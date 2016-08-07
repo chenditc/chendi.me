@@ -10,9 +10,9 @@
     <meta name="keyword"  content="">
     <link rel="shortcut icon" href="/img/favicon.ico">
 
-    <title>Welcome to Hux Blog - 陈迪的博客 | Di' Blog</title>
+    <title>Welcome to Di's Blog - 陈迪的博客 | Di' Blog</title>
 
-    <link rel="canonical" href="http://chendi.me/2015/01/29/hello-2015/">
+    <link rel="canonical" href="http://chendi.me/2016/08/06/hello-world/">
 
     <!-- Bootstrap Core CSS -->
     <link rel="stylesheet" href="/css/bootstrap.min.css">
@@ -143,12 +143,12 @@
                         <a class="tag" href="/tags/#生活" title="生活">生活</a>
                         
                     </div>
-                    <h1>Welcome to Hux Blog</h1>
+                    <h1>Welcome to Di's Blog</h1>
                     
                     
-                    <h2 class="subheading"> "Hello World, Hello Blog"</h2>
+                    <h2 class="subheading">欢迎来到我的博客</h2>
                     
-                    <span class="meta">Posted by Hux on January 29, 2015</span>
+                    <span class="meta">Posted by Di on August 6, 2016</span>
                 </div>
             </div>
         </div>
@@ -167,20 +167,22 @@
                 post-container">
 
 				<blockquote>
-  <p>“Yeah It’s on. ”</p>
+  <p>“Hello world. ”</p>
 </blockquote>
 
 <h2 id="section">前言</h2>
 
-<p>Hux 的 Blog 就这么开通了。</p>
+<p>终于把博客架起来了。</p>
 
 <p><a href="#build">跳过废话，直接看技术实现 </a></p>
 
-<p>2015 年，Hux 总算有个地方可以好好写点东西了。</p>
+<p>在博客出现了十几年之后才开始建自己的博客站，有种考古的感觉。</p>
 
-<p>作为一个程序员， Blog 这种轮子要是挂在大众博客程序上就太没意思了。一是觉得大部分 Blog 服务都太丑，二是觉得不能随便定制不好玩。之前因为太懒没有折腾，结果就一直连个写 Blog 的地儿都没有。</p>
+<p>不过除了博客，也找不到什么合适的地方写东西。</p>
 
-<p>在玩了一段时间知乎之后，答题的快感又激起了我开博客的冲动。之前的<a href="http://huangxuan.me/portfolio">个人网站</a>是作品集形式的（现在集成进来了），并不适合用来写博文，一不做二不休，花一天搞一个吧！</p>
+<p>公众号，微博，论坛都充斥着浓浓的商业气息，而且谁知道下一个10年，20年，他们还会不会存在。</p>
+
+<p>大概还是放在自己的域名，自己的版本控制最靠谱了。</p>
 
 <p id="build"></p>
 <hr />
@@ -189,49 +191,41 @@
 
 <p>接下来说说搭建这个博客的技术细节。</p>
 
-<p>正好之前就有关注过 <a href="https://pages.github.com/">GitHub Pages</a> + <a href="http://jekyllrb.com/">Jekyll</a> 快速 Building Blog 的技术方案，非常轻松时尚。</p>
-
-<p>其优点非常明显：</p>
+<p>在选择博客框架的时候犹豫了一下。最有名的博客框架大概是wordpress了，不过维护一个数据库和服务器实在是太麻烦。在建github repo的时候看到过<a href="https://pages.github.com/">GitHub Pages</a> + <a href="http://jekyllrb.com/">Jekyll</a> 的方案，感觉非常robust.</p>
 
 <ul>
-  <li><strong>Markdown</strong> 带来的优雅写作体验</li>
-  <li>非常熟悉的 Git workflow ，<strong>Git Commit 即 Blog Post</strong></li>
-  <li>利用 GitHub Pages 的域名和免费无限空间，不用自己折腾主机
-    <ul>
-      <li>如果需要自定义域名，也只需要简单改改 DNS 加个 CNAME 就好了</li>
-    </ul>
-  </li>
-  <li>Jekyll 的自定制非常容易，基本就是个模版引擎</li>
+  <li>一份markdown就是一篇博文，简洁明了。</li>
+  <li>Github自带markdown预览，方便调节格式。</li>
+  <li>无限储存空间，静态网站，无需服务器支持。</li>
+  <li>原生的git工具集都可以用。</li>
 </ul>
-
-<p>本来觉得最大的缺点可能是 GitHub 在国内访问起来太慢，所以第二天一起床就到 GitCafe(Chinese GitHub Copy) 迁移了一个<a href="http://huxpro.gitcafe.io">镜像</a>出来，结果还是巨慢。</p>
-
-<p>哥哥可是个前端好嘛！ 果断开 Chrome DevTool 查了下网络请求，原来是 <strong>pending 在了 Google Fonts</strong> 上，页面渲染一直被阻塞到请求超时为止，难怪这么慢。<br />
-忍痛割爱，只好把 Web Fonts 去了（反正超时看到的也只能是 fallback ），果然一下就正常了，而且 GitHub 和 GitCafe 对比并没有感受到明显的速度差异，虽然 github 的 ping 值明显要高一些，达到了 300ms，于是用 DNSPOD 优化了一下速度。</p>
 
 <hr />
 
-<p>配置的过程中也没遇到什么坑，基本就是 Git 的流程，相当顺手</p>
+<p>刚开始配置的时候，踩了特别多的坑。</p>
 
-<p>大的 Jekyll 主题上直接 fork 了 Clean Blog（这个主题也相当有名，就不多赘述了。唯一的缺点大概就是没有标签支持，于是我给它补上了。）</p>
+<p>Jekyll在github pages上的配置缺乏文档支持。网上有许多教程都已经过时了，在本地Jekyll生成的网站可以正常使用，但是放到github pages上就编译失败，也找不到对应的文档。</p>
 
-<p>本地调试环境需要 <code class="highlighter-rouge">gem install jekyll</code>，结果 rubygem 的源居然被墙了……后来手动改成了我大淘宝的镜像源才成功</p>
+<p>在尝试了不少教程之后，决定从已经可用的Github网站fork一个已经可用的出来，再修改成自己的风格。</p>
 
-<p>Theme 的 CSS 是基于 Bootstrap 定制的，看得不爽的地方直接在 Less 里改就好了（平时更习惯 SCSS 些），<strong>不过其实我一直觉得 Bootstrap 在移动端的体验做得相当一般，比我在淘宝参与的团队 CSS 框架差多了……</strong>所以为了体验，也补了不少 CSS 进去</p>
+<p>在此感谢<a href="http://huangxuan.me/">黄玄</a>贡献维护了开源模版<a href="https://github.com/Huxpro/huxblog-boilerplate">huxblog-boilerplate</a>.</p>
 
-<p>最后就进入了耗时反而最长的<strong>做图、写字</strong>阶段，也算是进入了<strong>写博客</strong>的正轨，因为是类似 Hack Day 的方式去搭这个站的，所以折腾折腾着大半夜就过去了。</p>
+<p>用了这个模版之后还做了一些小配置：</p>
 
-<p>第二天考虑中文字体的渲染，fork 了 <a href="http://www.typeisbeautiful.com/">Type is Beautiful</a> 的 <code class="highlighter-rouge">font</code> CSS，调整了字号，适配了 Win 的渣渲染，中英文混排效果好多了。</p>
+<ol>
+  <li>新建gh-pages branch。</li>
+  <li>把gh-pages branch设为默认branch。</li>
+  <li>在Github Repository的setting里面设置Custom domain，这样就可以使用http连接，否则会被强制使用https。</li>
+  <li>修改了一下_config.yml文件。</li>
+</ol>
+
+<hr />
 
 <h2 id="section-2">后记</h2>
 
-<p>回顾这个博客的诞生，纯粹是出于个人兴趣。在知乎相关问题上回答并获得一定的 star 后，我决定把这个博客主题当作一个小小的开源项目来维护。</p>
+<p>今后会把一些看的书，做的side project记录下来，算是整理一下自己的知识体系。</p>
 
-<p>在经历 v1.0 - v1.5 的蜕变后，这个博客主题愈发完整，不但增加了诸多 UI 层的优化（opinionated）；在代码层面，更加丰富的配置项也使得这个主题拥有了更好的灵活性与可拓展性。而作为一个开源项目，我也积极的为其完善文档与解决 issue。</p>
-
-<p>如果你恰好逛到了这里，希望你也能喜欢这个博客主题。</p>
-
-<p>—— Hux 后记于 2015.10</p>
+<p>希望也能因此结识一些有趣的人。</p>
 
 
                 <hr>
@@ -241,21 +235,21 @@
                 </style>
                 <div class="ds-share"
                     style="text-align: right"
-                    data-thread-key="/2015/01/29/hello-2015"
-                    data-title="Welcome to Hux Blog"
-                    data-url="http://chendi.me/2015/01/29/hello-2015/"
+                    data-thread-key="/2016/08/06/hello-world"
+                    data-title="Welcome to Di's Blog"
+                    data-url="http://chendi.me/2016/08/06/hello-world/"
                     data-images="http://chendi.me/img/post-bg-2015.jpg"
                     data-content="
-  “Yeah It’s on. ”
+  “Hello world. ”
 
 
 前言
 
-Hux 的 Blog 就这么开通了。
+终于把博客架起来了。
 
 跳过废话，直接看技术实现 
 
-2015 年，Hux 总算有个地... | 陈迪的博客 | Di' Blog " >
+在博客出现了十几年之后才开始建自己的博客站，有种考... | 陈迪的博客 | Di' Blog " >
                     <div class="ds-share-inline">
                       <ul  class="ds-share-icons-16">
                         <li data-toggle="ds-share-icons-more"><a class="ds-more" href="#">分享到：</a></li>
@@ -274,10 +268,10 @@ Hux 的 Blog 就这么开通了。
 
                 <ul class="pager">
                     
-                    
-                    <li class="next">
-                        <a href="/2015/04/14/unix-linux-note/" data-toggle="tooltip" data-placement="top" title="Example Post">Next Post &rarr;</a>
+                    <li class="previous">
+                        <a href="/2015/09/22/js-version/" data-toggle="tooltip" data-placement="top" title="Example Post">&larr; Previous Post</a>
                     </li>
+                    
                     
                 </ul>
 
@@ -286,9 +280,9 @@ Hux 的 Blog 就这么开通了。
                 <!-- 多说评论框 start -->
                 <div class="comment">
                     <div class="ds-thread"
-                        data-thread-key="/2015/01/29/hello-2015"
-                        data-title="Welcome to Hux Blog"
-                        data-url="http://chendi.me/2015/01/29/hello-2015/" >
+                        data-thread-key="/2016/08/06/hello-world"
+                        data-title="Welcome to Di's Blog"
+                        data-url="http://chendi.me/2016/08/06/hello-world/" >
                     </div>
                 </div>
                 <!-- 多说评论框 end -->
@@ -318,8 +312,6 @@ Hux 的 Blog 就这么开通了。
                             
         				
                             
-        				
-                            
                 				<a href="/tags/#前端开发" title="前端开发" rel="3">
                                     前端开发
                                 </a>
@@ -329,6 +321,8 @@ Hux 的 Blog 就这么开通了。
                 				<a href="/tags/#JavaScript" title="JavaScript" rel="3">
                                     JavaScript
                                 </a>
+                            
+        				
                             
         				
                             
@@ -345,13 +339,7 @@ Hux 的 Blog 就这么开通了。
                     
                         <li><a href="http://huangxuan.me">Hux Blog</a></li>
                     
-                        <li><a href="#">Foo</a></li>
-                    
-                        <li><a href="#">Bar</a></li>
-                    
-                        <li><a href="#">Example Friends</a></li>
-                    
-                        <li><a href="#">It helps SEO</a></li>
+                        <li><a href="http://mypokemon.io">My pokemon map</a></li>
                     
                 </ul>
                 
