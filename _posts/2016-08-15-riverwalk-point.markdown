@@ -3,7 +3,7 @@ layout:     post
 title:      "Riverwalk Point"
 subtitle:   "航拍: 最喜欢的公寓之一"
 date:       2016-08-15 20:15:00
-author:     "Di"
+author:     "Di Chen"
 header-img: "img/in-post/riverwalk-point/riverwalk-point-bg.jpg"
 tags:
     - 生活
