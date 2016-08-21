@@ -108,6 +108,7 @@ tags:
   这个问题的关键就在于减少相同地区的重复搜索。借用 [Data Deduplication](https://en.wikipedia.org/wiki/Data_deduplication) 的思想，我们可以用 `时间 + 地点` 来作为 Deduplication Key，如果区域 A 在 x 秒内搜索过了，就跳过这个区域。 
   
   在这里，我用 redis 来储存搜索记录，原因有两个:
+  
     1. Redis 的 setex 功能可以自动添加 ttl (Time to live)，在一定时间之后，记录会自动消失。
     2. Redis 作为一种 in memory cache，对于这类不需要高可靠性的数据，可以提供很好的查询速度。
   
