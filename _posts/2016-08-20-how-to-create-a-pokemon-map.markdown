@@ -56,9 +56,9 @@ tags:
 
 整个系统分为 3 个部分：
 
-1. 网页前端
-2. 数据查询层
-3. 数据采集层
+1. [网页前端]()
+2. [数据查询层]()
+3. [数据采集层]()
 
 ### 网页前端
 
@@ -95,7 +95,7 @@ tags:
 ![hilbert-example](/img/in-post/mypokemon-io-1/hilbert-example.jpg)
 
 
-## 优化数据采集层
+## 系统优化
 
 在实现了最简单的数据采集层之后，就已经可以在网页端看到小精灵了。但是还有一些问题需要优化解决:
 
@@ -115,6 +115,7 @@ tags:
   2. Redis 作为一种 in memory cache，对于这类不需要高可靠性的数据，可以提供很好的查询速度。
   
   具体实现:
+
 <pre style="background:#000;color:#f8f8f8"><span style="color:#99cf50">def</span> <span style="color:#89bdff">filter_duplciate_cell_ids</span>(<span style="color:#3e87e3">cell_ids</span>):
     <span style="color:#aeaeae;font-style:italic"># validate it against redis</span>
     redis_query <span style="color:#e28964">=</span> [ <span style="color:#65b042">"request.{0}"</span>.format(cell_id) <span style="color:#e28964">for</span> cell_id <span style="color:#e28964">in</span> cell_ids ]
