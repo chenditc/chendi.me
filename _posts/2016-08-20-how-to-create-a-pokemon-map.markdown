@@ -81,7 +81,7 @@ tags:
  - 如何得到每个区域里需要搜索的坐标点？
    - [Google S2](http://blog.christianperone.com/2015/08/googles-s2-geometry-on-the-sphere-cells-and-hilbert-curve/) 是一个基于[希尔伯特曲线](https://zh.wikipedia.org/wiki/%E5%B8%8C%E7%88%BE%E4%BC%AF%E7%89%B9%E6%9B%B2%E7%B7%9A) 的区域分割方式。它可以将一个区域分割成相同大小的区域并且用一个 unique id 来表示。我们可以用 Google S2 将区域分割成 100m * 100m 的小正方形，然后取其中心作为用户位置，发送给服务器。
 
-### 优化数据采集层
+## 优化数据采集层
 
 在实现了最简单的数据采集层之后，就已经可以在网页端看到小精灵了。但是还有一些问题需要优化解决:
 
@@ -92,23 +92,49 @@ tags:
 让我们一个个问题来解决:
 
 1. 如何减少搜索次数?
-  - 这个问题的关键就在于相同地区的重复搜索。借用 [Data Deduplication](https://en.wikipedia.org/wiki/Data_deduplication) 的思想，我们可以用 `时间 + 地点` 来作为 Deduplication Key，如果区域 A 在 x 秒内搜索过了，就跳过这个区域。 
-  - 在这里，我用 redis 来储存搜索记录，原因有两个:
+
+  这个问题的关键就在于减少相同地区的重复搜索。借用 [Data Deduplication](https://en.wikipedia.org/wiki/Data_deduplication) 的思想，我们可以用 `时间 + 地点` 来作为 Deduplication Key，如果区域 A 在 x 秒内搜索过了，就跳过这个区域。 
+  
+  在这里，我用 redis 来储存搜索记录，原因有两个:
     1. Redis 的 setex 功能可以自动添加 ttl (Time to live)，在一定时间之后，记录会自动消失。
     2. Redis 作为一种 in memory cache，对于这类不需要高可靠性的数据，可以提供很好的查询速度。
-  - 具体实现就是每次搜索之前，查询 Redis 是否有地点 A 的 unique id。如果有，不进行搜索。如果没有，设置 `key = area uniq id`，ttl 为60秒，然后进行搜索。
-2. 如何避免同一个账户过于频繁地访问 Pokemon Go 服务器？
-  - 使用多个账号( > 10000 个）
-  - 如何注册多个账号呢？
-    - 由于 Pokemon Go 官网的[注册](https://club.pokemon.com/us/pokemon-trainer-club/sign-up/) 不需要验证码，我用 [selenium](http://www.seleniumhq.org/) 写了一个批量注册机。
-  - 注册邮箱需要验证之后才能使用，如何批量得到邮箱地址呢？
-    - 申请一个域名，设置通用邮件转发。这样所有在那个域名下的邮箱地址都会转发到你指定的一个邮箱了。
-  - 怎样批量激活账户呢？
-    - 设置邮箱的 Pop3，并且写一个小脚本，定期轮询新邮件，并且点击激活地址。
-3. 如何降低由于登录服务器引起的搜索延迟？
   
+  具体实现就是每次搜索之前，查询 Redis 是否存有地点 A 的 unique id。如果有，不进行搜索。如果没有，设置 `key = area uniq id`，`ttl = 60 seconds`，然后进行搜索。
+2. 如何避免同一个账户过于频繁地访问 Pokemon Go 服务器？
+  答案很简单。使用多个账号( > 10000 个）。那么如何注册并使用多个账号呢？
 
+  由于 Pokemon Go 官网的[注册](https://club.pokemon.com/us/pokemon-trainer-club/sign-up/) 不需要验证码，我用 [selenium](http://www.seleniumhq.org/) 写了一个批量注册机，自动填写注册信息。
+  
+  注册邮箱需要验证之后才能使用，如何批量得到邮箱地址呢？
+   - 我申请了一个域名，设置通用邮件转发。这样所有在那个域名下的邮箱地址都会转发到我指定的一个邮箱了。我只需要注册一个邮箱，就可以映射到所有在我域名下的邮箱了。大部分的域名提供商都有邮件转发功能。
+  
+   怎样批量激活账户呢？
+    - 设置邮箱的 Pop3，并且写一个小脚本，定期轮询新邮件，并且点击激活地址。在激活之后，储存用户名密码到数据库。
 
+3. 如何降低由于登录服务器引起的搜索延迟？
+  在 [tejado/pgoapi](https://github.com/tejado/pgoapi) 中，为了模拟用户的行为，使用 API 之前，都会进行登录行为。整个流程分为 3 个部分：
+  
+  1. 从 oauth 服务器获取 account token。这里的 token 既可能是 Pokemon Trainer Club 的，也可能是 Google 的。
+  2. 从 Load Balance 服务器 (pgorelease.nianticlabs.com/plfe) 获取实际的 rpc 服务器地址以及 access token。
+  3. 使用第二部的 access token 签名 rpc 请求，发送到 rpc 服务器。
+  
+  在第一步跟第二步获得的 token 都是可以重复使用的，oauth token 有效时间大概是 3 小时，access token 有效时间大概是 30 分钟。我在每次成功登陆之后把 access token 和 rpc 服务器地址存到数据库中，这样就可以在不同的 Scan worker 之间使用了。
+
+在优化了上面三点之后，每条数据爬取的速度就快了一倍。
+
+---
+
+## Pokemon Map 的灾难
+
+这个地图做起来其实并不难，所以有很多同质性的地图网站，最有名的大概就是 [pokevision](https://pokevision.com/)。在 2016/07/30，Niantic （Pokemon Go的制作公司）将大部分云服务提供商的 ip 地址都封禁了，包括 AWS, Azure, DigitalOcean 等等。由于大部分的 Pokemon Map 都托管在云服务上，这就导致了几乎所有的 Pokemon Map 都无法使用了。比如[这篇报道](http://www.forbes.com/sites/ryanmac/2016/07/31/pokemon-go-cuts-off-access-to-pokevision-and-other-creature-finding-apps/#330f9be13dba)。
+
+同样，我的 Pokemon Map 也无法获取数据了，所有的 rpc 请求都返回了 nginx 403 错误请求。 为了解决这个问题，我们就需要更改发送请求的ip地址，最简单的方式就是使用一个 proxy 转发所有的通信流量。具体实现也很简单，在 Scan Worker 服务器上跑一个 ssh 链接即可: `ssh -o StrictHostKeyChecking=no -D <port number> -f -C -q -N username@<ip address>`。
+
+于是我们就成了少量生存下来的 Pokemon Map 之一了。
+
+#### 小新闻
+
+在 8 月 18 日，比利时最大的移动通信商 proximus 的 IP 被 Niantic 禁掉了。而这家通信商两周前还以无限 Pokemon Go 流量作为[宣传](https://www.proximus.be/en/id_b_cl_pokemon_go/large-companies-and-public-sector/discover/blog/one/news/pokemon-go.html)。经过与 Niantic 的交涉之后，终于又重新恢复了连接。
 
 ---
 
