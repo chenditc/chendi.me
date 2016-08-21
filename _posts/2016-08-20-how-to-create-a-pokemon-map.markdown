@@ -81,10 +81,14 @@ tags:
 ![hilbert-example](/img/in-post/mypokemon-io-1/hilbert-example.jpg)
 
 现在我们知道如何搜索一个区域，其他的部分就简单多了。
-  - 如何知道搜索哪个区域？
-    - 在数据查询的时候，把查询区域发送到一个消息队列里 (AWS SQS)，然后 search worker 不断地从队列里读取需要搜索的区域。
-  - 如何得到每个区域里需要搜索的坐标点？
-    - [Google S2](http://blog.christianperone.com/2015/08/googles-s2-geometry-on-the-sphere-cells-and-hilbert-curve/) 是一个基于[希尔伯特曲线](https://zh.wikipedia.org/wiki/%E5%B8%8C%E7%88%BE%E4%BC%AF%E7%89%B9%E6%9B%B2%E7%B7%9A) 的区域分割方式。它可以将一个区域分割成相同大小的区域并且用一个 unique id 来表示。我们可以用 Google S2 将区域分割成 100m * 100m 的小正方形，然后取其中心作为用户位置，发送给服务器。
+
+##### 如何知道搜索哪个区域
+
+在数据查询的时候，把查询区域发送到一个消息队列里 (AWS SQS)，然后 search worker 不断地从队列里读取需要搜索的区域。
+
+##### 如何得到每个区域里需要搜索的坐标点
+
+[Google S2](http://blog.christianperone.com/2015/08/googles-s2-geometry-on-the-sphere-cells-and-hilbert-curve/) 是一个基于[希尔伯特曲线](https://zh.wikipedia.org/wiki/%E5%B8%8C%E7%88%BE%E4%BC%AF%E7%89%B9%E6%9B%B2%E7%B7%9A) 的区域分割方式。它可以将一个区域分割成相同大小的区域并且用一个 unique id 来表示。我们可以用 Google S2 将区域分割成 100m * 100m 的小正方形，然后取其中心作为用户位置，发送给服务器。
 
 ## 优化数据采集层
 
