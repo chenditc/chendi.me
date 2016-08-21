@@ -30,8 +30,6 @@ tags:
 
 ### 监听网络流量
 
-> 2016/07/18
-
 首先，我需要架设一个网络流量监听的工具。由于近年来 REST API 的流行，我假设 Pokemon Go 也是用 REST API 来通信的，那么假设一个 http proxy 便能够进行 MITM ([man in the middle attack](https://en.wikipedia.org/wiki/Man-in-the-middle_attack)) 攻击，并截取通信记录了。在这里，我用的工具是 [burp](https://portswigger.net/burp/proxy.html)
 
 由于我的 macbook 和我的手机接入到了同一个 wifi ，我在电脑上设置的 proxy ，在 iphone 上也能连上。在 [burp configure](https://support.portswigger.net/customer/portal/articles/1841108-configuring-an-ios-device-to-work-with-burp) 界面有很详细的设置过程，在设置好电脑跟手机之后，我们就可以在 burp 上看到 Pokemon Go 的网络流量了。
