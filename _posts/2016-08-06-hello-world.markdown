@@ -4,7 +4,7 @@ title:      "Welcome to Di's Blog"
 subtitle:   "欢迎来到我的博客"
 date:       2016-08-06 20:15:00
 author:     "Di Chen"
-header-img: "img/post-bg-2015.jpg"
+header-img: "img/hello-world-bg.jpg"
 tags:
     - 生活
 ---
