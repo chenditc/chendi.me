@@ -112,7 +112,21 @@ tags:
   1. Redis 的 setex 功能可以自动添加 ttl (Time to live)，在一定时间之后，记录会自动消失。
   2. Redis 作为一种 in memory cache，对于这类不需要高可靠性的数据，可以提供很好的查询速度。
   
-  具体实现就是每次搜索之前，查询 Redis 是否存有地点 A 的 unique id。如果有，不进行搜索。如果没有，设置 `key = area uniq id`，`ttl = 60 seconds`，然后进行搜索。
+  具体实现:
+  ```python
+def filter_duplciate_cell_ids(cell_ids):
+    # validate it against redis
+    redis_query = [ "request.{0}".format(cell_id) for cell_id in cell_ids ]
+    # bulk check keys
+    cell_exist = redis_client.mget(redis_query)
+    new_cell_ids = []
+    for index in range(len(cell_ids)):
+        if cell_exist[index] == None:
+            new_cell_ids.append(cell_ids[index])
+            # set key to 1 with ttl 60 seconds
+            redis_client.setex(redis_query[index], 60, '1')
+    return new_cell_ids
+  ```
   
 #### 如何避免同一个账户过于频繁地访问 Pokemon Go 服务器
 
