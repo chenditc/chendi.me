@@ -167,6 +167,8 @@ tags:
 
 在 8 月 18 日，比利时最大的移动通信商 proximus 的 IP 被 Niantic 禁掉了。而这家通信商两周前还以无限 Pokemon Go 流量作为[宣传](https://www.proximus.be/en/id_b_cl_pokemon_go/large-companies-and-public-sector/discover/blog/one/news/pokemon-go.html)。经过与 Niantic 的交涉之后，终于又重新恢复了连接。
 
+IP 封禁也是会有误伤呀。
+
 ---
 
 ## 后记
