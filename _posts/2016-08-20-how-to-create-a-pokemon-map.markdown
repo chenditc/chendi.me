@@ -89,7 +89,8 @@ tags:
 
 ##### 希尔伯特例子
 
-比如下图中的每一个黑线的转折点就是一个搜索点。
+图中的黑线是一个 hilbert curve，而图中的每一个黑线的转折点就是一个搜索点。
+
 ![hilbert-example](/img/in-post/mypokemon-io-1/hilbert-example.jpg)
 
 
