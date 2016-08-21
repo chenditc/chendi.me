@@ -1,7 +1,7 @@
 ---
 layout:     post
-title:      "航拍: Riverwalk Point"
-subtitle:   "最喜欢的公寓之一"
+title:      "Riverwalk Point"
+subtitle:   "航拍: 最喜欢的公寓之一"
 date:       2016-08-15 20:15:00
 author:     "Di"
 header-img: "img/in-post/riverwalk-point/riverwalk-point-bg.jpg"
