@@ -55,6 +55,7 @@ tags:
 ![Architecture Diagram](/img/in-post/mypokemon-io-1/architecture.jpg)
 
 整个系统分为 3 个部分：
+
 1. 网页前端
 2. 数据查询层
 3. 数据采集层
