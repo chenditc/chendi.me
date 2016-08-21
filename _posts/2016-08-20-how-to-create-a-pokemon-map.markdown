@@ -93,7 +93,7 @@ tags:
 
 让我们一个个问题来解决:
 
-1. 如何减少搜索次数?
+#### 如何减少搜索次数
 
   这个问题的关键就在于减少相同地区的重复搜索。借用 [Data Deduplication](https://en.wikipedia.org/wiki/Data_deduplication) 的思想，我们可以用 `时间 + 地点` 来作为 Deduplication Key，如果区域 A 在 x 秒内搜索过了，就跳过这个区域。 
   
@@ -102,7 +102,9 @@ tags:
     2. Redis 作为一种 in memory cache，对于这类不需要高可靠性的数据，可以提供很好的查询速度。
   
   具体实现就是每次搜索之前，查询 Redis 是否存有地点 A 的 unique id。如果有，不进行搜索。如果没有，设置 `key = area uniq id`，`ttl = 60 seconds`，然后进行搜索。
-2. 如何避免同一个账户过于频繁地访问 Pokemon Go 服务器？
+  
+#### 如何避免同一个账户过于频繁地访问 Pokemon Go 服务器
+
   答案很简单。使用多个账号( > 10000 个）。那么如何注册并使用多个账号呢？
 
   由于 Pokemon Go 官网的[注册](https://club.pokemon.com/us/pokemon-trainer-club/sign-up/) 不需要验证码，我用 [selenium](http://www.seleniumhq.org/) 写了一个批量注册机，自动填写注册信息。
@@ -113,7 +115,8 @@ tags:
    怎样批量激活账户呢？
     - 设置邮箱的 Pop3，并且写一个小脚本，定期轮询新邮件，并且点击激活地址。在激活之后，储存用户名密码到数据库。
 
-3. 如何降低由于登录服务器引起的搜索延迟？
+#### 如何降低由于登录服务器引起的搜索延迟
+
   在 [tejado/pgoapi](https://github.com/tejado/pgoapi) 中，为了模拟用户的行为，使用 API 之前，都会进行登录行为。整个流程分为 3 个部分：
   
   1. 从 oauth 服务器获取 account token。这里的 token 既可能是 Pokemon Trainer Club 的，也可能是 Google 的。
