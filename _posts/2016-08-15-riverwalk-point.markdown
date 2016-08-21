@@ -18,6 +18,12 @@ tags:
 
 这是我在纽约罗斯福岛上住的公寓，在拿到 DJI 航拍器之后就很想把自己住过的地方也记录下来。
 
+### Youtube
+
 <iframe width="560" height="315" src="https://www.youtube.com/embed/asoAZ__t__A" frameborder="0" allowfullscreen></iframe>
+
+### 优酷
+
+<iframe height="498" width="510" src="http://player.youku.com/embed/XMTY5NDM4OTE0OA==" frameborder="0" allowfullscreen></iframe>
 
 希望各位有航拍经验的大神不吝赐教！
