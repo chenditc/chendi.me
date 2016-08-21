@@ -119,15 +119,17 @@ tags:
   具体实现:
 
 <pre style="background:#000;color:#f8f8f8"><span style="color:#99cf50">def</span> <span style="color:#89bdff">filter_duplciate_cell_ids</span>(<span style="color:#3e87e3">cell_ids</span>):
-    <span style="color:#aeaeae;font-style:italic"># validate it against redis</span>
-    redis_query <span style="color:#e28964">=</span> [ <span style="color:#65b042">"request.{0}"</span>.format(cell_id) <span style="color:#e28964">for</span> cell_id <span style="color:#e28964">in</span> cell_ids ]
-    cell_exist <span style="color:#e28964">=</span> redis_client.mget(redis_query)
-    new_cell_ids <span style="color:#e28964">=</span> []
-    <span style="color:#e28964">for</span> index <span style="color:#e28964">in</span> <span style="color:#dad085">range</span>(<span style="color:#dad085">len</span>(cell_ids)):
-        <span style="color:#e28964">if</span> cell_exist[index] <span style="color:#e28964">==</span> <span style="color:#3387cc">None</span>:
-            new_cell_ids.append(cell_ids[index])
-            redis_client.setex(redis_query[index], <span style="color:#3387cc">60</span>, <span style="color:#65b042">'1'</span>)
-    <span style="color:#e28964">return</span> new_cell_ids
+  <span style="color:#aeaeae;font-style:italic"># validate it against redis</span>
+  redis_query <span style="color:#e28964">=</span> [ <span style="color:#65b042">"request.{0}"</span>.format(cell_id) <span style="color:#e28964">for</span> cell_id <span style="color:#e28964">in</span> cell_ids ]
+  <span style="color:#aeaeae;font-style:italic"># bulk check redis keys</span>
+  cell_exist <span style="color:#e28964">=</span> redis_client.mget(redis_query)
+  new_cell_ids <span style="color:#e28964">=</span> []
+  <span style="color:#e28964">for</span> index <span style="color:#e28964">in</span> <span style="color:#dad085">range</span>(<span style="color:#dad085">len</span>(cell_ids)):
+    <span style="color:#e28964">if</span> cell_exist[index] <span style="color:#e28964">==</span> <span style="color:#3387cc">None</span>:
+      new_cell_ids.append(cell_ids[index])
+      <span style="color:#aeaeae;font-style:italic"># Set key with ttl 60 seconds</span>
+      redis_client.setex(redis_query[index], <span style="color:#3387cc">60</span>, <span style="color:#65b042">'1'</span>)
+  <span style="color:#e28964">return</span> new_cell_ids
 </pre>
   
 #### 如何避免同一个账户过于频繁地访问 Pokemon Go 服务器
