@@ -75,7 +75,7 @@ tags:
 
 数据采集才是这个地图中最核心的部分。要设计数据采集层，我们就要先看看有哪些可以用的工具。
 
-在前面我们已经得到了可以模拟 Pokemon Go 客户端的 python api，在 Pokemon Go 中，每 5 秒，客户端就会发送一个 `GET_MAP_OBJECTS` 请求给服务器，包含了用户所在的位置，服务器则会返回用户可以抓到的小精灵地址，以及离用户很近的小精灵地址。这些小精灵大概是在距离用户 100 米内的。这就意味着，每一个用户请求，只能覆盖半径 100 米的圆形区域，要搜索 1 平方公里的区域，就需要发送约 100 个请求到 Pokemon Go 服务器。
+在前面我们已经得到了可以模拟 Pokemon Go 客户端的 python api，在 Pokemon Go 中，每 5 秒，客户端就会发送一个 `GET_MAP_OBJECTS` 请求给服务器，包含了用户所在的位置，服务器则会返回用户可以抓到的小精灵地址，以及离用户很近的小精灵地址。这些小精灵大概是在距离用户 100 米内的。这就意味着，每一个用户请求，只能覆盖半径 100 米的圆形区域，要搜索 1 平方公里的区域，就需要发送约 100 个请求到 Pokemon Go 服务器。[例子](#希尔伯特例子)
 
 现在我们知道如何搜索一个区域，其他的部分就简单多了。
 
@@ -87,7 +87,7 @@ tags:
 
 [Google S2](http://blog.christianperone.com/2015/08/googles-s2-geometry-on-the-sphere-cells-and-hilbert-curve/) 是一个基于[希尔伯特曲线](https://zh.wikipedia.org/wiki/%E5%B8%8C%E7%88%BE%E4%BC%AF%E7%89%B9%E6%9B%B2%E7%B7%9A) 的区域分割方式。它可以将一个区域分割成相同大小的区域并且用一个 unique id 来表示。我们可以用 Google S2 将区域分割成 100m * 100m 的小正方形，然后取其中心作为用户位置，发送给服务器。
 
-##### 例子
+##### 希尔伯特例子
 
 比如下图中的每一个黑线的转折点就是一个搜索点。
 ![hilbert-example](/img/in-post/mypokemon-io-1/hilbert-example.jpg)
