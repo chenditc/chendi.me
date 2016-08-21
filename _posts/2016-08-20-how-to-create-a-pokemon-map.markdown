@@ -109,8 +109,8 @@ tags:
   
   在这里，我用 redis 来储存搜索记录，原因有两个:
   
-    1. Redis 的 setex 功能可以自动添加 ttl (Time to live)，在一定时间之后，记录会自动消失。
-    2. Redis 作为一种 in memory cache，对于这类不需要高可靠性的数据，可以提供很好的查询速度。
+  1. Redis 的 setex 功能可以自动添加 ttl (Time to live)，在一定时间之后，记录会自动消失。
+  2. Redis 作为一种 in memory cache，对于这类不需要高可靠性的数据，可以提供很好的查询速度。
   
   具体实现就是每次搜索之前，查询 Redis 是否存有地点 A 的 unique id。如果有，不进行搜索。如果没有，设置 `key = area uniq id`，`ttl = 60 seconds`，然后进行搜索。
   
