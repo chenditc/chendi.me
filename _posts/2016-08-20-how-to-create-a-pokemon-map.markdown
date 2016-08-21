@@ -36,6 +36,8 @@ tags:
 
 由于我的 macbook 和我的手机接入到了同一个 wifi ，我在电脑上设置的 proxy ，在 iphone 上也能连上。在 [burp configure](https://support.portswigger.net/customer/portal/articles/1841108-configuring-an-ios-device-to-work-with-burp) 界面有很详细的设置过程，在设置好电脑跟手机之后，我们就可以在 burp 上看到 Pokemon Go 的网络流量了。
 
+![burp snapshot](/img/in-post/mypokemon-io-1/burp.jpg)
+
 ### 解码
 
 在 burp 里，我们可以看到 Pokemon Go 的[通信记录](https://raw.githubusercontent.com/chenditc/pokemon-analyze/master/request_history)，其中大部分都是毫无意义的二进制码。联想一下 Google 的技术栈，不难想到，这是用 protocol buffer 编码过的，那么用 protobuf 反向解码，就可以看到原请求了。
