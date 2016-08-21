@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "Riverwalk Point"
+title:      "航拍: Riverwalk Point"
 subtitle:   "最喜欢的公寓之一"
 date:       2016-08-15 20:15:00
 author:     "Di"
@@ -14,7 +14,7 @@ tags:
 > “The future of possible. ”
 
 
-## What's this?
+## Where is this?
 
 这是我在纽约罗斯福岛上住的公寓，在拿到 DJI 航拍器之后就很想把自己住过的地方也记录下来。
 
