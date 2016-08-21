@@ -36,7 +36,7 @@ tags:
 
 由于我的 macbook 和我的手机接入到了同一个 wifi ，我在电脑上设置的 proxy ，在 iphone 上也能连上。在 [burp configure](https://support.portswigger.net/customer/portal/articles/1841108-configuring-an-ios-device-to-work-with-burp) 界面有很详细的设置过程，在设置好电脑跟手机之后，我们就可以在 burp 上看到 Pokemon Go 的网络流量了。
 
-![burp snapshot](/img/in-post/mypokemon-io-1/burp.jpg)
+[![burp snapshot](/img/in-post/mypokemon-io-1/burp.jpg)](/img/in-post/mypokemon-io-1/burp.jpg)
 
 ### 解码
 
@@ -52,7 +52,7 @@ tags:
 
 我最终的目标是提供一个 Pokemon Map as a Service，那么所有的数据储存跟采集都必然发生在云端。我决定的架构是这样的:
 
-![Architecture Diagram](/img/in-post/mypokemon-io-1/architecture.jpg)
+[![Architecture Diagram](/img/in-post/mypokemon-io-1/architecture.jpg)](/img/in-post/mypokemon-io-1/architecture.jpg)
 
 整个系统分为 3 个部分：
 
@@ -92,7 +92,8 @@ tags:
 
 图中的黑线是一个 hilbert curve，而图中的每一个黑线的转折点就是一个搜索点。
 
-![hilbert-example](/img/in-post/mypokemon-io-1/hilbert-example.jpg)
+[![hilbert-example](/img/in-post/mypokemon-io-1/hilbert-example.jpg)](/img/in-post/mypokemon-io-1/hilbert-example.jpg)
+
 
 ---
 
