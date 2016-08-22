@@ -24,6 +24,6 @@ tags:
 
 ### 优酷
 
-<iframe height="498" width="510" src="https://players.youku.com/player.php/sid/XMTY5NDI4NjYxMg/v.swf" frameborder="0" allowfullscreen></iframe>
+<iframe height="498" width="100%" src="https://players.youku.com/player.php/sid/XMTY5NDI4NjYxMg/v.swf" frameborder="0" allowfullscreen></iframe>
 
 希望各位有航拍经验的大神不吝赐教！
