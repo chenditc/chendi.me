@@ -163,11 +163,19 @@ tags:
 
 这个地图做起来其实并不难，所以有很多同质性的地图网站，最有名的大概就是 [pokevision](https://pokevision.com/)。在 2016/07/30，Niantic （Pokemon Go的制作公司）将大部分云服务提供商的 ip 地址都封禁了，包括 AWS, Azure, DigitalOcean 等等。由于大部分的 Pokemon Map 都托管在云服务上，这就导致了几乎所有的 Pokemon Map 都无法使用了。比如[这篇报道](http://www.forbes.com/sites/ryanmac/2016/07/31/pokemon-go-cuts-off-access-to-pokevision-and-other-creature-finding-apps/#330f9be13dba)。
 
-同样，我的 Pokemon Map 也无法获取数据了，所有的 rpc 请求都返回了 nginx 403 错误请求。 为了解决这个问题，我们就需要更改发送请求的ip地址，最简单的方式就是使用一个 proxy 转发所有的通信流量。具体实现也很简单，在 Scan Worker 服务器上跑一个 ssh 链接即可: 
+同样，我的 Pokemon Map 也无法获取数据了，所有的 rpc 请求都返回了 nginx 403 错误请求。 为了解决这个问题，我们就需要更改发送请求的ip地址，最简单的方式就是使用一个 proxy 转发所有的通信流量。
 
-`ssh -o StrictHostKeyChecking=no -D <port number> -f -C -q -N username@<ip address>`。
+具体实现也很简单，先在一个小众的云服务商注册一个云主机，天翼云，Ucloud 什么的都可以。假设我们拿到一个 ssh 账号密码: `<username>` + `<password>`。
 
-于是我们就成了少量生存下来的 Pokemon Map 之一了。
+在 Scan Worker 服务器上 (AWS EC2) 运行一个 ssh 链接: 
+
+`ssh -o StrictHostKeyChecking=no -D 31234 -f -C -q -N username@<ip address>`。
+
+这时会要求输入 ssh 密码。
+
+接下来，在 pgoapi 中搜索 requests，找到发送 https 的代码，加上 `proxies={'https' : 'sock5://127.0.0.1:31234'}`，这样就可以用小众云服务商的云主机作 https proxy 代理了。
+
+在做了这些设置之后，Pokemon Map又可以用了，于是我们就成了少量生存下来的 Pokemon Map 之一了。
 
 #### 小新闻
 
