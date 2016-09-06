@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "Today's sunset"
+title:      "NYC Sunset"
 subtitle:   "延时摄影: 纽约日落"
 date:       2016-09-06 20:15:00
 author:     "Di Chen"
