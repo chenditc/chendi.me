@@ -4,7 +4,7 @@ title:      "Today's sunset"
 subtitle:   "延时摄影: 纽约日落"
 date:       2016-09-06 20:15:00
 author:     "Di Chen"
-header-img: "img/in-post/17-miles-drive/17-miles-drive-bg.jpg"
+header-img: "img/in-post/new-york-city/nyc-sunset-bg.jpg"
 tags:
     - 生活
     - 延时摄影
