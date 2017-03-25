@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "Werrd bugs - 1"
+title:      "Weird bugs - 1"
 subtitle:   "奇怪的 bug 系列 - 1"
 date:       2017-03-25 20:15:00
 author:     "Di Chen"
@@ -31,6 +31,9 @@ tags:
 
 ### 排查方式
 
+#### 确认延迟分布
+
+在监控服务器延迟的时候，单个数字是无法准确地表达出问题的，
 
 ### 解决方法
 
