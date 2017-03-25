@@ -8,3 +8,17 @@ This blog is hosted as a github pages website and bing with my own domain [chend
 #### How to get code syntax highlight code?
 
 From online html5 [code generator](http://markup.su/highlighter/)
+
+#### How to add dark layer to background?
+
+Use online picture editing tool [pixlr](https://pixlr.com/editor/)
+
+1. Upload picture to pixlr editor.
+2. Click "Layer" => "New Layer".
+3. Type "G" to move tool to Paint Bucket Tool.
+4. Select Color to black.
+5. Choose "opacity" to 50. (You should tune this number to what suit you best)
+6. Click the picture.
+7. Download the picture by "File" => "Save".
+
+Now your background picture won't interfere with your Title.
