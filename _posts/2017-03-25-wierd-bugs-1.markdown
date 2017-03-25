@@ -1,0 +1,43 @@
+---
+layout:     post
+title:      "Werrd bugs - 1"
+subtitle:   "奇怪的 bug 系列 - 1"
+date:       2017-03-25 20:15:00
+author:     "Di Chen"
+header-img: "img/in-post/weird-bug-1/weird-bug-1-bg.jpg"
+tags:
+    - Tech
+    - Bug
+    - Unity3D
+    - DNS
+---
+
+> “There are two ways to write error-free programs; only the third one works.”
+> -- Alan Perlis, "Epigrams on Programming"
+
+## 前言
+
+在这几年的开发生涯中，遇到了或多或少的奇怪的BUG。从前端的浏览器兼容到后端的 DNS 解析，从常用的 ssh 到大部分人都不会关心的编译器优化。在排插问题的过程中，我也获益良多。往往为了排查了解一个问题的原因，需要用到多个领域的知识。在此也记录下我在 debug 一些奇怪问题的过程与方法，希望能与大家分享学习。
+
+---
+
+## 服务器响应时长由 20ms 变为 5s
+
+### 问题表象
+
+在开发一个新的 Restful 服务器的时候，我使用了 Django 框架作为服务器的后端框架。为了保证服务的延迟在预期的范围内，我接入了 [Datadog](https://www.datadoghq.com/) 性能监控服务来监控 Django 服务的延迟。
+
+此时，我在 Datadog 的监控板上，发现有一个请求的平均延迟达到了 1000+ ms，这个是远远超过了我定下的 SLA，于是便开始排查到底是什么原因，并且想要怎样优化。
+
+### 排查方式
+
+
+### 解决方法
+
+### 经验总结
+
+### 下一步
+
+---
+
+如果你看到这里，一定是真爱！欢迎看看我的其他 [blog](http://chendi.me/)。O(∩_∩)O
