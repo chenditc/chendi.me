@@ -1,9 +1,10 @@
-# HuxBlog Boilerplate
+# Chen Di's Blog
 
-##### This is the boilerplate of [Hux Blog](https://github.com/Huxpro/huxpro.github.io), all documents is over there!
+##### This blog is build up on the boilerplate of [Hux Blog](https://github.com/Huxpro/huxpro.github.io), all documents is over there!
 
-#### [View Boilerplate &rarr;](http://huangxuan.me/huxblog-boilerplate/)
+### How do I host my blog?
 
-#### [View Live Hux Blog &rarr;](http://huangxuan.me)
+This blog is hosted as a github pages website and bing with my own domain [chendi.me](http://chendi.me)
+#### How to get code syntax highlight code?
 
-## If you like Hux Blog, Please star [huxpro.github.io repo](https://github.com/Huxpro/huxpro.github.io) instead of this! Thank you!
+From online html5 [code generator](http://markup.su/highlighter/)

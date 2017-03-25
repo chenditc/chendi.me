@@ -1,0 +1,27 @@
+---
+layout:     post
+title:      "17 Miles Drive"
+subtitle:   "航拍: 加州海滩"
+date:       2016-08-17 20:15:00
+author:     "Di Chen"
+header-img: "img/in-post/17-miles-drive/17-miles-drive-bg.jpg"
+tags:
+    - 生活
+    - 航拍
+    - DJI
+---
+
+
+## Where is this?
+
+17 miles drive 是加州 Monterey 的一个高级别墅区的主干道，风景特别棒! 
+
+还好去的时候带着航拍器，可以趁此机会拍下一些与众不同的角度。
+
+### Youtube
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/S3CeKU_f9xc" frameborder="0" allowfullscreen></iframe>
+
+### 优酷
+
+<iframe height="498" width="100%" src="https://players.youku.com/player.php/sid/XMTY5NDI4NjYxMg/v.swf" frameborder="0" allowfullscreen></iframe>
