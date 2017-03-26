@@ -39,7 +39,11 @@ tags:
 
 在查看了服务器请求延迟的分布表后，我发现 90% 的请求都在 100 ms 以内就完成了，但是有 10% 的请求会出现延迟达到 5s 的情况。手动发送 HTTP 请求也证明了，高请求延迟的情况并不是每次都会出现，也就是说这个 bug 是不能 100% 重现的。 
 
-// TODO: 加图
+偶尔出现的高请求延迟，长达5秒:
+[![request-latency-high](/img/in-post/weird-bug-1/request-latency-high.png)](/img/in-post/weird-bug-1/request-latency-high.png)
+
+大部分时间在 20 ms 内完成:
+[![request-latency-low](/img/in-post/weird-bug-1/request-latency-low.png)](/img/in-post/weird-bug-1/request-latency-low.png)
 
 在这个时候便有两个推测：
 1. 每次延迟增加的时候都是固定增加 5s，这说明延迟增加的事件有一定确定性，5秒这个时间应该是某个配置中的，比如某个 timeout 的时间。
