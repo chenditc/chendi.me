@@ -35,7 +35,7 @@ tags:
 
 在监控服务器延迟的时候，单个数字是无法准确地表达出问题的。在 Google 的 [Site Reliability Engineering](http://shop.oreilly.com/product/0636920041528.do) 一书中提过，在监控服务器延迟的时候，监测 50%, 90%, 99% 的请求延迟会更有代表性。如下图。
 
-[![sre_latency](/img/in-post/weird-bug-1/sre-latency.jpg)](/img/in-post/weird-bug-1/sre-latency.jpg)
+[![sre_latency](/img/in-post/weird-bug-1/sre-latency.png)](/img/in-post/weird-bug-1/sre-latency.png)
 
 在查看了服务器请求延迟的分布表后，我发现 90% 的请求都在 100 ms 以内就完成了，但是有 10% 的请求会出现延迟达到 5s 的情况。手动发送 HTTP 请求也证明了，高请求延迟的情况并不是每次都会出现，也就是说这个 bug 是不能 100% 重现的。 
 
@@ -55,7 +55,7 @@ tags:
 
 在触发了长延时的 bug 之后，django-debug-toolbar 中的 profling 结果显示如下：
 
-[![django-profile-1](/img/in-post/weird-bug-1/django-profile-1.jpg)](/img/in-post/weird-bug-1/django-profile-1.jpg)
+[![django-profile-1](/img/in-post/weird-bug-1/django-profile-1.png)](/img/in-post/weird-bug-1/django-profile-1.png)
 
 从上图可以看出，在数据库的连接时，建立连接花了5秒钟，这个是导致整体请求延迟的主要原因。
 
