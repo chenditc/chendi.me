@@ -1,10 +1,10 @@
 ---
 layout:     post
-title:      "Could you stay in my memory?"
+title:      "How to keep you in my mind"
 subtitle:   "如何把你永远留在我的记忆里"
 date:       2016-11-05 07:15:00
 author:     "Di Chen"
-header-img: "img/in-post/life-logger-trail/life-logger-bg.jpg"
+header-img: "img/in-post/life-logger-trail/life-logger-bg.png"
 tags:
     - Tech
     - lifelogging 
