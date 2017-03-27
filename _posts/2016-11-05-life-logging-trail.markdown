@@ -117,7 +117,7 @@ Go Pro 也推出了比传统 Go Pro 更小的相机 -- Go Pro Hero Session。Ses
 
 从外观大小上来看，它足够低调，也足够轻盈，佩戴在身上的时候完全不会感觉到它的重量。
 
-（图片）
+[![life-logger-wear](/img/in-post/life-logger-trail/life-logger-wear.jpg)](/img/in-post/life-logger-trail/life-logger-wear.jpg)
 
 从续航角度来看，充电20分钟，能用一整天呢。
 
@@ -145,7 +145,22 @@ Go Pro 也推出了比传统 Go Pro 更小的相机 -- Go Pro Hero Session。Ses
 
 在美帝，我终于也有机会完成这个梦，并且我的小黑帮我拍了个真人 CS 写真集。
 
-(图片)
+来福枪
+[![01-shoot](/img/in-post/life-logger-trail/01-shoot.jpg)](/img/in-post/life-logger-trail/01-shoot.jpg)
+
+[![02-shoot](/img/in-post/life-logger-trail/02-shoot.jpg)](/img/in-post/life-logger-trail/02-shoot.jpg)
+
+[![03-shoot](/img/in-post/life-logger-trail/03-shoot.jpg)](/img/in-post/life-logger-trail/03-shoot.jpg)
+
+手枪
+[![04-shoot](/img/in-post/life-logger-trail/04-shoot.jpg)](/img/in-post/life-logger-trail/04-shoot.jpg)
+
+[![05-shoot](/img/in-post/life-logger-trail/05-shoot.jpg)](/img/in-post/life-logger-trail/05-shoot.jpg)
+
+[![06-shoot](/img/in-post/life-logger-trail/06-shoot.jpg)](/img/in-post/life-logger-trail/06-shoot.jpg)
+
+
+
 
 
 ### 一个码农的日常
