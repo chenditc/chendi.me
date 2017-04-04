@@ -2,7 +2,7 @@
 layout:     post
 title:      "Xixi Wetland"
 subtitle:   "西溪湿地航拍记录"
-date:       2016-09-06 20:15:00
+date:       2014-04-02 14:15:00
 author:     "Di Chen"
 header-img: "img/in-post/xixiwetland-1/xixiwetland-bg.jpg"
 tags:
