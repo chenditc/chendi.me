@@ -22,3 +22,9 @@ Use online picture editing tool [pixlr](https://pixlr.com/editor/)
 7. Download the picture by "File" => "Save".
 
 Now your background picture won't interfere with your Title.
+
+#### How to see change locally
+
+```
+$ jekyll serve --watch
+```
