@@ -1,0 +1,33 @@
+---
+layout:     post
+title:      "Xixi Wetland"
+subtitle:   "西溪湿地航拍记录"
+date:       2016-09-06 20:15:00
+author:     "Di Chen"
+header-img: "img/in-post/xixiwetland-1/xixiwetland-bg.jpg"
+tags:
+    - 旅行
+    - 航拍 
+---
+
+
+## What is this?
+
+清明节去西溪湿地公园逛了一圈，拿起好久没碰的大疆，好好飞了一小时，爽！
+
+不过以后航拍还是得先构思一下，不然素材不够用呢。
+
+
+<iframe height="498" width="100%" src="http://chendi.oss-cn-shanghai.aliyuncs.com/videos/xixi_small.mp4" frameborder="0" allowfullscreen></iframe>
+
+音乐：
+
+"Something Just Like This" - originally by The Chainsmokers & Coldplay 
+
+Written by: Andrew Taggart, Chris Martin, Guy Berryman, Jonny Buckland & Will Champion
+
+Cover by: Sam Tsui & KHS COVER
+
+视频拍摄与剪辑：陈迪
+
+设备：大疆精灵3
