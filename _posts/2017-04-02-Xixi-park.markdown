@@ -22,9 +22,8 @@ tags:
 
 视频献上，记得在 wifi 环境下观看哦。
 
-<video width=100% id="video" class="wrap" controls="" preload="none" type="video/mp4">  
-<source src="http://chendi.oss-cn-shanghai.aliyuncs.com/videos/xixi_small.mp4">  
-</video>
+<iframe width=100% src="http://chendi.oss-cn-shanghai.aliyuncs.com/videos/xixi_small.mp4" frameborder="0" allowfullscreen>
+</iframe>
 
 音乐：
 
