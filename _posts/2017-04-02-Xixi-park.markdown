@@ -20,7 +20,7 @@ tags:
 视频献上，记得在 wifi 环境下观看哦。
 
 <video width="100%" poster="/img/in-post/xixiwetland-1/xixiwetland-play.jpg" controls="" preload="none" type="video/mp4">  
-<source src="http://chendi.oss-cn-shanghai.aliyuncs.com/videos/xixi_small.mp4">  
+<source src="http://video.chendi.me/videos/xixi_small.mp4">  
 </video>
 
 音乐：
