@@ -1,0 +1,233 @@
+---
+layout:     post
+title:      "Weird bugs - 2"
+subtitle:   "奇怪的 bug 系列 2 -- Unity IL2CPP 编译时的坑"
+date:       2017-06-09 20:15:00
+author:     "Di Chen"
+header-img: "img/in-post/weird-bug-2/unity-bg.jpg"
+tags:
+    - Tech
+    - Bug
+    - Unity 
+    - iOS
+---
+
+> “There is no coincidence. Only the illusion of coincidence.”
+>
+> -- Alan Moore, V for Vendetta, Vol. III of X
+
+## 前言
+
+在这几年的开发生涯中，遇到了或多或少的奇怪的BUG。计算机不会撒谎，让人感到奇怪的 Bug 底下，一定有自己没搞明白的知识。
+
+---
+
+## Unity 编译错误
+
+### 问题表象
+
+在最近开发的项目中，我们使用了 Unity3D 作为我们的游戏开发引擎。在 Unity3D 中实现的功能，只要代码依赖的库支持，可以直接编译成安卓的 apk 安装包，或者导出 xcode，再编译出 iOS 的 ipa 安装包。
+
+理论上同一份代码，只要没有使用平台宏，例如 `#if UNITY_ANDROID`，在安卓上能运行的，在 iOS 平台上也应该可以。但是事情并没有这么简单。当我们导出 xcode 时，一切顺利，当使用 xcode 编译到 iPhone 上进行测试的时候，出现了如下错误：
+
+```
+LuaException: An exception was thrown by the type initializer for Newtonsoft.Json.Utilities.ConvertUtils
+stack traceback:
+ [C]: in function 'ApiTokenAuthPost'
+ [string "Controller/LoginRegisterPanelCtrl"]:163: in function <[string "Controller/LoginRegisterPanelCtrl"]:139>
+Newtonsoft.Json.Utilities.ConvertUtils:GetTypeCode(Type)
+Newtonsoft.Json.Serialization.DefaultContractResolver:IsJsonPrimitiveType(Type)
+Newtonsoft.Json.Serialization.DefaultContractResolver:CreateContract(Type)
+Newtonsoft.Json.Serialization.DefaultContractResolver:ResolveContract(Type)
+Newtonsoft.Json.Serialization.JsonSerializerInternalReader:GetContractSafe(Type)
+Newtonsoft.Json.Serialization.JsonSerializerInternalReader:Deserialize(JsonReader, Type, Boolean)
+Newtonsoft.Json.JsonSerializer:DeserializeInternal(JsonReader, Type)
+Newtonsoft.Json.JsonSerializer:Deserialize(JsonReader, Type)
+Newtonsoft.Json.JsonConvert:DeserializeObject(String, Type, JsonSerializerSettings)
+Newtonsoft.Json.JsonConvert:DeserializeObject(String, Type)
+Arpet.Auth.Client.ApiClient:Deserialize(String, Type, IList`1)
+Arpet.Auth.Api.DefaultApi:ApiTokenAuthPost(String, String)
+Grpc.GrpcDefaultApi:ApiTokenAuthPost(String, String)
+Grpc_GrpcDefaultApiWrap:ApiTokenAuthPost(IntPtr)
+```
+
+真实的异常信息被 Lua 框架捕获了，去除 Lua 框架的异常捕获后，看到的异常大概是：
+
+```
+Default Constructor cannot be found for type xxxxx
+```
+
+### 排查方式
+
+#### 检查代码是否定义了 Default Constructor
+
+既然报了找不到默认构造器，那么我们就从默认构造器开始入手。
+
+在这个项目中我们使用了 RESTful API 框架 swagger 来进行前端和后端之间的短连接通信，这个框架自带了 C# 的代码生成器。所以在使用时，只需要定义前后端交互的接口参数和返回值，就可以自动生成 API。生成的 API 源文件通过 mono 进行编译，生成 dll 文件加载进 Unity 工程里。在调用的时候只需要：
+
+```c#
+PlayerApi playerApi = new PlayerApi();
+PlayerStatus playerStatus = playerApi.PlayersStatusGet();
+```
+
+在代码中，报错是出现在将 HTTP Response 反序列化成 PlayerStatus 类的这个过程中。检查了代码之后，发现 Default Constructor 是有的。那么问题就来了，明明默认构造器是定义了的，并且**在安卓平台上可以正常运行**，为什么 Newtonsoft 库在 iOS 平台上找不到默认构造器呢？
+
+#### 检查编译过程
+
+由于同样的代码和库在安卓平台上都可以正常运行，所以应该是编译的过程中出现了问题。接下来，我就查阅了一下 Unity 编译成 xcode 代码中需要经过的几个关键步骤。
+
+在 Unity 中，生成 xcode 工程或者编译出 apk 的过程中，都要经过一个 *脚本解释后端* 来解释脚本语言，并且生成对应的原生平台的代码。这个可以在 `Build Setting => Player Settings` 中找到。
+
+[![scripting backend](/img/in-post/weird-bug-2/IL2CPP-2.png)](/img/in-post/weird-bug-2/IL2CPP-2.png)
+
+常用的解释后端有两个:
+
+1. **Mono2.x**
+
+    这个后端框架是基于一个开源跨平台的 [Mono 项目](http://www.mono-project.com/)。这个项目的版本已经到了 `4.x`，但是 Unity 中目前仍然只兼容了 `2.x`，可想而知，在性能上是落后了不少的。
+
+2. **IL2CPP**
+
+    由于 iOS 要求所有的 app 必须支持 64 位操作系统，所以使用 IL2CPP 进行编译是必须的。这个也是我需要重点了解研究的对象了。
+
+### 学习 IL2CPP
+
+#### 什么是 IL2CPP
+    
+[官方介绍](https://docs.unity3d.com/Manual/IL2CPP.html):
+
+```
+IL2CPP is a Unity-developed scripting back-end which you can use as an alternative 
+to Mono when building projects for some platforms. When you choose to build a project 
+using IL2CPP, Unity converts IL code (sometimes called CIL - Intermediate Language or 
+Common Intermediate Language) from scripts and assemblies into C++ code, before creating 
+a native binary file (.exe, apk, .xap, for example) for your chosen platform. Some of 
+the uses for IL2CPP include increasing the performance, security, and platform 
+compatibility of your Unity projects.
+```
+
+翻译：
+
+```
+IL2CPP 是一个由 Unity 开发的，当进行项目跨平台开发时，可以用来替代 Mono 的解释后端。
+当你选择用 IL2CPP 编译一个项目时，在生成对应的可执行文件之前，Unity 会先将脚本生成的
+ IL 代码 (有时也称 CIL 代码 - 中间语言) 还有汇编语言转化成 C++ 代码。在这个编译的过程
+中，IL2CPP 还对你的项目会进行性能，安全性，以及平台兼容性的提升。
+```
+
+简而言之，IL2CPP 是 Unity 针对自己的项目而开发的一个编辑器，长远来看，是一定会取代 Mono，至少在 iOS 平台上，已经完全取代了 Mono。
+
+#### IL2CPP 是怎样运作的
+
+Unity 官方给出了非常精炼的 [解释](https://docs.unity3d.com/Manual/IL2CPP-HowItWorks.html)
+
+```
+Upon starting a build using IL2CPP, Unity automatically performs the following steps:
+
+1. Unity Scripting API code is compiled to regular .NET DLLs (managed assemblies).
+2. All managed assemblies that aren’t part of scripts (such as plugins and base 
+   class libraries) are processed by a Unity tool called Unused Bytecode Stripper, 
+   which finds all unused classes and methods and removes them from these DLLs 
+   (Dynamic Link Library). This step significantly reduces the size of a built game.
+3. All managed assemblies are then converted to standard C++ code.
+4. The generated C++ code and the runtime part of IL2CPP is compiled using a native 
+   platform compiler.
+5. Finally, the code is linked into either an executable file or a DLL, depending on 
+   the platform you are targeting.
+```
+
+IL2CPP 的运作方式与大部分的编译器中的语言解释器都非常相似。
+
+当 IL2CPP 编译时，会经过如下 5 个步骤：
+
+1. 将 Unity C# 代码编译成常规的 .NET 动态库。由于这个动态库仍然是基于 .NET 框架的受控汇编码 (managed assemblies)，与底层 CPU 架构无关的，所以在后面几步中，可以被 IL2CPP 解析出来。
+2. 所有的非 Unity 框架中的汇编码将被 无效二进制码裁剪器 (Unused Bytecode Stripper) 处理一遍。它会找到所有没有被用到的类和方法，并且将它们从 DLL 动态库中移除。这个步骤会极大地减小游戏生成的安装包。
+3. 将上一步剩下的受控汇编码转译成标准的 C++ 代码。
+4. 用原生的编译器如 jdk, xcode 将上一步生成的 C++ 代码结合 IL2CPP Runtime 进行编译。
+5. 最后，代码要么直接被编译进二进制执行文件或者编译成一个动态库 dll，这个取决于我们编译的目标平台。在 iOS 上，C++ 可以直接被 Objective-C 调用，就直接被编译进 ipa 安装包了。
+
+[![scripting backend](/img/in-post/weird-bug-2/IL2CPP-3.png)](/img/in-post/weird-bug-2/IL2CPP-3.png)
+
+#### IL2CPP 为什么会导致我遇到的 Bug
+
+在上一节中提到，IL2CPP 会对二进制代码进行裁剪，如果没有找到方法或者类的直接引用，就会将其删去。
+
+比如，在以下伪代码中，Default Constructor 就不会被裁剪。
+
+```c#
+public class TestClass
+{
+  public A() {}
+}
+
+TestClass instance1 = TestClass();
+```
+
+但是在以下伪代码中，Default Constructor 就被裁剪了，我们就会遇到类似 `Default Constructor cannot be found for type TestClass` 的错误:
+
+```c#
+public class TestClass
+{
+  public A() {}
+}
+
+TestClass instance1 = Reflection.LoadClass("TestClass");
+```
+
+这是由于正常调用一个函数时，编译器可以通过汇编码的引用，确认该函数被调用过。但是通过反射调用时，在汇编码中找不到直接引用。这也就出现了我之前遇到的问题。
+
+Swagger 在使用 Newtonsoft.Json 库反序列化 Json 字符串时，并不是直接引用，所以导致了引用寻找失败，Default Constructor 被代码裁剪器裁剪掉了。
+
+### 解决方法
+
+解决方法相对来说比较简单，分为两步:
+
+1. 找到被裁剪掉的函数所处的 dll 库以及它的命名空间。
+2. 新建或者修改工程中的文件 `Assets/link.xml`，在文件中加入需要保留的汇编码的文件名和命名空间，比如:
+
+```xml
+<linker>
+    <assembly fullname="LeanCloud.Core">
+      <namespace fullname="LeanCloud" preserve="all"/>
+      <namespace fullname="LeanCloud.Internal" preserve="all"/>
+    </assembly>
+    <assembly fullname="LeanCloud.Realtime">
+      <namespace fullname="LeanCloud.Realtime" preserve="all"/>
+      <namespace fullname="LeanCloud.Realtime.Internal" preserve="all"/>
+    </assembly>
+    <assembly fullname="LeanCloud.Storage">
+      <namespace fullname="LeanCloud.Storage" preserve="all"/>
+      <namespace fullname="LeanCloud.Storage.Internal" preserve="all"/>
+    </assembly>
+</linker>
+```
+
+### 经验总结
+
+在这个事件中，学到了这么几点：
+
+1. **知识储备是日积月累的，书到用时方恨少。**
+
+    大四在交大做毕业设计时，我分配到了跟 Intel 合作进行安卓编译器优化的项目。这个项目乍看之下并不如其他的项目有趣，其他的项目例如用 opencv 进行人脸识别似乎更有意思。但是在编译器优化的项目中，Intel 的导师教了我们不少工业界中最实用的编译器知识。包括
+
+    - 编译器中涉及的步骤
+    - 编译器常做的优化
+    - 科学测量代码运行性能的方法
+    - 业界最新的几种编译器执行方法
+    - 优化编译性能的方法
+
+    这些知识在 95% 的情况下，我都用不上，但是一旦出现了相关的问题，如果没有这方面的知识积累，是不可能在短时间内找到解决方法的。
+
+2. **积极阅读官方文档。**
+
+    Unity3D 是一个相对成熟的游戏开发引擎，在今年 AR 和 VR 兴起的阶段，也被许多学术界和工业界的人士用作开发 AR 和 VR app 的第一选择。在这个过程中难免会遇到许多问题，但是 Unity 官方提供了非常详实的文档，涵盖了许多方面。对国人来说，唯一的缺点就是文档是用英文写的，而中文的翻译往往在一些人的博客中，不仅内容过时，许多时候也翻译不准确。
+
+    此时，能否顺利流畅地阅读英文官方文档，也直接决定了是否能快速地解决问题。
+
+3. **遇到问题的时候，能不断钻研。**
+
+    有许多问题并不是浮在表层逻辑的，许多问题的解决需要从系统或者框架的底层入手。如果存在畏难情绪，就没有办法找到底层的原因，也只能在表面上治标不治本，最终项目的质量也会受到影响。
+
+---
+
+如果你看到这里，一定是真爱！欢迎看看我的其他 [blog](http://chendi.me/)。O(∩_∩)O
