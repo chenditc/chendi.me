@@ -1,0 +1,129 @@
+---
+layout:     post
+title:      "Weird bugs - 3"
+subtitle:   "奇怪的 bug 系列 3 -- Unity 中的版本控制"
+date:       2017-06-11 00:15:00
+author:     "Di Chen"
+header-img: "img/in-post/weird-bug-3/unity-bg.jpg"
+tags:
+    - Tech
+    - Bug
+    - Unity 
+    - git
+---
+
+> “There is no coincidence. Only the illusion of coincidence.”
+>
+> -- Alan Moore, V for Vendetta, Vol. III of X
+
+## 前言
+
+在这几年的开发生涯中，遇到了或多或少的奇怪的BUG。计算机不会撒谎，让人感到奇怪的 Bug 底下，一定有自己没搞明白的知识。
+
+---
+
+## Unity 脚本挂载丢失
+
+### 问题表象
+
+在最近开发的项目中，我们使用了 Unity3D 作为我们的游戏开发引擎，并且使用 git 作为我们的版本控制软件。由于我们有多位 Unity3D 工程师，大家不可避免地需要从 git 上提交，合并，拉取最新的代码。而在 Unity 开发中，常常会需要挂载一个 C# 脚本到某个 prefab 或者 GameObject 上。当一个脚本挂载上去之后，其他团队成员从 git 上拉取或者复制最新代码下来之后，经常会见到下面这个非常令人崩溃的提示：
+
+[![Missing Mono Script](/img/in-post/weird-bug-3/missing-mono-1.jpg)](/img/in-post/weird-bug-3/missing-mono-1.jpg)
+
+这个提示就表示 Unity Editor 无法找到挂载的相应脚本，如果此时运行游戏或者打包游戏，游戏中对应脚本的逻辑便不会执行。QA 就会提出 bug （xxx 功能怎么丢了）。
+
+这个情况在我们开发的时候经常出现，特别是我们使用了 Leancloud 作为我们的聊天服务提供商，他们提供的 Unity SDK 便要求挂载一个 dll 中的脚本到场景中。由于脚本挂载在版本管理是一直丢失，我们的聊天功能也时灵时不灵。
+
+### 问题探究
+
+#### Unity 脚本挂载原理
+
+要解决这个问题，首先我们要理解 Unity 中脚本挂载的原理，Unity Editor 是靠什么来储存这个脚本挂载的联系的呢？
+
+在搜索了 Unity 官方论坛中的众多问题之后，大家的讨论都指向了一个叫 `guid` 的属性，例如 [这个讨论](https://forum.unity3d.com/threads/missing-mono-script.455228/)。在搜索项目之后，我发现所有的 `*.cs.meta` 文件中都储存了 `guid` 属性，也就是说，prefab 是利用这个 GUID 来寻找应该挂载的脚本的。
+
+```
+fileFormatVersion: 2
+guid: dd3e3945400194edfbe0c7a06d89b145
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+```
+
+那么，是不是 `*.cs.meta` `guid` 的值在版本控制之间变更了呢？恰恰相反。由于我们挂载的是 dll 文件，`.dll.meta` 文件在版本控制中一直没有变化过。那么这就说明一定是引用这个 `guid` 的地方变化了。那么 prefab 引用 `guid` 的信息储存在哪呢？
+
+我尝试使用各种方法打开 `.prefab` 文件，但是没有办法在其中找到 `GUID` 的对应行列，并且 `.prefab` 文件是二进制的，无法理解。在 Unity 官方论坛中查询许久之后发现了 [这个关于 Force Text 的讨论](http://answers.unity3d.com/questions/222281/asset-serialization-mixed-vs-force-text.html)，其中提到了 `Force Text` 设置。在尝试之后发现，通过更改 `ProjectSettings -> Editor -> Asset Serialization` 至 `Force Text`，原本是二进制的 `.prefab`，`.unity` 文件都变成了 yaml 编码的文本文件，在其中，可以很轻易地定位到 `guid` 的引用位置，如：
+
+```
+--- !u!114 &60726417
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 114000011878044986, guid: 7d74d246c03b90c47bd7b1563e473a9f,
+    type: 2}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 60726415}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd3e3945400194edfbe0c7a06d89b145, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &60726418
+```
+
+其中 `m_Script` 的 guid 与 `.cd.meta` 的 `guid` 是相对应的。如此一来，只要保证两边的 guid 不发生变化就可以保持脚本挂载的不丢失了。
+
+#### 脚本 guid 的变化方式
+
+由于聊天组件并不是经常变更的东西，但是每次更新都会丢失脚本挂载，所以还需要理解 guid 在什么时候会发生改变。
+
+我们发现有这么几种情况会更改 guid:
+1. 脚本内容更改。
+2. 场景内容更改。
+3. **dll 文件在不同平台上重新导入，例如 Windows vs. Mac OS**
+
+其中第三点才是我们的罪魁祸首，由于我们的开发环境包括 Mac OS 和 Windows，所以在项目更新的时候，同一个 dll 文件在不同平台导入的时候，都会更新一次 .meta 文件，同时更新场景中的引用 guid。但是在提交修改的时候，`.dll.meta` 的更新并没有被提交，只提交了场景的更新，这就导致了场景引用的 `guid` 与 `.dll.meta` 不相符，从而导致了脚本丢失。
+
+### 解决方法
+
+最后，我们的解决方案分成三个部分：
+
+1. 独立出挂载 dll 脚本的场景，不与经常修改的场景融合，从而相关的修改。
+2. 项目设置中，全部使用 `Force Text` 模式。
+3. 代码审核时，检查 prefab 和场景的修改，是否修改了 guid，如果修改了，检查是否必要。
+
+### 经验总结
+
+在这个事件中，学到了这么几点：
+
+1. **Unity 项目管理在进行版本控制时，尽量选择 `Force Text` 模式，并进行代码审核**
+
+    在使用 `Force Text` 模式之前，我们项目的代码审核遇到 prefab 修改或者场景修改时，往往无法审核修改内容，因为二进制文件无法被代码审核插件读取，如下图。
+
+    [![Git Diff 1](/img/in-post/weird-bug-3/diff-1.png)](/img/in-post/weird-bug-3/diff-1.png)
+
+    在使用 `Force Text` 模式之后，代码审核就可以清晰地看到修改的部分，甚至可以自动合并冲突，是两个人或者多人合作修改同一个场景。
+
+	[![Git Diff 2](/img/in-post/weird-bug-3/diff-2.png)](/img/in-post/weird-bug-3/diff-2.png)
+
+    这个问题解决之后，也节约了开发者大量用来同步代码和场景的时间。
+
+2. **You are not alone.**
+
+    Unity3D 是一个相对成熟的游戏开发引擎，往往我们遇到的问题都已经有人遇到过了，所以解决问题时很重要一步还是寻找前人的轨迹。
+
+3. **事出蹊跷必有妖**
+
+    计算机是不会骗人的，所谓的 ”莫名其妙“ 一定有办法可以解释，找到它。
+
+### 推荐阅读
+
+1. [关于 Force Text 的讨论](http://answers.unity3d.com/questions/222281/asset-serialization-mixed-vs-force-text.html)
+
+2. [关于 Unity 的 50 个技巧](http://devmag.org.za/2012/07/12/50-tips-for-working-with-unity-best-practices/)
+
+---
+
+如果你看到这里，一定是真爱！欢迎看看我的其他 [blog](http://chendi.me/)。O(∩_∩)O
