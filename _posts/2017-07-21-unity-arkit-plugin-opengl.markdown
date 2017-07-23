@@ -103,7 +103,7 @@ id<MTLTexture> 是 Objective-C 中指向 MTLTexture object 的指针，而 GLuin
 
 ##### 顶点比例放大/缩小
 
-```shader
+```glsl
       TexCoordInOut vert (Vertex vertex)
       {
         TexCoordInOut o;
@@ -132,7 +132,7 @@ id<MTLTexture> 是 Objective-C 中指向 MTLTexture object 的指针，而 GLuin
 
 在上面的代码中
 
-```shader
+```glsl
         o.texcoord = mul(_TextureRotation, float4(o.texcoord,0,1)).xy;
 ```
 
@@ -144,7 +144,7 @@ id<MTLTexture> 是 Objective-C 中指向 MTLTexture object 的指针，而 GLuin
 
 这是最后一步，将 Y 纹理和 UV 纹理转换为 RGB 编码格式。这个步骤苹果官方给出了转换矩阵，Unity 自身就套用这个矩阵进行了一次转换。
 
-```shader
+```glsl
         float2 texcoord = i.texcoord;
         float y = tex2D(_textureY, texcoord).r;
         float4 ycbcr = float4(y, tex2D(_textureCbCr, texcoord).rg, 1.0);
@@ -188,7 +188,7 @@ id<MTLTexture> 是 Objective-C 中指向 MTLTexture object 的指针，而 GLuin
 
 在参考了 [@handyTOOL](http://www.jianshu.com/u/e6367cf15710) 大神的 [ARKit & OpenGL ES - OpenGL实现篇](http://www.jianshu.com/p/380df8ae273f) 之后，用他博客中的代码替换掉了官方提供的获取 Metal Texture 的代码，具体解释见注释：
 
-```objective-c
+```objective_c
         if (glYTexture == 0) {
             // 检查 glYTexture 是否已经在 OpenGL 中初始化，如果尚未初始化则获取 handle.
             glGenTextures(1, &glYTexture);  
@@ -225,7 +225,7 @@ id<MTLTexture> 是 Objective-C 中指向 MTLTexture object 的指针，而 GLuin
 
 同时，修改一下将指针传回 Unity 的代码：
 
-```Diff
+```diff
  extern "C" UnityARTextureHandles GetVideoTextureHandles()
  {
      UnityARTextureHandles handles;
