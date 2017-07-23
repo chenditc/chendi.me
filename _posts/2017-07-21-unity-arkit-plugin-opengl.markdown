@@ -52,7 +52,7 @@ tags:
 
 在 ARKit 的 ARSession 中，用户可以获取到 ARFrame，在这个 ARFrame 中，我们可以通过 `capturedImage` 属性获取到像素点的缓存区。这个缓存区中以 YUV 的格式保存了图片的信息。官方的教程使用了 Metal 作为 GPU 渲染 API 来分别提取 Y 纹理和 UV 纹理：
 
-```
+```swift
 func updateCapturedImageTextures(frame: ARFrame) {
     // Create two textures (Y and CbCr) from the provided frame's captured image
     let pixelBuffer = frame.capturedImage
