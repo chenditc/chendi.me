@@ -18,12 +18,8 @@ tags:
 
 这是我在纽约罗斯福岛上住的公寓，在拿到 DJI 航拍器之后就很想把自己住过的地方也记录下来。
 
-### Youtube
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/asoAZ__t__A" frameborder="0" allowfullscreen></iframe>
-
-### 优酷
-
-<iframe height="498" width="100%" src="https://players.youku.com/player.php/sid/XMTY5NDM4OTE0OA/v.swf" frameborder="0" allowfullscreen></iframe>
+<video width="100%" poster="/img/in-post/riverwalk-point/riverwalk-point-poster.jpg" controls="" preload="none" type="video/mp4">  
+<source src="http://video.chendi.me/videos/Riverwalk.mp4">  
+</video>
 
 希望各位有航拍经验的大神不吝赐教！

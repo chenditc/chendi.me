@@ -18,10 +18,7 @@ tags:
 
 还好去的时候带着航拍器，可以趁此机会拍下一些与众不同的角度。
 
-### Youtube
+<video width="100%" poster="/img/in-post/17-miles-drive/17-miles-drive-poster.jpg" controls="" preload="none" type="video/mp4">  
+<source src="http://video.chendi.me/videos/17-Miles-Drive-medium.mp4">  
+</video>
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/S3CeKU_f9xc" frameborder="0" allowfullscreen></iframe>
-
-### 优酷
-
-<iframe height="498" width="100%" src="https://players.youku.com/player.php/sid/XMTY5NDI4NjYxMg/v.swf" frameborder="0" allowfullscreen></iframe>
