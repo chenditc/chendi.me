@@ -1,0 +1,36 @@
+---
+layout:     post
+title:      "Amoy"
+subtitle:   "厦门环岛路航拍记录"
+date:       2017-10-05 14:23:00
+author:     "Di Chen"
+header-img: "img/in-post/2017-Amoy/amoy-bg.jpg"
+tags:
+    - DJI 
+    - 航拍 
+---
+
+在其他城市航拍练手了这么几次之后，终于有机会给厦门拍一段视频了。
+
+其实关于厦门的航拍视频已经不少，但这次金砖会议之后，厦门又比以往更干净漂亮了。真好。
+
+不知道《航拍中国》什么时候会来厦门取景呢，期待。
+
+<video width="100%" poster="/img/in-post/2017-Amoy/amoy-poster.jpg" controls="" preload="none" type="video/mp4">  
+<source src="http://video.chendi.me/videos/Amoy2017.mp4">  
+</video>
+
+音乐：
+
+"Sky Full Of Stars" written by Coldplay & Swedish DJ Avicii
+
+Performed by: 
+ - Jon Schmidt: Piano
+ - Steven Sharp Nelson: Cello, cello percussion
+
+Original Track: https://thepianoguys.com/shop/albums/uncharted-deluxe-edition/
+
+视频拍摄与剪辑：陈迪
+
+设备：DJI Mavic
+
