@@ -47,6 +47,13 @@ layout: default
                 col-md-10 col-md-offset-1
                 post-container">
 
+
+            <!-- Language Selector -->
+            <select id="language_selector" onchange= "onLanChange(this.options[this.options.selectedIndex].value)">
+                <option value="0"> 中文 Chinese </option>
+                <option value="1"> 英语 English </option>
+            </select>
+
 				{{ content }}
 
                 <hr>
@@ -121,6 +128,31 @@ layout: default
         </div>
     </div>
 </article>
+
+<!-- Handle Language Change -->
+<script type="text/javascript">
+    var $zh = document.querySelector(".zh");
+    var $en = document.querySelector(".en");
+    var url = document.URL;
+    var new_url = url;
+    function onLanChange(index){
+        if(index == 0){
+            new_url = url.replace("-en/", "-zh/");
+        }else{
+            new_url = url.replace("-zh/", "-en/");
+        }
+        window.location.href = new_url;
+    }
+    if ((url.indexOf("-zh/") < 0) && (url.indexOf("-en/") < 0)) {
+      document.getElementById("language_selector").style.display = "none";
+    }
+    var languageSelect = document.getElementById('language_selector');
+    if (url.indexOf("-en/") > 0) {
+        languageSelect.selectedIndex = 1;
+    } 
+
+</script>
+
 
 
 {% if site.disqus_username %}
