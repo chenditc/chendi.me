@@ -11,27 +11,38 @@ tags:
     - grpc
 ---
 
-## 前言
+## Preface
 
-grpc 是由 google 推出的开源 rpc 框架。除了支持单向的 rpc 调用之外，同时还支持双向流通信，对于想要快速搭建一个基于长连接的应用是个不错的选择。
+Grpc is an open-sourced rpc framework developed by google。It support both unary remote procedual call and bi-directional streaming. For those who wants to build a client-server bi-directional persistent connection, it's a simple and modern solution.
 
-由于 Unity 本身的特性，虽然它是使用 C# 进行编程的，但是在打包成 iOS 或者安卓的时候需要进行一次转换，将 C# 代码转译成 C++ 代码，所以我们需要进行一些额外的工作，将 grpc 的 C# 库转为支持 Unity 的版本。
+Grpc itself support multiple language and multiple platform, but Unity is not one of them for now.
+
+Even though we develop most of the Unity project in C#, the Unity runtime is not running C# script directly. On Unity iOS platform specifically, it will use L2CPP (An ahead-of-time compiler) to translate c# script into c++ code, then finally compile and run on iOS devices. For us, if we want to use grpc in Unity project, we have some additional work to do.
 
 ---
 
-## C# 脚本初步测试
+## Testing grpc C# library 
 
-首先，我们可以直接将 [grpc 的官方库](https://github.com/grpc/grpc/tree/master/src/csharp) 的代码文件拷贝进工程中，并且用 [route guide example](https://github.com/grpc/grpc/tree/master/examples/csharp/route_guide) 来测试一下在 Unity 中 grpc 是否能用。
+First of all, we can directly copy the [grpc c# source code](https://github.com/grpc/grpc/tree/master/src/csharp) into Unity project and use [route guide example](https://github.com/grpc/grpc/tree/master/examples/csharp/route_guide) to test the basic feature of grpc.
 
-在编译时，我们会发现它依赖于 [Grpc.Core](https://www.nuget.org/packages/Grpc.Core/) 库，这个库是一个基于 C 的底层库，并不是由 C# 编写的。 nuget 包生成的 c# 动态库并不能直接使用，因为 iOS 是静态编译的，所以这是我们第一个要为 Unity 处理的部分。
+During compilation, we will find the C# grpc library is depend on [Grpc.Core](https://www.nuget.org/packages/Grpc.Core/) Library. *Grpc.Core* is a C library and official C# grpc library compile *Grpc.Core* into a shared library. Since iOS application can only depend on static library, we have to static compile the *Grpc.Core* library and use it in iOS devices. 
 
-## 生成 arm64 平台上可用的静态库
+Why don't we just copy the C code into the xcode project and use xcode to pull it in? In the core library, there are bunch of relative include like *#include "src/core/..."*, which is not easy to work around in xcode project.
 
-由于 iOS 是静态编译后生成一个可执行文件的，所以官方提供的 C# 动态库就不可用了，这时候我们需要自己编译一个静态库。 iOS 平台使用的架构是 arm 架构，由于现在基本都是64位的 iphone，所以直接用 arm64 作为目标平台即可。
+## Generate static library for arm64 platform
 
-### 修改 Makefile
+During this blog, we are focusing on iOS arm64 platform as an example, for other platform this might be apply.
 
-在官方提供的 grpc.core 的 Makefile 中，我们稍作修改，可以将编译出的 .a 文件调整为 arm64 架构下可用的。其中 iPhone SDK 的版本可根据自行需求进行修改。
+Since iOS need an static linked library instead of dynamicly load shared library, we can't simply use the packge from *nuget.org*. If we are simply supporting iOS arm64 architecture, we can just set the build target to arm64 and compile it on a arm64 machine (eg. Mac OS X)
+
+If we want to support all architecture, then we will need to cross-compile a [fat binary](https://en.wikipedia.org/wiki/Fat_binary)
+
+### Change Makefile
+
+We can make some changes to the official Makefile for grpc.core, then the binary will be able to use in iOS build. There are two things we need to change.
+
+ - Add -isysroot config. This decides which version of iOS we can support, using a lower level of OS can make it more compatible.
+ - Add -arch arm64 to make sure it build for arm64
 
 ```diff
  VALID_CONFIG_opt = 1
@@ -52,7 +63,7 @@ grpc 是由 google 推出的开源 rpc 框架。除了支持单向的 rpc 调用
  LDFLAGS += -g
 ```
 
-然后运行
+Then run
 
 ```bash
 ➜  grpc git:(v1.4.x) ✗ make
@@ -65,22 +76,27 @@ grpc 是由 google 推出的开源 rpc 框架。除了支持单向的 rpc 调用
 ./libs/opt/libgrpc.a                ./libs/opt/libz.a
 ```
 
-此时我们就有了 runtime 所需的静态库，我们将 `libgrpc.a` 复制到 `Assets/Plugins/iOS` 文件夹中，这样在导出 xcode 工程时就会自动加入 xcode 项目 link line 中。
+Now we have the library we need to grpc runtime. We can copy the `libgrpc.a` to Unity project `Assets/Plugins/iOS` directory. Unity will ensure this library is added to the link line of the xcode project.
 
-### 获取 C# 客户端所需的静态库
+### build grpc c# extension library
 
-除了 grpc.core 的静态库之外，我们还需要一个 csharp 的特制静态库，可以通过以下命令获得：
+Besides the grpc.core static library, we also need a csharp specific library, we can get the library by running:
 
 ```
-➜  grpc git:(v1.4.x) ✗ gcc -arch arm64  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS10.3.sdk -I. -I./include -c -o grpc_csharp_ext.o src/csharp/ext/grpc_csharp_ext.c
+➜  grpc git:(v1.4.x) ✗ clang -arch arm64  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS10.3.sdk -I. -I./include -c -o grpc_csharp_ext.o src/csharp/ext/grpc_csharp_ext.c
 ➜  grpc git:(v1.4.x) ✗ ar -rsc grpc_csharp_ext.a grpc_csharp_ext.o
 ```
 
-然后再将 grpc_csharp_ext.a 复制到 `Assets/Plugins/iOS` 文件夹中。
+Then we will copy `grpc_csharp_ext.a` into Unity project's `Assets/Plugins/iOS` directory.
 
-## 修改 Grpc.Core 代码中的动态库加载
+**Some thing to note:** If you want to support [App thining](https://docs.unity3d.com/Manual/AppThinning.html) feature, which will require a bitcode support of all dependent library. In order to generate a bitcode enabled library, we need to:
 
-为了应对 Grpc.Core 实现中使用的动态库加载，与 iOS 静态编译的做法冲突的情况，我们需要修改一下文件：
+1. Use clang as our compiler.
+2. Add option `-fembed-bitcode` to the compilation flags.
+
+## Change Grpc.Core code to use static link
+
+Since we are using static link instead of dynmaic load, we need to change the source code of Grpc.Core. Here are some related code:
 
 ```git
     modified:   src/csharp/Grpc.Core/Internal/DefaultSslRootsOverride.cs
@@ -89,11 +105,11 @@ grpc 是由 google 推出的开源 rpc 框架。除了支持单向的 rpc 调用
     modified:   src/csharp/Grpc.Core/Internal/NativeMethods.cs
 ```
 
-下面我们一个一个来看。
+Now let's take a look at each file
 
 ### DefaultSslRootsOverride.cs
 
-首先是 `DefaultSslRootsOverride.cs` 文件中，加载了预存在本地的证书文件，应该是用来做 certificate pinning 的吧。这部分可以暂时去掉，等需要用到这部分功能时再加入。
+First of all, in `DefaultSslRootsOverride.cs`，grpc loaded the local certificate file, I guess it's used for certificate pinning. We can remove this part, if you need it, just change it to the certificate you need.
 
 ```diff
 --- a/src/csharp/Grpc.Core/Internal/DefaultSslRootsOverride.cs
@@ -118,9 +134,9 @@ grpc 是由 google 推出的开源 rpc 框架。除了支持单向的 rpc 调用
 
 ### NativeExtension.cs
 
-在这里我们需要修改动态库加载的函数 `Load()`，要做两部分考虑：
+In the function `Load()`, we need need to make two changes:
 
-**在 iOS 平台上，不需要加载动态库，可以直接跳过这个函数的逻辑，使用 Unity Macro 来实现:**
+**On iOS platform, we don't need to load dynamic library, but on Unity Editor, we still need to load dynamic library, let's use a simple Unity Macro to differentiate them:**
 
 ```diff
 --- a/src/csharp/Grpc.Core/Internal/NativeExtension.cs
@@ -136,7 +152,7 @@ grpc 是由 google 推出的开源 rpc 框架。除了支持单向的 rpc 调用
 +                       #endif
 ```
 
-**在 PC 或者 MAC 上，仍然要加载动态库并且运行，否则就无法在 PC 或者 Mac 上调试游戏了，所以我们需要修改一下寻找插件的路径：**
+**On PC or MAC, we need to load dynamic library, but the path should be modified:**
 
 ```diff
 @@ -111,8 +114,10 @@ namespace Grpc.Core.Internal
@@ -154,7 +170,7 @@ grpc 是由 google 推出的开源 rpc 框架。除了支持单向的 rpc 调用
 
 ### NativeLogRedirector.cs
 
-在 C 代码回调 C# 代码时，由于 IL2CPP 会对函数名进行 [name mangling](https://www.ibm.com/support/knowledgecenter/en/ssw_ibm_i_72/rzarg/name_mangling.htm)，所以会找不到函数，所以需要用 `MonoPInvokeCallback` 进行修饰，避免因为名称改变而无法调用：
+When C code in Grpc.Core calls C# code, it was not able to find the correct reference. This is because during IL2CPP compilation, a [name mangling](https://www.ibm.com/support/knowledgecenter/en/ssw_ibm_i_72/rzarg/name_mangling.htm) process happened, the name of the function is wrapped by namespace and class name. We can attonate the function name by `MonoPInvokeCallback`, which will help Untiy IL2CPP to understand which method might get called from C code.
 
 ```diff
 --- a/src/csharp/Grpc.Core/Internal/NativeLogRedirector.cs
@@ -169,7 +185,7 @@ grpc 是由 google 推出的开源 rpc 框架。除了支持单向的 rpc 调用
 
 ```
 
-另外可以修改一下输出到 Console 时调用的函数：
+We can also change the log function to Unity Debug Log：
 
 ```diff
 @@ -97,7 +98,11 @@ namespace Grpc.Core.Internal
@@ -186,9 +202,9 @@ grpc 是由 google 推出的开源 rpc 框架。除了支持单向的 rpc 调用
 
 ### NativeMethods.cs
 
-在这里，grpc 调用了 Grpc.Core 中的 C 代码。在 Unity 中，需要使用 [Unity 官方要求的方式](https://docs.unity3d.com/Manual/PluginsForIOS.html)，定义原生函数的原型，并且在初始化时，设置进去。
+In this file, grpc invoked the c code in `Grpc.Core` library. In Unity, if we want to call into native code or invoke method in assembly, we need to [define the assembly source](https://docs.unity3d.com/Manual/PluginsForIOS.html). And we also need to define each native call and add `Dllimport()` decorator to each method that need to be called.
 
-由于 iOS 上用的是静态编译，所以当平台为 iOS 时，pluginName 设为 "__Internal"
+Since iOS is using static compiling, so we use "__Internal" for iOS platform.
 
 ```diff
 --- a/src/csharp/Grpc.Core/Internal/NativeMethods.cs
@@ -207,7 +223,8 @@ grpc 是由 google 推出的开源 rpc 框架。除了支持单向的 rpc 调用
 +
 ```
 
-定义 C API
+Define each method that needs to be called and add `Dllimport` decorator.
+
 
 ```diff
 +               static class NativeCalls
@@ -221,7 +238,7 @@ grpc 是由 google 推出的开源 rpc 框架。除了支持单向的 rpc 调用
 ...
 ```
 
-修改初始化方式
+Change the way we initialize the method.
 
 ```diff
          public NativeMethods(UnmanagedLibrary library)
@@ -234,19 +251,20 @@ grpc 是由 google 推出的开源 rpc 框架。除了支持单向的 rpc 调用
 ...
 ```
 
-上面这部分代码 diff 省略了许多函数，基本上所有 Grpc.Core 中的函数都需要和 `grpcsharp_init` 一样的处理，由于篇幅限制，就不把所有函数都的 diff 都放上来了。
+We simplfied the process of this change. This is mostly copy-pasting work. Almost all the method in this file need to make above three changes we made to`grpcsharp_init`. To simply this blog, I didn't copy the full diff here.
 
-### 调试打包
+### Compile and test
 
-在最后，我们在真机和 Unity Editor 中测试了一下，所有类型的 grpc 请求都可以正常进行。唯一有些意外的就是，在资源释放时，记得要调用 `channel.Dispose()`，如果不调用的话，进程就会卡死。这个原因目前没有去仔细研究过，官方 demo 中似乎也没有。
+Finally, I use the [route guide example](https://github.com/grpc/grpc/tree/master/examples/csharp/route_guide) to test the basic feature of grpc, like unary call, bi-directional streaming. They all works fine.
 
-### 经验总结
+The only thing that seems weird to me is during clean up. After we close the connection to server, we will need to call `channel.Dispose()` to release the resource of grpc connection, otherwise, Unity will hang and seems waiting for the thread to exit. I'm not sure about the root cause of this problem, official demo didn't call `Dispose` explicitly.
 
-这个问题其实相对也是比较棘手的，查了许多资料，也参考了一下日本游戏界前辈的做法 [Magic Onion Project](https://github.com/neuecc/MagicOnion)。不过在解决的时候没有马上把博客写出来，所以现在总结起来也没有太多感想了。
+### Conclusion
 
-以后就算是忙，也还是要及时总结才行。
+This is a relative tedious work to make grpc work on Unity. I did quite a lot of research, the only project I found is [Magic Onion Project](https://github.com/neuecc/MagicOnion). This project makes a lot of Unity specific change to make grpc work on it. Since Unity was not supporting .Net 4.6 (now they do), even the async mechanism needs a special implementation. Now, Unity provide a beta release of .Net 4.6 support, I believe this will become the mainstream support, so I just focus on making grpc work on .Net 4.6.
 
+Even we make it work on iOS, it will still take tremendous effout to make it work on Android, Windows, Xbox and etc.
 
 ---
 
-如果你看到这里，一定是真爱！欢迎看看我的其他 [blog](http://chendi.me/)。O(∩_∩)O
+If you like my blog, please checkout [other posts](http://chendi.me/)。O(∩_∩)O
