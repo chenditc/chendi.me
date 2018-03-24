@@ -5,6 +5,7 @@ subtitle:   "在 Unity 开发中使用 grpc 组件"
 date:       2017-07-30 00:15:00
 author:     "Di Chen"
 header-img: "img/in-post/unity-arkit-plugin-opengl/arkit-bg-1.jpg"
+en: true
 tags:
     - Tech
     - Unity 
@@ -46,11 +47,11 @@ We can make some changes to the official Makefile for grpc.core, then the binary
 
 ```diff
  VALID_CONFIG_opt = 1
--CC_opt = $(DEFAULT_CC)
--CXX_opt = $(DEFAULT_CXX)
-+IOSFLAGS =  -arch arm64  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS10.3.sdk -fembed-bitcode
-+CC_opt = $(DEFAULT_CC) $(IOSFLAGS) 
-+CXX_opt = $(DEFAULT_CXX) $(IOSFLAGS)
+- CC_opt = $(DEFAULT_CC)
+- CXX_opt = $(DEFAULT_CXX)
++ IOSFLAGS =  -arch arm64  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS10.3.sdk -fembed-bitcode
++ CC_opt = $(DEFAULT_CC) $(IOSFLAGS) 
++ CXX_opt = $(DEFAULT_CXX) $(IOSFLAGS)
  LD_opt = $(DEFAULT_CC)
  LDXX_opt = $(DEFAULT_CXX)
  CXXFLAGS_opt = -fno-exceptions
@@ -58,8 +59,8 @@ We can make some changes to the official Makefile for grpc.core, then the binary
  
  CFLAGS += -std=c99 -Wsign-conversion -Wconversion $(W_SHADOW) $(W_EXTRA_SEMI)
  CXXFLAGS += -std=c++11
--CPPFLAGS += -g -Wall -Wextra -Werror -Wno-long-long -Wno-unused-parameter -DOSATOMIC_USE_INLINED=1
-+CPPFLAGS += -g -Wall -Wextra -Wno-long-long -Wno-unused-parameter -DOSATOMIC_USE_INLINED=1
+- CPPFLAGS += -g -Wall -Wextra -Werror -Wno-long-long -Wno-unused-parameter -DOSATOMIC_USE_INLINED=1
++ CPPFLAGS += -g -Wall -Wextra -Wno-long-long -Wno-unused-parameter -DOSATOMIC_USE_INLINED=1
  LDFLAGS += -g
 ```
 
