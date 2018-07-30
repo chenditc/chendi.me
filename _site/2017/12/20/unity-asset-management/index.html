@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>Unity Asset Management - 陈迪的博客 | Di' Blog</title>
+
+    <link rel="canonical" href="http://localhost:4000/2017/12/20/unity-asset-management/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Di's Blog</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/in-post/unity-asset-management/unity-bg.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/in-post/unity-asset-management/unity-bg.jpg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Tech" title="Tech">Tech</a>
+                        
+                        <a class="tag" href="/tags/#Unity" title="Unity">Unity</a>
+                        
+                    </div>
+                    <h1>Unity Asset Management</h1>
+                    
+                    
+                    <h2 class="subheading">Unity 中资源管理的学习总结</h2>
+                    
+                    <span class="meta">Posted by Di Chen on December 20, 2017</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+
+            <!-- Language Selector -->
+            <select id="language_selector" onchange= "onLanChange(this.options[this.options.selectedIndex].value)">
+                <option value="0"> 中文 Chinese </option>
+                <option value="1"> 英语 English </option>
+            </select>
+
+				<h2 id="需求">需求</h2>
+
+<p>在团队进行 Unity 开发的时候，就资源管理的方式出现过许多吐槽，比如 “为什么不直接放进 Resource 里，多方便”，“要是当初放进 Resource 里就不会出这么多 bug 了 ”。当吐槽的次数越来越多，就意味着这个问题是阻碍开发效率的因素，急需解决。</p>
+
+<p>同时，游戏安装包的大小与资源管理的方式直接挂钩，想要缩小安装包，就必须理解资源管理的原理并进行优化。</p>
+
+<h3 id="背景常识">背景常识</h3>
+
+<p>对于大部分 Unity 开发来说，资源管理是个必修课，但是对于我这个主修后端开发的来说，还是有一些常识需要补补的。</p>
+
+<p><strong><a href="https://unity3d.com/learn/tutorials/temas/best-practices/assets-objects-and-serialization">资源</a></strong> 在这篇博客中特别指的是 Unity 中的资源，例如图片，纹理，材质，模型，音频文件等。在游戏进行中，绚丽的特效和精美的场景都需要将资源从手机储存中读取出来并播放。由于摩尔定律，手机的 CPU 和 GPU 都有了大幅提高 ，但是手机储存介质的存取速度却没有太多提升，这就导致了在游戏的过程中资源的管理很容易成为瓶颈。(磁盘I储存以及 IO成为瓶颈)</p>
+
+<hr />
+
+<h3 id="目标细化">目标细化</h3>
+<p>在资源管理这个话题下，我们可以将其分为一下几个需要进行权衡的问题：</p>
+
+<ol>
+  <li><strong>资源在什么时候，存在哪？</strong> 存在游戏安装包中？还是存在服务器上？还是存在内存中？还是存在手机磁盘上？</li>
+  <li><strong>资源是否需要压缩？</strong> 用如果要压缩，什么算法压缩？什么时候进行解压缩？</li>
+  <li><strong>资源是否需要缓存？缓存在什么地方？</strong></li>
+  <li><strong>资源是否需要热更新？如何支持热更新？</strong></li>
+  <li><strong>游戏安装包的大小由哪几部分组成？如何在不影响游戏安装体验的情况下，如何减小安装包</strong></li>
+</ol>
+
+<h2 id="官方文档总结">官方文档总结</h2>
+
+<p>Unity 官方的文档对于资源管理有丰富的文档。在阅读之后受益良多，故在此总结，望与大家交流促进。</p>
+
+<h3 id="resources">Resources</h3>
+
+<p>对于大部分 Unity 开发者来说，最熟悉的资源储存位置便是 Resources 文件夹了，对于储存在 Resources 文件夹中的文件来说，读取只需要一句简单的 <code class="highlighter-rouge">Resources.Load</code> 即可，如下：</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    rend.material.mainTexture = Resources.Load("glass") as Texture;
+</code></pre></div></div>
+
+<p>放在 Resources 中的好处就是方便，需要用的就放进去，用的时候直接取出来。但是在 <a href="https://unity3d.com/learn/tutorials/temas/best-practices/resources-folder">官方的最佳实践文档中</a>，官方明确说明 <code class="highlighter-rouge">Don't use it</code>。不推荐的原因包括：</p>
+
+<ol>
+  <li>将资源放于 Resources 中，在程序运行时，资源在内存的管理就不由程序员掌控。一个资源，例如图片，在使用过后是否要销毁，节省内存，还是要在内存中保留，方便后续其他界面使用？这个信息是 Unity 不能直接计算出的。</li>
+  <li>在 Resources 文件夹中放置过多资源，会增加游戏的启动时间。游戏启动的时候，Splash Screen 播放的时候，会读取并索引 Resources 文件夹中的资源，索引的本质是一个<a href="https://unity3d.com/learn/tutorials/temas/best-practices/resources-folder#footnote-1">树结构</a>。索引的建立所花的时间复杂度是 O(N log(N))，当 Resources 文件夹中有超过 10,000 个文件时，低端机上可能需要花费好几秒钟才能完成索引建立。</li>
+  <li>如果将资源放在 Resources 文件夹中，资源会在编译时生成一个 Resources 资源包，这个资源包在编译之后是不能被修改的，也就减少了资源热更新方案中的灵活性。</li>
+</ol>
+
+<p>综上所述，Resources 是一个短期使用方便，但是不利于长期项目发展的方案。对于快速做一个 demo 来说，是最佳选择。在正式项目中，对于部分常用，少量，不需要经常更新的资源，也可以放于 Resources 文件夹中。</p>
+
+<p>特别是对于图片资源来说，有个奇怪的现象。如果图片放于 Asset Bundle 中，在储存时占用的空间是 Unity 资源序列化的大小，一个 100Kb 的 jpg 图片可能会序列化成 5M 的文件。但是在 Resources 文件夹中，只会占用 100Kb 的空间，并且在加载使用时没有太多区别。</p>
+
+<h3 id="asset-bundle">Asset Bundle</h3>
+
+<p>Asset Bundle 是 Unity <a href="https://unity3d.com/learn/tutorials/topics/best-practices/assetbundle-fundamentals">官方推荐的资源管理方案</a>。建议大家都完整地阅读以下官方的文档，非常细致详细。</p>
+
+<p>在使用 Asset Bundle 的时候有3个方面是首先要了解的：</p>
+<ol>
+  <li>Asset Bundle 是否压缩？使用哪种压缩方案？</li>
+  <li>Asset Bundle 如何读取使用？</li>
+  <li>如何从 Asset Bundle 中读取出对应的 Unity Object?</li>
+</ol>
+
+<h4 id="asset-bundle-的压缩方式以及分发">Asset Bundle 的压缩方式以及分发</h4>
+
+<p>Asset Bundle 在项目中往往包含了模型，动作，贴图等游戏必须的资源。在 Unity 中，对于压缩方式，我们有 3 种选择：</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>压缩方式</th>
+      <th style="text-align: center">提取 Object</th>
+      <th style="text-align: center">压缩后大小</th>
+      <th style="text-align: center">解压速度</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>不压缩</td>
+      <td style="text-align: center">提取时可以单独提取某个 Object。</td>
+      <td style="text-align: center">无变化</td>
+      <td style="text-align: center">不需解压</td>
+    </tr>
+    <tr>
+      <td>使用 <code class="highlighter-rouge">LZ4</code> 算法压缩</td>
+      <td style="text-align: center">压缩时可以独立压缩每一个 Asset Bundle 中的 Object，并且提取时可以单独提取某个 Object。</td>
+      <td style="text-align: center">压缩率与 <code class="highlighter-rouge">zip</code> 相似</td>
+      <td style="text-align: center">解压快，大部分情况下无感知</td>
+    </tr>
+    <tr>
+      <td>使用 <code class="highlighter-rouge">LZMA</code> 算法压缩</td>
+      <td style="text-align: center">提取时只能一次加载出整个 Asset Bundle 中的内容，不能单独提取某个 Object</td>
+      <td style="text-align: center">多数情况下压缩率比 <code class="highlighter-rouge">LZ4</code> 略佳</td>
+      <td style="text-align: center">解压慢</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>在<a href="https://unity3d.com/learn/tutorials/topics/best-practices/assetbundle-usage-patterns">压缩方式的官方文档</a>中，根据不同的使用场景给出了对应的建议。对于我的项目来说，由于是 iOS 平台上的项目，包体大小是希望尽量小的，这样可以避免玩家下载的等待时间。同时，我们选择不在游戏开始时下载资源包，从而避免玩家在游戏开始时由于资源包下载导致的流逝。所以，我们最后决定使用 LZ4 压缩 Asset Bundle，并在分发时<a href="https://unity3d.com/learn/tutorials/temas/best-practices/assetbundle-usage-patterns?playlist=30089#Distribution_Streaming_Assets">绑定在安装包中发放</a>。</p>
+
+<h4 id="asset-bundle-如何读取使用">Asset Bundle 如何读取使用</h4>
+
+<p>在<a href="https://unity3d.com/learn/tutorials/topics/best-practices/assetbundle-fundamentals#Loading_AssetBundles">官方关于AB包读取的部分</a>也提供了5种不同的 API 进行 AB 包的读取。</p>
+
+<ol>
+  <li>
+    <p><code class="highlighter-rouge">AssetBundle.LoadFromMemory</code> 官方推荐不使用该 API。原因是在使用时会使用相当于资源3倍的内存占用。这个 API 底层运行是会先将资源从可执行文件的代码区读取出来，复制到一块新开辟的内存空间，所以最终会占用3块内存：</p>
+
+    <ol>
+      <li>可执行文件的代码区内存占用。</li>
+      <li>新开辟的内存空间，用以储存从代码区拷贝出来的 AB 包。</li>
+      <li>最终从 AB 中读取出来的 Unity Object</li>
+    </ol>
+  </li>
+  <li>
+    <p><code class="highlighter-rouge">AssetBundle.LoadFromFile</code> 高度优化过的用以读取未压缩或者 LZ4 压缩的 AB 包。在调用该 API 时，Unity 只会加载 AB 包的头文件，而不会读取真正的内容。主要的资源内容会在实例化 Unity Object，也就是调用 <code class="highlighter-rouge">AssetBundle.Load</code> 时进行读取。使用时要注意这个懒读取的机制，避免在性能需求高的时候进行第一次 Load 操作。同时，在 Unity Editor 中，这个 API 会直接读取加载整个 AB 包的内容，和手机上不同，所以在 Unity Editor 进行性能分析时会发现资源加载所占用的性能特别多。</p>
+  </li>
+  <li>
+    <p><code class="highlighter-rouge">AssetBundle.LoadFromStream</code> 这个 API 没有过多介绍，应该是与 <code class="highlighter-rouge">AssetBundle.LoadFromFile</code> 类似，但是形式上传入参数为一个数据流。</p>
+  </li>
+  <li>
+    <p><code class="highlighter-rouge">UnityWebRequest</code> 中的 <a href="http://docs.unity3d.com/ScriptReference/Networking.DownloadHandlerAssetBundle.html?_ga=2.267324747.47480907.1518831956-488113989.1504339953">DownloadHandlerAssetBundle</a> API。</p>
+
+    <ul>
+      <li>这个 API 是官方推荐的，用法也比较多样，最简单的例子可以在 <a href="https://docs.unity3d.com/Manual/UnityWebRequest-DownloadingAssetBundle.html">Downloading an AssetBundle from HTTP server</a> 中找到。</li>
+      <li>其中有一个功能是很有用的，就是它的缓存功能。当使用带版本号的 API <code class="highlighter-rouge">public static Networking.UnityWebRequest GetAssetBundle(string uri, uint version, uint crc);</code> 来下载时，会先检查本地是否有该版本的 AssetBundle，如果有就直接使用本地的 AB 包，如果没有就从服务器下载后放入缓存中。</li>
+      <li><strong>注意</strong>，在Unity的 AssetBundle 缓存系统里，（文件名，版本号）就标注了一个 AssetBundle，和 AB 包下载的 url 无关。所以 AB 包可以一开始放在安装包中，从安装包文件夹下载出来到缓存中，而需要更新时，从 CDN 服务器检查下载新版本即可，二者可以无缝兼容。关于缓存部分原理可以看 <a href="https://docs.unity3d.com/ScriptReference/Networking.UnityWebRequest.GetAssetBundle.html">UnityWebRequest 的介绍</a>。</li>
+    </ul>
+  </li>
+  <li>
+    <p><code class="highlighter-rouge">WWW.LoadFromCacheOrDownload</code>。根据官方文档，从 2017.1 开始，这个 API 只是 <code class="highlighter-rouge">UnityWebRequest</code> 的一个封装，并且将在未来 deprecated。 推荐大家尽量不使用这个 API。</p>
+  </li>
+</ol>
+
+<h4 id="如何从-assetbundle-中读取-unity-object">如何从 AssetBundle 中读取 Unity Object</h4>
+
+<p>从 AssetBundle 中读取 Unity Object 主要有 3 个 API：</p>
+
+<ul>
+  <li><a href="https://docs.unity3d.com/ScriptReference/AssetBundle.LoadAsset.html">LoadAsset</a></li>
+  <li><a href="https://docs.unity3d.com/ScriptReference/AssetBundle.LoadAllAssets.html">LoadAllAsset</a></li>
+  <li><a href="https://docs.unity3d.com/ScriptReference/AssetBundle.LoadAssetWithSubAssets.html">LoadAssetWithSubAssets</a></li>
+</ul>
+
+<p>这三个 API 的使用选择上相对比较容易判断。</p>
+
+<ul>
+  <li>当一个 AB 包中大部分(66%或者以上）的 Unity Object 都需要被加载时，使用 <code class="highlighter-rouge">LoadAllAsset</code>。</li>
+  <li>如果要加载多个 Unity Object，尽量多使用 <code class="highlighter-rouge">LoadAllAsset</code> API，如果需要可以将其分为多个 AB 包。</li>
+  <li>如果要加载的 Unity Object 引用了很多其他 Unity Object，例如一个角色形象，引用了 FBX 文件，动作，贴图等。此时使用 <code class="highlighter-rouge">LoadAssetWithSubAssets</code>。</li>
+  <li>其余的情况都使用 LoadAsset。</li>
+</ul>
+
+<h2 id="最终解决方案">最终解决方案</h2>
+
+<p>在比较权衡了便捷性，用户体验，性能，资源占用等方面因素，我们最后使用了如下的一套方案。</p>
+
+<h3 id="资源储存">资源储存</h3>
+
+<p>绝大部分的资源使用 Asset Bundle 来进行序列化，主要包括模型，特效，界面 UI。少部分特殊资源储存于 Resources 文件夹中，这部分主要是加载界面，字体，小图标等资源。这样的分配可以让关键部件例如加载，文字提示等功能更加健壮，不会出现由于 AssetBundle 管理不善而出现的致命 Bug，同时也可以让后期更新模型特效资源更灵活。</p>
+
+<h3 id="资源压缩和分发">资源压缩和分发</h3>
+
+<p>最初，我们在 Asset Bundle 分发方面使用了热加载的方案，就是在游戏开始时检测资源包更新，下载最新资源包后，再解压资源包，进入游戏。这个流程的好处在于初始的包体非常小，可以减小至 100 MB 以内。但是这个流程的弊病也很严重，就是玩家需要一个 “下载资源包” 的过程，并且这个过程需要占用玩家的手机使用时间，不能在后台进行。对于成熟的游戏例如 “王者荣耀” 来说，玩家的认可度足够高，是可以接受这个时间付出的。但是对于一个新生的游戏，这个过程导致的用户流失却是我们不能承受的，所以我们选择了第二套方案。</p>
+
+<p>第二套方案是在安装包中附带了对应版本的 Asset Bundle 并进行了压缩，在游戏开启时，只需要进行一次十几秒的解压过程即可开始游戏。这是一个端游常用的方案，在游戏发行的初期可以帮助我们避免由于 “下载资源包” 导致的用户流失。</p>
+
+<p>在今后的迭代中，我们还准备做进一步的改进，融合第一套和第二套方案。第二套方案在游戏启动时，同样可以检测资源包的更新，通过资源包的哈希值以及更新时间，判断是否需要下载更新。这样对于第一次下载游戏的用户，可以避免由 “下载资源包” 导致的用户流失，而对于第二次更新游戏的用户，可以一定程度上避免全量更新。</p>
+
+<h3 id="资源的使用">资源的使用</h3>
+
+<p>在资源使用上，主要流程还是 预加载资源包 – 使用克隆资源 – 释放资源包，但是由于不同模块间可能会需要使用相同的资源，所以模块间仍然需要进行协作来优化资源的使用。这里主要有一个优化点。</p>
+
+<p>引用计数。在加载使用资源包的流程，其实和内存管理中 开辟内存空间 – 使用内存空间 – 释放内存空间 的流程很相似。所以我们也可以将内存管理中常用的手段拿来使用。内存管理中除了我们都熟悉的 Garbage Collection 之外，还有 iOS 中使用的 ARC (Automatic Reference Counting)，自动引用计数。当一个资源被引用使用时，我们将其的计数加一，当其被释放时，将其的计数减一，如果计数为 0，则将其释放。这样一来，我们既可以准确及时地释放资源，又可以最大程度地避免资源管理上的混乱。</p>
+
+<h3 id="经验总结">经验总结</h3>
+
+<p>Unity 在目前的 3D 开发引擎里，算是社区很健全，同时文档也很丰富的一个引擎。我们遇到的绝大部分问题都是其他开发者踩过的坑，如果在一个方面停滞不前，没有好的解决方案时，不妨系统地静下心来通读一下文档。欲速则不达，静下心思考之后，往往能找到更优雅地捷径。</p>
+
+<hr />
+
+<p>如果你看到这里，一定是真爱！欢迎看看我的其他 <a href="http://chendi.me/">blog</a>。O(∩_∩)O</p>
+
+
+                <hr>
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2017/10/05/Amoy/" data-toggle="tooltip" data-placement="top" title="Amoy">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2018/04/20/app-store-review/" data-toggle="tooltip" data-placement="top" title="App Store Review Tips">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                
+                <!-- 友言 评论框 start -->
+                <!-- UY BEGIN -->
+                </br>
+                <div id="uyan_frame"></div>
+                <script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2138710"></script>
+                <!-- UY END -->
+                <!-- 友言 评论框 end -->
+                
+
+                
+
+            </div>
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#生活" title="生活" rel="4">
+                                    生活
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#航拍" title="航拍" rel="4">
+                                    航拍
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#DJI" title="DJI" rel="3">
+                                    DJI
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Tech" title="Tech" rel="10">
+                                    Tech
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Bug" title="Bug" rel="3">
+                                    Bug
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Unity" title="Unity" rel="6">
+                                    Unity
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#grpc" title="grpc" rel="2">
+                                    grpc
+                                </a>
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://huangxuan.me">Hux Blog</a></li>
+                    
+                        <li><a href="http://mypokemon.io">My pokemon map</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+<!-- Handle Language Change -->
+<script type="text/javascript">
+    var $zh = document.querySelector(".zh");
+    var $en = document.querySelector(".en");
+    var url = document.URL;
+    var new_url = url;
+    function onLanChange(index){
+        if(index == 0){
+            new_url = url.replace("-en/", "-zh/");
+        }else{
+            new_url = url.replace("-zh/", "-en/");
+        }
+        window.location.href = new_url;
+    }
+    if ((url.indexOf("-zh/") < 0) && (url.indexOf("-en/") < 0)) {
+      document.getElementById("language_selector").style.display = "none";
+    }
+    var languageSelect = document.getElementById('language_selector');
+    if (url.indexOf("-en/") > 0) {
+        languageSelect.selectedIndex = 1;
+    } 
+
+</script>
+
+
+
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/chenditc">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/5997371930">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    <li>
+                        <a target="_blank" href="https://www.facebook.com/chenditc">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/chenditc">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Di's Blog 2018
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=huxpro&repo=huxpro.github.io&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-78900217-4';
+    var _gaDomain = 'chendi.me';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+<script>
+    // dynamic User by Hux
+    var _baId = '8507be049b7b8a2e0b8be7f8f815f9d0';
+
+    // Originial
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?" + _baId;
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

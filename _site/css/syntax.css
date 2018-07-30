@@ -2,7 +2,8 @@
 /* from http://stackoverflow.com/a/23393920 */
 
 .highlight pre code * {
-  white-space: nowrap;    // this sets all children inside to nowrap
+  // syntax highlighting need this to prevent wrap newline
+  white-space: pre;    // this sets all children inside to nowrap
 }
 
 .highlight pre {

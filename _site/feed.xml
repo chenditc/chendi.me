@@ -3,818 +3,1800 @@
   <channel>
     <title>Di's Blog</title>
     <description></description>
-    <link>http://chendi.me/</link>
-    <atom:link href="http://chendi.me/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Sun, 07 Aug 2016 09:44:46 -0400</pubDate>
-    <lastBuildDate>Sun, 07 Aug 2016 09:44:46 -0400</lastBuildDate>
-    <generator>Jekyll v3.2.1</generator>
+    <link>http://localhost:4000/</link>
+    <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml" />
+    <pubDate>Mon, 30 Jul 2018 19:59:57 +0800</pubDate>
+    <lastBuildDate>Mon, 30 Jul 2018 19:59:57 +0800</lastBuildDate>
+    <generator>Jekyll v3.8.3</generator>
     
       <item>
-        <title>Welcome to Di's Blog</title>
-        <description>&lt;blockquote&gt;
-  &lt;p&gt;“Hello world. ”&lt;/p&gt;
-&lt;/blockquote&gt;
+        <title>App Store Review Tips</title>
+        <description>&lt;h2 id=&quot;初衷&quot;&gt;初衷&lt;/h2&gt;
 
-&lt;h2 id=&quot;section&quot;&gt;前言&lt;/h2&gt;
+&lt;p&gt;这篇博客主要想记录一下 App Store 中审核遇到的一些问题，以及最终解决的方案，希望对后来者有一定帮助，也是对自己的经验总结。&lt;/p&gt;
 
-&lt;p&gt;终于把博客架起来了。&lt;/p&gt;
+&lt;p&gt;对于苹果开发者来说，App Store 的审核是一个对整体迭代效率影响极大的一个环节，但是绝大部分情况下，App Store 的审核还是比较客观效率的，所以不必将其视为洪水猛兽。&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&quot;#build&quot;&gt;跳过废话，直接看技术实现 &lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;在博客出现了十几年之后才开始建自己的博客站，有种考古的感觉。&lt;/p&gt;
-
-&lt;p&gt;不过除了博客，也找不到什么合适的地方写东西。&lt;/p&gt;
-
-&lt;p&gt;公众号，微博，论坛都充斥着浓浓的商业气息，而且谁知道下一个10年，20年，他们还会不会存在。&lt;/p&gt;
-
-&lt;p&gt;大概还是放在自己的域名，自己的版本控制最靠谱了。&lt;/p&gt;
-
-&lt;p id=&quot;build&quot;&gt;&lt;/p&gt;
-&lt;hr /&gt;
-
-&lt;h2 id=&quot;section-1&quot;&gt;正文&lt;/h2&gt;
-
-&lt;p&gt;接下来说说搭建这个博客的技术细节。&lt;/p&gt;
-
-&lt;p&gt;在选择博客框架的时候犹豫了一下。最有名的博客框架大概是wordpress了，不过维护一个数据库和服务器实在是太麻烦。在建github repo的时候看到过&lt;a href=&quot;https://pages.github.com/&quot;&gt;GitHub Pages&lt;/a&gt; + &lt;a href=&quot;http://jekyllrb.com/&quot;&gt;Jekyll&lt;/a&gt; 的方案，感觉非常robust.&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;一份markdown就是一篇博文，简洁明了。&lt;/li&gt;
-  &lt;li&gt;Github自带markdown预览，方便调节格式。&lt;/li&gt;
-  &lt;li&gt;无限储存空间，静态网站，无需服务器支持。&lt;/li&gt;
-  &lt;li&gt;原生的git工具集都可以用。&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;刚开始配置的时候，踩了特别多的坑。&lt;/p&gt;
-
-&lt;p&gt;Jekyll在github pages上的配置缺乏文档支持。网上有许多教程都已经过时了，在本地Jekyll生成的网站可以正常使用，但是放到github pages上就编译失败，也找不到对应的文档。&lt;/p&gt;
-
-&lt;p&gt;在尝试了不少教程之后，决定从已经可用的Github网站fork一个已经可用的出来，再修改成自己的风格。&lt;/p&gt;
-
-&lt;p&gt;在此感谢&lt;a href=&quot;http://huangxuan.me/&quot;&gt;黄玄&lt;/a&gt;贡献维护了开源模版&lt;a href=&quot;https://github.com/Huxpro/huxblog-boilerplate&quot;&gt;huxblog-boilerplate&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;用了这个模版之后还做了一些小配置：&lt;/p&gt;
+&lt;p&gt;这里主要讨论下面几个问题：&lt;/p&gt;
 
 &lt;ol&gt;
-  &lt;li&gt;新建gh-pages branch。&lt;/li&gt;
-  &lt;li&gt;把gh-pages branch设为默认branch。&lt;/li&gt;
-  &lt;li&gt;在Github Repository的setting里面设置Custom domain，这样就可以使用http连接，否则会被强制使用https。&lt;/li&gt;
-  &lt;li&gt;修改了一下_config.yml文件。&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#第三方登录&quot;&gt;第三方登录&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;第三方支付与内购&lt;/li&gt;
+  &lt;li&gt;网络不联通（DNS 解析）&lt;/li&gt;
+  &lt;li&gt;初版兼容性&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#区分审核服务器&quot;&gt;区分审核服务器&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;NSContactDescription&lt;/li&gt;
 &lt;/ol&gt;
 
-&lt;hr /&gt;
+&lt;h2 id=&quot;第三方登录&quot;&gt;第三方登录&lt;/h2&gt;
 
-&lt;h2 id=&quot;section-2&quot;&gt;后记&lt;/h2&gt;
+&lt;p&gt;现在基本上每个游戏或者 app 都会开放第三方登录，并且可能第三方登录是 95% 用户使用的登录方式。我们也希望尽可能优化用户登录的体验，所以也希望用户使用第三方登录，而不是手机号验证码或者邮箱验证。所以我们的登录界面是这样的：&lt;/p&gt;
 
-&lt;p&gt;今后会把一些看的书，做的side project记录下来，算是整理一下自己的知识体系。&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;/img/in-post/app-store-review/01-app.jpeg&quot;&gt;&lt;img src=&quot;/img/in-post/app-store-review/01-app.jpeg&quot; alt=&quot;01-app&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;希望也能因此结识一些有趣的人。&lt;/p&gt;
-</description>
-        <pubDate>Sat, 06 Aug 2016 16:15:00 -0400</pubDate>
-        <link>http://chendi.me/2016/08/06/hello-world/</link>
-        <guid isPermaLink="true">http://chendi.me/2016/08/06/hello-world/</guid>
-        
-        <category>生活</category>
-        
-        
-      </item>
-    
-      <item>
-        <title>Example Post</title>
-        <description>&lt;p&gt;JavaScript 有着很奇怪的命名史。&lt;/p&gt;
+&lt;p&gt;但是对于 App Store 审核员来说，有两个问题：&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;审核员大概率是外国人，看不懂中文，也就看不懂右上角的手机登录入口。所以有可能会打回 App，理由是未提供自有账号登录系统。&lt;/li&gt;
+  &lt;li&gt;审核员点击第三方登录按钮后，会跳转至第三方登录界面，对于审核员来说，变相要求其安装 QQ 或者微信这样的第三方程序，会以 “不得要求用户安装其他程序才能使用该程序” 理由打回。&lt;/li&gt;
+&lt;/ol&gt;
 
-&lt;p&gt;1995 年，它作为网景浏览器（Netscape Navigator）的一部分首次发布，网景给这个新语言命名为 LiveScript。一年后，为了搭上当时媒体热炒 Java 的顺风车，临时改名为了 JavaScript &lt;em&gt;（当然，Java 和 JavaScript 的关系，就和雷锋和雷锋塔一样 —— 并没有什么关系）&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;对于这个情况，我们想了两种解决方法：&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;只提供账号密码登录的方式，弱化第三方登录的 UI 显著性。&lt;/li&gt;
+  &lt;li&gt;在审核期间使 App 作出与线上服务器不同的表现，只展示账号密码登录的界面，等到审核通过后，再显示完整界面。&lt;/li&gt;
+&lt;/ol&gt;
 
-&lt;p&gt;&lt;img src=&quot;/img/in-post/post-js-version/javascript-java.jpg&quot; alt=&quot;java-javascript&quot; /&gt;
-&lt;small class=&quot;img-hint&quot;&gt;歪果仁的笑话怎么一点都不好笑&lt;/small&gt;&lt;/p&gt;
+&lt;p&gt;最后我们权衡了一下采用了方法2，这样对于 UI 和用户体验，我们有更完整的掌控性。至于如何在审核期间使 App 作出与线上服务器不同的表现，见 &lt;a href=&quot;#区分审核服务器&quot;&gt;第五节 - 区分审核服务器&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;第三方支付与内购&quot;&gt;第三方支付与内购&lt;/h2&gt;
+
+&lt;p&gt;在我们提交审核时，我们曾被以下理由打回过 2 次：&lt;/p&gt;
 
 &lt;blockquote&gt;
-  &lt;p&gt;译者注：&lt;a href=&quot;https://en.wikipedia.org/wiki/JavaScript#History&quot;&gt;wikipedia 的 JavaScript 词条&lt;/a&gt; 更详细的叙述了这段历史&lt;/p&gt;
+  &lt;p&gt;Guideline 3.1.1 - In-App Purchase&lt;/p&gt;
 &lt;/blockquote&gt;
-
-&lt;p&gt;1996 年，网景将 JavaScript 提交给 &lt;a href=&quot;http://www.ecma-international.org/&quot;&gt;ECMA International（欧洲计算机制造商协会）&lt;/a&gt; 进行标准化，并最终确定出新的语言标准，它就是 ECMAScript。自此，ECMAScript 成为所有 JavaScript 实现的基础，不过，由于 JavaScript 名字的历史原因和市场原因（很显然 ECMAScript 这个名字并不令人喜欢……），现实中我们只用 ECMAScript 称呼标准，平时都还是使用 JavaScript 来称呼这个语言。&lt;/p&gt;
 
 &lt;blockquote&gt;
-  &lt;p&gt;术语（译者注）：&lt;/p&gt;
-
-  &lt;ul&gt;
-    &lt;li&gt;&lt;em&gt;标准（Standard）&lt;/em&gt;： 用于定义与其他事物区别的一套规则&lt;/li&gt;
-    &lt;li&gt;&lt;em&gt;实现（Implementation）&lt;/em&gt;： 某个标准的具体实施/真实实践&lt;/li&gt;
-  &lt;/ul&gt;
+  &lt;p&gt;We noticed that your app contains a payment mechanism other than in-app purchase for digital content or to unlock features or functionality within your app, which is not appropriate for the App Store. In-app purchase is the only valid in-app payment mechanism for digital content.&lt;/p&gt;
 &lt;/blockquote&gt;
-
-&lt;p&gt;不过，JavaScript 开发者们并不怎么在乎这些，因为在诞生之后的 15 年里，ECMAScript 并没有多少变化，而且现实中的很多实现都已经和标准大相径庭。其实在第一版的 ECMAScript 发布后，很快又跟进发布了两个版本，但是自从 1999 年 ECMAScript 3 发布后，十年内都没有任何改动被成功添加到官方规范里。取而代之的，是各大浏览器厂商们争先进行自己的语言拓展，web 开发者们别无选择只能去尝试并且支持这些 API。即使是在 2009 年 ECMAScript 5 发布之后，仍然用了数年这些新规范才得到了浏览器的广泛支持，可是大部分开发者还是写着 ECMAScript 3 风格的代码，并不觉得有必要去了解这些规范。&lt;/p&gt;
 
 &lt;blockquote&gt;
-  &lt;p&gt;译者注：&lt;a href=&quot;https://en.wikipedia.org/wiki/ECMAScript#4th_Edition_.28abandoned.29&quot;&gt;ECMAScript 第四版草案&lt;/a&gt;由于太过激进而被抛弃，Adobe 的 &lt;a href=&quot;https://en.wikipedia.org/wiki/ActionScript&quot;&gt;ActionScript 3.0&lt;/a&gt; 是 ECMAScript edition 4 的唯一实现（ Flash 差点就统一 Web 了）&lt;/p&gt;
+  &lt;p&gt;Note: Continuing to hide functionality within your app or other dishonest acts may result in the removal of your apps from the App Store and termination of your Apple Developer Program membership and all associated memberships.&lt;/p&gt;
 &lt;/blockquote&gt;
 
-&lt;p&gt;到了 2012 年，事情突然开始有了转变。大家开始推动停止对旧版本 IE 浏览器的支持，用 ECMAScript 5 (ES5) 风格来编写代码也变得更加可行。与此同时，一个新的 ECMAScript 规范也开始启动。到了这时，大家开始逐渐习惯以对 ECMAScript 规范的版本支持程度来形容各种 JavaScript 实现。在正式被指名为 ECMAScript 第 6 版 (ES6) 之前，这个新的标准原本被称为 ES.Harmony（和谐）。2015 年，负责制定 ECMAScript 规范草案的委员会 TC39 决定将定义新标准的制度改为一年一次，这意味着每个新特性一旦被批准就可以添加，而不像以往一样，规范只有在整个草案完成，所有特性都没问题后才能被定稿。因此，ECMAScript 第 6 版在六月份公布之前，又被重命名为了 ECMAScript 2015（ES2015）&lt;/p&gt;
+&lt;blockquote&gt;
+  &lt;p&gt;Next Steps&lt;/p&gt;
+&lt;/blockquote&gt;
 
-&lt;p&gt;目前，仍然有很多新的 JavaScript 特性或语法正在提议中，包括 &lt;a href=&quot;https://github.com/wycats/javascript-decorators&quot;&gt;decorators（装饰者）&lt;/a&gt;，&lt;a href=&quot;https://github.com/lukehoban/ecmascript-asyncawait&quot;&gt;async-await（async-await 异步编程模型）&lt;/a&gt; 和 &lt;a href=&quot;https://github.com/jeffmo/es-class-properties&quot;&gt;static class properties（静态类属性）&lt;/a&gt;。它们通常被称为 ES7，ES2016 或者 ES.Next 的特性，不过实际上它们只能被称作提案或者说可能性，毕竟 ES2016 的规范还没有完成，有可能全部都会引入，也有可能一个都没有。TC39 把一个提案分为 4 个阶段，你可以在 &lt;a href=&quot;https://babeljs.io/docs/usage/experimental/&quot;&gt;Babel 的官网&lt;/a&gt; 上查看各个提案目前都在哪个阶段了。&lt;/p&gt;
+&lt;blockquote&gt;
+  &lt;p&gt;To resolve this issue, please remove all external or third-party payment mechanisms and implement in-app purchase to facilitate digital good transactions, including unlocking features or functionality within your app.&lt;/p&gt;
+&lt;/blockquote&gt;
 
-&lt;p&gt;所以，我们该如何使用这一大堆术语呢？下面的列表或许能帮助到你：&lt;/p&gt;
+&lt;blockquote&gt;
+  &lt;p&gt;If you believe your use of an alternative payment mechanism is a permissible use case, please respond directly to this message in Resolution Center with detailed information.&lt;/p&gt;
+&lt;/blockquote&gt;
 
+&lt;p&gt;这个理由其实理解起来很简单 “我们检测到你在 app 里用了第三方登录，你别管我们怎么检测的，但是你得把它给去了”。&lt;/p&gt;
+
+&lt;p&gt;我们第一次遇到这个问题时，我们刚接入了集成各种第三方登录的 SDK - ShareSDK，在 ShareSDK 中包含了微信的 SDK，而微信的 SDK 中包含了微信支付的代码，苹果正是监测到这部分代码后，拒绝了对应的编译包。解决方法其实相对简单，只要将微信的 SDK 更换为不带微信支付的即可。&lt;/p&gt;
+
+&lt;p&gt;我们第二次遇到这个问题是，就比较奇怪了，在前一次正常过审核的编译和此次编译之间，我们没有引入额外的第三方支付或者更改过 SDK 包。我们在 Resolution Center 回复质询了详细信息，但是苹果并没有给出更详细的反馈。当时我们有两个方案：&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;提交 Appeal 审核申诉，声明我们没有使用第三方支付，并要求重新审核。&lt;/li&gt;
+  &lt;li&gt;拆开 ipa 包，扫描可疑的 API，并将其剔除。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;方案1操作起来简单，但是很可能会拖很久，而且据说一旦提起 Appeal，审核将变得非常严格，很可能得不偿失。&lt;/p&gt;
+
+&lt;p&gt;方案2操作的主动权掌握在我们手中，可以第一时间执行，也许当天就能找到问题所在，但是相对繁琐。淘宝上有类似的服务，价格大概为3000元。&lt;/p&gt;
+
+&lt;p&gt;我们最终选择了方案2，方案2的执行过程如下：&lt;/p&gt;
+
+&lt;h4 id=&quot;找到-ipa-包对应的符号表&quot;&gt;找到 ipa 包对应的符号表&lt;/h4&gt;
+&lt;h4 id=&quot;在符号表中找到函数名&quot;&gt;在符号表中找到函数名&lt;/h4&gt;
+&lt;h4 id=&quot;在函数名中找到可疑的函数&quot;&gt;在函数名中找到可疑的函数&lt;/h4&gt;
+&lt;h4 id=&quot;将函数定位到-sdk-或代码中&quot;&gt;将函数定位到 SDK 或代码中&lt;/h4&gt;
+
+&lt;h2 id=&quot;网络不联通dns-解析&quot;&gt;网络不联通（DNS 解析）&lt;/h2&gt;
+
+&lt;h2 id=&quot;初版兼容性&quot;&gt;初版兼容性&lt;/h2&gt;
+
+&lt;h2 id=&quot;区分审核服务器&quot;&gt;区分审核服务器&lt;/h2&gt;
+
+&lt;p&gt;在我们的团队中，App 环境分成 3 个，dev -&amp;gt; alpha -&amp;gt; release&lt;/p&gt;
+
+&lt;p&gt;dev 是开发团队平时用于开发，测试的服务器。
+alpha 是发版本前，用于固定版本的测试环境，以及审核用的环境。
+release 是线上的正式服务器。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;/img/in-post/app-store-review/02-env.jpeg&quot;&gt;&lt;img src=&quot;/img/in-post/app-store-review/02-env.jpeg&quot; alt=&quot;02-env&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;每一个环境中，有其对应的安装包和服务器包。&lt;/p&gt;
 &lt;ul&gt;
-  &lt;li&gt;&lt;strong&gt;ECMAScript&lt;/strong&gt;：一个由 ECMA International 进行标准化，TC39 委员会进行监督的语言。通常用于指代标准本身。&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;JavaScript&lt;/strong&gt;：ECMAScript 标准的各种实现的最常用称呼。这个术语并不局限于某个特定版本的 ECMAScript 规范，并且可能被用于任何不同程度的任意版本的 ECMAScript 的实现。&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;ECMAScript 5 (ES5)&lt;/strong&gt;：ECMAScript 的第五版修订，于 2009 年完成标准化。这个规范在所有现代浏览器中都相当完全的实现了。&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;ECMAScript 6 (ES6) / ECMAScript 2015 (ES2015)&lt;/strong&gt;：ECMAScript 的第六版修订，于 2015 年完成标准化。这个标准被部分实现于大部分现代浏览器。可以查阅&lt;a href=&quot;http://kangax.github.io/compat-table/es6/&quot;&gt;这张兼容性表&lt;/a&gt;来查看不同浏览器和工具的实现情况。&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;ECMAScript 2016&lt;/strong&gt;：预计的第七版 ECMAScript 修订，计划于明年夏季发布。这份规范具体将包含哪些特性还没有最终确定&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;ECMAScript Proposals&lt;/strong&gt;：被考虑加入未来版本 ECMAScript 标准的特性与语法提案，他们需要经历五个阶段：Strawman（稻草人），Proposal（提议），Draft（草案），Candidate（候选）以及 Finished （完成）。&lt;/li&gt;
+  &lt;li&gt;安装包即 iOS 的 ipa 包。
+    &lt;ul&gt;
+      &lt;li&gt;其中包括了版本号，编译时间戳，还有打包时的美术资源&lt;/li&gt;
+      &lt;li&gt;&lt;strong&gt;每一个版本号对应一个环境，由版本号控制安装包对应的环境&lt;/strong&gt;。&lt;/li&gt;
+      &lt;li&gt;版本号对应的环境信息储存在高可用的服务器上，这里选择的是阿里云的 OSS 服务，既保证了高可用性，也在最大限度上减少了服务器开销。如下图：&lt;a href=&quot;/img/in-post/app-store-review/03-env.jpeg&quot;&gt;&lt;img src=&quot;/img/in-post/app-store-review/03-env.jpeg&quot; alt=&quot;03-env&quot; /&gt;&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;客户端在&lt;strong&gt;第一次打开时&lt;/strong&gt;，向阿里云请求该版本号对应的环境名，&lt;strong&gt;并缓存在本地&lt;/strong&gt;，下次打开时直接从本地读取。&lt;/li&gt;
+      &lt;li&gt;在得到环境名后，从本地的环境 - ip 表中，获取对应的服务器 ip ，并连接对应的服务器进行交互。&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;服务器则是用 docker 打包部署。
+    &lt;ul&gt;
+      &lt;li&gt;其中包括了服务器代码以及打 docker 时的配置表信息。&lt;/li&gt;
+      &lt;li&gt;每个环境使用对应 docker tag 的 docker，例如 dev 版使用的 docker 镜像是 &lt;code class=&quot;highlighter-rouge&quot;&gt;test_docker:dev&lt;/code&gt;，而 alpha 版使用的 docker 镜像是 &lt;code class=&quot;highlighter-rouge&quot;&gt;test_docker:alpha&lt;/code&gt;，这样一来变更服务器版本就只需用一行代码来切换 tag 指向即可，保证了部署的代码和测试的代码是一致的。&lt;/li&gt;
+      &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;$ docker tag test_docker:dev test_docker:alpha&lt;/code&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;在这整个 Blog 中，我将把目前的 ECMAScript 版本称作 ES6（因为这是大部分开发者最习以为常的），把明年的规范称作 ES2016（因为，与 ES6/ES2015 不同，这个名字将在整个标准化过程中沿用）并且将那些还没有成为 ECMAScript 定稿或草案的未来语言概念称为 ECMAScript 提案或者 JavaScript 提案。我将尽我所能在任何可能引起困惑的场合沿用这篇文章。&lt;/p&gt;
+&lt;p&gt;这样一来，每个环境之间就不会互相影响了，开发时：&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;客户端程序可以连接 dev 版本的服务器进行开发，服务器的更新，数据变化不会影响到审核或者线上正式玩家。&lt;/li&gt;
+  &lt;li&gt;当需要发版时，更改阿里云 OSS 上的文件，将客户端包里版本号对应的环境更改至 alpha，并将dev 标签的 docker 打上 alpha 标签，我们就完成了将 dev 环境复制到 alpha 环境的操作。&lt;/li&gt;
+  &lt;li&gt;此时，我们可以将对应的客户端安装包提交审核，在审核期间，开发和线上活动均不会影响到审核员的数据。&lt;/li&gt;
+  &lt;li&gt;等到审核通过后，我们可以再将审核服和对应安装包部署到 release 环境中。&lt;/li&gt;
+&lt;/ol&gt;
 
-&lt;h4 id=&quot;section&quot;&gt;一些资源&lt;/h4&gt;
+&lt;p&gt;由于我们在客户端有了对应的环境名，我们也可以对应作出一些审核中特有的操作，例如：&lt;/p&gt;
 
-&lt;ul&gt;
-  &lt;li&gt;TC39 的 &lt;a href=&quot;https://github.com/tc39/ecma262&quot;&gt;Github 仓库&lt;/a&gt;上可以看到所有目前公开的提案&lt;/li&gt;
-  &lt;li&gt;如果你还不熟悉 ES6，Babel 有一个&lt;a href=&quot;https://babeljs.io/docs/learn-es2015/&quot;&gt;很不错的特性概览&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;如果你希望深入 ES6，这里有两本很不错的书： Axel Rauschmayer 的 &lt;a href=&quot;http://exploringjs.com/&quot;&gt;Exploring ES6&lt;/a&gt;和 Nicholas Zakas 的 &lt;a href=&quot;https://leanpub.com/understandinges6&quot;&gt;Understanding ECMAScript 6&lt;/a&gt;。Axel 的博客 &lt;a href=&quot;http://www.2ality.com/&quot;&gt;2ality&lt;/a&gt; 也是很不错的 ES6 资源&lt;/li&gt;
-&lt;/ul&gt;
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;env&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;alpha&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;do_something&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;do_something_else&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;p&gt;&lt;img class=&quot;shadow&quot; width=&quot;320&quot; src=&quot;/img/in-post/post-js-version/keep-calm-and-learn-javascript.png&quot; /&gt;
-&lt;small class=&quot;img-hint&quot;&gt;来学 JavaScript 吧！&lt;/small&gt;&lt;/p&gt;
+&lt;h3 id=&quot;经验总结&quot;&gt;经验总结&lt;/h3&gt;
 
-&lt;h4 id=&quot;section-1&quot;&gt;著作权声明&lt;/h4&gt;
-
-&lt;p&gt;本文译自 &lt;a href=&quot;http://benmccormick.org/2015/09/14/es5-es6-es2016-es-next-whats-going-on-with-javascript-versioning/&quot;&gt;ES5, ES6, ES2016, ES.Next: What’s going on with JavaScript versioning?&lt;/a&gt; &lt;br /&gt;
-译者 &lt;a href=&quot;http://weibo.com/huxpro&quot;&gt;黄玄&lt;/a&gt;，首次发布于 &lt;a href=&quot;http://huangxuan.me&quot;&gt;Hux Blog&lt;/a&gt;，转载请保留以上链接&lt;/p&gt;
-</description>
-        <pubDate>Tue, 22 Sep 2015 00:00:00 -0400</pubDate>
-        <link>http://chendi.me/2015/09/22/js-version/</link>
-        <guid isPermaLink="true">http://chendi.me/2015/09/22/js-version/</guid>
-        
-        <category>前端开发</category>
-        
-        <category>JavaScript</category>
-        
-        <category>翻译</category>
-        
-        
-      </item>
-    
-      <item>
-        <title>Example Post using Keynote Layout</title>
-        <description>&lt;blockquote&gt;
-  &lt;p&gt;下滑这里查看更多内容&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;7月9日，我在公司内部进行了名为「JavaScript 模块化七日谈」分享，并将该 Slides 分享到了微博上。出乎意料地，这篇微博先后被 @JS小组 @尤小右 @寸志 等近 200 人转发，阅读达到 10w，获得了还不错的评价。&lt;/p&gt;
-
-&lt;p&gt;于是，我决定将它重新发到我的博客上，并为它专门制作了适用于 Keynote 展示文稿的新布局。它能自动根据屏幕大小/旋转以一定比例填充屏幕，你也可以直接点击下方链接在新页面打开，来获得更好的、沉浸式的全屏体验&lt;/p&gt;
-
-&lt;h3 id=&quot;watch-slides-httphuangxuanmejs-module-7day&quot;&gt;&lt;a href=&quot;http://huangxuan.me/js-module-7day&quot;&gt;Watch Slides →&lt;/a&gt;&lt;/h3&gt;
-
-&lt;p&gt;&lt;img src=&quot;http://huangxuan.me/js-module-7day/attach/qrcode.png&quot; width=&quot;350&quot; height=&quot;350&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;small class=&quot;img-hint&quot;&gt;你也可以通过扫描二维码在手机上观看&lt;/small&gt;&lt;/p&gt;
-
-&lt;p&gt;这个 Web Slides 开源在&lt;a href=&quot;https://github.com/Huxpro/js-module-7day&quot;&gt;我的 Github 上&lt;/a&gt;，欢迎你帮助我完善这个展示文稿，你可以给我提 issue，可以 fork &amp;amp; pull request。如果它能帮助到你了，希望你还能不吝啬 star 一下这个项目&lt;/p&gt;
-
-&lt;h3 id=&quot;catalog&quot;&gt;Catalog&lt;/h3&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;第一日 上古时期 &lt;strong&gt;&lt;em&gt;Module?&lt;/em&gt;&lt;/strong&gt; 从设计模式说起&lt;/li&gt;
-  &lt;li&gt;第二日 石器时代 &lt;strong&gt;&lt;em&gt;Script Loader&lt;/em&gt;&lt;/strong&gt; 只有封装性可不够，我们还需要加载&lt;/li&gt;
-  &lt;li&gt;第三日 蒸汽朋克 &lt;strong&gt;&lt;em&gt;Module Loader&lt;/em&gt;&lt;/strong&gt; 模块化架构的工业革命&lt;/li&gt;
-  &lt;li&gt;第四日 号角吹响 &lt;strong&gt;&lt;em&gt;CommonJS&lt;/em&gt;&lt;/strong&gt; 征服世界的第一步是跳出浏览器&lt;/li&gt;
-  &lt;li&gt;第五日 双塔奇兵 &lt;strong&gt;&lt;em&gt;AMD/CMD&lt;/em&gt;&lt;/strong&gt; 浏览器环境模块化方案&lt;/li&gt;
-  &lt;li&gt;第六日 精灵宝钻 &lt;strong&gt;&lt;em&gt;Browserify/Webpack&lt;/em&gt;&lt;/strong&gt; 大势所趋，去掉这层包裹！&lt;/li&gt;
-  &lt;li&gt;第七日 王者归来 &lt;strong&gt;&lt;em&gt;ES6 Module&lt;/em&gt;&lt;/strong&gt; 最后的战役&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h3 id=&quot;thanks&quot;&gt;Thanks&lt;/h3&gt;
-
-&lt;p&gt;&lt;a href=&quot;http://lab.hakim.se/reveal-js&quot;&gt;Reveal.js&lt;/a&gt;&lt;/p&gt;
-</description>
-        <pubDate>Thu, 09 Jul 2015 00:00:00 -0400</pubDate>
-        <link>http://chendi.me/2015/07/09/js-module-7day/</link>
-        <guid isPermaLink="true">http://chendi.me/2015/07/09/js-module-7day/</guid>
-        
-        <category>前端开发</category>
-        
-        <category>JavaScript</category>
-        
-        
-      </item>
-    
-      <item>
-        <title>Example Post with Code Highlight</title>
-        <description>&lt;h2 id=&quot;foreword&quot;&gt;Foreword&lt;/h2&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;Here comes Module!&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;随着网站逐渐变成「互联网应用程序」，嵌入网页的 JavaScript 代码越来越庞大，越来越复杂。网页越来越像桌面程序，需要一个团队分工协作、进度管理、单元测试……我们不得不使用软件工程的方法，来管理网页的业务逻辑。&lt;/p&gt;
-
-&lt;p&gt;于是，JavaScript 的模块化成为迫切需求。在 ES6 Module 来临之前，JavaScript 社区提供了强大支持，尝试在现有的运行环境下，实现模块的效果。&lt;/p&gt;
+&lt;p&gt;Unity 在目前的 3D 开发引擎里，算是社区很健全，同时文档也很丰富的一个引擎。我们遇到的绝大部分问题都是其他开发者踩过的坑，如果在一个方面停滞不前，没有好的解决方案时，不妨系统地静下心来通读一下文档。欲速则不达，静下心思考之后，往往能找到更优雅地捷径。&lt;/p&gt;
 
 &lt;hr /&gt;
 
-&lt;h2 id=&quot;catalog&quot;&gt;Catalog&lt;/h2&gt;
+&lt;p&gt;如果你看到这里，一定是真爱！欢迎看看我的其他 &lt;a href=&quot;http://chendi.me/&quot;&gt;blog&lt;/a&gt;。O(∩_∩)O&lt;/p&gt;
+</description>
+        <pubDate>Fri, 20 Apr 2018 08:15:00 +0800</pubDate>
+        <link>http://localhost:4000/2018/04/20/app-store-review/</link>
+        <guid isPermaLink="true">http://localhost:4000/2018/04/20/app-store-review/</guid>
+        
+        <category>Tech</category>
+        
+        <category>AppStore</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>Unity Asset Management</title>
+        <description>&lt;h2 id=&quot;需求&quot;&gt;需求&lt;/h2&gt;
+
+&lt;p&gt;在团队进行 Unity 开发的时候，就资源管理的方式出现过许多吐槽，比如 “为什么不直接放进 Resource 里，多方便”，“要是当初放进 Resource 里就不会出这么多 bug 了 ”。当吐槽的次数越来越多，就意味着这个问题是阻碍开发效率的因素，急需解决。&lt;/p&gt;
+
+&lt;p&gt;同时，游戏安装包的大小与资源管理的方式直接挂钩，想要缩小安装包，就必须理解资源管理的原理并进行优化。&lt;/p&gt;
+
+&lt;h3 id=&quot;背景常识&quot;&gt;背景常识&lt;/h3&gt;
+
+&lt;p&gt;对于大部分 Unity 开发来说，资源管理是个必修课，但是对于我这个主修后端开发的来说，还是有一些常识需要补补的。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;a href=&quot;https://unity3d.com/learn/tutorials/temas/best-practices/assets-objects-and-serialization&quot;&gt;资源&lt;/a&gt;&lt;/strong&gt; 在这篇博客中特别指的是 Unity 中的资源，例如图片，纹理，材质，模型，音频文件等。在游戏进行中，绚丽的特效和精美的场景都需要将资源从手机储存中读取出来并播放。由于摩尔定律，手机的 CPU 和 GPU 都有了大幅提高 ，但是手机储存介质的存取速度却没有太多提升，这就导致了在游戏的过程中资源的管理很容易成为瓶颈。(磁盘I储存以及 IO成为瓶颈)&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h3 id=&quot;目标细化&quot;&gt;目标细化&lt;/h3&gt;
+&lt;p&gt;在资源管理这个话题下，我们可以将其分为一下几个需要进行权衡的问题：&lt;/p&gt;
 
 &lt;ol&gt;
-  &lt;li&gt;&lt;a href=&quot;#commonjs--node&quot;&gt;CommonJS &amp;amp; Node&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#history&quot;&gt;History&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#requirejs--amd&quot;&gt;RequireJS &amp;amp; AMD&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#seajs--cmd&quot;&gt;SeaJS &amp;amp; CMD&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#amd-vs-cmd&quot;&gt;AMD vs CMD&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#webpack&quot;&gt;WebPack&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;资源在什么时候，存在哪？&lt;/strong&gt; 存在游戏安装包中？还是存在服务器上？还是存在内存中？还是存在手机磁盘上？&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;资源是否需要压缩？&lt;/strong&gt; 用如果要压缩，什么算法压缩？什么时候进行解压缩？&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;资源是否需要缓存？缓存在什么地方？&lt;/strong&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;资源是否需要热更新？如何支持热更新？&lt;/strong&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;游戏安装包的大小由哪几部分组成？如何在不影响游戏安装体验的情况下，如何减小安装包&lt;/strong&gt;&lt;/li&gt;
 &lt;/ol&gt;
 
-&lt;h2 id=&quot;commonjs--node&quot;&gt;CommonJS &amp;amp; Node&lt;/h2&gt;
+&lt;h2 id=&quot;官方文档总结&quot;&gt;官方文档总结&lt;/h2&gt;
 
-&lt;blockquote&gt;
-  &lt;p&gt;Javascript: not just for browsers any more! —— CommonJS Slogen&lt;/p&gt;
-&lt;/blockquote&gt;
+&lt;p&gt;Unity 官方的文档对于资源管理有丰富的文档。在阅读之后受益良多，故在此总结，望与大家交流促进。&lt;/p&gt;
 
-&lt;p&gt;前端模块化的事实标准之一，2009 年 8 月，&lt;a href=&quot;http://wiki.commonjs.org/wiki/CommonJS&quot;&gt;CommonJS&lt;/a&gt; 诞生。&lt;/p&gt;
+&lt;h3 id=&quot;resources&quot;&gt;Resources&lt;/h3&gt;
 
-&lt;p&gt;CommonJS 本质上只是一套规范（API 定义），而 Node.js 采用并实现了部分规范，CommonJS Module 的写法也因此广泛流行。&lt;/p&gt;
+&lt;p&gt;对于大部分 Unity 开发者来说，最熟悉的资源储存位置便是 Resources 文件夹了，对于储存在 Resources 文件夹中的文件来说，读取只需要一句简单的 &lt;code class=&quot;highlighter-rouge&quot;&gt;Resources.Load&lt;/code&gt; 即可，如下：&lt;/p&gt;
 
-&lt;p&gt;让我们看看 Node 中的实现：&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;    rend.material.mainTexture = Resources.Load(&quot;glass&quot;) as Texture;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;// 由于 Node 原生支持模块的作用域，并不需要额外的 wrapper&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;// &quot;as though the module was wrapped in a function&quot;&lt;/span&gt;
+&lt;p&gt;放在 Resources 中的好处就是方便，需要用的就放进去，用的时候直接取出来。但是在 &lt;a href=&quot;https://unity3d.com/learn/tutorials/temas/best-practices/resources-folder&quot;&gt;官方的最佳实践文档中&lt;/a&gt;，官方明确说明 &lt;code class=&quot;highlighter-rouge&quot;&gt;Don't use it&lt;/code&gt;。不推荐的原因包括：&lt;/p&gt;
 
-&lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;require&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'./a'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 加载模块（同步加载）&lt;/span&gt;
-&lt;span class=&quot;nx&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;doSomething&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;         &lt;span class=&quot;c1&quot;&gt;// 等上一句执行完才会执行&lt;/span&gt;
+&lt;ol&gt;
+  &lt;li&gt;将资源放于 Resources 中，在程序运行时，资源在内存的管理就不由程序员掌控。一个资源，例如图片，在使用过后是否要销毁，节省内存，还是要在内存中保留，方便后续其他界面使用？这个信息是 Unity 不能直接计算出的。&lt;/li&gt;
+  &lt;li&gt;在 Resources 文件夹中放置过多资源，会增加游戏的启动时间。游戏启动的时候，Splash Screen 播放的时候，会读取并索引 Resources 文件夹中的资源，索引的本质是一个&lt;a href=&quot;https://unity3d.com/learn/tutorials/temas/best-practices/resources-folder#footnote-1&quot;&gt;树结构&lt;/a&gt;。索引的建立所花的时间复杂度是 O(N log(N))，当 Resources 文件夹中有超过 10,000 个文件时，低端机上可能需要花费好几秒钟才能完成索引建立。&lt;/li&gt;
+  &lt;li&gt;如果将资源放在 Resources 文件夹中，资源会在编译时生成一个 Resources 资源包，这个资源包在编译之后是不能被修改的，也就减少了资源热更新方案中的灵活性。&lt;/li&gt;
+&lt;/ol&gt;
 
-&lt;span class=&quot;nx&quot;&gt;exports&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;b&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(){&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// 暴露 b 函数接口&lt;/span&gt;
-  &lt;span class=&quot;c1&quot;&gt;// do something&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;p&gt;综上所述，Resources 是一个短期使用方便，但是不利于长期项目发展的方案。对于快速做一个 demo 来说，是最佳选择。在正式项目中，对于部分常用，少量，不需要经常更新的资源，也可以放于 Resources 文件夹中。&lt;/p&gt;
+
+&lt;p&gt;特别是对于图片资源来说，有个奇怪的现象。如果图片放于 Asset Bundle 中，在储存时占用的空间是 Unity 资源序列化的大小，一个 100Kb 的 jpg 图片可能会序列化成 5M 的文件。但是在 Resources 文件夹中，只会占用 100Kb 的空间，并且在加载使用时没有太多区别。&lt;/p&gt;
+
+&lt;h3 id=&quot;asset-bundle&quot;&gt;Asset Bundle&lt;/h3&gt;
+
+&lt;p&gt;Asset Bundle 是 Unity &lt;a href=&quot;https://unity3d.com/learn/tutorials/topics/best-practices/assetbundle-fundamentals&quot;&gt;官方推荐的资源管理方案&lt;/a&gt;。建议大家都完整地阅读以下官方的文档，非常细致详细。&lt;/p&gt;
+
+&lt;p&gt;在使用 Asset Bundle 的时候有3个方面是首先要了解的：&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;Asset Bundle 是否压缩？使用哪种压缩方案？&lt;/li&gt;
+  &lt;li&gt;Asset Bundle 如何读取使用？&lt;/li&gt;
+  &lt;li&gt;如何从 Asset Bundle 中读取出对应的 Unity Object?&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h4 id=&quot;asset-bundle-的压缩方式以及分发&quot;&gt;Asset Bundle 的压缩方式以及分发&lt;/h4&gt;
+
+&lt;p&gt;Asset Bundle 在项目中往往包含了模型，动作，贴图等游戏必须的资源。在 Unity 中，对于压缩方式，我们有 3 种选择：&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;压缩方式&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;提取 Object&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;压缩后大小&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;解压速度&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;不压缩&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;提取时可以单独提取某个 Object。&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;无变化&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;不需解压&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;使用 &lt;code class=&quot;highlighter-rouge&quot;&gt;LZ4&lt;/code&gt; 算法压缩&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;压缩时可以独立压缩每一个 Asset Bundle 中的 Object，并且提取时可以单独提取某个 Object。&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;压缩率与 &lt;code class=&quot;highlighter-rouge&quot;&gt;zip&lt;/code&gt; 相似&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;解压快，大部分情况下无感知&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;使用 &lt;code class=&quot;highlighter-rouge&quot;&gt;LZMA&lt;/code&gt; 算法压缩&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;提取时只能一次加载出整个 Asset Bundle 中的内容，不能单独提取某个 Object&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;多数情况下压缩率比 &lt;code class=&quot;highlighter-rouge&quot;&gt;LZ4&lt;/code&gt; 略佳&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;解压慢&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;在&lt;a href=&quot;https://unity3d.com/learn/tutorials/topics/best-practices/assetbundle-usage-patterns&quot;&gt;压缩方式的官方文档&lt;/a&gt;中，根据不同的使用场景给出了对应的建议。对于我的项目来说，由于是 iOS 平台上的项目，包体大小是希望尽量小的，这样可以避免玩家下载的等待时间。同时，我们选择不在游戏开始时下载资源包，从而避免玩家在游戏开始时由于资源包下载导致的流逝。所以，我们最后决定使用 LZ4 压缩 Asset Bundle，并在分发时&lt;a href=&quot;https://unity3d.com/learn/tutorials/temas/best-practices/assetbundle-usage-patterns?playlist=30089#Distribution_Streaming_Assets&quot;&gt;绑定在安装包中发放&lt;/a&gt;。&lt;/p&gt;
+
+&lt;h4 id=&quot;asset-bundle-如何读取使用&quot;&gt;Asset Bundle 如何读取使用&lt;/h4&gt;
+
+&lt;p&gt;在&lt;a href=&quot;https://unity3d.com/learn/tutorials/topics/best-practices/assetbundle-fundamentals#Loading_AssetBundles&quot;&gt;官方关于AB包读取的部分&lt;/a&gt;也提供了5种不同的 API 进行 AB 包的读取。&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;AssetBundle.LoadFromMemory&lt;/code&gt; 官方推荐不使用该 API。原因是在使用时会使用相当于资源3倍的内存占用。这个 API 底层运行是会先将资源从可执行文件的代码区读取出来，复制到一块新开辟的内存空间，所以最终会占用3块内存：&lt;/p&gt;
+
+    &lt;ol&gt;
+      &lt;li&gt;可执行文件的代码区内存占用。&lt;/li&gt;
+      &lt;li&gt;新开辟的内存空间，用以储存从代码区拷贝出来的 AB 包。&lt;/li&gt;
+      &lt;li&gt;最终从 AB 中读取出来的 Unity Object&lt;/li&gt;
+    &lt;/ol&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;AssetBundle.LoadFromFile&lt;/code&gt; 高度优化过的用以读取未压缩或者 LZ4 压缩的 AB 包。在调用该 API 时，Unity 只会加载 AB 包的头文件，而不会读取真正的内容。主要的资源内容会在实例化 Unity Object，也就是调用 &lt;code class=&quot;highlighter-rouge&quot;&gt;AssetBundle.Load&lt;/code&gt; 时进行读取。使用时要注意这个懒读取的机制，避免在性能需求高的时候进行第一次 Load 操作。同时，在 Unity Editor 中，这个 API 会直接读取加载整个 AB 包的内容，和手机上不同，所以在 Unity Editor 进行性能分析时会发现资源加载所占用的性能特别多。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;AssetBundle.LoadFromStream&lt;/code&gt; 这个 API 没有过多介绍，应该是与 &lt;code class=&quot;highlighter-rouge&quot;&gt;AssetBundle.LoadFromFile&lt;/code&gt; 类似，但是形式上传入参数为一个数据流。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;UnityWebRequest&lt;/code&gt; 中的 &lt;a href=&quot;http://docs.unity3d.com/ScriptReference/Networking.DownloadHandlerAssetBundle.html?_ga=2.267324747.47480907.1518831956-488113989.1504339953&quot;&gt;DownloadHandlerAssetBundle&lt;/a&gt; API。&lt;/p&gt;
+
+    &lt;ul&gt;
+      &lt;li&gt;这个 API 是官方推荐的，用法也比较多样，最简单的例子可以在 &lt;a href=&quot;https://docs.unity3d.com/Manual/UnityWebRequest-DownloadingAssetBundle.html&quot;&gt;Downloading an AssetBundle from HTTP server&lt;/a&gt; 中找到。&lt;/li&gt;
+      &lt;li&gt;其中有一个功能是很有用的，就是它的缓存功能。当使用带版本号的 API &lt;code class=&quot;highlighter-rouge&quot;&gt;public static Networking.UnityWebRequest GetAssetBundle(string uri, uint version, uint crc);&lt;/code&gt; 来下载时，会先检查本地是否有该版本的 AssetBundle，如果有就直接使用本地的 AB 包，如果没有就从服务器下载后放入缓存中。&lt;/li&gt;
+      &lt;li&gt;&lt;strong&gt;注意&lt;/strong&gt;，在Unity的 AssetBundle 缓存系统里，（文件名，版本号）就标注了一个 AssetBundle，和 AB 包下载的 url 无关。所以 AB 包可以一开始放在安装包中，从安装包文件夹下载出来到缓存中，而需要更新时，从 CDN 服务器检查下载新版本即可，二者可以无缝兼容。关于缓存部分原理可以看 &lt;a href=&quot;https://docs.unity3d.com/ScriptReference/Networking.UnityWebRequest.GetAssetBundle.html&quot;&gt;UnityWebRequest 的介绍&lt;/a&gt;。&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;WWW.LoadFromCacheOrDownload&lt;/code&gt;。根据官方文档，从 2017.1 开始，这个 API 只是 &lt;code class=&quot;highlighter-rouge&quot;&gt;UnityWebRequest&lt;/code&gt; 的一个封装，并且将在未来 deprecated。 推荐大家尽量不使用这个 API。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h4 id=&quot;如何从-assetbundle-中读取-unity-object&quot;&gt;如何从 AssetBundle 中读取 Unity Object&lt;/h4&gt;
+
+&lt;p&gt;从 AssetBundle 中读取 Unity Object 主要有 3 个 API：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://docs.unity3d.com/ScriptReference/AssetBundle.LoadAsset.html&quot;&gt;LoadAsset&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://docs.unity3d.com/ScriptReference/AssetBundle.LoadAllAssets.html&quot;&gt;LoadAllAsset&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://docs.unity3d.com/ScriptReference/AssetBundle.LoadAssetWithSubAssets.html&quot;&gt;LoadAssetWithSubAssets&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;这三个 API 的使用选择上相对比较容易判断。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;当一个 AB 包中大部分(66%或者以上）的 Unity Object 都需要被加载时，使用 &lt;code class=&quot;highlighter-rouge&quot;&gt;LoadAllAsset&lt;/code&gt;。&lt;/li&gt;
+  &lt;li&gt;如果要加载多个 Unity Object，尽量多使用 &lt;code class=&quot;highlighter-rouge&quot;&gt;LoadAllAsset&lt;/code&gt; API，如果需要可以将其分为多个 AB 包。&lt;/li&gt;
+  &lt;li&gt;如果要加载的 Unity Object 引用了很多其他 Unity Object，例如一个角色形象，引用了 FBX 文件，动作，贴图等。此时使用 &lt;code class=&quot;highlighter-rouge&quot;&gt;LoadAssetWithSubAssets&lt;/code&gt;。&lt;/li&gt;
+  &lt;li&gt;其余的情况都使用 LoadAsset。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;最终解决方案&quot;&gt;最终解决方案&lt;/h2&gt;
+
+&lt;p&gt;在比较权衡了便捷性，用户体验，性能，资源占用等方面因素，我们最后使用了如下的一套方案。&lt;/p&gt;
+
+&lt;h3 id=&quot;资源储存&quot;&gt;资源储存&lt;/h3&gt;
+
+&lt;p&gt;绝大部分的资源使用 Asset Bundle 来进行序列化，主要包括模型，特效，界面 UI。少部分特殊资源储存于 Resources 文件夹中，这部分主要是加载界面，字体，小图标等资源。这样的分配可以让关键部件例如加载，文字提示等功能更加健壮，不会出现由于 AssetBundle 管理不善而出现的致命 Bug，同时也可以让后期更新模型特效资源更灵活。&lt;/p&gt;
+
+&lt;h3 id=&quot;资源压缩和分发&quot;&gt;资源压缩和分发&lt;/h3&gt;
+
+&lt;p&gt;最初，我们在 Asset Bundle 分发方面使用了热加载的方案，就是在游戏开始时检测资源包更新，下载最新资源包后，再解压资源包，进入游戏。这个流程的好处在于初始的包体非常小，可以减小至 100 MB 以内。但是这个流程的弊病也很严重，就是玩家需要一个 “下载资源包” 的过程，并且这个过程需要占用玩家的手机使用时间，不能在后台进行。对于成熟的游戏例如 “王者荣耀” 来说，玩家的认可度足够高，是可以接受这个时间付出的。但是对于一个新生的游戏，这个过程导致的用户流失却是我们不能承受的，所以我们选择了第二套方案。&lt;/p&gt;
+
+&lt;p&gt;第二套方案是在安装包中附带了对应版本的 Asset Bundle 并进行了压缩，在游戏开启时，只需要进行一次十几秒的解压过程即可开始游戏。这是一个端游常用的方案，在游戏发行的初期可以帮助我们避免由于 “下载资源包” 导致的用户流失。&lt;/p&gt;
+
+&lt;p&gt;在今后的迭代中，我们还准备做进一步的改进，融合第一套和第二套方案。第二套方案在游戏启动时，同样可以检测资源包的更新，通过资源包的哈希值以及更新时间，判断是否需要下载更新。这样对于第一次下载游戏的用户，可以避免由 “下载资源包” 导致的用户流失，而对于第二次更新游戏的用户，可以一定程度上避免全量更新。&lt;/p&gt;
+
+&lt;h3 id=&quot;资源的使用&quot;&gt;资源的使用&lt;/h3&gt;
+
+&lt;p&gt;在资源使用上，主要流程还是 预加载资源包 – 使用克隆资源 – 释放资源包，但是由于不同模块间可能会需要使用相同的资源，所以模块间仍然需要进行协作来优化资源的使用。这里主要有一个优化点。&lt;/p&gt;
+
+&lt;p&gt;引用计数。在加载使用资源包的流程，其实和内存管理中 开辟内存空间 – 使用内存空间 – 释放内存空间 的流程很相似。所以我们也可以将内存管理中常用的手段拿来使用。内存管理中除了我们都熟悉的 Garbage Collection 之外，还有 iOS 中使用的 ARC (Automatic Reference Counting)，自动引用计数。当一个资源被引用使用时，我们将其的计数加一，当其被释放时，将其的计数减一，如果计数为 0，则将其释放。这样一来，我们既可以准确及时地释放资源，又可以最大程度地避免资源管理上的混乱。&lt;/p&gt;
+
+&lt;h3 id=&quot;经验总结&quot;&gt;经验总结&lt;/h3&gt;
+
+&lt;p&gt;Unity 在目前的 3D 开发引擎里，算是社区很健全，同时文档也很丰富的一个引擎。我们遇到的绝大部分问题都是其他开发者踩过的坑，如果在一个方面停滞不前，没有好的解决方案时，不妨系统地静下心来通读一下文档。欲速则不达，静下心思考之后，往往能找到更优雅地捷径。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;如果你看到这里，一定是真爱！欢迎看看我的其他 &lt;a href=&quot;http://chendi.me/&quot;&gt;blog&lt;/a&gt;。O(∩_∩)O&lt;/p&gt;
+</description>
+        <pubDate>Wed, 20 Dec 2017 08:15:00 +0800</pubDate>
+        <link>http://localhost:4000/2017/12/20/unity-asset-management/</link>
+        <guid isPermaLink="true">http://localhost:4000/2017/12/20/unity-asset-management/</guid>
+        
+        <category>Tech</category>
+        
+        <category>Unity</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>Amoy</title>
+        <description>&lt;p&gt;在其他城市航拍练手了这么几次之后，终于有机会给厦门拍一段视频了。&lt;/p&gt;
+
+&lt;p&gt;其实关于厦门的航拍视频已经不少，但这次金砖会议之后，厦门又比以往更干净漂亮了。真好。&lt;/p&gt;
+
+&lt;p&gt;不知道《航拍中国》什么时候会来厦门取景呢，期待。&lt;/p&gt;
+
+&lt;video width=&quot;100%&quot; poster=&quot;/img/in-post/2017-Amoy/amoy-poster.jpg&quot; controls=&quot;&quot; preload=&quot;none&quot; type=&quot;video/mp4&quot;&gt;  
+&lt;source src=&quot;http://video.chendi.me/videos/Amoy2017.mp4&quot; /&gt;  
+&lt;/video&gt;
+
+&lt;p&gt;音乐：&lt;/p&gt;
+
+&lt;p&gt;“Sky Full Of Stars” written by Coldplay &amp;amp; Swedish DJ Avicii&lt;/p&gt;
+
+&lt;p&gt;Performed by:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Jon Schmidt: Piano&lt;/li&gt;
+  &lt;li&gt;Steven Sharp Nelson: Cello, cello percussion&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Original Track: https://thepianoguys.com/shop/albums/uncharted-deluxe-edition/&lt;/p&gt;
+
+&lt;p&gt;视频拍摄与剪辑：陈迪&lt;/p&gt;
+
+&lt;p&gt;设备：DJI Mavic&lt;/p&gt;
+
+</description>
+        <pubDate>Thu, 05 Oct 2017 22:23:00 +0800</pubDate>
+        <link>http://localhost:4000/2017/10/05/Amoy/</link>
+        <guid isPermaLink="true">http://localhost:4000/2017/10/05/Amoy/</guid>
+        
+        <category>DJI</category>
+        
+        <category>航拍</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>Support grpc library on Unity</title>
+        <description>&lt;h2 id=&quot;前言&quot;&gt;前言&lt;/h2&gt;
+
+&lt;p&gt;grpc 是由 google 推出的开源 rpc 框架。除了支持单向的 rpc 调用之外，同时还支持双向流通信，对于想要快速搭建一个基于长连接的应用是个不错的选择。&lt;/p&gt;
+
+&lt;p&gt;由于 Unity 本身的特性，虽然它是使用 C# 进行编程的，但是在打包成 iOS 或者安卓的时候需要进行一次转换，将 C# 代码转译成 C++ 代码，所以我们需要进行一些额外的工作，将 grpc 的 C# 库转为支持 Unity 的版本。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;c-脚本初步测试&quot;&gt;C# 脚本初步测试&lt;/h2&gt;
+
+&lt;p&gt;首先，我们可以直接将 &lt;a href=&quot;https://github.com/grpc/grpc/tree/master/src/csharp&quot;&gt;grpc 的官方库&lt;/a&gt; 的代码文件拷贝进工程中，并且用 &lt;a href=&quot;https://github.com/grpc/grpc/tree/master/examples/csharp/route_guide&quot;&gt;route guide example&lt;/a&gt; 来测试一下在 Unity 中 grpc 是否能用。&lt;/p&gt;
+
+&lt;p&gt;在编译时，我们会发现它依赖于 &lt;a href=&quot;https://www.nuget.org/packages/Grpc.Core/&quot;&gt;Grpc.Core&lt;/a&gt; 库，这个库是一个基于 C 的底层库，并不是由 C# 编写的。 nuget 包生成的 c# 动态库并不能直接使用，因为 iOS 是静态编译的，所以这是我们第一个要为 Unity 处理的部分。&lt;/p&gt;
+
+&lt;h2 id=&quot;生成-arm64-平台上可用的静态库&quot;&gt;生成 arm64 平台上可用的静态库&lt;/h2&gt;
+
+&lt;p&gt;由于 iOS 是静态编译后生成一个可执行文件的，所以官方提供的 C# 动态库就不可用了，这时候我们需要自己编译一个静态库。 iOS 平台使用的架构是 arm 架构，由于现在基本都是64位的 iphone，所以直接用 arm64 作为目标平台即可。&lt;/p&gt;
+
+&lt;h3 id=&quot;修改-makefile&quot;&gt;修改 Makefile&lt;/h3&gt;
+
+&lt;p&gt;在官方提供的 grpc.core 的 Makefile 中，我们稍作修改，可以将编译出的 .a 文件调整为 arm64 架构下可用的。其中 iPhone SDK 的版本可根据自行需求进行修改。&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt; VALID_CONFIG_opt = 1
+&lt;span class=&quot;gd&quot;&gt;-CC_opt = $(DEFAULT_CC)
+-CXX_opt = $(DEFAULT_CXX)
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+IOSFLAGS =  -arch arm64  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS10.3.sdk -fembed-bitcode
++CC_opt = $(DEFAULT_CC) $(IOSFLAGS) 
++CXX_opt = $(DEFAULT_CXX) $(IOSFLAGS)
+&lt;/span&gt; LD_opt = $(DEFAULT_CC)
+ LDXX_opt = $(DEFAULT_CXX)
+ CXXFLAGS_opt = -fno-exceptions
+&lt;span class=&quot;gu&quot;&gt;@@ -339,7 +340,7 @@ HOST_LDXX ?= $(LDXX)
+&lt;/span&gt; 
+ CFLAGS += -std=c99 -Wsign-conversion -Wconversion $(W_SHADOW) $(W_EXTRA_SEMI)
+ CXXFLAGS += -std=c++11
+&lt;span class=&quot;gd&quot;&gt;-CPPFLAGS += -g -Wall -Wextra -Werror -Wno-long-long -Wno-unused-parameter -DOSATOMIC_USE_INLINED=1
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+CPPFLAGS += -g -Wall -Wextra -Wno-long-long -Wno-unused-parameter -DOSATOMIC_USE_INLINED=1
+&lt;/span&gt; LDFLAGS += -g
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;然后运行&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;➜  grpc git:&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;v1.4.x&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; ✗ make
+...
+...
+➜  grpc git:&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;v1.4.x&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; ✗ &lt;span class=&quot;nb&quot;&gt;ls&lt;/span&gt; ./libs/opt/&lt;span class=&quot;k&quot;&gt;*&lt;/span&gt;.a
+./libs/opt/libares.a                ./libs/opt/libgrpc_cronet.a
+./libs/opt/libboringssl.a           ./libs/opt/libgrpc_plugin_support.a
+./libs/opt/libgpr.a                 ./libs/opt/libgrpc_unsecure.a
+./libs/opt/libgrpc.a                ./libs/opt/libz.a
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;此时我们就有了 runtime 所需的静态库，我们将 &lt;code class=&quot;highlighter-rouge&quot;&gt;libgrpc.a&lt;/code&gt; 复制到 &lt;code class=&quot;highlighter-rouge&quot;&gt;Assets/Plugins/iOS&lt;/code&gt; 文件夹中，这样在导出 xcode 工程时就会自动加入 xcode 项目 link line 中。&lt;/p&gt;
+
+&lt;h3 id=&quot;获取-c-客户端所需的静态库&quot;&gt;获取 C# 客户端所需的静态库&lt;/h3&gt;
+
+&lt;p&gt;除了 grpc.core 的静态库之外，我们还需要一个 csharp 的特制静态库，可以通过以下命令获得：&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;➜  grpc git:(v1.4.x) ✗ gcc -arch arm64  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS10.3.sdk -I. -I./include -c -o grpc_csharp_ext.o src/csharp/ext/grpc_csharp_ext.c
+➜  grpc git:(v1.4.x) ✗ ar -rsc grpc_csharp_ext.a grpc_csharp_ext.o
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;然后再将 grpc_csharp_ext.a 复制到 &lt;code class=&quot;highlighter-rouge&quot;&gt;Assets/Plugins/iOS&lt;/code&gt; 文件夹中。&lt;/p&gt;
+
+&lt;h2 id=&quot;修改-grpccore-代码中的动态库加载&quot;&gt;修改 Grpc.Core 代码中的动态库加载&lt;/h2&gt;
+
+&lt;p&gt;为了应对 Grpc.Core 实现中使用的动态库加载，与 iOS 静态编译的做法冲突的情况，我们需要修改一下文件：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;language-git&quot;&gt;    modified:   src/csharp/Grpc.Core/Internal/DefaultSslRootsOverride.cs
+    modified:   src/csharp/Grpc.Core/Internal/NativeExtension.cs
+    modified:   src/csharp/Grpc.Core/Internal/NativeLogRedirector.cs
+    modified:   src/csharp/Grpc.Core/Internal/NativeMethods.cs
 &lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
 
-&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;exports&lt;/code&gt;是一个内置对象，就像&lt;code class=&quot;highlighter-rouge&quot;&gt;require&lt;/code&gt;是一个内置加载函数一样。如果你希望直接赋值一个完整的对象或者构造函数，覆写&lt;code class=&quot;highlighter-rouge&quot;&gt;module.exports&lt;/code&gt;就可以了。&lt;/p&gt;
+&lt;p&gt;下面我们一个一个来看。&lt;/p&gt;
 
-&lt;p&gt;CommonJS 前身叫 ServerJS ，&lt;strong&gt;后来希望能更加 COMMON，成为通吃各种环境的模块规范，改名为 CommonJS&lt;/strong&gt; 。CommonJS 最初只专注于 Server-side 而非浏览器环境，因此它采用了同步加载的机制，这对服务器环境（硬盘 I/O 速度）不是问题，而对浏览器环境（网速）来说并不合适。&lt;/p&gt;
+&lt;h3 id=&quot;defaultsslrootsoverridecs&quot;&gt;DefaultSslRootsOverride.cs&lt;/h3&gt;
 
-&lt;p&gt;因此，各种适用于浏览器环境的模块框架与标准逐个诞生，他们的共同点是：&lt;/p&gt;
+&lt;p&gt;首先是 &lt;code class=&quot;highlighter-rouge&quot;&gt;DefaultSslRootsOverride.cs&lt;/code&gt; 文件中，加载了预存在本地的证书文件，应该是用来做 certificate pinning 的吧。这部分可以暂时去掉，等需要用到这部分功能时再加入。&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gd&quot;&gt;--- a/src/csharp/Grpc.Core/Internal/DefaultSslRootsOverride.cs
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/src/csharp/Grpc.Core/Internal/DefaultSslRootsOverride.cs
+&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -56,6 +56,7 @@ namespace Grpc.Core.Internal
+&lt;/span&gt;         {
+             lock (staticLock)
+             {
+&lt;span class=&quot;gi&quot;&gt;+                               /*
+&lt;/span&gt;                 var stream = typeof(DefaultSslRootsOverride).GetTypeInfo().Assembly.GetManifestResourceStream(RootsPemResourceName);
+                 if (stream == null)
+                 {
+&lt;span class=&quot;gu&quot;&gt;@@ -66,6 +67,7 @@ namespace Grpc.Core.Internal
+&lt;/span&gt;                     var pemRootCerts = streamReader.ReadToEnd();
+                     native.grpcsharp_override_default_ssl_roots(pemRootCerts);
+                 }
+&lt;span class=&quot;gi&quot;&gt;+                */
+&lt;/span&gt;             }
+         }
+     }
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;nativeextensioncs&quot;&gt;NativeExtension.cs&lt;/h3&gt;
+
+&lt;p&gt;在这里我们需要修改动态库加载的函数 &lt;code class=&quot;highlighter-rouge&quot;&gt;Load()&lt;/code&gt;，要做两部分考虑：&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;在 iOS 平台上，不需要加载动态库，可以直接跳过这个函数的逻辑，使用 Unity Macro 来实现:&lt;/strong&gt;&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gd&quot;&gt;--- a/src/csharp/Grpc.Core/Internal/NativeExtension.cs
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/src/csharp/Grpc.Core/Internal/NativeExtension.cs
+&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -93,7 +93,10 @@ namespace Grpc.Core.Internal
+&lt;/span&gt;         /// Detects which configuration of native extension to load and load it.
+         /// &amp;lt;/summary&amp;gt;
+         private static UnmanagedLibrary Load()
+&lt;span class=&quot;gd&quot;&gt;-        {
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+               {
++                       #if UNITY_IOS
++                               return null;
++                       #endif
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;strong&gt;在 PC 或者 MAC 上，仍然要加载动态库并且运行，否则就无法在 PC 或者 Mac 上调试游戏了，所以我们需要修改一下寻找插件的路径：&lt;/strong&gt;&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gu&quot;&gt;@@ -111,8 +114,10 @@ namespace Grpc.Core.Internal
+&lt;/span&gt;             var netCorePublishedAppStylePath = Path.Combine(assemblyDirectory, runtimesDirectory, GetNativeLibraryFilename());
+             var netCoreAppStylePath = Path.Combine(assemblyDirectory, &quot;../..&quot;, runtimesDirectory, GetNativeLibraryFilename());
+ 
+&lt;span class=&quot;gi&quot;&gt;+                       var unityPath = Path.Combine (assemblyDirectory, &quot;../../Assets/Plugins/GrpcLib&quot;, runtimesDirectory, GetNativeLibraryFilename ());
++
+&lt;/span&gt;             // Look for all native library in all possible locations in given order.
+&lt;span class=&quot;gd&quot;&gt;-            string[] paths = new[] { classicPath, netCorePublishedAppStylePath, netCoreAppStylePath};
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+                       string[] paths = new[] { classicPath, netCorePublishedAppStylePath, netCoreAppStylePath, unityPath};
+&lt;/span&gt;             return new UnmanagedLibrary(paths);
+         }
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;nativelogredirectorcs&quot;&gt;NativeLogRedirector.cs&lt;/h3&gt;
+
+&lt;p&gt;在 C 代码回调 C# 代码时，由于 IL2CPP 会对函数名进行 &lt;a href=&quot;https://www.ibm.com/support/knowledgecenter/en/ssw_ibm_i_72/rzarg/name_mangling.htm&quot;&gt;name mangling&lt;/a&gt;，所以会找不到函数，所以需要用 &lt;code class=&quot;highlighter-rouge&quot;&gt;MonoPInvokeCallback&lt;/code&gt; 进行修饰，避免因为名称改变而无法调用：&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gd&quot;&gt;--- a/src/csharp/Grpc.Core/Internal/NativeLogRedirector.cs
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/src/csharp/Grpc.Core/Internal/NativeLogRedirector.cs
+&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -66,6 +66,7 @@ namespace Grpc.Core.Internal
+&lt;/span&gt;             }
+         }
+ 
+&lt;span class=&quot;gi&quot;&gt;+        [AOT.MonoPInvokeCallback(typeof(GprLogDelegate))]
+&lt;/span&gt;         private static void HandleWrite(IntPtr fileStringPtr, int line, ulong threadId, IntPtr severityStringPtr, IntPtr msgPtr)
+         {
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;另外可以修改一下输出到 Console 时调用的函数：&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gu&quot;&gt;@@ -97,7 +98,11 @@ namespace Grpc.Core.Internal
+&lt;/span&gt;             }
+             catch (Exception e)
+             {
+&lt;span class=&quot;gd&quot;&gt;-                Console.WriteLine(&quot;Caught exception in native callback &quot; + e);
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+#if UNITY_METRO
++                               UnityEngine.Debug.Log(&quot;Caught exception in native callback &quot; + e);
++#else
++                               Console.WriteLine(&quot;Caught exception in native callback &quot; + e);
++#endif
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;nativemethodscs&quot;&gt;NativeMethods.cs&lt;/h3&gt;
+
+&lt;p&gt;在这里，grpc 调用了 Grpc.Core 中的 C 代码。在 Unity 中，需要使用 &lt;a href=&quot;https://docs.unity3d.com/Manual/PluginsForIOS.html&quot;&gt;Unity 官方要求的方式&lt;/a&gt;，定义原生函数的原型，并且在初始化时，设置进去。&lt;/p&gt;
+
+&lt;p&gt;由于 iOS 上用的是静态编译，所以当平台为 iOS 时，pluginName 设为 “__Internal”&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gd&quot;&gt;--- a/src/csharp/Grpc.Core/Internal/NativeMethods.cs
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/src/csharp/Grpc.Core/Internal/NativeMethods.cs
+&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -51,6 +51,14 @@ namespace Grpc.Core.Internal
+&lt;/span&gt;     /// &amp;lt;/summary&amp;gt;
+     internal class NativeMethods
+     {
+&lt;span class=&quot;gi&quot;&gt;+#if UNITY_EDITOR               
++               private const string pluginName = &quot;grpc_csharp_ext&quot;;            
++#elif UNITY_IOS || UNITY_TVOS || UNITY_WEBGL           
++               public const string pluginName = &quot;__Internal&quot;;          
++#else          
++               public const string pluginName = &quot;grpc_csharp_ext&quot;;             
++#endif
++
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;定义 C API&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gi&quot;&gt;+               static class NativeCalls
++               {
++                       [DllImport(pluginName)]
++                       internal static extern void grpcsharp_init();
++
++                       [DllImport(pluginName)]
++                       internal static extern void grpcsharp_shutdown();
+&lt;/span&gt;...
+...
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;修改初始化方式&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;         public NativeMethods(UnmanagedLibrary library)
+         {
+&lt;span class=&quot;gi&quot;&gt;+               #if UNITY_IOS
++                       this.grpcsharp_init = NativeCalls.grpcsharp_init;
++                       this.grpcsharp_shutdown = NativeCalls.grpcsharp_shutdown;
++                       this.grpcsharp_version_string = NativeCalls.grpcsharp_version_string;
+&lt;/span&gt;...
+...
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;上面这部分代码 diff 省略了许多函数，基本上所有 Grpc.Core 中的函数都需要和 &lt;code class=&quot;highlighter-rouge&quot;&gt;grpcsharp_init&lt;/code&gt; 一样的处理，由于篇幅限制，就不把所有函数都的 diff 都放上来了。&lt;/p&gt;
+
+&lt;h3 id=&quot;调试打包&quot;&gt;调试打包&lt;/h3&gt;
+
+&lt;p&gt;在最后，我们在真机和 Unity Editor 中测试了一下，所有类型的 grpc 请求都可以正常进行。唯一有些意外的就是，在资源释放时，记得要调用 &lt;code class=&quot;highlighter-rouge&quot;&gt;channel.Dispose()&lt;/code&gt;，如果不调用的话，进程就会卡死。这个原因目前没有去仔细研究过，官方 demo 中似乎也没有。&lt;/p&gt;
+
+&lt;h3 id=&quot;经验总结&quot;&gt;经验总结&lt;/h3&gt;
+
+&lt;p&gt;这个问题其实相对也是比较棘手的，查了许多资料，也参考了一下日本游戏界前辈的做法 &lt;a href=&quot;https://github.com/neuecc/MagicOnion&quot;&gt;Magic Onion Project&lt;/a&gt;。不过在解决的时候没有马上把博客写出来，所以现在总结起来也没有太多感想了。&lt;/p&gt;
+
+&lt;p&gt;以后就算是忙，也还是要及时总结才行。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;如果你看到这里，一定是真爱！欢迎看看我的其他 &lt;a href=&quot;http://chendi.me/&quot;&gt;blog&lt;/a&gt;。O(∩_∩)O&lt;/p&gt;
+</description>
+        <pubDate>Sun, 30 Jul 2017 08:15:00 +0800</pubDate>
+        <link>http://localhost:4000/2017/07/30/unity-grpc-plugin-zh/</link>
+        <guid isPermaLink="true">http://localhost:4000/2017/07/30/unity-grpc-plugin-zh/</guid>
+        
+        <category>Tech</category>
+        
+        <category>Unity</category>
+        
+        <category>grpc</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>Support grpc library on Unity</title>
+        <description>&lt;h2 id=&quot;preface&quot;&gt;Preface&lt;/h2&gt;
+
+&lt;p&gt;Grpc is an open-sourced rpc framework developed by google。It support both unary remote procedual call and bi-directional streaming. For those who wants to build a client-server bi-directional persistent connection, it’s a simple and modern solution.&lt;/p&gt;
+
+&lt;p&gt;Grpc itself support multiple language and multiple platform, but Unity is not one of them for now.&lt;/p&gt;
+
+&lt;p&gt;Even though we develop most of the Unity project in C#, the Unity runtime is not running C# script directly. On Unity iOS platform specifically, it will use L2CPP (An ahead-of-time compiler) to translate c# script into c++ code, then finally compile and run on iOS devices. For us, if we want to use grpc in Unity project, we have some additional work to do.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;testing-grpc-c-library&quot;&gt;Testing grpc C# library&lt;/h2&gt;
+
+&lt;p&gt;First of all, we can directly copy the &lt;a href=&quot;https://github.com/grpc/grpc/tree/master/src/csharp&quot;&gt;grpc c# source code&lt;/a&gt; into Unity project and use &lt;a href=&quot;https://github.com/grpc/grpc/tree/master/examples/csharp/route_guide&quot;&gt;route guide example&lt;/a&gt; to test the basic feature of grpc.&lt;/p&gt;
+
+&lt;p&gt;During compilation, we will find the C# grpc library is depend on &lt;a href=&quot;https://www.nuget.org/packages/Grpc.Core/&quot;&gt;Grpc.Core&lt;/a&gt; Library. &lt;em&gt;Grpc.Core&lt;/em&gt; is a C library and official C# grpc library compile &lt;em&gt;Grpc.Core&lt;/em&gt; into a shared library. Since iOS application can only depend on static library, we have to static compile the &lt;em&gt;Grpc.Core&lt;/em&gt; library and use it in iOS devices.&lt;/p&gt;
+
+&lt;p&gt;Why don’t we just copy the C code into the xcode project and use xcode to pull it in? In the core library, there are bunch of relative include like &lt;em&gt;#include “src/core/…“&lt;/em&gt;, which is not easy to work around in xcode project.&lt;/p&gt;
+
+&lt;h2 id=&quot;generate-static-library-for-arm64-platform&quot;&gt;Generate static library for arm64 platform&lt;/h2&gt;
+
+&lt;p&gt;During this blog, we are focusing on iOS arm64 platform as an example, for other platform this might be apply.&lt;/p&gt;
+
+&lt;p&gt;Since iOS need an static linked library instead of dynamicly load shared library, we can’t simply use the packge from &lt;em&gt;nuget.org&lt;/em&gt;. If we are simply supporting iOS arm64 architecture, we can just set the build target to arm64 and compile it on a arm64 machine (eg. Mac OS X)&lt;/p&gt;
+
+&lt;p&gt;If we want to support all architecture, then we will need to cross-compile a &lt;a href=&quot;https://en.wikipedia.org/wiki/Fat_binary&quot;&gt;fat binary&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;change-makefile&quot;&gt;Change Makefile&lt;/h3&gt;
+
+&lt;p&gt;We can make some changes to the official Makefile for grpc.core, then the binary will be able to use in iOS build. There are two things we need to change.&lt;/p&gt;
 
 &lt;ul&gt;
-  &lt;li&gt;采用异步加载（预先加载所有依赖的模块后回调执行，符合浏览器的网络环境）&lt;/li&gt;
-  &lt;li&gt;虽然代码风格不同，但其实都可以看作 CommonJS Modules 语法的变体。&lt;/li&gt;
-  &lt;li&gt;都在向着 &lt;strong&gt;COMMON&lt;/strong&gt; 的方向进化：&lt;strong&gt;兼容不同风格，兼容浏览器和服务器两种环境&lt;/strong&gt;&lt;/li&gt;
+  &lt;li&gt;Add -isysroot config. This decides which version of iOS we can support, using a lower level of OS can make it more compatible.&lt;/li&gt;
+  &lt;li&gt;Add -arch arm64 to make sure it build for arm64&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;本文接下来要讨论的典例是：&lt;/p&gt;
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt; VALID_CONFIG_opt = 1
+&lt;span class=&quot;gd&quot;&gt;- CC_opt = $(DEFAULT_CC)
+- CXX_opt = $(DEFAULT_CXX)
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+ IOSFLAGS =  -arch arm64  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS10.3.sdk -fembed-bitcode
++ CC_opt = $(DEFAULT_CC) $(IOSFLAGS) 
++ CXX_opt = $(DEFAULT_CXX) $(IOSFLAGS)
+&lt;/span&gt; LD_opt = $(DEFAULT_CC)
+ LDXX_opt = $(DEFAULT_CXX)
+ CXXFLAGS_opt = -fno-exceptions
+&lt;span class=&quot;gu&quot;&gt;@@ -339,7 +340,7 @@ HOST_LDXX ?= $(LDXX)
+&lt;/span&gt; 
+ CFLAGS += -std=c99 -Wsign-conversion -Wconversion $(W_SHADOW) $(W_EXTRA_SEMI)
+ CXXFLAGS += -std=c++11
+&lt;span class=&quot;gd&quot;&gt;- CPPFLAGS += -g -Wall -Wextra -Werror -Wno-long-long -Wno-unused-parameter -DOSATOMIC_USE_INLINED=1
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+ CPPFLAGS += -g -Wall -Wextra -Wno-long-long -Wno-unused-parameter -DOSATOMIC_USE_INLINED=1
+&lt;/span&gt; LDFLAGS += -g
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;ul&gt;
-  &lt;li&gt;RequireJS &amp;amp; AMD（异步加载，预执行，依赖前置。默认推荐 AMD 写法）&lt;/li&gt;
-  &lt;li&gt;SeaJS &amp;amp; CMD（异步加载，懒执行，依赖就近，默认推荐 CommonJS 写法）&lt;/li&gt;
-&lt;/ul&gt;
+&lt;p&gt;Then run&lt;/p&gt;
 
-&lt;h2 id=&quot;history&quot;&gt;History&lt;/h2&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;➜  grpc git:&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;v1.4.x&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; ✗ make
+...
+...
+➜  grpc git:&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;v1.4.x&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; ✗ &lt;span class=&quot;nb&quot;&gt;ls&lt;/span&gt; ./libs/opt/&lt;span class=&quot;k&quot;&gt;*&lt;/span&gt;.a
+./libs/opt/libares.a                ./libs/opt/libgrpc_cronet.a
+./libs/opt/libboringssl.a           ./libs/opt/libgrpc_plugin_support.a
+./libs/opt/libgpr.a                 ./libs/opt/libgrpc_unsecure.a
+./libs/opt/libgrpc.a                ./libs/opt/libz.a
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;!--&lt;h2 id=&quot;history&quot;&gt; History &lt;/h2&gt;--&gt;
+&lt;p&gt;Now we have the library we need to grpc runtime. We can copy the &lt;code class=&quot;highlighter-rouge&quot;&gt;libgrpc.a&lt;/code&gt; to Unity project &lt;code class=&quot;highlighter-rouge&quot;&gt;Assets/Plugins/iOS&lt;/code&gt; directory. Unity will ensure this library is added to the link line of the xcode project.&lt;/p&gt;
 
-&lt;blockquote&gt;
-  &lt;p&gt;此段落参考自玉伯的 &lt;a href=&quot;https://github.com/seajs/seajs/issues/588&quot;&gt;前端模块化开发那点历史&lt;/a&gt;&lt;/p&gt;
-&lt;/blockquote&gt;
+&lt;h3 id=&quot;build-grpc-c-extension-library&quot;&gt;build grpc c# extension library&lt;/h3&gt;
 
-&lt;p&gt;09-10 年间，CommonJS（那时还叫 ServerJS） 社区推出 &lt;a href=&quot;http://wiki.commonjs.org/wiki/Modules&quot;&gt;Modules/1.0&lt;/a&gt; 规范，并且在 Node.js 等环境下取得了很不错的实践。&lt;/p&gt;
+&lt;p&gt;Besides the grpc.core static library, we also need a csharp specific library, we can get the library by running:&lt;/p&gt;
 
-&lt;p&gt;09年下半年这帮充满干劲的小伙子们想把 ServerJS 的成功经验进一步推广到浏览器端，于是将社区改名叫 CommonJS，同时激烈争论 Modules 的下一版规范。分歧和冲突由此诞生，逐步形成了三大流派：&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;➜  grpc git:(v1.4.x) ✗ clang -arch arm64  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS10.3.sdk -I. -I./include -c -o grpc_csharp_ext.o src/csharp/ext/grpc_csharp_ext.c
+➜  grpc git:(v1.4.x) ✗ ar -rsc grpc_csharp_ext.a grpc_csharp_ext.o
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Then we will copy &lt;code class=&quot;highlighter-rouge&quot;&gt;grpc_csharp_ext.a&lt;/code&gt; into Unity project’s &lt;code class=&quot;highlighter-rouge&quot;&gt;Assets/Plugins/iOS&lt;/code&gt; directory.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Some thing to note:&lt;/strong&gt; If you want to support &lt;a href=&quot;https://docs.unity3d.com/Manual/AppThinning.html&quot;&gt;App thining&lt;/a&gt; feature, which will require a bitcode support of all dependent library. In order to generate a bitcode enabled library, we need to:&lt;/p&gt;
 
 &lt;ol&gt;
-  &lt;li&gt;&lt;strong&gt;Modules/1.x&lt;/strong&gt; 流派。这个观点觉得 1.x 规范已经够用，只要移植到浏览器端就好。要做的是新增 &lt;a href=&quot;http://wiki.commonjs.org/wiki/Modules/Transport&quot;&gt;Modules/Transport&lt;/a&gt; 规范，即在浏览器上运行前，先通过转换工具将模块转换为符合 Transport 规范的代码。主流代表是服务端的开发人员。现在值得关注的有两个实现：越来越火的 component 和走在前沿的 es6 module transpiler。&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;Modules/Async&lt;/strong&gt; 流派。这个观点觉得浏览器有自身的特征，不应该直接用 Modules/1.x 规范。这个观点下的典型代表是 &lt;a href=&quot;http://wiki.commonjs.org/wiki/Modules/AsynchronousDefinition&quot;&gt;AMD&lt;/a&gt; 规范及其实现 &lt;a href=&quot;http://requirejs.org/&quot;&gt;RequireJS&lt;/a&gt;。这个稍后再细说。&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;Modules/2.0&lt;/strong&gt; 流派。这个观点觉得浏览器有自身的特征，不应该直接用 Modules/1.x 规范，但应该尽可能与 Modules/1.x 规范保持一致。这个观点下的典型代表是 BravoJS 和 FlyScript 的作者。BravoJS 作者对 CommonJS 的社区的贡献很大，这份 Modules/2.0-draft 规范花了很多心思。FlyScript 的作者提出了 Modules/Wrappings 规范，这规范是 CMD 规范的前身。可惜的是 BravoJS 太学院派，FlyScript 后来做了自我阉割，将整个网站（flyscript.org）下线了。这个观点在本文中的典型代表就是 SeaJS 和 CMD 了&lt;/li&gt;
+  &lt;li&gt;Use clang as our compiler.&lt;/li&gt;
+  &lt;li&gt;Add option &lt;code class=&quot;highlighter-rouge&quot;&gt;-fembed-bitcode&lt;/code&gt; to the compilation flags.&lt;/li&gt;
 &lt;/ol&gt;
 
-&lt;p&gt;补一嘴：阿里 KISSY 的 KMD 其实跟 AMD 非常类似，只是用 &lt;code class=&quot;highlighter-rouge&quot;&gt;add&lt;/code&gt;和&lt;code class=&quot;highlighter-rouge&quot;&gt;use&lt;/code&gt; 两个源自于 YUI Modules 的函数名替换了 &lt;code class=&quot;highlighter-rouge&quot;&gt;define&lt;/code&gt; 和 &lt;code class=&quot;highlighter-rouge&quot;&gt;require&lt;/code&gt; ，但其原理更接近 RequireJS ，与 YUI Modules 的 &lt;code class=&quot;highlighter-rouge&quot;&gt;Y&lt;/code&gt; 沙箱 Attach 机制并不相同&lt;/p&gt;
+&lt;h2 id=&quot;change-grpccore-code-to-use-static-link&quot;&gt;Change Grpc.Core code to use static link&lt;/h2&gt;
 
-&lt;h2 id=&quot;requirejs--amd&quot;&gt;RequireJS &amp;amp; AMD&lt;/h2&gt;
+&lt;p&gt;Since we are using static link instead of dynmaic load, we need to change the source code of Grpc.Core. Here are some related code:&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&quot;http://wiki.commonjs.org/wiki/Modules/AsynchronousDefinition&quot;&gt;AMD (Async Module Definition)&lt;/a&gt; 是 RequireJS 在推广过程中对模块定义的规范化产出。&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;RequireJS is a JavaScript file and module loader. It is optimized for in-browser use, but it can be used in other JavaScript environments&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;RequireJS 主要解决的还是 CommonJS 同步加载脚本不适合浏览器 这个问题：&lt;/p&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;//CommonJS&lt;/span&gt;
-
-&lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Employee&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;require&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;types/Employee&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-
-&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Programmer&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(){&lt;/span&gt;
-    &lt;span class=&quot;c1&quot;&gt;//do something&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;  
-
-&lt;span class=&quot;nx&quot;&gt;Programmer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;prototype&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Employee&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-
-&lt;span class=&quot;c1&quot;&gt;//如果 require call 是异步的，那么肯定 error&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;//因为在执行这句前 Employee 模块肯定来不及加载进来&lt;/span&gt;
+&lt;pre&gt;&lt;code class=&quot;language-git&quot;&gt;    modified:   src/csharp/Grpc.Core/Internal/DefaultSslRootsOverride.cs
+    modified:   src/csharp/Grpc.Core/Internal/NativeExtension.cs
+    modified:   src/csharp/Grpc.Core/Internal/NativeLogRedirector.cs
+    modified:   src/csharp/Grpc.Core/Internal/NativeMethods.cs
 &lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-&lt;blockquote&gt;
-  &lt;p&gt;As the comment indicates above, if require() is async, this code will not work. However, loading scripts synchronously in the browser kills performance. So, what to do?&lt;/p&gt;
+
+&lt;p&gt;Now let’s take a look at each file&lt;/p&gt;
+
+&lt;h3 id=&quot;defaultsslrootsoverridecs&quot;&gt;DefaultSslRootsOverride.cs&lt;/h3&gt;
+
+&lt;p&gt;First of all, in &lt;code class=&quot;highlighter-rouge&quot;&gt;DefaultSslRootsOverride.cs&lt;/code&gt;，grpc loaded the local certificate file, I guess it’s used for certificate pinning. We can remove this part, if you need it, just change it to the certificate you need.&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gd&quot;&gt;--- a/src/csharp/Grpc.Core/Internal/DefaultSslRootsOverride.cs
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/src/csharp/Grpc.Core/Internal/DefaultSslRootsOverride.cs
+&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -56,6 +56,7 @@ namespace Grpc.Core.Internal
+&lt;/span&gt;         {
+             lock (staticLock)
+             {
+&lt;span class=&quot;gi&quot;&gt;+                               /*
+&lt;/span&gt;                 var stream = typeof(DefaultSslRootsOverride).GetTypeInfo().Assembly.GetManifestResourceStream(RootsPemResourceName);
+                 if (stream == null)
+                 {
+&lt;span class=&quot;gu&quot;&gt;@@ -66,6 +67,7 @@ namespace Grpc.Core.Internal
+&lt;/span&gt;                     var pemRootCerts = streamReader.ReadToEnd();
+                     native.grpcsharp_override_default_ssl_roots(pemRootCerts);
+                 }
+&lt;span class=&quot;gi&quot;&gt;+                */
+&lt;/span&gt;             }
+         }
+     }
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;nativeextensioncs&quot;&gt;NativeExtension.cs&lt;/h3&gt;
+
+&lt;p&gt;In the function &lt;code class=&quot;highlighter-rouge&quot;&gt;Load()&lt;/code&gt;, we need need to make two changes:&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;On iOS platform, we don’t need to load dynamic library, but on Unity Editor, we still need to load dynamic library, let’s use a simple Unity Macro to differentiate them:&lt;/strong&gt;&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gd&quot;&gt;--- a/src/csharp/Grpc.Core/Internal/NativeExtension.cs
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/src/csharp/Grpc.Core/Internal/NativeExtension.cs
+&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -93,7 +93,10 @@ namespace Grpc.Core.Internal
+&lt;/span&gt;         /// Detects which configuration of native extension to load and load it.
+         /// &amp;lt;/summary&amp;gt;
+         private static UnmanagedLibrary Load()
+&lt;span class=&quot;gd&quot;&gt;-        {
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+               {
++                       #if UNITY_IOS
++                               return null;
++                       #endif
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;strong&gt;On PC or MAC, we need to load dynamic library, but the path should be modified:&lt;/strong&gt;&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gu&quot;&gt;@@ -111,8 +114,10 @@ namespace Grpc.Core.Internal
+&lt;/span&gt;             var netCorePublishedAppStylePath = Path.Combine(assemblyDirectory, runtimesDirectory, GetNativeLibraryFilename());
+             var netCoreAppStylePath = Path.Combine(assemblyDirectory, &quot;../..&quot;, runtimesDirectory, GetNativeLibraryFilename());
+ 
+&lt;span class=&quot;gi&quot;&gt;+                       var unityPath = Path.Combine (assemblyDirectory, &quot;../../Assets/Plugins/GrpcLib&quot;, runtimesDirectory, GetNativeLibraryFilename ());
++
+&lt;/span&gt;             // Look for all native library in all possible locations in given order.
+&lt;span class=&quot;gd&quot;&gt;-            string[] paths = new[] { classicPath, netCorePublishedAppStylePath, netCoreAppStylePath};
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+                       string[] paths = new[] { classicPath, netCorePublishedAppStylePath, netCoreAppStylePath, unityPath};
+&lt;/span&gt;             return new UnmanagedLibrary(paths);
+         }
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;nativelogredirectorcs&quot;&gt;NativeLogRedirector.cs&lt;/h3&gt;
+
+&lt;p&gt;When C code in Grpc.Core calls C# code, it was not able to find the correct reference. This is because during IL2CPP compilation, a &lt;a href=&quot;https://www.ibm.com/support/knowledgecenter/en/ssw_ibm_i_72/rzarg/name_mangling.htm&quot;&gt;name mangling&lt;/a&gt; process happened, the name of the function is wrapped by namespace and class name. We can attonate the function name by &lt;code class=&quot;highlighter-rouge&quot;&gt;MonoPInvokeCallback&lt;/code&gt;, which will help Untiy IL2CPP to understand which method might get called from C code.&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gd&quot;&gt;--- a/src/csharp/Grpc.Core/Internal/NativeLogRedirector.cs
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/src/csharp/Grpc.Core/Internal/NativeLogRedirector.cs
+&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -66,6 +66,7 @@ namespace Grpc.Core.Internal
+&lt;/span&gt;             }
+         }
+ 
+&lt;span class=&quot;gi&quot;&gt;+        [AOT.MonoPInvokeCallback(typeof(GprLogDelegate))]
+&lt;/span&gt;         private static void HandleWrite(IntPtr fileStringPtr, int line, ulong threadId, IntPtr severityStringPtr, IntPtr msgPtr)
+         {
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;We can also change the log function to Unity Debug Log：&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gu&quot;&gt;@@ -97,7 +98,11 @@ namespace Grpc.Core.Internal
+&lt;/span&gt;             }
+             catch (Exception e)
+             {
+&lt;span class=&quot;gd&quot;&gt;-                Console.WriteLine(&quot;Caught exception in native callback &quot; + e);
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+#if UNITY_METRO
++                               UnityEngine.Debug.Log(&quot;Caught exception in native callback &quot; + e);
++#else
++                               Console.WriteLine(&quot;Caught exception in native callback &quot; + e);
++#endif
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;nativemethodscs&quot;&gt;NativeMethods.cs&lt;/h3&gt;
+
+&lt;p&gt;In this file, grpc invoked the c code in &lt;code class=&quot;highlighter-rouge&quot;&gt;Grpc.Core&lt;/code&gt; library. In Unity, if we want to call into native code or invoke method in assembly, we need to &lt;a href=&quot;https://docs.unity3d.com/Manual/PluginsForIOS.html&quot;&gt;define the assembly source&lt;/a&gt;. And we also need to define each native call and add &lt;code class=&quot;highlighter-rouge&quot;&gt;Dllimport()&lt;/code&gt; decorator to each method that need to be called.&lt;/p&gt;
+
+&lt;p&gt;Since iOS is using static compiling, so we use “__Internal” for iOS platform.&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gd&quot;&gt;--- a/src/csharp/Grpc.Core/Internal/NativeMethods.cs
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/src/csharp/Grpc.Core/Internal/NativeMethods.cs
+&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -51,6 +51,14 @@ namespace Grpc.Core.Internal
+&lt;/span&gt;     /// &amp;lt;/summary&amp;gt;
+     internal class NativeMethods
+     {
+&lt;span class=&quot;gi&quot;&gt;+#if UNITY_EDITOR               
++               private const string pluginName = &quot;grpc_csharp_ext&quot;;            
++#elif UNITY_IOS || UNITY_TVOS || UNITY_WEBGL           
++               public const string pluginName = &quot;__Internal&quot;;          
++#else          
++               public const string pluginName = &quot;grpc_csharp_ext&quot;;             
++#endif
++
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Define each method that needs to be called and add &lt;code class=&quot;highlighter-rouge&quot;&gt;Dllimport&lt;/code&gt; decorator.&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gi&quot;&gt;+               static class NativeCalls
++               {
++                       [DllImport(pluginName)]
++                       internal static extern void grpcsharp_init();
++
++                       [DllImport(pluginName)]
++                       internal static extern void grpcsharp_shutdown();
+&lt;/span&gt;...
+...
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Change the way we initialize the method.&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;         public NativeMethods(UnmanagedLibrary library)
+         {
+&lt;span class=&quot;gi&quot;&gt;+               #if UNITY_IOS
++                       this.grpcsharp_init = NativeCalls.grpcsharp_init;
++                       this.grpcsharp_shutdown = NativeCalls.grpcsharp_shutdown;
++                       this.grpcsharp_version_string = NativeCalls.grpcsharp_version_string;
+&lt;/span&gt;...
+...
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;We simplfied the process of this change. This is mostly copy-pasting work. Almost all the method in this file need to make above three changes we made to&lt;code class=&quot;highlighter-rouge&quot;&gt;grpcsharp_init&lt;/code&gt;. To simply this blog, I didn’t copy the full diff here.&lt;/p&gt;
+
+&lt;h3 id=&quot;compile-and-test&quot;&gt;Compile and test&lt;/h3&gt;
+
+&lt;p&gt;Finally, I use the &lt;a href=&quot;https://github.com/grpc/grpc/tree/master/examples/csharp/route_guide&quot;&gt;route guide example&lt;/a&gt; to test the basic feature of grpc, like unary call, bi-directional streaming. They all works fine.&lt;/p&gt;
+
+&lt;p&gt;The only thing that seems weird to me is during clean up. After we close the connection to server, we will need to call &lt;code class=&quot;highlighter-rouge&quot;&gt;channel.Dispose()&lt;/code&gt; to release the resource of grpc connection, otherwise, Unity will hang and seems waiting for the thread to exit. I’m not sure about the root cause of this problem, official demo didn’t call &lt;code class=&quot;highlighter-rouge&quot;&gt;Dispose&lt;/code&gt; explicitly.&lt;/p&gt;
+
+&lt;h3 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h3&gt;
+
+&lt;p&gt;This is a relative tedious work to make grpc work on Unity. I did quite a lot of research, the only project I found is &lt;a href=&quot;https://github.com/neuecc/MagicOnion&quot;&gt;Magic Onion Project&lt;/a&gt;. This project makes a lot of Unity specific change to make grpc work on it. Since Unity was not supporting .Net 4.6 (now they do), even the async mechanism needs a special implementation. Now, Unity provide a beta release of .Net 4.6 support, I believe this will become the mainstream support, so I just focus on making grpc work on .Net 4.6.&lt;/p&gt;
+
+&lt;p&gt;Even we make it work on iOS, it will still take tremendous effout to make it work on Android, Windows, Xbox and etc.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;If you like my blog, please checkout &lt;a href=&quot;http://chendi.me/&quot;&gt;other posts&lt;/a&gt;。O(∩_∩)O&lt;/p&gt;
+</description>
+        <pubDate>Sun, 30 Jul 2017 08:15:00 +0800</pubDate>
+        <link>http://localhost:4000/2017/07/30/unity-grpc-plugin-en/</link>
+        <guid isPermaLink="true">http://localhost:4000/2017/07/30/unity-grpc-plugin-en/</guid>
+        
+        <category>Tech</category>
+        
+        <category>Unity</category>
+        
+        <category>grpc</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>Support OpenGL ES 2 on Unity ARKit Plugin</title>
+        <description>&lt;blockquote&gt;
+  &lt;p&gt;“Visualization is daydreaming with a purpose.”&lt;/p&gt;
+
+  &lt;p&gt;– Bo Bennett&lt;/p&gt;
 &lt;/blockquote&gt;
 
-&lt;p&gt;所以我们需要 &lt;strong&gt;Function Wrapping&lt;/strong&gt; 来获取依赖并且提前通过 script tag 提前加载进来&lt;/p&gt;
+&lt;h2 id=&quot;前言&quot;&gt;前言&lt;/h2&gt;
 
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;//AMD Wrapper&lt;/span&gt;
+&lt;p&gt;在 2017 年的 WWDC 苹果开发者大会上，苹果发布了自己的 AR 解决方案 – ARKit。它结合了 iOS 设备自身传感器以及单目 SLAM 算法，在空间定位的能力上几乎可以与 Hololens 这样的外设相媲美了。&lt;/p&gt;
 
-&lt;span class=&quot;nx&quot;&gt;define&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;types&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;Employee&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;    &lt;span class=&quot;c1&quot;&gt;//依赖&lt;/span&gt;
-    &lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;Employee&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;//这个回调会在所有依赖都被加载后才执行&lt;/span&gt;
+&lt;p&gt;在第一时间，Unity 也发布了 ARKit 的插件：&lt;/p&gt;
 
-        &lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Programmer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(){&lt;/span&gt;
-            &lt;span class=&quot;c1&quot;&gt;//do something&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://forum.unity3d.com/threads/arkit-support-for-ios-via-unity-arkit-plugin.474385/&quot;&gt;论坛讨论区&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://bitbucket.org/Unity-Technologies/unity-arkit-plugin/&quot;&gt;官方 Bitbucket 代码库&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.assetstore.unity3d.com/en/#!/content/92515&quot;&gt;Unity商店（相对代码库更新较慢）&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
 
-        &lt;span class=&quot;nx&quot;&gt;Programmer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;prototype&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Employee&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Programmer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;//return Constructor&lt;/span&gt;
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;unity-脚本初步测试&quot;&gt;Unity 脚本初步测试&lt;/h2&gt;
+
+&lt;h3 id=&quot;强大的空间定位能力&quot;&gt;强大的空间定位能力&lt;/h3&gt;
+
+&lt;p&gt;在测试使用了 Vuforia 和 Kudan 的 AR SDK 之后，苹果的 ARKit 确确实实是把 AR 体验提升了一个等级。Vuforia 的绝大部分定位能力来源于图像的特征点识别，而并没有过多的空间定位 处理能力。而 Kudan 的 AR SDK 并不依赖于图像的预处理，更多的是依赖于实时图像分析，追踪。这两个 SDK 是在 ARKit 发布之前我们能找到效果最好的 AR SDK，但是都不理想。&lt;/p&gt;
+
+&lt;p&gt;而苹果的 ARKit 则是结合了 iOS 设备自身传感器以及单目 SLAM 算法，在不依赖于提前环境建模的基础上，有着非常优秀的空间定位能力。除了在非常光滑平整的平面上，定位能力稍显不足，绝大部分室内室外场景的定位都是非常精确的。&lt;/p&gt;
+
+&lt;h3 id=&quot;unity-插件原理&quot;&gt;Unity 插件原理&lt;/h3&gt;
+
+&lt;p&gt;在使用 Unity 插件之前，先学习了一下 ARKit 和 Unity 结合的方案。大概总结如下。&lt;/p&gt;
+
+&lt;h4 id=&quot;arkit-提供自定义渲染机制&quot;&gt;ARKit 提供自定义渲染机制&lt;/h4&gt;
+
+&lt;p&gt;在 ARKit 追踪开始之后，摄像头的图像并不是可以自动显示到屏幕上的，特别是与第三方游戏引擎 Unity 结合的情况下。Unity 自身的渲染机制决定了：所有渲染到屏幕上的东西，都需要经过 Unity 引擎的处理。摄像头捕捉到的图像也是一样。&lt;/p&gt;
+
+&lt;p&gt;如果不使用 ARKit 的话，Unity 显示摄像头的图像可以用 &lt;a href=&quot;https://docs.unity3d.com/ScriptReference/WebCamTexture.html&quot;&gt;WebCamTexture API&lt;/a&gt; 来实现，Unity 已经封装好了获取摄像头并显示的逻辑。但是在使用 ARKit 之后，这个方案就不适用了。因为在开启 ARKit 之后，ARKit 需要访问摄像头获取图片，给 SLAM 算法提供分析用的数据。此时如果尝试获取摄像头的图片便会失败。&lt;/p&gt;
+
+&lt;p&gt;于是在官方的 ARKit 文档中，它提供了自定义渲染摄像头图片的方法: &lt;a href=&quot;https://developer.apple.com/documentation/arkit/displaying_an_ar_experience_with_metal&quot;&gt;ARKit 文档&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;/img/in-post/unity-arkit-plugin-opengl/arkit-custom-rendering.png&quot;&gt;&lt;img src=&quot;/img/in-post/unity-arkit-plugin-opengl/arkit-custom-rendering.png&quot; alt=&quot;官方示意图&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;在 ARKit 的 ARSession 中，用户可以获取到 ARFrame，在这个 ARFrame 中，我们可以通过 &lt;code class=&quot;highlighter-rouge&quot;&gt;capturedImage&lt;/code&gt; 属性获取到像素点的缓存区。这个缓存区中以 YUV 的格式保存了图片的信息。官方的教程使用了 Metal 作为 GPU 渲染 API 来分别提取 Y 纹理和 UV 纹理：&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;updateCapturedImageTextures&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;frame&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ARFrame&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// Create two textures (Y and CbCr) from the provided frame's captured image&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;pixelBuffer&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;frame&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;capturedImage&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;CVPixelBufferGetPlaneCount&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pixelBuffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt;
     &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-
-&lt;p&gt;当依赖模块非常多时，这种&lt;strong&gt;依赖前置&lt;/strong&gt;的写法会显得有点奇怪，所以 AMD 给了一个语法糖， &lt;strong&gt;simplified CommonJS wrapping&lt;/strong&gt;，借鉴了 CommonJS 的 require 就近风格，也更方便对 CommonJS 模块的兼容：&lt;/p&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nx&quot;&gt;define&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;require&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;dependency1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;require&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'dependency1'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
-        &lt;span class=&quot;nx&quot;&gt;dependency2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;require&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'dependency2'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{};&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-&lt;p&gt;The AMD loader will parse out the &lt;code class=&quot;highlighter-rouge&quot;&gt;require('')&lt;/code&gt; calls by using &lt;code class=&quot;highlighter-rouge&quot;&gt;Function.prototype.toString()&lt;/code&gt;, then internally convert the above define call into this:&lt;/p&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nx&quot;&gt;define&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;([&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'require'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'dependency1'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'dependency2'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;require&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;dependency1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;require&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'dependency1'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
-        &lt;span class=&quot;nx&quot;&gt;dependency2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;require&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'dependency2'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{};&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-
-&lt;p&gt;出于&lt;code class=&quot;highlighter-rouge&quot;&gt;Function.prototype.toString()&lt;/code&gt;兼容性和性能的考虑，最好的做法还是做一次 &lt;strong&gt;optimized build&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;AMD 和 CommonJS 的核心争议如下：&lt;/p&gt;
-
-&lt;h3 id=&quot;section&quot;&gt;1. &lt;strong&gt;执行时机&lt;/strong&gt;&lt;/h3&gt;
-
-&lt;p&gt;Modules/1.0:&lt;/p&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;require&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;./a&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// 执行到此时，a.js 才同步下载并执行&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-
-&lt;p&gt;AMD: （使用 require 的语法糖时）&lt;/p&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nx&quot;&gt;define&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;([&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;require&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;require&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)){&lt;/span&gt;
-    &lt;span class=&quot;c1&quot;&gt;// 在这里，a.js 已经下载并且执行好了&lt;/span&gt;
-    &lt;span class=&quot;c1&quot;&gt;// 使用 require() 并不是 AMD 的推荐写法&lt;/span&gt;
-    &lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;require&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;./a&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// 此处仅仅是取模块 a 的 exports&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-
-&lt;p&gt;AMD 里提前下载 a.js 是出于对浏览器环境的考虑，只能采取异步下载，这个社区都认可（Sea.js 也是这么做的）&lt;/p&gt;
-
-&lt;p&gt;但是 AMD 的执行是 Early Executing，而 Modules/1.0 是第一次 require 时才执行。这个差异很多人不能接受，包括持 Modules/2.0 观点的人也不能接受。&lt;/p&gt;
-
-&lt;h3 id=&quot;section-1&quot;&gt;2. &lt;strong&gt;书写风格&lt;/strong&gt;&lt;/h3&gt;
-
-&lt;p&gt;AMD 推荐的风格并不使用&lt;code class=&quot;highlighter-rouge&quot;&gt;require&lt;/code&gt;，而是通过参数传入，破坏了&lt;strong&gt;依赖就近&lt;/strong&gt;：&lt;/p&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nx&quot;&gt;define&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;([&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;a&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;b&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;c&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;c&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;
-    &lt;span class=&quot;c1&quot;&gt;// 提前申明了并初始化了所有模块&lt;/span&gt;
-
-    &lt;span class=&quot;kc&quot;&gt;true&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;||&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;foo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;//即便根本没用到模块 b，但 b 还是提前执行了。&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-
-&lt;p&gt;不过，在笔者看来，风格喜好因人而异，主要还是&lt;strong&gt;预执行&lt;/strong&gt;和&lt;strong&gt;懒执行&lt;/strong&gt;的差异。&lt;/p&gt;
-
-&lt;p&gt;另外，require 2.0 也开始思考异步处理&lt;strong&gt;软依赖&lt;/strong&gt;（区别于一定需要的&lt;strong&gt;硬依赖&lt;/strong&gt;）的问题，提出了这样的方案：&lt;/p&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;// 函数体内：&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;status&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;
-    &lt;span class=&quot;nx&quot;&gt;async&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;([&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'a'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;
-        &lt;span class=&quot;nx&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;doSomething&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;capturedImageTextureY&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;createTexture&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;fromPixelBuffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pixelBuffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;pixelFormat&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;r8Unorm&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;planeIndex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;capturedImageTextureCbCr&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;createTexture&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;fromPixelBuffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pixelBuffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;pixelFormat&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rg8Unorm&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;planeIndex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;
 &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
 
-&lt;h2 id=&quot;seajs--cmd&quot;&gt;SeaJS &amp;amp; CMD&lt;/h2&gt;
+&lt;span class=&quot;kd&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;createTexture&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fromPixelBuffer&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;pixelBuffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;CVPixelBuffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;pixelFormat&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;MTLPixelFormat&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;planeIndex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;MTLTexture&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;?&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;mtlTexture&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;MTLTexture&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;?&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;nil&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;width&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;CVPixelBufferGetWidthOfPlane&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pixelBuffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;planeIndex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;height&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;CVPixelBufferGetHeightOfPlane&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pixelBuffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;planeIndex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    
+    &lt;span class=&quot;k&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;texture&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;CVMetalTexture&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;?&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;nil&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;status&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;CVMetalTextureCacheCreateTextureFromImage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kc&quot;&gt;nil&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;capturedImageTextureCache&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pixelBuffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;nil&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pixelFormat&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;width&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;height&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;planeIndex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;texture&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;status&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;kCVReturnSuccess&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;mtlTexture&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;CVMetalTextureGetTexture&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;texture&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mtlTexture&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;p&gt;CMD (Common Module Definition) 是 &lt;a href=&quot;http://seajs.org/docs/&quot;&gt;SeaJS&lt;/a&gt; 在推广过程中对模块定义的规范化产出，是 Modules/2.0 流派的支持者，因此 SeaJS 的模块写法尽可能与 Modules/1.x 规范保持一致。&lt;/p&gt;
+&lt;p&gt;这部分的代码也被 Unity 的 ARKit 插件用来获取 YUV 纹理了。&lt;/p&gt;
 
-&lt;p&gt;不过目前国外的该流派都死得差不多了，RequireJS 目前成为浏览器端模块的事实标准，国内最有名气的就是玉伯的 Sea.js ，不过对国际的推广力度不够。&lt;/p&gt;
+&lt;p&gt;在获取到 YUV 纹理之后，官方建议使用 shader 将 YUV 纹理转换成 RGB 图片进行渲染，这样只需要获取 YUV 纹理的指针，而不需要在内存中进行保存，或者使用 CPU 进行计算。&lt;/p&gt;
 
-&lt;ul&gt;
-  &lt;li&gt;CMD Specification
-    &lt;ul&gt;
-      &lt;li&gt;&lt;a href=&quot;https://github.com/cmdjs/specification/blob/master/draft/module.md&quot;&gt;English (CMDJS-repo)&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;https://github.com/seajs/seajs/issues/242&quot;&gt;Chinese (SeaJS-repo)&lt;/a&gt;&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
+&lt;h4 id=&quot;unity-原生纹理-api&quot;&gt;Unity 原生纹理 API&lt;/h4&gt;
 
-&lt;p&gt;CMD 主要有 define, factory, require, export 这么几个东西&lt;/p&gt;
+&lt;p&gt;在 Unity 的 ARKit 插件中，它用到了 &lt;a href=&quot;https://docs.unity3d.com/ScriptReference/Texture2D.CreateExternalTexture.html&quot;&gt;Texture2D.CreateExternalTexture&lt;/a&gt; 将 iOS 原生的纹理转换成 Unity C# 代码中的纹理。这样一来，我们就可以将这个纹理使用到 Unity 的 shader 或者其他 3D 运算中。&lt;/p&gt;
 
-&lt;ul&gt;
-  &lt;li&gt;define &lt;code class=&quot;highlighter-rouge&quot;&gt;define(id?, deps?, factory)&lt;/code&gt;&lt;/li&gt;
-  &lt;li&gt;factory &lt;code class=&quot;highlighter-rouge&quot;&gt;factory(require, exports, module)&lt;/code&gt;&lt;/li&gt;
-  &lt;li&gt;require &lt;code class=&quot;highlighter-rouge&quot;&gt;require(id)&lt;/code&gt;&lt;/li&gt;
-  &lt;li&gt;exports &lt;code class=&quot;highlighter-rouge&quot;&gt;Object&lt;/code&gt;&lt;/li&gt;
-&lt;/ul&gt;
+&lt;p&gt;从官方的 API 定义上来看：&lt;/p&gt;
 
-&lt;p&gt;CMD 推荐的 Code Style 是使用 CommonJS 风格的 &lt;code class=&quot;highlighter-rouge&quot;&gt;require&lt;/code&gt;：&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Native texture object on Direct3D-like devices is a pointer to the base type, 
+from which a texture can be created (IDirect3DBaseTexture9 on D3D9, 
+ID3D11ShaderResourceView on D3D11). On OpenGL/OpenGL ES it is GLuint. On Metal 
+it is id&amp;lt;MTLTexture&amp;gt;.
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;ul&gt;
-  &lt;li&gt;这个 require 实际上是一个全局函数，用于加载模块，这里实际就是传入而已&lt;/li&gt;
-&lt;/ul&gt;
+&lt;p&gt;id&lt;MTLTexture&gt; 是 Objective-C 中指向 MTLTexture object 的指针，而 GLuint 是 OpenGL 的对象句柄，所以说这个 API 本身仅仅是复制了对应渲染引擎的指针，在性能上也并没有多少开销。&lt;/MTLTexture&gt;&lt;/p&gt;
 
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nx&quot;&gt;define&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;require&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;exports&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+&lt;h4 id=&quot;unity-渲染-shader&quot;&gt;Unity 渲染 shader&lt;/h4&gt;
 
-    &lt;span class=&quot;c1&quot;&gt;// 获取模块 a 的接口&lt;/span&gt;
-    &lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;require&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'./a'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-    &lt;span class=&quot;c1&quot;&gt;// 调用模块 a 的方法&lt;/span&gt;
-    &lt;span class=&quot;nx&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;doSomething&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;p&gt;在利用 &lt;a href=&quot;https://docs.unity3d.com/ScriptReference/Texture2D.CreateExternalTexture.html&quot;&gt;Texture2D.CreateExternalTexture&lt;/a&gt; 获取到了原生纹理的指针之后，Unity 写了一个 YUV 转 RGB 的 shader，这个 shader 包括 3 个部分：&lt;/p&gt;
 
-    &lt;span class=&quot;c1&quot;&gt;// 对外提供 foo 属性&lt;/span&gt;
-    &lt;span class=&quot;nx&quot;&gt;exports&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;foo&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'bar'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;c1&quot;&gt;// 对外提供 doSomething 方法&lt;/span&gt;
-    &lt;span class=&quot;nx&quot;&gt;exports&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;doSomething&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{};&lt;/span&gt;
+&lt;h5 id=&quot;顶点比例放大缩小&quot;&gt;顶点比例放大/缩小&lt;/h5&gt;
 
-&lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
+&lt;div class=&quot;language-glsl highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;      &lt;span class=&quot;n&quot;&gt;TexCoordInOut&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;vert&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Vertex&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;vertex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;TexCoordInOut&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;o&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;o&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;position&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;UnityObjectToClipPos&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;vertex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;position&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; 
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_isPortrait&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+          &lt;span class=&quot;n&quot;&gt;o&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;texcoord&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;float2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;vertex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;texcoord&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;vertex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;texcoord&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_texCoordScale&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+          &lt;span class=&quot;n&quot;&gt;o&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;texcoord&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;float2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;vertex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;texcoord&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_texCoordScale&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;vertex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;texcoord&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;o&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;texcoord&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mul&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_TextureRotation&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;float4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;o&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;texcoord&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;xy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+              
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;o&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;p&gt;但是你也可以使用 AMD 风格，或者使用 return 来进行模块暴露&lt;/p&gt;
+&lt;p&gt;在转换 texcoord 的时候，由于 Metal 渲染 API 获取到的纹理中心点是在 (0,0)，也就是说纹理是在如下图的坐标系中：&lt;/p&gt;
 
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nx&quot;&gt;define&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'hello'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'jquery'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;require&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;exports&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;module&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+&lt;p&gt;&lt;img src=&quot;/img/in-post/unity-arkit-plugin-opengl/metal-coordinates-1.png&quot; width=&quot;300&quot; /&gt;&lt;/p&gt;
 
-    &lt;span class=&quot;c1&quot;&gt;// 模块代码...&lt;/span&gt;
+&lt;p&gt;所以缩放时，需要先将坐标系平移 0.5f 然后乘以缩放值，再移回 (0,0) 点。这个部分我没有找到相应的文档，如果有大神对 Metal 的坐标系体系比较了解的，烦请指教。&lt;/p&gt;
 
-    &lt;span class=&quot;c1&quot;&gt;// 直接通过 return 暴露接口&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;na&quot;&gt;foo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'bar'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-        &lt;span class=&quot;na&quot;&gt;doSomething&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{}&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+&lt;h5 id=&quot;定点旋转&quot;&gt;定点旋转&lt;/h5&gt;
 
-&lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
+&lt;p&gt;在上面的代码中&lt;/p&gt;
 
-&lt;p&gt;Sea.js 借鉴了 RequireJS 的不少东西，比如将 FlyScript 中的 module.declare 改名为 define 等。Sea.js 更多地来自 Modules/2.0 的观点，但尽可能去掉了学院派的东西，加入了不少实战派的理念。&lt;/p&gt;
+&lt;div class=&quot;language-glsl highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;        &lt;span class=&quot;n&quot;&gt;o&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;texcoord&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mul&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_TextureRotation&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;float4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;o&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;texcoord&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;xy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h2 id=&quot;amd-vs-cmd&quot;&gt;AMD vs CMD&lt;/h2&gt;
+&lt;p&gt;这句代码使用 &lt;code class=&quot;highlighter-rouge&quot;&gt;_TextureRotation&lt;/code&gt; 进行了一次图片的旋转，这是因为 ARKit 的相机角度和真实视角并不相匹配。旋转后的图片在如下图的坐标系中：&lt;/p&gt;
 
-&lt;p&gt;&lt;strong&gt;虽然两者目前都兼容各种风格，但其底层原理并不相同，从其分别推荐的写法就可以看出两者背后原理的不同：&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/img/in-post/unity-arkit-plugin-opengl/metal-coordinates-2.png&quot; width=&quot;300&quot; /&gt;&lt;/p&gt;
+
+&lt;h5 id=&quot;yuv-纹理转-rgb-纹理&quot;&gt;YUV 纹理转 RGB 纹理&lt;/h5&gt;
+
+&lt;p&gt;这是最后一步，将 Y 纹理和 UV 纹理转换为 RGB 编码格式。这个步骤苹果官方给出了转换矩阵，Unity 自身就套用这个矩阵进行了一次转换。&lt;/p&gt;
+
+&lt;div class=&quot;language-glsl highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;        &lt;span class=&quot;n&quot;&gt;float2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;texcoord&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;texcoord&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tex2D&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_textureY&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;texcoord&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;r&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;float4&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ycbcr&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;float4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tex2D&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_textureCbCr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;texcoord&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rg&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+        &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;float4x4&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ycbcrToRGBTransform&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;float4x4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;float4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;4020&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;7010&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;float4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;3441&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;7141&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;5291&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;float4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;7720&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;8860&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;float4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+          &lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mul&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ycbcrToRGBTransform&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ycbcr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;opengl-支持&quot;&gt;OpenGL 支持&lt;/h3&gt;
+
+&lt;p&gt;在大概理解 Unity ARKit 插件的渲染原理之后，我们来看一下在 OpenGL Graphic API 上运行会有什么效果。&lt;/p&gt;
+
+&lt;p&gt;在 Unity ARKit Plugin 项目的 &lt;code class=&quot;highlighter-rouge&quot;&gt;Build Settings -&amp;gt; Player Settings&lt;/code&gt; 中将 Graphic API 设置为 OpenGL ES 2，然后导出 xcode 项目并且运行之后，我们看到屏幕上可以显示出特征点云，并且可以进行空间定位，但是摄像头的图像无法显示。这是为什么呢？&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/img/in-post/unity-arkit-plugin-opengl/fix-1.png&quot; width=&quot;300&quot; /&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;原因猜测&quot;&gt;原因猜测&lt;/h4&gt;
 
 &lt;ol&gt;
-  &lt;li&gt;对于依赖的模块，AMD 是&lt;strong&gt;提前执行&lt;/strong&gt;，CMD 是&lt;strong&gt;懒执行&lt;/strong&gt;。（都是先加载）
-    &lt;ul&gt;
-      &lt;li&gt;CMD 推崇&lt;strong&gt;依赖就近&lt;/strong&gt;，AMD 推崇&lt;strong&gt;依赖前置&lt;/strong&gt;。&lt;/li&gt;
-    &lt;/ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;ARKit 的空间定位功能仍然可用。&lt;/p&gt;
+
+    &lt;p&gt;这表示 ARKit 的计算并不依赖于渲染方式，很可能只是利用了 GPU 的矩阵计算能力，但是不依赖于某些特定的 API。这个也和机器学习的利用 GPU 的方式类似，在运行基于 cuda 的代码时，与 OpenGL 绘制屏幕上其他部分的 GPU 使用并不冲突。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;屏幕渲染是绿色的。&lt;/p&gt;
+
+    &lt;p&gt;这个原因肯定和 OpenGL 与 Metal 的区别有关。理解这个现象出现的原因，也就能定位显示的问题，从而解决它。&lt;/p&gt;
   &lt;/li&gt;
 &lt;/ol&gt;
 
-&lt;p&gt;看代码：&lt;/p&gt;
+&lt;h4 id=&quot;问题排查以及解决&quot;&gt;问题排查以及解决&lt;/h4&gt;
 
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;// AMD 默认推荐&lt;/span&gt;
+&lt;p&gt;首先，检查一遍代码，将所有与渲染 API 有关的代码都找出来。这里接触到的代码非常少，但是有一个地方很容易被忽略的，就是 &lt;a href=&quot;https://docs.unity3d.com/ScriptReference/Texture2D.CreateExternalTexture.html&quot;&gt;Texture2D.CreateExternalTexture&lt;/a&gt; 这个 API 的调用。&lt;/p&gt;
 
-&lt;span class=&quot;nx&quot;&gt;define&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;([&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'./a'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'./b'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 依赖前置，提前执行&lt;/span&gt;
+&lt;p&gt;如文档中所说的，这个函数只是储存一个纹理的指针，而不是将纹理复制出来。这样一来，在后面的 shader 计算中，便将 &lt;code class=&quot;highlighter-rouge&quot;&gt;MTLTexture&lt;/code&gt; 的指针传给了 OpenGL 的 API，难怪渲染会出错。我们就从这里开始解决。&lt;/p&gt;
 
-    &lt;span class=&quot;nx&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;doSomething&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-    &lt;span class=&quot;nx&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;doSomething&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;h5 id=&quot;使用-opengl-api-提取-yuv-纹理&quot;&gt;使用 OpenGL API 提取 YUV 纹理&lt;/h5&gt;
 
-&lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+&lt;p&gt;在参考了 &lt;a href=&quot;http://www.jianshu.com/u/e6367cf15710&quot;&gt;@handyTOOL&lt;/a&gt; 大神的 &lt;a href=&quot;http://www.jianshu.com/p/380df8ae273f&quot;&gt;ARKit &amp;amp; OpenGL ES - OpenGL实现篇&lt;/a&gt; 之后，用他博客中的代码替换掉了官方提供的获取 Metal Texture 的代码，具体解释见注释：&lt;/p&gt;
 
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
+&lt;div class=&quot;language-objective_c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;glYTexture&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;c1&quot;&gt;// 检查 glYTexture 是否已经在 OpenGL 中初始化，如果尚未初始化则获取 handle.&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;glGenTextures&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;glYTexture&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;  
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;glUVTexture&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;c1&quot;&gt;// 检查 glUVTexture 是否已经在 OpenGL 中初始化，如果尚未初始化则获取 handle.&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;glGenTextures&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;glUVTexture&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        
+        &lt;span class=&quot;c1&quot;&gt;// 获取 Y panel 的宽高和内存地址&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;GLsizei&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;textureWidth&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GLsizei&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CVPixelBufferGetWidthOfPlane&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pixelBuffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;GLsizei&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;textureHeight&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GLsizei&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CVPixelBufferGetHeightOfPlane&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pixelBuffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;baseAddress&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CVPixelBufferGetBaseAddressOfPlane&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pixelBuffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        
+        &lt;span class=&quot;c1&quot;&gt;// glBindTexture 将当前 OpenGL 处理的对象设为 glYTexture&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;glBindTexture&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GL_TEXTURE_2D&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;glYTexture&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// 用 GL_LUMINANCE 格式读出 baseAddress 指向的单通道 8 byte 的图片纹理&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;glTexImage2D&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GL_TEXTURE_2D&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;GL_LUMINANCE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;textureWidth&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;textureHeight&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;GL_LUMINANCE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;GL_UNSIGNED_BYTE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;baseAddress&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// glBindTexture 将当前 OpenGL 处理的对象设为 空&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;glBindTexture&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GL_TEXTURE_2D&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        
+        &lt;span class=&quot;n&quot;&gt;textureWidth&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GLsizei&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CVPixelBufferGetWidthOfPlane&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pixelBuffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;textureHeight&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GLsizei&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CVPixelBufferGetHeightOfPlane&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pixelBuffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;laAddress&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CVPixelBufferGetBaseAddressOfPlane&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pixelBuffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;glBindTexture&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GL_TEXTURE_2D&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;glUVTexture&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// 用 GL_LUMINANCE_ALPHA 格式读出 laAddress 指向的双通道 8 byte 的图片纹理&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// 其中 U panel 的信息存在第一个通道中，对应 rgba 的 r 通道&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// V panel 的信息存在第四个通道中，对应 rgba 的 a 通道&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;glTexImage2D&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GL_TEXTURE_2D&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;GL_LUMINANCE_ALPHA&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;textureWidth&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;textureHeight&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;GL_LUMINANCE_ALPHA&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;GL_UNSIGNED_BYTE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;laAddress&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;glBindTexture&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GL_TEXTURE_2D&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;// CMD&lt;/span&gt;
+&lt;h5 id=&quot;将-opengl-纹理指针传回-unity&quot;&gt;将 OpenGL 纹理指针传回 Unity&lt;/h5&gt;
 
-&lt;span class=&quot;nx&quot;&gt;define&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;require&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;exports&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;module&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+&lt;p&gt;同时，修改一下将指针传回 Unity 的代码：&lt;/p&gt;
 
-    &lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;require&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'./a'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;nx&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;doSomething&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt; extern &quot;C&quot; UnityARTextureHandles GetVideoTextureHandles()
+ {
+     UnityARTextureHandles handles;
+&lt;span class=&quot;gd&quot;&gt;-    handles.textureY = (__bridge_retained void*)s_CapturedImageTextureY;
+-    handles.textureCbCr = (__bridge_retained void*)s_CapturedImageTextureCbCr;
+-
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+    if (UnitySelectedRenderingAPI() == apiOpenGLES2 ) {
++        handles.textureY = (void*) glYTexture;
++        handles.textureCbCr = (void*) glUVTexture;
++    }
++    else {
++        handles.textureY = (__bridge_retained void*)s_CapturedImageTextureY;
++        handles.textureCbCr = (__bridge_retained void*)s_CapturedImageTextureCbCr;
++    }
+&lt;/span&gt;     return handles;
+ }
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-    &lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;b&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;require&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'./b'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// 依赖就近，延迟执行&lt;/span&gt;
-    &lt;span class=&quot;nx&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;doSomething&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
+&lt;p&gt;需要注意的是，如果是使用 Metal API，是将 &lt;code class=&quot;highlighter-rouge&quot;&gt;id&amp;lt;MTLTexture&amp;gt;&lt;/code&gt; 类型转换为 &lt;code class=&quot;highlighter-rouge&quot;&gt;void *&lt;/code&gt; 类型，两者都是指针。当使用 OpenGL API 时，是将 &lt;code class=&quot;highlighter-rouge&quot;&gt;GLuint&lt;/code&gt; 转换为 &lt;code class=&quot;highlighter-rouge&quot;&gt;void *&lt;/code&gt; 类型。&lt;code class=&quot;highlighter-rouge&quot;&gt;GLuint&lt;/code&gt; 在头文件定义中是 &lt;code class=&quot;highlighter-rouge&quot;&gt;unsigned int&lt;/code&gt;，所以是将一个整数型存到指针类型中，不要将 &lt;code class=&quot;highlighter-rouge&quot;&gt;GLuint&lt;/code&gt; 的指针传回 Unity 了。&lt;/p&gt;
 
-&lt;h2 id=&quot;webpack&quot;&gt;WebPack&lt;/h2&gt;
+&lt;h5 id=&quot;opengl-相关的坐标变换&quot;&gt;OpenGL 相关的坐标变换&lt;/h5&gt;
 
-&lt;blockquote&gt;
-  &lt;p&gt;working…&lt;/p&gt;
-&lt;/blockquote&gt;
+&lt;p&gt;如果仅仅进行上述修改，我们发现屏幕上仍然无法正确显示出摄像头拍摄到的图像。我们将会看到如下画面。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/img/in-post/unity-arkit-plugin-opengl/fix-2.png&quot; width=&quot;300&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;此时这些图像会随着摄像头的移动而改变，说明摄像头的纹理已经提取出来了，只是渲染的时候出了问题。在尝试使用 Unity 的 &lt;code class=&quot;highlighter-rouge&quot;&gt;Unlit/Texture&lt;/code&gt; shader 进行渲染之后，发现 Y panel 和 UV panel 的纹理是正确的，图像显示出来是左旋90度的，所以应该是 shader 的计算过程中出了问题。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/img/in-post/unity-arkit-plugin-opengl/opengl-coordinates-1.png&quot; width=&quot;300&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;在 debug shader 的过程中，我先将所有 shader 代码都简化为与 &lt;code class=&quot;highlighter-rouge&quot;&gt;Unlit/Texture&lt;/code&gt; shader 一样，然后再一点点加回。此时发现，在加入旋转之后，图像就变成了如上图所示的条纹状。&lt;/p&gt;
+
+&lt;p&gt;为了修复这个问题，我们需要调整一下 shader：&lt;/p&gt;
+
+&lt;p&gt;先将纹理往 x 轴平移 1.0f：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/img/in-post/unity-arkit-plugin-opengl/opengl-coordinates-2.png&quot; width=&quot;300&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;再进行围绕(0,0) 旋转 90 度：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/img/in-post/unity-arkit-plugin-opengl/opengl-coordinates-3.png&quot; width=&quot;300&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;虽然这样操作可以正确地纠正图像，但是我并不太理解为什么不平移直接旋转 90 的话，会出现条纹状的图像。&lt;/p&gt;
+
+&lt;h3 id=&quot;解决方法&quot;&gt;解决方法&lt;/h3&gt;
+
+&lt;p&gt;在这边博客写下的时候，对于 OpenGL ES 2 的支持已经提交 Pull Request 给 Unity 的官方代码库了，暂未合并进 master 分支：&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://bitbucket.org/Unity-Technologies/unity-arkit-plugin/pull-requests/6/support-opengl-es-2-as-the-rendering-api/diff&quot;&gt;Pull Request: Support OpenGL ES 2 as the rendering API&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;经验总结&quot;&gt;经验总结&lt;/h3&gt;
+
+&lt;p&gt;在这个事件中，学到了：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;理解问题的原因是解决问题的第一步&lt;/strong&gt;&lt;/p&gt;
+
+    &lt;p&gt;在刚开始 debug shader 渲染的时候，由于之前没有前端开发的经验，我是以一种试试看的心态，调整各个参数试图找到合适的组合以求解决问题。但是这个试错的过程不仅繁杂，而且往往没有目的性，会浪费很多时间。最后还是花了时间学习了一些基本的 shader 知识后，理解了 shader 代码再进行修改的。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;如果你看到这里，一定是真爱！欢迎看看我的其他 &lt;a href=&quot;http://chendi.me/&quot;&gt;blog&lt;/a&gt;。O(∩_∩)O&lt;/p&gt;
 </description>
-        <pubDate>Mon, 25 May 2015 00:00:00 -0400</pubDate>
-        <link>http://chendi.me/2015/05/25/js-module-loader/</link>
-        <guid isPermaLink="true">http://chendi.me/2015/05/25/js-module-loader/</guid>
+        <pubDate>Fri, 21 Jul 2017 08:15:00 +0800</pubDate>
+        <link>http://localhost:4000/2017/07/21/unity-arkit-plugin-opengl/</link>
+        <guid isPermaLink="true">http://localhost:4000/2017/07/21/unity-arkit-plugin-opengl/</guid>
         
-        <category>前端开发</category>
+        <category>Tech</category>
         
-        <category>JavaScript</category>
+        <category>Unity</category>
+        
+        <category>ARKit</category>
+        
+        <category>OpenGL</category>
         
         
       </item>
     
       <item>
-        <title>Example Post</title>
+        <title>Weird bugs - 3</title>
         <description>&lt;blockquote&gt;
-  &lt;p&gt;This document is not completed and will be updated anytime.&lt;/p&gt;
+  &lt;p&gt;“There is no coincidence. Only the illusion of coincidence.”&lt;/p&gt;
+
+  &lt;p&gt;– Alan Moore, V for Vendetta, Vol. III of X&lt;/p&gt;
 &lt;/blockquote&gt;
 
-&lt;h2 id=&quot;catagory&quot;&gt;Catagory&lt;/h2&gt;
+&lt;h2 id=&quot;前言&quot;&gt;前言&lt;/h2&gt;
+
+&lt;p&gt;在这几年的开发生涯中，遇到了或多或少的奇怪的BUG。计算机不会撒谎，让人感到奇怪的 Bug 底下，一定有自己没搞明白的知识。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;unity-脚本挂载丢失&quot;&gt;Unity 脚本挂载丢失&lt;/h2&gt;
+
+&lt;h3 id=&quot;问题表象&quot;&gt;问题表象&lt;/h3&gt;
+
+&lt;p&gt;在最近开发的项目中，我们使用了 Unity3D 作为我们的游戏开发引擎，并且使用 git 作为我们的版本控制软件。由于我们有多位 Unity3D 工程师，大家不可避免地需要从 git 上提交，合并，拉取最新的代码。而在 Unity 开发中，常常会需要挂载一个 C# 脚本到某个 prefab 或者 GameObject 上。当一个脚本挂载上去之后，其他团队成员从 git 上拉取或者复制最新代码下来之后，经常会见到下面这个非常令人崩溃的提示：&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;/img/in-post/weird-bug-3/missing-mono-1.jpg&quot;&gt;&lt;img src=&quot;/img/in-post/weird-bug-3/missing-mono-1.jpg&quot; alt=&quot;Missing Mono Script&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;这个提示就表示 Unity Editor 无法找到挂载的相应脚本，如果此时运行游戏或者打包游戏，游戏中对应脚本的逻辑便不会执行。QA 就会提出 bug （xxx 功能怎么丢了）。&lt;/p&gt;
+
+&lt;p&gt;这个情况在我们开发的时候经常出现，特别是我们使用了 Leancloud 作为我们的聊天服务提供商，他们提供的 Unity SDK 便要求挂载一个 dll 中的脚本到场景中。由于脚本挂载在版本管理是一直丢失，我们的聊天功能也时灵时不灵。&lt;/p&gt;
+
+&lt;h3 id=&quot;问题探究&quot;&gt;问题探究&lt;/h3&gt;
+
+&lt;h4 id=&quot;unity-脚本挂载原理&quot;&gt;Unity 脚本挂载原理&lt;/h4&gt;
+
+&lt;p&gt;要解决这个问题，首先我们要理解 Unity 中脚本挂载的原理，Unity Editor 是靠什么来储存这个脚本挂载的联系的呢？&lt;/p&gt;
+
+&lt;p&gt;在搜索了 Unity 官方论坛中的众多问题之后，大家的讨论都指向了一个叫 &lt;code class=&quot;highlighter-rouge&quot;&gt;guid&lt;/code&gt; 的属性，例如 &lt;a href=&quot;https://forum.unity3d.com/threads/missing-mono-script.455228/&quot;&gt;这个讨论&lt;/a&gt;。在搜索项目之后，我发现所有的 &lt;code class=&quot;highlighter-rouge&quot;&gt;*.cs.meta&lt;/code&gt; 文件中都储存了 &lt;code class=&quot;highlighter-rouge&quot;&gt;guid&lt;/code&gt; 属性，也就是说，prefab 是利用这个 GUID 来寻找应该挂载的脚本的。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;fileFormatVersion: 2
+guid: dd3e3945400194edfbe0c7a06d89b145
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;那么，是不是 &lt;code class=&quot;highlighter-rouge&quot;&gt;*.cs.meta&lt;/code&gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;guid&lt;/code&gt; 的值在版本控制之间变更了呢？恰恰相反。由于我们挂载的是 dll 文件，&lt;code class=&quot;highlighter-rouge&quot;&gt;.dll.meta&lt;/code&gt; 文件在版本控制中一直没有变化过。那么这就说明一定是引用这个 &lt;code class=&quot;highlighter-rouge&quot;&gt;guid&lt;/code&gt; 的地方变化了。那么 prefab 引用 &lt;code class=&quot;highlighter-rouge&quot;&gt;guid&lt;/code&gt; 的信息储存在哪呢？&lt;/p&gt;
+
+&lt;p&gt;我尝试使用各种方法打开 &lt;code class=&quot;highlighter-rouge&quot;&gt;.prefab&lt;/code&gt; 文件，但是没有办法在其中找到 &lt;code class=&quot;highlighter-rouge&quot;&gt;GUID&lt;/code&gt; 的对应行列，并且 &lt;code class=&quot;highlighter-rouge&quot;&gt;.prefab&lt;/code&gt; 文件是二进制的，无法理解。在 Unity 官方论坛中查询许久之后发现了 &lt;a href=&quot;http://answers.unity3d.com/questions/222281/asset-serialization-mixed-vs-force-text.html&quot;&gt;这个关于 Force Text 的讨论&lt;/a&gt;，其中提到了 &lt;code class=&quot;highlighter-rouge&quot;&gt;Force Text&lt;/code&gt; 设置。在尝试之后发现，通过更改 &lt;code class=&quot;highlighter-rouge&quot;&gt;ProjectSettings -&amp;gt; Editor -&amp;gt; Asset Serialization&lt;/code&gt; 至 &lt;code class=&quot;highlighter-rouge&quot;&gt;Force Text&lt;/code&gt;，原本是二进制的 &lt;code class=&quot;highlighter-rouge&quot;&gt;.prefab&lt;/code&gt;，&lt;code class=&quot;highlighter-rouge&quot;&gt;.unity&lt;/code&gt; 文件都变成了 yaml 编码的文本文件，在其中，可以很轻易地定位到 &lt;code class=&quot;highlighter-rouge&quot;&gt;guid&lt;/code&gt; 的引用位置，如：&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;--- !u!114 &amp;amp;60726417
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 114000011878044986, guid: 7d74d246c03b90c47bd7b1563e473a9f,
+    type: 2}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 60726415}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd3e3945400194edfbe0c7a06d89b145, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &amp;amp;60726418
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;其中 &lt;code class=&quot;highlighter-rouge&quot;&gt;m_Script&lt;/code&gt; 的 guid 与 &lt;code class=&quot;highlighter-rouge&quot;&gt;.cd.meta&lt;/code&gt; 的 &lt;code class=&quot;highlighter-rouge&quot;&gt;guid&lt;/code&gt; 是相对应的。如此一来，只要保证两边的 guid 不发生变化就可以保持脚本挂载的不丢失了。&lt;/p&gt;
+
+&lt;h4 id=&quot;脚本-guid-的变化方式&quot;&gt;脚本 guid 的变化方式&lt;/h4&gt;
+
+&lt;p&gt;由于聊天组件并不是经常变更的东西，但是每次更新都会丢失脚本挂载，所以还需要理解 guid 在什么时候会发生改变。&lt;/p&gt;
+
+&lt;p&gt;我们发现有这么几种情况会更改 guid:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;脚本内容更改。&lt;/li&gt;
+  &lt;li&gt;场景内容更改。&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;dll 文件在不同平台上重新导入，例如 Windows vs. Mac OS&lt;/strong&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;其中第三点才是我们的罪魁祸首，由于我们的开发环境包括 Mac OS 和 Windows，所以在项目更新的时候，同一个 dll 文件在不同平台导入的时候，都会更新一次 .meta 文件，同时更新场景中的引用 guid。但是在提交修改的时候，&lt;code class=&quot;highlighter-rouge&quot;&gt;.dll.meta&lt;/code&gt; 的更新并没有被提交，只提交了场景的更新，这就导致了场景引用的 &lt;code class=&quot;highlighter-rouge&quot;&gt;guid&lt;/code&gt; 与 &lt;code class=&quot;highlighter-rouge&quot;&gt;.dll.meta&lt;/code&gt; 不相符，从而导致了脚本丢失。&lt;/p&gt;
+
+&lt;h3 id=&quot;解决方法&quot;&gt;解决方法&lt;/h3&gt;
+
+&lt;p&gt;最后，我们的解决方案分成三个部分：&lt;/p&gt;
 
 &lt;ol&gt;
-  &lt;li&gt;&lt;a href=&quot;#unix&quot;&gt;Unix&lt;/a&gt;
-    &lt;ol&gt;
-      &lt;li&gt;&lt;a href=&quot;#bell-labs&quot;&gt;Bell Labs&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#xenix&quot;&gt;Xenix&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#bsd&quot;&gt;BSD&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#freebsd--apple&quot;&gt;FreeBSD &amp;amp; Apple&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#nextstep&quot;&gt;NeXTStep&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#darwin&quot;&gt;Darwin&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#posix&quot;&gt;POSIX&lt;/a&gt;&lt;/li&gt;
-    &lt;/ol&gt;
+  &lt;li&gt;独立出挂载 dll 脚本的场景，不与经常修改的场景融合，从而相关的修改。&lt;/li&gt;
+  &lt;li&gt;项目设置中，全部使用 &lt;code class=&quot;highlighter-rouge&quot;&gt;Force Text&lt;/code&gt; 模式。&lt;/li&gt;
+  &lt;li&gt;代码审核时，检查 prefab 和场景的修改，是否修改了 guid，如果修改了，检查是否必要。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;经验总结&quot;&gt;经验总结&lt;/h3&gt;
+
+&lt;p&gt;在这个事件中，学到了这么几点：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;Unity 项目管理在进行版本控制时，尽量选择 &lt;code class=&quot;highlighter-rouge&quot;&gt;Force Text&lt;/code&gt; 模式，并进行代码审核&lt;/strong&gt;&lt;/p&gt;
+
+    &lt;p&gt;在使用 &lt;code class=&quot;highlighter-rouge&quot;&gt;Force Text&lt;/code&gt; 模式之前，我们项目的代码审核遇到 prefab 修改或者场景修改时，往往无法审核修改内容，因为二进制文件无法被代码审核插件读取，如下图。&lt;/p&gt;
+
+    &lt;p&gt;&lt;a href=&quot;/img/in-post/weird-bug-3/diff-1.png&quot;&gt;&lt;img src=&quot;/img/in-post/weird-bug-3/diff-1.png&quot; alt=&quot;Git Diff 1&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+    &lt;p&gt;在使用 &lt;code class=&quot;highlighter-rouge&quot;&gt;Force Text&lt;/code&gt; 模式之后，代码审核就可以清晰地看到修改的部分，甚至可以自动合并冲突，是两个人或者多人合作修改同一个场景。&lt;/p&gt;
+
+    &lt;p&gt;&lt;a href=&quot;/img/in-post/weird-bug-3/diff-2.png&quot;&gt;&lt;img src=&quot;/img/in-post/weird-bug-3/diff-2.png&quot; alt=&quot;Git Diff 2&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+    &lt;p&gt;这个问题解决之后，也节约了开发者大量用来同步代码和场景的时间。&lt;/p&gt;
   &lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#unix-like&quot;&gt;Unix-like&lt;/a&gt;
-    &lt;ol&gt;
-      &lt;li&gt;&lt;a href=&quot;#single-unix-specification&quot;&gt;Single Unix Specification&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#apple-ios&quot;&gt;Apple iOS&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#xnu-kernel&quot;&gt;XNU Kernel&lt;/a&gt;&lt;/li&gt;
-    &lt;/ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;You are not alone.&lt;/strong&gt;&lt;/p&gt;
+
+    &lt;p&gt;Unity3D 是一个相对成熟的游戏开发引擎，往往我们遇到的问题都已经有人遇到过了，所以解决问题时很重要一步还是寻找前人的轨迹。&lt;/p&gt;
   &lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#linux&quot;&gt;Linux&lt;/a&gt;
-    &lt;ol&gt;
-      &lt;li&gt;&lt;a href=&quot;#linux-kernel&quot;&gt;Linux Kernel&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#gnu-project&quot;&gt;GNU Project&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#android&quot;&gt;Android&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#android-kernel&quot;&gt;Android Kernel&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#android-rom&quot;&gt;Android ROM&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#chrome-os&quot;&gt;Chrome OS&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#chromium-os&quot;&gt;Chromium OS&lt;/a&gt;&lt;/li&gt;
-    &lt;/ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;事出蹊跷必有妖&lt;/strong&gt;&lt;/p&gt;
+
+    &lt;p&gt;计算机是不会骗人的，所谓的 ”莫名其妙“ 一定有办法可以解释，找到它。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;推荐阅读&quot;&gt;推荐阅读&lt;/h3&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;a href=&quot;http://answers.unity3d.com/questions/222281/asset-serialization-mixed-vs-force-text.html&quot;&gt;关于 Force Text 的讨论&lt;/a&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;a href=&quot;http://devmag.org.za/2012/07/12/50-tips-for-working-with-unity-best-practices/&quot;&gt;关于 Unity 的 50 个技巧&lt;/a&gt;&lt;/p&gt;
   &lt;/li&gt;
 &lt;/ol&gt;
 
 &lt;hr /&gt;
 
-&lt;h2 id=&quot;unix&quot;&gt;Unix&lt;/h2&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;Unix is a &lt;strong&gt;family&lt;/strong&gt; of multitasking, multiuser computer OS.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;Derive from the original &lt;strong&gt;AT&amp;amp;T Unix&lt;/strong&gt;, Developed in the 1970s at &lt;strong&gt;Bell Labs&lt;/strong&gt; (贝尔实验室), initially intended for use inside the &lt;strong&gt;Bell System&lt;/strong&gt;.&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;
-    &lt;h4 id=&quot;bell-labs&quot;&gt;Bell Labs&lt;/h4&gt;
-    &lt;p&gt;Bell 和 AT&amp;amp;A 在那时已经是一家了，可以看到那时的通信公司真是一线 IT 公司呢。
-&lt;strong&gt;C 语言也是 Bell Labs 的产物&lt;/strong&gt;，从一开始就是为了用于 Unix 而设计出来的。所以 Unix （在 73 年用 C 重写）在高校流行后，C 语言也获得了广泛支持。&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;AT&amp;amp;T licensed Unix to outside parties(第三方) from the late 1970s, leading to a variety of both &lt;strong&gt;academic&lt;/strong&gt; (最有有名的 BSD ) and &lt;strong&gt;commercial&lt;/strong&gt; (Microsoft Xenix, IBM AIX, SunOS Solaris)&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;
-    &lt;h4 id=&quot;xenix&quot;&gt;Xenix&lt;/h4&gt;
-    &lt;p&gt;微软 1979 年从 AT&amp;amp;A 授权来的 Unix OS，配合着 x86 成为当时最受欢迎的 Unix 发行版。后来 M$ 和 IBM 合作开发 OS/2 操作系统后放弃，后来最终转向 &lt;strong&gt;Windows NT&lt;/strong&gt;。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;h4 id=&quot;bsd&quot;&gt;BSD&lt;/h4&gt;
-    &lt;p&gt;&lt;strong&gt;Barkeley Software Distribution&lt;/strong&gt;, also called Berkeley Unix. Today the term “BSD” is used to refer to any of the BSD descendants(后代) which together form a branch of the family of Unix-like OS.(共同组成了一个分支)&lt;/p&gt;
-    &lt;ul&gt;
-      &lt;li&gt;&lt;strong&gt;BSD 最大的贡献是在 BSD 中率先增加了虚拟存储器和 Internet 协议&lt;/strong&gt;，其 TCP/IP(IPv4 only) 代码仍然在现代 OS 上使用（ Microsoft Windows and most of the foundation of Apple’s OS X and iOS ）&lt;/li&gt;
-      &lt;li&gt;BSD 后来发展出了众多开源后代，包括 FreeBSD, OpenBSD, NetBSD 等等……很多闭源的 vendor Unix 也都从 BSD 衍生而来。&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;h4 id=&quot;freebsd--apple&quot;&gt;FreeBSD &amp;amp; Apple&lt;/h4&gt;
-    &lt;p&gt;FreeBSD 不但是 Open Source BSD 中占有率最高的，还直接影响了 Apple Inc : NeXT Computer 的团队在 FreeBSD 上衍生出了 NeXTSTEP 操作系统，这货后来在 Apple 时期演化成了 &lt;strong&gt;Darwin&lt;/strong&gt; ，这个“达尔文”居然还是个开源系统，而且是 the Core of &lt;strong&gt;Mac OS X&lt;/strong&gt; and &lt;strong&gt;iOS&lt;/strong&gt;.&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;h4 id=&quot;nextstep&quot;&gt;NeXTSTEP&lt;/h4&gt;
-    &lt;p&gt;An &lt;strong&gt;object-oriented&lt;/strong&gt;, multitasking OS. Low-level C but High-level OC language and runtime the first time, combined with an &lt;strong&gt;OO aplication layer&lt;/strong&gt; and including several “kits”.  &lt;br /&gt;
-大家都知道 NeXT 是 Steve Jobs 被 forced out of Apple 后和 a few of his coworkers 创办的，所以 &lt;strong&gt;NeXTSTEP 绝对是证明 Jobs 实力的作品。&lt;/strong&gt;&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;h4 id=&quot;darwin&quot;&gt;Darwin&lt;/h4&gt;
-    &lt;p&gt;&lt;a href=&quot;http://en.wikipedia.org/wiki/Darwin_(operating_system\)&quot;&gt;Darwin&lt;/a&gt;, the core set of components upon which Mac OS X and iOS based, mostly POSIX compatible, but has never, by itself, been certified as being compatible with any version of &lt;strong&gt;POSIX&lt;/strong&gt;. (OS X, since Leopard, has been certified as compatible with the Single UNIX Specification version 3)&lt;br /&gt;
-&lt;strong&gt;所以说 Mac OS X 算是很正统 Unix 的了&lt;/strong&gt;&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;h4 id=&quot;posix&quot;&gt;POSIX&lt;/h4&gt;
-    &lt;p&gt;可移植操作系统接口, Portable Operating System Interface, is a family of standards specified by the IEEE from maintaining compatibility between OS, defines the API along with Command Line Shells and utility interfaces, for software comaptibility with variants of Unix and other OS.&lt;/p&gt;
-    &lt;ul&gt;
-      &lt;li&gt;Fully POSIX compliant:
-        &lt;ul&gt;
-          &lt;li&gt;OS X&lt;/li&gt;
-          &lt;li&gt;QNX OS (BlackBerry)&lt;/li&gt;
-        &lt;/ul&gt;
-      &lt;/li&gt;
-      &lt;li&gt;Mostly complicant:
-        &lt;ul&gt;
-          &lt;li&gt;Linux&lt;/li&gt;
-          &lt;li&gt;OpenBSD/FreeBSD&lt;/li&gt;
-          &lt;li&gt;Darwin (Core of &lt;strong&gt;iOS&lt;/strong&gt; &amp;amp; OS X)&lt;/li&gt;
-          &lt;li&gt;&lt;strong&gt;Android&lt;/strong&gt;&lt;/li&gt;
-        &lt;/ul&gt;
-      &lt;/li&gt;
-      &lt;li&gt;Complicant via compatibility feature （通过兼容功能实现兼容）
-        &lt;ul&gt;
-          &lt;li&gt;Windows NT Kernel
-            &lt;ul&gt;
-              &lt;li&gt;Windows Server 2000, 2003, 2008, 2008 R2, 2012&lt;/li&gt;
-            &lt;/ul&gt;
-          &lt;/li&gt;
-          &lt;li&gt;Symbian OS (with PIPS)
-            &lt;ul&gt;
-              &lt;li&gt;Symbian was a closed-source OS.&lt;/li&gt;
-            &lt;/ul&gt;
-          &lt;/li&gt;
-        &lt;/ul&gt;
-      &lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;hr /&gt;
-
-&lt;h2 id=&quot;unix-like&quot;&gt;Unix-like&lt;/h2&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;A Unix-like (sometimes referred to as UN*X or *nix) operating system is one that behaves in a manner similar to a Unix system, while not necessarily conforming to or being certified to any version of the &lt;strong&gt;Single UNIX Specification&lt;/strong&gt;.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;There is no standard for defining the term.&lt;br /&gt;
-其实 Unix-like 是个相对模糊的概念：&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;最狭义的 Unix 单指 Bell Labs’s Unix&lt;/li&gt;
-  &lt;li&gt;稍广义的 Unix 指代所有 Licensed Unix, 即通过了 SUS 的 Unix-like ，比如 OS X&lt;/li&gt;
-  &lt;li&gt;最广义的 Unix 即所有 Unix-like 系统，无论它是否通过过任何 SUS，包括 Linux，BSD Family 等&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h4 id=&quot;single-unix-specification&quot;&gt;Single UNIX Specification&lt;/h4&gt;
-&lt;p&gt;The Single UNIX Specification (SUS) is the collective name of a family of standards for computer OS, compliance with which is required to &lt;strong&gt;qualify for the name “Unix”&lt;/strong&gt;, like &lt;strong&gt;POSIX&lt;/strong&gt;.&lt;/p&gt;
-
-&lt;h4 id=&quot;apple-ios&quot;&gt;Apple iOS&lt;/h4&gt;
-&lt;p&gt;iOS is a &lt;strong&gt;Unix-like OS based on Darwin(BSD)&lt;/strong&gt; and OS X, which share some frameworks including Core Foundation, Founadtion and the Darwin foundation with OS X, but, Unix-like shell access is not avaliable for users and restricted for apps, &lt;strong&gt;making iOS not fully Unix-compatible either.&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;The iOS kernal is &lt;strong&gt;XNU&lt;/strong&gt;, the kernal of Darwin.&lt;/p&gt;
-
-&lt;h4 id=&quot;xnu-kernel&quot;&gt;XNU Kernel&lt;/h4&gt;
-&lt;p&gt;XNU, the acronym(首字母缩写) for &lt;strong&gt;&lt;em&gt;X is Not Unix&lt;/em&gt;&lt;/strong&gt;, which is the &lt;strong&gt;Computer OS Kernel&lt;/strong&gt; developed at Apple Inc since Dec 1996 for use in the Mac OS X and released as free open source software as part of Darwin.&lt;/p&gt;
-
-&lt;hr /&gt;
-
-&lt;h2 id=&quot;linux&quot;&gt;Linux&lt;/h2&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;Linux is a Unix-like and mostly POSIX-compliant computer OS.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;&lt;img src=&quot;http://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Unix_timeline.en.svg/800px-Unix_timeline.en.svg.png&quot; alt=&quot;Unix_timeline&quot; /&gt;&lt;/p&gt;
-
-&lt;h4 id=&quot;linux-kernel&quot;&gt;Linux Kernel&lt;/h4&gt;
-
-&lt;p&gt;严格来讲，术语 Linux 只表示 &lt;a href=&quot;http://en.wikipedia.org/wiki/Linux_kernel&quot;&gt;Linux Kernel&lt;/a&gt; 操作系统内核本身，比如说 Android is Based on Linux (Kernel). Linus 编写的也只是这一部分，一个免费的 Unix-like Kernel，并不属于 GNU Project 的一部分。&lt;/p&gt;
-
-&lt;p&gt;但通常把 Linux 作为 Linux Kernel 与大量配合使用的 GNU Project Software Kit (包括 Bash, Lib, Compiler, 以及后期的 GUI etc) 所组合成的 OS 的统称。（包括各类 Distribution 发行版）&lt;/p&gt;
-
-&lt;p&gt;这类操作系统也被称为 &lt;strong&gt;GNU/Linux&lt;/strong&gt;&lt;/p&gt;
-
-&lt;h4 id=&quot;gnu-project&quot;&gt;GNU Project&lt;/h4&gt;
-
-&lt;p&gt;The GNU Project is a &lt;strong&gt;free software, mass collaboration&lt;/strong&gt; project, which based on the following freedom rights:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Users are free to run the software, share (copy, distribute), study and modify it.&lt;/li&gt;
-  &lt;li&gt;GNU software guarantees these freedom-rights legally (via its license).&lt;/li&gt;
-  &lt;li&gt;So it is not only FREE but, more important, FREEDOM.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;In order to ensure that the &lt;em&gt;entire&lt;/em&gt; software of a computer grants its users all freedom rights (use, share, study, modify), even the most fundamental and important part, &lt;strong&gt;the operating system&lt;/strong&gt;, needed to be written.&lt;/p&gt;
-
-&lt;p&gt;This OS is decided to called &lt;strong&gt;GNU (a recursive acronym meaning “GNU is not Unix”)&lt;/strong&gt;. By 1992, the GNU Project had completed all of the major OS components except for their kernel, &lt;em&gt;GNU Hurd&lt;/em&gt;.&lt;/p&gt;
-
-&lt;p&gt;With the release of the third-party &lt;strong&gt;Linux Kernel&lt;/strong&gt;, started independently by &lt;em&gt;Linus Torvalds&lt;/em&gt; in 1991 and released under the GPLv0.12 in 1992, for the first time it was possible to run an OS &lt;strong&gt;composed completely of free software&lt;/strong&gt;.&lt;/p&gt;
-
-&lt;p&gt;Though the Linux kernel is not part of the GNU project, it was developed using GCC and other GNU programming tools and was released as free software under the GPL.&lt;/p&gt;
-
-&lt;p&gt;Anyway, there eventually comes to the &lt;strong&gt;GNU/Linux&lt;/strong&gt;&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;&lt;strong&gt;GPL&lt;/strong&gt;: GNU General Public License&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;GCC&lt;/strong&gt;: GNU Compiler Collection&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;其他与 GPL 相关的自由/开源软件公共许可证：&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;&lt;a href=&quot;http://en.wikipedia.org/wiki/Mozilla_Public_License&quot;&gt;Mozilla Public License&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;http://en.wikipedia.org/wiki/MIT_License&quot;&gt;MIT License&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;http://en.wikipedia.org/wiki/BSD_licenses&quot;&gt;BSD Public License&lt;/a&gt;
-    &lt;ul&gt;
-      &lt;li&gt;GPL 强制后续版本必须是自由软件，而 BSD 的后续可以选择继续开源或者封闭&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;http://en.wikipedia.org/wiki/Apache_License&quot;&gt;Apache License&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;img src=&quot;http://dl2.iteye.com/upload/attachment/0047/4142/d770c85a-49b7-3c7f-8ae2-cbb6451e00d8.png&quot; alt=&quot;Public License&quot; /&gt;&lt;/p&gt;
-
-&lt;h4 id=&quot;android&quot;&gt;Android&lt;/h4&gt;
-
-&lt;p&gt;Android is a mobile OS based on &lt;strong&gt;Linux Kernel&lt;/strong&gt;, so it’s definitely &lt;strong&gt;Unix-like&lt;/strong&gt;.&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Linux is under GPL so Android has to be open source&lt;/strong&gt;.
-Android’s source code is released by Google under open source licenses, although most Android devices ultimately ship with a combination of open source and proprietary software, including proprietary software developed and licensed by Google &lt;em&gt;(GMS are all proprietary)&lt;/em&gt;&lt;/p&gt;
-
-&lt;h4 id=&quot;android-kernel&quot;&gt;Android Kernel&lt;/h4&gt;
-
-&lt;p&gt;Android’s kernel is based on one of the Linux kernel’s long-term support (LTS) branches.&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Android’s variant of the Linux kernel&lt;/strong&gt; has further architectural changes that are implemented by Google outside the typical Linux kernel development cycle, and, certain features that Google contributed back to the Linux kernel. Google maintains a public code repo that contains their experimental work to re-base Android off the latest stable Linux versions.&lt;/p&gt;
-
-&lt;p&gt;Android Kernel 大概是 Linux Kernel 最得意的分支了，Android 也是 Linux 最流行的发行版。不过，也有一些 Google 工程师认为 Android is not Linux in the traditional Unix-like Linux distribution sense. 总之这类东西就算有各种协议也还是很难说清楚，在我理解里 Android Kernel 大概就是 fork Linux Kernel 之后改动和定制比较深的例子。&lt;/p&gt;
-
-&lt;h4 id=&quot;android-rom&quot;&gt;Android ROM&lt;/h4&gt;
-
-&lt;p&gt;既然提到 Android 就不得不提提 Android ROM&lt;/p&gt;
-
-&lt;p&gt;ROM 的本义实际上是只读内存：&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Read-only memory&lt;/strong&gt; (ROM) is a class of storage medium used in computers and other electronic devices. Data stored in ROM can only be modified slowly, with difficulty, or not at all, so it is &lt;strong&gt;mainly used to distribute firmware (固件)&lt;/strong&gt; (software that is very closely tied to specific hardware, and unlikely to need frequent updates).&lt;/p&gt;
-
-&lt;p&gt;ROM 在发展的过程中不断进化，从只读演变成了可编程可擦除，并最终演化成了 Flash&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;PROM (Programmable read-only memory)&lt;/li&gt;
-  &lt;li&gt;EPROM (Erasable programmable read-only memory)&lt;/li&gt;
-  &lt;li&gt;EEPROM (Electrically erasable programmable read-only memory)
-    &lt;ul&gt;
-      &lt;li&gt;Flash memory (闪存)&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Flash 的出现是历史性的，它不但可以作为 ROM 使用，又因其极高的读写速度和稳定性，先后发展成为U盘（USB flash drives）、移动设备主要内置存储，和虐机械硬盘几条街的固态硬盘（SSD），可以说这货基本统一了高端存储市场的技术规格。&lt;/p&gt;
-
-&lt;p&gt;所以我们平时习惯说的 ROM 其实还是来源于老单片机时代，那时的 ROM 真的是写了就很难（需要上电复位）、甚至无法修改，所以那时往 ROM 里烧下去的程序就被称作 firmware ，固件。久而久之，虽然技术发展了，固件仍然指代那些不常需要更新的软件，而 ROM 这个词也就这么沿用下来了。&lt;/p&gt;
-
-&lt;p&gt;所以在 wiki 里是没有 Android ROM 这个词条的，只有 &lt;a href=&quot;http://en.wikipedia.org/wiki/List_of_custom_Android_firmwares&quot;&gt;List of custom Android firmwares&lt;/a&gt;&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;A custom firmware, also known as a custom ROM, ROM, or custom OS, is an aftermarket distribution of the Android operating system. They are based on the Android Open Source Project (AOSP), hence most are open-sourced releases, unlike proprietary modifications by device manufacturers.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;各类 Android ROM 在 Android 词类下也都是属于 &lt;strong&gt;Forks and distributions&lt;/strong&gt; 一类的。&lt;/p&gt;
-
-&lt;p&gt;所以我说，其实各类 Android ROM 也好，fork Android 之流的 YunOS、FireOS 也好，改了多少东西，碰到多深的 codebase ……&lt;strong&gt;其实 ROM 和 Distribution OS 的界限是很模糊的&lt;/strong&gt;，为什么 Android 就不可以是移动时代的 Linux ，为什么 Devlik/ART 就不能是移动时代的 GCC 呢？&lt;/p&gt;
-
-&lt;h4 id=&quot;chrome-os&quot;&gt;Chrome OS&lt;/h4&gt;
-
-&lt;p&gt;Chrome OS is an operating system based on the &lt;strong&gt;Linux kernel&lt;/strong&gt; and designed by Google to work with web applications and installed applications.&lt;/p&gt;
-
-&lt;p&gt;虽然目前只是个 Web Thin Client OS ，但是 RoadMap 非常酷……&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;&lt;strong&gt;Chrome Packaged Application&lt;/strong&gt; (Support working offline and installed)&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;Android App Runtime&lt;/strong&gt; (run Android applications natively…fxxking awesome)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;平复一下激动的心情，还是回到正题来：&lt;/p&gt;
-
-&lt;h4 id=&quot;chromium-os&quot;&gt;Chromium OS&lt;/h4&gt;
-
-&lt;p&gt;Chrome OS is based on Chromium OS, which is the open-source development version of Chrome OS, which is a &lt;strong&gt;Linux distribution&lt;/strong&gt; designed by Google.&lt;/p&gt;
-
-&lt;p&gt;For Detail, Chromium OS based on &lt;a href=&quot;http://en.wikipedia.org/wiki/Gentoo_Linux&quot;&gt;Gentoo Linux&lt;/a&gt;, emm…&lt;/p&gt;
+&lt;p&gt;如果你看到这里，一定是真爱！欢迎看看我的其他 &lt;a href=&quot;http://chendi.me/&quot;&gt;blog&lt;/a&gt;。O(∩_∩)O&lt;/p&gt;
 </description>
-        <pubDate>Tue, 14 Apr 2015 00:00:00 -0400</pubDate>
-        <link>http://chendi.me/2015/04/14/unix-linux-note/</link>
-        <guid isPermaLink="true">http://chendi.me/2015/04/14/unix-linux-note/</guid>
+        <pubDate>Sun, 11 Jun 2017 08:15:00 +0800</pubDate>
+        <link>http://localhost:4000/2017/06/11/weird-bugs-3/</link>
+        <guid isPermaLink="true">http://localhost:4000/2017/06/11/weird-bugs-3/</guid>
         
-        <category>OS</category>
+        <category>Tech</category>
         
-        <category>Unix</category>
+        <category>Bug</category>
         
-        <category>Linux</category>
+        <category>Unity</category>
+        
+        <category>git</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>Weird bugs - 2</title>
+        <description>&lt;blockquote&gt;
+  &lt;p&gt;“There is no coincidence. Only the illusion of coincidence.”&lt;/p&gt;
+
+  &lt;p&gt;– Alan Moore, V for Vendetta, Vol. III of X&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;前言&quot;&gt;前言&lt;/h2&gt;
+
+&lt;p&gt;在这几年的开发生涯中，遇到了或多或少的奇怪的BUG。计算机不会撒谎，让人感到奇怪的 Bug 底下，一定有自己没搞明白的知识。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;unity-编译错误&quot;&gt;Unity 编译错误&lt;/h2&gt;
+
+&lt;h3 id=&quot;问题表象&quot;&gt;问题表象&lt;/h3&gt;
+
+&lt;p&gt;在最近开发的项目中，我们使用了 Unity3D 作为我们的游戏开发引擎。在 Unity3D 中实现的功能，只要代码依赖的库支持，可以直接编译成安卓的 apk 安装包，或者导出 xcode，再编译出 iOS 的 ipa 安装包。&lt;/p&gt;
+
+&lt;p&gt;理论上同一份代码，只要没有使用平台宏，例如 &lt;code class=&quot;highlighter-rouge&quot;&gt;#if UNITY_ANDROID&lt;/code&gt;，在安卓上能运行的，在 iOS 平台上也应该可以。但是事情并没有这么简单。当我们导出 xcode 时，一切顺利，当使用 xcode 编译到 iPhone 上进行测试的时候，出现了如下错误：&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;LuaException: An exception was thrown by the type initializer for Newtonsoft.Json.Utilities.ConvertUtils
+stack traceback:
+ [C]: in function 'ApiTokenAuthPost'
+ [string &quot;Controller/LoginRegisterPanelCtrl&quot;]:163: in function &amp;lt;[string &quot;Controller/LoginRegisterPanelCtrl&quot;]:139&amp;gt;
+Newtonsoft.Json.Utilities.ConvertUtils:GetTypeCode(Type)
+Newtonsoft.Json.Serialization.DefaultContractResolver:IsJsonPrimitiveType(Type)
+Newtonsoft.Json.Serialization.DefaultContractResolver:CreateContract(Type)
+Newtonsoft.Json.Serialization.DefaultContractResolver:ResolveContract(Type)
+Newtonsoft.Json.Serialization.JsonSerializerInternalReader:GetContractSafe(Type)
+Newtonsoft.Json.Serialization.JsonSerializerInternalReader:Deserialize(JsonReader, Type, Boolean)
+Newtonsoft.Json.JsonSerializer:DeserializeInternal(JsonReader, Type)
+Newtonsoft.Json.JsonSerializer:Deserialize(JsonReader, Type)
+Newtonsoft.Json.JsonConvert:DeserializeObject(String, Type, JsonSerializerSettings)
+Newtonsoft.Json.JsonConvert:DeserializeObject(String, Type)
+Arpet.Auth.Client.ApiClient:Deserialize(String, Type, IList`1)
+Arpet.Auth.Api.DefaultApi:ApiTokenAuthPost(String, String)
+Grpc.GrpcDefaultApi:ApiTokenAuthPost(String, String)
+Grpc_GrpcDefaultApiWrap:ApiTokenAuthPost(IntPtr)
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;真实的异常信息被 Lua 框架捕获了，去除 Lua 框架的异常捕获后，看到的异常大概是：&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Default Constructor cannot be found for type xxxxx
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;排查方式&quot;&gt;排查方式&lt;/h3&gt;
+
+&lt;h4 id=&quot;检查代码是否定义了-default-constructor&quot;&gt;检查代码是否定义了 Default Constructor&lt;/h4&gt;
+
+&lt;p&gt;既然报了找不到默认构造器，那么我们就从默认构造器开始入手。&lt;/p&gt;
+
+&lt;p&gt;在这个项目中我们使用了 RESTful API 框架 swagger 来进行前端和后端之间的短连接通信，这个框架自带了 C# 的代码生成器。所以在使用时，只需要定义前后端交互的接口参数和返回值，就可以自动生成 API。生成的 API 源文件通过 mono 进行编译，生成 dll 文件加载进 Unity 工程里。在调用的时候只需要：&lt;/p&gt;
+
+&lt;div class=&quot;language-c# highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;PlayerApi&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;playerApi&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;PlayerApi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;PlayerStatus&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;playerStatus&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;playerApi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;PlayersStatusGet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;在代码中，报错是出现在将 HTTP Response 反序列化成 PlayerStatus 类的这个过程中。检查了代码之后，发现 Default Constructor 是有的。那么问题就来了，明明默认构造器是定义了的，并且&lt;strong&gt;在安卓平台上可以正常运行&lt;/strong&gt;，为什么 Newtonsoft 库在 iOS 平台上找不到默认构造器呢？&lt;/p&gt;
+
+&lt;h4 id=&quot;检查编译过程&quot;&gt;检查编译过程&lt;/h4&gt;
+
+&lt;p&gt;由于同样的代码和库在安卓平台上都可以正常运行，所以应该是编译的过程中出现了问题。接下来，我就查阅了一下 Unity 编译成 xcode 代码中需要经过的几个关键步骤。&lt;/p&gt;
+
+&lt;p&gt;在 Unity 中，生成 xcode 工程或者编译出 apk 的过程中，都要经过一个 &lt;em&gt;脚本解释后端&lt;/em&gt; 来解释脚本语言，并且生成对应的原生平台的代码。这个可以在 &lt;code class=&quot;highlighter-rouge&quot;&gt;Build Setting =&amp;gt; Player Settings&lt;/code&gt; 中找到。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;/img/in-post/weird-bug-2/IL2CPP-2.png&quot;&gt;&lt;img src=&quot;/img/in-post/weird-bug-2/IL2CPP-2.png&quot; alt=&quot;scripting backend&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;常用的解释后端有两个:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;Mono2.x&lt;/strong&gt;&lt;/p&gt;
+
+    &lt;p&gt;这个后端框架是基于一个开源跨平台的 &lt;a href=&quot;http://www.mono-project.com/&quot;&gt;Mono 项目&lt;/a&gt;。这个项目的版本已经到了 &lt;code class=&quot;highlighter-rouge&quot;&gt;4.x&lt;/code&gt;，但是 Unity 中目前仍然只兼容了 &lt;code class=&quot;highlighter-rouge&quot;&gt;2.x&lt;/code&gt;，可想而知，在性能上是落后了不少的。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;IL2CPP&lt;/strong&gt;&lt;/p&gt;
+
+    &lt;p&gt;由于 iOS 要求所有的 app 必须支持 64 位操作系统，所以使用 IL2CPP 进行编译是必须的。这个也是我需要重点了解研究的对象了。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;学习-il2cpp&quot;&gt;学习 IL2CPP&lt;/h3&gt;
+
+&lt;h4 id=&quot;什么是-il2cpp&quot;&gt;什么是 IL2CPP&lt;/h4&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://docs.unity3d.com/Manual/IL2CPP.html&quot;&gt;官方介绍&lt;/a&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;IL2CPP is a Unity-developed scripting back-end which you can use as an alternative 
+to Mono when building projects for some platforms. When you choose to build a project 
+using IL2CPP, Unity converts IL code (sometimes called CIL - Intermediate Language or 
+Common Intermediate Language) from scripts and assemblies into C++ code, before creating 
+a native binary file (.exe, apk, .xap, for example) for your chosen platform. Some of 
+the uses for IL2CPP include increasing the performance, security, and platform 
+compatibility of your Unity projects.
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;翻译：&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;IL2CPP 是一个由 Unity 开发的，当进行项目跨平台开发时，可以用来替代 Mono 的解释后端。
+当你选择用 IL2CPP 编译一个项目时，在生成对应的可执行文件之前，Unity 会先将脚本生成的
+ IL 代码 (有时也称 CIL 代码 - 中间语言) 还有汇编语言转化成 C++ 代码。在这个编译的过程
+中，IL2CPP 还对你的项目会进行性能，安全性，以及平台兼容性的提升。
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;简而言之，IL2CPP 是 Unity 针对自己的项目而开发的一个编辑器，长远来看，是一定会取代 Mono，至少在 iOS 平台上，已经完全取代了 Mono。&lt;/p&gt;
+
+&lt;h4 id=&quot;il2cpp-是怎样运作的&quot;&gt;IL2CPP 是怎样运作的&lt;/h4&gt;
+
+&lt;p&gt;Unity 官方给出了非常精炼的 &lt;a href=&quot;https://docs.unity3d.com/Manual/IL2CPP-HowItWorks.html&quot;&gt;解释&lt;/a&gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Upon starting a build using IL2CPP, Unity automatically performs the following steps:
+
+1. Unity Scripting API code is compiled to regular .NET DLLs (managed assemblies).
+2. All managed assemblies that aren’t part of scripts (such as plugins and base 
+   class libraries) are processed by a Unity tool called Unused Bytecode Stripper, 
+   which finds all unused classes and methods and removes them from these DLLs 
+   (Dynamic Link Library). This step significantly reduces the size of a built game.
+3. All managed assemblies are then converted to standard C++ code.
+4. The generated C++ code and the runtime part of IL2CPP is compiled using a native 
+   platform compiler.
+5. Finally, the code is linked into either an executable file or a DLL, depending on 
+   the platform you are targeting.
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;IL2CPP 的运作方式与大部分的编译器中的语言解释器都非常相似。&lt;/p&gt;
+
+&lt;p&gt;当 IL2CPP 编译时，会经过如下 5 个步骤：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;将 Unity C# 代码编译成常规的 .NET 动态库。由于这个动态库仍然是基于 .NET 框架的受控汇编码 (managed assemblies)，与底层 CPU 架构无关的，所以在后面几步中，可以被 IL2CPP 解析出来。&lt;/li&gt;
+  &lt;li&gt;所有的非 Unity 框架中的汇编码将被 无效二进制码裁剪器 (Unused Bytecode Stripper) 处理一遍。它会找到所有没有被用到的类和方法，并且将它们从 DLL 动态库中移除。这个步骤会极大地减小游戏生成的安装包。&lt;/li&gt;
+  &lt;li&gt;将上一步剩下的受控汇编码转译成标准的 C++ 代码。&lt;/li&gt;
+  &lt;li&gt;用原生的编译器如 jdk, xcode 将上一步生成的 C++ 代码结合 IL2CPP Runtime 进行编译。&lt;/li&gt;
+  &lt;li&gt;最后，代码要么直接被编译进二进制执行文件或者编译成一个动态库 dll，这个取决于我们编译的目标平台。在 iOS 上，C++ 可以直接被 Objective-C 调用，就直接被编译进 ipa 安装包了。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;a href=&quot;/img/in-post/weird-bug-2/IL2CPP-3.png&quot;&gt;&lt;img src=&quot;/img/in-post/weird-bug-2/IL2CPP-3.png&quot; alt=&quot;scripting backend&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;il2cpp-为什么会导致我遇到的-bug&quot;&gt;IL2CPP 为什么会导致我遇到的 Bug&lt;/h4&gt;
+
+&lt;p&gt;在上一节中提到，IL2CPP 会对二进制代码进行裁剪，如果没有找到方法或者类的直接引用，就会将其删去。&lt;/p&gt;
+
+&lt;p&gt;比如，在以下伪代码中，Default Constructor 就不会被裁剪。&lt;/p&gt;
+
+&lt;div class=&quot;language-c# highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;TestClass&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;A&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;TestClass&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;instance1&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;TestClass&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;但是在以下伪代码中，Default Constructor 就被裁剪了，我们就会遇到类似 &lt;code class=&quot;highlighter-rouge&quot;&gt;Default Constructor cannot be found for type TestClass&lt;/code&gt; 的错误:&lt;/p&gt;
+
+&lt;div class=&quot;language-c# highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;TestClass&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;A&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;TestClass&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;instance1&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Reflection&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;LoadClass&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;TestClass&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;这是由于正常调用一个函数时，编译器可以通过汇编码的引用，确认该函数被调用过。但是通过反射调用时，在汇编码中找不到直接引用。这也就出现了我之前遇到的问题。&lt;/p&gt;
+
+&lt;p&gt;Swagger 在使用 Newtonsoft.Json 库反序列化 Json 字符串时，并不是直接引用，所以导致了引用寻找失败，Default Constructor 被代码裁剪器裁剪掉了。&lt;/p&gt;
+
+&lt;h3 id=&quot;解决方法&quot;&gt;解决方法&lt;/h3&gt;
+
+&lt;p&gt;解决方法相对来说比较简单，分为两步:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;找到被裁剪掉的函数所处的 dll 库以及它的命名空间。&lt;/li&gt;
+  &lt;li&gt;新建或者修改工程中的文件 &lt;code class=&quot;highlighter-rouge&quot;&gt;Assets/link.xml&lt;/code&gt;，在文件中加入需要保留的汇编码的文件名和命名空间，比如:&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;div class=&quot;language-xml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;linker&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;assembly&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;fullname=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;LeanCloud.Core&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;namespace&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;fullname=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;LeanCloud&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;preserve=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;all&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;namespace&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;fullname=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;LeanCloud.Internal&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;preserve=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;all&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;/assembly&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;assembly&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;fullname=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;LeanCloud.Realtime&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;namespace&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;fullname=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;LeanCloud.Realtime&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;preserve=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;all&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;namespace&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;fullname=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;LeanCloud.Realtime.Internal&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;preserve=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;all&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;/assembly&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;assembly&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;fullname=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;LeanCloud.Storage&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;namespace&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;fullname=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;LeanCloud.Storage&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;preserve=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;all&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;namespace&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;fullname=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;LeanCloud.Storage.Internal&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;preserve=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;all&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;/assembly&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;/linker&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;经验总结&quot;&gt;经验总结&lt;/h3&gt;
+
+&lt;p&gt;在这个事件中，学到了这么几点：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;知识储备是日积月累的，书到用时方恨少。&lt;/strong&gt;&lt;/p&gt;
+
+    &lt;p&gt;大四在交大做毕业设计时，我分配到了跟 Intel 合作进行安卓编译器优化的项目。这个项目乍看之下并不如其他的项目有趣，其他的项目例如用 opencv 进行人脸识别似乎更有意思。但是在编译器优化的项目中，Intel 的导师教了我们不少工业界中最实用的编译器知识。包括&lt;/p&gt;
+
+    &lt;ul&gt;
+      &lt;li&gt;编译器中涉及的步骤&lt;/li&gt;
+      &lt;li&gt;编译器常做的优化&lt;/li&gt;
+      &lt;li&gt;科学测量代码运行性能的方法&lt;/li&gt;
+      &lt;li&gt;业界最新的几种编译器执行方法&lt;/li&gt;
+      &lt;li&gt;优化编译性能的方法&lt;/li&gt;
+    &lt;/ul&gt;
+
+    &lt;p&gt;这些知识在 95% 的情况下，我都用不上，但是一旦出现了相关的问题，如果没有这方面的知识积累，是不可能在短时间内找到解决方法的。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;积极阅读官方文档。&lt;/strong&gt;&lt;/p&gt;
+
+    &lt;p&gt;Unity3D 是一个相对成熟的游戏开发引擎，在今年 AR 和 VR 兴起的阶段，也被许多学术界和工业界的人士用作开发 AR 和 VR app 的第一选择。在这个过程中难免会遇到许多问题，但是 Unity 官方提供了非常详实的文档，涵盖了许多方面。对国人来说，唯一的缺点就是文档是用英文写的，而中文的翻译往往在一些人的博客中，不仅内容过时，许多时候也翻译不准确。&lt;/p&gt;
+
+    &lt;p&gt;此时，能否顺利流畅地阅读英文官方文档，也直接决定了是否能快速地解决问题。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;遇到问题的时候，能不断钻研。&lt;/strong&gt;&lt;/p&gt;
+
+    &lt;p&gt;有许多问题并不是浮在表层逻辑的，许多问题的解决需要从系统或者框架的底层入手。如果存在畏难情绪，就没有办法找到底层的原因，也只能在表面上治标不治本，最终项目的质量也会受到影响。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;如果你看到这里，一定是真爱！欢迎看看我的其他 &lt;a href=&quot;http://chendi.me/&quot;&gt;blog&lt;/a&gt;。O(∩_∩)O&lt;/p&gt;
+</description>
+        <pubDate>Sat, 10 Jun 2017 04:15:00 +0800</pubDate>
+        <link>http://localhost:4000/2017/06/10/weird-bugs-2/</link>
+        <guid isPermaLink="true">http://localhost:4000/2017/06/10/weird-bugs-2/</guid>
+        
+        <category>Tech</category>
+        
+        <category>Bug</category>
+        
+        <category>Unity</category>
+        
+        <category>iOS</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>Xixi Wetland</title>
+        <description>&lt;h2 id=&quot;what-is-this&quot;&gt;What is this?&lt;/h2&gt;
+
+&lt;p&gt;清明节去西溪湿地公园逛了一圈，拿起好久没碰的大疆，好好飞了一小时，爽！&lt;/p&gt;
+
+&lt;p&gt;不过以后航拍还是得先构思一下，不然素材不够用呢。&lt;/p&gt;
+
+&lt;p&gt;视频献上，记得在 wifi 环境下观看哦。&lt;/p&gt;
+
+&lt;video width=&quot;100%&quot; poster=&quot;/img/in-post/xixiwetland-1/xixiwetland-play.jpg&quot; controls=&quot;&quot; preload=&quot;none&quot; type=&quot;video/mp4&quot;&gt;  
+&lt;source src=&quot;http://video.chendi.me/videos/xixi_small.mp4&quot; /&gt;  
+&lt;/video&gt;
+
+&lt;p&gt;音乐：&lt;/p&gt;
+
+&lt;p&gt;“Something Just Like This” - originally by The Chainsmokers &amp;amp; Coldplay&lt;/p&gt;
+
+&lt;p&gt;Written by: Andrew Taggart, Chris Martin, Guy Berryman, Jonny Buckland &amp;amp; Will Champion&lt;/p&gt;
+
+&lt;p&gt;Cover by: Sam Tsui &amp;amp; KHS COVER&lt;/p&gt;
+
+&lt;p&gt;视频拍摄与剪辑：陈迪&lt;/p&gt;
+
+&lt;p&gt;设备：大疆精灵3&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;旅行的意义&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;a href=&quot;/img/in-post/xixiwetland-1/dji.jpg&quot;&gt;&lt;img src=&quot;/img/in-post/xixiwetland-1/dji.jpg&quot; alt=&quot;dji&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;/img/in-post/xixiwetland-1/cong1.jpg&quot;&gt;&lt;img src=&quot;/img/in-post/xixiwetland-1/cong1.jpg&quot; alt=&quot;cong1&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;/img/in-post/xixiwetland-1/cong2.jpg&quot;&gt;&lt;img src=&quot;/img/in-post/xixiwetland-1/cong2.jpg&quot; alt=&quot;cong2&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+</description>
+        <pubDate>Sun, 02 Apr 2017 22:15:00 +0800</pubDate>
+        <link>http://localhost:4000/2017/04/02/Xixi-park/</link>
+        <guid isPermaLink="true">http://localhost:4000/2017/04/02/Xixi-park/</guid>
+        
+        <category>旅行</category>
+        
+        <category>航拍</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>Weird bugs - 1</title>
+        <description>&lt;blockquote&gt;
+  &lt;p&gt;“There are two ways to write error-free programs; only the third one works.”&lt;/p&gt;
+
+  &lt;p&gt;– Alan Perlis, “Epigrams on Programming”&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;前言&quot;&gt;前言&lt;/h2&gt;
+
+&lt;p&gt;在这几年的开发生涯中，遇到了或多或少的奇怪的BUG。从前端的浏览器兼容到后端的 DNS 解析，从常用的 ssh 到大部分人都不会关心的编译器优化。在排查问题的过程中，我也获益良多。往往为了排查了解一个问题的原因，需要用到多个领域的知识。在此也记录下我在 debug 一些奇怪问题的过程与方法，希望能与大家分享学习。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;服务器响应时长由-20ms-变为-5s&quot;&gt;服务器响应时长由 20ms 变为 5s&lt;/h2&gt;
+
+&lt;h3 id=&quot;问题表象&quot;&gt;问题表象&lt;/h3&gt;
+
+&lt;p&gt;在开发一个新的 Restful 服务器的时候，我使用了 Django 框架作为服务器的后端框架。为了保证服务的延迟在预期的范围内，我接入了 &lt;a href=&quot;https://www.datadoghq.com/&quot;&gt;Datadog&lt;/a&gt; 性能监控服务来监控 Django 服务的延迟。&lt;/p&gt;
+
+&lt;p&gt;此时，我在 Datadog 的监控板上，发现有一个请求的平均延迟达到了 1000+ ms，这个是远远超过了我定下的 SLA，于是便开始排查到底是什么原因，并且想要怎样优化。&lt;/p&gt;
+
+&lt;h3 id=&quot;排查方式&quot;&gt;排查方式&lt;/h3&gt;
+
+&lt;h4 id=&quot;确认延迟分布&quot;&gt;确认延迟分布&lt;/h4&gt;
+
+&lt;p&gt;在监控服务器延迟的时候，单个数字是无法准确地表达出问题的。在 Google 的 &lt;a href=&quot;http://shop.oreilly.com/product/0636920041528.do&quot;&gt;Site Reliability Engineering&lt;/a&gt; 一书中提过，在监控服务器延迟的时候，监测 50%, 90%, 99% 的请求延迟会更有代表性。如下图。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;/img/in-post/weird-bug-1/sre-latency.png&quot;&gt;&lt;img src=&quot;/img/in-post/weird-bug-1/sre-latency.png&quot; alt=&quot;sre_latency&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;在查看了服务器请求延迟的分布表后，我发现 90% 的请求都在 100 ms 以内就完成了，但是有 10% 的请求会出现延迟达到 5s 的情况。手动发送 HTTP 请求也证明了，高请求延迟的情况并不是每次都会出现，也就是说这个 bug 是不能 100% 重现的。&lt;/p&gt;
+
+&lt;p&gt;偶尔出现的高请求延迟，长达5秒:
+&lt;a href=&quot;/img/in-post/weird-bug-1/request-latency-high.png&quot;&gt;&lt;img src=&quot;/img/in-post/weird-bug-1/request-latency-high.png&quot; alt=&quot;request-latency-high&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;大部分时间在 20 ms 内完成:
+&lt;a href=&quot;/img/in-post/weird-bug-1/request-latency-low.png&quot;&gt;&lt;img src=&quot;/img/in-post/weird-bug-1/request-latency-low.png&quot; alt=&quot;request-latency-low&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;在这个时候便有两个推测：&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;每次延迟增加的时候都是固定增加 5s，这说明延迟增加的事件有一定确定性，5秒这个时间应该是某个配置中的，比如某个 timeout 的时间。&lt;/li&gt;
+  &lt;li&gt;不是 100% 可重现的事件，第一反应便是线程死锁，或者数据库死锁，第一次操作失败，并且在重试时成功。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h4 id=&quot;推理以及分段排查&quot;&gt;推理以及分段排查&lt;/h4&gt;
+
+&lt;h5 id=&quot;profiling&quot;&gt;Profiling&lt;/h5&gt;
+
+&lt;p&gt;在解决服务器延迟高的问题时，靠猜显然是不能解决问题的，必须靠 profiling 来帮助我们准确定位具体延迟高的代码。在现阶段已经有了比较完整的 profiling 工具链来帮助我们，从 OS 层的 dtrace, strace，再到框架层的 &lt;a href=&quot;https://github.com/jazzband/django-debug-toolbar&quot;&gt;django-debug-toolbar&lt;/a&gt;，我们应该利用这些工具帮助我们排查性能问题。&lt;/p&gt;
+
+&lt;p&gt;在这里，由于我是用的服务器框架是 Django，所以利用的是 &lt;a href=&quot;https://github.com/jazzband/django-debug-toolbar&quot;&gt;django-debug-toolbar&lt;/a&gt; 自带的 profiling 功能。&lt;/p&gt;
+
+&lt;p&gt;在触发了长延时的 bug 之后，django-debug-toolbar 中的 profling 结果显示如下：&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;/img/in-post/weird-bug-1/django-profile-1.png&quot;&gt;&lt;img src=&quot;/img/in-post/weird-bug-1/django-profile-1.png&quot; alt=&quot;django-profile-1&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;从上图可以看出，在数据库的连接时，建立连接花了5秒钟，这个是导致整体请求延迟的主要原因。&lt;/p&gt;
+
+&lt;p&gt;P.S. 在使用 django-debug-toolbar 的时候，如果返回的内容不是 html 格式的，而是 json 格式的，则 toolbar 并不会显示出来，我自定义了一层 django middleware，将 json 格式的 response 转化为 html 格式的，从而触发 toolbar 的显示。&lt;/p&gt;
+
+&lt;p&gt;P.S. 对于 POST HTTP 请求来说，不好像 GET 请求一样在浏览器中触发并浏览 toolbar。于是我安装了 &lt;a href=&quot;https://github.com/djsutho/django-debug-toolbar-request-history&quot;&gt;Request History Panel for Django Debug Toolbar&lt;/a&gt;。这样可以先用 curl 发送一个 POST 请求，然后再用 GET 请求获得 toolbar，在 toolbar 中切换到之前的 POST 请求，查看具体的 profile 结果。&lt;/p&gt;
+
+&lt;h5 id=&quot;数据库连接排查&quot;&gt;数据库连接排查&lt;/h5&gt;
+
+&lt;p&gt;在涉及到网络连接时，问题就变得复杂了。数据库的连接时间虽然是5秒，但是并没有失败，说明在数据库连接中应该有某个超时的操作，但是后续重试成功了。这个问题有可能与多个因素相关，比如 Django 服务器的线程冲突导致资源不足，或者宿主主机资源不足，或者 DNS 解析超时，或者虚拟机桥接内核有 bug (我部署在阿里云的容器服务上，应该有两层虚拟化，一层是 ECS 主机的虚拟层，一层是 docker 的虚拟层)，也有可能是阿里云版的 PostgreSQL 内配置了某些防火墙，导致连接不稳定。&lt;/p&gt;
+
+&lt;p&gt;在这个时候我做了两件事:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;在宿主主机启动一个本地版本的 PostgreSQL，并用 Django 服务器连接宿主主机版本的 PostgreSQL，看看是否有长延迟的情况。发现没有长延迟的情况。初步判定长延迟只出现在与阿里云 RDS 的连接上。&lt;/li&gt;
+  &lt;li&gt;在开发用的 ECS 上启动 docker 镜像连接阿里云 RDS，发现也不会出现长延迟的情况。初步判定长延迟只出现在阿里云的容器服务与阿里云 RDS 的连接上。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;由于我对阿里云的容器服务和 RDS 的内部架构配置不了解，我提交了一个工单请求阿里云 RDS 组协助排查。&lt;/p&gt;
+
+&lt;p&gt;在工单排查中，使用了 tcpdump 来抓包在建立连接时，数据库连接端口的所有 tcp 包。在 wireshark 中可以看到所有 tcp 连接都成功建立了，并且没有出现超时的现象。RDS 数据库的问题便被暂时排除了。&lt;/p&gt;
+
+&lt;h5 id=&quot;docker-网络状态排查&quot;&gt;docker 网络状态排查&lt;/h5&gt;
+
+&lt;p&gt;由于这个问题只会在阿里云的容器服务上出现，便将工单移交至阿里云的容器服务组进行进一步排查。&lt;/p&gt;
+
+&lt;p&gt;此时，我想起了在设置服务器监控时，我将 docker 镜像的网络连接方式由 bridge 模式切换到了 host 模式，以便将 docker 中的数据直接发送至 8125 端口 (datadog agent 的默认数据收集端口)。会不会是由于 docker 镜像的网络连接方式改变而导致的问题呢？&lt;/p&gt;
+
+&lt;p&gt;此时，我将 docker 镜像的网络连接方式调回了 bridge 模式，数据库连接长延时的问题便消失了！&lt;/p&gt;
+
+&lt;p&gt;在同一时间，阿里云的容器服务组将问题反馈给了阿里云的溪恒，在研究后发现是 DNS 解析数据库地址时超时了，DNS 连接超时时间的配置在 &lt;code class=&quot;highlighter-rouge&quot;&gt;/etc/resolv.conf&lt;/code&gt;，如果将 timeout 的时间改为 1 秒，则长延迟只会有1秒。阿里云容器服务组提供的建议是使用 nscd 模块缓存 DNS 解析结果：&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ sudo apt-get install -y nscd
+$ service nscd start
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;由于宿主 ECS 服务器使用了 nscd 缓存 DNS 的解析结果，所以如果直接在宿主上运行 Django 服务器，则不会出现连接超时的情况，但是如果在 docker 内运行 Django 服务器，由于 docker 内没有安装 nscd，则会出现连接长延时的情况。&lt;/p&gt;
+
+&lt;p&gt;这个也解释了为什么之前抓包数据库连接的时候看不出问题：由于 DNS 解析是发生在 tcp 连接建立之前，tcp 连接信息只包含了 ip 地址，所以在 tcp 包中看不出连接有问题。&lt;/p&gt;
+
+&lt;p&gt;同时，由于 DNS 解析超时之后会再进行重试，所以虽然一次解析超时，但是第二次解析成功后，数据库连接仍然可以正常建立。&lt;/p&gt;
+
+&lt;h3 id=&quot;解决方法&quot;&gt;解决方法&lt;/h3&gt;
+
+&lt;p&gt;解决方法包含两部分:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;在容器的 Dockerfile 中增加 nscd 的安装。这个模块理论上应该安装在所有 docker 容器中以优化 DNS 解析速度。&lt;/li&gt;
+  &lt;li&gt;降低 DNS 解析超时配置。将 &lt;code class=&quot;highlighter-rouge&quot;&gt;/etc/resolv.conf&lt;/code&gt; 中的 timeout 时间改为 1 秒，以避免由于 DNS 解析超时时，有不必要的长延迟。&lt;/li&gt;
+  &lt;li&gt;docker 容器使用 bridge 模式。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;经验总结&quot;&gt;经验总结&lt;/h3&gt;
+
+&lt;p&gt;在这个事件中，学到了这么几点：&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;性能监控应该及早安装。&lt;/p&gt;
+
+    &lt;p&gt;从开发的早期，就应该安装性能监控，从而每一次小的改变对性能有怎样的影响都可以清晰地看出来。若是到了开发的后期才安装性能监控，要优化时就需要 profile 代码才能找到性能瓶颈。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;DNS 解析是属于网络基础架构底层的服务，但是往往对上层的应用有极大的影响。&lt;/p&gt;
+
+    &lt;p&gt;大部分开发者往往会忽视 DNS 解析在网络应用中的影响，但是，DNS 是网络中非常脆弱的一环。从近期多次 DNS 服务器遭受 DDOS 攻击导致的互联网瘫痪可以看出，DNS 的容灾和安全性也是服务架构中需要考虑的。同时，DNS 缓存在大部分场合也都是需要的。只不过 DNS 缓存也同时伴随着一定的风险。比如在 Name Server 的配置修改之后，往往需要等待缓存过期才能在客户端生效。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;遇到问题的时候，先思考最近修改了什么。&lt;/p&gt;
+
+    &lt;p&gt;这个其实是在 Bloomberg 时 Team Leader 教的第一课。只是在这次事件中，长连接延时是由于安装监控服务而引入的 (将 docker 网络模式改为 host 模式)。就如同薛定谔的猫一样，在没有测量之前，它没有这个问题，在测量之后，我也不确定这个问题是原本存在的，还是由于测量导致的。这个也是排查困难的主要原因之一。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;下一步&quot;&gt;下一步&lt;/h3&gt;
+
+&lt;p&gt;到目前为止，服务器的请求延迟已经恢复正常，但是仍然有几个问题不得其解:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;为什么这个问题只会在 docker 网络模式为 host 模式时出现，host 模式理应使用宿主的网络栈，也就是说，在 host 模式时，应该会使用宿主的 nscd 来缓存 DNS 解析结果。&lt;/li&gt;
+  &lt;li&gt;当 nscd 缓存 miss 时，nscd 同样会使用 DNS 服务器进行 DNS 解析，也有一定几率会出现 DNS 解析长延迟的情况，那么我们只是降低了问题出现的概率和时间，但并没有根本上解决问题的所在，即为什么 DNS 解析会出现超时的情况。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;以上两个问题已经在阿里云的工单中提供，我将在容器和宿主上抓包检测 DNS 解析的过程，进一步了解问题的所在。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;如果你看到这里，一定是真爱！欢迎看看我的其他 &lt;a href=&quot;http://chendi.me/&quot;&gt;blog&lt;/a&gt;。O(∩_∩)O&lt;/p&gt;
+</description>
+        <pubDate>Sun, 26 Mar 2017 04:15:00 +0800</pubDate>
+        <link>http://localhost:4000/2017/03/26/weird-bugs-1/</link>
+        <guid isPermaLink="true">http://localhost:4000/2017/03/26/weird-bugs-1/</guid>
+        
+        <category>Tech</category>
+        
+        <category>Bug</category>
+        
+        <category>Docker</category>
+        
+        <category>DNS</category>
         
         
       </item>

@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>Support grpc library on Unity - 陈迪的博客 | Di' Blog</title>
+
+    <link rel="canonical" href="http://localhost:4000/2017/07/30/unity-grpc-plugin-en/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Di's Blog</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/in-post/unity-arkit-plugin-opengl/arkit-bg-1.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/in-post/unity-arkit-plugin-opengl/arkit-bg-1.jpg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Tech" title="Tech">Tech</a>
+                        
+                        <a class="tag" href="/tags/#Unity" title="Unity">Unity</a>
+                        
+                        <a class="tag" href="/tags/#grpc" title="grpc">grpc</a>
+                        
+                    </div>
+                    <h1>Support grpc library on Unity</h1>
+                    
+                    
+                    <h2 class="subheading">在 Unity 开发中使用 grpc 组件</h2>
+                    
+                    <span class="meta">Posted by Di Chen on July 30, 2017</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+
+            <!-- Language Selector -->
+            <select id="language_selector" onchange= "onLanChange(this.options[this.options.selectedIndex].value)">
+                <option value="0"> 中文 Chinese </option>
+                <option value="1"> 英语 English </option>
+            </select>
+
+				<h2 id="preface">Preface</h2>
+
+<p>Grpc is an open-sourced rpc framework developed by google。It support both unary remote procedual call and bi-directional streaming. For those who wants to build a client-server bi-directional persistent connection, it’s a simple and modern solution.</p>
+
+<p>Grpc itself support multiple language and multiple platform, but Unity is not one of them for now.</p>
+
+<p>Even though we develop most of the Unity project in C#, the Unity runtime is not running C# script directly. On Unity iOS platform specifically, it will use L2CPP (An ahead-of-time compiler) to translate c# script into c++ code, then finally compile and run on iOS devices. For us, if we want to use grpc in Unity project, we have some additional work to do.</p>
+
+<hr />
+
+<h2 id="testing-grpc-c-library">Testing grpc C# library</h2>
+
+<p>First of all, we can directly copy the <a href="https://github.com/grpc/grpc/tree/master/src/csharp">grpc c# source code</a> into Unity project and use <a href="https://github.com/grpc/grpc/tree/master/examples/csharp/route_guide">route guide example</a> to test the basic feature of grpc.</p>
+
+<p>During compilation, we will find the C# grpc library is depend on <a href="https://www.nuget.org/packages/Grpc.Core/">Grpc.Core</a> Library. <em>Grpc.Core</em> is a C library and official C# grpc library compile <em>Grpc.Core</em> into a shared library. Since iOS application can only depend on static library, we have to static compile the <em>Grpc.Core</em> library and use it in iOS devices.</p>
+
+<p>Why don’t we just copy the C code into the xcode project and use xcode to pull it in? In the core library, there are bunch of relative include like <em>#include “src/core/…“</em>, which is not easy to work around in xcode project.</p>
+
+<h2 id="generate-static-library-for-arm64-platform">Generate static library for arm64 platform</h2>
+
+<p>During this blog, we are focusing on iOS arm64 platform as an example, for other platform this might be apply.</p>
+
+<p>Since iOS need an static linked library instead of dynamicly load shared library, we can’t simply use the packge from <em>nuget.org</em>. If we are simply supporting iOS arm64 architecture, we can just set the build target to arm64 and compile it on a arm64 machine (eg. Mac OS X)</p>
+
+<p>If we want to support all architecture, then we will need to cross-compile a <a href="https://en.wikipedia.org/wiki/Fat_binary">fat binary</a></p>
+
+<h3 id="change-makefile">Change Makefile</h3>
+
+<p>We can make some changes to the official Makefile for grpc.core, then the binary will be able to use in iOS build. There are two things we need to change.</p>
+
+<ul>
+  <li>Add -isysroot config. This decides which version of iOS we can support, using a lower level of OS can make it more compatible.</li>
+  <li>Add -arch arm64 to make sure it build for arm64</li>
+</ul>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code> VALID_CONFIG_opt = 1
+<span class="gd">- CC_opt = $(DEFAULT_CC)
+- CXX_opt = $(DEFAULT_CXX)
+</span><span class="gi">+ IOSFLAGS =  -arch arm64  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS10.3.sdk -fembed-bitcode
++ CC_opt = $(DEFAULT_CC) $(IOSFLAGS) 
++ CXX_opt = $(DEFAULT_CXX) $(IOSFLAGS)
+</span> LD_opt = $(DEFAULT_CC)
+ LDXX_opt = $(DEFAULT_CXX)
+ CXXFLAGS_opt = -fno-exceptions
+<span class="gu">@@ -339,7 +340,7 @@ HOST_LDXX ?= $(LDXX)
+</span> 
+ CFLAGS += -std=c99 -Wsign-conversion -Wconversion $(W_SHADOW) $(W_EXTRA_SEMI)
+ CXXFLAGS += -std=c++11
+<span class="gd">- CPPFLAGS += -g -Wall -Wextra -Werror -Wno-long-long -Wno-unused-parameter -DOSATOMIC_USE_INLINED=1
+</span><span class="gi">+ CPPFLAGS += -g -Wall -Wextra -Wno-long-long -Wno-unused-parameter -DOSATOMIC_USE_INLINED=1
+</span> LDFLAGS += -g
+</code></pre></div></div>
+
+<p>Then run</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>➜  grpc git:<span class="o">(</span>v1.4.x<span class="o">)</span> ✗ make
+...
+...
+➜  grpc git:<span class="o">(</span>v1.4.x<span class="o">)</span> ✗ <span class="nb">ls</span> ./libs/opt/<span class="k">*</span>.a
+./libs/opt/libares.a                ./libs/opt/libgrpc_cronet.a
+./libs/opt/libboringssl.a           ./libs/opt/libgrpc_plugin_support.a
+./libs/opt/libgpr.a                 ./libs/opt/libgrpc_unsecure.a
+./libs/opt/libgrpc.a                ./libs/opt/libz.a
+</code></pre></div></div>
+
+<p>Now we have the library we need to grpc runtime. We can copy the <code class="highlighter-rouge">libgrpc.a</code> to Unity project <code class="highlighter-rouge">Assets/Plugins/iOS</code> directory. Unity will ensure this library is added to the link line of the xcode project.</p>
+
+<h3 id="build-grpc-c-extension-library">build grpc c# extension library</h3>
+
+<p>Besides the grpc.core static library, we also need a csharp specific library, we can get the library by running:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>➜  grpc git:(v1.4.x) ✗ clang -arch arm64  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS10.3.sdk -I. -I./include -c -o grpc_csharp_ext.o src/csharp/ext/grpc_csharp_ext.c
+➜  grpc git:(v1.4.x) ✗ ar -rsc grpc_csharp_ext.a grpc_csharp_ext.o
+</code></pre></div></div>
+
+<p>Then we will copy <code class="highlighter-rouge">grpc_csharp_ext.a</code> into Unity project’s <code class="highlighter-rouge">Assets/Plugins/iOS</code> directory.</p>
+
+<p><strong>Some thing to note:</strong> If you want to support <a href="https://docs.unity3d.com/Manual/AppThinning.html">App thining</a> feature, which will require a bitcode support of all dependent library. In order to generate a bitcode enabled library, we need to:</p>
+
+<ol>
+  <li>Use clang as our compiler.</li>
+  <li>Add option <code class="highlighter-rouge">-fembed-bitcode</code> to the compilation flags.</li>
+</ol>
+
+<h2 id="change-grpccore-code-to-use-static-link">Change Grpc.Core code to use static link</h2>
+
+<p>Since we are using static link instead of dynmaic load, we need to change the source code of Grpc.Core. Here are some related code:</p>
+
+<pre><code class="language-git">    modified:   src/csharp/Grpc.Core/Internal/DefaultSslRootsOverride.cs
+    modified:   src/csharp/Grpc.Core/Internal/NativeExtension.cs
+    modified:   src/csharp/Grpc.Core/Internal/NativeLogRedirector.cs
+    modified:   src/csharp/Grpc.Core/Internal/NativeMethods.cs
+</code></pre>
+
+<p>Now let’s take a look at each file</p>
+
+<h3 id="defaultsslrootsoverridecs">DefaultSslRootsOverride.cs</h3>
+
+<p>First of all, in <code class="highlighter-rouge">DefaultSslRootsOverride.cs</code>，grpc loaded the local certificate file, I guess it’s used for certificate pinning. We can remove this part, if you need it, just change it to the certificate you need.</p>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gd">--- a/src/csharp/Grpc.Core/Internal/DefaultSslRootsOverride.cs
+</span><span class="gi">+++ b/src/csharp/Grpc.Core/Internal/DefaultSslRootsOverride.cs
+</span><span class="gu">@@ -56,6 +56,7 @@ namespace Grpc.Core.Internal
+</span>         {
+             lock (staticLock)
+             {
+<span class="gi">+                               /*
+</span>                 var stream = typeof(DefaultSslRootsOverride).GetTypeInfo().Assembly.GetManifestResourceStream(RootsPemResourceName);
+                 if (stream == null)
+                 {
+<span class="gu">@@ -66,6 +67,7 @@ namespace Grpc.Core.Internal
+</span>                     var pemRootCerts = streamReader.ReadToEnd();
+                     native.grpcsharp_override_default_ssl_roots(pemRootCerts);
+                 }
+<span class="gi">+                */
+</span>             }
+         }
+     }
+</code></pre></div></div>
+
+<h3 id="nativeextensioncs">NativeExtension.cs</h3>
+
+<p>In the function <code class="highlighter-rouge">Load()</code>, we need need to make two changes:</p>
+
+<p><strong>On iOS platform, we don’t need to load dynamic library, but on Unity Editor, we still need to load dynamic library, let’s use a simple Unity Macro to differentiate them:</strong></p>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gd">--- a/src/csharp/Grpc.Core/Internal/NativeExtension.cs
+</span><span class="gi">+++ b/src/csharp/Grpc.Core/Internal/NativeExtension.cs
+</span><span class="gu">@@ -93,7 +93,10 @@ namespace Grpc.Core.Internal
+</span>         /// Detects which configuration of native extension to load and load it.
+         /// &lt;/summary&gt;
+         private static UnmanagedLibrary Load()
+<span class="gd">-        {
+</span><span class="gi">+               {
++                       #if UNITY_IOS
++                               return null;
++                       #endif
+</span></code></pre></div></div>
+
+<p><strong>On PC or MAC, we need to load dynamic library, but the path should be modified:</strong></p>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gu">@@ -111,8 +114,10 @@ namespace Grpc.Core.Internal
+</span>             var netCorePublishedAppStylePath = Path.Combine(assemblyDirectory, runtimesDirectory, GetNativeLibraryFilename());
+             var netCoreAppStylePath = Path.Combine(assemblyDirectory, "../..", runtimesDirectory, GetNativeLibraryFilename());
+ 
+<span class="gi">+                       var unityPath = Path.Combine (assemblyDirectory, "../../Assets/Plugins/GrpcLib", runtimesDirectory, GetNativeLibraryFilename ());
++
+</span>             // Look for all native library in all possible locations in given order.
+<span class="gd">-            string[] paths = new[] { classicPath, netCorePublishedAppStylePath, netCoreAppStylePath};
+</span><span class="gi">+                       string[] paths = new[] { classicPath, netCorePublishedAppStylePath, netCoreAppStylePath, unityPath};
+</span>             return new UnmanagedLibrary(paths);
+         }
+</code></pre></div></div>
+
+<h3 id="nativelogredirectorcs">NativeLogRedirector.cs</h3>
+
+<p>When C code in Grpc.Core calls C# code, it was not able to find the correct reference. This is because during IL2CPP compilation, a <a href="https://www.ibm.com/support/knowledgecenter/en/ssw_ibm_i_72/rzarg/name_mangling.htm">name mangling</a> process happened, the name of the function is wrapped by namespace and class name. We can attonate the function name by <code class="highlighter-rouge">MonoPInvokeCallback</code>, which will help Untiy IL2CPP to understand which method might get called from C code.</p>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gd">--- a/src/csharp/Grpc.Core/Internal/NativeLogRedirector.cs
+</span><span class="gi">+++ b/src/csharp/Grpc.Core/Internal/NativeLogRedirector.cs
+</span><span class="gu">@@ -66,6 +66,7 @@ namespace Grpc.Core.Internal
+</span>             }
+         }
+ 
+<span class="gi">+        [AOT.MonoPInvokeCallback(typeof(GprLogDelegate))]
+</span>         private static void HandleWrite(IntPtr fileStringPtr, int line, ulong threadId, IntPtr severityStringPtr, IntPtr msgPtr)
+         {
+
+</code></pre></div></div>
+
+<p>We can also change the log function to Unity Debug Log：</p>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gu">@@ -97,7 +98,11 @@ namespace Grpc.Core.Internal
+</span>             }
+             catch (Exception e)
+             {
+<span class="gd">-                Console.WriteLine("Caught exception in native callback " + e);
+</span><span class="gi">+#if UNITY_METRO
++                               UnityEngine.Debug.Log("Caught exception in native callback " + e);
++#else
++                               Console.WriteLine("Caught exception in native callback " + e);
++#endif
+</span></code></pre></div></div>
+
+<h3 id="nativemethodscs">NativeMethods.cs</h3>
+
+<p>In this file, grpc invoked the c code in <code class="highlighter-rouge">Grpc.Core</code> library. In Unity, if we want to call into native code or invoke method in assembly, we need to <a href="https://docs.unity3d.com/Manual/PluginsForIOS.html">define the assembly source</a>. And we also need to define each native call and add <code class="highlighter-rouge">Dllimport()</code> decorator to each method that need to be called.</p>
+
+<p>Since iOS is using static compiling, so we use “__Internal” for iOS platform.</p>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gd">--- a/src/csharp/Grpc.Core/Internal/NativeMethods.cs
+</span><span class="gi">+++ b/src/csharp/Grpc.Core/Internal/NativeMethods.cs
+</span><span class="gu">@@ -51,6 +51,14 @@ namespace Grpc.Core.Internal
+</span>     /// &lt;/summary&gt;
+     internal class NativeMethods
+     {
+<span class="gi">+#if UNITY_EDITOR               
++               private const string pluginName = "grpc_csharp_ext";            
++#elif UNITY_IOS || UNITY_TVOS || UNITY_WEBGL           
++               public const string pluginName = "__Internal";          
++#else          
++               public const string pluginName = "grpc_csharp_ext";             
++#endif
++
+</span></code></pre></div></div>
+
+<p>Define each method that needs to be called and add <code class="highlighter-rouge">Dllimport</code> decorator.</p>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gi">+               static class NativeCalls
++               {
++                       [DllImport(pluginName)]
++                       internal static extern void grpcsharp_init();
++
++                       [DllImport(pluginName)]
++                       internal static extern void grpcsharp_shutdown();
+</span>...
+...
+</code></pre></div></div>
+
+<p>Change the way we initialize the method.</p>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code>         public NativeMethods(UnmanagedLibrary library)
+         {
+<span class="gi">+               #if UNITY_IOS
++                       this.grpcsharp_init = NativeCalls.grpcsharp_init;
++                       this.grpcsharp_shutdown = NativeCalls.grpcsharp_shutdown;
++                       this.grpcsharp_version_string = NativeCalls.grpcsharp_version_string;
+</span>...
+...
+</code></pre></div></div>
+
+<p>We simplfied the process of this change. This is mostly copy-pasting work. Almost all the method in this file need to make above three changes we made to<code class="highlighter-rouge">grpcsharp_init</code>. To simply this blog, I didn’t copy the full diff here.</p>
+
+<h3 id="compile-and-test">Compile and test</h3>
+
+<p>Finally, I use the <a href="https://github.com/grpc/grpc/tree/master/examples/csharp/route_guide">route guide example</a> to test the basic feature of grpc, like unary call, bi-directional streaming. They all works fine.</p>
+
+<p>The only thing that seems weird to me is during clean up. After we close the connection to server, we will need to call <code class="highlighter-rouge">channel.Dispose()</code> to release the resource of grpc connection, otherwise, Unity will hang and seems waiting for the thread to exit. I’m not sure about the root cause of this problem, official demo didn’t call <code class="highlighter-rouge">Dispose</code> explicitly.</p>
+
+<h3 id="conclusion">Conclusion</h3>
+
+<p>This is a relative tedious work to make grpc work on Unity. I did quite a lot of research, the only project I found is <a href="https://github.com/neuecc/MagicOnion">Magic Onion Project</a>. This project makes a lot of Unity specific change to make grpc work on it. Since Unity was not supporting .Net 4.6 (now they do), even the async mechanism needs a special implementation. Now, Unity provide a beta release of .Net 4.6 support, I believe this will become the mainstream support, so I just focus on making grpc work on .Net 4.6.</p>
+
+<p>Even we make it work on iOS, it will still take tremendous effout to make it work on Android, Windows, Xbox and etc.</p>
+
+<hr />
+
+<p>If you like my blog, please checkout <a href="http://chendi.me/">other posts</a>。O(∩_∩)O</p>
+
+
+                <hr>
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2017/07/21/unity-arkit-plugin-opengl/" data-toggle="tooltip" data-placement="top" title="Support OpenGL ES 2 on Unity ARKit Plugin">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2017/07/30/unity-grpc-plugin-zh/" data-toggle="tooltip" data-placement="top" title="Support grpc library on Unity">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                
+                <!-- 友言 评论框 start -->
+                <!-- UY BEGIN -->
+                </br>
+                <div id="uyan_frame"></div>
+                <script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2138710"></script>
+                <!-- UY END -->
+                <!-- 友言 评论框 end -->
+                
+
+                
+
+            </div>
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#生活" title="生活" rel="4">
+                                    生活
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#航拍" title="航拍" rel="4">
+                                    航拍
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#DJI" title="DJI" rel="3">
+                                    DJI
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Tech" title="Tech" rel="10">
+                                    Tech
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Bug" title="Bug" rel="3">
+                                    Bug
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Unity" title="Unity" rel="6">
+                                    Unity
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#grpc" title="grpc" rel="2">
+                                    grpc
+                                </a>
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://huangxuan.me">Hux Blog</a></li>
+                    
+                        <li><a href="http://mypokemon.io">My pokemon map</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+<!-- Handle Language Change -->
+<script type="text/javascript">
+    var $zh = document.querySelector(".zh");
+    var $en = document.querySelector(".en");
+    var url = document.URL;
+    var new_url = url;
+    function onLanChange(index){
+        if(index == 0){
+            new_url = url.replace("-en/", "-zh/");
+        }else{
+            new_url = url.replace("-zh/", "-en/");
+        }
+        window.location.href = new_url;
+    }
+    if ((url.indexOf("-zh/") < 0) && (url.indexOf("-en/") < 0)) {
+      document.getElementById("language_selector").style.display = "none";
+    }
+    var languageSelect = document.getElementById('language_selector');
+    if (url.indexOf("-en/") > 0) {
+        languageSelect.selectedIndex = 1;
+    } 
+
+</script>
+
+
+
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/chenditc">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/5997371930">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    <li>
+                        <a target="_blank" href="https://www.facebook.com/chenditc">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/chenditc">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Di's Blog 2018
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=huxpro&repo=huxpro.github.io&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-78900217-4';
+    var _gaDomain = 'chendi.me';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+<script>
+    // dynamic User by Hux
+    var _baId = '8507be049b7b8a2e0b8be7f8f815f9d0';
+
+    // Originial
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?" + _baId;
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

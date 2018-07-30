@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>Weird bugs - 1 - 陈迪的博客 | Di' Blog</title>
+
+    <link rel="canonical" href="http://localhost:4000/2017/03/26/weird-bugs-1/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Di's Blog</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/in-post/weird-bug-1/weird-bug-1-bg.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/in-post/weird-bug-1/weird-bug-1-bg.jpg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Tech" title="Tech">Tech</a>
+                        
+                        <a class="tag" href="/tags/#Bug" title="Bug">Bug</a>
+                        
+                        <a class="tag" href="/tags/#Docker" title="Docker">Docker</a>
+                        
+                        <a class="tag" href="/tags/#DNS" title="DNS">DNS</a>
+                        
+                    </div>
+                    <h1>Weird bugs - 1</h1>
+                    
+                    
+                    <h2 class="subheading">奇怪的 bug 系列 - 1</h2>
+                    
+                    <span class="meta">Posted by Di Chen on March 26, 2017</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+
+            <!-- Language Selector -->
+            <select id="language_selector" onchange= "onLanChange(this.options[this.options.selectedIndex].value)">
+                <option value="0"> 中文 Chinese </option>
+                <option value="1"> 英语 English </option>
+            </select>
+
+				<blockquote>
+  <p>“There are two ways to write error-free programs; only the third one works.”</p>
+
+  <p>– Alan Perlis, “Epigrams on Programming”</p>
+</blockquote>
+
+<h2 id="前言">前言</h2>
+
+<p>在这几年的开发生涯中，遇到了或多或少的奇怪的BUG。从前端的浏览器兼容到后端的 DNS 解析，从常用的 ssh 到大部分人都不会关心的编译器优化。在排查问题的过程中，我也获益良多。往往为了排查了解一个问题的原因，需要用到多个领域的知识。在此也记录下我在 debug 一些奇怪问题的过程与方法，希望能与大家分享学习。</p>
+
+<hr />
+
+<h2 id="服务器响应时长由-20ms-变为-5s">服务器响应时长由 20ms 变为 5s</h2>
+
+<h3 id="问题表象">问题表象</h3>
+
+<p>在开发一个新的 Restful 服务器的时候，我使用了 Django 框架作为服务器的后端框架。为了保证服务的延迟在预期的范围内，我接入了 <a href="https://www.datadoghq.com/">Datadog</a> 性能监控服务来监控 Django 服务的延迟。</p>
+
+<p>此时，我在 Datadog 的监控板上，发现有一个请求的平均延迟达到了 1000+ ms，这个是远远超过了我定下的 SLA，于是便开始排查到底是什么原因，并且想要怎样优化。</p>
+
+<h3 id="排查方式">排查方式</h3>
+
+<h4 id="确认延迟分布">确认延迟分布</h4>
+
+<p>在监控服务器延迟的时候，单个数字是无法准确地表达出问题的。在 Google 的 <a href="http://shop.oreilly.com/product/0636920041528.do">Site Reliability Engineering</a> 一书中提过，在监控服务器延迟的时候，监测 50%, 90%, 99% 的请求延迟会更有代表性。如下图。</p>
+
+<p><a href="/img/in-post/weird-bug-1/sre-latency.png"><img src="/img/in-post/weird-bug-1/sre-latency.png" alt="sre_latency" /></a></p>
+
+<p>在查看了服务器请求延迟的分布表后，我发现 90% 的请求都在 100 ms 以内就完成了，但是有 10% 的请求会出现延迟达到 5s 的情况。手动发送 HTTP 请求也证明了，高请求延迟的情况并不是每次都会出现，也就是说这个 bug 是不能 100% 重现的。</p>
+
+<p>偶尔出现的高请求延迟，长达5秒:
+<a href="/img/in-post/weird-bug-1/request-latency-high.png"><img src="/img/in-post/weird-bug-1/request-latency-high.png" alt="request-latency-high" /></a></p>
+
+<p>大部分时间在 20 ms 内完成:
+<a href="/img/in-post/weird-bug-1/request-latency-low.png"><img src="/img/in-post/weird-bug-1/request-latency-low.png" alt="request-latency-low" /></a></p>
+
+<p>在这个时候便有两个推测：</p>
+<ol>
+  <li>每次延迟增加的时候都是固定增加 5s，这说明延迟增加的事件有一定确定性，5秒这个时间应该是某个配置中的，比如某个 timeout 的时间。</li>
+  <li>不是 100% 可重现的事件，第一反应便是线程死锁，或者数据库死锁，第一次操作失败，并且在重试时成功。</li>
+</ol>
+
+<h4 id="推理以及分段排查">推理以及分段排查</h4>
+
+<h5 id="profiling">Profiling</h5>
+
+<p>在解决服务器延迟高的问题时，靠猜显然是不能解决问题的，必须靠 profiling 来帮助我们准确定位具体延迟高的代码。在现阶段已经有了比较完整的 profiling 工具链来帮助我们，从 OS 层的 dtrace, strace，再到框架层的 <a href="https://github.com/jazzband/django-debug-toolbar">django-debug-toolbar</a>，我们应该利用这些工具帮助我们排查性能问题。</p>
+
+<p>在这里，由于我是用的服务器框架是 Django，所以利用的是 <a href="https://github.com/jazzband/django-debug-toolbar">django-debug-toolbar</a> 自带的 profiling 功能。</p>
+
+<p>在触发了长延时的 bug 之后，django-debug-toolbar 中的 profling 结果显示如下：</p>
+
+<p><a href="/img/in-post/weird-bug-1/django-profile-1.png"><img src="/img/in-post/weird-bug-1/django-profile-1.png" alt="django-profile-1" /></a></p>
+
+<p>从上图可以看出，在数据库的连接时，建立连接花了5秒钟，这个是导致整体请求延迟的主要原因。</p>
+
+<p>P.S. 在使用 django-debug-toolbar 的时候，如果返回的内容不是 html 格式的，而是 json 格式的，则 toolbar 并不会显示出来，我自定义了一层 django middleware，将 json 格式的 response 转化为 html 格式的，从而触发 toolbar 的显示。</p>
+
+<p>P.S. 对于 POST HTTP 请求来说，不好像 GET 请求一样在浏览器中触发并浏览 toolbar。于是我安装了 <a href="https://github.com/djsutho/django-debug-toolbar-request-history">Request History Panel for Django Debug Toolbar</a>。这样可以先用 curl 发送一个 POST 请求，然后再用 GET 请求获得 toolbar，在 toolbar 中切换到之前的 POST 请求，查看具体的 profile 结果。</p>
+
+<h5 id="数据库连接排查">数据库连接排查</h5>
+
+<p>在涉及到网络连接时，问题就变得复杂了。数据库的连接时间虽然是5秒，但是并没有失败，说明在数据库连接中应该有某个超时的操作，但是后续重试成功了。这个问题有可能与多个因素相关，比如 Django 服务器的线程冲突导致资源不足，或者宿主主机资源不足，或者 DNS 解析超时，或者虚拟机桥接内核有 bug (我部署在阿里云的容器服务上，应该有两层虚拟化，一层是 ECS 主机的虚拟层，一层是 docker 的虚拟层)，也有可能是阿里云版的 PostgreSQL 内配置了某些防火墙，导致连接不稳定。</p>
+
+<p>在这个时候我做了两件事:</p>
+<ol>
+  <li>在宿主主机启动一个本地版本的 PostgreSQL，并用 Django 服务器连接宿主主机版本的 PostgreSQL，看看是否有长延迟的情况。发现没有长延迟的情况。初步判定长延迟只出现在与阿里云 RDS 的连接上。</li>
+  <li>在开发用的 ECS 上启动 docker 镜像连接阿里云 RDS，发现也不会出现长延迟的情况。初步判定长延迟只出现在阿里云的容器服务与阿里云 RDS 的连接上。</li>
+</ol>
+
+<p>由于我对阿里云的容器服务和 RDS 的内部架构配置不了解，我提交了一个工单请求阿里云 RDS 组协助排查。</p>
+
+<p>在工单排查中，使用了 tcpdump 来抓包在建立连接时，数据库连接端口的所有 tcp 包。在 wireshark 中可以看到所有 tcp 连接都成功建立了，并且没有出现超时的现象。RDS 数据库的问题便被暂时排除了。</p>
+
+<h5 id="docker-网络状态排查">docker 网络状态排查</h5>
+
+<p>由于这个问题只会在阿里云的容器服务上出现，便将工单移交至阿里云的容器服务组进行进一步排查。</p>
+
+<p>此时，我想起了在设置服务器监控时，我将 docker 镜像的网络连接方式由 bridge 模式切换到了 host 模式，以便将 docker 中的数据直接发送至 8125 端口 (datadog agent 的默认数据收集端口)。会不会是由于 docker 镜像的网络连接方式改变而导致的问题呢？</p>
+
+<p>此时，我将 docker 镜像的网络连接方式调回了 bridge 模式，数据库连接长延时的问题便消失了！</p>
+
+<p>在同一时间，阿里云的容器服务组将问题反馈给了阿里云的溪恒，在研究后发现是 DNS 解析数据库地址时超时了，DNS 连接超时时间的配置在 <code class="highlighter-rouge">/etc/resolv.conf</code>，如果将 timeout 的时间改为 1 秒，则长延迟只会有1秒。阿里云容器服务组提供的建议是使用 nscd 模块缓存 DNS 解析结果：</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ sudo apt-get install -y nscd
+$ service nscd start
+</code></pre></div></div>
+
+<p>由于宿主 ECS 服务器使用了 nscd 缓存 DNS 的解析结果，所以如果直接在宿主上运行 Django 服务器，则不会出现连接超时的情况，但是如果在 docker 内运行 Django 服务器，由于 docker 内没有安装 nscd，则会出现连接长延时的情况。</p>
+
+<p>这个也解释了为什么之前抓包数据库连接的时候看不出问题：由于 DNS 解析是发生在 tcp 连接建立之前，tcp 连接信息只包含了 ip 地址，所以在 tcp 包中看不出连接有问题。</p>
+
+<p>同时，由于 DNS 解析超时之后会再进行重试，所以虽然一次解析超时，但是第二次解析成功后，数据库连接仍然可以正常建立。</p>
+
+<h3 id="解决方法">解决方法</h3>
+
+<p>解决方法包含两部分:</p>
+<ol>
+  <li>在容器的 Dockerfile 中增加 nscd 的安装。这个模块理论上应该安装在所有 docker 容器中以优化 DNS 解析速度。</li>
+  <li>降低 DNS 解析超时配置。将 <code class="highlighter-rouge">/etc/resolv.conf</code> 中的 timeout 时间改为 1 秒，以避免由于 DNS 解析超时时，有不必要的长延迟。</li>
+  <li>docker 容器使用 bridge 模式。</li>
+</ol>
+
+<h3 id="经验总结">经验总结</h3>
+
+<p>在这个事件中，学到了这么几点：</p>
+<ol>
+  <li>
+    <p>性能监控应该及早安装。</p>
+
+    <p>从开发的早期，就应该安装性能监控，从而每一次小的改变对性能有怎样的影响都可以清晰地看出来。若是到了开发的后期才安装性能监控，要优化时就需要 profile 代码才能找到性能瓶颈。</p>
+  </li>
+  <li>
+    <p>DNS 解析是属于网络基础架构底层的服务，但是往往对上层的应用有极大的影响。</p>
+
+    <p>大部分开发者往往会忽视 DNS 解析在网络应用中的影响，但是，DNS 是网络中非常脆弱的一环。从近期多次 DNS 服务器遭受 DDOS 攻击导致的互联网瘫痪可以看出，DNS 的容灾和安全性也是服务架构中需要考虑的。同时，DNS 缓存在大部分场合也都是需要的。只不过 DNS 缓存也同时伴随着一定的风险。比如在 Name Server 的配置修改之后，往往需要等待缓存过期才能在客户端生效。</p>
+  </li>
+  <li>
+    <p>遇到问题的时候，先思考最近修改了什么。</p>
+
+    <p>这个其实是在 Bloomberg 时 Team Leader 教的第一课。只是在这次事件中，长连接延时是由于安装监控服务而引入的 (将 docker 网络模式改为 host 模式)。就如同薛定谔的猫一样，在没有测量之前，它没有这个问题，在测量之后，我也不确定这个问题是原本存在的，还是由于测量导致的。这个也是排查困难的主要原因之一。</p>
+  </li>
+</ol>
+
+<h3 id="下一步">下一步</h3>
+
+<p>到目前为止，服务器的请求延迟已经恢复正常，但是仍然有几个问题不得其解:</p>
+
+<ol>
+  <li>为什么这个问题只会在 docker 网络模式为 host 模式时出现，host 模式理应使用宿主的网络栈，也就是说，在 host 模式时，应该会使用宿主的 nscd 来缓存 DNS 解析结果。</li>
+  <li>当 nscd 缓存 miss 时，nscd 同样会使用 DNS 服务器进行 DNS 解析，也有一定几率会出现 DNS 解析长延迟的情况，那么我们只是降低了问题出现的概率和时间，但并没有根本上解决问题的所在，即为什么 DNS 解析会出现超时的情况。</li>
+</ol>
+
+<p>以上两个问题已经在阿里云的工单中提供，我将在容器和宿主上抓包检测 DNS 解析的过程，进一步了解问题的所在。</p>
+
+<hr />
+
+<p>如果你看到这里，一定是真爱！欢迎看看我的其他 <a href="http://chendi.me/">blog</a>。O(∩_∩)O</p>
+
+
+                <hr>
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2016/11/05/life-logging-trail/" data-toggle="tooltip" data-placement="top" title="How to keep you in my mind">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2017/04/02/Xixi-park/" data-toggle="tooltip" data-placement="top" title="Xixi Wetland">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                
+                <!-- 友言 评论框 start -->
+                <!-- UY BEGIN -->
+                </br>
+                <div id="uyan_frame"></div>
+                <script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2138710"></script>
+                <!-- UY END -->
+                <!-- 友言 评论框 end -->
+                
+
+                
+
+            </div>
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#生活" title="生活" rel="4">
+                                    生活
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#航拍" title="航拍" rel="4">
+                                    航拍
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#DJI" title="DJI" rel="3">
+                                    DJI
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Tech" title="Tech" rel="10">
+                                    Tech
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Bug" title="Bug" rel="3">
+                                    Bug
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Unity" title="Unity" rel="6">
+                                    Unity
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#grpc" title="grpc" rel="2">
+                                    grpc
+                                </a>
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://huangxuan.me">Hux Blog</a></li>
+                    
+                        <li><a href="http://mypokemon.io">My pokemon map</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+<!-- Handle Language Change -->
+<script type="text/javascript">
+    var $zh = document.querySelector(".zh");
+    var $en = document.querySelector(".en");
+    var url = document.URL;
+    var new_url = url;
+    function onLanChange(index){
+        if(index == 0){
+            new_url = url.replace("-en/", "-zh/");
+        }else{
+            new_url = url.replace("-zh/", "-en/");
+        }
+        window.location.href = new_url;
+    }
+    if ((url.indexOf("-zh/") < 0) && (url.indexOf("-en/") < 0)) {
+      document.getElementById("language_selector").style.display = "none";
+    }
+    var languageSelect = document.getElementById('language_selector');
+    if (url.indexOf("-en/") > 0) {
+        languageSelect.selectedIndex = 1;
+    } 
+
+</script>
+
+
+
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/chenditc">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/5997371930">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    <li>
+                        <a target="_blank" href="https://www.facebook.com/chenditc">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/chenditc">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Di's Blog 2018
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=huxpro&repo=huxpro.github.io&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-78900217-4';
+    var _gaDomain = 'chendi.me';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+<script>
+    // dynamic User by Hux
+    var _baId = '8507be049b7b8a2e0b8be7f8f815f9d0';
+
+    // Originial
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?" + _baId;
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>
