@@ -19,11 +19,11 @@ tags:
 这里主要讨论下面几个问题：
 
 1. [第三方登录](#第三方登录)
-2. 第三方支付与内购
-3. 网络不联通（DNS 解析）
-4. 初版兼容性
+2. [第三方支付与内购](#第三方支付与内购)
+3. [网络以及服务不连通](#网络以及服务不连通)
+4. [初版兼容性](#初版兼容性)
 5. [区分审核服务器](#区分审核服务器)
-6. NSContactDescription
+6. [Missing Info.plist key](#missing-infoplist-key)
 
 ## 第三方登录
 
@@ -72,14 +72,100 @@ tags:
 我们最终选择了方案2，方案2的执行过程如下：
 
 #### 找到 ipa 包对应的符号表
+
+为了找到与支付相关的代码，我们选择从符号表入手，xcode 打包 ipa 之后，在 archive 文件中可以找到二进制文件并提取出符号表。
+
+例如 archive 文件是： myapp.xcarchive
+
+那么对应的二进制文件路径在：
+`myapp.xcarchive/dSYMs/myapp.app.dSYM/Contents/Resources/DWARF/myapp`
+
+我们可以使用 Unix 的 nm 工具获取到该二进制文件的对应符号表。
+
+`nm myapp.xcarchive/dSYMs/myapp.app.dSYM/Contents/Resources/DWARF/myapp > symbols`
+
 #### 在符号表中找到函数名
-#### 在函数名中找到可疑的函数
-#### 将函数定位到 SDK 或代码中
 
+我们关心的函数一般带有关键字 "pay", "payment"，我们接着过滤出带有该关键字的函数
 
-## 网络不联通（DNS 解析）
+`grep -i "pay" symbols > pay_api`
+`grep -i "payment" symbols > payment_api`
+
+在 pay_api 以及 payment_api 中，我们会看到类似：
+
+```
+000000010275a484 t +[WXApi handleNontaxPayReq:]
+0000000102757bd4 t +[WXApi handleOpenTypeWebViewWithNontaxpay:delegate:]
+0000000102757d48 t +[WXApi handleOpenTypeWebViewWithPayInsurance:delegate:]
+000000010275a594 t +[WXApi handlePayInsuranceReq:]
+0000000102a8d780 t -[FBSDKPaymentObserver handleTransaction:]
+0000000102a8d4c8 t -[FBSDKPaymentObserver init]
+0000000102a8d63c t -[FBSDKPaymentObserver paymentQueue:updatedTransactions:]
+0000000102a8d510 t -[FBSDKPaymentObserver startObservingTransactions]
+0000000102a8d5a8 t -[FBSDKPaymentObserver stopObservingTransactions]
+```
+这样的符号表，三个栏位分别表示：
+ - 符号对应的虚拟地址
+ - 符号的类型
+ - 符号本身，可能是函数签名，也可能是变量名
+
+#### 在函数名中找到可疑的函数并移除
+
+App Store 审核时显然不可能打回所有带有 `pay` 或者 `payment` 关键字函数的安装包，肯定是在有把握的情况下才会将 app 打回。所以下一步就是确认哪些 API 是让审核不过的。
+
+我们检查的方式主要有两个：
+1. 该 API 所属的 SDK 是否有第三方支付的能力。
+2. 该 API 是否是直接支持第三方支付功能的。
+
+所以我们排除了一些无关的 API，例如：
+1. TalkingData 数据采集 API，TalkingData 只是数据采集方，API 被苹果监控的可能性较小。
+2. Facebook 的 API，FB 本身不提供支付功能，API 被苹果监控的可能性较小。
+3. 支付宝的朋友圈 API，虽然符号中有 "Alipay"，但是朋友圈 API 必然也被集成进了许多不需要支付的 App，被 ban 的可能性也比较小。
+4. 我们自己代码中内购相关的 API，虽然符号中有 "pay" 字样，但是相信大部分内购 App 都会有，被 ban 的可能性较小。
+
+最终我们定位到了两个可疑的 API：
+1. QQ 支付的 API
+```
+0000000102c8d48c t -[QQApiPayObject AppInfo]
+0000000102c8d460 t -[QQApiPayObject OrderNo]
+0000000102c8d3b0 t -[QQApiPayObject dealloc]
+0000000102c8d330 t -[QQApiPayObject initWithOrderNo:AppInfo:]
+0000000102c8d49c t -[QQApiPayObject setAppInfo:]
+0000000102c8d470 t -[QQApiPayObject setOrderNo:]
+```
+对于 QQ 支付的 API 来讲，无疑是苹果针对禁止的功能，我们的做法是从 QQ 的 SDK 下载处下了一个不带支付功能的。
+2. 微信支付 API
+```
+000000010275a484 t +[WXApi handleNontaxPayReq:]
+0000000102757bd4 t +[WXApi handleOpenTypeWebViewWithNontaxpay:delegate:]
+0000000102757d48 t +[WXApi handleOpenTypeWebViewWithPayInsurance:delegate:]
+000000010275a594 t +[WXApi handlePayInsuranceReq:]
+```
+对于微信的这几个 API 来说，从字面上看不出其主要功能是什么，所以我们下载了微信的两个 SDK 版本，一个带支付的，一个不带支付的。对比了一下发现两个版本中都有这几个符号，所以初步确认这个符号和支付功能无关，就没有对应修改。
+
+在更换了 QQ SDK 之后，我们的 App 就过审核了。
+
+## 网络以及服务不连通
+
+在第一次提交审核的时候，我们被打回的理由是 "游戏打开之后就卡在了 Unity logo 画面"，但是本地各种机型都无法复现。在加载阶段，我们做的事情很简单：
+
+1. 从 HTTPDNS 获取 DNS 解析结果。
+2. 连接服务器更新最新版本信息。
+
+在请美国的同学帮忙测试之后发现，错误发生在从 HTTPDNS 获取 DNS 解析结果这一步，这一步我们使用的是阿里云的 HTTPDNS 服务，但是不知为何，在国外区域请求一直发生错误。无奈之下，我们自己搭建了一个简易的 HTTPDNS 服务，解决了这个问题。
+
+如果读者遇到本地无法复现的审核问题，不妨搭个 VPN，连接到加州的网络试试看。
 
 ## 初版兼容性
+
+有一个我们吃了大亏的地方，就是第一个发布版本中，Info.plist 的 UIRequiredDeviceCapabilities 没有设置，导致后期收到了不少 App Store 的差评。
+
+UIRequiredDeviceCapabilities 的[官方文档](https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/iPhoneOSKeys.html#//apple_ref/doc/uid/TP40009252-SW3)给出了一系列可以使用的 key 值，如果在 xcode 的 Info.plist 中包含对应的 key 值，则在 App Store 上，只有满足对应兼容性要求的手机才能下载。并且，**在今后更新的版本中，都要支持曾经支持过的所有机型**。这就意味着，兼容性只能放宽，不能收紧。
+
+这会导致什么问题呢？对我们来说，第一次发布的版本中，我们只限制了 iOS 11 以上的手机可以下载，但是没有限制支持 arkit 的才能下载。所以有一些机型不支持 arkit 的下载之后，发现 AR 功能无法使用而留下了差评。后期我们发现之后也不能收紧兼容性，给维护造成了很大困扰。
+
+[![05-devicecompatibility](/img/in-post/app-store-review/05-devicecompatibility.jpeg)](/img/in-post/app-store-review/05-devicecompatibility.jpeg)
+
 
 ## 区分审核服务器
 
@@ -120,8 +206,21 @@ else:
   do_something_else()
 ```
 
+## Missing Info.plist key
 
-### 经验总结
+我们在搭建了自动打包系统之后，每天都会打包上传最新的安装包，在某次 git commit 之后，收到了苹果发来的邮件：
+
+```
+Missing Info.plist key- This app attempts to access privacy-sensitive data without a usage description. The app's Info.plist must contain an NSContactsUsageDescription key with a string value explaining to the user how the app uses this data.
+```
+
+我们在 App 的使用过程中从未获取过用户的联系人信息，所以我们希望找到导致这个警告的原因，而不是添加一个不必要的 NSContactsUsageDescription。
+
+苹果会弹出这个警告，而我们没有调用联系人的 API，那么应该是间接引入了获取联系人的 API，导致 API 被苹果扫描到了。我们在 Linked Library 中找到了 Contacts.Framework 并将其删除后，重新编译。发现讯飞科技的 SDK 报错了。原来是我们使用了游密的 SDK 实现聊天功能，游密又使用了讯飞的 SDK 实现语音转文字功能，讯飞的 SDK 又引入了联系人的 API 来获取联系人名字，帮助语音识别更准确地识别人名。
+
+最后由于我们不需要讯飞的 SDK，就和游密要了不含讯飞的SDK。如果不使用这个方式，也可以自己新建一个 .m 文件，实现几个 dummy function 来规避编译错误，又不影响已有功能。
+
+# 经验总结
 
 Unity 在目前的 3D 开发引擎里，算是社区很健全，同时文档也很丰富的一个引擎。我们遇到的绝大部分问题都是其他开发者踩过的坑，如果在一个方面停滞不前，没有好的解决方案时，不妨系统地静下心来通读一下文档。欲速则不达，静下心思考之后，往往能找到更优雅地捷径。
 
