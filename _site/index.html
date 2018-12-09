@@ -154,6 +154,28 @@
             ">
     			
 <div class="post-preview">
+    <a href="/2018/11/11/snappy-python-incompatibility/">
+        <h2 class="post-title">
+            Snappy-python is not fully compatible with hadoop-snappy
+        </h2>
+        
+        <h3 class="post-subtitle">
+            Snappy 的 python SDK 与 hadoop snappy 不兼容的问题
+        </h3>
+        
+        <div class="post-content-preview">
+            起因
+
+在我当前项目中，有一部分技术架构涉及到数据在 python 脚本中用 json + snappy 的格式压缩之后储存起来，json 是作为数据序列化的格式，而 snappy 则是作为数据压缩的格式。在下游处理中，spark 任务会读取这部分数据进行处理。这套方案理论上是没有问题的，在我们的调研中，也确认了 python 中上传的数据，在 spark 中可以被正确解读。但是在实际广泛使...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by Di Chen on November 11, 2018
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
     <a href="/2018/04/20/app-store-review/">
         <h2 class="post-title">
             App Store Review Tips
@@ -427,34 +449,6 @@ Written...
 </div>
 <hr>
 
-<div class="post-preview">
-    <a href="/2017/03/26/weird-bugs-1/">
-        <h2 class="post-title">
-            Weird bugs - 1
-        </h2>
-        
-        <h3 class="post-subtitle">
-            奇怪的 bug 系列 - 1
-        </h3>
-        
-        <div class="post-content-preview">
-            
-  “There are two ways to write error-free programs; only the third one works.”
-
-  – Alan Perlis, “Epigrams on Programming”
-
-
-前言
-
-在这几年的开发生涯中，遇到了或多或少的奇怪的BUG。从前端的浏览器兼容到后端的 DNS 解析，从常用的 ssh 到大部分人都不会关心的...
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by Di Chen on March 26, 2017
-    </p>
-</div>
-<hr>
-
 
 <!-- Pager -->
 
@@ -503,7 +497,7 @@ Written...
                             
                         
                             
-                                <a href="/tags/#Tech" title="Tech" rel="10">
+                                <a href="/tags/#Tech" title="Tech" rel="11">
                                     Tech
                                 </a>
                             

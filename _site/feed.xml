@@ -5,9 +5,143 @@
     <description></description>
     <link>http://localhost:4000/</link>
     <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Wed, 01 Aug 2018 17:11:19 +0800</pubDate>
-    <lastBuildDate>Wed, 01 Aug 2018 17:11:19 +0800</lastBuildDate>
-    <generator>Jekyll v3.8.3</generator>
+    <pubDate>Sun, 09 Dec 2018 16:55:52 +0800</pubDate>
+    <lastBuildDate>Sun, 09 Dec 2018 16:55:52 +0800</lastBuildDate>
+    <generator>Jekyll v3.8.5</generator>
+    
+      <item>
+        <title>Snappy-python is not fully compatible with hadoop-snappy</title>
+        <description>&lt;h2 id=&quot;起因&quot;&gt;起因&lt;/h2&gt;
+
+&lt;p&gt;在我当前项目中，有一部分技术架构涉及到数据在 python 脚本中用 json + &lt;a href=&quot;https://github.com/google/snappy&quot;&gt;snappy&lt;/a&gt; 的格式压缩之后储存起来，json 是作为数据序列化的格式，而 snappy 则是作为数据压缩的格式。在下游处理中，spark 任务会读取这部分数据进行处理。这套方案理论上是没有问题的，在我们的调研中，也确认了 python 中上传的数据，在 spark 中可以被正确解读。但是在实际广泛使用时，我们发现有某些数据在 python 端能正常地被压缩以及解压，但是在 spark 端就报了下面的错误：&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;java.lang.InternalError: Could not decompress data. Input is invalid.
+at org.apache.hadoop.io.compress.snappy.SnappyDecompressor.decompressBytesDirect(Native Method) 
+at org.apache.hadoop.io.compress.snappy.SnappyDecompressor.decompress(SnappyDecompressor.java:239)
+at org.apache.hadoop.io.compress.BlockDecompressorStream.decompress(BlockDecompressorStream.java:88)
+at org.apache.hadoop.io.compress.DecompressorStream.read(DecompressorStream.java:85)
+...
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;这里记录的是解决这个问题的过程和结果。&lt;/p&gt;
+
+&lt;h2 id=&quot;分析错误原因&quot;&gt;分析错误原因&lt;/h2&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;首先缩小一下问题出现的范围&lt;/strong&gt;。&lt;/p&gt;
+
+    &lt;p&gt;这个错误大概在1万个文件中才会出现一次，并且我们将出错的文件重新用 python 库解压之后，spark 仍然无法解析。所以基本可以认定这个文件指出了 spark 和 python 中 snappy SDK 的一些不兼容之处。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;缩小测试用例，找出最小可以复现问题的测试用例&lt;/strong&gt;。&lt;/p&gt;
+
+    &lt;p&gt;原始的错误文件大概有2.6MB，压缩之后是2.5MB，压缩比例很差。好在文件并不大，决定用二分法找出有问题的数据内容。在将数据分为两份之后，发现只有其中一份用 python sdk 压缩之后 spark 无法解析，另一份则没有问题。在不断缩小范围之后，定位到了一段 base64 encode 的数据上。这部分 base64 encode 的数据大概有1.5MB。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;构建最小可以复现问题的测试用例&lt;/strong&gt;。&lt;/p&gt;
+
+    &lt;p&gt;在比较正常压缩文件和该错误压缩文件之后，发现 base64 encode 的数据几乎没有被压缩，原文和压缩后的文件几乎是相同的。此时我们大胆猜测，当压缩后的文件与原文相同时，snappy 解压时会因为找不到所需的元数据而报错。在编写了一个随机字符生成器后，我们基本验证了我们的猜测：&lt;/p&gt;
+
+    &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;import random
+import string
+N=1000000
+print(''.join(random.choices(string.ascii_uppercase + string.digits, k=N)))
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;p&gt;并且在 N 在大于 100 万的情况下必然复现。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;寻找解决问题的方法&quot;&gt;寻找解决问题的方法&lt;/h2&gt;
+
+&lt;h3 id=&quot;对比测试结果&quot;&gt;对比测试结果&lt;/h3&gt;
+&lt;p&gt;在找到复现的 test case 之后，下一步我们要找问题的根源。对于一个序列化和反序列化的算法，不同语言的实现应该遵从同一套标准，那么同一段数据压缩后的二进制文件应该也是相同的。&lt;/p&gt;
+
+&lt;p&gt;将 snappy-python 压缩后的文件命名为 python_result.snappy&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;python3 -m snappy -t hadoop_snappy -c test.txt &amp;gt; test_python.txt.snappy
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;此时我们还需要 hadoop-snappy 编译出来的二进制文件&lt;/p&gt;
+
+&lt;h3 id=&quot;编译-hadoop-snappy-测试用例&quot;&gt;编译 hadoop-snappy 测试用例&lt;/h3&gt;
+&lt;p&gt;hadoop-snappy 的源码在 &lt;a href=&quot;https://code.google.com/archive/p/hadoop-snappy/&quot;&gt;Hadoop snappy google code&lt;/a&gt;。可以从&lt;a href=&quot;https://storage.googleapis.com/google-code-archive-source/v2/code.google.com/hadoop-snappy/source-archive.zip&quot;&gt;这里&lt;/a&gt;下载源码。&lt;/p&gt;
+
+&lt;p&gt;源码编译时需要先安装 snappy 库，同时配置 snappy 库的到 java 的 VM Options 中。例如我在 Mac OS 上用 brew 安装的 snappy。&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ brew install snappy
+$ ls /usr/local/Cellar/snappy/1.1.7_1
+AUTHORS              INSTALL_RECEIPT.json README.md            lib
+COPYING              NEWS                 include
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;snappy 库的路径是 /usr/local/Cellar/snappy/1.1.7_1，那么就配置 -Dsnappy.prefix=/usr/local/Cellar/snappy/1.1.7_1&lt;/p&gt;
+
+&lt;p&gt;同时要注意，老版本的 hadoop-snappy 有一个提示错误，当 snappy 格式错误时，提示的是找不到 snappy 库，可以用以下方式修改 &lt;code class=&quot;highlighter-rouge&quot;&gt;src/main/native/src/org/apache/hadoop/io/compress/snappy/SnappyDecompressor.c&lt;/code&gt;，然后重新编译来解决。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;   if (ret == SNAPPY_BUFFER_TOO_SMALL){
+-    THROW(env, &quot;Ljava/lang/InternalError&quot;, &quot;Could not decompress data. Buffer length is too small.&quot;);
++    THROW(env, &quot;java/lang/InternalError&quot;, &quot;Could not decompress data. Buffer length is too small.&quot;);
+   } else if (ret == SNAPPY_INVALID_INPUT){
+-    THROW(env, &quot;Ljava/lang/InternalError&quot;, &quot;Could not decompress data. Input is invalid.&quot;);
++    THROW(env, &quot;java/lang/InternalError&quot;, &quot;Could not decompress data. Input is invalid.&quot;);
+   } else if (ret != SNAPPY_OK){
+-    THROW(env, &quot;Ljava/lang/InternalError&quot;, &quot;Could not decompress data.&quot;);
++    THROW(env, &quot;java/lang/InternalError&quot;, &quot;Could not decompress data.&quot;);
+   }
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;编译之后可以使用测试用例来触发 snappy 的压缩，测试用例在 &lt;code class=&quot;highlighter-rouge&quot;&gt;src/test/java/org/apache/hadoop/io/compress/snappy/TestSnappyCodec.java&lt;/code&gt;。压缩之后我们得到了 test_java.txt.snappy&lt;/p&gt;
+
+&lt;p&gt;我们比较一下 test_java.txt.snappy 和 test_python.txt.snappy，发现 test_python.txt.snappy 整个文件中，如果用 utf-8 编码格式打开，只有最开头有一段乱码的二进制头信息。但是 test_java.txt.snappy 则每隔 256K 就会有一段二进制头信息。&lt;/p&gt;
+
+&lt;p&gt;在这时，我们可以初步断定是两个语言的头信息写入不一致导致的文件格式不兼容。&lt;/p&gt;
+
+&lt;h3 id=&quot;查看源码&quot;&gt;查看源码&lt;/h3&gt;
+&lt;p&gt;snappy 的压缩和代码在 java 中其实并不复杂，主要都集中在 &lt;code class=&quot;highlighter-rouge&quot;&gt;src/main/java/org/apache/hadoop/io/compress/snappy/&lt;/code&gt;，本质上是在 java 中将 byte 流读入后，将数据分块，再对每一块进行压缩。而我们看到的文件里的的二进制头信息其实就是每一块数据的元数据，例如每一块数据的长度等。那么是什么决定了数据块的默认大小呢？有两个变量可能会造成影响。&lt;/p&gt;
+
+&lt;p&gt;一个是 DEFAULT_DIRECT_BUFFER_SIZE:&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ grep DEFAULT_DIRECT_BUFFER_SIZE src/main/java/org/apache/hadoop/io/compress/snappy/SnappyCompressor.java
+$   private static final int DEFAULT_DIRECT_BUFFER_SIZE = 64 * 1024;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;这里是代码定义的默认大小，64K。但是在测试用例中我们发现，调整这个数值并不会改变最后生成的数据块大小。&lt;/p&gt;
+
+&lt;p&gt;另一个是 IO_COMPRESSION_CODEC_SNAPPY_BUFFERSIZE_DEFAULT：&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ grep -b2 IO_COMPRESSION_CODEC_SNAPPY_BUFFERSIZE_DEFAULT src/main/java/org/apache/hadoop/io/compress/SnappyCodec.java
+1527-
+1528-  /** Default value for IO_COMPRESSION_CODEC_SNAPPY_BUFFERSIZE_KEY */
+1598:  public static final int IO_COMPRESSION_CODEC_SNAPPY_BUFFERSIZE_DEFAULT =
+1673-      256 * 1024;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;这个配置文件控制了在作为 Hadoop Codec 组件实例化时，使用的数据块大小。如果我们将这个值调为 256，我们会发现测试用例中数据块的分块确实变化了。&lt;/p&gt;
+
+&lt;p&gt;这时候，我们可以大致明白，之所以 python-snappy 压缩的文件在 hadoop-snappy 中无法解析，其实本质上是因为 python-snappy 在一整个 256K 数据块中的任何一块地方生成元数据头，导致 hadoop-snappy 一次性读取进来的 256K 全是数据，没有数据块头，也就无法解析出对应的数据块长度，最终报了 “ Input is invalid.” 错误。&lt;/p&gt;
+
+&lt;p&gt;那么为什么其他数据没问题， base64 的数据就会出问题呢？&lt;/p&gt;
+
+&lt;p&gt;首先，并不是一定 256K 的位置才会生成一个数据块头信息，而是每一个可以被截断并压缩的数据块就会生成一个头信息。但是对于 base64 的文字，基本是原文读入，原文写出的，所以连续的 256K base64 编码数据中，如果没有强行截断的话，就不会生成数据头。这个应该是 python-snappy sdk 的一个bug，不过由于时间原因，没办法细看 python-snappy sdk 并修复这个问题。&lt;/p&gt;
+
+&lt;h3 id=&quot;最终解决方法&quot;&gt;最终解决方法&lt;/h3&gt;
+&lt;p&gt;首先我们尝试调大 hadoop-snappy 的解压区块大小，当 hadoop-snappy 的 IO_COMPRESSION_CODEC_SNAPPY_BUFFERSIZE_DEFAULT 设置为 512K 时，我们发现 python-snappy 压缩的 base64 encode 文件可以被正常解压。但是在 hadoop 集群上，这样有可能导致这样保存下来的 snappy.json 文件无法被其他未修改配置的 hadoop 组件读取。&lt;/p&gt;
+
+&lt;p&gt;还有一个思路就是调小 python-snappy 的区块大小。虽然文档中没有提到修改的方式，但是从 API 的签名中我们发现，在 &lt;a href=&quot;https://github.com/andrix/python-snappy/blob/master/snappy/hadoop_snappy.py&quot;&gt;hadoop-snappy.py&lt;/a&gt; 文件中也定义了 &lt;code class=&quot;highlighter-rouge&quot;&gt;SNAPPY_BUFFER_SIZE_DEFAULT&lt;/code&gt; 变量，控制默认的区块大小。而在 stream_compress 函数的签名中也有 blocksize 变量，默认值就是 SNAPPY_BUFFER_SIZE_DEFAULT。所以只要在调用 stream_compress 的时候将 blocksize 调为 128K 即可。&lt;/p&gt;
+
+&lt;p&gt;最后联调后发现，这个方法生成的 python-snappy 文件是可以被 hadoop-snappy 成功解析的。最后我们的解决方法就是在 stream_compress 设置 blocksize 为 128K。&lt;/p&gt;
+
+&lt;h1 id=&quot;经验总结&quot;&gt;经验总结&lt;/h1&gt;
+
+&lt;p&gt;首先这个问题其实本质上还是一个算法，多个语言实现导致的问题。虽然底层的压缩算法使用的是同一套库，但是上层数据块的切分实现可能有细微差别，导致这个问题的发生。这个问题的解决其实关键是有一个可以复现的测试用例，有了这个测试用例之后就能帮我们不断缩小问题的范围，最后找到一个相对实现起来比较容易的解决方案。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;如果你看到这里，一定是真爱！欢迎看看我的其他 &lt;a href=&quot;http://chendi.me/&quot;&gt;blog&lt;/a&gt;。O(∩_∩)O&lt;/p&gt;
+</description>
+        <pubDate>Sun, 11 Nov 2018 05:15:00 +0800</pubDate>
+        <link>http://localhost:4000/2018/11/11/snappy-python-incompatibility/</link>
+        <guid isPermaLink="true">http://localhost:4000/2018/11/11/snappy-python-incompatibility/</guid>
+        
+        <category>Tech</category>
+        
+        
+      </item>
     
       <item>
         <title>App Store Review Tips</title>
@@ -1749,162 +1883,6 @@ compatibility of your Unity projects.
         <category>旅行</category>
         
         <category>航拍</category>
-        
-        
-      </item>
-    
-      <item>
-        <title>Weird bugs - 1</title>
-        <description>&lt;blockquote&gt;
-  &lt;p&gt;“There are two ways to write error-free programs; only the third one works.”&lt;/p&gt;
-
-  &lt;p&gt;– Alan Perlis, “Epigrams on Programming”&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;h2 id=&quot;前言&quot;&gt;前言&lt;/h2&gt;
-
-&lt;p&gt;在这几年的开发生涯中，遇到了或多或少的奇怪的BUG。从前端的浏览器兼容到后端的 DNS 解析，从常用的 ssh 到大部分人都不会关心的编译器优化。在排查问题的过程中，我也获益良多。往往为了排查了解一个问题的原因，需要用到多个领域的知识。在此也记录下我在 debug 一些奇怪问题的过程与方法，希望能与大家分享学习。&lt;/p&gt;
-
-&lt;hr /&gt;
-
-&lt;h2 id=&quot;服务器响应时长由-20ms-变为-5s&quot;&gt;服务器响应时长由 20ms 变为 5s&lt;/h2&gt;
-
-&lt;h3 id=&quot;问题表象&quot;&gt;问题表象&lt;/h3&gt;
-
-&lt;p&gt;在开发一个新的 Restful 服务器的时候，我使用了 Django 框架作为服务器的后端框架。为了保证服务的延迟在预期的范围内，我接入了 &lt;a href=&quot;https://www.datadoghq.com/&quot;&gt;Datadog&lt;/a&gt; 性能监控服务来监控 Django 服务的延迟。&lt;/p&gt;
-
-&lt;p&gt;此时，我在 Datadog 的监控板上，发现有一个请求的平均延迟达到了 1000+ ms，这个是远远超过了我定下的 SLA，于是便开始排查到底是什么原因，并且想要怎样优化。&lt;/p&gt;
-
-&lt;h3 id=&quot;排查方式&quot;&gt;排查方式&lt;/h3&gt;
-
-&lt;h4 id=&quot;确认延迟分布&quot;&gt;确认延迟分布&lt;/h4&gt;
-
-&lt;p&gt;在监控服务器延迟的时候，单个数字是无法准确地表达出问题的。在 Google 的 &lt;a href=&quot;http://shop.oreilly.com/product/0636920041528.do&quot;&gt;Site Reliability Engineering&lt;/a&gt; 一书中提过，在监控服务器延迟的时候，监测 50%, 90%, 99% 的请求延迟会更有代表性。如下图。&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;/img/in-post/weird-bug-1/sre-latency.png&quot;&gt;&lt;img src=&quot;/img/in-post/weird-bug-1/sre-latency.png&quot; alt=&quot;sre_latency&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;在查看了服务器请求延迟的分布表后，我发现 90% 的请求都在 100 ms 以内就完成了，但是有 10% 的请求会出现延迟达到 5s 的情况。手动发送 HTTP 请求也证明了，高请求延迟的情况并不是每次都会出现，也就是说这个 bug 是不能 100% 重现的。&lt;/p&gt;
-
-&lt;p&gt;偶尔出现的高请求延迟，长达5秒:
-&lt;a href=&quot;/img/in-post/weird-bug-1/request-latency-high.png&quot;&gt;&lt;img src=&quot;/img/in-post/weird-bug-1/request-latency-high.png&quot; alt=&quot;request-latency-high&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;大部分时间在 20 ms 内完成:
-&lt;a href=&quot;/img/in-post/weird-bug-1/request-latency-low.png&quot;&gt;&lt;img src=&quot;/img/in-post/weird-bug-1/request-latency-low.png&quot; alt=&quot;request-latency-low&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;在这个时候便有两个推测：&lt;/p&gt;
-&lt;ol&gt;
-  &lt;li&gt;每次延迟增加的时候都是固定增加 5s，这说明延迟增加的事件有一定确定性，5秒这个时间应该是某个配置中的，比如某个 timeout 的时间。&lt;/li&gt;
-  &lt;li&gt;不是 100% 可重现的事件，第一反应便是线程死锁，或者数据库死锁，第一次操作失败，并且在重试时成功。&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h4 id=&quot;推理以及分段排查&quot;&gt;推理以及分段排查&lt;/h4&gt;
-
-&lt;h5 id=&quot;profiling&quot;&gt;Profiling&lt;/h5&gt;
-
-&lt;p&gt;在解决服务器延迟高的问题时，靠猜显然是不能解决问题的，必须靠 profiling 来帮助我们准确定位具体延迟高的代码。在现阶段已经有了比较完整的 profiling 工具链来帮助我们，从 OS 层的 dtrace, strace，再到框架层的 &lt;a href=&quot;https://github.com/jazzband/django-debug-toolbar&quot;&gt;django-debug-toolbar&lt;/a&gt;，我们应该利用这些工具帮助我们排查性能问题。&lt;/p&gt;
-
-&lt;p&gt;在这里，由于我是用的服务器框架是 Django，所以利用的是 &lt;a href=&quot;https://github.com/jazzband/django-debug-toolbar&quot;&gt;django-debug-toolbar&lt;/a&gt; 自带的 profiling 功能。&lt;/p&gt;
-
-&lt;p&gt;在触发了长延时的 bug 之后，django-debug-toolbar 中的 profling 结果显示如下：&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;/img/in-post/weird-bug-1/django-profile-1.png&quot;&gt;&lt;img src=&quot;/img/in-post/weird-bug-1/django-profile-1.png&quot; alt=&quot;django-profile-1&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;从上图可以看出，在数据库的连接时，建立连接花了5秒钟，这个是导致整体请求延迟的主要原因。&lt;/p&gt;
-
-&lt;p&gt;P.S. 在使用 django-debug-toolbar 的时候，如果返回的内容不是 html 格式的，而是 json 格式的，则 toolbar 并不会显示出来，我自定义了一层 django middleware，将 json 格式的 response 转化为 html 格式的，从而触发 toolbar 的显示。&lt;/p&gt;
-
-&lt;p&gt;P.S. 对于 POST HTTP 请求来说，不好像 GET 请求一样在浏览器中触发并浏览 toolbar。于是我安装了 &lt;a href=&quot;https://github.com/djsutho/django-debug-toolbar-request-history&quot;&gt;Request History Panel for Django Debug Toolbar&lt;/a&gt;。这样可以先用 curl 发送一个 POST 请求，然后再用 GET 请求获得 toolbar，在 toolbar 中切换到之前的 POST 请求，查看具体的 profile 结果。&lt;/p&gt;
-
-&lt;h5 id=&quot;数据库连接排查&quot;&gt;数据库连接排查&lt;/h5&gt;
-
-&lt;p&gt;在涉及到网络连接时，问题就变得复杂了。数据库的连接时间虽然是5秒，但是并没有失败，说明在数据库连接中应该有某个超时的操作，但是后续重试成功了。这个问题有可能与多个因素相关，比如 Django 服务器的线程冲突导致资源不足，或者宿主主机资源不足，或者 DNS 解析超时，或者虚拟机桥接内核有 bug (我部署在阿里云的容器服务上，应该有两层虚拟化，一层是 ECS 主机的虚拟层，一层是 docker 的虚拟层)，也有可能是阿里云版的 PostgreSQL 内配置了某些防火墙，导致连接不稳定。&lt;/p&gt;
-
-&lt;p&gt;在这个时候我做了两件事:&lt;/p&gt;
-&lt;ol&gt;
-  &lt;li&gt;在宿主主机启动一个本地版本的 PostgreSQL，并用 Django 服务器连接宿主主机版本的 PostgreSQL，看看是否有长延迟的情况。发现没有长延迟的情况。初步判定长延迟只出现在与阿里云 RDS 的连接上。&lt;/li&gt;
-  &lt;li&gt;在开发用的 ECS 上启动 docker 镜像连接阿里云 RDS，发现也不会出现长延迟的情况。初步判定长延迟只出现在阿里云的容器服务与阿里云 RDS 的连接上。&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;由于我对阿里云的容器服务和 RDS 的内部架构配置不了解，我提交了一个工单请求阿里云 RDS 组协助排查。&lt;/p&gt;
-
-&lt;p&gt;在工单排查中，使用了 tcpdump 来抓包在建立连接时，数据库连接端口的所有 tcp 包。在 wireshark 中可以看到所有 tcp 连接都成功建立了，并且没有出现超时的现象。RDS 数据库的问题便被暂时排除了。&lt;/p&gt;
-
-&lt;h5 id=&quot;docker-网络状态排查&quot;&gt;docker 网络状态排查&lt;/h5&gt;
-
-&lt;p&gt;由于这个问题只会在阿里云的容器服务上出现，便将工单移交至阿里云的容器服务组进行进一步排查。&lt;/p&gt;
-
-&lt;p&gt;此时，我想起了在设置服务器监控时，我将 docker 镜像的网络连接方式由 bridge 模式切换到了 host 模式，以便将 docker 中的数据直接发送至 8125 端口 (datadog agent 的默认数据收集端口)。会不会是由于 docker 镜像的网络连接方式改变而导致的问题呢？&lt;/p&gt;
-
-&lt;p&gt;此时，我将 docker 镜像的网络连接方式调回了 bridge 模式，数据库连接长延时的问题便消失了！&lt;/p&gt;
-
-&lt;p&gt;在同一时间，阿里云的容器服务组将问题反馈给了阿里云的溪恒，在研究后发现是 DNS 解析数据库地址时超时了，DNS 连接超时时间的配置在 &lt;code class=&quot;highlighter-rouge&quot;&gt;/etc/resolv.conf&lt;/code&gt;，如果将 timeout 的时间改为 1 秒，则长延迟只会有1秒。阿里云容器服务组提供的建议是使用 nscd 模块缓存 DNS 解析结果：&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ sudo apt-get install -y nscd
-$ service nscd start
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;由于宿主 ECS 服务器使用了 nscd 缓存 DNS 的解析结果，所以如果直接在宿主上运行 Django 服务器，则不会出现连接超时的情况，但是如果在 docker 内运行 Django 服务器，由于 docker 内没有安装 nscd，则会出现连接长延时的情况。&lt;/p&gt;
-
-&lt;p&gt;这个也解释了为什么之前抓包数据库连接的时候看不出问题：由于 DNS 解析是发生在 tcp 连接建立之前，tcp 连接信息只包含了 ip 地址，所以在 tcp 包中看不出连接有问题。&lt;/p&gt;
-
-&lt;p&gt;同时，由于 DNS 解析超时之后会再进行重试，所以虽然一次解析超时，但是第二次解析成功后，数据库连接仍然可以正常建立。&lt;/p&gt;
-
-&lt;h3 id=&quot;解决方法&quot;&gt;解决方法&lt;/h3&gt;
-
-&lt;p&gt;解决方法包含两部分:&lt;/p&gt;
-&lt;ol&gt;
-  &lt;li&gt;在容器的 Dockerfile 中增加 nscd 的安装。这个模块理论上应该安装在所有 docker 容器中以优化 DNS 解析速度。&lt;/li&gt;
-  &lt;li&gt;降低 DNS 解析超时配置。将 &lt;code class=&quot;highlighter-rouge&quot;&gt;/etc/resolv.conf&lt;/code&gt; 中的 timeout 时间改为 1 秒，以避免由于 DNS 解析超时时，有不必要的长延迟。&lt;/li&gt;
-  &lt;li&gt;docker 容器使用 bridge 模式。&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h3 id=&quot;经验总结&quot;&gt;经验总结&lt;/h3&gt;
-
-&lt;p&gt;在这个事件中，学到了这么几点：&lt;/p&gt;
-&lt;ol&gt;
-  &lt;li&gt;
-    &lt;p&gt;性能监控应该及早安装。&lt;/p&gt;
-
-    &lt;p&gt;从开发的早期，就应该安装性能监控，从而每一次小的改变对性能有怎样的影响都可以清晰地看出来。若是到了开发的后期才安装性能监控，要优化时就需要 profile 代码才能找到性能瓶颈。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;DNS 解析是属于网络基础架构底层的服务，但是往往对上层的应用有极大的影响。&lt;/p&gt;
-
-    &lt;p&gt;大部分开发者往往会忽视 DNS 解析在网络应用中的影响，但是，DNS 是网络中非常脆弱的一环。从近期多次 DNS 服务器遭受 DDOS 攻击导致的互联网瘫痪可以看出，DNS 的容灾和安全性也是服务架构中需要考虑的。同时，DNS 缓存在大部分场合也都是需要的。只不过 DNS 缓存也同时伴随着一定的风险。比如在 Name Server 的配置修改之后，往往需要等待缓存过期才能在客户端生效。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;遇到问题的时候，先思考最近修改了什么。&lt;/p&gt;
-
-    &lt;p&gt;这个其实是在 Bloomberg 时 Team Leader 教的第一课。只是在这次事件中，长连接延时是由于安装监控服务而引入的 (将 docker 网络模式改为 host 模式)。就如同薛定谔的猫一样，在没有测量之前，它没有这个问题，在测量之后，我也不确定这个问题是原本存在的，还是由于测量导致的。这个也是排查困难的主要原因之一。&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h3 id=&quot;下一步&quot;&gt;下一步&lt;/h3&gt;
-
-&lt;p&gt;到目前为止，服务器的请求延迟已经恢复正常，但是仍然有几个问题不得其解:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;为什么这个问题只会在 docker 网络模式为 host 模式时出现，host 模式理应使用宿主的网络栈，也就是说，在 host 模式时，应该会使用宿主的 nscd 来缓存 DNS 解析结果。&lt;/li&gt;
-  &lt;li&gt;当 nscd 缓存 miss 时，nscd 同样会使用 DNS 服务器进行 DNS 解析，也有一定几率会出现 DNS 解析长延迟的情况，那么我们只是降低了问题出现的概率和时间，但并没有根本上解决问题的所在，即为什么 DNS 解析会出现超时的情况。&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;以上两个问题已经在阿里云的工单中提供，我将在容器和宿主上抓包检测 DNS 解析的过程，进一步了解问题的所在。&lt;/p&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;如果你看到这里，一定是真爱！欢迎看看我的其他 &lt;a href=&quot;http://chendi.me/&quot;&gt;blog&lt;/a&gt;。O(∩_∩)O&lt;/p&gt;
-</description>
-        <pubDate>Sun, 26 Mar 2017 04:15:00 +0800</pubDate>
-        <link>http://localhost:4000/2017/03/26/weird-bugs-1/</link>
-        <guid isPermaLink="true">http://localhost:4000/2017/03/26/weird-bugs-1/</guid>
-        
-        <category>Tech</category>
-        
-        <category>Bug</category>
-        
-        <category>Docker</category>
-        
-        <category>DNS</category>
         
         
       </item>

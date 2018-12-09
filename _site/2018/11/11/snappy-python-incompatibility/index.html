@@ -10,9 +10,9 @@
     <meta name="keyword"  content="">
     <link rel="shortcut icon" href="/img/favicon.ico">
 
-    <title>How to keep you in my mind - 陈迪的博客 | Di' Blog</title>
+    <title>Snappy-python is not fully compatible with hadoop-snappy - 陈迪的博客 | Di' Blog</title>
 
-    <link rel="canonical" href="http://localhost:4000/2016/11/05/life-logging-trail/">
+    <link rel="canonical" href="http://localhost:4000/2018/11/11/snappy-python-incompatibility/">
 
     <!-- Bootstrap Core CSS -->
     <link rel="stylesheet" href="/css/bootstrap.min.css">
@@ -125,12 +125,12 @@
 
     <!-- Image to hack wechat -->
 <!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
-<!-- <img src="/img/in-post/life-logger-trail/life-logger-bg.png" width="0" height="0"> -->
+<!-- <img src="/img/in-post/snappy-python-incompatibility/snappy-bg.png" width="0" height="0"> -->
 
 <!-- Post Header -->
 <style type="text/css">
     header.intro-header{
-        background-image: url('/img/in-post/life-logger-trail/life-logger-bg.png')
+        background-image: url('/img/in-post/snappy-python-incompatibility/snappy-bg.png')
     }
 </style>
 <header class="intro-header" >
@@ -142,15 +142,13 @@
                         
                         <a class="tag" href="/tags/#Tech" title="Tech">Tech</a>
                         
-                        <a class="tag" href="/tags/#lifelogging" title="lifelogging">lifelogging</a>
-                        
                     </div>
-                    <h1>How to keep you in my mind</h1>
+                    <h1>Snappy-python is not fully compatible with hadoop-snappy</h1>
                     
                     
-                    <h2 class="subheading">如何把你永远留在我的记忆里</h2>
+                    <h2 class="subheading">Snappy 的 python SDK 与 hadoop snappy 不兼容的问题</h2>
                     
-                    <span class="meta">Posted by Di Chen on November 5, 2016</span>
+                    <span class="meta">Posted by Di Chen on November 11, 2018</span>
                 </div>
             </div>
         </div>
@@ -175,218 +173,124 @@
                 <option value="1"> 英语 English </option>
             </select>
 
-				<blockquote>
-  <p>“最美的不是下雨天，而是曾与你躲过雨的屋檐”</p>
-</blockquote>
+				<h2 id="起因">起因</h2>
 
-<h2 id="前言">前言</h2>
+<p>在我当前项目中，有一部分技术架构涉及到数据在 python 脚本中用 json + <a href="https://github.com/google/snappy">snappy</a> 的格式压缩之后储存起来，json 是作为数据序列化的格式，而 snappy 则是作为数据压缩的格式。在下游处理中，spark 任务会读取这部分数据进行处理。这套方案理论上是没有问题的，在我们的调研中，也确认了 python 中上传的数据，在 spark 中可以被正确解读。但是在实际广泛使用时，我们发现有某些数据在 python 端能正常地被压缩以及解压，但是在 spark 端就报了下面的错误：</p>
 
-<p>多少次，生活都在我们不经意的瞬间，暖暖地拥抱了我们。</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>java.lang.InternalError: Could not decompress data. Input is invalid.
+at org.apache.hadoop.io.compress.snappy.SnappyDecompressor.decompressBytesDirect(Native Method) 
+at org.apache.hadoop.io.compress.snappy.SnappyDecompressor.decompress(SnappyDecompressor.java:239)
+at org.apache.hadoop.io.compress.BlockDecompressorStream.decompress(BlockDecompressorStream.java:88)
+at org.apache.hadoop.io.compress.DecompressorStream.read(DecompressorStream.java:85)
+...
+</code></pre></div></div>
 
-<p>在那个绽放着你温暖笑容的铺满大雪的十字街口，</p>
+<p>这里记录的是解决这个问题的过程和结果。</p>
 
-<p>在那个红色枫叶飘下的初秋斜坡，</p>
-
-<p>在那个与你一起等车的雨天</p>
-
-<p>随着时间缓缓地冲刷，这些记忆却渐行渐远。</p>
-
-<p>就像我们渐渐地忘了儿时的梦想。</p>
-
-<hr />
-
-<h2 id="你好life-logger">你好，life logger</h2>
-
-<p>在不久之前，我的大学好友，<a href="http://baidu.com/?q=帮农忙">帮农忙</a>的 CEO 推荐了一本书给我 – 必然( The inevitable )。</p>
-
-<p>作者讲了在他看来，未来科技会带给我们的12个不可改变的趋势。比如：</p>
-
-<ul>
-  <li>xxx as a service （xxx即服务）</li>
-  <li>life-logging （生活记录）</li>
-</ul>
-
-<p>在感叹老爷子的目光敏锐思维先进的同时，life-logging 也狠狠地撞击了我被生活固化的思维。</p>
-
-<h3 id="什么是-life-logging">什么是 life logging?</h3>
-
-<p>记得在美国的科幻片里，经常会有主角对着一个摄像头说话，然后留下一些关键信息，比如实验记录，高官秘密之类的。还有在人类航海历史上，为了避免珍贵的航海经验和资料丢失，往往在每条船上都会有个航海日志，记录下船只经历过的路线，风浪。</p>
-
-<p>这个，就是 logging。</p>
-
-<p>那么，life logging，就是记录生活。比如之前大火的爸爸去哪儿，由专业的摄制组记录下每一对父子/父女的生活，有温馨，有惊险，有反思，有成长。试问，有哪位父母不希望留下自己跟儿女相处的每个瞬间呢？</p>
-
-<p>第一声爸爸</p>
-
-<p>第一次走路</p>
-
-<p>第一天上学</p>
-
-<p>第一次争吵</p>
-
-<p>第一次。。。</p>
-
-<p>假如，有这么一个小精灵，可以自动拍照，帮你记录下生活的点点滴滴</p>
-
-<p>这，看起来似乎是曾经出现在我梦里的东西？</p>
-
-<h3 id="需求">需求</h3>
-
-<p>那么，我的需求到底是什么呢？</p>
+<h2 id="分析错误原因">分析错误原因</h2>
 
 <ol>
-  <li>延时摄影功能。
-    <ul>
-      <li>目前我们都是使用手机记录下我们想要留住的瞬间，但是掏出手机，对焦的过程极大影响了我们的体验。试想为了留下偶像演唱会的照片，透过相机的显示屏来看着自己的偶像，岂不买shu还珠(TODO)？假如能把我看到的，自动转化成照片，那么便完美了。</li>
-      <li>延时摄影功能就可以让相机自动每x秒拍张照片，如果相机放对位置，就能解放我们拍照的双手啦。</li>
-    </ul>
+  <li>
+    <p><strong>首先缩小一下问题出现的范围</strong>。</p>
+
+    <p>这个错误大概在1万个文件中才会出现一次，并且我们将出错的文件重新用 python 库解压之后，spark 仍然无法解析。所以基本可以认定这个文件指出了 spark 和 python 中 snappy SDK 的一些不兼容之处。</p>
   </li>
-  <li>便携性。
-    <ul>
-      <li>既然要作为生活记录仪，那么必然要便于携带，最好能自然地融入到我的生活装扮里。比如领带？眼镜？</li>
-    </ul>
+  <li>
+    <p><strong>缩小测试用例，找出最小可以复现问题的测试用例</strong>。</p>
+
+    <p>原始的错误文件大概有2.6MB，压缩之后是2.5MB，压缩比例很差。好在文件并不大，决定用二分法找出有问题的数据内容。在将数据分为两份之后，发现只有其中一份用 python sdk 压缩之后 spark 无法解析，另一份则没有问题。在不断缩小范围之后，定位到了一段 base64 encode 的数据上。这部分 base64 encode 的数据大概有1.5MB。</p>
   </li>
-  <li>续航时间。
-    <ul>
-      <li>为了不漏掉每个瞬间，我们也需要它有强大的续航能力，至少不能比手机的续航差吧？</li>
-    </ul>
-  </li>
-  <li>易用性。
-    <ul>
-      <li>导入，导出，以及开始，停止拍照的控制容易程度，也直接决定了用户上手的难度。</li>
-    </ul>
+  <li>
+    <p><strong>构建最小可以复现问题的测试用例</strong>。</p>
+
+    <p>在比较正常压缩文件和该错误压缩文件之后，发现 base64 encode 的数据几乎没有被压缩，原文和压缩后的文件几乎是相同的。此时我们大胆猜测，当压缩后的文件与原文相同时，snappy 解压时会因为找不到所需的元数据而报错。在编写了一个随机字符生成器后，我们基本验证了我们的猜测：</p>
+
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import random
+import string
+N=1000000
+print(''.join(random.choices(string.ascii_uppercase + string.digits, k=N)))
+</code></pre></div>    </div>
+
+    <p>并且在 N 在大于 100 万的情况下必然复现。</p>
   </li>
 </ol>
 
-<h3 id="尝试">尝试</h3>
+<h2 id="寻找解决问题的方法">寻找解决问题的方法</h2>
 
-<p>在简单的 Google 之后，惊喜地发现还真有初创公司设计制作做了这个小精灵，而且还不止一家。</p>
+<h3 id="对比测试结果">对比测试结果</h3>
+<p>在找到复现的 test case 之后，下一步我们要找问题的根源。对于一个序列化和反序列化的算法，不同语言的实现应该遵从同一套标准，那么同一段数据压缩后的二进制文件应该也是相同的。</p>
 
-<p>为了找到最适合我的，我尝试了下面这几个产品：</p>
+<p>将 snappy-python 压缩后的文件命名为 python_result.snappy</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python3 -m snappy -t hadoop_snappy -c test.txt &gt; test_python.txt.snappy
+</code></pre></div></div>
 
-<h4 id="酷立派">酷立派</h4>
+<p>此时我们还需要 hadoop-snappy 编译出来的二进制文件</p>
 
-<p>从支持国货的角度出发，我试用的第一个产品是腾讯投资的一个国产life logger。产品很简单实在，一个一元硬币大小的小方盒子，可以拍照，摄像，延时摄影。产品定位似乎是一个小型的运动相机。</p>
+<h3 id="编译-hadoop-snappy-测试用例">编译 hadoop-snappy 测试用例</h3>
+<p>hadoop-snappy 的源码在 <a href="https://code.google.com/archive/p/hadoop-snappy/">Hadoop snappy google code</a>。可以从<a href="https://storage.googleapis.com/google-code-archive-source/v2/code.google.com/hadoop-snappy/source-archive.zip">这里</a>下载源码。</p>
 
-<p>它在便携性上还是很不错的，佩戴起来完全不影响自身的穿衣风格。</p>
+<p>源码编译时需要先安装 snappy 库，同时配置 snappy 库的到 java 的 VM Options 中。例如我在 Mac OS 上用 brew 安装的 snappy。</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ brew install snappy
+$ ls /usr/local/Cellar/snappy/1.1.7_1
+AUTHORS              INSTALL_RECEIPT.json README.md            lib
+COPYING              NEWS                 include
+</code></pre></div></div>
+<p>snappy 库的路径是 /usr/local/Cellar/snappy/1.1.7_1，那么就配置 -Dsnappy.prefix=/usr/local/Cellar/snappy/1.1.7_1</p>
 
-<p>只是它最大的缺点就是续航能力太！差！了！ 延时摄影模式拍3个小时就没电了。</p>
+<p>同时要注意，老版本的 hadoop-snappy 有一个提示错误，当 snappy 格式错误时，提示的是找不到 snappy 库，可以用以下方式修改 <code class="highlighter-rouge">src/main/native/src/org/apache/hadoop/io/compress/snappy/SnappyDecompressor.c</code>，然后重新编译来解决。</p>
 
-<p>一边拍一边还发烫，不知道的还以为是暖宝宝呢。</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   if (ret == SNAPPY_BUFFER_TOO_SMALL){
+-    THROW(env, "Ljava/lang/InternalError", "Could not decompress data. Buffer length is too small.");
++    THROW(env, "java/lang/InternalError", "Could not decompress data. Buffer length is too small.");
+   } else if (ret == SNAPPY_INVALID_INPUT){
+-    THROW(env, "Ljava/lang/InternalError", "Could not decompress data. Input is invalid.");
++    THROW(env, "java/lang/InternalError", "Could not decompress data. Input is invalid.");
+   } else if (ret != SNAPPY_OK){
+-    THROW(env, "Ljava/lang/InternalError", "Could not decompress data.");
++    THROW(env, "java/lang/InternalError", "Could not decompress data.");
+   }
+</code></pre></div></div>
 
-<p>除此之外，拍出来的照片清晰度还停留在10年前智能手机的水平。</p>
+<p>编译之后可以使用测试用例来触发 snappy 的压缩，测试用例在 <code class="highlighter-rouge">src/test/java/org/apache/hadoop/io/compress/snappy/TestSnappyCodec.java</code>。压缩之后我们得到了 test_java.txt.snappy</p>
 
-<p>于是退货了。</p>
+<p>我们比较一下 test_java.txt.snappy 和 test_python.txt.snappy，发现 test_python.txt.snappy 整个文件中，如果用 utf-8 编码格式打开，只有最开头有一段乱码的二进制头信息。但是 test_java.txt.snappy 则每隔 256K 就会有一段二进制头信息。</p>
 
-<h4 id="go-pro-hero-session">Go Pro Hero Session</h4>
+<p>在这时，我们可以初步断定是两个语言的头信息写入不一致导致的文件格式不兼容。</p>
 
-<p>既然讲到相机，那么 Go Pro 算是运动相机类的标杆了。</p>
+<h3 id="查看源码">查看源码</h3>
+<p>snappy 的压缩和代码在 java 中其实并不复杂，主要都集中在 <code class="highlighter-rouge">src/main/java/org/apache/hadoop/io/compress/snappy/</code>，本质上是在 java 中将 byte 流读入后，将数据分块，再对每一块进行压缩。而我们看到的文件里的的二进制头信息其实就是每一块数据的元数据，例如每一块数据的长度等。那么是什么决定了数据块的默认大小呢？有两个变量可能会造成影响。</p>
 
-<p>Go Pro 也推出了比传统 Go Pro 更小的相机 – Go Pro Hero Session。Session 的大小基本就是一个正方体的一元硬币。在运动相机里算是很小瞧了。</p>
+<p>一个是 DEFAULT_DIRECT_BUFFER_SIZE:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ grep DEFAULT_DIRECT_BUFFER_SIZE src/main/java/org/apache/hadoop/io/compress/snappy/SnappyCompressor.java
+$   private static final int DEFAULT_DIRECT_BUFFER_SIZE = 64 * 1024;
+</code></pre></div></div>
+<p>这里是代码定义的默认大小，64K。但是在测试用例中我们发现，调整这个数值并不会改变最后生成的数据块大小。</p>
 
-<p>如同传统的 Go Pro 一样，Session 也支持延时摄影，可以自定义每 x 秒拍一张照片。由于 Go Pro 的运动相机基因， Session 的成像质量特别好,点个赞！</p>
+<p>另一个是 IO_COMPRESSION_CODEC_SNAPPY_BUFFERSIZE_DEFAULT：</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ grep -b2 IO_COMPRESSION_CODEC_SNAPPY_BUFFERSIZE_DEFAULT src/main/java/org/apache/hadoop/io/compress/SnappyCodec.java
+1527-
+1528-  /** Default value for IO_COMPRESSION_CODEC_SNAPPY_BUFFERSIZE_KEY */
+1598:  public static final int IO_COMPRESSION_CODEC_SNAPPY_BUFFERSIZE_DEFAULT =
+1673-      256 * 1024;
+</code></pre></div></div>
+<p>这个配置文件控制了在作为 Hadoop Codec 组件实例化时，使用的数据块大小。如果我们将这个值调为 256，我们会发现测试用例中数据块的分块确实变化了。</p>
 
-<p>不过 Session 的延迟摄影模式下的续航模式也只有3小时，跟它的摄影模式续航是一样的。这也决定了它不可能被全天佩戴，只能在某些感兴趣的场景下佩戴。</p>
+<p>这时候，我们可以大致明白，之所以 python-snappy 压缩的文件在 hadoop-snappy 中无法解析，其实本质上是因为 python-snappy 在一整个 256K 数据块中的任何一块地方生成元数据头，导致 hadoop-snappy 一次性读取进来的 256K 全是数据，没有数据块头，也就无法解析出对应的数据块长度，最终报了 “ Input is invalid.” 错误。</p>
 
-<h4 id="narrative-clip">Narrative Clip</h4>
+<p>那么为什么其他数据没问题， base64 的数据就会出问题呢？</p>
 
-<p>最终，我发现了 life logger 界的标杆 <a href="http://baidu.com/?q=narrativeclip">Narrative Clip</a>。</p>
+<p>首先，并不是一定 256K 的位置才会生成一个数据块头信息，而是每一个可以被截断并压缩的数据块就会生成一个头信息。但是对于 base64 的文字，基本是原文读入，原文写出的，所以连续的 256K base64 编码数据中，如果没有强行截断的话，就不会生成数据头。这个应该是 python-snappy sdk 的一个bug，不过由于时间原因，没办法细看 python-snappy sdk 并修复这个问题。</p>
 
-<p>它几乎完美地满足了我所有的需求。</p>
+<h3 id="最终解决方法">最终解决方法</h3>
+<p>首先我们尝试调大 hadoop-snappy 的解压区块大小，当 hadoop-snappy 的 IO_COMPRESSION_CODEC_SNAPPY_BUFFERSIZE_DEFAULT 设置为 512K 时，我们发现 python-snappy 压缩的 base64 encode 文件可以被正常解压。但是在 hadoop 集群上，这样有可能导致这样保存下来的 snappy.json 文件无法被其他未修改配置的 hadoop 组件读取。</p>
 
-<p>从外观大小上来看，它足够低调，也足够轻盈，佩戴在身上的时候完全不会感觉到它的重量。</p>
+<p>还有一个思路就是调小 python-snappy 的区块大小。虽然文档中没有提到修改的方式，但是从 API 的签名中我们发现，在 <a href="https://github.com/andrix/python-snappy/blob/master/snappy/hadoop_snappy.py">hadoop-snappy.py</a> 文件中也定义了 <code class="highlighter-rouge">SNAPPY_BUFFER_SIZE_DEFAULT</code> 变量，控制默认的区块大小。而在 stream_compress 函数的签名中也有 blocksize 变量，默认值就是 SNAPPY_BUFFER_SIZE_DEFAULT。所以只要在调用 stream_compress 的时候将 blocksize 调为 128K 即可。</p>
 
-<p><a href="/img/in-post/life-logger-trail/life-logger-wear.jpg"><img src="/img/in-post/life-logger-trail/life-logger-wear.jpg" alt="life-logger-wear" /></a></p>
+<p>最后联调后发现，这个方法生成的 python-snappy 文件是可以被 hadoop-snappy 成功解析的。最后我们的解决方法就是在 stream_compress 设置 blocksize 为 128K。</p>
 
-<p>从续航角度来看，充电20分钟，能用一整天呢。</p>
+<h1 id="经验总结">经验总结</h1>
 
-<p>（图片）</p>
-
-<p>而在功能上，延时摄影是它的默认模式。只要有电，并且光线足够，它就会每隔30秒自动对焦拍照。当光线不足或者电量不足的时候，就自动停止了。所以呢，只要拿出来，它就自动开始运作，而放进口袋里就自动停止了。</p>
-
-<p>（图片）</p>
-
-<p>完美！</p>
-
-<hr />
-
-<h2 id="新世界">新世界</h2>
-
-<p>我平时的佩戴方式一般分为两种。</p>
-<ul>
-  <li>如果穿着衬衫，那么就别在衬衫的领子下方。</li>
-  <li>如果穿着 T-shirt，就挂在一个项链上。</li>
-</ul>
-
-<p>于是，它开始记录我的生活了。</p>
-
-<h3 id="第一人称射击日记">第一人称射击日记</h3>
-
-<p>相信每个男生的心底都有个梦想，举起布满金属光泽的厚重手枪，扣动扳机，看着子弹传出黝黑枪口的火焰，完美击中目标。</p>
-
-<p>在美帝，我终于也有机会完成这个梦，并且我的小黑帮我拍了个真人 CS 写真集。</p>
-
-<p>来福枪
-<a href="/img/in-post/life-logger-trail/01-shoot.jpeg"><img src="/img/in-post/life-logger-trail/01-shoot.jpeg" alt="01-shoot" /></a></p>
-
-<p><a href="/img/in-post/life-logger-trail/02-shoot.jpeg"><img src="/img/in-post/life-logger-trail/02-shoot.jpeg" alt="02-shoot" /></a></p>
-
-<p><a href="/img/in-post/life-logger-trail/03-shoot.jpeg"><img src="/img/in-post/life-logger-trail/03-shoot.jpeg" alt="03-shoot" /></a></p>
-
-<p>手枪
-<a href="/img/in-post/life-logger-trail/04-shoot.jpeg"><img src="/img/in-post/life-logger-trail/04-shoot.jpeg" alt="04-shoot" /></a></p>
-
-<p><a href="/img/in-post/life-logger-trail/05-shoot.jpeg"><img src="/img/in-post/life-logger-trail/05-shoot.jpeg" alt="05-shoot" /></a></p>
-
-<p><a href="/img/in-post/life-logger-trail/06-shoot.jpeg"><img src="/img/in-post/life-logger-trail/06-shoot.jpeg" alt="06-shoot" /></a></p>
-
-<h3 id="一个码农的日常">一个码农的日常</h3>
-
-<p>也许，不是每一天都能有特别的事情发生。但是，每一天对于你，我都是不可复制的珍贵的一天。</p>
-
-<p>在日常上班的路上，也能留下值得回味的瞬间。</p>
-
-<p>清晨，看着窗外曼哈顿这头巨兽随着阳光渐渐醒来</p>
-
-<p><a href="/img/in-post/life-logger-trail/01-morning-city-view.jpg"><img src="/img/in-post/life-logger-trail/01-morning-city-view.jpg" alt="01-morning-city-view" /></a></p>
-
-<p>跟邻居一起乘电梯下楼</p>
-
-<p><a href="/img/in-post/life-logger-trail/02-morning-elevator-view.jpg"><img src="/img/in-post/life-logger-trail/02-morning-elevator-view.jpg" alt="02-morning-elevator-view" /></a></p>
-
-<p>迎着朝阳走向地铁站</p>
-
-<p><a href="/img/in-post/life-logger-trail/03-morning-street-view.jpg"><img src="/img/in-post/life-logger-trail/03-morning-street-view.jpg" alt="03-morning-street-view" /></a></p>
-
-<p>踏上拥挤的地铁</p>
-
-<p><a href="/img/in-post/life-logger-trail/04-morning-subway-view.jpg"><img src="/img/in-post/life-logger-trail/04-morning-subway-view.jpg" alt="04-morning-subway-view" /></a></p>
-
-<p>走在曼哈顿的街头</p>
-
-<p><a href="/img/in-post/life-logger-trail/05-morning-manhattan-view.jpg"><img src="/img/in-post/life-logger-trail/05-morning-manhattan-view.jpg" alt="05-morning-manhattan-view" /></a></p>
-
-<p>为了公司的保密要求，在公司内部的时候就把 life logger 取下，放回口袋里。</p>
-
-<p>中午休息跟同事一起吃顿日式快餐</p>
-
-<p><a href="/img/in-post/life-logger-trail/06-lunch-view.jpg"><img src="/img/in-post/life-logger-trail/06-lunch-view.jpg" alt="06-lunch-view" /></a></p>
-
-<p>晚上下班买份土耳其烤肉回家</p>
-
-<p><a href="/img/in-post/life-logger-trail/07-turkish-view.jpg"><img src="/img/in-post/life-logger-trail/07-turkish-view.jpg" alt="07-turkish-view" /></a></p>
-
-<p>下了班继续等待繁忙的地铁把上百万的 New Yorker 送回自己温暖的家</p>
-
-<p><a href="/img/in-post/life-logger-trail/08-1-subway-girl.jpg"><img src="/img/in-post/life-logger-trail/08-1-subway-girl.jpg" alt="08-1-subway-girl" /></a></p>
-
-<p><a href="/img/in-post/life-logger-trail/08-evening-subway-view.jpg"><img src="/img/in-post/life-logger-trail/08-evening-subway-view.jpg" alt="08-evening-subway-view" /></a></p>
-
-<p>回到家，便摊在柔软的懒人沙发上，望着空白的天花板，将如潮的思绪收回到自己身上</p>
-
-<p><a href="/img/in-post/life-logger-trail/09-lying-down.jpg"><img src="/img/in-post/life-logger-trail/09-lying-down.jpg" alt="09-lying-down" /></a></p>
-
-<p>###</p>
+<p>首先这个问题其实本质上还是一个算法，多个语言实现导致的问题。虽然底层的压缩算法使用的是同一套库，但是上层数据块的切分实现可能有细微差别，导致这个问题的发生。这个问题的解决其实关键是有一个可以复现的测试用例，有了这个测试用例之后就能帮我们不断缩小问题的范围，最后找到一个相对实现起来比较容易的解决方案。</p>
 
 <hr />
 
@@ -398,13 +302,9 @@
                 <ul class="pager">
                     
                     <li class="previous">
-                        <a href="/2016/09/07/New-York-Sunset/" data-toggle="tooltip" data-placement="top" title="NYC Sunset">&larr; Previous Post</a>
+                        <a href="/2018/04/20/app-store-review/" data-toggle="tooltip" data-placement="top" title="App Store Review Tips">&larr; Previous Post</a>
                     </li>
                     
-                    
-                    <li class="next">
-                        <a href="/2017/03/26/weird-bugs-1/" data-toggle="tooltip" data-placement="top" title="Weird bugs - 1">Next Post &rarr;</a>
-                    </li>
                     
                 </ul>
 
