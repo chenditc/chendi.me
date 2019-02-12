@@ -292,6 +292,12 @@ $   private static final int DEFAULT_DIRECT_BUFFER_SIZE = 64 * 1024;
 
 <p>首先这个问题其实本质上还是一个算法，多个语言实现导致的问题。虽然底层的压缩算法使用的是同一套库，但是上层数据块的切分实现可能有细微差别，导致这个问题的发生。这个问题的解决其实关键是有一个可以复现的测试用例，有了这个测试用例之后就能帮我们不断缩小问题的范围，最后找到一个相对实现起来比较容易的解决方案。</p>
 
+<h2 id="题外话">题外话</h2>
+
+<p>在看 Google snappy 的代码时，发现一个 <a href="https://github.com/google/snappy/commit/824e6718b5b5a50d32a89124853da0a11828b25c">commit</a>。Google 的工程师在做 regression 性能测试的时候发现，LLVM 的一个内存对齐的相关改动，导致 snappy 的性能下降了 3%，这个改动影响到了多个 intel 架构。最后虽然没能理解出现的原因，但是强行在 x86 架构上增加一个补位元素，抵消了 LLVM 上游的副作用，使得 snappy 的性能恢复到 LLVM 修改之前。</p>
+
+<p>这看起来是个小优化，但是也看到了 Google 背后完整的基础架构，能支持工程师定期进行性能测试，并且将性能测试在不同架构上进行复现。确实厉害。</p>
+
 <hr />
 
 <p>如果你看到这里，一定是真爱！欢迎看看我的其他 <a href="http://chendi.me/">blog</a>。O(∩_∩)O</p>
@@ -305,6 +311,10 @@ $   private static final int DEFAULT_DIRECT_BUFFER_SIZE = 64 * 1024;
                         <a href="/2018/04/20/app-store-review/" data-toggle="tooltip" data-placement="top" title="App Store Review Tips">&larr; Previous Post</a>
                     </li>
                     
+                    
+                    <li class="next">
+                        <a href="/2019/01/28/leverage-datalake-service-in-etl/" data-toggle="tooltip" data-placement="top" title="Leverage Datalake cloud service in ETL">Next Post &rarr;</a>
+                    </li>
                     
                 </ul>
 
@@ -354,7 +364,7 @@ $   private static final int DEFAULT_DIRECT_BUFFER_SIZE = 64 * 1024;
                             
         				
                             
-                				<a href="/tags/#Tech" title="Tech" rel="11">
+                				<a href="/tags/#Tech" title="Tech" rel="12">
                                     Tech
                                 </a>
                             
@@ -544,7 +554,7 @@ $   private static final int DEFAULT_DIRECT_BUFFER_SIZE = 64 * 1024;
                     
                 </ul>
                 <p class="copyright text-muted">
-                    Copyright &copy; Di's Blog 2018
+                    Copyright &copy; Di's Blog 2019
                     <br>
                     Theme by <a href="http://huangxuan.me">Hux</a> |
                     <iframe

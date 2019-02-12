@@ -154,6 +154,31 @@
             ">
     			
 <div class="post-preview">
+    <a href="/2019/01/28/leverage-datalake-service-in-etl/">
+        <h2 class="post-title">
+            Leverage Datalake cloud service in ETL
+        </h2>
+        
+        <h3 class="post-subtitle">
+            利用 Datalake 服务加速数据分析的迭代流程
+        </h3>
+        
+        <div class="post-content-preview">
+            起因
+
+在数据采集和分析的流程中，目前有3个痛点不好解决：
+
+  数据采集之后是以多个小 json 文件储存在类似 AWS S3 的对象储存中的，当我们要核验数据的特征，例如最大值，数据总数之类的，需要使用 MapReduce 或者 spark 才能实现，而这个操作门槛相对较高。并且由于数据是以多个小文件的形式存在，批处理脚本的执行效率低，每次都需要较长时间才能完成一个简单的数据查询。
+  ...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by Di Chen on January 28, 2019
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
     <a href="/2018/11/11/snappy-python-incompatibility/">
         <h2 class="post-title">
             Snappy-python is not fully compatible with hadoop-snappy
@@ -413,42 +438,6 @@ Unity 编译错误
 </div>
 <hr>
 
-<div class="post-preview">
-    <a href="/2017/04/02/Xixi-park/">
-        <h2 class="post-title">
-            Xixi Wetland
-        </h2>
-        
-        <h3 class="post-subtitle">
-            西溪湿地航拍记录
-        </h3>
-        
-        <div class="post-content-preview">
-            What is this?
-
-清明节去西溪湿地公园逛了一圈，拿起好久没碰的大疆，好好飞了一小时，爽！
-
-不过以后航拍还是得先构思一下，不然素材不够用呢。
-
-视频献上，记得在 wifi 环境下观看哦。
-
-  
-  
-
-
-音乐：
-
-“Something Just Like This” - originally by The Chainsmokers &amp; Coldplay
-
-Written...
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by Di Chen on April 2, 2017
-    </p>
-</div>
-<hr>
-
 
 <!-- Pager -->
 
@@ -497,7 +486,7 @@ Written...
                             
                         
                             
-                                <a href="/tags/#Tech" title="Tech" rel="11">
+                                <a href="/tags/#Tech" title="Tech" rel="12">
                                     Tech
                                 </a>
                             
@@ -679,7 +668,7 @@ Written...
                     
                 </ul>
                 <p class="copyright text-muted">
-                    Copyright &copy; Di's Blog 2018
+                    Copyright &copy; Di's Blog 2019
                     <br>
                     Theme by <a href="http://huangxuan.me">Hux</a> |
                     <iframe

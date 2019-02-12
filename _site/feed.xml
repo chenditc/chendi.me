@@ -5,9 +5,67 @@
     <description></description>
     <link>http://localhost:4000/</link>
     <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Sun, 09 Dec 2018 16:55:52 +0800</pubDate>
-    <lastBuildDate>Sun, 09 Dec 2018 16:55:52 +0800</lastBuildDate>
-    <generator>Jekyll v3.8.5</generator>
+    <pubDate>Tue, 29 Jan 2019 13:53:17 +0800</pubDate>
+    <lastBuildDate>Tue, 29 Jan 2019 13:53:17 +0800</lastBuildDate>
+    <generator>Jekyll v3.8.3</generator>
+    
+      <item>
+        <title>Leverage Datalake cloud service in ETL</title>
+        <description>&lt;h2 id=&quot;起因&quot;&gt;起因&lt;/h2&gt;
+
+&lt;p&gt;在数据采集和分析的流程中，目前有3个痛点不好解决：&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;数据采集之后是以多个小 json 文件储存在类似 AWS S3 的对象储存中的，当我们要核验数据的特征，例如最大值，数据总数之类的，需要使用 MapReduce 或者 spark 才能实现，而这个操作门槛相对较高。并且由于数据是以多个小文件的形式存在，批处理脚本的执行效率低，每次都需要较长时间才能完成一个简单的数据查询。&lt;/li&gt;
+  &lt;li&gt;数据清洗的时候不了解数据特性，例如空值，异常值的情况，所以容易在清洗过程中欠缺对异常情况的处理。&lt;/li&gt;
+  &lt;li&gt;数据分析的迭代周期长，出了问题回溯困难。因为统计需要使用专业的数据处理脚本，所以需求提出之后，需要经过代码实现，测试，批量执行之后才能看到结果，迭代周期往往以天计算。同时某个数据的统计值与预期不符时，缺少合适的工具帮助回溯到原始数据。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;这里使用的是阿里云 Data Lake Analytics 服务帮助解决这个问题。同时用阿里云的 OSS 作为数据源储存。&lt;/p&gt;
+
+&lt;p&gt;Data Lake Analytics 将一些简单的 ETL 任务封装成 SAAS 服务了，所以绝大部分的操作是在阿里云的控制台上执行的。&lt;/p&gt;
+
+&lt;h2 id=&quot;简化将小文件合并成大文件的过程&quot;&gt;简化将小文件合并成大文件的过程&lt;/h2&gt;
+
+&lt;p&gt;首先，我们来解决痛点1。&lt;/p&gt;
+
+&lt;p&gt;对于小文件查询慢的问题，传统的解决方法是写一个 spark 的数据清洗脚本来将其转为 parquet 格式，然后再用 zepplin 之类的工具进行查询分析。&lt;/p&gt;
+
+&lt;p&gt;Data Lake Analytics 的处理分成以下几个步骤：&lt;/p&gt;
+
+&lt;h3 id=&quot;建立一个外表连接到需要处理的-oss-路径&quot;&gt;建立一个外表连接到需要处理的 OSS 路径。&lt;/h3&gt;
+
+&lt;p&gt;这里可以使用阿里云的建表向导来进行。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;/img/in-post/aliyun-datalake/datalake1.png&quot;&gt;&lt;img src=&quot;/img/in-post/aliyun-datalake/datalake1.png&quot; alt=&quot;datalake1&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;填入几个关于数据源的信息后，会自动生成一个建表的 schema。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;/img/in-post/aliyun-datalake/datalake2.png&quot;&gt;&lt;img src=&quot;/img/in-post/aliyun-datalake/datalake2.png&quot; alt=&quot;datalake2&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;这里建议大家手动审核调整一下建表的 sql，然后在 sql 界面进行建表。&lt;/p&gt;
+
+&lt;h3 id=&quot;使用-data-lake-的-mysql-接口连接其数据库&quot;&gt;使用 Data Lake 的 MySQL 接口连接其数据库&lt;/h3&gt;
+
+&lt;p&gt;在阿里云控制台可以获取到连接的参数信息。建议根据 &lt;a href=&quot;https://help.aliyun.com/document_detail/98381.html?spm=a2c4g.11186623.6.557.6aff7b8cAX4zoH&quot;&gt;文档&lt;/a&gt; 配置子账号并用子账号创建新表。&lt;/p&gt;
+
+&lt;p&gt;连接上之后，我们就可以用刚才阿里云生成的建表 sql 创建一个新的外表了。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;/img/in-post/aliyun-datalake/datalake3.png&quot;&gt;&lt;img src=&quot;/img/in-post/aliyun-datalake/datalake3.png&quot; alt=&quot;datalake3&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;使用-data-lake-的-mysql-接口进行初步查询&quot;&gt;使用 Data Lake 的 MySQL 接口进行初步查询&lt;/h3&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;如果你看到这里，一定是真爱！欢迎看看我的其他 &lt;a href=&quot;http://chendi.me/&quot;&gt;blog&lt;/a&gt;。O(∩_∩)O&lt;/p&gt;
+</description>
+        <pubDate>Mon, 28 Jan 2019 16:15:00 +0800</pubDate>
+        <link>http://localhost:4000/2019/01/28/leverage-datalake-service-in-etl/</link>
+        <guid isPermaLink="true">http://localhost:4000/2019/01/28/leverage-datalake-service-in-etl/</guid>
+        
+        <category>Tech</category>
+        
+        
+      </item>
     
       <item>
         <title>Snappy-python is not fully compatible with hadoop-snappy</title>
@@ -129,6 +187,12 @@ $   private static final int DEFAULT_DIRECT_BUFFER_SIZE = 64 * 1024;
 &lt;h1 id=&quot;经验总结&quot;&gt;经验总结&lt;/h1&gt;
 
 &lt;p&gt;首先这个问题其实本质上还是一个算法，多个语言实现导致的问题。虽然底层的压缩算法使用的是同一套库，但是上层数据块的切分实现可能有细微差别，导致这个问题的发生。这个问题的解决其实关键是有一个可以复现的测试用例，有了这个测试用例之后就能帮我们不断缩小问题的范围，最后找到一个相对实现起来比较容易的解决方案。&lt;/p&gt;
+
+&lt;h2 id=&quot;题外话&quot;&gt;题外话&lt;/h2&gt;
+
+&lt;p&gt;在看 Google snappy 的代码时，发现一个 &lt;a href=&quot;https://github.com/google/snappy/commit/824e6718b5b5a50d32a89124853da0a11828b25c&quot;&gt;commit&lt;/a&gt;。Google 的工程师在做 regression 性能测试的时候发现，LLVM 的一个内存对齐的相关改动，导致 snappy 的性能下降了 3%，这个改动影响到了多个 intel 架构。最后虽然没能理解出现的原因，但是强行在 x86 架构上增加一个补位元素，抵消了 LLVM 上游的副作用，使得 snappy 的性能恢复到 LLVM 修改之前。&lt;/p&gt;
+
+&lt;p&gt;这看起来是个小优化，但是也看到了 Google 背后完整的基础架构，能支持工程师定期进行性能测试，并且将性能测试在不同架构上进行复现。确实厉害。&lt;/p&gt;
 
 &lt;hr /&gt;
 
@@ -1835,54 +1899,6 @@ compatibility of your Unity projects.
         <category>Unity</category>
         
         <category>iOS</category>
-        
-        
-      </item>
-    
-      <item>
-        <title>Xixi Wetland</title>
-        <description>&lt;h2 id=&quot;what-is-this&quot;&gt;What is this?&lt;/h2&gt;
-
-&lt;p&gt;清明节去西溪湿地公园逛了一圈，拿起好久没碰的大疆，好好飞了一小时，爽！&lt;/p&gt;
-
-&lt;p&gt;不过以后航拍还是得先构思一下，不然素材不够用呢。&lt;/p&gt;
-
-&lt;p&gt;视频献上，记得在 wifi 环境下观看哦。&lt;/p&gt;
-
-&lt;video width=&quot;100%&quot; poster=&quot;/img/in-post/xixiwetland-1/xixiwetland-play.jpg&quot; controls=&quot;&quot; preload=&quot;none&quot; type=&quot;video/mp4&quot;&gt;  
-&lt;source src=&quot;http://video.chendi.me/videos/xixi_small.mp4&quot; /&gt;  
-&lt;/video&gt;
-
-&lt;p&gt;音乐：&lt;/p&gt;
-
-&lt;p&gt;“Something Just Like This” - originally by The Chainsmokers &amp;amp; Coldplay&lt;/p&gt;
-
-&lt;p&gt;Written by: Andrew Taggart, Chris Martin, Guy Berryman, Jonny Buckland &amp;amp; Will Champion&lt;/p&gt;
-
-&lt;p&gt;Cover by: Sam Tsui &amp;amp; KHS COVER&lt;/p&gt;
-
-&lt;p&gt;视频拍摄与剪辑：陈迪&lt;/p&gt;
-
-&lt;p&gt;设备：大疆精灵3&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;旅行的意义&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;&lt;a href=&quot;/img/in-post/xixiwetland-1/dji.jpg&quot;&gt;&lt;img src=&quot;/img/in-post/xixiwetland-1/dji.jpg&quot; alt=&quot;dji&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;/img/in-post/xixiwetland-1/cong1.jpg&quot;&gt;&lt;img src=&quot;/img/in-post/xixiwetland-1/cong1.jpg&quot; alt=&quot;cong1&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;/img/in-post/xixiwetland-1/cong2.jpg&quot;&gt;&lt;img src=&quot;/img/in-post/xixiwetland-1/cong2.jpg&quot; alt=&quot;cong2&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-</description>
-        <pubDate>Sun, 02 Apr 2017 22:15:00 +0800</pubDate>
-        <link>http://localhost:4000/2017/04/02/Xixi-park/</link>
-        <guid isPermaLink="true">http://localhost:4000/2017/04/02/Xixi-park/</guid>
-        
-        <category>旅行</category>
-        
-        <category>航拍</category>
         
         
       </item>
