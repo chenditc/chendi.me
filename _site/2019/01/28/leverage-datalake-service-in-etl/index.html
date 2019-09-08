@@ -214,7 +214,30 @@
 
 <p><a href="/img/in-post/aliyun-datalake/datalake3.png"><img src="/img/in-post/aliyun-datalake/datalake3.png" alt="datalake3" /></a></p>
 
-<h3 id="使用-data-lake-的-mysql-接口进行初步查询">使用 Data Lake 的 MySQL 接口进行初步查询</h3>
+<h3 id="建立-parquet-格式的外表">建立 Parquet 格式的外表</h3>
+
+<p>使用前面阿里云建表向导提供的建表 SQL，我们可以做一些修改，例如将 <code class="highlighter-rouge">STORE AS JSON</code> 改为 <code class="highlighter-rouge">STORE AS PARQUET</code> 然后建立一个指向新的 OSS 路径的外表。</p>
+
+<p>然后我们可以使用下面的 SQL 将 JSON 格式的文件导入到 PARQUET 格式的文件中去，完成小文件合并的任务。</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/*+run_async=true*/</span> 
+<span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">parquet_table</span> <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">json_table</span>
+</code></pre></div></div>
+
+<p>记得加上面的 <code class="highlighter-rouge">/*+run_async=true*/</code> 标注，因为这个执行过程比较久，将其设置为异步执行可以避免由于 mysql 客户端超时导致的任务失败。</p>
+
+<h2 id="在parquet文件上进行数据特性分析">在Parquet文件上进行数据特性分析</h2>
+
+<p>当我们将数据从 json 文件插入至 parquet 文件后，我们就可以从 parquet 文件对应的表进行 sql 查询了。由于文件已经被合并成大的 parquet 文件，查询性能也会大大提高。</p>
+
+<h2 id="回溯问题文件">回溯问题文件</h2>
+
+<p>当我们发现数据的统计值不符合我们的预期时，往往需要回溯寻找出问题的原始数据是什么，Datalake 也是做这类工作的一个利器。</p>
+
+<p>当我们使用 OSS 作为外表进行查询时，我们可以使用 <code class="highlighter-rouge">$path</code> 获取外表数据源的文件名称。</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">SELECT</span> <span class="err">$</span><span class="n">path</span><span class="p">,</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">json_table</span>
+</code></pre></div></div>
 
 <hr />
 
@@ -229,6 +252,10 @@
                         <a href="/2018/11/11/snappy-python-incompatibility/" data-toggle="tooltip" data-placement="top" title="Snappy-python is not fully compatible with hadoop-snappy">&larr; Previous Post</a>
                     </li>
                     
+                    
+                    <li class="next">
+                        <a href="/2019/09/08/sync-outlook-calendar/" data-toggle="tooltip" data-placement="top" title="Sync Outlook Calendar And Conference Room">Next Post &rarr;</a>
+                    </li>
                     
                 </ul>
 
@@ -278,7 +305,7 @@
                             
         				
                             
-                				<a href="/tags/#Tech" title="Tech" rel="12">
+                				<a href="/tags/#Tech" title="Tech" rel="13">
                                     Tech
                                 </a>
                             

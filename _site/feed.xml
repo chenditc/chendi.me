@@ -5,9 +5,199 @@
     <description></description>
     <link>http://localhost:4000/</link>
     <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Tue, 29 Jan 2019 13:53:17 +0800</pubDate>
-    <lastBuildDate>Tue, 29 Jan 2019 13:53:17 +0800</lastBuildDate>
-    <generator>Jekyll v3.8.3</generator>
+    <pubDate>Sun, 08 Sep 2019 22:54:02 +0800</pubDate>
+    <lastBuildDate>Sun, 08 Sep 2019 22:54:02 +0800</lastBuildDate>
+    <generator>Jekyll v3.8.5</generator>
+    
+      <item>
+        <title>Sync Outlook Calendar And Conference Room</title>
+        <description>&lt;h2 id=&quot;起因&quot;&gt;起因&lt;/h2&gt;
+
+&lt;p&gt;由于系统A实现上的需求，我们需要将 outlook 中的会议室的使用信息，以及对应每个用户的日程信息同步至内部开发的系统A中。主要需求包括：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;outlook上的会议室使用情况涉及到不使用系统A的用户，所以outlook上的会议室预约信息会比系统A中的多，我们需要把这些额外的预约信息同步至系统A中，这样系统A中的用户在预约会议室时，可以考虑到其他用户的冲突。&lt;/li&gt;
+  &lt;li&gt;用户已经习惯使用 outlook 将日程和会议室信息同步至手机端，所以系统A中增加的日程需要同步至 outlook 中，包括会议室订阅也需要增加。&lt;/li&gt;
+  &lt;li&gt;当系统A中日程的属性变化时，outlook中需要对应发生变化。&lt;/li&gt;
+  &lt;li&gt;当outlook中日程的属性发生变化时，系统A中也需要对应发生变化&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;探索调研&quot;&gt;探索调研&lt;/h2&gt;
+
+&lt;h3 id=&quot;搭建测试环境&quot;&gt;搭建测试环境&lt;/h3&gt;
+
+&lt;p&gt;为了便于测试，我们需要搭建一套基于 outlook 的邮件以及会议室系统，这里需要以下资源：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Windows Server 2012r2.
+    &lt;ul&gt;
+      &lt;li&gt;2 核心&lt;/li&gt;
+      &lt;li&gt;16G 内存&lt;/li&gt;
+      &lt;li&gt;300G 磁盘&lt;/li&gt;
+      &lt;li&gt;云服务商上对外 25 端口默认是禁止使用的，需要单独申请开放，例如 &lt;a href=&quot;https://help.aliyun.com/knowledge_detail/56130.html&quot;&gt;阿里云25端口解封&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;在 1 中的 windows 服务器上配置 AD 以及 Exchange Server 2016&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;需要配置一个域名以及 DNS 记录
+    &lt;ul&gt;
+      &lt;li&gt;需要给 exchange 服务器挂一个域名，例如 mail.abc.com，这个会作为邮件发送的服务器地址。&lt;/li&gt;
+      &lt;li&gt;需要配置 autodiscover 域名，例如 autodiscover.abc.com，这个域名会用来给客户端自动发现邮箱配置。&lt;/li&gt;
+      &lt;li&gt;需要配置一条 MX 记录，主机名 @，记录指向 mail.abc.com&lt;/li&gt;
+      &lt;li&gt;域名最好能申请 CA 签发的正规 https 证书，否则用自签名证书可能会遇到诸多不便。&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;配置用户以及模拟权限&quot;&gt;配置用户以及模拟权限&lt;/h3&gt;
+
+&lt;p&gt;我们需要为系统A建立一个服务账号，这个账号的会使用代码进行登录。同时，我们希望这个账号可以代所有其他用户账号管理会议日程信息，所以我们需要赋予这个账号 Impersonation 权限，也叫模拟权限。&lt;/p&gt;
+
+&lt;p&gt;我们可以通过后台管理 ecp 界面上的权限管理配置服务账号的权限：
+&lt;a href=&quot;/img/in-post/outlook-calendar/pic1.png&quot;&gt;&lt;img src=&quot;/img/in-post/outlook-calendar/pic1.png&quot; alt=&quot;pic1&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;其中配置的 ApplicationImpersonation 会赋予其模拟他人账号登录的权限
+&lt;a href=&quot;/img/in-post/outlook-calendar/pic2.png&quot;&gt;&lt;img src=&quot;/img/in-post/outlook-calendar/pic2.png&quot; alt=&quot;pic2&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;同时，我们也需要建立几个会议室邮箱，这样我们才能有公共的 “会议室” 以供预定。&lt;/p&gt;
+
+&lt;h3 id=&quot;exchangelib的使用&quot;&gt;exchangelib的使用&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://github.com/ecederstrand/exchangelib&quot;&gt;exchangelib&lt;/a&gt; 提供了一个可以使用 python 代码访问 exchange 服务的库，并且在使用上去 Django 的 ORM 极其类似。&lt;/p&gt;
+
+&lt;p&gt;安装：
+&lt;code class=&quot;highlighter-rouge&quot;&gt;pip3 install exchangelib&lt;/code&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;登陆-exchange-账号&quot;&gt;登陆 exchange 账号&lt;/h4&gt;
+
+&lt;p&gt;如果 exchange 服务器使用的是自签名的 https 证书，则需要跳过 https 证书验证环节：&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;# 自签名服务器需要跳过 HTTPS 的证书检查
+&lt;/span&gt;&lt;span class=&quot;kn&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;exchangelib.protocol&lt;/span&gt; &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;BaseProtocol&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;NoVerifyHTTPAdapter&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;BaseProtocol&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;HTTP_ADAPTER_CLS&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;NoVerifyHTTPAdapter&lt;/span&gt;
+
+&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;urllib3&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;urllib3&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;disable_warnings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;声明登陆服务器所使用的版本号、账号、密码、服务器连接地址：&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;version&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Version&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;build&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Build&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;15&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;12&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;34&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;credentials&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Credentials&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'administrator'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;'xxxxxxx'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;config&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Configuration&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;server&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'mail.abc.com'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;credentials&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;credentials&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;version&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;version&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;auth_type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;NTLM&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;以用户 abc 的身份登陆，IMPERSONATION 字段表示以用之前配置的账号密码，模拟用户 zhangsan@abc.com 登陆：&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;account&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Account&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'zhangsan@abc.com'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;credentials&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;credentials&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;config&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;config&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;access_type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IMPERSONATION&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;创建新的日程&quot;&gt;创建新的日程&lt;/h4&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;# 新建一个日程对象
+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;new_meeting&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CalendarItem&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;account&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;account&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# 需要绑定一个发起人账号
+&lt;/span&gt;        &lt;span class=&quot;n&quot;&gt;folder&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;account&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;calendar&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# 默认加入该账号的日历文件夹
+&lt;/span&gt;        &lt;span class=&quot;n&quot;&gt;start&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;account&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;default_timezone&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;localize&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;EWSDateTime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2019&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;21&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)),&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;#带时区的开始和结束时间
+&lt;/span&gt;        &lt;span class=&quot;n&quot;&gt;end&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;account&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;default_timezone&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;localize&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;EWSDateTime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2019&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;21&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;20&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)),&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;#带时区的开始和结束时间
+&lt;/span&gt;        &lt;span class=&quot;n&quot;&gt;subject&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;final test 6&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# 会议名称
+&lt;/span&gt;        &lt;span class=&quot;n&quot;&gt;body&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'Hello from Python'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# 会议内容
+&lt;/span&gt;        &lt;span class=&quot;n&quot;&gt;location&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'2楼广寒宫'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# 会议室地点，只需要文字描述，与实际会议室账号无关
+&lt;/span&gt;        &lt;span class=&quot;n&quot;&gt;required_attendees&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'abc@abc.com'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;guanghan@abc.com&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;])&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;new_meeting&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;save&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send_meeting_invitations&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;SEND_TO_ALL_AND_SAVE_COPY&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;# 切换至会议室账号并接受邀请
+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;room_account&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Account&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'guanghan@abc.com'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;credentials&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;credentials&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;config&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;config&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;access_type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IMPERSONATION&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;item&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;room_account&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;calendar&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;all&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;order_by&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'-datetime_received'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)[:&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]:&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;item&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;item&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;accept&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;注意：&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;如果需要对这个日程绑定一个会议室，需要将这个会议室对应的邮箱加到参与者列表里，然后再更换登录账号，接受所有的会议邀请。&lt;/li&gt;
+  &lt;li&gt;保存时需要增加参数 &lt;code class=&quot;highlighter-rouge&quot;&gt;send_meeting_invitations=SEND_TO_ALL_AND_SAVE_COPY&lt;/code&gt;，否则参与者不会收到邀请信息。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h4 id=&quot;查询日程并以某条件过滤&quot;&gt;查询日程并以某条件过滤&lt;/h4&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;start&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;account&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;default_timezone&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;localize&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;EWSDateTime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2019&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;21&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;end&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;account&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;default_timezone&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;localize&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;EWSDateTime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2019&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;21&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;20&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;items&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;account&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;calendar&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;filter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;last_modified_time__range&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;start&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;end&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;item&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;items&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+	&lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;item&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# 每个会议都有一个 ID
+&lt;/span&gt;	&lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;item&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;subject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# 会议标题
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;查询会议室的使用情况&quot;&gt;查询会议室的使用情况&lt;/h4&gt;
+
+&lt;p&gt;会议室和用户没有本质上的区别。可以通过 Impersonation 登录会议室的邮箱账号，查看其日历上的内容来获取使用情况。&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;start&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;account&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;default_timezone&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;localize&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;EWSDateTime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2019&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;21&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;end&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;account&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;default_timezone&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;localize&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;EWSDateTime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2019&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;21&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;20&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;items&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;account&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;calendar&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;filter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;last_modified_time__range&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;start&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;end&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;item&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;items&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+	&lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;item&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# 每个会议都有一个 ID
+&lt;/span&gt;	&lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;item&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;start&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# 会议开始时间
+&lt;/span&gt;	&lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;item&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;end&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# 会议结束时间
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;获取到该会议室的使用情况后，就可以检查该时间段内是否有人使用了。&lt;/p&gt;
+
+&lt;h3 id=&quot;系统设计&quot;&gt;系统设计&lt;/h3&gt;
+
+&lt;h4 id=&quot;outlook-中会议室使用情况同步至系统内&quot;&gt;outlook 中会议室使用情况同步至系统内&lt;/h4&gt;
+
+&lt;p&gt;为了保证会议室使用情况的实时以及查询的稳定性，我们定期将会议室的使用情况同步至系统内&lt;/p&gt;
+
+&lt;p&gt;同步任务需要实现：&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;系统A中的会议室使用记录内增加 outlook id，字符串类型，用于记录 outlook 中的会议ID&lt;/li&gt;
+  &lt;li&gt;每次查询获取所有会议室最近一段时间内的日程列表，使用 last_modifed_time 字段进行过滤，只取上次同步任务之后变更的日程，与系统内的记录对比并更新&lt;/li&gt;
+  &lt;li&gt;如果有系统A中不存在的日程，标记为外部创建日程即可&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;如果有同步需求，也可以通过代码手动调用同步任务触发。
+正常情况下设置定时任务，每10分钟同步一次即可。&lt;/p&gt;
+
+&lt;h4 id=&quot;系统中增加日程&quot;&gt;系统中增加日程&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;检查对应会议室在 xx 时间段内是否有被预定&lt;/li&gt;
+  &lt;li&gt;绑定会议室后，系统A内创建会议室日程。&lt;/li&gt;
+  &lt;li&gt;日程保存时，检测是否有 outlook 日程绑定，同时检测 outlook 日程是否仍然存在，如果不存在，则创建outlook日程并绑定会议室，outlook中创建日程的用户与系统登录用户一致。&lt;/li&gt;
+  &lt;li&gt;绑定 outlook 会议室的操作即发送会议邀请给对应的会议室账号，再登陆会议室账号接受邀请即可。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;系统中修改日程&quot;&gt;系统中修改日程&lt;/h4&gt;
+&lt;ul&gt;
+  &lt;li&gt;系统中修改日程属性，如开始时间、结束时间、会议室等。&lt;/li&gt;
+  &lt;li&gt;修改后在保存时通过会议 ID 查询 outlook 中会议的对象，修改对应字段后保存 outlook 对象即可。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;系统中删除日程&quot;&gt;系统中删除日程&lt;/h4&gt;
+&lt;ul&gt;
+  &lt;li&gt;系统内标记日程位删除，同时 soft delete 删除 outlook 中的日程。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;总结&quot;&gt;总结&lt;/h2&gt;
+
+&lt;p&gt;outlook 对于会议室的设计感觉像是有历史遗留问题，每个会议室都必须分配一个邮箱，同时用邮箱来管理。但是目前来看，这个设计也有可取之处，就是对于会议室的操作可以复用用户的操作，学习成本更低一些。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;如果你看到这里，一定是真爱！欢迎看看我的其他 &lt;a href=&quot;http://chendi.me/&quot;&gt;blog&lt;/a&gt;。O(∩_∩)O&lt;/p&gt;
+</description>
+        <pubDate>Sun, 08 Sep 2019 08:15:00 +0800</pubDate>
+        <link>http://localhost:4000/2019/09/08/sync-outlook-calendar/</link>
+        <guid isPermaLink="true">http://localhost:4000/2019/09/08/sync-outlook-calendar/</guid>
+        
+        <category>Tech</category>
+        
+        
+      </item>
     
       <item>
         <title>Leverage Datalake cloud service in ETL</title>
@@ -52,7 +242,30 @@
 
 &lt;p&gt;&lt;a href=&quot;/img/in-post/aliyun-datalake/datalake3.png&quot;&gt;&lt;img src=&quot;/img/in-post/aliyun-datalake/datalake3.png&quot; alt=&quot;datalake3&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
 
-&lt;h3 id=&quot;使用-data-lake-的-mysql-接口进行初步查询&quot;&gt;使用 Data Lake 的 MySQL 接口进行初步查询&lt;/h3&gt;
+&lt;h3 id=&quot;建立-parquet-格式的外表&quot;&gt;建立 Parquet 格式的外表&lt;/h3&gt;
+
+&lt;p&gt;使用前面阿里云建表向导提供的建表 SQL，我们可以做一些修改，例如将 &lt;code class=&quot;highlighter-rouge&quot;&gt;STORE AS JSON&lt;/code&gt; 改为 &lt;code class=&quot;highlighter-rouge&quot;&gt;STORE AS PARQUET&lt;/code&gt; 然后建立一个指向新的 OSS 路径的外表。&lt;/p&gt;
+
+&lt;p&gt;然后我们可以使用下面的 SQL 将 JSON 格式的文件导入到 PARQUET 格式的文件中去，完成小文件合并的任务。&lt;/p&gt;
+
+&lt;div class=&quot;language-sql highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;cm&quot;&gt;/*+run_async=true*/&lt;/span&gt; 
+&lt;span class=&quot;k&quot;&gt;INSERT&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;INTO&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;parquet_table&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;SELECT&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;FROM&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;json_table&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;记得加上面的 &lt;code class=&quot;highlighter-rouge&quot;&gt;/*+run_async=true*/&lt;/code&gt; 标注，因为这个执行过程比较久，将其设置为异步执行可以避免由于 mysql 客户端超时导致的任务失败。&lt;/p&gt;
+
+&lt;h2 id=&quot;在parquet文件上进行数据特性分析&quot;&gt;在Parquet文件上进行数据特性分析&lt;/h2&gt;
+
+&lt;p&gt;当我们将数据从 json 文件插入至 parquet 文件后，我们就可以从 parquet 文件对应的表进行 sql 查询了。由于文件已经被合并成大的 parquet 文件，查询性能也会大大提高。&lt;/p&gt;
+
+&lt;h2 id=&quot;回溯问题文件&quot;&gt;回溯问题文件&lt;/h2&gt;
+
+&lt;p&gt;当我们发现数据的统计值不符合我们的预期时，往往需要回溯寻找出问题的原始数据是什么，Datalake 也是做这类工作的一个利器。&lt;/p&gt;
+
+&lt;p&gt;当我们使用 OSS 作为外表进行查询时，我们可以使用 &lt;code class=&quot;highlighter-rouge&quot;&gt;$path&lt;/code&gt; 获取外表数据源的文件名称。&lt;/p&gt;
+
+&lt;div class=&quot;language-sql highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;SELECT&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;FROM&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;json_table&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
 &lt;hr /&gt;
 
@@ -1652,253 +1865,6 @@ MonoBehaviour:
         <category>Unity</category>
         
         <category>git</category>
-        
-        
-      </item>
-    
-      <item>
-        <title>Weird bugs - 2</title>
-        <description>&lt;blockquote&gt;
-  &lt;p&gt;“There is no coincidence. Only the illusion of coincidence.”&lt;/p&gt;
-
-  &lt;p&gt;– Alan Moore, V for Vendetta, Vol. III of X&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;h2 id=&quot;前言&quot;&gt;前言&lt;/h2&gt;
-
-&lt;p&gt;在这几年的开发生涯中，遇到了或多或少的奇怪的BUG。计算机不会撒谎，让人感到奇怪的 Bug 底下，一定有自己没搞明白的知识。&lt;/p&gt;
-
-&lt;hr /&gt;
-
-&lt;h2 id=&quot;unity-编译错误&quot;&gt;Unity 编译错误&lt;/h2&gt;
-
-&lt;h3 id=&quot;问题表象&quot;&gt;问题表象&lt;/h3&gt;
-
-&lt;p&gt;在最近开发的项目中，我们使用了 Unity3D 作为我们的游戏开发引擎。在 Unity3D 中实现的功能，只要代码依赖的库支持，可以直接编译成安卓的 apk 安装包，或者导出 xcode，再编译出 iOS 的 ipa 安装包。&lt;/p&gt;
-
-&lt;p&gt;理论上同一份代码，只要没有使用平台宏，例如 &lt;code class=&quot;highlighter-rouge&quot;&gt;#if UNITY_ANDROID&lt;/code&gt;，在安卓上能运行的，在 iOS 平台上也应该可以。但是事情并没有这么简单。当我们导出 xcode 时，一切顺利，当使用 xcode 编译到 iPhone 上进行测试的时候，出现了如下错误：&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;LuaException: An exception was thrown by the type initializer for Newtonsoft.Json.Utilities.ConvertUtils
-stack traceback:
- [C]: in function 'ApiTokenAuthPost'
- [string &quot;Controller/LoginRegisterPanelCtrl&quot;]:163: in function &amp;lt;[string &quot;Controller/LoginRegisterPanelCtrl&quot;]:139&amp;gt;
-Newtonsoft.Json.Utilities.ConvertUtils:GetTypeCode(Type)
-Newtonsoft.Json.Serialization.DefaultContractResolver:IsJsonPrimitiveType(Type)
-Newtonsoft.Json.Serialization.DefaultContractResolver:CreateContract(Type)
-Newtonsoft.Json.Serialization.DefaultContractResolver:ResolveContract(Type)
-Newtonsoft.Json.Serialization.JsonSerializerInternalReader:GetContractSafe(Type)
-Newtonsoft.Json.Serialization.JsonSerializerInternalReader:Deserialize(JsonReader, Type, Boolean)
-Newtonsoft.Json.JsonSerializer:DeserializeInternal(JsonReader, Type)
-Newtonsoft.Json.JsonSerializer:Deserialize(JsonReader, Type)
-Newtonsoft.Json.JsonConvert:DeserializeObject(String, Type, JsonSerializerSettings)
-Newtonsoft.Json.JsonConvert:DeserializeObject(String, Type)
-Arpet.Auth.Client.ApiClient:Deserialize(String, Type, IList`1)
-Arpet.Auth.Api.DefaultApi:ApiTokenAuthPost(String, String)
-Grpc.GrpcDefaultApi:ApiTokenAuthPost(String, String)
-Grpc_GrpcDefaultApiWrap:ApiTokenAuthPost(IntPtr)
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;真实的异常信息被 Lua 框架捕获了，去除 Lua 框架的异常捕获后，看到的异常大概是：&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Default Constructor cannot be found for type xxxxx
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;h3 id=&quot;排查方式&quot;&gt;排查方式&lt;/h3&gt;
-
-&lt;h4 id=&quot;检查代码是否定义了-default-constructor&quot;&gt;检查代码是否定义了 Default Constructor&lt;/h4&gt;
-
-&lt;p&gt;既然报了找不到默认构造器，那么我们就从默认构造器开始入手。&lt;/p&gt;
-
-&lt;p&gt;在这个项目中我们使用了 RESTful API 框架 swagger 来进行前端和后端之间的短连接通信，这个框架自带了 C# 的代码生成器。所以在使用时，只需要定义前后端交互的接口参数和返回值，就可以自动生成 API。生成的 API 源文件通过 mono 进行编译，生成 dll 文件加载进 Unity 工程里。在调用的时候只需要：&lt;/p&gt;
-
-&lt;div class=&quot;language-c# highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;PlayerApi&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;playerApi&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;PlayerApi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;PlayerStatus&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;playerStatus&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;playerApi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;PlayersStatusGet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;在代码中，报错是出现在将 HTTP Response 反序列化成 PlayerStatus 类的这个过程中。检查了代码之后，发现 Default Constructor 是有的。那么问题就来了，明明默认构造器是定义了的，并且&lt;strong&gt;在安卓平台上可以正常运行&lt;/strong&gt;，为什么 Newtonsoft 库在 iOS 平台上找不到默认构造器呢？&lt;/p&gt;
-
-&lt;h4 id=&quot;检查编译过程&quot;&gt;检查编译过程&lt;/h4&gt;
-
-&lt;p&gt;由于同样的代码和库在安卓平台上都可以正常运行，所以应该是编译的过程中出现了问题。接下来，我就查阅了一下 Unity 编译成 xcode 代码中需要经过的几个关键步骤。&lt;/p&gt;
-
-&lt;p&gt;在 Unity 中，生成 xcode 工程或者编译出 apk 的过程中，都要经过一个 &lt;em&gt;脚本解释后端&lt;/em&gt; 来解释脚本语言，并且生成对应的原生平台的代码。这个可以在 &lt;code class=&quot;highlighter-rouge&quot;&gt;Build Setting =&amp;gt; Player Settings&lt;/code&gt; 中找到。&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;/img/in-post/weird-bug-2/IL2CPP-2.png&quot;&gt;&lt;img src=&quot;/img/in-post/weird-bug-2/IL2CPP-2.png&quot; alt=&quot;scripting backend&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;常用的解释后端有两个:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;Mono2.x&lt;/strong&gt;&lt;/p&gt;
-
-    &lt;p&gt;这个后端框架是基于一个开源跨平台的 &lt;a href=&quot;http://www.mono-project.com/&quot;&gt;Mono 项目&lt;/a&gt;。这个项目的版本已经到了 &lt;code class=&quot;highlighter-rouge&quot;&gt;4.x&lt;/code&gt;，但是 Unity 中目前仍然只兼容了 &lt;code class=&quot;highlighter-rouge&quot;&gt;2.x&lt;/code&gt;，可想而知，在性能上是落后了不少的。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;IL2CPP&lt;/strong&gt;&lt;/p&gt;
-
-    &lt;p&gt;由于 iOS 要求所有的 app 必须支持 64 位操作系统，所以使用 IL2CPP 进行编译是必须的。这个也是我需要重点了解研究的对象了。&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h3 id=&quot;学习-il2cpp&quot;&gt;学习 IL2CPP&lt;/h3&gt;
-
-&lt;h4 id=&quot;什么是-il2cpp&quot;&gt;什么是 IL2CPP&lt;/h4&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://docs.unity3d.com/Manual/IL2CPP.html&quot;&gt;官方介绍&lt;/a&gt;:&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;IL2CPP is a Unity-developed scripting back-end which you can use as an alternative 
-to Mono when building projects for some platforms. When you choose to build a project 
-using IL2CPP, Unity converts IL code (sometimes called CIL - Intermediate Language or 
-Common Intermediate Language) from scripts and assemblies into C++ code, before creating 
-a native binary file (.exe, apk, .xap, for example) for your chosen platform. Some of 
-the uses for IL2CPP include increasing the performance, security, and platform 
-compatibility of your Unity projects.
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;翻译：&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;IL2CPP 是一个由 Unity 开发的，当进行项目跨平台开发时，可以用来替代 Mono 的解释后端。
-当你选择用 IL2CPP 编译一个项目时，在生成对应的可执行文件之前，Unity 会先将脚本生成的
- IL 代码 (有时也称 CIL 代码 - 中间语言) 还有汇编语言转化成 C++ 代码。在这个编译的过程
-中，IL2CPP 还对你的项目会进行性能，安全性，以及平台兼容性的提升。
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;简而言之，IL2CPP 是 Unity 针对自己的项目而开发的一个编辑器，长远来看，是一定会取代 Mono，至少在 iOS 平台上，已经完全取代了 Mono。&lt;/p&gt;
-
-&lt;h4 id=&quot;il2cpp-是怎样运作的&quot;&gt;IL2CPP 是怎样运作的&lt;/h4&gt;
-
-&lt;p&gt;Unity 官方给出了非常精炼的 &lt;a href=&quot;https://docs.unity3d.com/Manual/IL2CPP-HowItWorks.html&quot;&gt;解释&lt;/a&gt;&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Upon starting a build using IL2CPP, Unity automatically performs the following steps:
-
-1. Unity Scripting API code is compiled to regular .NET DLLs (managed assemblies).
-2. All managed assemblies that aren’t part of scripts (such as plugins and base 
-   class libraries) are processed by a Unity tool called Unused Bytecode Stripper, 
-   which finds all unused classes and methods and removes them from these DLLs 
-   (Dynamic Link Library). This step significantly reduces the size of a built game.
-3. All managed assemblies are then converted to standard C++ code.
-4. The generated C++ code and the runtime part of IL2CPP is compiled using a native 
-   platform compiler.
-5. Finally, the code is linked into either an executable file or a DLL, depending on 
-   the platform you are targeting.
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;IL2CPP 的运作方式与大部分的编译器中的语言解释器都非常相似。&lt;/p&gt;
-
-&lt;p&gt;当 IL2CPP 编译时，会经过如下 5 个步骤：&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;将 Unity C# 代码编译成常规的 .NET 动态库。由于这个动态库仍然是基于 .NET 框架的受控汇编码 (managed assemblies)，与底层 CPU 架构无关的，所以在后面几步中，可以被 IL2CPP 解析出来。&lt;/li&gt;
-  &lt;li&gt;所有的非 Unity 框架中的汇编码将被 无效二进制码裁剪器 (Unused Bytecode Stripper) 处理一遍。它会找到所有没有被用到的类和方法，并且将它们从 DLL 动态库中移除。这个步骤会极大地减小游戏生成的安装包。&lt;/li&gt;
-  &lt;li&gt;将上一步剩下的受控汇编码转译成标准的 C++ 代码。&lt;/li&gt;
-  &lt;li&gt;用原生的编译器如 jdk, xcode 将上一步生成的 C++ 代码结合 IL2CPP Runtime 进行编译。&lt;/li&gt;
-  &lt;li&gt;最后，代码要么直接被编译进二进制执行文件或者编译成一个动态库 dll，这个取决于我们编译的目标平台。在 iOS 上，C++ 可以直接被 Objective-C 调用，就直接被编译进 ipa 安装包了。&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;&lt;a href=&quot;/img/in-post/weird-bug-2/IL2CPP-3.png&quot;&gt;&lt;img src=&quot;/img/in-post/weird-bug-2/IL2CPP-3.png&quot; alt=&quot;scripting backend&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;h4 id=&quot;il2cpp-为什么会导致我遇到的-bug&quot;&gt;IL2CPP 为什么会导致我遇到的 Bug&lt;/h4&gt;
-
-&lt;p&gt;在上一节中提到，IL2CPP 会对二进制代码进行裁剪，如果没有找到方法或者类的直接引用，就会将其删去。&lt;/p&gt;
-
-&lt;p&gt;比如，在以下伪代码中，Default Constructor 就不会被裁剪。&lt;/p&gt;
-
-&lt;div class=&quot;language-c# highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;TestClass&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;A&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-&lt;span class=&quot;n&quot;&gt;TestClass&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;instance1&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;TestClass&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;但是在以下伪代码中，Default Constructor 就被裁剪了，我们就会遇到类似 &lt;code class=&quot;highlighter-rouge&quot;&gt;Default Constructor cannot be found for type TestClass&lt;/code&gt; 的错误:&lt;/p&gt;
-
-&lt;div class=&quot;language-c# highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;TestClass&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;A&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-&lt;span class=&quot;n&quot;&gt;TestClass&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;instance1&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Reflection&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;LoadClass&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;TestClass&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;这是由于正常调用一个函数时，编译器可以通过汇编码的引用，确认该函数被调用过。但是通过反射调用时，在汇编码中找不到直接引用。这也就出现了我之前遇到的问题。&lt;/p&gt;
-
-&lt;p&gt;Swagger 在使用 Newtonsoft.Json 库反序列化 Json 字符串时，并不是直接引用，所以导致了引用寻找失败，Default Constructor 被代码裁剪器裁剪掉了。&lt;/p&gt;
-
-&lt;h3 id=&quot;解决方法&quot;&gt;解决方法&lt;/h3&gt;
-
-&lt;p&gt;解决方法相对来说比较简单，分为两步:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;找到被裁剪掉的函数所处的 dll 库以及它的命名空间。&lt;/li&gt;
-  &lt;li&gt;新建或者修改工程中的文件 &lt;code class=&quot;highlighter-rouge&quot;&gt;Assets/link.xml&lt;/code&gt;，在文件中加入需要保留的汇编码的文件名和命名空间，比如:&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;div class=&quot;language-xml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;linker&amp;gt;&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;lt;assembly&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;fullname=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;LeanCloud.Core&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
-      &lt;span class=&quot;nt&quot;&gt;&amp;lt;namespace&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;fullname=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;LeanCloud&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;preserve=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;all&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
-      &lt;span class=&quot;nt&quot;&gt;&amp;lt;namespace&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;fullname=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;LeanCloud.Internal&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;preserve=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;all&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;lt;/assembly&amp;gt;&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;lt;assembly&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;fullname=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;LeanCloud.Realtime&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
-      &lt;span class=&quot;nt&quot;&gt;&amp;lt;namespace&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;fullname=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;LeanCloud.Realtime&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;preserve=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;all&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
-      &lt;span class=&quot;nt&quot;&gt;&amp;lt;namespace&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;fullname=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;LeanCloud.Realtime.Internal&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;preserve=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;all&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;lt;/assembly&amp;gt;&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;lt;assembly&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;fullname=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;LeanCloud.Storage&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
-      &lt;span class=&quot;nt&quot;&gt;&amp;lt;namespace&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;fullname=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;LeanCloud.Storage&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;preserve=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;all&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
-      &lt;span class=&quot;nt&quot;&gt;&amp;lt;namespace&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;fullname=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;LeanCloud.Storage.Internal&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;preserve=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;all&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;lt;/assembly&amp;gt;&lt;/span&gt;
-&lt;span class=&quot;nt&quot;&gt;&amp;lt;/linker&amp;gt;&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;h3 id=&quot;经验总结&quot;&gt;经验总结&lt;/h3&gt;
-
-&lt;p&gt;在这个事件中，学到了这么几点：&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;知识储备是日积月累的，书到用时方恨少。&lt;/strong&gt;&lt;/p&gt;
-
-    &lt;p&gt;大四在交大做毕业设计时，我分配到了跟 Intel 合作进行安卓编译器优化的项目。这个项目乍看之下并不如其他的项目有趣，其他的项目例如用 opencv 进行人脸识别似乎更有意思。但是在编译器优化的项目中，Intel 的导师教了我们不少工业界中最实用的编译器知识。包括&lt;/p&gt;
-
-    &lt;ul&gt;
-      &lt;li&gt;编译器中涉及的步骤&lt;/li&gt;
-      &lt;li&gt;编译器常做的优化&lt;/li&gt;
-      &lt;li&gt;科学测量代码运行性能的方法&lt;/li&gt;
-      &lt;li&gt;业界最新的几种编译器执行方法&lt;/li&gt;
-      &lt;li&gt;优化编译性能的方法&lt;/li&gt;
-    &lt;/ul&gt;
-
-    &lt;p&gt;这些知识在 95% 的情况下，我都用不上，但是一旦出现了相关的问题，如果没有这方面的知识积累，是不可能在短时间内找到解决方法的。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;积极阅读官方文档。&lt;/strong&gt;&lt;/p&gt;
-
-    &lt;p&gt;Unity3D 是一个相对成熟的游戏开发引擎，在今年 AR 和 VR 兴起的阶段，也被许多学术界和工业界的人士用作开发 AR 和 VR app 的第一选择。在这个过程中难免会遇到许多问题，但是 Unity 官方提供了非常详实的文档，涵盖了许多方面。对国人来说，唯一的缺点就是文档是用英文写的，而中文的翻译往往在一些人的博客中，不仅内容过时，许多时候也翻译不准确。&lt;/p&gt;
-
-    &lt;p&gt;此时，能否顺利流畅地阅读英文官方文档，也直接决定了是否能快速地解决问题。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;遇到问题的时候，能不断钻研。&lt;/strong&gt;&lt;/p&gt;
-
-    &lt;p&gt;有许多问题并不是浮在表层逻辑的，许多问题的解决需要从系统或者框架的底层入手。如果存在畏难情绪，就没有办法找到底层的原因，也只能在表面上治标不治本，最终项目的质量也会受到影响。&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;如果你看到这里，一定是真爱！欢迎看看我的其他 &lt;a href=&quot;http://chendi.me/&quot;&gt;blog&lt;/a&gt;。O(∩_∩)O&lt;/p&gt;
-</description>
-        <pubDate>Sat, 10 Jun 2017 04:15:00 +0800</pubDate>
-        <link>http://localhost:4000/2017/06/10/weird-bugs-2/</link>
-        <guid isPermaLink="true">http://localhost:4000/2017/06/10/weird-bugs-2/</guid>
-        
-        <category>Tech</category>
-        
-        <category>Bug</category>
-        
-        <category>Unity</category>
-        
-        <category>iOS</category>
         
         
       </item>
