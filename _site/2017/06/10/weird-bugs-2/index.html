@@ -5,13 +5,50 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="description" content="">
-    <meta name="keyword"  content="">
-    <link rel="shortcut icon" href="/img/favicon.ico">
+    <meta name="keywords"  content="">
+    <meta name="theme-color" content="">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Weird bugs - 2 - 陈迪的博客 | Di' Blog">
+    
+    <meta property="og:type" content="article">
+    <meta property="og:description" content="
+  “There is no coincidence. Only the illusion of coincidence.”
 
+  – Alan Moore, V for Vendetta, Vol. III of X
+
+">
+    
+    <meta property="article:published_time" content="2017-06-10T04:15:00Z">
+    
+    
+    <meta property="article:author" content="Di Chen">
+    
+    
+    <meta property="article:tag" content="Tech">
+    
+    <meta property="article:tag" content="Bug">
+    
+    <meta property="article:tag" content="Unity">
+    
+    <meta property="article:tag" content="iOS">
+    
+    
+    <meta property="og:image" content="http://localhost:4000/img/avatar-di.jpg">
+    <meta property="og:url" content="http://localhost:4000/2017/06/10/weird-bugs-2/">
+    <meta property="og:site_name" content="陈迪的博客 | Di' Blog">
+    
     <title>Weird bugs - 2 - 陈迪的博客 | Di' Blog</title>
 
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
     <link rel="canonical" href="http://localhost:4000/2017/06/10/weird-bugs-2/">
 
     <!-- Bootstrap Core CSS -->
@@ -20,20 +57,10 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/css/hux-blog.min.css">
 
-    <!-- Pygments Github CSS -->
-    <link rel="stylesheet" href="/css/syntax.css">
-
     <!-- Custom Fonts -->
     <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
     <!-- Hux change font-awesome CDN to qiniu -->
-    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
-
-
-    <!-- Hux Delete, sad but pending in China
-    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
-    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
-    css'>
-    -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -52,7 +79,9 @@
 <body ontouchstart="">
 
     <!-- Navigation -->
+
 <nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+
     <div class="container-fluid">
         <!-- Brand and toggle get grouped for better mobile display -->
         <div class="navbar-header page-scroll">
@@ -66,11 +95,6 @@
         </div>
 
         <!-- Collect the nav links, forms, and other content for toggling -->
-        <!-- Known Issue, found by Hux:
-            <nav>'s height woule be hold on by its content.
-            so, when navbar scale out, the <nav> will cover tags.
-            also mask any touch event of tags, unfortunately.
-        -->
         <div id="huxblog_navbar">
             <div class="navbar-collapse">
                 <ul class="nav navbar-nav navbar-right">
@@ -78,13 +102,25 @@
                         <a href="/">Home</a>
                     </li>
                     
+                    
+                    
+                    
                     <li>
                         <a href="/about/">About</a>
                     </li>
                     
+                    
+                    
+                    
+                    
+                    
+                    
                     <li>
                         <a href="/tags/">Tags</a>
                     </li>
+                    
+                    
+                    
                     
                 </ul>
             </div>
@@ -102,10 +138,8 @@
     var $navbar = document.querySelector('#huxblog_navbar');
     var $collapse = document.querySelector('.navbar-collapse');
 
-    $toggle.addEventListener('click', handleMagic)
-    function handleMagic(e){
-        if ($navbar.className.indexOf('in') > 0) {
-        // CLOSE
+    var __HuxNav__ = {
+        close: function(){
             $navbar.className = " ";
             // wait until animation end.
             setTimeout(function(){
@@ -114,12 +148,38 @@
                     $collapse.style.height = "0px"
                 }
             },400)
-        }else{
-        // OPEN
+        },
+        open: function(){
             $collapse.style.height = "auto"
             $navbar.className += " in";
         }
     }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
 </script>
 
 
@@ -128,38 +188,52 @@
 <!-- <img src="/img/in-post/weird-bug-2/unity-bg.jpg" width="0" height="0"> -->
 
 <!-- Post Header -->
+
+
+
 <style type="text/css">
     header.intro-header{
-        background-image: url('/img/in-post/weird-bug-2/unity-bg.jpg')
+        position: relative;
+        background-image: url('/img/in-post/weird-bug-2/unity-bg.jpg');
+        background: ;
     }
+
+    
 </style>
+
 <header class="intro-header" >
+
+    <div class="header-mask"></div>
+    
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                 <div class="post-heading">
                     <div class="tags">
                         
-                        <a class="tag" href="/tags/#Tech" title="Tech">Tech</a>
+                        <a class="tag" href="/archive/?tag=Tech" title="Tech">Tech</a>
                         
-                        <a class="tag" href="/tags/#Bug" title="Bug">Bug</a>
+                        <a class="tag" href="/archive/?tag=Bug" title="Bug">Bug</a>
                         
-                        <a class="tag" href="/tags/#Unity" title="Unity">Unity</a>
+                        <a class="tag" href="/archive/?tag=Unity" title="Unity">Unity</a>
                         
-                        <a class="tag" href="/tags/#iOS" title="iOS">iOS</a>
+                        <a class="tag" href="/archive/?tag=iOS" title="iOS">iOS</a>
                         
                     </div>
                     <h1>Weird bugs - 2</h1>
                     
-                    
                     <h2 class="subheading">奇怪的 bug 系列 2 -- Unity IL2CPP 编译时的坑</h2>
-                    
                     <span class="meta">Posted by Di Chen on June 10, 2017</span>
                 </div>
             </div>
         </div>
     </div>
 </header>
+
+
+
+
+
 
 <!-- Post Content -->
 <article>
@@ -172,12 +246,8 @@
                 col-md-10 col-md-offset-1
                 post-container">
 
-
-            <!-- Language Selector -->
-            <select id="language_selector" onchange= "onLanChange(this.options[this.options.selectedIndex].value)">
-                <option value="0"> 中文 Chinese </option>
-                <option value="1"> 英语 English </option>
-            </select>
+                <!-- Multi-Lingual -->
+                
 
 				<blockquote>
   <p>“There is no coincidence. Only the illusion of coincidence.”</p>
@@ -410,34 +480,34 @@ compatibility of your Unity projects.
 <p>如果你看到这里，一定是真爱！欢迎看看我的其他 <a href="http://chendi.me/">blog</a>。O(∩_∩)O</p>
 
 
-                <hr>
-
+                <hr style="visibility: hidden;">
                 <ul class="pager">
                     
                     <li class="previous">
-                        <a href="/2017/04/02/Xixi-park/" data-toggle="tooltip" data-placement="top" title="Xixi Wetland">&larr; Previous Post</a>
+                        <a href="/2017/04/02/Xixi-park/" data-toggle="tooltip" data-placement="top" title="Xixi Wetland">
+                        Previous<br>
+                        <span>Xixi Wetland</span>
+                        </a>
                     </li>
                     
                     
                     <li class="next">
-                        <a href="/2017/06/11/weird-bugs-3/" data-toggle="tooltip" data-placement="top" title="Weird bugs - 3">Next Post &rarr;</a>
+                        <a href="/2017/06/11/weird-bugs-3/" data-toggle="tooltip" data-placement="top" title="Weird bugs - 3">
+                        Next<br>
+                        <span>Weird bugs - 3</span>
+                        </a>
                     </li>
                     
                 </ul>
-
-                
-                <!-- 友言 评论框 start -->
-                <!-- UY BEGIN -->
-                </br>
-                <div id="uyan_frame"></div>
-                <script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2138710"></script>
-                <!-- UY END -->
-                <!-- 友言 评论框 end -->
-                
+                <hr style="visibility: hidden;">
 
                 
 
-            </div>
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
 
     <!-- Sidebar Container -->
             <div class="
@@ -447,123 +517,78 @@ compatibility of your Unity projects.
 
                 <!-- Featured Tags -->
                 
-                <section>
-                    <hr class="hidden-sm hidden-xs">
-                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
-                    <div class="tags">
-        				
-                            
-                				<a href="/tags/#生活" title="生活" rel="4">
-                                    生活
-                                </a>
-                            
-        				
-                            
-                				<a href="/tags/#航拍" title="航拍" rel="4">
-                                    航拍
-                                </a>
-                            
-        				
-                            
-                				<a href="/tags/#DJI" title="DJI" rel="3">
-                                    DJI
-                                </a>
-                            
-        				
-                            
-                				<a href="/tags/#Tech" title="Tech" rel="13">
-                                    Tech
-                                </a>
-                            
-        				
-                            
-        				
-                            
-        				
-                            
-        				
-                            
-        				
-                            
-        				
-                            
-                				<a href="/tags/#Bug" title="Bug" rel="3">
-                                    Bug
-                                </a>
-                            
-        				
-                            
-        				
-                            
-        				
-                            
-        				
-                            
-                				<a href="/tags/#Unity" title="Unity" rel="6">
-                                    Unity
-                                </a>
-                            
-        				
-                            
-        				
-                            
-        				
-                            
-        				
-                            
-        				
-                            
-                				<a href="/tags/#grpc" title="grpc" rel="2">
-                                    grpc
-                                </a>
-                            
-        				
-                            
-        				
-        			</div>
-                </section>
-                
+
+
+<section>
+    
+        <hr class="hidden-sm hidden-xs">
+    
+    <h5><a href="/archive/">FEATURED TAGS</a></h5>
+    <div class="tags">
+        
+        
+        
+        </a>
+        
+        
+                <a data-sort="0015" 
+                    href="/archive/?tag=%E7%94%9F%E6%B4%BB"
+                    title="生活"
+                    rel="5">生活</a>
+        
+                <a data-sort="0007" 
+                    href="/archive/?tag=Tech"
+                    title="Tech"
+                    rel="13">Tech</a>
+        
+                <a data-sort="0014" 
+                    href="/archive/?tag=Unity"
+                    title="Unity"
+                    rel="6">Unity</a>
+        
+                <a data-sort="0016" 
+                    href="/archive/?tag=%E8%88%AA%E6%8B%8D"
+                    title="航拍"
+                    rel="4">航拍</a>
+        
+                <a data-sort="0017" 
+                    href="/archive/?tag=Bug"
+                    title="Bug"
+                    rel="3">Bug</a>
+        
+                <a data-sort="0017" 
+                    href="/archive/?tag=DJI"
+                    title="DJI"
+                    rel="3">DJI</a>
+        
+                <a data-sort="0018" 
+                    href="/archive/?tag=grpc"
+                    title="grpc"
+                    rel="2">grpc
+    </div>
+</section>
+
 
                 <!-- Friends Blog -->
                 
-                <hr>
-                <h5>FRIENDS</h5>
-                <ul class="list-inline">
-                    
-                        <li><a href="http://huangxuan.me">Hux Blog</a></li>
-                    
-                        <li><a href="http://mypokemon.io">My pokemon map</a></li>
-                    
-                </ul>
-                
+<hr>
+<h5>FRIENDS</h5>
+<ul class="list-inline">
+  
+  <li><a href="http://huangxuan.me">Hux Blog</a></li>
+  
+  <li><a href="http://mypokemon.io">My pokemon map</a></li>
+  
+</ul>
+
             </div>
         </div>
     </div>
 </article>
 
-<!-- Handle Language Change -->
-<script type="text/javascript">
-    var $zh = document.querySelector(".zh");
-    var $en = document.querySelector(".en");
-    var url = document.URL;
-    var new_url = url;
-    function onLanChange(index){
-        if(index == 0){
-            new_url = url.replace("-en/", "-zh/");
-        }else{
-            new_url = url.replace("-zh/", "-en/");
-        }
-        window.location.href = new_url;
-    }
-    if ((url.indexOf("-zh/") < 0) && (url.indexOf("-en/") < 0)) {
-      document.getElementById("language_selector").style.display = "none";
-    }
-    var languageSelect = document.getElementById('language_selector');
-    if (url.indexOf("-en/") > 0) {
-        languageSelect.selectedIndex = 1;
-    } 
+<!-- add support for mathjax by voleking-->
 
-</script>
+
 
 
 
@@ -584,11 +609,11 @@ compatibility of your Unity projects.
 </script>
 <!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
 <script>
-    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
         anchors.options = {
-          visible: 'always',
+          visible: 'hover',
           placement: 'right',
-          icon: '#'
+          // icon: '#'
         };
         anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
     })
@@ -612,61 +637,65 @@ compatibility of your Unity projects.
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <ul class="list-inline text-center">
-                    
-                    
-
-                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
-                    
-                    <li>
-                        <a target="_blank" href="https://www.zhihu.com/people/chenditc">
-                            <span class="fa-stack fa-lg">
-                                <i class="fa fa-circle fa-stack-2x"></i>
-                                <i class="fa  fa-stack-1x fa-inverse">知</i>
-                            </span>
-                        </a>
-                    </li>
-                    
-                    
-                    <li>
-                        <a target="_blank" href="http://weibo.com/5997371930">
-                            <span class="fa-stack fa-lg">
-                                <i class="fa fa-circle fa-stack-2x"></i>
-                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
-                            </span>
-                        </a>
-                    </li>
-                    
+                <!-- SNS Link -->
+                
 
 
-                    
-                    <li>
-                        <a target="_blank" href="https://www.facebook.com/chenditc">
-                            <span class="fa-stack fa-lg">
-                                <i class="fa fa-circle fa-stack-2x"></i>
-                                <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
-                            </span>
-                        </a>
-                    </li>
-                    
-                    
-                    <li>
-                        <a target="_blank" href="https://github.com/chenditc">
-                            <span class="fa-stack fa-lg">
-                                <i class="fa fa-circle fa-stack-2x"></i>
-                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
-                            </span>
-                        </a>
-                    </li>
-                    
-                </ul>
+<ul class="list-inline text-center">
+
+
+  
+  
+  
+  <li>
+    <a target="_blank" href="https://www.zhihu.com/people/chenditc">
+      <span class="fa-stack fa-lg">
+        <i class="fa fa-circle fa-stack-2x"></i>
+        <i class="fa  fa-stack-1x fa-inverse">知</i>
+      </span>
+    </a>
+  </li>
+  
+  
+  <li>
+    <a target="_blank" href="http://weibo.com/5997371930">
+      <span class="fa-stack fa-lg">
+        <i class="fa fa-circle fa-stack-2x"></i>
+        <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+      </span>
+    </a>
+  </li>
+  
+  
+  <li>
+    <a target="_blank" href="https://www.facebook.com/chenditc">
+      <span class="fa-stack fa-lg">
+        <i class="fa fa-circle fa-stack-2x"></i>
+        <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
+      </span>
+    </a>
+  </li>
+  
+  
+  <li>
+    <a target="_blank" href="https://github.com/chenditc">
+      <span class="fa-stack fa-lg">
+        <i class="fa fa-circle fa-stack-2x"></i>
+        <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+      </span>
+    </a>
+  </li>
+  
+  
+</ul>
+
                 <p class="copyright text-muted">
-                    Copyright &copy; Di's Blog 2019
+                    Copyright &copy; Di's Blog 2020
                     <br>
-                    Theme by <a href="http://huangxuan.me">Hux</a> |
+                    Powered by <a href="http://huangxuan.me">Hux Blog</a> |
                     <iframe
                         style="margin-left: 2px; margin-bottom:-5px;"
-                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        frameborder="0" scrolling="0" width="100px" height="20px"
                         src="https://ghbtns.com/github-btn.html?user=huxpro&repo=huxpro.github.io&type=star&count=true" >
                     </iframe>
                 </p>
@@ -679,10 +708,13 @@ compatibility of your Unity projects.
 <script src="/js/jquery.min.js "></script>
 
 <!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
 <script src="/js/bootstrap.min.js "></script>
 
 <!-- Custom Theme JavaScript -->
 <script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
 
 
 <!-- async load function -->
@@ -697,14 +729,15 @@ compatibility of your Unity projects.
     }
 </script>
 
-<!-- 
-     Because of the native support for backtick-style fenced code blocks 
-     right within the Markdown is landed in Github Pages, 
-     From V1.6, There is no need for Highlight.js, 
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
      so Huxblog drops it officially.
 
-     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
-     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
 -->
 <!--
     <script>
@@ -716,23 +749,12 @@ compatibility of your Unity projects.
 -->
 
 
-<!-- jquery.tagcloud.js -->
-<script>
-    // only load tagcloud.js in tag.html
-    if($('#tag_cloud').length !== 0){
-        async("/js/jquery.tagcloud.js",function(){
-            $.fn.tagcloud.defaults = {
-                //size: {start: 1, end: 1, unit: 'em'},
-                color: {start: '#bbbbee', end: '#0085a1'},
-            };
-            $('#tag_cloud a').tagcloud();
-        })
-    }
-</script>
+
+
 
 <!--fastClick.js -->
 <script>
-    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
         var $nav = document.querySelector("nav");
         if($nav) FastClick.attach($nav);
     })
@@ -773,6 +795,14 @@ compatibility of your Unity projects.
       s.parentNode.insertBefore(hm, s);
     })();
 </script>
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
 
 
 

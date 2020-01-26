@@ -5,9 +5,33 @@
     <description></description>
     <link>http://localhost:4000/</link>
     <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Sun, 08 Sep 2019 22:54:02 +0800</pubDate>
-    <lastBuildDate>Sun, 08 Sep 2019 22:54:02 +0800</lastBuildDate>
-    <generator>Jekyll v3.8.5</generator>
+    <pubDate>Sun, 26 Jan 2020 17:57:09 +0800</pubDate>
+    <lastBuildDate>Sun, 26 Jan 2020 17:57:09 +0800</lastBuildDate>
+    <generator>Jekyll v4.0.0</generator>
+    
+      <item>
+        <title>直觉（Cover）</title>
+        <description>&lt;blockquote&gt;
+  &lt;p&gt;“我喜欢你的眼睛你的睫毛你的侧脸，喜欢你嘟着嘴巴说教我吐烟圈。”&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;video width=&quot;100%&quot; poster=&quot;/img/in-post/cover/zhijue.jpg&quot; controls=&quot;&quot; preload=&quot;none&quot; type=&quot;video/mp4&quot;&gt;  
+&lt;source src=&quot;http://video.chendi.me/videos/20200111-zhijue.mp4&quot; /&gt;  
+&lt;/video&gt;
+
+&lt;p&gt;喜欢歌词，单曲循环了好多遍，就想试着录一下了。
+第一次还是有点紧张。&lt;/p&gt;
+</description>
+        <pubDate>Tue, 21 Jan 2020 04:15:00 +0800</pubDate>
+        <link>http://localhost:4000/2020/01/21/zhijue-recording-studio/</link>
+        <guid isPermaLink="true">http://localhost:4000/2020/01/21/zhijue-recording-studio/</guid>
+        
+        <category>生活</category>
+        
+        <category>Cover</category>
+        
+        
+      </item>
     
       <item>
         <title>Sync Outlook Calendar And Conference Room</title>
@@ -950,8 +974,8 @@ release 是线上的正式服务器。&lt;/p&gt;
 &lt;/span&gt; LD_opt = $(DEFAULT_CC)
  LDXX_opt = $(DEFAULT_CXX)
  CXXFLAGS_opt = -fno-exceptions
-&lt;span class=&quot;gu&quot;&gt;@@ -339,7 +340,7 @@ HOST_LDXX ?= $(LDXX)
-&lt;/span&gt; 
+&lt;span class=&quot;p&quot;&gt;@@ -339,7 +340,7 @@&lt;/span&gt; HOST_LDXX ?= $(LDXX)
+ 
  CFLAGS += -std=c99 -Wsign-conversion -Wconversion $(W_SHADOW) $(W_EXTRA_SEMI)
  CXXFLAGS += -std=c++11
 &lt;span class=&quot;gd&quot;&gt;-CPPFLAGS += -g -Wall -Wextra -Werror -Wno-long-long -Wno-unused-parameter -DOSATOMIC_USE_INLINED=1
@@ -1001,16 +1025,16 @@ release 是线上的正式服务器。&lt;/p&gt;
 
 &lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gd&quot;&gt;--- a/src/csharp/Grpc.Core/Internal/DefaultSslRootsOverride.cs
 &lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/src/csharp/Grpc.Core/Internal/DefaultSslRootsOverride.cs
-&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -56,6 +56,7 @@ namespace Grpc.Core.Internal
-&lt;/span&gt;         {
+&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;@@ -56,6 +56,7 @@&lt;/span&gt; namespace Grpc.Core.Internal
+         {
              lock (staticLock)
              {
 &lt;span class=&quot;gi&quot;&gt;+                               /*
 &lt;/span&gt;                 var stream = typeof(DefaultSslRootsOverride).GetTypeInfo().Assembly.GetManifestResourceStream(RootsPemResourceName);
                  if (stream == null)
                  {
-&lt;span class=&quot;gu&quot;&gt;@@ -66,6 +67,7 @@ namespace Grpc.Core.Internal
-&lt;/span&gt;                     var pemRootCerts = streamReader.ReadToEnd();
+&lt;span class=&quot;p&quot;&gt;@@ -66,6 +67,7 @@&lt;/span&gt; namespace Grpc.Core.Internal
+                     var pemRootCerts = streamReader.ReadToEnd();
                      native.grpcsharp_override_default_ssl_roots(pemRootCerts);
                  }
 &lt;span class=&quot;gi&quot;&gt;+                */
@@ -1027,8 +1051,8 @@ release 是线上的正式服务器。&lt;/p&gt;
 
 &lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gd&quot;&gt;--- a/src/csharp/Grpc.Core/Internal/NativeExtension.cs
 &lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/src/csharp/Grpc.Core/Internal/NativeExtension.cs
-&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -93,7 +93,10 @@ namespace Grpc.Core.Internal
-&lt;/span&gt;         /// Detects which configuration of native extension to load and load it.
+&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;@@ -93,7 +93,10 @@&lt;/span&gt; namespace Grpc.Core.Internal
+         /// Detects which configuration of native extension to load and load it.
          /// &amp;lt;/summary&amp;gt;
          private static UnmanagedLibrary Load()
 &lt;span class=&quot;gd&quot;&gt;-        {
@@ -1040,8 +1064,8 @@ release 是线上的正式服务器。&lt;/p&gt;
 
 &lt;p&gt;&lt;strong&gt;在 PC 或者 MAC 上，仍然要加载动态库并且运行，否则就无法在 PC 或者 Mac 上调试游戏了，所以我们需要修改一下寻找插件的路径：&lt;/strong&gt;&lt;/p&gt;
 
-&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gu&quot;&gt;@@ -111,8 +114,10 @@ namespace Grpc.Core.Internal
-&lt;/span&gt;             var netCorePublishedAppStylePath = Path.Combine(assemblyDirectory, runtimesDirectory, GetNativeLibraryFilename());
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;@@ -111,8 +114,10 @@&lt;/span&gt; namespace Grpc.Core.Internal
+             var netCorePublishedAppStylePath = Path.Combine(assemblyDirectory, runtimesDirectory, GetNativeLibraryFilename());
              var netCoreAppStylePath = Path.Combine(assemblyDirectory, &quot;../..&quot;, runtimesDirectory, GetNativeLibraryFilename());
  
 &lt;span class=&quot;gi&quot;&gt;+                       var unityPath = Path.Combine (assemblyDirectory, &quot;../../Assets/Plugins/GrpcLib&quot;, runtimesDirectory, GetNativeLibraryFilename ());
@@ -1059,8 +1083,8 @@ release 是线上的正式服务器。&lt;/p&gt;
 
 &lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gd&quot;&gt;--- a/src/csharp/Grpc.Core/Internal/NativeLogRedirector.cs
 &lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/src/csharp/Grpc.Core/Internal/NativeLogRedirector.cs
-&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -66,6 +66,7 @@ namespace Grpc.Core.Internal
-&lt;/span&gt;             }
+&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;@@ -66,6 +66,7 @@&lt;/span&gt; namespace Grpc.Core.Internal
+             }
          }
  
 &lt;span class=&quot;gi&quot;&gt;+        [AOT.MonoPInvokeCallback(typeof(GprLogDelegate))]
@@ -1071,8 +1095,8 @@ release 是线上的正式服务器。&lt;/p&gt;
 
 &lt;p&gt;另外可以修改一下输出到 Console 时调用的函数：&lt;/p&gt;
 
-&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gu&quot;&gt;@@ -97,7 +98,11 @@ namespace Grpc.Core.Internal
-&lt;/span&gt;             }
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;@@ -97,7 +98,11 @@&lt;/span&gt; namespace Grpc.Core.Internal
+             }
              catch (Exception e)
              {
 &lt;span class=&quot;gd&quot;&gt;-                Console.WriteLine(&quot;Caught exception in native callback &quot; + e);
@@ -1091,8 +1115,8 @@ release 是线上的正式服务器。&lt;/p&gt;
 
 &lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gd&quot;&gt;--- a/src/csharp/Grpc.Core/Internal/NativeMethods.cs
 &lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/src/csharp/Grpc.Core/Internal/NativeMethods.cs
-&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -51,6 +51,14 @@ namespace Grpc.Core.Internal
-&lt;/span&gt;     /// &amp;lt;/summary&amp;gt;
+&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;@@ -51,6 +51,14 @@&lt;/span&gt; namespace Grpc.Core.Internal
+     /// &amp;lt;/summary&amp;gt;
      internal class NativeMethods
      {
 &lt;span class=&quot;gi&quot;&gt;+#if UNITY_EDITOR               
@@ -1114,7 +1138,7 @@ release 是线上的正式服务器。&lt;/p&gt;
 +
 +                       [DllImport(pluginName)]
 +                       internal static extern void grpcsharp_shutdown();
-&lt;/span&gt;...
+&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;...&lt;/span&gt;
 ...
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
@@ -1126,7 +1150,7 @@ release 是线上的正式服务器。&lt;/p&gt;
 +                       this.grpcsharp_init = NativeCalls.grpcsharp_init;
 +                       this.grpcsharp_shutdown = NativeCalls.grpcsharp_shutdown;
 +                       this.grpcsharp_version_string = NativeCalls.grpcsharp_version_string;
-&lt;/span&gt;...
+&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;...&lt;/span&gt;
 ...
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
@@ -1205,8 +1229,8 @@ release 是线上的正式服务器。&lt;/p&gt;
 &lt;/span&gt; LD_opt = $(DEFAULT_CC)
  LDXX_opt = $(DEFAULT_CXX)
  CXXFLAGS_opt = -fno-exceptions
-&lt;span class=&quot;gu&quot;&gt;@@ -339,7 +340,7 @@ HOST_LDXX ?= $(LDXX)
-&lt;/span&gt; 
+&lt;span class=&quot;p&quot;&gt;@@ -339,7 +340,7 @@&lt;/span&gt; HOST_LDXX ?= $(LDXX)
+ 
  CFLAGS += -std=c99 -Wsign-conversion -Wconversion $(W_SHADOW) $(W_EXTRA_SEMI)
  CXXFLAGS += -std=c++11
 &lt;span class=&quot;gd&quot;&gt;- CPPFLAGS += -g -Wall -Wextra -Werror -Wno-long-long -Wno-unused-parameter -DOSATOMIC_USE_INLINED=1
@@ -1263,16 +1287,16 @@ release 是线上的正式服务器。&lt;/p&gt;
 
 &lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gd&quot;&gt;--- a/src/csharp/Grpc.Core/Internal/DefaultSslRootsOverride.cs
 &lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/src/csharp/Grpc.Core/Internal/DefaultSslRootsOverride.cs
-&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -56,6 +56,7 @@ namespace Grpc.Core.Internal
-&lt;/span&gt;         {
+&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;@@ -56,6 +56,7 @@&lt;/span&gt; namespace Grpc.Core.Internal
+         {
              lock (staticLock)
              {
 &lt;span class=&quot;gi&quot;&gt;+                               /*
 &lt;/span&gt;                 var stream = typeof(DefaultSslRootsOverride).GetTypeInfo().Assembly.GetManifestResourceStream(RootsPemResourceName);
                  if (stream == null)
                  {
-&lt;span class=&quot;gu&quot;&gt;@@ -66,6 +67,7 @@ namespace Grpc.Core.Internal
-&lt;/span&gt;                     var pemRootCerts = streamReader.ReadToEnd();
+&lt;span class=&quot;p&quot;&gt;@@ -66,6 +67,7 @@&lt;/span&gt; namespace Grpc.Core.Internal
+                     var pemRootCerts = streamReader.ReadToEnd();
                      native.grpcsharp_override_default_ssl_roots(pemRootCerts);
                  }
 &lt;span class=&quot;gi&quot;&gt;+                */
@@ -1289,8 +1313,8 @@ release 是线上的正式服务器。&lt;/p&gt;
 
 &lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gd&quot;&gt;--- a/src/csharp/Grpc.Core/Internal/NativeExtension.cs
 &lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/src/csharp/Grpc.Core/Internal/NativeExtension.cs
-&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -93,7 +93,10 @@ namespace Grpc.Core.Internal
-&lt;/span&gt;         /// Detects which configuration of native extension to load and load it.
+&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;@@ -93,7 +93,10 @@&lt;/span&gt; namespace Grpc.Core.Internal
+         /// Detects which configuration of native extension to load and load it.
          /// &amp;lt;/summary&amp;gt;
          private static UnmanagedLibrary Load()
 &lt;span class=&quot;gd&quot;&gt;-        {
@@ -1302,8 +1326,8 @@ release 是线上的正式服务器。&lt;/p&gt;
 
 &lt;p&gt;&lt;strong&gt;On PC or MAC, we need to load dynamic library, but the path should be modified:&lt;/strong&gt;&lt;/p&gt;
 
-&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gu&quot;&gt;@@ -111,8 +114,10 @@ namespace Grpc.Core.Internal
-&lt;/span&gt;             var netCorePublishedAppStylePath = Path.Combine(assemblyDirectory, runtimesDirectory, GetNativeLibraryFilename());
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;@@ -111,8 +114,10 @@&lt;/span&gt; namespace Grpc.Core.Internal
+             var netCorePublishedAppStylePath = Path.Combine(assemblyDirectory, runtimesDirectory, GetNativeLibraryFilename());
              var netCoreAppStylePath = Path.Combine(assemblyDirectory, &quot;../..&quot;, runtimesDirectory, GetNativeLibraryFilename());
  
 &lt;span class=&quot;gi&quot;&gt;+                       var unityPath = Path.Combine (assemblyDirectory, &quot;../../Assets/Plugins/GrpcLib&quot;, runtimesDirectory, GetNativeLibraryFilename ());
@@ -1321,8 +1345,8 @@ release 是线上的正式服务器。&lt;/p&gt;
 
 &lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gd&quot;&gt;--- a/src/csharp/Grpc.Core/Internal/NativeLogRedirector.cs
 &lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/src/csharp/Grpc.Core/Internal/NativeLogRedirector.cs
-&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -66,6 +66,7 @@ namespace Grpc.Core.Internal
-&lt;/span&gt;             }
+&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;@@ -66,6 +66,7 @@&lt;/span&gt; namespace Grpc.Core.Internal
+             }
          }
  
 &lt;span class=&quot;gi&quot;&gt;+        [AOT.MonoPInvokeCallback(typeof(GprLogDelegate))]
@@ -1333,8 +1357,8 @@ release 是线上的正式服务器。&lt;/p&gt;
 
 &lt;p&gt;We can also change the log function to Unity Debug Log：&lt;/p&gt;
 
-&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gu&quot;&gt;@@ -97,7 +98,11 @@ namespace Grpc.Core.Internal
-&lt;/span&gt;             }
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;@@ -97,7 +98,11 @@&lt;/span&gt; namespace Grpc.Core.Internal
+             }
              catch (Exception e)
              {
 &lt;span class=&quot;gd&quot;&gt;-                Console.WriteLine(&quot;Caught exception in native callback &quot; + e);
@@ -1353,8 +1377,8 @@ release 是线上的正式服务器。&lt;/p&gt;
 
 &lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gd&quot;&gt;--- a/src/csharp/Grpc.Core/Internal/NativeMethods.cs
 &lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+++ b/src/csharp/Grpc.Core/Internal/NativeMethods.cs
-&lt;/span&gt;&lt;span class=&quot;gu&quot;&gt;@@ -51,6 +51,14 @@ namespace Grpc.Core.Internal
-&lt;/span&gt;     /// &amp;lt;/summary&amp;gt;
+&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;@@ -51,6 +51,14 @@&lt;/span&gt; namespace Grpc.Core.Internal
+     /// &amp;lt;/summary&amp;gt;
      internal class NativeMethods
      {
 &lt;span class=&quot;gi&quot;&gt;+#if UNITY_EDITOR               
@@ -1376,7 +1400,7 @@ release 是线上的正式服务器。&lt;/p&gt;
 +
 +                       [DllImport(pluginName)]
 +                       internal static extern void grpcsharp_shutdown();
-&lt;/span&gt;...
+&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;...&lt;/span&gt;
 ...
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
@@ -1388,7 +1412,7 @@ release 是线上的正式服务器。&lt;/p&gt;
 +                       this.grpcsharp_init = NativeCalls.grpcsharp_init;
 +                       this.grpcsharp_shutdown = NativeCalls.grpcsharp_shutdown;
 +                       this.grpcsharp_version_string = NativeCalls.grpcsharp_version_string;
-&lt;/span&gt;...
+&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;...&lt;/span&gt;
 ...
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
@@ -1568,7 +1592,7 @@ it is id&amp;lt;MTLTexture&amp;gt;.
             &lt;span class=&quot;n&quot;&gt;float4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
           &lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
 
-        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mul&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ycbcrToRGBTransform&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ycbcr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;mul&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ycbcrToRGBTransform&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ycbcr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
 &lt;h3 id=&quot;opengl-支持&quot;&gt;OpenGL 支持&lt;/h3&gt;
@@ -1717,154 +1741,6 @@ it is id&amp;lt;MTLTexture&amp;gt;.
         <category>ARKit</category>
         
         <category>OpenGL</category>
-        
-        
-      </item>
-    
-      <item>
-        <title>Weird bugs - 3</title>
-        <description>&lt;blockquote&gt;
-  &lt;p&gt;“There is no coincidence. Only the illusion of coincidence.”&lt;/p&gt;
-
-  &lt;p&gt;– Alan Moore, V for Vendetta, Vol. III of X&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;h2 id=&quot;前言&quot;&gt;前言&lt;/h2&gt;
-
-&lt;p&gt;在这几年的开发生涯中，遇到了或多或少的奇怪的BUG。计算机不会撒谎，让人感到奇怪的 Bug 底下，一定有自己没搞明白的知识。&lt;/p&gt;
-
-&lt;hr /&gt;
-
-&lt;h2 id=&quot;unity-脚本挂载丢失&quot;&gt;Unity 脚本挂载丢失&lt;/h2&gt;
-
-&lt;h3 id=&quot;问题表象&quot;&gt;问题表象&lt;/h3&gt;
-
-&lt;p&gt;在最近开发的项目中，我们使用了 Unity3D 作为我们的游戏开发引擎，并且使用 git 作为我们的版本控制软件。由于我们有多位 Unity3D 工程师，大家不可避免地需要从 git 上提交，合并，拉取最新的代码。而在 Unity 开发中，常常会需要挂载一个 C# 脚本到某个 prefab 或者 GameObject 上。当一个脚本挂载上去之后，其他团队成员从 git 上拉取或者复制最新代码下来之后，经常会见到下面这个非常令人崩溃的提示：&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;/img/in-post/weird-bug-3/missing-mono-1.jpg&quot;&gt;&lt;img src=&quot;/img/in-post/weird-bug-3/missing-mono-1.jpg&quot; alt=&quot;Missing Mono Script&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;这个提示就表示 Unity Editor 无法找到挂载的相应脚本，如果此时运行游戏或者打包游戏，游戏中对应脚本的逻辑便不会执行。QA 就会提出 bug （xxx 功能怎么丢了）。&lt;/p&gt;
-
-&lt;p&gt;这个情况在我们开发的时候经常出现，特别是我们使用了 Leancloud 作为我们的聊天服务提供商，他们提供的 Unity SDK 便要求挂载一个 dll 中的脚本到场景中。由于脚本挂载在版本管理是一直丢失，我们的聊天功能也时灵时不灵。&lt;/p&gt;
-
-&lt;h3 id=&quot;问题探究&quot;&gt;问题探究&lt;/h3&gt;
-
-&lt;h4 id=&quot;unity-脚本挂载原理&quot;&gt;Unity 脚本挂载原理&lt;/h4&gt;
-
-&lt;p&gt;要解决这个问题，首先我们要理解 Unity 中脚本挂载的原理，Unity Editor 是靠什么来储存这个脚本挂载的联系的呢？&lt;/p&gt;
-
-&lt;p&gt;在搜索了 Unity 官方论坛中的众多问题之后，大家的讨论都指向了一个叫 &lt;code class=&quot;highlighter-rouge&quot;&gt;guid&lt;/code&gt; 的属性，例如 &lt;a href=&quot;https://forum.unity3d.com/threads/missing-mono-script.455228/&quot;&gt;这个讨论&lt;/a&gt;。在搜索项目之后，我发现所有的 &lt;code class=&quot;highlighter-rouge&quot;&gt;*.cs.meta&lt;/code&gt; 文件中都储存了 &lt;code class=&quot;highlighter-rouge&quot;&gt;guid&lt;/code&gt; 属性，也就是说，prefab 是利用这个 GUID 来寻找应该挂载的脚本的。&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;fileFormatVersion: 2
-guid: dd3e3945400194edfbe0c7a06d89b145
-MonoImporter:
-  serializedVersion: 2
-  defaultReferences: []
-  executionOrder: 0
-  icon: {instanceID: 0}
-  userData: 
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;那么，是不是 &lt;code class=&quot;highlighter-rouge&quot;&gt;*.cs.meta&lt;/code&gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;guid&lt;/code&gt; 的值在版本控制之间变更了呢？恰恰相反。由于我们挂载的是 dll 文件，&lt;code class=&quot;highlighter-rouge&quot;&gt;.dll.meta&lt;/code&gt; 文件在版本控制中一直没有变化过。那么这就说明一定是引用这个 &lt;code class=&quot;highlighter-rouge&quot;&gt;guid&lt;/code&gt; 的地方变化了。那么 prefab 引用 &lt;code class=&quot;highlighter-rouge&quot;&gt;guid&lt;/code&gt; 的信息储存在哪呢？&lt;/p&gt;
-
-&lt;p&gt;我尝试使用各种方法打开 &lt;code class=&quot;highlighter-rouge&quot;&gt;.prefab&lt;/code&gt; 文件，但是没有办法在其中找到 &lt;code class=&quot;highlighter-rouge&quot;&gt;GUID&lt;/code&gt; 的对应行列，并且 &lt;code class=&quot;highlighter-rouge&quot;&gt;.prefab&lt;/code&gt; 文件是二进制的，无法理解。在 Unity 官方论坛中查询许久之后发现了 &lt;a href=&quot;http://answers.unity3d.com/questions/222281/asset-serialization-mixed-vs-force-text.html&quot;&gt;这个关于 Force Text 的讨论&lt;/a&gt;，其中提到了 &lt;code class=&quot;highlighter-rouge&quot;&gt;Force Text&lt;/code&gt; 设置。在尝试之后发现，通过更改 &lt;code class=&quot;highlighter-rouge&quot;&gt;ProjectSettings -&amp;gt; Editor -&amp;gt; Asset Serialization&lt;/code&gt; 至 &lt;code class=&quot;highlighter-rouge&quot;&gt;Force Text&lt;/code&gt;，原本是二进制的 &lt;code class=&quot;highlighter-rouge&quot;&gt;.prefab&lt;/code&gt;，&lt;code class=&quot;highlighter-rouge&quot;&gt;.unity&lt;/code&gt; 文件都变成了 yaml 编码的文本文件，在其中，可以很轻易地定位到 &lt;code class=&quot;highlighter-rouge&quot;&gt;guid&lt;/code&gt; 的引用位置，如：&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;--- !u!114 &amp;amp;60726417
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 114000011878044986, guid: 7d74d246c03b90c47bd7b1563e473a9f,
-    type: 2}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 60726415}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dd3e3945400194edfbe0c7a06d89b145, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &amp;amp;60726418
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;其中 &lt;code class=&quot;highlighter-rouge&quot;&gt;m_Script&lt;/code&gt; 的 guid 与 &lt;code class=&quot;highlighter-rouge&quot;&gt;.cd.meta&lt;/code&gt; 的 &lt;code class=&quot;highlighter-rouge&quot;&gt;guid&lt;/code&gt; 是相对应的。如此一来，只要保证两边的 guid 不发生变化就可以保持脚本挂载的不丢失了。&lt;/p&gt;
-
-&lt;h4 id=&quot;脚本-guid-的变化方式&quot;&gt;脚本 guid 的变化方式&lt;/h4&gt;
-
-&lt;p&gt;由于聊天组件并不是经常变更的东西，但是每次更新都会丢失脚本挂载，所以还需要理解 guid 在什么时候会发生改变。&lt;/p&gt;
-
-&lt;p&gt;我们发现有这么几种情况会更改 guid:&lt;/p&gt;
-&lt;ol&gt;
-  &lt;li&gt;脚本内容更改。&lt;/li&gt;
-  &lt;li&gt;场景内容更改。&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;dll 文件在不同平台上重新导入，例如 Windows vs. Mac OS&lt;/strong&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;其中第三点才是我们的罪魁祸首，由于我们的开发环境包括 Mac OS 和 Windows，所以在项目更新的时候，同一个 dll 文件在不同平台导入的时候，都会更新一次 .meta 文件，同时更新场景中的引用 guid。但是在提交修改的时候，&lt;code class=&quot;highlighter-rouge&quot;&gt;.dll.meta&lt;/code&gt; 的更新并没有被提交，只提交了场景的更新，这就导致了场景引用的 &lt;code class=&quot;highlighter-rouge&quot;&gt;guid&lt;/code&gt; 与 &lt;code class=&quot;highlighter-rouge&quot;&gt;.dll.meta&lt;/code&gt; 不相符，从而导致了脚本丢失。&lt;/p&gt;
-
-&lt;h3 id=&quot;解决方法&quot;&gt;解决方法&lt;/h3&gt;
-
-&lt;p&gt;最后，我们的解决方案分成三个部分：&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;独立出挂载 dll 脚本的场景，不与经常修改的场景融合，从而相关的修改。&lt;/li&gt;
-  &lt;li&gt;项目设置中，全部使用 &lt;code class=&quot;highlighter-rouge&quot;&gt;Force Text&lt;/code&gt; 模式。&lt;/li&gt;
-  &lt;li&gt;代码审核时，检查 prefab 和场景的修改，是否修改了 guid，如果修改了，检查是否必要。&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h3 id=&quot;经验总结&quot;&gt;经验总结&lt;/h3&gt;
-
-&lt;p&gt;在这个事件中，学到了这么几点：&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;Unity 项目管理在进行版本控制时，尽量选择 &lt;code class=&quot;highlighter-rouge&quot;&gt;Force Text&lt;/code&gt; 模式，并进行代码审核&lt;/strong&gt;&lt;/p&gt;
-
-    &lt;p&gt;在使用 &lt;code class=&quot;highlighter-rouge&quot;&gt;Force Text&lt;/code&gt; 模式之前，我们项目的代码审核遇到 prefab 修改或者场景修改时，往往无法审核修改内容，因为二进制文件无法被代码审核插件读取，如下图。&lt;/p&gt;
-
-    &lt;p&gt;&lt;a href=&quot;/img/in-post/weird-bug-3/diff-1.png&quot;&gt;&lt;img src=&quot;/img/in-post/weird-bug-3/diff-1.png&quot; alt=&quot;Git Diff 1&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-    &lt;p&gt;在使用 &lt;code class=&quot;highlighter-rouge&quot;&gt;Force Text&lt;/code&gt; 模式之后，代码审核就可以清晰地看到修改的部分，甚至可以自动合并冲突，是两个人或者多人合作修改同一个场景。&lt;/p&gt;
-
-    &lt;p&gt;&lt;a href=&quot;/img/in-post/weird-bug-3/diff-2.png&quot;&gt;&lt;img src=&quot;/img/in-post/weird-bug-3/diff-2.png&quot; alt=&quot;Git Diff 2&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-    &lt;p&gt;这个问题解决之后，也节约了开发者大量用来同步代码和场景的时间。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;You are not alone.&lt;/strong&gt;&lt;/p&gt;
-
-    &lt;p&gt;Unity3D 是一个相对成熟的游戏开发引擎，往往我们遇到的问题都已经有人遇到过了，所以解决问题时很重要一步还是寻找前人的轨迹。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;事出蹊跷必有妖&lt;/strong&gt;&lt;/p&gt;
-
-    &lt;p&gt;计算机是不会骗人的，所谓的 ”莫名其妙“ 一定有办法可以解释，找到它。&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h3 id=&quot;推荐阅读&quot;&gt;推荐阅读&lt;/h3&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;a href=&quot;http://answers.unity3d.com/questions/222281/asset-serialization-mixed-vs-force-text.html&quot;&gt;关于 Force Text 的讨论&lt;/a&gt;&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;a href=&quot;http://devmag.org.za/2012/07/12/50-tips-for-working-with-unity-best-practices/&quot;&gt;关于 Unity 的 50 个技巧&lt;/a&gt;&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;如果你看到这里，一定是真爱！欢迎看看我的其他 &lt;a href=&quot;http://chendi.me/&quot;&gt;blog&lt;/a&gt;。O(∩_∩)O&lt;/p&gt;
-</description>
-        <pubDate>Sun, 11 Jun 2017 08:15:00 +0800</pubDate>
-        <link>http://localhost:4000/2017/06/11/weird-bugs-3/</link>
-        <guid isPermaLink="true">http://localhost:4000/2017/06/11/weird-bugs-3/</guid>
-        
-        <category>Tech</category>
-        
-        <category>Bug</category>
-        
-        <category>Unity</category>
-        
-        <category>git</category>
         
         
       </item>
