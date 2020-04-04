@@ -21,6 +21,8 @@ Use online picture editing tool [pixlr](https://pixlr.com/editor/)
 6. Click the picture.
 7. Download the picture by "File" => "Save".
 
+8. Upload to https://www.anooc.com/ts/gs to apply gaussian distortion.
+
 Now your background picture won't interfere with your Title.
 
 #### How to see change locally
