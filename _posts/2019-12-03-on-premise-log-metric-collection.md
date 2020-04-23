@@ -20,6 +20,8 @@ tags:
 
 在当前的项目中，我们已经使用了 Elasticsearch 作为业务的数据储存，同时利用 ansible、docker、jenkins 组合了一套快速部署的工具。在配置好需要部署主机的 ssh 连接信息后，我们可以通过 jenkins 一键部署一个 Elasticsearch 和 Kibana。
 
+[![jenkins.png](/img/in-post/on-premise-log-metric-collection/jenkins.png)](/img/in-post/on-premise-log-metric-collection/jenkins.png)
+
 ### 需求分析
 
 在私有化部署的环境中，日志的收集使用有几个特点：
@@ -39,31 +41,41 @@ tags:
 方案上有3个备选方案：
 
 1. 利用 ELK （Elasticsearch、Logstash、Kibana） 做整体的监控基础组件，同时使用 Elastic 新推出的 beat 系列作为采集工具。
+[![dashboard1.png](/img/in-post/on-premise-log-metric-collection/dashboard1.png)](/img/in-post/on-premise-log-metric-collection/dashboard1.png)
 2. 利用 Zabbix、Open-Falcon 等运维监控工具进行系统基础组件的监控。同时利用自定义指标，进行数据的监控和告警。
+[![zabbix.png](/img/in-post/on-premise-log-metric-collection/zabbix.png)](/img/in-post/on-premise-log-metric-collection/zabbix.png)
 3. 利用 TICK (Telegraph、InfluxDB、Chronograf、Kapacitor) 做整体的监控基础组件。
+[![grafana.jpg](/img/in-post/on-premise-log-metric-collection/grafana.jpg)](/img/in-post/on-premise-log-metric-collection/grafana.jpg)
 
 方案2和3在需求上不能很好满足日志的收集和查看功能，所以排除掉了，目前日志方面能比较好满足需求的只有开源的 ELK 和商业化的 Splunk，由于预算原因，Splunk 也被排除了。
 
-方案1根据我们的需求进一步细化：
+方案1(ELK)根据我们的需求进一步细化：
 1. 需要能快速部署：通过我们的 Jenkins 可以实现一键部署的功能。
 2. 部署组件简单：我们只部署 Elasticsearch 和 Kibana 组件，同时 Elasticsearch 本身作为最基础的组件是自包含的，不依赖任何外部组件。而我们也不使用集群，只用单机部署，保证 Elasticsearch 部署的简单和稳定。
 3. 功能性优于稳定性：虽然业务使用的 Elasticsearch 停留在 5.5.3 版本，我们日志采集和分析使用的 Elasticsearch 直接升级到 7.6.0 版本，同时后续的版本升级也可以较为激进，如果遇到不兼容的情况，也不需要保留已有数据，删除数据重新部署即可。
+4. 性能要求不高：使用单机部署，Elasticsearch 和 Kibana 部署在同一台机器上。
 
 ### 日志专用的Elasticsearch、Kibana、Beat
 
 为了避免日志使用的 ES 和业务使用的 ES 在资源或者配置上发生冲突，日志专用的 ES 单独做了一个部署，使用约 3G 内存。
 
 日志采集：
-我们在所有相关主机上使用 ansible 部署[filebeat](https://www.elastic.co/beats/filebeat) 进行日志的采集，为了简化系统，我们也没有使用 logstash 做日志的预处理，只是简单地配置了 filebeat 的配置文件，并加入了我们的 jenkins 一键部署套件中。
-
-系统指标收集：
-我们在所有相关主机上使用 ansible 部署 [metricbeat](https://www.elastic.co/beats/metricbeat) 进行指标的收集，通过配置文件的配置，可以采集到 docker 的资源使用、系统CPU、内存、磁盘、网络的使用状态，同时也开放了 statsd 格式的指标收集端口。
-
-在现场状态检测：
-我们在网关机器上使用 ansible 部署 [heartbeat](https://www.elastic.co/beats/heartbeat) 进行主动的资源可用性探测，对系统相关的数据库、http服务等监控其相应状态，并将其发送至默认的 ES 储存索引中。
+- 我们在所有相关主机上使用 ansible 部署[filebeat](https://www.elastic.co/beats/filebeat) 进行日志的采集，为了简化系统，我们也没有使用 logstash 做日志的预处理，只是简单地配置了 filebeat 的配置文件，并加入了我们的 jenkins 一键部署套件中。
 
 日志的查看：
-由于日志直接通过 filebeat 收集到了 es 中，我们使用
+- 由于日志直接通过 filebeat 收集到了 es 中，我们使用 Kibana 就能直接进行查看了。
+
+[![filebeat.gif](/img/in-post/on-premise-log-metric-collection/filebeat.gif)](/img/in-post/on-premise-log-metric-collection/filebeat.gif)
+
+系统指标收集：
+- 我们在所有相关主机上使用 ansible 部署 [metricbeat](https://www.elastic.co/beats/metricbeat) 进行指标的收集，通过配置文件的配置，可以采集到 docker 的资源使用、系统CPU、内存、磁盘、网络的使用状态，同时也开放了 statsd 格式的指标收集端口。
+
+[![metricbeat.jpg](/img/in-post/on-premise-log-metric-collection/metricbeat.jpg)](/img/in-post/on-premise-log-metric-collection/metricbeat.jpg)
+
+在现场状态检测：
+- 我们在网关机器上使用 ansible 部署 [heartbeat](https://www.elastic.co/beats/heartbeat) 进行主动的资源可用性探测，对系统相关的数据库、http服务等监控其相应状态，并将其发送至默认的 ES 储存索引中。
+
+[![heartbeat.png](/img/in-post/on-premise-log-metric-collection/heartbeat.png)](/img/in-post/on-premise-log-metric-collection/heartbeat.png)
 
 ### 基于ES的告警
 
