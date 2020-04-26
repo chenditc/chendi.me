@@ -7,8 +7,6 @@ author:     "Di Chen"
 header-img: "img/in-post/mypokemon-io-1/mypokemon-io-bg.jpg"
 tags:
     - Tech
-    - Hack
-    - Pokemon Go
 ---
 
 > “Go catch em all! ”

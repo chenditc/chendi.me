@@ -9,7 +9,6 @@ en: true
 tags:
     - Tech
     - Unity 
-    - grpc
 ---
 
 ## Preface

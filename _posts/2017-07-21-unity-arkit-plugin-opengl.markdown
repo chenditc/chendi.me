@@ -8,8 +8,6 @@ header-img: "img/in-post/unity-arkit-plugin-opengl/arkit-bg-1.jpg"
 tags:
     - Tech
     - Unity 
-    - ARKit
-    - OpenGL
 ---
 
 > “Visualization is daydreaming with a purpose.”

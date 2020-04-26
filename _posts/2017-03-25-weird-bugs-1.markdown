@@ -8,8 +8,6 @@ header-img: "img/in-post/weird-bug-1/weird-bug-1-bg.jpg"
 tags:
     - Tech
     - Bug
-    - Docker 
-    - DNS
 ---
 
 > “There are two ways to write error-free programs; only the third one works.”

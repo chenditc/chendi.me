@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="description" content="">
+    <meta name="keywords"  content="">
+    <meta name="theme-color" content="">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Weird bugs - 4 - 陈迪的博客 | Di' Blog">
+    
+    <meta property="og:type" content="article">
+    <meta property="og:description" content="前言
+">
+    
+    <meta property="article:published_time" content="2019-10-07T08:15:00Z">
+    
+    
+    <meta property="article:author" content="Di Chen">
+    
+    
+    <meta property="article:tag" content="Tech">
+    
+    <meta property="article:tag" content="Bug">
+    
+    <meta property="article:tag" content="Linux">
+    
+    
+    <meta property="og:image" content="http://localhost:4000/img/avatar-di.jpg">
+    <meta property="og:url" content="http://localhost:4000/2019/10/07/weird-bug-4/">
+    <meta property="og:site_name" content="陈迪的博客 | Di' Blog">
+    
+    <title>Weird bugs - 4 - 陈迪的博客 | Di' Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/2019/10/07/weird-bug-4/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Di's Blog</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    
+                    
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                    
+                    
+                    
+                    
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/in-post/weird-bug-1/weird-bug-1-bg.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+
+
+
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/in-post/weird-bug-1/weird-bug-1-bg.jpg');
+        background: ;
+    }
+
+    
+</style>
+
+<header class="intro-header" >
+
+    <div class="header-mask"></div>
+    
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Tech" title="Tech">Tech</a>
+                        
+                        <a class="tag" href="/tags/#Bug" title="Bug">Bug</a>
+                        
+                        <a class="tag" href="/tags/#Linux" title="Linux">Linux</a>
+                        
+                    </div>
+                    <h1>Weird bugs - 4</h1>
+                    
+                    <h2 class="subheading">奇怪的 bug 系列 4 -- Linux 网卡混杂模式</h2>
+                    <span class="meta">Posted by Di Chen on October 7, 2019</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+
+
+
+
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<h2 id="前言">前言</h2>
+
+<p>这次记录的 bug 是主要是涉及网络知识比较多，排查中主要用到了 tcpdump 以及一些运气。</p>
+
+<hr />
+
+<h2 id="问题以及排查过程">问题以及排查过程</h2>
+
+<h3 id="问题表象">问题表象</h3>
+
+<p>在一台 vmware 部署的 Redhat 系统上安装 docker，使用的是阿里云的镜像源，安装命令如下</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>yum remove  docker \
+            docker-client \
+            docker-client-latest \
+            docker-common \
+            docker-latest \
+            docker-latest-logrotate \
+            docker-logrotate \
+            docker-selinux \
+            docker-engine-selinux \
+            docker-engine
+ 
+ 
+# Set up repository
+sudo yum install -y yum-utils device-mapper-persistent-data lvm2
+  
+# Use Aliyun Docker
+sudo yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+ 
+ 
+# install the latest version docker
+yum install docker-ce
+</code></pre></div></div>
+
+<p>在安装完成后发现 docker 可以正常启动，未报错，但是启动后对应的 http 端口无法连通，具体表现为错误 “curl: (56) Recv Failure: Connection reset by peer.”</p>
+
+<h3 id="问题排查和解决">问题排查和解决</h3>
+
+<h4 id="定位错误组件">定位错误组件</h4>
+<p>首先尝试进行横向分段排查，定位具体是哪个组件为正常运行。</p>
+
+<p>docker 所在的主机 ip 为 10.0.10.1
+docker 建立的 NAT 网段为 172.17.0.1/16
+启动的 docker 对外暴露的端口为 9200，启动命令类似：<code class="highlighter-rouge">docker run -p 9200:9200 mydocker</code>
+启动后的 docker 在 docker 的网段内 ip 为 172.17.0.2</p>
+
+<p>首先尝试在宿主主机访问对应端口： <code class="highlighter-rouge">$ curl 10.0.10.1:9200</code>，报 “No route to host” 错误。
+同时尝试使用 telnet 连接该端口 <code class="highlighter-rouge">$ telnet 10.0.10.1:9200</code>，同样报 “No route to host” 错误。我们知道 tcp 连接的第一步是三次握手建立连接，报 “No route to host” 说明连握手都无法完成，问题应该出在网络的第4层以下。</p>
+
+<p>在宿主主机上尝试 ping 对应的 docker NAT 网关内的 ip：<code class="highlighter-rouge">$ping 172.17.0.2</code>，发现ping不通。尝试反向ping，从 docker 内 ping 172.17.0.1 发现也无法 ping 通，说明 docker 的网桥可能未正常工作。</p>
+
+<p>docker 的网络包是通过 iptables 进行配置转发的，所以首先排查宿主主机上的 iptables 配置是否正常。
+<code class="highlighter-rouge">$ iptables --list</code> 查看所有 iptables 规则，iptables 内 DOCKER-USER 和 DOCKER 是检验所有发到 docker 容器的规则，这两部分在主机的 iptables 配置里都是空的，或 all anywhere，所以理论上不会对 tcp 包进行拦截。这部分没发现有异常。</p>
+
+<p>接下来尝试使用 tcpdump 抓流量包，查看在链路的哪个部分无法连通。还是使用分段排查的方式，先排查 docker0 网卡的流量包，看是否包含 telnet 的握手请求。使用 <code class="highlighter-rouge">$tcpdump -w docker.pcap -i docker0</code> 在一个 ssh 窗口中进行抓包，然后使用 <code class="highlighter-rouge">$telnet 172.17.0.1 9200</code> 发起 tcp 连接。此时发现了一个奇怪的现象，在 tcpdump 运行的时候，所有网络请求都能通了！ telnet 可以正常连接，curl 命令也能返回预期的信息。关闭 tcpdump 后，又变回了原来无法连通的情况。</p>
+
+<h4 id="解决方法">解决方法</h4>
+
+<p>根据之前发现的情况，Google 搜索 “docker tcpdump 抓包后通了”，发现了一篇类似情况的排查博客：<a href="https://ieevee.com/tech/2016/11/24/promisc.html">从混杂模式开始说起</a>。</p>
+
+<blockquote>
+  <p>但前几天BJ机房掉电，重启后发现宿主机无法登陆，网络不通。ipmi登陆上去，检查team0状态、br0状态都正常，tcpdump抓包发现，报文能够到达team0的子接口(eno0），但无法送到br0，因此ping宿主机不通。</p>
+
+  <p>偶然发现，从外面ping宿主机网络，如果在team0口、eno0口都执行tcpdump，宿主机、docker容器，网络均可达。</p>
+</blockquote>
+
+<p>从现象上看，他遇到的问题和我的表现是一样的。在该博客中也提到了该问题的根源：物理网卡进入了混杂模式，但是子接口并没有进入，导致子接口无法获取对应的网络包。我在问题宿主主机上做了验证：</p>
+
+<p>查看系统日志，并计算进入混杂模式但是未退出的网卡：</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ cat /var/log/messages | grep promisc | grep enter | cut -d " " -f 8 | sort | uniq -c | sort -n &gt; card_list_enter
+$ cat /var/log/messages | grep promisc | grep enter | cut -d " " -f 8 | sort | uniq -c | sort -n &gt; card_list_left
+$ diff card_list_enter card_list_left
+...
+</code></pre></div></div>
+
+<p>上面的 shell 先统计了所有网卡进入混杂模式的次数，然后统计了所有网卡退出混杂模式的次数，再 diff 找到进入了混杂模式，但是未退出的网卡。然后再去 <code class="highlighter-rouge">$cat /sys/class/net/docker0/flags</code>, 看具体的标志位是否打开，发现除了 docker0 网卡之外，其他有若干网卡打开了混杂模式。而同时，查看 <code class="highlighter-rouge">/var/log/messages</code> 也发现每次 tcpdump 的时候，docker0 网卡都会进入混杂模式。</p>
+
+<p>尝试使用命令 <code class="highlighter-rouge">$ifconfig docker0 PROMISC</code> 手动打开 docker0 的混杂模式后，docker 就能正常运行了。</p>
+
+<h3 id="原理">原理</h3>
+
+<h4 id="混杂模式是什么">混杂模式是什么</h4>
+
+<h4 id="为什么tcpdump需要打开对应网卡的混杂模式">为什么tcpdump需要打开对应网卡的混杂模式</h4>
+
+<h4 id="为什么不混杂模式无法连接主机">为什么不混杂模式无法连接主机</h4>
+
+<h3 id="推荐阅读">推荐阅读</h3>
+
+<ol>
+  <li>
+    <p><a href="https://docs.docker.com/network/iptables/">Docker and iptables</a></p>
+  </li>
+  <li>
+    <p><a href="https://ieevee.com/tech/2016/11/24/promisc.html">从混杂模式开始说起</a></p>
+  </li>
+</ol>
+
+<hr />
+
+<p>如果你看到这里，一定是真爱！欢迎看看我的其他 <a href="http://chendi.me/">blog</a>。O(∩_∩)O</p>
+
+
+                <hr style="visibility: hidden;">
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2019/09/08/sync-outlook-calendar/" data-toggle="tooltip" data-placement="top" title="Sync Outlook Calendar And Conference Room">
+                        Previous<br>
+                        <span>Sync Outlook Calendar And Conference Room</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2019/11/01/performance-optimization/" data-toggle="tooltip" data-placement="top" title="Performance Optimization">
+                        Next<br>
+                        <span>Performance Optimization</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <hr style="visibility: hidden;">
+
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+
+
+<section>
+    
+        <hr class="hidden-sm hidden-xs">
+    
+    <h5><a href="/archive/">FEATURED TAGS</a></h5>
+    <div class="tags">
+        
+        
+        
+        </a>
+        
+        
+                <a data-sort="0018" 
+                    href="/tags/#%E7%94%9F%E6%B4%BB"
+                    title="生活"
+                    rel="6">生活</a>
+        
+                <a data-sort="0007" 
+                    href="/tags/#Tech"
+                    title="Tech"
+                    rel="17">Tech</a>
+        
+                <a data-sort="0018" 
+                    href="/tags/#Unity"
+                    title="Unity"
+                    rel="6">Unity</a>
+        
+                <a data-sort="0020" 
+                    href="/tags/#%E8%88%AA%E6%8B%8D"
+                    title="航拍"
+                    rel="4">航拍</a>
+        
+                <a data-sort="0020" 
+                    href="/tags/#Bug"
+                    title="Bug"
+                    rel="4">Bug</a>
+        
+                <a data-sort="0022" 
+                    href="/tags/#Linux"
+                    title="Linux"
+                    rel="2">Linux
+    </div>
+</section>
+
+
+
+                <!-- Friends Blog -->
+                
+<hr>
+<h5>FRIENDS</h5>
+<ul class="list-inline">
+  
+  <li><a href="http://huangxuan.me">Hux Blog</a></li>
+  
+  <li><a href="http://mypokemon.io">My pokemon map</a></li>
+  
+</ul>
+
+            </div>
+        </div>
+    </div>
+</article>
+
+<!-- add support for mathjax by voleking-->
+
+
+
+
+
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'hover',
+          placement: 'right',
+          // icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <!-- SNS Link -->
+                
+
+
+<ul class="list-inline text-center">
+
+
+  
+  
+  
+  <li>
+    <a target="_blank" href="https://www.zhihu.com/people/chenditc">
+      <span class="fa-stack fa-lg">
+        <i class="fa fa-circle fa-stack-2x"></i>
+        <i class="fa  fa-stack-1x fa-inverse">知</i>
+      </span>
+    </a>
+  </li>
+  
+  
+  <li>
+    <a target="_blank" href="http://weibo.com/5997371930">
+      <span class="fa-stack fa-lg">
+        <i class="fa fa-circle fa-stack-2x"></i>
+        <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+      </span>
+    </a>
+  </li>
+  
+  
+  <li>
+    <a target="_blank" href="https://www.facebook.com/chenditc">
+      <span class="fa-stack fa-lg">
+        <i class="fa fa-circle fa-stack-2x"></i>
+        <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
+      </span>
+    </a>
+  </li>
+  
+  
+  <li>
+    <a target="_blank" href="https://github.com/chenditc">
+      <span class="fa-stack fa-lg">
+        <i class="fa fa-circle fa-stack-2x"></i>
+        <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+      </span>
+    </a>
+  </li>
+  
+  
+</ul>
+
+                <p class="copyright text-muted">
+                    Copyright &copy; Di's Blog 2020
+                    <br>
+                    Powered by <a href="http://huangxuan.me">Hux Blog</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=huxpro&repo=huxpro.github.io&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+
+
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-78900217-4';
+    var _gaDomain = 'chendi.me';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+<script>
+    // dynamic User by Hux
+    var _baId = '8507be049b7b8a2e0b8be7f8f815f9d0';
+
+    // Originial
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?" + _baId;
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

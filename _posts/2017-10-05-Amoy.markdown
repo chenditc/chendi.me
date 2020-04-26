@@ -6,7 +6,6 @@ date:       2017-10-05 14:23:00
 author:     "Di Chen"
 header-img: "img/in-post/2017-Amoy/amoy-bg.jpg"
 tags:
-    - DJI 
     - 航拍 
 ---
 

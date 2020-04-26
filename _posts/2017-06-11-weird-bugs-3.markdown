@@ -9,7 +9,6 @@ tags:
     - Tech
     - Bug
     - Unity 
-    - git
 ---
 
 > “There is no coincidence. Only the illusion of coincidence.”

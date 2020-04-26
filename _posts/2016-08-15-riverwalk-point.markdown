@@ -8,7 +8,6 @@ header-img: "img/in-post/riverwalk-point/riverwalk-point-bg.jpg"
 tags:
     - 生活
     - 航拍
-    - DJI
 ---
 
 > “The future of possible. ”

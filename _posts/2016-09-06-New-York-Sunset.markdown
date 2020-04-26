@@ -8,7 +8,6 @@ header-img: "img/in-post/new-york-city/nyc-sunset-bg.jpg"
 tags:
     - 生活
     - 延时摄影
-    - 纽约
 ---
 
 

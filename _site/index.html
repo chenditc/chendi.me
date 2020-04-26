@@ -102,6 +102,8 @@
                     
                     
                     
+                    
+                    
                 </ul>
             </div>
         </div>
@@ -187,6 +189,7 @@
 </header>
 
 
+
 <!-- Main Content -->
 <div class="container">
 	<div class="row">
@@ -202,6 +205,37 @@
                 postlist-container
             ">
     			
+<div class="post-preview">
+    <a href="/2020/04/24/tech-management-notes/">
+        <h2 class="post-title">
+            Tech Team Management Note
+        </h2>
+        
+        <h3 class="post-subtitle">
+            技术管理思考笔记
+        </h3>
+        
+        <div class="post-content-preview">
+            整体思路
+
+  每个人需求不同，单独沟通并在管理过程中尽量满足。需求包括：
+    
+      职业发展需求
+      经济需求（薪资、奖金、期权）
+      个人成就需求
+      社会地位需求（办公环境、公司地位、公司福利）
+    
+  
+  以激发团队的主观能动性为主，以被动监督团队成员为辅。
+  公平交换。每个人只要有付出就有回报，同时相互理解，公司在个人遇到困难时给予灵活...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by Di Chen on April 24, 2020
+    </p>
+</div>
+<hr>
+
 <div class="post-preview">
     <a href="/2020/01/21/zhijue-recording-studio/">
         <h2 class="post-title">
@@ -228,6 +262,105 @@
     </a>
     <p class="post-meta">
         Posted by Di Chen on January 21, 2020
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
+    <a href="/2019/12/03/on-premise-log-metric-collection/">
+        <h2 class="post-title">
+            On premise log and metric collection
+        </h2>
+        
+        <h3 class="post-subtitle">
+            私有化部署系统的日志和指标收集方案
+        </h3>
+        
+        <div class="post-content-preview">
+            前言
+
+在私有化部署的系统中，系统可能会多次进行分布式组件的部署，而在私有化部署的环境中，可能没有完善的日志收集、指标收集和分析的工具，为了能便捷地进行日志、指标的收集和分析，这里提出一个简单的 ELK 指标收集方案。
+
+
+
+背景
+
+在当前的项目中，我们已经使用了 Elasticsearch 作为业务的数据储存，同时利用 ansible、docker、jenkins 组合了一套快速部署的工具...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by Di Chen on December 3, 2019
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
+    <a href="/2019/11/01/performance-optimization/">
+        <h2 class="post-title">
+            Performance Optimization
+        </h2>
+        
+        <h3 class="post-subtitle">
+            性能优化的整体思路和常用工具方法
+        </h3>
+        
+        <div class="post-content-preview">
+            前言
+
+在工作中发现关于性能优化相关的工作，大部分人都较少涉猎，也缺少相关的经验，所以把我的经验记录下来，抛砖引玉。
+
+
+
+需求
+
+性能需求
+
+在一个系统运行的过程中，遇到性能上的需求无法满足是非常常见的。例如：
+
+  一个 HTTP 服务器的某个请求响应时间过长。
+  一个消息队列同时可以发送、储存的消息数量不足。
+  一个脚本的执行时间过长。
+
+
+高性能往往可以具体拆解为低延迟和高吞吐量...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by Di Chen on November 1, 2019
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
+    <a href="/2019/10/07/weird-bug-4/">
+        <h2 class="post-title">
+            Weird bugs - 4
+        </h2>
+        
+        <h3 class="post-subtitle">
+            奇怪的 bug 系列 4 -- Linux 网卡混杂模式
+        </h3>
+        
+        <div class="post-content-preview">
+            前言
+
+这次记录的 bug 是主要是涉及网络知识比较多，排查中主要用到了 tcpdump 以及一些运气。
+
+
+
+问题以及排查过程
+
+问题表象
+
+在一台 vmware 部署的 Redhat 系统上安装 docker，使用的是阿里云的镜像源，安装命令如下
+
+yum remove  docker \
+            docker-client \
+            docker-cl...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by Di Chen on October 7, 2019
     </p>
 </div>
 <hr>
@@ -363,118 +496,6 @@
 </div>
 <hr>
 
-<div class="post-preview">
-    <a href="/2017/10/05/Amoy/">
-        <h2 class="post-title">
-            Amoy
-        </h2>
-        
-        <h3 class="post-subtitle">
-            厦门环岛路航拍记录
-        </h3>
-        
-        <div class="post-content-preview">
-            在其他城市航拍练手了这么几次之后，终于有机会给厦门拍一段视频了。
-
-其实关于厦门的航拍视频已经不少，但这次金砖会议之后，厦门又比以往更干净漂亮了。真好。
-
-不知道《航拍中国》什么时候会来厦门取景呢，期待。
-
-  
-  
-
-
-音乐：
-
-“Sky Full Of Stars” written by Coldplay &amp; Swedish DJ Avicii
-
-Performed by:
-
-...
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by Di Chen on October 5, 2017
-    </p>
-</div>
-<hr>
-
-<div class="post-preview">
-    <a href="/2017/07/30/unity-grpc-plugin-zh/">
-        <h2 class="post-title">
-            Support grpc library on Unity
-        </h2>
-        
-        <h3 class="post-subtitle">
-            在 Unity 开发中使用 grpc 组件
-        </h3>
-        
-        <div class="post-content-preview">
-            前言
-
-grpc 是由 google 推出的开源 rpc 框架。除了支持单向的 rpc 调用之外，同时还支持双向流通信，对于想要快速搭建一个基于长连接的应用是个不错的选择。
-
-由于 Unity 本身的特性，虽然它是使用 C# 进行编程的，但是在打包成 iOS 或者安卓的时候需要进行一次转换，将 C# 代码转译成 C++ 代码，所以我们需要进行一些额外的工作，将 grpc 的 C# 库转为支持...
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by Di Chen on July 30, 2017
-    </p>
-</div>
-<hr>
-
-<div class="post-preview">
-    <a href="/2017/07/30/unity-grpc-plugin-en/">
-        <h2 class="post-title">
-            Support grpc library on Unity
-        </h2>
-        
-        <h3 class="post-subtitle">
-            在 Unity 开发中使用 grpc 组件
-        </h3>
-        
-        <div class="post-content-preview">
-            Preface
-
-Grpc is an open-sourced rpc framework developed by google。It support both unary remote procedual call and bi-directional streaming. For those who wants to build a client-server bi-directio...
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by Di Chen on July 30, 2017
-    </p>
-</div>
-<hr>
-
-<div class="post-preview">
-    <a href="/2017/07/21/unity-arkit-plugin-opengl/">
-        <h2 class="post-title">
-            Support OpenGL ES 2 on Unity ARKit Plugin
-        </h2>
-        
-        <h3 class="post-subtitle">
-            给 Unity ARKit Plugin 添加 OpenGL ES 2 的支持
-        </h3>
-        
-        <div class="post-content-preview">
-            
-  “Visualization is daydreaming with a purpose.”
-
-  – Bo Bennett
-
-
-前言
-
-在 2017 年的 WWDC 苹果开发者大会上，苹果发布了自己的 AR 解决方案 – ARKit。它结合了 iOS 设备自身传感器以及单目 SLAM 算法，在空间定位的能力上几乎可以与 Hololens 这样的外设相媲美了。
-
-在第一时间，Unity...
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by Di Chen on July 21, 2017
-    </p>
-</div>
-<hr>
-
 
 <!-- Pager -->
 
@@ -511,42 +532,38 @@ Grpc is an open-sourced rpc framework developed by google。It support both unar
         </a>
         
         
-                <a data-sort="0015" 
-                    href="/archive/?tag=%E7%94%9F%E6%B4%BB"
+                <a data-sort="0018" 
+                    href="/tags/#%E7%94%9F%E6%B4%BB"
                     title="生活"
-                    rel="5">生活</a>
+                    rel="6">生活</a>
         
                 <a data-sort="0007" 
-                    href="/archive/?tag=Tech"
+                    href="/tags/#Tech"
                     title="Tech"
-                    rel="13">Tech</a>
+                    rel="17">Tech</a>
         
-                <a data-sort="0014" 
-                    href="/archive/?tag=Unity"
+                <a data-sort="0018" 
+                    href="/tags/#Unity"
                     title="Unity"
                     rel="6">Unity</a>
         
-                <a data-sort="0016" 
-                    href="/archive/?tag=%E8%88%AA%E6%8B%8D"
+                <a data-sort="0020" 
+                    href="/tags/#%E8%88%AA%E6%8B%8D"
                     title="航拍"
                     rel="4">航拍</a>
         
-                <a data-sort="0017" 
-                    href="/archive/?tag=Bug"
+                <a data-sort="0020" 
+                    href="/tags/#Bug"
                     title="Bug"
-                    rel="3">Bug</a>
+                    rel="4">Bug</a>
         
-                <a data-sort="0017" 
-                    href="/archive/?tag=DJI"
-                    title="DJI"
-                    rel="3">DJI</a>
-        
-                <a data-sort="0018" 
-                    href="/archive/?tag=grpc"
-                    title="grpc"
-                    rel="2">grpc
+                <a data-sort="0022" 
+                    href="/tags/#Linux"
+                    title="Linux"
+                    rel="2">Linux
     </div>
 </section>
+
 
 
                 <!-- Short About -->

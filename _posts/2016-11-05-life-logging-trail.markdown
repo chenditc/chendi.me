@@ -7,7 +7,7 @@ author:     "Di Chen"
 header-img: "img/in-post/life-logger-trail/life-logger-bg.png"
 tags:
     - Tech
-    - lifelogging 
+    - 生活 
 ---
 
 > “最美的不是下雨天，而是曾与你躲过雨的屋檐”
