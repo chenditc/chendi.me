@@ -12,7 +12,7 @@ tags:
 
 ## 前言
 
-在私有化部署的系统中，系统可能会多次进行分布式组件的部署，而在私有化部署的环境中，可能没有完善的日志收集、指标收集和分析的工具，为了能便捷地进行日志、指标的收集和分析，这里提出一个简单的 ELK 指标收集方案。
+在私有化部署的系统中，系统可能会多次进行分布式组件的部署，而在私有化部署的环境中，可能没有完善的日志收集、指标收集和分析的工具，为了能便捷地进行日志、指标的收集和分析，这里提出一个简单的可复制的 ELK 日志、指标收集方案。
 
 ---
 
@@ -21,6 +21,11 @@ tags:
 在当前的项目中，我们已经使用了 Elasticsearch 作为业务的数据储存，同时利用 ansible、docker、jenkins 组合了一套快速部署的工具。在配置好需要部署主机的 ssh 连接信息后，我们可以通过 jenkins 一键部署一个 Elasticsearch 和 Kibana。
 
 [![jenkins.png](/img/in-post/on-premise-log-metric-collection/jenkins.png)](/img/in-post/on-premise-log-metric-collection/jenkins.png)
+
+简单介绍一下：
+1. 我们把所有的部署脚本、配置文件、Jenkins 任务都打包到一个标准化的 Jenkins docker 包中，只要安装到目标的环境上，即可把所有部署所需的工具都一次性带入。
+2. 在 Jenkins 中内嵌一个 yaml 格式的配置文件管理器，对于所有部署需要依赖的变量进行统一管理，例如xx系统后端对外暴露的端口号，只在 Jenkins 中配置一次，所有的脚本都会自动读取该变量，Only one golden source。
+3. 当所有的配置确定下来后，后续的流程理论上是可以做到全自动化的，所以所有的安装都通过脚本来完成。做到 Configuration as Code, Infrastrature as Code。
 
 ### 需求分析
 
@@ -86,7 +91,9 @@ Elastalert 可以配置多种告警类型，例如
  - 某指标出现的频率增加或者减少（spike 类型）
  - N 分钟未检测到某指标（flatline类型）等。
 
-目前我们也只使用了最基础的 frequency 类型告警。
+每个告警的配置核心其实是一个 elasticsearch 的查询语句，通过查询语句返回的条目数来进行判断。
+
+目前我们也只使用了最基础的 frequency 类型告警。由于这个告警是针对特定几个私有化部署的系统，所以我们提前配置好了若干个告警的配置文件，在部署脚本中，如果没有特别需求，就全部复制到 elastalert 的系统中，不需要任何手工配置。
 
 ### 监控大盘
 
@@ -98,7 +105,14 @@ Elastalert 可以配置多种告警类型，例如
 
 [![dashboard3.png](/img/in-post/on-premise-log-metric-collection/dashboard3.png)](/img/in-post/on-premise-log-metric-collection/dashboard3.png)
 
+#### Kibana配置自动化
+Kibana 当中所有持久化了的配置都是一个 [Saved Object](https://www.elastic.co/guide/en/kibana/current/managing-saved-objects.html)，包括：快捷搜索、监控大盘、可视化面板、索引配置。
+
+我们在内部的测试环境中配置好了一个监控用的 Kibana 后，将配置文件通过 CI 系统定期导出储存于 git 仓库中，下一次更新基础组件时，更新脚本就会自动将对应的 kibana 配置导入到私有化部署的环境中，在部署时不需要任何手工配置，实现 Infrastructure as Code。
+
 ### 扩展监控范围
+这套部署组件在扩展上也是有一个标准流程的。
+
 #### 监控更多的应用组件
 当我们需要监控新增的应用组件时。
  - 对于服务状态，我们可以简单地将应用组件的访问地址加入 hearbeat 的配置中，就可以在监控面板看到对应组件的状态了。
