@@ -22,10 +22,10 @@ tags:
 
 [![jenkins.png](/img/in-post/on-premise-log-metric-collection/jenkins.png)](/img/in-post/on-premise-log-metric-collection/jenkins.png)
 
-简单介绍一下：
-1. 我们把所有的部署脚本、配置文件、Jenkins 任务都打包到一个标准化的 Jenkins docker 包中，只要安装到目标的环境上，即可把所有部署所需的工具都一次性带入。
-2. 在 Jenkins 中内嵌一个 yaml 格式的配置文件管理器，对于所有部署需要依赖的变量进行统一管理，例如xx系统后端对外暴露的端口号，只在 Jenkins 中配置一次，所有的脚本都会自动读取该变量，Only one golden source。
-3. 当所有的配置确定下来后，后续的流程理论上是可以做到全自动化的，所以所有的安装都通过脚本来完成。做到 Configuration as Code, Infrastrature as Code。
+这套系统遵循以下的设计原则：
+1. Self-Contained Deployment：我们把所有的部署脚本、配置文件、Jenkins 任务都打包到一个标准化的 Jenkins docker 包中，只要安装到目标的环境上，即可把所有部署所需的工具都一次性带入。
+2. Single Source of Truth：在 Jenkins 中内嵌一个 yaml 格式的配置文件管理器，对于所有部署需要依赖的变量进行统一管理，例如xx系统后端对外暴露的端口号，只在 Jenkins 中配置一次，所有的脚本都会自动读取该变量。
+3. Configuration as Code, Infrastructure as Code：当所有的配置确定下来后，后续的流程理论上是可以做到全自动化的，所以所有的安装都通过脚本来完成。
 
 ### 需求分析
 
