@@ -110,6 +110,8 @@ tags:
 
 [第二章原文](http://book.chendi.me:8080/site/library/view/clean-agile-back/9780135782002/ch02.html)
 
+敏捷迭代的目标和实施前提。
+
 #### 程序员的职业素养 (Professionalism)
 
 > We in this industry sorely need to increase our professionalism. We fail too often. We ship too much crap. We accept too many defects. We make terrible trade-offs. Too often, we behave like unruly teenagers with a new credit card. In simpler times, these behaviors were tolerable because the stakes were relatively low. In the ’70s and ’80s and even into the ’90s, the cost of software failure, though high, was limited and containable.
@@ -122,6 +124,8 @@ tags:
 
 思考：
  - 作为一个程序员，难的不是尽力写出好的代码，或者保持高的专业度，难的是上司或者领导迫于商业或者其他压力，要求你不写测试用例，不测试直接上线等等。
+
+---
 
 #### 一些对程序员的合理的期望 (Reasonable Expectations)
 
@@ -159,6 +163,8 @@ tags:
 思考：
  - 这些期望描绘了一个敏捷迭代的乌托邦，如果能达到 50% 基本就是一个不错的公司了，如果能达到 80%，就可以列上程序员的理想雇主了。
  - 预计在未来10年内，这些期望都不会完全被认同，比如自动化测试就需要很长的时间才能完成覆盖和补全，如果哪个公司能让程序员低成本地进行自动化测试，这家公司也会创造极大的财富。
+
+---
 
 #### 权利法案 (The Bill Of Rights)
 
@@ -204,9 +210,11 @@ tags:
   - 如果在所有人都认同这个权利法案的前提下，项目的推进是可以在一个理性且高效的节奏里进行的，关键是**所有人**都认同这个权利法案。而这个关键就要求大家都了解到每个权利背后的原因，没有做过研发的人是很难理解的，比如为什么不能承诺某个事情在某个时间点前一定要完成。
   - 认同这个权利法案最好是在项目启动会的时候就提出，明确基调之后，后续的细则措施也会好推行很多。
 
+---
 
+### 第三章：敏捷的业务方实践
 
-
+[第三章原文](http://book.chendi.me:8080/site/library/view/clean-agile-back/9780135782002/ch03.html)
 
 
 ---
