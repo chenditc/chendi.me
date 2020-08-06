@@ -30,8 +30,8 @@
     <meta property="article:tag" content="Linux">
     
     
-    <meta property="og:image" content="http://localhost:4000/img/avatar-di.jpg">
-    <meta property="og:url" content="http://localhost:4000/2019/10/07/weird-bug-4/">
+    <meta property="og:image" content="http://0.0.0.0:4000/img/avatar-di.jpg">
+    <meta property="og:url" content="http://0.0.0.0:4000/2019/10/07/weird-bug-4/">
     <meta property="og:site_name" content="陈迪的博客 | Di' Blog">
     
     <title>Weird bugs - 4 - 陈迪的博客 | Di' Blog</title>
@@ -43,7 +43,7 @@
     <link rel="shortcut icon" href="/img/favicon.ico">
     
     <!-- Canonical URL -->
-    <link rel="canonical" href="http://localhost:4000/2019/10/07/weird-bug-4/">
+    <link rel="canonical" href="http://0.0.0.0:4000/2019/10/07/weird-bug-4/">
 
     <!-- Bootstrap Core CSS -->
     <link rel="stylesheet" href="/css/bootstrap.min.css">
@@ -54,7 +54,7 @@
     <!-- Custom Fonts -->
     <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
     <!-- Hux change font-awesome CDN to qiniu -->
-    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="//cdn.staticfile.org/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -328,9 +328,15 @@ $ diff card_list_enter card_list_left
 
 <h4 id="混杂模式是什么">混杂模式是什么</h4>
 
+<p><a href="https://zh.wikipedia.org/wiki/%E6%B7%B7%E6%9D%82%E6%A8%A1%E5%BC%8F">混杂模式</a>是网卡在链路层工作的一个工作模式。简单来说，一般网卡网卡只接受来自网络端口的目的地址指向自己的数据，但是混杂模式下会接受所有数据。判断标准就是数据的 MAC 地址是否相同。</p>
+
 <h4 id="为什么tcpdump需要打开对应网卡的混杂模式">为什么tcpdump需要打开对应网卡的混杂模式</h4>
 
+<p>tcpdump 需要监听特定网络接口或者进程的网络请求，这些网络请求并不一定是发给自己的，所以需要打开网卡的混杂模式，从而获取到所有相关数据。</p>
+
 <h4 id="为什么不混杂模式无法连接主机">为什么不混杂模式无法连接主机</h4>
+
+<p>这个原因仍然没有得到100%的确认和复现，因为出问题的主机是在客户的环境中，我们能访问的时间非常有限。应该是由于数据包的 MAC 地址在 iptables 或者虚拟机的网卡转发时被修改了，修改后的值与 docker0 的 MAC 地址不一致，所以 docker0 在没有打开混杂模式前无法获取到对应数据包。如果要从根本上解决这个问题，还需要 RedHat 以及 Vmware 的工程师介入，在这个 case 中我们没有相关的权限要求，只能先解决问题的表现了。</p>
 
 <h3 id="推荐阅读">推荐阅读</h3>
 
@@ -399,7 +405,7 @@ $ diff card_list_enter card_list_left
         </a>
         
         
-                <a data-sort="0018" 
+                <a data-sort="0020" 
                     href="/tags/#%E7%94%9F%E6%B4%BB"
                     title="生活"
                     rel="6">生活</a>
@@ -407,24 +413,24 @@ $ diff card_list_enter card_list_left
                 <a data-sort="0007" 
                     href="/tags/#Tech"
                     title="Tech"
-                    rel="17">Tech</a>
+                    rel="19">Tech</a>
         
-                <a data-sort="0018" 
+                <a data-sort="0020" 
                     href="/tags/#Unity"
                     title="Unity"
                     rel="6">Unity</a>
         
-                <a data-sort="0020" 
+                <a data-sort="0022" 
                     href="/tags/#%E8%88%AA%E6%8B%8D"
                     title="航拍"
                     rel="4">航拍</a>
         
-                <a data-sort="0020" 
+                <a data-sort="0022" 
                     href="/tags/#Bug"
                     title="Bug"
                     rel="4">Bug</a>
         
-                <a data-sort="0022" 
+                <a data-sort="0024" 
                     href="/tags/#Linux"
                     title="Linux"
                     rel="2">Linux
@@ -473,7 +479,7 @@ $ diff card_list_enter card_list_left
 </script>
 <!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
 <script>
-    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+    async("//cdn.staticfile.org/anchor-js/1.1.1/anchor.min.js", function(){
         anchors.options = {
           visible: 'hover',
           placement: 'right',
@@ -556,11 +562,11 @@ $ diff card_list_enter card_list_left
                 <p class="copyright text-muted">
                     Copyright &copy; Di's Blog 2020
                     <br>
-                    Powered by <a href="http://huangxuan.me">Hux Blog</a> |
+                    Powered by <a href="http://chendi.me">chendi.me</a> |
                     <iframe
                         style="margin-left: 2px; margin-bottom:-5px;"
                         frameborder="0" scrolling="0" width="100px" height="20px"
-                        src="https://ghbtns.com/github-btn.html?user=huxpro&repo=huxpro.github.io&type=star&count=true" >
+                        src="https://ghbtns.com/github-btn.html?user=chenditc&repo=chendi.me&type=star&count=true" >
                     </iframe>
                 </p>
             </div>
@@ -618,7 +624,7 @@ $ diff card_list_enter card_list_left
 
 <!--fastClick.js -->
 <script>
-    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+    async("//cdn.staticfile.org/fastclick/1.0.6/fastclick.min.js", function(){
         var $nav = document.querySelector("nav");
         if($nav) FastClick.attach($nav);
     })

@@ -16,8 +16,8 @@
     <meta property="og:type" content="website">
     <meta property="og:description" content="Welcome to my little tiny Blog">
     
-    <meta property="og:image" content="http://localhost:4000/img/avatar-di.jpg">
-    <meta property="og:url" content="http://localhost:4000/">
+    <meta property="og:image" content="http://0.0.0.0:4000/img/avatar-di.jpg">
+    <meta property="og:url" content="http://0.0.0.0:4000/">
     <meta property="og:site_name" content="陈迪的博客 | Di' Blog">
     
     <title>陈迪的博客 | Di' Blog</title>
@@ -29,7 +29,7 @@
     <link rel="shortcut icon" href="/img/favicon.ico">
     
     <!-- Canonical URL -->
-    <link rel="canonical" href="http://localhost:4000/">
+    <link rel="canonical" href="http://0.0.0.0:4000/">
 
     <!-- Bootstrap Core CSS -->
     <link rel="stylesheet" href="/css/bootstrap.min.css">
@@ -40,7 +40,7 @@
     <!-- Custom Fonts -->
     <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
     <!-- Hux change font-awesome CDN to qiniu -->
-    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="//cdn.staticfile.org/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -173,7 +173,7 @@
 
 
 
-<header class="intro-header" style="background-image: url('/img/home-bg.jpg')">
+<header class="intro-header" style="background-image: url('/img/home-bg.webp')">
   <div class="container">
     <div class="row">
       <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
@@ -205,6 +205,70 @@
                 postlist-container
             ">
     			
+<div class="post-preview">
+    <a href="/2020/06/28/reading-notes-clean-agile/">
+        <h2 class="post-title">
+            Reading notes: Clean Agile
+        </h2>
+        
+        <h3 class="post-subtitle">
+            读书笔记：敏捷整洁之道
+        </h3>
+        
+        <div class="post-content-preview">
+            目录
+
+第一章：敏捷的起源
+
+  铁十字，项目中必须要做的权衡
+  敏捷的目的
+  管理项目的铁十字 (The Iron Cross)
+
+
+第二章：为什么要敏捷
+
+  程序员的职业素养 (Professionalism)
+  一些对程序员的合理的期望 (Reasonable Expectations)
+  权利法案 (The Bill Of Rights)
+
+
+第三章：敏捷的业务方实践
+
+
+...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by Di Chen on June 28, 2020
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
+    <a href="/2020/05/23/on-premise-deployment-solution-change-v3/">
+        <h2 class="post-title">
+            On Premise Deployment Solution
+        </h2>
+        
+        <h3 class="post-subtitle">
+            私有化部署方案的演进
+        </h3>
+        
+        <div class="post-content-preview">
+            前言
+
+随着业务的快速发展，我们对私有化部署的流程上也发现不少可以优化改进的地方，今天主要和大家分享一下我们私有化部署方式的演进过程：
+第一阶段：以脚本为核心的部署方式（docker文件 + 脚本 + 环境变量）
+第二阶段：以 Jenkins 为核心的部署方式（docker文件 + jenkins + 配置文件）
+第三阶段：以 Jenkins 和 docker harbor 为核心的部署方式...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by Di Chen on May 23, 2020
+    </p>
+</div>
+<hr>
+
 <div class="post-preview">
     <a href="/2020/04/24/tech-management-notes/">
         <h2 class="post-title">
@@ -279,13 +343,13 @@
         <div class="post-content-preview">
             前言
 
-在私有化部署的系统中，系统可能会多次进行分布式组件的部署，而在私有化部署的环境中，可能没有完善的日志收集、指标收集和分析的工具，为了能便捷地进行日志、指标的收集和分析，这里提出一个简单的 ELK 指标收集方案。
+在私有化部署的系统中，系统可能会多次进行分布式组件的部署，而在私有化部署的环境中，可能没有完善的日志收集、指标收集和分析的工具，为了能便捷地进行日志、指标的收集和分析，这里提出一个简单的可复制的 ELK 日志、指标收集方案。
 
 
 
 背景
 
-在当前的项目中，我们已经使用了 Elasticsearch 作为业务的数据储存，同时利用 ansible、docker、jenkins 组合了一套快速部署的工具...
+在当前的项目中，我们已经使用了 Elasticsearch 作为业务的数据储存，同时利用 ansible、docker、jenkins 组合了一套...
         </div>
     </a>
     <p class="post-meta">
@@ -438,64 +502,6 @@ yum remove  docker \
 </div>
 <hr>
 
-<div class="post-preview">
-    <a href="/2018/04/20/app-store-review/">
-        <h2 class="post-title">
-            App Store Review Tips
-        </h2>
-        
-        <h3 class="post-subtitle">
-            App Store 审核经验总结
-        </h3>
-        
-        <div class="post-content-preview">
-            初衷
-
-这篇博客主要想记录一下 App Store 中审核遇到的一些问题，以及最终解决的方案，希望对后来者有一定帮助，也是对自己的经验总结。
-
-对于苹果开发者来说，App Store 的审核是一个对整体迭代效率影响极大的一个环节，但是绝大部分情况下，App Store 的审核还是比较客观效率的，所以不必将其视为洪水猛兽。
-
-这里主要讨论下面几个问题：
-
-
-  第三方登录
-  第三方支付与内购...
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by Di Chen on April 20, 2018
-    </p>
-</div>
-<hr>
-
-<div class="post-preview">
-    <a href="/2017/12/20/unity-asset-management/">
-        <h2 class="post-title">
-            Unity Asset Management
-        </h2>
-        
-        <h3 class="post-subtitle">
-            Unity 中资源管理的学习总结
-        </h3>
-        
-        <div class="post-content-preview">
-            需求
-
-在团队进行 Unity 开发的时候，就资源管理的方式出现过许多吐槽，比如 “为什么不直接放进 Resource 里，多方便”，“要是当初放进 Resource 里就不会出这么多 bug 了 ”。当吐槽的次数越来越多，就意味着这个问题是阻碍开发效率的因素，急需解决。
-
-同时，游戏安装包的大小与资源管理的方式直接挂钩，想要缩小安装包，就必须理解资源管理的原理并进行优化。
-
-背景常识
-
-对...
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by Di Chen on December 20, 2017
-    </p>
-</div>
-<hr>
-
 
 <!-- Pager -->
 
@@ -532,7 +538,7 @@ yum remove  docker \
         </a>
         
         
-                <a data-sort="0018" 
+                <a data-sort="0020" 
                     href="/tags/#%E7%94%9F%E6%B4%BB"
                     title="生活"
                     rel="6">生活</a>
@@ -540,24 +546,24 @@ yum remove  docker \
                 <a data-sort="0007" 
                     href="/tags/#Tech"
                     title="Tech"
-                    rel="17">Tech</a>
+                    rel="19">Tech</a>
         
-                <a data-sort="0018" 
+                <a data-sort="0020" 
                     href="/tags/#Unity"
                     title="Unity"
                     rel="6">Unity</a>
         
-                <a data-sort="0020" 
+                <a data-sort="0022" 
                     href="/tags/#%E8%88%AA%E6%8B%8D"
                     title="航拍"
                     rel="4">航拍</a>
         
-                <a data-sort="0020" 
+                <a data-sort="0022" 
                     href="/tags/#Bug"
                     title="Bug"
                     rel="4">Bug</a>
         
-                <a data-sort="0022" 
+                <a data-sort="0024" 
                     href="/tags/#Linux"
                     title="Linux"
                     rel="2">Linux
@@ -650,6 +656,7 @@ yum remove  docker \
 
 
 
+
     <!-- Footer -->
 <footer>
     <div class="container">
@@ -710,11 +717,11 @@ yum remove  docker \
                 <p class="copyright text-muted">
                     Copyright &copy; Di's Blog 2020
                     <br>
-                    Powered by <a href="http://huangxuan.me">Hux Blog</a> |
+                    Powered by <a href="http://chendi.me">chendi.me</a> |
                     <iframe
                         style="margin-left: 2px; margin-bottom:-5px;"
                         frameborder="0" scrolling="0" width="100px" height="20px"
-                        src="https://ghbtns.com/github-btn.html?user=huxpro&repo=huxpro.github.io&type=star&count=true" >
+                        src="https://ghbtns.com/github-btn.html?user=chenditc&repo=chendi.me&type=star&count=true" >
                     </iframe>
                 </p>
             </div>
@@ -772,7 +779,7 @@ yum remove  docker \
 
 <!--fastClick.js -->
 <script>
-    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+    async("//cdn.staticfile.org/fastclick/1.0.6/fastclick.min.js", function(){
         var $nav = document.querySelector("nav");
         if($nav) FastClick.attach($nav);
     })

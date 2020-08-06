@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="description" content="">
+    <meta name="keywords"  content="">
+    <meta name="theme-color" content="">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="On Premise Deployment Solution - 陈迪的博客 | Di' Blog">
+    
+    <meta property="og:type" content="article">
+    <meta property="og:description" content="前言
+">
+    
+    <meta property="article:published_time" content="2020-05-23T08:15:00Z">
+    
+    
+    <meta property="article:author" content="Di Chen">
+    
+    
+    <meta property="article:tag" content="Tech">
+    
+    <meta property="article:tag" content="Deployment">
+    
+    
+    <meta property="og:image" content="http://0.0.0.0:4000/img/avatar-di.jpg">
+    <meta property="og:url" content="http://0.0.0.0:4000/2020/05/23/on-premise-deployment-solution-change-v3/">
+    <meta property="og:site_name" content="陈迪的博客 | Di' Blog">
+    
+    <title>On Premise Deployment Solution - 陈迪的博客 | Di' Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://0.0.0.0:4000/2020/05/23/on-premise-deployment-solution-change-v3/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdn.staticfile.org/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Di's Blog</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    
+                    
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                    
+                    
+                    
+                    
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/in-post/weird-bug-1/weird-bug-1-bg.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+
+
+
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/in-post/weird-bug-1/weird-bug-1-bg.jpg');
+        background: ;
+    }
+
+    
+</style>
+
+<header class="intro-header" >
+
+    <div class="header-mask"></div>
+    
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Tech" title="Tech">Tech</a>
+                        
+                        <a class="tag" href="/tags/#Deployment" title="Deployment">Deployment</a>
+                        
+                    </div>
+                    <h1>On Premise Deployment Solution</h1>
+                    
+                    <h2 class="subheading">私有化部署方案的演进</h2>
+                    <span class="meta">Posted by Di Chen on May 23, 2020</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+
+
+
+
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<h2 id="前言">前言</h2>
+
+<p>随着业务的快速发展，我们对私有化部署的流程上也发现不少可以优化改进的地方，今天主要和大家分享一下我们私有化部署方式的演进过程：
+第一阶段：以脚本为核心的部署方式（docker文件 + 脚本 + 环境变量）
+第二阶段：以 Jenkins 为核心的部署方式（docker文件 + jenkins + 配置文件）
+第三阶段：以 Jenkins 和 docker harbor 为核心的部署方式（docker harbor + jenkins + 配置文件）</p>
+
+<hr />
+
+<h3 id="第一阶段">第一阶段</h3>
+
+<p>在我们做第一个私有化部署的系统时，我们的系统架构相对简单，包含的需要部署的组件不超过10个。所以对于部署方案，我们的考虑是：</p>
+
+<ol>
+  <li>能支持横向扩展。</li>
+  <li>能支持快速部署启动一个开发环境或者 debug 环境。</li>
+  <li>能支持快速部署一个新的客户环境。</li>
+</ol>
+
+<p>所以在第一阶段，我们的做法是用<strong>一个</strong>很牛逼的脚本，一键启动所有组件。其中组件需要相互关联的部分，都通过变量设置在脚本中，从而避免参数设置不一致导致的部署问题，例如：</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>DB_ENGINE=mysql
+DB_HOST=192.168.0.3,192.168.0.4
+DB_PORT=3306
+
+# Start backend server
+start_backend_server.sh -e db_host=$DB_HOST -e db_port=$DB_PORT
+
+# Start async worker
+start_async_worker.sh  -e db_host=$DB_HOST -e db_port=$DB_PORT
+
+...
+...
+</code></pre></div></div>
+
+<p>这个方案在我们只有一个产品的时候是非常方便的，操作步骤简单直接，且维护成本不高，也很灵活。</p>
+
+<p>但是随着公司的产品不断增多，需要进行复用的组件和工具也越来越多。例如两个产品的部署过程中，可能都会需要部署 redis、mysql、RabbitMQ，在每个项目中都放一个相同的 start_redis.sh 的脚本显然不是一个很好的方案，这样会导致后续对 redis 的版本升级或者参数调优无法在各个项目中应用。基于 <strong>DRY (Don’t Repeat Yourself)</strong> 原则，我们开启了第二阶段的部署方案升级。</p>
+
+<h3 id="第二阶段">第二阶段</h3>
+
+<p>第二阶段主要是为了解决几个第一阶段的问题：</p>
+
+<ol>
+  <li>脚本更新不及时。内部测试环境在更新部署的时候使用的是 k8s 集群，于是没有使用脚本进行部署。所以常常出现代码进行了修改，但是只更新了 k8s 的服务配置文件，没更新私有化部署脚本的问题。</li>
+  <li>使用方法和文档更新不及时。当某个组件的部署方式发生变更时，需要对应更新每一个产品的部署文档，常出现一个组件更新了，但是只更新了一个产品的文档，其他的就忘了。</li>
+  <li>脚本复用性差。随着产品的不断增多，每个产品都有一部分重复的基础组件的部署代码，这部分代码无法在产品间进行复用。</li>
+  <li>容错性差。当部署的过程中遇到错误时，在几百行 shell 代码中找到问题的难度大。</li>
+  <li>难以保证幂等性。shell 的编写对大部分人来说是一个过程性的编写方式，难以做到每个步骤都是幂等的，在执行脚本的过程中对执行者要求比较高，需要考虑重复执行脚本带来的副作用。</li>
+</ol>
+
+<p>针对这些问题，我们也考虑了几种不同的解决方案：</p>
+
+<h4 id="备选1-使用docker编排引擎">备选1: 使用docker编排引擎</h4>
+
+<p>使用 k8s 或者 docker swarm 进行容器的编排，用编排文件替代部署脚本。这个方案也是我们在内部测试环境中用的方案，方案的好处很明显：</p>
+<ol>
+  <li>可以利用 k8s 的负载均衡完成集群内部的横向扩容，而不需要额外的负载均衡。</li>
+  <li>可以更充分地利用 k8s 的资源调度，最大程度利用宿主主机的资源。</li>
+  <li>可以使用声明式的配置方式，声明最终希望达成的状态，而由编排引擎来生成、执行相应的操作。同时可以对配置文件进行版本管理，达到 Configuration as Code 和 Infrastructure as Code 的方式。</li>
+  <li>可以保证在测试环境中的部署方式和私有化部署环境中一致，从而通过在测试过程中强制更新 k8s 保证代码和部署流程的一致性。</li>
+</ol>
+
+<p>除开业界已经认同的这些好处之外，也有一部分实际情况的制约：</p>
+<ol>
+  <li>目前 k8s 集群的部署和维护在国内的金融和实体企业仍然是相对空白的，也缺少对该类技术的了解。</li>
+  <li>对于生产环境上使用的 k8s 集群，机构往往希望可以有专业的商业支持服务，包括但不限于证书的配置调试、集群的扩缩容、异构硬件的支持、性能问题的排查、网络问题的排查等。这个支持的成本和其带来的增益比还是不足以支撑这个方案的。</li>
+</ol>
+
+<h4 id="备选2-基于成熟工具的编排部署jenkins--ansible">备选2: 基于成熟工具的编排部署（Jenkins + ansible）</h4>
+
+<p>为了解决上一个备选方案的制约，我们考虑以一个相对成熟的工具来实现类似的功能。此时我们考虑使用 Jenkins 来进行脚本的封装和管理，同时使用 ansible 和统一的配置文件来实现 k8s 能带给我们的好处。</p>
+
+<h5 id="集群的灵活调度和横向扩容">集群的灵活调度和横向扩容</h5>
+
+<p>为了实现灵活的集群内部的横向扩容，我们使用一个集中式的网关进行网络请求的转发，如下图：
+<a href="/img/in-post/on-premise-deployment/star_nginx.png"><img src="/img/in-post/on-premise-deployment/star_nginx.png" alt="star_nginx.png" /></a></p>
+
+<p>所有组件内部的请求访问都经过一个 Nginx 网关进行转发，这样如果我们需要对某个服务进行宿主主机的变更，或者需要增加额外的实例进行横向扩容，都可以在不更改其他服务配置的前提下进行。</p>
+
+<h5 id="声明式的配置方式">声明式的配置方式</h5>
+
+<p>为了能达到声明式的配置，我们将配置文件简化成了类似的格式：</p>
+
+<p>main.yaml:</p>
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">service1</span><span class="pi">:</span>
+  <span class="na">image</span><span class="pi">:</span> <span class="s">redis</span>
+  <span class="na">deploy_hosts</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">192.168.0.2</span>
+    <span class="pi">-</span> <span class="s">192.168.0.3</span>
+    <span class="pi">-</span> <span class="s">192.168.0.4</span>
+  <span class="na">port</span><span class="pi">:</span> <span class="m">6379</span>
+  <span class="na">memory_limit</span><span class="pi">:</span> <span class="s">1G</span>
+
+<span class="na">service2</span><span class="pi">:</span>
+  <span class="na">image</span><span class="pi">:</span> <span class="s">mysql</span>
+  <span class="na">deploy_hosts</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">192.168.0.2</span>
+  <span class="na">port</span><span class="pi">:</span> <span class="m">3306</span>
+</code></pre></div></div>
+
+<p>而我们的启动脚本也统一读取这个配置文件来知悉他依赖的组件部署在哪，应该通过哪个端口进行访问。这样以来，我们便实现了 SSOT (Single Source of Truth)，不会出现迁移修改组件后，依赖其的服务无法使用的情况。运维同学在看到这个配置文件之后，也可以很直观地看出来每个服务运行在哪、有什么参数配置。</p>
+
+<p>同时我们把启动脚本转换成了一个 Ansible 的脚本。Ansible 的一个特点便是声明式、可复用。我们的 Ansible 脚本从 main.yaml 中读取服务希望达到的状态后，会进行所有相关的操作，包括生成配置文件、拉取最新的 docker、启动 docker、检测是否需要初始化数据、检测服务状态符合预期等。这样一来，我们也实现了 Configuration as Code 和 Infrastructure as Code 的部署方式。</p>
+
+<h5 id="界面化的封装">界面化的封装</h5>
+
+<p>如果要迁移至 Ansible 和配置文件的这个方案，就必须要解决测试环境的问题，我们希望这个部署方案是和开发、测试的部署方法一致的，这样才能保证部署流程和代码的一致性。在这个基础上，为了简化研发的使用，我们对 Ansible 的脚本和配置文件用 Jenkins 进行了封装。</p>
+
+<p><a href="/img/in-post/on-premise-deployment/jenkins_deploy.png"><img src="/img/in-post/on-premise-deployment/jenkins_deploy.png" alt="jenkins_deploy.png" /></a></p>
+
+<p>在一个 docker 包中包含了：</p>
+<ul>
+  <li>Jenkins 的所有所需插件和配置，例如每个任务需要调用哪个ansible脚本，每个任务需要触发哪些依赖的任务</li>
+  <li>所有的 Ansible 部署脚本</li>
+  <li>默认的配置文件</li>
+  <li>部署需要用到的工具包，例如 ssh、ansible、openssl 等。</li>
+</ul>
+
+<p><a href="/img/in-post/on-premise-deployment/jenkins_view.png"><img src="/img/in-post/on-premise-deployment/jenkins_view.png" alt="jenkins_view.png" /></a></p>
+
+<p>这样一来也大大减少了运维可能出错的操作步骤，同时对于一套标准系统的部署时间也可以减少到小时级别。甚至内部的测试环境部署可以在30分钟内完成，为后续的自动化测试打下基础。</p>
+
+<h5 id="公共组件封装">公共组件封装</h5>
+
+<p>我们最终选择了方案二（Jenkins + Ansible）作为我们的解决方案，我们把内部所有需要进行私有化部署的系统都迁移到了基于 Jenkins 的部署系统上。</p>
+
+<p><a href="/img/in-post/on-premise-deployment/jenkins_component.png"><img src="/img/in-post/on-premise-deployment/jenkins_component.png" alt="jenkins_component.png" /></a></p>
+
+<p>对于常用的公共组件包括储存组件：redis、mysql、oracle、elasticsearch、minio 等，所有产品都可以遵循最佳实践进行部署复用。而对于部分业务中间件，例如文档解析、NLP提取、格式转换等服务，所有产品也可以快速接入使用。</p>
+
+<p>值得一提的是，其他的日志、指标采集、监控告警、看板等功能，也成了整个私有化部署架构中的共享组件，赋能保证了产品的稳定性和可运维性。</p>
+
+<h5 id="不足之处">不足之处</h5>
+
+<p>在这套方案中，仍有几个细节点是待改善的：</p>
+<ol>
+  <li>部署工具本身的版本管理。Jenkins 和部署脚本的内容是会随着产品的迭代而变化的，例如一个月前的产品使用的是 Elasticsearch 6.8，目前的产品使用的是 Elasticsearch 7.6，这时产品的升级过程中，就需要对部署脚本做一定修改，如果使用了错误的部署工具，可能会导致部署的产品出错。</li>
+  <li>docker 镜像文件的传输和管理。由于在私有化部署的环境中，有许多环境是完全不能接入外网的，所以我们的 docker 是通过 <code class="highlighter-rouge">docker save -o xxx.tar &lt;image&gt;</code> 进行导出，然后将 tar 文件通过 jenkins 下载、拷贝、并加载到目标服务器上的。如果能接入外网，就直接从一个 http 服务器下载并加载镜像文件。
+    <ul>
+      <li>这个方案的第一个问题是 docker 的版本号不好管理。因为对于 tar 文件的每个版本都归档会造成巨大的储存资源的压力，每个版本都保存下来的话，对于一个集成了 CI/CD 的产品，每天会产生10余个部署文件，无疑是一个浪费。</li>
+      <li>第二个问题是更新时较慢。每次更新代码时，及时只更新一行代码，可能也需要下载1G的 docker 文件，导致在私有化环境中更新速度很慢。</li>
+    </ul>
+  </li>
+</ol>
+
+<h3 id="第三阶段">第三阶段</h3>
+
+<p>针对第二阶段的一些不足之处，我们也做了更进一步的优化：</p>
+<ol>
+  <li>除了使用 docker 文件进行打包和传输，我们也引入了私有化 docker 镜像仓库进行 docker 包的管理。利用 docker 镜像仓库本身的 TAG 功能进行多版本的归档。由于 docker 包的重复文件层不会重复储存，所以可以支持对所有产品版本的归档储存。</li>
+  <li>对于部署工具本身，也同时加入 docker 的镜像仓库中，用 TAG 进行多版本的归档管理，每次部署时，要求部署工具和代码包的版本作为一个统一整体进行部署。</li>
+</ol>
+
+<p>三阶段的改动相对于第二阶段并不算大，主要工作是：</p>
+<ol>
+  <li>将相关 docker 的打包 CI 任务中，增加推送到 docker 的镜像仓库的配置。</li>
+  <li>在默认配置文件当中，原本的 image: 配置字段设置为基于镜像仓库的地址</li>
+  <li>在 ansible 的启动脚本的 docker_container 模块中，增加 pull 选项的配置，决定是否在重启的时候拉取最新的镜像。这一步是相对 tricky 的，因为我们仍然要兼容不能访问私有化镜像仓库的环境，这些环境中 pull 需要设置为 false，而其他环境需要设置为 true。</li>
+</ol>
+
+<h3 id="总结">总结</h3>
+
+<p>我们希望在满足 DRY（Don’t Repeat Yourself）、SSOT (Single Source of Truth)、CaC（Configuration as Code）、IaC（Infrastructure as Code）的原则基础上，尽量简化和自动化部署流程。虽然在实际项目中推广 k8s 的使用遇到了一些困难，但是我们仍然曲线救国，利用老将 Jenkins 和 Ansible 达到了目的。</p>
+
+
+
+                <hr style="visibility: hidden;">
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2020/04/24/tech-management-notes/" data-toggle="tooltip" data-placement="top" title="Tech Team Management Note">
+                        Previous<br>
+                        <span>Tech Team Management Note</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2020/06/28/reading-notes-clean-agile/" data-toggle="tooltip" data-placement="top" title="Reading notes: Clean Agile">
+                        Next<br>
+                        <span>Reading notes: Clean Agile</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <hr style="visibility: hidden;">
+
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+
+
+<section>
+    
+        <hr class="hidden-sm hidden-xs">
+    
+    <h5><a href="/archive/">FEATURED TAGS</a></h5>
+    <div class="tags">
+        
+        
+        
+        </a>
+        
+        
+                <a data-sort="0020" 
+                    href="/tags/#%E7%94%9F%E6%B4%BB"
+                    title="生活"
+                    rel="6">生活</a>
+        
+                <a data-sort="0007" 
+                    href="/tags/#Tech"
+                    title="Tech"
+                    rel="19">Tech</a>
+        
+                <a data-sort="0020" 
+                    href="/tags/#Unity"
+                    title="Unity"
+                    rel="6">Unity</a>
+        
+                <a data-sort="0022" 
+                    href="/tags/#%E8%88%AA%E6%8B%8D"
+                    title="航拍"
+                    rel="4">航拍</a>
+        
+                <a data-sort="0022" 
+                    href="/tags/#Bug"
+                    title="Bug"
+                    rel="4">Bug</a>
+        
+                <a data-sort="0024" 
+                    href="/tags/#Linux"
+                    title="Linux"
+                    rel="2">Linux
+    </div>
+</section>
+
+
+
+                <!-- Friends Blog -->
+                
+<hr>
+<h5>FRIENDS</h5>
+<ul class="list-inline">
+  
+  <li><a href="http://huangxuan.me">Hux Blog</a></li>
+  
+  <li><a href="http://mypokemon.io">My pokemon map</a></li>
+  
+</ul>
+
+            </div>
+        </div>
+    </div>
+</article>
+
+<!-- add support for mathjax by voleking-->
+
+
+
+
+
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdn.staticfile.org/anchor-js/1.1.1/anchor.min.js", function(){
+        anchors.options = {
+          visible: 'hover',
+          placement: 'right',
+          // icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <!-- SNS Link -->
+                
+
+
+<ul class="list-inline text-center">
+
+
+  
+  
+  
+  <li>
+    <a target="_blank" href="https://www.zhihu.com/people/chenditc">
+      <span class="fa-stack fa-lg">
+        <i class="fa fa-circle fa-stack-2x"></i>
+        <i class="fa  fa-stack-1x fa-inverse">知</i>
+      </span>
+    </a>
+  </li>
+  
+  
+  <li>
+    <a target="_blank" href="http://weibo.com/5997371930">
+      <span class="fa-stack fa-lg">
+        <i class="fa fa-circle fa-stack-2x"></i>
+        <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+      </span>
+    </a>
+  </li>
+  
+  
+  <li>
+    <a target="_blank" href="https://www.facebook.com/chenditc">
+      <span class="fa-stack fa-lg">
+        <i class="fa fa-circle fa-stack-2x"></i>
+        <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
+      </span>
+    </a>
+  </li>
+  
+  
+  <li>
+    <a target="_blank" href="https://github.com/chenditc">
+      <span class="fa-stack fa-lg">
+        <i class="fa fa-circle fa-stack-2x"></i>
+        <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+      </span>
+    </a>
+  </li>
+  
+  
+</ul>
+
+                <p class="copyright text-muted">
+                    Copyright &copy; Di's Blog 2020
+                    <br>
+                    Powered by <a href="http://chendi.me">chendi.me</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=chenditc&repo=chendi.me&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+
+
+
+<!--fastClick.js -->
+<script>
+    async("//cdn.staticfile.org/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-78900217-4';
+    var _gaDomain = 'chendi.me';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+<script>
+    // dynamic User by Hux
+    var _baId = '8507be049b7b8a2e0b8be7f8f815f9d0';
+
+    // Originial
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?" + _baId;
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>
