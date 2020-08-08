@@ -220,7 +220,7 @@ tags:
 实际项目：
   - 在上一个项目中，用户的权利基本都是可以得到保障的，除了一点，就是当前项目的状态。项目的状态都是经过美化过的，没人愿意承认当前的项目当中问题一大堆，显得自己能力不行，但是哪个项目会是一帆风顺没有坎坷的呢？
   - 在上一个项目中，研发的权利是没办法得到保障的。
-    - 无法高质量地完成工作。当需求来不及做的时候，第一处理方案总是加班，在加班的时候，开发者也很难保持一个完美主义的状态把事情做到 100 分，于是就产出了低质量的产品。如果第一处理方案也没法处理，第二处理方案往往是跳过测试、跳过文档、跳过审核，跳过这些看似不会立即产生价值的阶段。
+    - 无法高质量地完成工作。当需求来不及做的时候，第一处理方案总是加班，在长期无偿加班的时候，开发者也很难保持一个完美主义的状态把事情做到 100 分，于是就产出了低质量的产品。如果第一处理方案也没法处理，第二处理方案往往是跳过测试、跳过文档、跳过审核，跳过这些看似不会立即产生价值的阶段。
     - 无法拿到清晰描述的需求和优先级。在面对强势的客户时，客户提出的需求在一个迭代内可以变化两三次，导致前一个需求还没测试完，需求就又变了。
     - 预估即承诺。在预估的时候，管理层认为预估应该要尽量贴近实际，所以偏长的预估往往会被 challenge。而在实际推进的时候，预估又被认为是“承诺”，导致“承诺”的时间内永远完不成工作。此时理性人的做法就是提高预估的时间，这样一来，用户就得不到真实的信息了。也违背了“诚实预估”的期望。
 
@@ -230,9 +230,43 @@ tags:
 
 ---
 
-### 第三章：敏捷的业务方实践
-
+### 第三章：敏捷的业务方最佳实践
+ 
 [第三章原文](http://book.chendi.me:8080/site/library/view/clean-agile-back/9780135782002/ch03.html)
+
+#### 项目计划和估时
+
+> How do you estimate a project? The simple answer is that you break it down into its constituent pieces and then estimate those pieces. This is a fine approach; but what if the pieces themselves are too big to estimate with any accuracy? You simply break down those pieces into smaller pieces and estimate them.
+
+> If you would like an accurate and precise estimate of a project, then break it down into individual lines of code. The time it takes you to do this will give you a very accurate and precise measure of how long it took you to build the project—because you just built it.
+
+观点总结：
+ - 项目的计划和排期常见的方法是把一个大项目，拆成小的工作包，对每一个工作包进行估时后，再进行汇总。如果有某个工作包没办法估时怎么办呢？把它拆成更小颗粒度的工作包。这样循环下去，最小的颗粒度可以拆分到每一行代码。
+ - 如果我们想要一个很精准的时间预估，那么我们就需要把任务拆成每一行代码，但是如果这样做了，那这个项目也就做完了，这样做就会花很长时间来进行时间预估。而时间预估的目的是获得一个不精确的预估，预估得越不精确，所需要花在预估上的时间也越少，反之亦然。
+ - 预估的时候可以用 [PERT 方法](https://en.wikipedia.org/wiki/Program_evaluation_and_review_technique)，预估三个时间，一个 10% 可能完成的时间，一个 50% 可能完成的时间，还有一个 90% 可能完成的时间，项目经理利用这三个时间来做项目计划。
+
+实际项目：
+ - 在上一个项目中，由于管理层认为“预估时间”等于“承诺时间”，而研发又倾向于预估一个 50% 可能完成工作的时间。这就导致了预估时间有 50% 可能是不够的，也就意味着有 50% 的延期可能。
+
+思考：
+ - 在预估的同时，最好也能把预估不准的可能因素给列出来，包括第三方库的使用、新架构的引入、新的业务流程的熟悉等。这样项目经理才能把这些导致预估不准的要素也作为项目风险考虑进去。
+
+---
+
+#### 用户故事和估时
+
+> A user story is an abbreviated description of a feature of the system, told from the point of view of a user.
+
+> So, we pick a story from the batch that we consider to be of average complexity. Then, we choose a number of points for the story. It is now our Golden Story. It is the standard against which all other stories will be compared. 
+
+> The iteration begins with the Iteration Planning Meeting (IPM). This meeting should be scheduled to be one-twentieth the duration of the iteration. The IPM for a two-week iteration should require about a half a day.
+
+观点总结：
+ - 每个用户故事是一个需求的简短描述，简短到可以一眼看完，但是又能明白要解决**用户**的什么问题。
+ - 在早期挑选一个平均复杂度的需求作为**黄金故事**，也就是**锚点**，
+
+
+
 
 
 ---
