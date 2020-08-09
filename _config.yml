@@ -58,7 +58,7 @@ uyan_user_id: 2138710
 
 # Analytics settings
 # Baidu Analytics
-ba_track_id: 8507be049b7b8a2e0b8be7f8f815f9d0 
+# ba_track_id: 8507be049b7b8a2e0b8be7f8f815f9d0 
 # Google Analytics
 ga_track_id: 'UA-78900217-4'            # Format: UA-xxxxxx-xx
 ga_domain: chendi.me
