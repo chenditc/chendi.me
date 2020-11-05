@@ -4,6 +4,7 @@ title:      "Reading notes: Clean Agile"
 subtitle:   "读书笔记：敏捷整洁之道"
 date:       2020-6-28 00:15:00
 author:     "Di Chen"
+catalog:    true
 header-img: "img/in-post/reading-notes/agile-bg.jpg"
 tags:
     - Tech
@@ -24,6 +25,14 @@ tags:
  - [权利法案 (The Bill Of Rights)](#权利法案-the-bill-of-rights)
 
 [第三章：敏捷的业务方实践](#第三章敏捷的业务方实践)
+ - [项目计划和估时](#项目计划和估时)
+ - [用户故事和估时](#用户故事和估时)
+ - [迭代的计划](#迭代的计划)
+ - [迭代中管理](#迭代中管理)
+ - [QA和测试](#QA和测试)
+ - [团队速度](#团队速度)
+ - [测试用例](#测试用例)
+ - [完整团队](#完整团队)
 
 ---
 
@@ -240,16 +249,20 @@ tags:
 
 > If you would like an accurate and precise estimate of a project, then break it down into individual lines of code. The time it takes you to do this will give you a very accurate and precise measure of how long it took you to build the project—because you just built it.
 
+> There’s a saying among older programmers: “I can meet any deadline you set for me, as long as the software doesn’t have to work properly.”
+
 观点总结：
  - 项目的计划和排期常见的方法是把一个大项目，拆成小的工作包，对每一个工作包进行估时后，再进行汇总。如果有某个工作包没办法估时怎么办呢？把它拆成更小颗粒度的工作包。这样循环下去，最小的颗粒度可以拆分到每一行代码。
  - 如果我们想要一个很精准的时间预估，那么我们就需要把任务拆成每一行代码，但是如果这样做了，那这个项目也就做完了，这样做就会花很长时间来进行时间预估。而时间预估的目的是获得一个不精确的预估，预估得越不精确，所需要花在预估上的时间也越少，反之亦然。
  - 预估的时候可以用 [PERT 方法](https://en.wikipedia.org/wiki/Program_evaluation_and_review_technique)，预估三个时间，一个 10% 可能完成的时间，一个 50% 可能完成的时间，还有一个 90% 可能完成的时间，项目经理利用这三个时间来做项目计划。
+ - 只要不要求软件正常工作，我可以满足任何时间要求。
 
 实际项目：
  - 在上一个项目中，由于管理层认为“预估时间”等于“承诺时间”，而研发又倾向于预估一个 50% 可能完成工作的时间。这就导致了预估时间有 50% 可能是不够的，也就意味着有 50% 的延期可能。
 
 思考：
  - 在预估的同时，最好也能把预估不准的可能因素给列出来，包括第三方库的使用、新架构的引入、新的业务流程的熟悉等。这样项目经理才能把这些导致预估不准的要素也作为项目风险考虑进去。
+ - 对于 “预估时间” 怎样看待，有很多分歧意见。很多人会认为如果不能让工程师承诺一个时间，就会不断拖拉导致延期。其实这个观点只是希望用 “预估时间” 形成一个限制，避免需求范围的扩张和工作摸鱼。但需求范围的扩张最好是通过验收条件来限制，例如设计一个合理的 Acceptance Test。而由于软件工程本身是个很需要创造力的脑力工作，单纯用时间来限制并不能保证创造出高质量的工作。
 
 ---
 
@@ -261,9 +274,136 @@ tags:
 
 > The iteration begins with the Iteration Planning Meeting (IPM). This meeting should be scheduled to be one-twentieth the duration of the iteration. The IPM for a two-week iteration should require about a half a day.
 
+> A spike is a meta-story, or rather, a story for estimating a story. It is called a spike because it often requires us to develop a long but very thin slice through all the layers of the system. That will allow the developers to do the work necessary to estimate the original story, which can be implemented in a future iteration.
+
 观点总结：
  - 每个用户故事是一个需求的简短描述，简短到可以一眼看完，但是又能明白要解决**用户**的什么问题。
- - 在早期挑选一个平均复杂度的需求作为**黄金故事**，也就是**锚点**，
+ - 在早期挑选一个平均复杂度的需求作为**黄金故事**，也就是**锚点**。这个用户故事在后续会用来评估是否有估时膨胀的问题，例如登陆功能在一开始只需要3个 story point，但是在半年后，类似的一个功能却需要30个 story point，这说明在这半年内发生了估时膨胀。
+ - 迭代规划会议需要安排相对于整个迭代 1/12 的时间。例如两周的迭代需要大概半天进行迭代规划会议。
+ - 一个 spike (尖刺) 是指为了能以期望的准确度来预估某个用户故事，而进行的活动。这个活动的完成目的就是可以预估该用户故事。
+
+实际项目：
+ - 在上一个项目中，没有**锚点**需求，但是也没有明显的估时膨胀的现象，因为在每个迭代中，任务的相对复杂度会和早期的类似任务进行对比，避免估时膨胀。
+ - 迭代规划会议确实是相对耗时的一件事，因为要让迭代中参与的所有人都明白这个迭代中要做的事情，所以 1/12 的比例也是相对合理的。在上一个项目中也是类似的安排。只不过把会议拆成了两个，一个是需求讲解的会议，一个是估时和冲突讨论的会议。
+
+思考：
+ - 估时膨胀的问题是许多领导层担心的事情，但在实际操作中，如果团队的成员都是有较好职业素养的，其实并不太容易出现。但设立一个**锚点**需求可以帮助许多刚开始采用敏捷的团队了解怎样快速上手。
+ - 还有一个常见的情况就是缺乏足够的信息来进行精确的预估。此时往往需要用一个单独的任务来进行调研，团队的实际实践中，需要把握调研的深度，深入到足够进行预估即可，避免在调研上无休止地进行。
+
+---
+
+#### 迭代的计划
+
+> The stories that are valuable but cheap will be done right away. Those that are valuable but expensive will be done later. Those that are neither valuable nor expensive might get done one day. Those that are not valuable but are expensive will never be done. This is a return on investment (ROI) calculation. It’s not made formally, and no math is necessary. The stakeholders simply look at the card and make a judgement based on its value and its estimated cost.
+
+> At the midpoint of the iteration, many stories should be done. With only a week left, it’s not likely that they are going to get 20 more points done. So the stakeholders remove enough stories from the plan to reduce the remaining points to 10.
+
+> On Monday, when the next iteration begins, how many points should the stakeholders plan for? Eighteen, of course. This is called yesterday’s weather.
+
+观点总结：
+ - 不是所有的用户故事都需要被完成的，根据 ROI (Return On Investment)，可以将用户故事根据成本和回报分成4个象限，从高价值低成本 -> 高价值高成本 -> 低价值低成本 进行安排迭代。而低价值高成本的用户故事可能永远都不会被安排到。
+ - 在迭代的中间点，需求方需要根据已完成的故事点数，进行任务的调整，如果预计能完成更多任务就加一些用户故事进来，如果预计完不成的话，就删去一些用户故事。从而帮助团队在迭代结束的时候，尽量交付完成的用户故事。
+ - 在下个迭代开始的时候，如何预估团队的速度呢？最简单的就是按照上一个迭代完成的用户故事的总点数。
+
+思考：
+ - 在项目背景的不同情况下，对于一部分低价值、高成本的用户故事可能也需要做。例如签订了与成本无关的总价合同，在总价合同中要求了该部分需求需要实现。这时候客户其实不关心项目的实现成本，能多实现一些需求就是一些。但换个角度想，合作都是基于善意基础的，如果一方表现出非善意的情况，另一方的理智做法是选择对自己价值保留最大的做法。例如甲方如果真的非善意地提出了某低价值高成本的需求需要实现，乙方在权衡合同缔约的成本和实现成本之后，也是可以做出一个理智判断的。从博弈论的角度来说，在进行的合同中，此类的需求不会太多，否则乙方一定会选择缔约来终止合同的。
+ - 在管理团队时，许多人会认为任务排得越多越好，团队的速度预估高一些更好。但这样往往会导致团队的重心分散，所有的事情都是高优先，所有的需求都必须要完成，结果结束的时候完成了一部分不那么重要的，而重要的需求没完成。
+
+#### 迭代中管理
+
+ > The goal of each iteration is to produce data by getting stories done. The team should focus on stories rather than tasks within stories. It is far better to get 80% of the stories done than it is to get each story 80% done. Focus on driving the stories to completion.
+
+观点总结：
+ - 迭代的目的是**收集数据**
+ - 在一个迭代中，如果有一部分用户故事没有完成，要在迭代中后期选择牺牲一部分用户故事，以保证交付尽量多**完整**的需求。
+
+实际项目：
+ - 在上一个项目中，并没有完全按照这个最佳实践进行，由于需要牺牲的用户故事也是有极大的用户价值的，而且程序员在进行上下文切换的时候，会有一部分的工作效率的损失，所以从长期项目的进度角度，并没有按照这个最佳实践进行。
+
+思考：
+ - 在敏捷的原则中，为了应对迭代和迭代之间可能进行的频繁的需求变更，所以对于**完整**地完成一个用户故事会特别看重，毕竟没有完成用户故事的话，也就无从谈起针对已上线功能进行迭代了。
+ - 同时为了迭代的数据收集是尽量准确的，我们不相信程序员说的 80% 已完成的话，我们只相信完成、通过测试、可以上线的功能演示。
+
+---
+
+#### QA和测试
+
+> If QA has not already begun to write the automated acceptance tests, they should start as soon as the IPM ends.
+
+> Acceptance test writing should go quickly. We expect them to all be written before the midpoint of the iteration.
+
+> After the midpoint, if all the acceptance tests are done, QA should be working on the tests for the next iteration.
+
+> Developers and QA should be communicating intensely about these tests. We don’t want QA to simply “throw the tests over the wall” to the developers.
+
+观点总结：
+ - QA 和测试应该完全用自动化的方式来实现，而用户故事满足的需求应该是代码通过了对应用户故事的测试用例。这样可以在开发提交之后迅速检验是否符合要求，测试就不会是链路的最后一段。
+ - QA 应该在迭代中期完成所有自动化测试的撰写，完成之后可以写下个迭代的测试。
+ - QA 和开发在测试撰写的过程中应该积极沟通，而不是测试写完之后就扔给开发。
+
+实际项目：
+ - 测试的完全自动化难度很大，在上一个项目中，后端的项目是有完整的单元测试，集成测试也很容易通过 rest api 的调用实现。但是前端的项目迟迟不能实现自动化，由于前端代码的特性，元素的定位和状态的识别一直没有一个银弹。
+ - 由于前端项目没办法进行自动化，就还是需要手动测试的补充介入，也导致测试仍然在交付链路的最后一段，承受者很大的压力。
+ - 在上一个项目中，由于大部分用例没有自动化，研发也并不关心测试写好的逻辑，而是等测试执行后发现问题了，才跟测试沟通。
+
+思考：
+ - 前端的测试自动化仍然是业界发展的一个重要方向。在我离职之前原本希望推动一个改进，将测试工程师和前端工程师之前搭起一个桥梁，例如约定一个元素定位的机制，类似特殊的 html tag attribute 之类的，帮助测试解决元素定位的问题。如果能把前端的测试进行自动化，整体的迭代和交付速度才能真正提高。例如在 3000 多人的 Bloomberg，QA 团队就用 UI 测试框架实现了常见的功能测试，两三天内就能验证完整体的系统正确性。而在上一个10多人的团队中，却仍然也要1周才能验证完毕。
+
+---
+
+#### 团队速度
+
+> We expect that after the first few iterations, the slope will be zero—that is, horizontal. We don’t expect the team to be speeding up or slowing down over long periods.
+
+> If we see a positive slope, it likely does not mean that the team is actually going faster. Rather, it probably means that the project manager is putting pressure on the team to go faster. As that pressure builds, the team will unconsciously shift the value of their estimates to make it appear that they are going faster.
+
+> If the velocity chart shows a consistent negative slope, then the most likely cause is the quality of the code. The team is likely not refactoring enough and they are probably allowing the code to rot. One reason that teams fail to refactor enough is that they don’t write enough unit tests, so they fear that refactoring will break something that used to work. Managing this fear of change is a major goal of team management, and it all comes down to the testing discipline.
+
+> As velocity falls, pressure on the team builds. This causes the points to inflate. That inflation can hide the falling velocity.
+
+> One way to avoid inflation is to constantly compare story estimates back to the original Golden Story, the standard against which other stories will be measured.
+
+观点总结：
+ - 团队速度大概是所有管理层最关心的东西之一。一般来说在开头的几个迭代后，速度的变化就会趋于0，长期来看速度不应该变快，也不应该变慢。
+ - 如果我们发现速度变快了。大概率不是团队真的更高效了，而是管理者的压力逼得大家把预估都往高了估，这样可以让自己看起来效率变高了。这就是预估膨胀了。
+ - 如果我们发现速度变慢了。大概率是因为重构做的不够，而重构不够的原因是单元测试不够，所以大家害怕重构。解决这个问题的办法是规划测试的原则，在后面还会提到。
+ - 预估膨胀可能会掩盖速度变慢的事实，一个避免预估膨胀的办法就是不断把预估时间跟**锚点**任务进行对比。
+
+实际项目：
+ - 许多管理层并不认为速度长期应该是平稳的，而是应该越来越快的。例如团队成员的成长，工具集的优化和增加以及大家对业务的理解加深都应该让速度变快。但事实是，能保持团队速度不变就很不容易了。确实团队的磨合、成长可以让原本可能需要3天的任务在1天内完成，但是随着项目的进行，复杂度增加的速度往往大于团队能力的增加，导致综合来看速度很难保持不变。
+
+思考：
+ - 对于速度的变快和变慢，都应该作为数据的一部分进行收集和分析。只有理解变化的原因，才有可能进行团队的下一步优化和管理。
+
+---
+
+#### 测试用例
+
+> Requirements should be specified by the business.
+
+> The business writes formal tests describing the behavior of each user story, and developers automate those tests.
+
+> Acceptance tests are a collaborative effort between business analysts, QA, and the developers. Business analysts specify the happy paths. QA’s role is to write the unhappy paths. There are a lot more of them than there are of the former.
+
+> It is the programmers’ job to run the tests. It is the programmers’ job to make sure that their code passes all the tests. 
+
+观点总结：
+ - 测试需求应该来自于需求方。
+ - 需求方撰写用户期望进行的操作流程。QA 撰写错误操作流程的测试用例。QA 和程序员一起把测试进行自动化。
+ - QA 交付测试给开发后，由开发执行对应的测试并且保证测试通过。
+
+实际项目：
+ - 要求需求方参与测试用例的撰写是很奢侈的一件事，在过去的项目中，需求方并没有时间参与。
+ - 研发的工资往往比测试要高，所以要求研发协助测试进行测试的自动化和执行也是一件管理层不愿意做的事情。
+
+思考：
+ - 据我所知，AWS、Google 之类的海外互联网企业，测试工程师的地位和薪资与研发是不相上下的，这也解释了为什么他们的测试自动化建设这么好。我认为这是需要从上至下的支持才能达到的。
+
+---
+
+#### 完整团队
+
+> 
 
 
 
