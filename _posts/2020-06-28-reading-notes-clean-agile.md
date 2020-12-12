@@ -41,10 +41,6 @@ tags:
 
 ---
 
-
-
-
-
 ### 前言
 
 在过去项目的开发和迭代过程中，遇到了不少业务方和开发方预期不一致导致的冲突，在所谓的”敏捷迭代“的过程中，也没有感受到敏捷带来的效率或者项目可控性的提升。学而不思则罔，思而不学则殆，于是带着工作中的疑问来阅读整洁系列的新作。
@@ -537,13 +533,77 @@ tags:
  - 持续集成最大的好处在于：项目经理有信心，已完成的工作在下次交付的时候可以顺利打包部署。而不会出现代码 “写完了”，但是无法合并进代码库，无法打包的情况。
  - 这个好处的代价是，把所有代码合并、测试的工作前置了。有的人觉得这是一种负担，每次提交代码都需要解决冲突、修复单元测试。但总的工作量其实没有变化，即使提交代码的时候不解决，后续打包发布的时候也还是需要解决的。
 
+---
 
+### 第五章：技术实践
 
+[第五章原文](http://book.chendi.me:8080/site/library/view/clean-agile-back/9780135782002/ch05.html)
 
+这章中提到的很多时间和大部分程序员的工作方式不同，所以很多程序员倾向于不实施这些技术时间。但是这些技术时间是敏捷迭代的精髓，没有测试驱动开发、重构、简化设计等实践的话，敏捷只是一个形式空壳。
 
 ---
 
+#### 测试驱动开发
 
+> Accountants are taught, in the early days of their schooling, to enter the transactions one at a time and compute the balance each time. This allows them to catch errors quickly.
+
+> Programmers who learn TDD are taught to enter every behavior one at a time—once as a failing test, and then again as production code that passes the test. This allows them to catch errors quickly.
+
+> The Three Rules of TDD
+> 1. Do not write any production code until you have first written a test that fails due to the lack of that code.
+> 2. Do not write more of a test than is sufficient to fail—and failing to compile counts as a failure.
+> 3. Do not write more production code than is sufficient to pass the currently failing test.
+
+> Benefits
+> - Easy ebugging 
+> - Good Documentation
+> - Fun
+> - Test Completeness
+> - Testable Design
+> - **Courage to make change**
+
+观点总结：
+ - 测试驱动开发就像会计记账一样，会计一笔一笔记，记完核对资产负债表帐是否是平的。这样如果记错了就会快速发现。软件研发的时候，也把每个功能一个个写，写好一个测试和代码就测一遍，这样能快速发现有 bug 的地方。
+ - 简化版的测试驱动开发可以很简单，首先写测试让当前的测试 fail，然后改代码让测试 pass，往复循环。把颗粒度拆细到 compile 不通过也算测试 fail。
+ - 测试驱动开发有很多好处，包括：
+   - 很容易 debug，因为每个循环的时间就几分钟，所以让测试 fail 的原因一定是这几分钟内的修改，范围小，容易排查。
+   - 测试本身就是活文档，而且这个文档本身是跟着代码不断更新的。
+   - 有趣。写测试的过程就像设计一个关卡，而写代码通过测试的过程就像是通关的过程，是一个充满正反馈的循环。
+   - 测试用例会很完善，因为每写一段代码都会有对应的测试，每个异常都会有异常捕获的测试。
+   - 整体设计是松耦合，可测试的。因为需要先把测试用例设计好才做实现，所以可测试性会更强。
+   - 最重要的是，在需要清理旧代码、改别人代码的时候，会更有勇气，因为我们可以相信测试用例只要都通过了，就是 OK 的。
+
+实际项目：
+ - 这个实践在实际项目推进中其实有挺多难点的：
+   1. 项目早期测试设计带来的额外时间成本。早项目刚开始时，可能会需要写很多项目基础性的代码，例如数据库连接、数据结构定义等等，这些代码本身的实现很简单，但是写测试的时间往往与实现他们相同。所以会带来额外的时间成本，而管理团队往往不能接受这个时间成本。
+   2. 开启一个新项目的机会不多，很多时候往往是在旧项目上做修改，而旧项目的架构设计对于可测试性的考虑不多，导致了为了写一个新功能的单元测试，可能需要先对 20% 的项目进行重构，并补充重构的单元测试。这对业务方来说也是不可以接受的。
+ - 在之前的项目中，我们采取了折衷的方案，对于关键的业务逻辑进行大量单元测试的覆盖。对于难以 mock 的部分进行手动测试的覆盖，并对于稳定需求进行自动化集成测试。对于大部分的业务需求修改，单元测试已经可以帮助研发有勇气进行快速清理和修改了。
+
+思考：
+ - 我还没有机会尝试过完整的 TDD，不过从过去的经验中，单元测试的帮助是毋庸置疑的。我会在后续的 side project 中尝试以 TDD 的形式进行开发，再回头补充这部分的感想。
+
+#### 重构
+
+> The process of refactoring is woven intrinsically into the Three Rules of TDD in what is known as the Red/Green/Refactor cycle.
+> 1. First, we create a test that fails.
+> 2. Then we make the test pass.
+> 3. (Refactor) Then we clean up the code.
+
+> To say this differently, it is hard enough to get code working, let alone getting the code to be clean. So we first focus on getting the code working by whatever messy means occur to our meager minds. Then, once working, with tests passing, we clean up the mess we made.
+
+> We do not reserve time in the schedule for such large refactorings. Instead, we migrate the code one small step at a time, while continuing to add new features during the normal Agile cycle.
+
+观点总结：
+ - 重构并不是一个一次性的大动作，而是贯穿在研发中的正常步骤。按照 TDD 的步骤，我们先写一个测试用例，这时候测试 fail，然后再写代码让测试 pass，最后重构使代码简介漂亮。
+ - 对于一些涉及面较大的重构，我们也不会一次性预定几天、几周甚至几个月来进行，而是会把重构拆成小的步骤，和其他的功能迭代一起进行，在这期间，测试仍然可以通过，系统也仍然可以部署交付。
+
+实际项目：
+ - 在过去的项目中，小型的重构往往是程序员自发进行的，但是对于需要较多时间的重构，往往是单独排期进行。这个主要是由于程序员不知道如何在不影响当前系统的情况下进行渐进重构。
+
+思考：
+ - 重构的颗粒度拆分是这个循环过程中的关键，一次性重写大段的代码简单，但是把重构拆成不影响单元测试的小代码相对而言就很难，也很考验程序员的设计功底。
+
+#### 简化设计
 
 
 
