@@ -28,5 +28,6 @@ Now your background picture won't interfere with your Title.
 #### How to see change locally
 
 ```
+$ gem install jekyll bundle jekyll-paginate
 $ jekyll serve --watch
 ```

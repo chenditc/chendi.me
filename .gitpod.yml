@@ -1,0 +1,6 @@
+tasks:
+  - init: |
+      npm install
+      gem install jekyll bundler
+      gem install jekyll-paginate
+    command: npm run watch
