@@ -9,6 +9,7 @@ header-img: "img/in-post/reading-notes/agile-bg.jpg"
 tags:
     - Tech
     - Agile
+    - Reading
 ---
 
 ### 目录

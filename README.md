@@ -14,14 +14,8 @@ From online html5 [code generator](http://markup.su/highlighter/)
 Use online picture editing tool [pixlr](https://pixlr.com/editor/)
 
 1. Upload picture to pixlr editor.
-2. Click "Layer" => "New Layer".
-3. Type "G" to move tool to Paint Bucket Tool.
-4. Select Color to black.
-5. Choose "opacity" to 50. (You should tune this number to what suit you best)
-6. Click the picture.
-7. Download the picture by "File" => "Save".
-
-8. Upload to https://www.anooc.com/ts/gs to apply gaussian distortion.
+2. Click "Adjust and Filter", apply blue to something around 20-30
+3. Turn the brightness down.
 
 Now your background picture won't interfere with your Title.
 
