@@ -31,6 +31,9 @@ tags:
   - [管理公司员工犯的错](#管理公司员工犯的错)
   - [工作的难度不随着公司的大小而改变，只是难点不同而已](#工作的难度不随着公司的大小而改变只是难点不同而已)
   - [公司文化是从每一个决策中产生的](#公司文化是从每一个决策中产生的)
+  - [领导人的成功标准](#领导人的成功标准)
+  - [不要把鸡蛋放在一个篮子里](#不要把鸡蛋放在一个篮子里)
+  - [做老好人容易，保持高标准难](#做老好人容易保持高标准难)
 - [弱点反省](#弱点反省)
 - [其他材料](#其他材料)
 - [TODO](#todo)
@@ -177,11 +180,44 @@ Ray 创立桥水基金并且壮大的过程也算是一个成功的创业经历�
 
 > At first I sent these tapes of management meetings unedited to the entire company, but that was a huge burden on people's time. So I built a small team to edit the tapes, focusing on the most important moments. And overtime we added these questions to create virtual reality case studies that could be used for training. Overtime these tapes became part of a boot camp for new employees as well as a window into an ongoing stream of situations connected to the principles for handling them. All this openness led to some very frank discussions about who did what and why, and as a result we were able to deepen our understanding of our different ways of thinking. 
 
+> As with all organizations, whether Bridgewater would succeed would come down to the people and the culture. People who run companies are faced with important choices every day. How they make those choices determines the character of the company, the quality of its relationships, and the outcomes it produces. 
+
 Ray 在桥水基金早期会把所有管理层会议的录音无剪辑地发送给全公司，后期为了节约时间，把这些录音剪辑省下精华之后发给全公司。这个开放和透明程度是我听说唯一一家公司有这么做的。要能做到这点，至少需要管理层和所有员工的基本利益是一致的，同时管理层的三观是正的。
 
 在后期，这些剪辑后的录音被做成了新人的虚拟场景培训，告诉大家在什么情况下应该做什么样的决定，以及这些决定背后的原则。这在我看来是一个很高明的落实企业文化的手段，**企业文化并不是口头上喊的口号，而是在每一天的工作中，每个人做的决策凝聚起来的**。就比如有的企业说“结果导向”是其中一个企业文化，那么是不是能做到只检查结果，而不用996来监控员工的上班时间呢？如果有的企业说“客户至上”是企业文化，那么在客户利益和公司利益受到冲突的时候，能否以客户成功作为第一决策标准，牺牲公司的利润垫呢？桥水基金的培训可以在很短的时间内，用事实告诉所有人，这家公司的文化究竟是什么。
 
----
+#### 领导人的成功标准
+
+> I clearly hadn't done a good enough job of finding and training others, to whom I could delegate my responsibilities. To me, the greatest success you can have is to orchestrate others to do things well without you. A step below that is doing things well yourself, and worst of all, is doing things poorly yourself.
+
+> In May 2008, I wrote an email to five members of the management committee copying the entire company, telling them that I am escalating to let you know that I have reached my limits, and that the quality of my work and my work life balance are both suffering unacceptably.  
+
+Ray 作为桥水基金的首席投资官和首席执行官，也没办法同时做好公司管理和投资两件事情。让我敬佩的是他能把自己缺乏精力，工作质量下降，生活工作不平衡的情况跟所有人坦诚地沟通出来。在他看来，最成功的事情是让别人在你不在的时候把事情做好，次一级的是亲力亲为把事情做好，最次的一级是自己也不能把事情做好。
+
+其实对于很多新晋的 leader 来说，特别是技术 leader，最难的就是把思维从 “我要做好这件事” 变成 “我要让团队里的成员都把事情做好”。反而一些从非技术岗出来的 leader，更会调动其他人的力量来完成一件事。我不认为这是一件优点或者缺点，只是在不同阶段不同岗位需要有不同的技能和思维方式。认清，并朝这个方向努力即可。
+
+#### 不要把鸡蛋放在一个篮子里
+
+> We would have done even better had we not feared being wrong, which led us to balance our bets instead of arrogantly and foolishly putting more chips at stake. But I had no regrets because I had learned that it wasn't smart to bet that way. While in this case we would have made more money if we were less balanced. We certainly wouldn't have survived and succeeded long enough to be in such a position if we'd approached our investments that way. 
+
+在次贷危机时，桥水基金预测到了信用危机，并且重新平衡了持仓，并获得了超额收益。在那个时候如果桥水基金更加激进地堵上更多仓位，可以获得更多的回报。但是如果以这个风格进行资产配置的话，桥水基金也不会生存到现在，因为只要有一两次没有预料到的黑天鹅事件，就能让整个基金垮台。
+
+就像每次 all in 的堵法，即使你的胜率有 99%，只要有一次输了，就从此离场，再也没有入场的机会了。所以桥水基金也许在信用危机事件里错过了一些利润，但是也正是稳健的资产管理风格让他们穿越了牛熊。这并不意味着无脑地平均分配所有标的仓位，也需要根据自己的判断增配或者减配标的资产。
+
+#### 做老好人容易，保持高标准难
+
+> No matter how much we put into screening new hires and training them to work in our idea meritocracy, it was inevitable that many of them would fall short. My approach was to hire,train, test and then fire or promote quickly so that we could rapidly identify the excellent hires and get rid of the ordinary ones, repeating the process again and again until the percentage of those who are truly great was high enough to meet our needs. But for this to work, we needed people with high standards who wouldn't hesitate to eliminate people who couldn't cut it. Many new employees and some older ones still were reluctant to probe hard at what people were like, which made things worse. **It's tough to be tough on people.**
+
+桥水基金希望打造理想的精英组织，其中最难的就是招聘到足够多的精英，并且保持精英的高密度，这也是大部分创业公司面临的难题。桥水基金的做法是**快速地招聘、培训、测试然后开除或者提拔新人**。要实现这一点就要求所有人都要有高标准，要敢于对其他人进行检验，但至今很多人仍然做不到这一点。毕竟做一个老好人，大家都喜欢，其乐融融，可以获得很多正反馈。但只有敢于做坏人，保持高标准，才有可能打造出精英化的组织。
+
+我在之前的工作中也不敢直接地测试新人，担心会给人不信任的感觉。但现在回想起来，这应该是信任的基础，没有经过检验的信任就像飘在河流上的浮桥，当大浪来临时就翻了，但经过检验的信任就像水泥桥一样，见过卡车开过，也就不会担心人走的时候会掉下来了。
+
+如果从头开始打造这样一个团队，我认为有 2 点是关键的：
+1. 在招聘上的高投入。这个投入不光是指钱，钱当然需要是市场上最高一档的，最优秀的人会不希望自己被贱卖了。这个投入也包括时间、制度、人员等等，需要有人去找优秀的人，去吸引他们加入，去培训、测试新人，需要有完善的资料和流程可以在最短时间内完成培训和测试。
+2. 敢于淘汰的领导者。对于无法达到标准的人，能敢于做出淘汰的决策，哪怕我们私下是很好的朋友，一起旅行，一起喝酒，但工作上如果不能达到标准，就应该果断淘汰。
+
+当然除了这2点，还有很多其他需要做到的，但是反思之前团队搭建的流程，这两点也是我主要没做好的地方。
+
 ---
 
 ### 弱点反省
