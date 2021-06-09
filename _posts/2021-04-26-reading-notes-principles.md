@@ -218,6 +218,27 @@ Ray 作为桥水基金的首席投资官和首席执行官，也没办法同时�
 
 当然除了这2点，还有很多其他需要做到的，但是反思之前团队搭建的流程，这两点也是我主要没做好的地方。
 
+#### 改变世界的人的特征
+
+> While not perfect, these personality assessments have been invaluable. In fact, I've been adapting and refining them to help us in our recruiting and management. The answers these shapers provided to the standardized questions would give me objective and statistically measurable evidence about their similarities and their differences. It turns out that they have a lot in common. They are all independent thinkers who do not let anything or anyone stand in the way of achieving their audacious goals. They have very strong mental maps of how things should be done and at the same time a willingness to test those mental maps in the world of reality and change the way they do things to make them work better. They are extremely resilient because their need to achieve what they envision is stronger than the pain they experience as they struggle to achieve it. Perhaps most interesting, they have a wider range of vision that most people, either because they have that vision themselves or because they know how to get it from others who can see what they can't. All are able to see both big pictures and granular details and synthesize the perspectives they gained at those different levels. Whereas most people just see it from one level or the other. They are simultaneously creative and systematic and practical. They are assertive and open minded. Above all, they are passionate about what they're doing, intolerant of people who work for them who aren't excellent at what they do and want to have a big beneficial impact on the world. 
+
+> On one of the personality assessments, there is a category that they almost all ranked low on called concern for others. But that doesn't mean what it sounds like. Gates care deeply about other people. Yet the personality tests they took rated them low. Why was that? In speaking with them and reviewing the exact questions that led to these ratings, it became clear. When faced with a choice between achieving their goal or pleasing or not disappointing others, they would clearly choose achieving their goal every time. 
+
+Ray 利用心理测试，请许多世界上的名人，比如比尔盖茨，Elon Musk 做了心理测试，看这些改变世界的人有什么共同特征。有几个有趣的点：
+
+1. 他们的韧性很强。因为他们想要做成某一件事的欲望，超过了他们承受的痛苦。
+2. 他们的视野更宽广。可能由于他们自身的高瞻远瞩，也可能是因为他们善于从他人身上听取意见。
+3. 他们对为他们工作的人要求一样很高。
+4. **他们在“为他人着想”这一点上的分数很低。因为他们如果需要在完成目标和让别人开心之间选择，他们一定会选择达成目标，不做老好人。**
+
+#### 从他人的行为得到结论
+
+> About a year into my transition, I saw that many new managers and some older ones still couldn't see the patterns of people's behaviors through time. In other words, they couldn't connect the dots between what people are like and the outcomes they produce. There. 
+
+很显然，每个人的行为轨迹，过去做过的事情，是可以反映出一个人的特性，以及他未来会怎样表现的。他是有大局观的人，还是更关注细节的人。但是许多管理者并不能从人的行为上得到这点结论。有几种可能：
+1. 缺乏观察。没有关注一个人完成目标的情况，那应该加强任务轨迹的留存。
+2. 观察到了，但是不敢下结论。由于观察的不够多，不愿意用一两次行为的结果来给一个人下定论。这样的情况也许是因为工具或者时间不足，无法捕捉到更多的情况，也可能是因为心底相信每个人都可以改变，但这个思维不应该影响短期的结论。
+
 ---
 
 ### 弱点反省
