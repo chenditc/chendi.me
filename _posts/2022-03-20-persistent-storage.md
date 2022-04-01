@@ -104,7 +104,7 @@ SSTable 是在 BigTable paper 中提到的用来讲数据持久化在磁盘上�
 
 Write ahead log 记录的是所有对存储系统进行修改的操作，一旦操作写入了 write ahead log 后，如果系统崩溃或者重启，就可以通过 write ahead log 进行回放来重新构造系统应该处在的状态，例如增加一条数据，删除一条数据等等。结合 sstable 的使用，当新增的数据操作进入系统后，先写入 write ahead log，然后缓存这条数据在内存里，就可以返回成功了，后续等内存中的数据足够多后，打包成一个 sstable 写入磁盘即可。
 
-如此一来，我们 write ahead log 和 sstable 都是顺序写入，同时还利用了内存的告诉随机读写，获得了告诉的数据写入的速度和吞吐量。但是仍然有3个问题没有解决：
+如此一来，我们 write ahead log 和 sstable 都是顺序写入，同时还利用了内存的告诉随机读写，获得了高速的数据写入的速度和吞吐量。但是仍然有3个问题没有解决：
 1. 如果我们要修改一个数据怎么办？
 2. 如果我们要读取一个数据怎么办？
 3. 如果我们要删除一个数据怎么办？
@@ -115,9 +115,9 @@ LSM 树是一种分层的数据结构，用来解决上述的 3 个问题。
 
 [![compaction.jpeg](/img/in-post/storage/compaction.jpeg)](/img/in-post/storage/compaction.jpeg)
 
-为了能修改一个数据，LSM tree 对每个 SSTable 增加一个层级的概念。即先写入磁盘的 sstable 是比较老的，后写入的 sstable 是比较新的，在内存里的是最新的，假如不同层级的 sstable 都包含同一个 key 值，则最新的 sstable 中包含的 key 对应的 value 是最新的。这样一来，如果我们需要修改一个数据，只需要在系统中添加一条新的数据就可以了，在这个分层的定义中，新的数据会使得旧的数据失效。这意味着修改和写入的复杂度都是 O(1)。
+为了能修改一个数据，LSM tree 对每个 SSTable 增加一个层级的概念。即先写入磁盘的 sstable 是比较老的，后写入的 sstable 是比较新的，在内存里的是最新的。假如不同层级的 sstable 都包含同一个 key 值，则最新的 sstable 中包含的 key 对应的 value 是最新的。这样一来，如果我们需要修改一个数据，只需要在系统中添加一条新的数据就可以了，在这个分层的定义中，新的数据会使得旧的数据失效。这意味着修改和写入的复杂度都是 O(1)。
 
-那么如何读区一个数据呢？由于 sstable 是分层的，所以最简单的方法就是从新到旧遍历所有 sstable，直到找到第一个包含这个 key 值的 sstable，并读取它的 value。如果没有找到对应的 key，则表示 key 不在系统中。这意味着读取的时间复杂度是 O(N)，N 是需要访问的 sstable 的数量。
+那么如何读取一个数据呢？由于 sstable 是分层的，所以最简单的方法就是从新到旧遍历所有 sstable，直到找到第一个包含这个 key 值的 sstable，并读取它的 value。如果没有找到对应的 key，则表示 key 不在系统中。这意味着读取的时间复杂度是 O(N)，N 是需要访问的 sstable 的数量。
 
 >【面试题插入】假如 key 值是 a:int -> b:int 这样一个数字段，那么这个查询的过程其实就是面试题中的 [skyline problem](https://leetcode.com/problems/the-skyline-problem/)。
 > - skyline 中的 building 对应的就是不同层级的 sstable
@@ -131,9 +131,9 @@ LSM 树是一种分层的数据结构，用来解决上述的 3 个问题。
 
 #### Memtable
 
-LSM 为了能给在内存中储存新写入的数据，同时内存中的数据也是最新的，所以内存中的数据也可以看作是最上层的缓存，LSM 把内存中的这部分数据叫做 memtable。Memtable 一般使用平衡二叉树例如 AVL 树或者红黑树进行储存，从而提供 log(N) 的稳定存取速度。之所以没有使用哈希表，是因为 memtable 在增长到一定程度时，需要将 key value 排序转换成 sstable 写入磁盘，使用哈希表不利于排序的进行。
+LSM 在处理写操作时，会先把数据存在内存中，所以内存中的数据也可以看作是整个系统最上层的缓存，LSM 把内存中的这部分数据叫做 memtable。Memtable 一般使用平衡二叉树例如 AVL 树或者红黑树进行储存，从而提供 log(N) 的稳定存取速度。之所以没有使用哈希表，是因为 memtable 在增长到一定程度时，需要将 key value 排序转换成 sstable 写入磁盘，使用哈希表不利于排序的进行。
 
-每次当 memtable 写入磁盘后，Write ahead log 就可以删除新建一个，或者标记某个 checkpoint 为已持久化的。这样一来如果遇到宕机，只需要重放 checkpoint 之后的操作就可以了。
+每次当 memtable 写入磁盘后，Write ahead log 就可以删除原来的 log 文件，新建一个新的 log 文件。或者也可以标记 log 文件的某个 offset 为已持久化的 checkpoint。这样一来如果遇到宕机，只需要重放 checkpoint 之后的操作就可以了。
 
 #### Compaction
 
