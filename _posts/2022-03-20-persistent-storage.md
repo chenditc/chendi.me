@@ -216,12 +216,12 @@ B+ 树在读取时比较简单，只需要根据树的信息找到对应节点�
 3. 可以在 master 机上小范围内解决拜占庭将军问题，大部分的组件不需要关心共识问题。通过与 Master 节点的通信来决定哪些 slave 节点是可用的。
 
 但是主从结构也有部分缺陷：
-1. master 是集群中可能出现单点故障的部分，所以往往对 master 也需要有额外的主备结构进行冗余的保护。
+1. master 是集群中可能出现单点故障的部分，所以往往对 master 也需要有额外的主备结构进行冗余的保护，或者 master 本身也需要是一个集群。这就导致部署会比较复杂。
 2. 读写数据时需要先向 master 请求元信息，可能会增加读写数据时的延迟和资源开销。这一点往往需要客户端使用缓存来进行优化。
 
 ### 哈希分配
 
-[![dynamo.jpg](/img/in-post/storage/dynamo.jpg)](/img/in-post/storage/dynamo.jpg)
+[![consistent_hashing.png](/img/in-post/storage/consistent_hashing.png)](/img/in-post/storage/consistent_hashing.png)
 
 使用哈希进行负载分配，就是当一个写数据的请求进入系统时，根据请求的某些特征，例如数据的 key 值进行哈希。使用数据的哈希值除余节点数后，用余数的值决定应该分配到哪台机器的哪个磁盘上进行储存。这个方法使得集群中所有机器的地位相同，任意一台机器都可以进行哈希操作，也就没有了主从结构中单点故障的风险。
 
@@ -502,7 +502,7 @@ Azure Storage 的架构和 GFS + Bitable 很像，可以将名词一一对应减
 
 #### AWS Dynamo (S3)
 
-[![dynamo.jpg](/img/in-post/storage/dynamo.jpg)](/img/in-post/storage/dynamo.jpg)
+[![consistent_hashing.png](/img/in-post/storage/consistent_hashing.png)](/img/in-post/storage/consistent_hashing.png)
 
 1. 设计目标：
  - 提供写入永不失败的储存系统
