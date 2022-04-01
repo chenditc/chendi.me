@@ -534,6 +534,7 @@ Azure Storage 的架构和 GFS + Bitable 很像，可以将名词一一对应减
 #### Minio
 
 [![minio.jpg](/img/in-post/storage/minio.jpg)](/img/in-post/storage/minio.jpg)
+[![minio2.jpg](/img/in-post/storage/minio2.jpg)](/img/in-post/storage/minio2.jpg)
 
 1. 设计目标：
  - 提供[云原生的对象储存](https://blog.min.io/what-it-really-means-to-be-cloud-native-in-the-storage-world/)
