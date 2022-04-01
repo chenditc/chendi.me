@@ -115,7 +115,9 @@ LSM 树是一种分层的数据结构，用来解决上述的 3 个问题。
 
 [![compaction.jpeg](/img/in-post/storage/compaction.jpeg)](/img/in-post/storage/compaction.jpeg)
 
-为了能修改一个数据，LSM tree 对每个 SSTable 增加一个层级的概念。即先写入磁盘的 sstable 是比较老的，后写入的 sstable 是比较新的，在内存里的是最新的。假如不同层级的 sstable 都包含同一个 key 值，则最新的 sstable 中包含的 key 对应的 value 是最新的。这样一来，如果我们需要修改一个数据，只需要在系统中添加一条新的数据就可以了，在这个分层的定义中，新的数据会使得旧的数据失效。这意味着修改和写入的复杂度都是 O(1)。
+为了能修改一个数据，LSM tree 对每个 SSTable 增加一个层级的概念。即先写入磁盘的 sstable 是比较老的，后写入的 sstable 是比较新的，在内存里的是最新的。例如第一层的 sstable ID 是 1-<timestamp>，从而将层级和时间戳都包含进 ID 里，层级越小越新，同层级的时间戳越小越新。
+
+假如不同的 sstable 都包含同一个 key 值，则最新的 sstable 中包含的 key 对应的 value 是最新的。这样一来，如果我们需要修改一个数据，只需要在系统中添加一条新的数据就可以了，在这个分层的定义中，新的数据会使得旧的数据失效。这意味着修改和写入的复杂度都是 O(1)。
 
 那么如何读取一个数据呢？由于 sstable 是分层的，所以最简单的方法就是从新到旧遍历所有 sstable，直到找到第一个包含这个 key 值的 sstable，并读取它的 value。如果没有找到对应的 key，则表示 key 不在系统中。这意味着读取的时间复杂度是 O(N)，N 是需要访问的 sstable 的数量。
 
