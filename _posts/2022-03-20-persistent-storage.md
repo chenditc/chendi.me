@@ -5,7 +5,7 @@ subtitle:   "分布式存储中常用的数据结构以及取舍"
 date:       2022-03-20 00:15:00
 author:     "Di Chen"
 catalog:    true
-header-img: "img/in-post/weird-bug-1/weird-bug-1-bg.jpg"
+header-img: "img/in-post/storage/storage.jpg"
 tags:
     - tech
     - storage
