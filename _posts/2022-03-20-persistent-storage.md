@@ -530,7 +530,7 @@ Apache Ozone 的架构和 GFS 比较像，可以将名词一一对应减少理�
 |:----------------|:----------------|
 | Hadoop Distributed Data Store| GFS  |
 | A Container     | A File in GFS   |
-| An Block        | A Chunk         |
+| A Block        | A Chunk         |
 | Ratis Log       | Operation Log   | 
 | Raft protocol   | Chubby          |
 
