@@ -2,7 +2,7 @@
 layout:     post
 title:      "Sync Outlook Calendar And Conference Room"
 subtitle:   "将 Outlook 中的日程信息以及会议室信息同步至第三方系统"
-date:       2019-09-08 00:15:00
+date:       2019-09-08 10:15:00
 author:     "Di Chen"
 header-img: "img/in-post/outlook-calendar/outlook-bg.jpg"
 tags:

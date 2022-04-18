@@ -2,7 +2,7 @@
 layout:     post
 title:      "Snappy-python is not fully compatible with hadoop-snappy"
 subtitle:   "Snappy 的 python SDK 与 hadoop snappy 不兼容的问题"
-date:       2018-11-10 21:15:00
+date:       2018-11-11 21:15:00
 author:     "Di Chen"
 header-img: "img/in-post/snappy-python-incompatibility/snappy-bg.png"
 tags:

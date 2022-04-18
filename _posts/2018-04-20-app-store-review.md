@@ -2,7 +2,7 @@
 layout:     post
 title:      "App Store Review Tips"
 subtitle:   "App Store 审核经验总结"
-date:       2018-04-20 00:15:00
+date:       2018-04-20 10:15:00
 author:     "Di Chen"
 header-img: "img/in-post/app-store-review/04-appstore.jpeg"
 tags:

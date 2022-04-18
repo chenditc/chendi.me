@@ -2,7 +2,7 @@
 layout:     post
 title:      "On premise log and metric collection"
 subtitle:   "私有化部署系统的日志和指标收集方案"
-date:       2019-12-03 00:15:00
+date:       2019-12-03 10:15:00
 author:     "Di Chen"
 header-img: "img/in-post/weird-bug-1/weird-bug-1-bg.jpg"
 tags:

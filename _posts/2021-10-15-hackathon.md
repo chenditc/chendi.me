@@ -2,7 +2,7 @@
 layout:     post
 title:      "Microsoft Hackathon 2021"
 subtitle:   "自动识别并举报交通违章"
-date:       2021-10-15 00:15:00
+date:       2021-10-15 10:15:00
 author:     "Di Chen"
 catalog:    true
 header-img: "img/in-post/hackathon/hackathon2.jpg"

@@ -2,7 +2,7 @@
 layout:     post
 title:      "Support OpenGL ES 2 on Unity ARKit Plugin"
 subtitle:   "给 Unity ARKit Plugin 添加 OpenGL ES 2 的支持"
-date:       2017-07-21 00:15:00
+date:       2017-07-21 10:15:00
 author:     "Di Chen"
 header-img: "img/in-post/unity-arkit-plugin-opengl/arkit-bg-1.jpg"
 tags:

@@ -2,7 +2,7 @@
 layout:     post
 title:      "Weird bugs - 2"
 subtitle:   "奇怪的 bug 系列 2 -- Unity IL2CPP 编译时的坑"
-date:       2017-06-09 20:15:00
+date:       2017-06-10 20:15:00
 author:     "Di Chen"
 header-img: "img/in-post/weird-bug-2/unity-bg.jpg"
 tags:

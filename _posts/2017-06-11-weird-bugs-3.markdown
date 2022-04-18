@@ -2,7 +2,7 @@
 layout:     post
 title:      "Weird bugs - 3"
 subtitle:   "奇怪的 bug 系列 3 -- Unity 中的版本控制"
-date:       2017-06-11 00:15:00
+date:       2017-06-11 10:15:00
 author:     "Di Chen"
 header-img: "img/in-post/weird-bug-3/unity-bg.jpg"
 tags:

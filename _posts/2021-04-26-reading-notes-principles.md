@@ -2,7 +2,7 @@
 layout:     post
 title:      "Reading notes: Principles"
 subtitle:   "读书笔记：原则"
-date:       2021-4-26 00:15:00
+date:       2021-4-26 10:15:00
 author:     "Di Chen"
 catalog:    true
 header-img: "img/in-post/reading-notes/ray-dalio.jpg"

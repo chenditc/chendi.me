@@ -2,7 +2,7 @@
 layout:     post
 title:      "How to keep you in my mind"
 subtitle:   "如何把你永远留在我的记忆里"
-date:       2016-11-05 07:15:00
+date:       2016-11-05 10:15:00
 author:     "Di Chen"
 header-img: "img/in-post/life-logger-trail/life-logger-bg.png"
 tags:

@@ -2,7 +2,7 @@
 layout:     post
 title:      "Reading notes: Clean Agile"
 subtitle:   "读书笔记：敏捷整洁之道"
-date:       2020-6-28 00:15:00
+date:       2020-6-28 10:15:00
 author:     "Di Chen"
 catalog:    true
 header-img: "img/in-post/reading-notes/agile-bg.jpg"
