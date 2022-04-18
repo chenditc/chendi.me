@@ -4,7 +4,7 @@ title:      "Tech Team Management Note"
 subtitle:   "技术管理思考笔记"
 date:       2020-4-24 00:15:00
 author:     "Di Chen"
-header-img: "img/in-post/weird-bug-1/weird-bug-1-bg.jpg"
+header-img: "img/in-post/cover/management.jpg"
 tags:
     - Tech
     - Management

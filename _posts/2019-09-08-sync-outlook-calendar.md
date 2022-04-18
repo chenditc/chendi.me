@@ -57,7 +57,7 @@ tags:
 安装：
 `pip3 install exchangelib`
 
-#### 登陆 exchange 账号
+#### 登录 exchange 账号
 
 如果 exchange 服务器使用的是自签名的 https 证书，则需要跳过 https 证书验证环节：
 
@@ -70,7 +70,7 @@ import urllib3
 urllib3.disable_warnings()
 ```
 
-声明登陆服务器所使用的版本号、账号、密码、服务器连接地址：
+声明登录服务器所使用的版本号、账号、密码、服务器连接地址：
 
 ```python
 version = Version(build=Build(15, 0, 12, 34))
@@ -80,7 +80,7 @@ config = Configuration(
             )
 ```
 
-以用户 abc 的身份登陆，IMPERSONATION 字段表示以用之前配置的账号密码，模拟用户 zhangsan@abc.com 登陆：
+以用户 abc 的身份登录，IMPERSONATION 字段表示以用之前配置的账号密码，模拟用户 zhangsan@abc.com 登录：
 
 ```python
 account = Account('zhangsan@abc.com', credentials=credentials, config=config, access_type=IMPERSONATION)
@@ -157,7 +157,7 @@ for item in items:
  - 检查对应会议室在 xx 时间段内是否有被预定
  - 绑定会议室后，系统A内创建会议室日程。
  - 日程保存时，检测是否有 outlook 日程绑定，同时检测 outlook 日程是否仍然存在，如果不存在，则创建outlook日程并绑定会议室，outlook中创建日程的用户与系统登录用户一致。
- - 绑定 outlook 会议室的操作即发送会议邀请给对应的会议室账号，再登陆会议室账号接受邀请即可。
+ - 绑定 outlook 会议室的操作即发送会议邀请给对应的会议室账号，再登录会议室账号接受邀请即可。
 
 #### 系统中修改日程
  - 系统中修改日程属性，如开始时间、结束时间、会议室等。
