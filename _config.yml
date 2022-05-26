@@ -83,8 +83,13 @@ friends: [
     {
         title: "Hux Blog",
         href: "http://huangxuan.me"
-    },{
+    },
+    {
         title: "大白的博客",
         href: "http://baymax.cool"
+    },
+    {
+        title: "卡拉云低代码工具",
+        href: "https://kalacloud.com"
     }
 ]
