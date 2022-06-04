@@ -2,7 +2,7 @@
 layout:     post
 title:      "Weird bugs - 6"
 subtitle:   "奇怪的 bug 系列 6 - Powershell 调用 C# dll 中遇到的问题"
-date:       2022-05-01 10:15:00
+date:       2022-06-01 10:15:00
 author:     "Di Chen"
 catalog:    true
 header-img: "img/in-post/cover/ppt.jpg"
