@@ -9,10 +9,32 @@
     padding-right: 5%;
   }
 }
+
+article {
+  display: unset;
+}
+
 .sidebar-container {
   color: #bfbfbf;
   font-size: 14px;
+  padding-right: 0px;
+  padding-left: 0px;
+  position: sticky;
+  top: 0;
 }
+
+li.h3_nav {
+  margin-left: 15px;
+}
+
+li.h4_nav {
+  margin-left: 30px;
+}
+
+ul.catalog-body {
+    padding-inline-start: 20px;
+}
+
 .sidebar-container h5 {
   color: #808080;
   padding-bottom: 1em;
@@ -679,6 +701,8 @@ form .row:first-child .floating-label-form-group {
     padding: 15px 25px;
   }
 }
+
+
 .pager li > a {
   color: #404040;
 }
