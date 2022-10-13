@@ -48,13 +48,14 @@ tags:
 ### 数据更新方案
 
 Qlib 的 A 股数据集来源经过 3 个阶段：
+
+[![qlib_data_process.jpeg](/img/in-post/quant/qlib_data_process.jpeg)](/img/in-post/quant/qlib_data_process.jpeg)
+
  - 第一个阶段是爬虫将每个股票的日度量价数据采集下来，每个股票作为一个 csv 文件。
  - 第二个阶段是处理这些 csv 文件，使得价格等数据归一化并复权，存成新的 csv 文件。这一步是不可逆的，因为归一化之后所有股票的第一日价格都是 1，我们无法得知原本的股价是多少。
  - 第三个阶段是将归一化后的 csv 文件转成 numpy 格式的 bin 文件。
 
 如果要从数据源进行更新，就需要将获得第一阶段中生成的 csv 文件，然后在原始 csv 上添加新数据后重新进行第二阶段的复权和归一化。由于第一阶段的数据并没有提供，项目自带的更新脚本便行不通了。
-
-[![qlib_data_process.jpeg](/img/in-post/quant/qlib_data_process.jpeg)](/img/in-post/quant/qlib_data_process.jpeg)
 
 我尝试从头爬取所有股票数据，然后对数据重新进行一遍处理。但这时又发现了一些其他问题。
 
