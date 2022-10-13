@@ -77,6 +77,34 @@ Linux 通过一系列 flag 可以控制限制所有资源或者只控制一小�
 
 当一个 Windows 容器中的进程需要调用系统 API 时，例如调用一个 NTFS 的创建文件 API `NtCreateFile` 时，内核会调用 `PsGetCurrentSilo` 去获取调用进程是否是挂载到某个 Silo 里的，从而判断要不要使用 Silo 中的对象作为根对象。同时，部分内核的 API 也可以根据这个判断是否要拒绝某些危险的 API 调用，例如加载内核驱动之类的，从而防止容器逃逸等安全问题。
 
+但是 Windows 的 Silo 并不能使得所有容器共享 Windows 的 System Service，例如 Identity Service，COM System Application 等。Windows 的一些操作系统能力是通过动态加载 dll，然后发送 RPC 请求给 System Service 来实现的。比如 DHCP 网络配置就需要 DHCP service 的运行来配合。在 Windows 容器中，如果需要使用这些 Service，就需要它们运行在容器内，如果运行在容器外，容器内就用不了这些 Service。至于为什么要这样设计，我认为主要是隔离 RPC 请求太难了，因为 RPC 请求的参数是容器内的应用可以修改的，如果容器内的应用模仿其他容器的 Silo ID，从 RPC 的层面不好分辨。
+
+[![process-isolation.png](/img/in-post/windows-container/process-isolation.png)](/img/in-post/windows-container/process-isolation.png)
+
+于是 Windows 容器中除了要运行的应用进程，还会有 System Service 的进程。这就导致了 Windows 容器的启动比较慢，因为它需要先启动系统的一些 Serivce。同时为了把这些 System Service 打包进镜像，镜像也会比较大。我们可以运行一个 Windows 容器，然后用 powershell 的 `Get-Service` 命令查看有哪些 Service:
+
+```Powershell
+PS C:\> get-service
+
+Status   Name               DisplayName
+------   ----               -----------
+Stopped  AppIDSvc           Application Identity
+Stopped  AppMgmt            Application Management
+Stopped  AppReadiness       App Readiness
+Stopped  AppXSvc            AppX Deployment Service (AppXSVC)
+Stopped  BFE                Base Filtering Engine
+Stopped  BITS               Background Intelligent Transfer Ser...
+Stopped  CertPropSvc        Certificate Propagation
+Running  cexecsvc           Container Execution Agent
+Stopped  ClipSVC            Client License Service (ClipSVC)
+Stopped  COMSysApp          COM+ System Application
+Running  CoreMessagingRe... CoreMessaging
+Running  CryptSvc           Cryptographic Services
+Running  DcomLaunch         DCOM Server Process Launcher
+...
+...
+```
+
 ### UnionFS
 
 Union File System 提供了可以将多个文件目录合并的能力，在使用者看来是一个完整的文件系统。它最早是在名为 Knoppix 的 Linux 发行版中被引入的，Knoppix 提供了 LiveCD 的演示功能，可以使用 CD + USB 作为文件系统，CD 作为只读的文件层，USB 作为可读写的文件层。在 Linux 上也迭代多年并又了多个不同的实现，例如 aufs, overlayfs, btrfs 等。
@@ -119,6 +147,8 @@ Windows 还有一个比较特别的，就是注册表。注册表在几乎所有
 ### Windows Hyper-V 容器
 
 Hyper-V 是 2008 年发布的虚拟机管理程序，在实现容器时，Windows 容器团队为了实现更好的隔离性，尝试用 hyper-v 作为隔离模式，实现了一个 Hyper-V 版的容器。
+
+[![hyper-v-isolation.png](/img/in-post/windows-container/hyper-v-isolation.png)](/img/in-post/windows-container/hyper-v-isolation.png)
 
 Hyper-V 版的容器其实本质上是一个轻量虚拟机，每个容器内部有一个完整的 Windows 内核。Hyper-V 容器和 Hyper-V 虚拟机主要区别在于，为了加快容器的启动速度，Windows 提前启动了一个 `Utulity Hyper-V VM`，同时把这个 VM 的内核状态和内存状态给持久化了下来，这样下一次启动 Hyper-V 容器时，就可以跳过 VM 的初始化阶段，直接进入容器的初始化阶段。
 
