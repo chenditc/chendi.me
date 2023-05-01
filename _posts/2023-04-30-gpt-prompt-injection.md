@@ -5,10 +5,32 @@ subtitle:   "Prompt Injection 的危害和影响"
 date:       2023-04-30 10:15:00
 author:     "Di Chen"
 catalog:    true
-header-img: "img/in-post/cover/aihuman.jpg"
+header-img: "img/in-post/cover/aihacker.jpg"
 tags:
     - AI
 ---
+
+- [前言](#前言)
+- [什么是 Prompt Injection Attack](#什么是-prompt-injection-attack)
+- [Prompt Injection 可能造成的破坏](#prompt-injection-可能造成的破坏)
+  - [被黑客用来白嫖 API](#被黑客用来白嫖-api)
+  - [泄漏精心调试的 Prompt](#泄漏精心调试的-prompt)
+  - [引导模型说出不合适的话](#引导模型说出不合适的话)
+  - [LLM 版的 SEO](#llm-版的-seo)
+  - [通过 AutoGPT 等平台注入其他应用](#通过-autogpt-等平台注入其他应用)
+- [常见的 Prompt Injection 思路](#常见的-prompt-injection-思路)
+  - [移除前置规则与框架](#移除前置规则与框架)
+  - [更改语义环境](#更改语义环境)
+    - [切换为翻译语义](#切换为翻译语义)
+    - [普通文本指代敏感信息](#普通文本指代敏感信息)
+    - [用总结、复述类的任务包裹前置语义](#用总结复述类的任务包裹前置语义)
+- [Prompt Injection 的防御思路](#prompt-injection-的防御思路)
+  - [从工程角度解决](#从工程角度解决)
+  - [从 Prompt 角度解决](#从-prompt-角度解决)
+    - [Prompt 中限制用户的合法输入](#prompt-中限制用户的合法输入)
+    - [Prompt 中限制 LLM 的合法输出](#prompt-中限制-llm-的合法输出)
+  - [从模型角度解决 - 检测注意力权重](#从模型角度解决---检测注意力权重)
+- [商业影响](#商业影响)
 
 ## 前言
 
