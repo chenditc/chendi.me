@@ -18,6 +18,6 @@ jobs:
         SECRET_KEY: ${{ secrets.CosUploadSecretKey }}
         BUCKET: blog-1254083249
         REGION: ap-shanghai
-      run: /tmp/coscli config add -a blog -b $BUCKET -r $ap-shanghai -i $SECRET_ID -k $SECRET_KEY --init-skip
+      run: /tmp/coscli config add -a blog -b $BUCKET -r $REGION -i $SECRET_ID -k $SECRET_KEY --init-skip
     - name: Upload
       run: /tmp/coscli cp -r ${{ github.workspace }}/_site/ cos://blog/ --exclude "./.git/*"
