@@ -11,13 +11,13 @@ jobs:
         -v ${{ github.workspace }}:/srv/jekyll -v ${{ github.workspace }}/_site:/srv/jekyll/_site \
         jekyll/builder:latest /bin/bash -c "chmod -R 777 /srv/jekyll && jekyll build --future"
     - name: Install coscmd
-      run: git clone https://github.com/tencentyun/coscmd.git && cd coscmd && sudo python setup.py install
+      run: wget https://cosbrowser.cloud.tencent.com/software/coscli/coscli-linux-amd64 -o /tmp/coscli && chmod a+x /tmp/coscli
     - name: Configure coscmd
       env:
         SECRET_ID: ${{ secrets.CosUploadSecretId }}
         SECRET_KEY: ${{ secrets.CosUploadSecretKey }}
         BUCKET: blog-1254083249
         REGION: ap-shanghai
-      run: coscmd config -a $SECRET_ID -s $SECRET_KEY -b $BUCKET -r $REGION
+      run: /tmp/coscli config add -a blog -b $BUCKET -r $ap-shanghai -i $SECRET_ID -k $SECRET_KEY --init-skip
     - name: Upload
-      run: coscmd upload -rs --delete -f ${{ github.workspace }}/_site/ / --ignore "./.git/*"
+      run: /tmp/coscli cp -r ${{ github.workspace }}/_site/ cos://blog/ --exclude "./.git/*"
