@@ -11,7 +11,7 @@ jobs:
         -v ${{ github.workspace }}:/srv/jekyll -v ${{ github.workspace }}/_site:/srv/jekyll/_site \
         jekyll/builder:latest /bin/bash -c "chmod -R 777 /srv/jekyll && jekyll build --future"
     - name: Install coscmd
-      run: sudo pip install coscmd
+      run: git clone https://github.com/tencentyun/coscmd.git && cd coscmd && python setup.py install
     - name: Configure coscmd
       env:
         SECRET_ID: ${{ secrets.CosUploadSecretId }}
