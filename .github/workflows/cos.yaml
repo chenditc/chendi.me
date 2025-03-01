@@ -23,4 +23,4 @@ jobs:
       env:
         COS_SECRET_ID: ${{ secrets.CosUploadSecretId }}
         COS_SECRET_KEY: ${{ secrets.CosUploadSecretKey }}
-      run: /tmp/coscli cp -r ${{ github.workspace }}/_site/ cos://blog/ --exclude "./.git/*"
+      run: /tmp/coscli cp  -i $COS_SECRET_ID -k $COS_SECRET_KEY -r ${{ github.workspace }}/_site/ cos://blog/ --exclude "./.git/*"
