@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>日历页面及工资计算器</title>
+  <!-- 引入 Bootstrap 5 CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    body {
+      padding-top: 20px;
+    }
+    .container-custom {
+      max-width: 800px;
+    }
+    .calendar-table td, .calendar-table th {
+      text-align: center;
+      vertical-align: middle;
+    }
+    .calendar-table input[type="checkbox"] {
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container container-custom">
+    <!-- 月份切换与批量选择 -->
+    <div class="mb-4 text-center">
+      <button id="prevMonth" class="btn btn-primary me-2">上一月</button>
+      <span id="currentMonthYear" class="h4"></span>
+      <button id="nextMonth" class="btn btn-primary ms-2">下一月</button>
+    </div>
+    <div class="mb-4 text-center">
+      <button id="selectAll" class="btn btn-secondary me-2">全选当前月</button>
+      <button id="deselectAll" class="btn btn-secondary">取消当前月</button>
+    </div>
+    
+    <!-- 日历显示区 -->
+    <div id="calendar" class="mb-4"></div>
+    
+    <!-- 已选日期列表 -->
+    <div id="selectedDates" class="mb-4"></div>
+    
+    <!-- 输入项：月薪和每月应上工天数 -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <label for="monthlySalary" class="form-label">月薪：</label>
+        <input type="number" id="monthlySalary" class="form-control" value="8000" min="0">
+      </div>
+      <div class="col-md-6">
+        <label for="workDays" class="form-label">每月应上工天数：</label>
+        <input type="number" id="workDays" class="form-control" value="26" min="0">
+      </div>
+    </div>
+    
+    <!-- 工资计算器显示区 -->
+    <div id="salaryCalculator" class="alert alert-info"></div>
+  </div>
+
+  <script>
+    // 当前显示的年份和月份（0-11）
+    let currentDate = new Date();
+    let currentYear = currentDate.getFullYear();
+    let currentMonth = currentDate.getMonth();
+
+    // 用于存储所有勾选的日期（格式：YYYY-MM-DD）
+    let selectedDates = new Set();
+    // 定义星期的中文名称
+    const weekdayNames = ["日", "一", "二", "三", "四", "五", "六"];
+
+    // 生成日历表格
+    function generateCalendar(year, month) {
+      // 显示当前的年月
+      const currentMonthYearSpan = document.getElementById('currentMonthYear');
+      currentMonthYearSpan.textContent = year + '年 ' + (month + 1) + '月';
+
+      let calendarDiv = document.getElementById('calendar');
+      let firstDay = new Date(year, month, 1);
+      let startingDay = firstDay.getDay(); // 0代表星期日
+      let daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      let html = '<table class="table table-bordered calendar-table"><thead><tr>';
+      // 输出星期标题
+      for (let i = 0; i < 7; i++) {
+        html += '<th>' + (i === 0 ? '日' : (i === 6 ? '六' : i)) + '</th>';
+      }
+      html += '</tr></thead><tbody>';
+
+      let date = 1;
+      // 最多6行日历
+      for (let i = 0; i < 6; i++) {
+        html += '<tr>';
+        for (let j = 0; j < 7; j++) {
+          if (i === 0 && j < startingDay) {
+            html += '<td></td>';
+          } else if (date > daysInMonth) {
+            html += '<td></td>';
+          } else {
+            let monthStr = (month + 1).toString().padStart(2, '0');
+            let dateStr = date.toString().padStart(2, '0');
+            let fullDateStr = year + '-' + monthStr + '-' + dateStr;
+            let checked = selectedDates.has(fullDateStr) ? 'checked' : '';
+            html += '<td>';
+            html += '<div class="form-check">';
+            html += '<input class="form-check-input" type="checkbox" id="date-' + fullDateStr + '" ' + checked + ' data-date="' + fullDateStr + '">';
+            html += '<label class="form-check-label" for="date-' + fullDateStr + '">' + date + '</label>';
+            html += '</div>';
+            html += '</td>';
+            date++;
+          }
+        }
+        html += '</tr>';
+        if (date > daysInMonth) break;
+      }
+      html += '</tbody></table>';
+      calendarDiv.innerHTML = html;
+
+      // 为所有复选框绑定事件监听
+      let checkboxes = calendarDiv.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+          let d = this.getAttribute('data-date');
+          if (this.checked) {
+            selectedDates.add(d);
+          } else {
+            selectedDates.delete(d);
+          }
+          updateSelectedList();
+        });
+      });
+    }
+
+    // 更新已选日期列表及工资计算器
+    function updateSelectedList() {
+      let selectedDiv = document.getElementById('selectedDates');
+      let selectedArray = Array.from(selectedDates);
+      selectedArray.sort();
+      let html = '<h4>已选日期</h4>';
+      html += '<ul class="list-group">';
+      selectedArray.forEach(function(dateStr) {
+        let dateObj = new Date(dateStr);
+        let weekday = weekdayNames[dateObj.getDay()];
+        html += '<li class="list-group-item">' + dateStr + ' 星期' + weekday + '</li>';
+      });
+      html += '</ul>';
+      html += '<p class="mt-2">总共选择：' + selectedArray.length + ' 天</p>';
+      selectedDiv.innerHTML = html;
+
+      // 计算工资
+      let monthlySalary = parseFloat(document.getElementById('monthlySalary').value) || 0;
+      let workDays = parseFloat(document.getElementById('workDays').value) || 0;
+      let x = selectedArray.length;
+      let y = workDays === 0 ? 0 : (x / workDays * monthlySalary);
+      
+      let salaryHtml = `<h4>月应结工资计算器</h4>
+                        <p>${x} / ${workDays} * ${monthlySalary} = ${y.toFixed(2)}</p>`;
+      document.getElementById('salaryCalculator').innerHTML = salaryHtml;
+    }
+
+    // 批量选择当前月：选中当前月所有日期
+    function selectAllCurrentMonth() {
+      let firstDay = new Date(currentYear, currentMonth, 1);
+      let daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      for (let d = 1; d <= daysInMonth; d++) {
+        let monthStr = (currentMonth + 1).toString().padStart(2, '0');
+        let dateStr = d.toString().padStart(2, '0');
+        let fullDateStr = currentYear + '-' + monthStr + '-' + dateStr;
+        selectedDates.add(fullDateStr);
+      }
+      // 重新生成日历，使当前月的复选框全部被选中
+      generateCalendar(currentYear, currentMonth);
+      updateSelectedList();
+    }
+
+    // 批量取消当前月所有日期
+    function deselectAllCurrentMonth() {
+      let firstDay = new Date(currentYear, currentMonth, 1);
+      let daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      for (let d = 1; d <= daysInMonth; d++) {
+        let monthStr = (currentMonth + 1).toString().padStart(2, '0');
+        let dateStr = d.toString().padStart(2, '0');
+        let fullDateStr = currentYear + '-' + monthStr + '-' + dateStr;
+        selectedDates.delete(fullDateStr);
+      }
+      generateCalendar(currentYear, currentMonth);
+      updateSelectedList();
+    }
+
+    // 月份切换事件
+    document.getElementById('prevMonth').addEventListener('click', function() {
+      currentMonth--;
+      if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      generateCalendar(currentYear, currentMonth);
+      updateSelectedList();
+    });
+
+    document.getElementById('nextMonth').addEventListener('click', function() {
+      currentMonth++;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+      generateCalendar(currentYear, currentMonth);
+      updateSelectedList();
+    });
+
+    // 批量选择按钮事件
+    document.getElementById('selectAll').addEventListener('click', selectAllCurrentMonth);
+    document.getElementById('deselectAll').addEventListener('click', deselectAllCurrentMonth);
+
+    // 当月薪或工作天数变化时更新工资计算器
+    document.getElementById('monthlySalary').addEventListener('input', updateSelectedList);
+    document.getElementById('workDays').addEventListener('input', updateSelectedList);
+
+    // 初始化日历和显示
+    generateCalendar(currentYear, currentMonth);
+    updateSelectedList();
+  </script>
+
+  <!-- 引入 Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
