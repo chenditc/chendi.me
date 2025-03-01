@@ -38,7 +38,7 @@
     <div id="calendar" class="mb-4"></div>
     
     <!-- 已选日期列表 -->
-    <div id="selectedDates" class="mb-4"></div>
+    <div id="selectedDates" class="mb-4" hidden="true" ></div>
     
     <!-- 输入项：月薪和每月应上工天数 -->
     <div class="row mb-4">
@@ -67,7 +67,7 @@
     // 定义星期的中文名称
     const weekdayNames = ["日", "一", "二", "三", "四", "五", "六"];
 
-    // 生成日历表格
+    // 生成日历表格，包含 header（带复选框）和日期格
     function generateCalendar(year, month) {
       // 显示当前的年月
       const currentMonthYearSpan = document.getElementById('currentMonthYear');
@@ -78,10 +78,15 @@
       let startingDay = firstDay.getDay(); // 0代表星期日
       let daysInMonth = new Date(year, month + 1, 0).getDate();
 
+      // 构建表格头部，每一列增加 header 复选框
       let html = '<table class="table table-bordered calendar-table"><thead><tr>';
-      // 输出星期标题
       for (let i = 0; i < 7; i++) {
-        html += '<th>' + (i === 0 ? '日' : (i === 6 ? '六' : i)) + '</th>';
+        html += `<th>
+                   <div class="form-check">
+                     <input class="form-check-input header-checkbox" type="checkbox" id="header-col-${i}" data-col="${i}">
+                     <label class="form-check-label" for="header-col-${i}">${weekdayNames[i]}</label>
+                   </div>
+                 </th>`;
       }
       html += '</tr></thead><tbody>';
 
@@ -100,10 +105,10 @@
             let fullDateStr = year + '-' + monthStr + '-' + dateStr;
             let checked = selectedDates.has(fullDateStr) ? 'checked' : '';
             html += '<td>';
-            html += '<div class="form-check">';
-            html += '<input class="form-check-input" type="checkbox" id="date-' + fullDateStr + '" ' + checked + ' data-date="' + fullDateStr + '">';
-            html += '<label class="form-check-label" for="date-' + fullDateStr + '">' + date + '</label>';
-            html += '</div>';
+            html += `<div class="form-check">
+                       <input class="form-check-input day-checkbox" type="checkbox" id="date-${fullDateStr}" ${checked} data-date="${fullDateStr}">
+                       <label class="form-check-label" for="date-${fullDateStr}">${date}</label>
+                     </div>`;
             html += '</td>';
             date++;
           }
@@ -114,9 +119,9 @@
       html += '</tbody></table>';
       calendarDiv.innerHTML = html;
 
-      // 为所有复选框绑定事件监听
-      let checkboxes = calendarDiv.querySelectorAll('input[type="checkbox"]');
-      checkboxes.forEach(function(checkbox) {
+      // 为所有日期复选框绑定事件监听
+      let dayCheckboxes = calendarDiv.querySelectorAll('input.day-checkbox');
+      dayCheckboxes.forEach(function(checkbox) {
         checkbox.addEventListener('change', function() {
           let d = this.getAttribute('data-date');
           if (this.checked) {
@@ -127,9 +132,37 @@
           updateSelectedList();
         });
       });
+
+      // 为 header 复选框绑定事件：切换整列
+      let headerCheckboxes = calendarDiv.querySelectorAll('input.header-checkbox');
+      headerCheckboxes.forEach(function(headerCheckbox) {
+        headerCheckbox.addEventListener('change', function() {
+          let colIndex = parseInt(this.getAttribute('data-col'));
+          let checked = this.checked;
+          // 遍历所有行，处理对应列的复选框
+          let rows = calendarDiv.querySelectorAll('tbody tr');
+          rows.forEach(function(row) {
+            let cells = row.querySelectorAll('td');
+            if (cells.length > colIndex) {
+              let cell = cells[colIndex];
+              let checkbox = cell.querySelector('input.day-checkbox');
+              if (checkbox) {
+                checkbox.checked = checked;
+                let d = checkbox.getAttribute('data-date');
+                if (checked) {
+                  selectedDates.add(d);
+                } else {
+                  selectedDates.delete(d);
+                }
+              }
+            }
+          });
+          updateSelectedList();
+        });
+      });
     }
 
-    // 更新已选日期列表及工资计算器
+    // 更新已选日期列表和工资计算器
     function updateSelectedList() {
       let selectedDiv = document.getElementById('selectedDates');
       let selectedArray = Array.from(selectedDates);
@@ -158,7 +191,6 @@
 
     // 批量选择当前月：选中当前月所有日期
     function selectAllCurrentMonth() {
-      let firstDay = new Date(currentYear, currentMonth, 1);
       let daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
       for (let d = 1; d <= daysInMonth; d++) {
         let monthStr = (currentMonth + 1).toString().padStart(2, '0');
@@ -166,14 +198,12 @@
         let fullDateStr = currentYear + '-' + monthStr + '-' + dateStr;
         selectedDates.add(fullDateStr);
       }
-      // 重新生成日历，使当前月的复选框全部被选中
       generateCalendar(currentYear, currentMonth);
       updateSelectedList();
     }
 
     // 批量取消当前月所有日期
     function deselectAllCurrentMonth() {
-      let firstDay = new Date(currentYear, currentMonth, 1);
       let daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
       for (let d = 1; d <= daysInMonth; d++) {
         let monthStr = (currentMonth + 1).toString().padStart(2, '0');
