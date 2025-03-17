@@ -245,7 +245,8 @@
 
 ![svgviewer-output (26)](https://github.com/user-attachments/assets/711c4069-dbcf-4c72-a9cc-6768e4069487)
 
-![svgviewer-output (23)](https://github.com/user-attachments/assets/720ddea2-7494-4f25-a260-8cfc2a5a0ff3)
+![svgviewer-output (27)](https://github.com/user-attachments/assets/345a6272-795c-4dee-a193-159426cc1e59)
+
   
 #### **幻灯片8: 互动环节 - 思考讨论**
   - 引导问题："为什么某些Agent应用体验不佳？"
