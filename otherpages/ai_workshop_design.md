@@ -1,4 +1,4 @@
-![svgviewer-output (10)](https://github.com/user-attachments/assets/ebdb44e5-85cc-4844-a057-b32386ba5fbf)# 大模型 Agent 实战工作坊大纲
+# 大模型 Agent 实战工作坊大纲
 
 - [大模型 Agent 实战工作坊大纲](#-agent-)
    * [工作坊目标](#)
