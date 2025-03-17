@@ -243,8 +243,9 @@
   谢谢各位的分享！我们看到了很多有趣的例子，从智能家居助手到客服机器人，从邮件分类器到个人健康顾问。这些应用都展示了Agent技术的潜力，同时也暴露了当前技术的一些局限。
 </details>
 
-![svgviewer-output (23)](https://github.com/user-attachments/assets/720ddea2-7494-4f25-a260-8cfc2a5a0ff3)
+![svgviewer-output (26)](https://github.com/user-attachments/assets/711c4069-dbcf-4c72-a9cc-6768e4069487)
 
+![svgviewer-output (23)](https://github.com/user-attachments/assets/720ddea2-7494-4f25-a260-8cfc2a5a0ff3)
   
 #### **幻灯片8: 互动环节 - 思考讨论**
   - 引导问题："为什么某些Agent应用体验不佳？"
