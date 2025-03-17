@@ -161,6 +161,11 @@
   - 错误累积效应明显：每步95%的准确率，连续5步后整体准确率仅77%
   - 规划与执行分离的难题：模型可能规划得很好，但执行时遇到意外情况难以应对
 </details>
+
+![svgviewer-output (17)](https://github.com/user-attachments/assets/05042334-052d-4980-bb5b-13bef1b25962)
+
+![svgviewer-output (16)](https://github.com/user-attachments/assets/ddfa94c1-230e-4cac-9759-2f80c66efb3d)
+
   
 #### **幻灯片5: Agent的交互形式**
   - 对话式交互：类似聊天界面的交互方式
@@ -186,6 +191,10 @@
   不同的交互形式适合不同的应用场景，选择合适的交互形式对用户体验至关重要。
 </details>
 
+![svgviewer-output (20)](https://github.com/user-attachments/assets/98410ce2-7b1c-4072-86b8-0b6a32750f8b)
+
+![svgviewer-output (21)](https://github.com/user-attachments/assets/e5717df5-a1fc-413e-b9e8-1c9a1a25647f)
+
 #### **幻灯片6: 案例分析：Microsoft Copilot的局限性**
   - 背景：微软推出的AI助手，承诺能完成复杂任务
   - 缺点：复杂指令的遵循程度不高，搜索的召回率不高，流程不透明
@@ -199,7 +208,7 @@
 
   主要缺点包括：
   - 复杂指令的遵循程度不高，特别是多步骤任务
-  - 搜索的召回率不高，有时无法找到用户需要的信息
+  - 搜索的召回率不高，例如Email、Sharepoint 的搜索词或者搜索方式不是最优的，有时无法找到用户需要的信息
   - 流程不透明，用户难以了解AI是如何得出结论的
 
   这些问题的根本原因在于：
@@ -207,6 +216,8 @@
   - 缺乏有效的错误恢复机制，一旦某一步出错，整个流程就会失败
   - 流程和结果难以校验，用户无法确认AI的输出是否正确
 </details>
+
+![svgviewer-output (22)](https://github.com/user-attachments/assets/be24db47-7f74-4473-9643-6abec94998cc)
 
   
 #### **幻灯片7: 互动环节 - 案例讨论**
@@ -230,6 +241,9 @@
 
   谢谢各位的分享！我们看到了很多有趣的例子，从智能家居助手到客服机器人，从邮件分类器到个人健康顾问。这些应用都展示了Agent技术的潜力，同时也暴露了当前技术的一些局限。
 </details>
+
+![svgviewer-output (23)](https://github.com/user-attachments/assets/720ddea2-7494-4f25-a260-8cfc2a5a0ff3)
+
   
 #### **幻灯片8: 互动环节 - 思考讨论**
   - 引导问题："为什么某些Agent应用体验不佳？"
