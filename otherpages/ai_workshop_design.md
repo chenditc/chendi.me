@@ -1,4 +1,4 @@
-# 大模型 Agent 实战工作坊大纲
+![svgviewer-output (10)](https://github.com/user-attachments/assets/ebdb44e5-85cc-4844-a057-b32386ba5fbf)# 大模型 Agent 实战工作坊大纲
 
 - [大模型 Agent 实战工作坊大纲](#-agent-)
    * [工作坊目标](#)
@@ -76,7 +76,9 @@
 </details>
 
 ![Image](https://github.com/user-attachments/assets/8ab5bac3-b4a7-4234-a7fb-ba293d52f0ff)
-  
+
+![svgviewer-output (13)](https://github.com/user-attachments/assets/ae1323a0-4e16-4182-a676-514f93401ca9)
+
 #### **幻灯片2: Agent的核心组件**
   - 感知(Perception)：获取和理解环境信息
   - 决策(Decision)：基于信息做出判断和规划（可选）
@@ -100,6 +102,9 @@
 
   了解这些组件有助于我们设计更有效的Agent系统。
 </details>
+![svgviewer-output (14)](https://github.com/user-attachments/assets/b8233965-bb78-4d47-a290-ec00137813e0)
+
+![svgviewer-output (11)](https://github.com/user-attachments/assets/f0611949-1e37-4147-8abb-7f3abdc933d8)
 
 #### **幻灯片3: Workflow型Agent vs 自主型Agent**
   - Workflow型Agent：预定义的执行路径，步骤清晰，类似流水线
@@ -126,6 +131,10 @@
 
   自主型Agent的例子包括复杂问题求解助手或创意内容生成系统。
 </details>
+
+![svgviewer-output (15)](https://github.com/user-attachments/assets/706e7b23-943d-4e85-bd30-280914af2f22)
+
+![svgviewer-output (12)](https://github.com/user-attachments/assets/8aa7b0c8-cdeb-4af6-8333-eb0997dd8215)
   
 #### **幻灯片4: 当前落地现状分析**
   - Workflow更易落地的原因：
