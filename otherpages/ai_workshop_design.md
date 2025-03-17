@@ -217,9 +217,10 @@
   - 流程和结果难以校验，用户无法确认AI的输出是否正确
 </details>
 
+![svgviewer-output (25)](https://github.com/user-attachments/assets/81c04d9c-0791-48ad-b6a4-00019cae19e8)
+
 ![svgviewer-output (22)](https://github.com/user-attachments/assets/be24db47-7f74-4473-9643-6abec94998cc)
 
-  
 #### **幻灯片7: 互动环节 - 案例讨论**
   - 分组讨论（4-5人一组）：
     - 识别日常生活中已存在的Agent应用
