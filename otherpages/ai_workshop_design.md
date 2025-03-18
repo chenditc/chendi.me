@@ -393,6 +393,9 @@
 相比之下，战略规划需要综合考量多方面因素，判断标准高度主观，且错误可能导致严重后果。
 </details>
 
+![svgviewer-output (7)](https://github.com/user-attachments/assets/d67fe2f8-f1c7-44d5-9326-96a7eb874771)
+
+
 #### **幻灯片4: 常见应用领域与案例**
   - 信息处理：
     - 文档摘要与关键信息提取
