@@ -321,6 +321,10 @@
 
 记住，好的Agent应用不一定是最复杂的，而是能真正节省时间和精力的。
 </details>
+
+![automation_perspective_structured](https://github.com/user-attachments/assets/d40d44fd-4ad6-4f93-be4b-3062ed35d332)
+
+![automation_perspective_english](https://github.com/user-attachments/assets/e4f0e750-92c0-4c2a-abc0-2dd363228470)
   
 #### **幻灯片2: 任务拆解方法论**
   - 输入-处理-输出模型详解
@@ -352,6 +356,11 @@
 
 通过这种拆解，我们可以清晰地看到任务的各个组成部分，为后续的Agent设计奠定基础。
 </details>
+
+![task_decomposition_methodology_improved](https://github.com/user-attachments/assets/e740d97f-1351-4b33-ad3a-f832186f2bc3)
+
+![task_decomposition_methodology_english (3)](https://github.com/user-attachments/assets/900b52a8-f2b5-4c7f-aa80-af1c2c86b197)
+
 
 #### **幻灯片3: 适合当前技术条件下实现的任务特征**
   - 理想的Agent任务特征：
