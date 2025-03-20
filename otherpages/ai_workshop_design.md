@@ -89,6 +89,8 @@
   值得注意的是，只要满足这两个特点中的任何一个，往往就会被认为是Agent。在实际应用中，不同类型的Agent包括客服Agent、研究Agent等，都是为了解决特定领域的问题而设计的。
 </details>
 
+![Picture1](https://github.com/user-attachments/assets/77b3eec0-5a47-4232-8eea-4fd87b72f718)
+
 #### 幻灯片2: Agent的核心组件
   - 感知(Perception)：获取和理解环境信息
     - 往往由人输入，或者由 Agent 调用工具完成
@@ -115,6 +117,8 @@
   需要注意的是，决策和执行是可选的。如果模型只处理文本，不需要与外部系统交互，那么可能不需要明确的决策和执行步骤。比如写小说的 Agent
 
 </details>
+
+![Picture2](https://github.com/user-attachments/assets/f6d76d01-5c81-4c0a-b56e-561ab145c959)
 
 #### 幻灯片3: Workflow型Agent vs 自主型Agent
   - Workflow型Agent：预定义的执行路径，步骤清晰，类似流水线
@@ -145,6 +149,8 @@
 
     两者最关键的区别在于执行路径的决定权：Workflow型Agent的路径是开发者提前规划好的，而自主型Agent的路径是由大模型在运行时临时生成的。另外，自主型Agent通常包含反馈"环"结构，能够根据执行结果调整后续行动，而Workflow型Agent一般是线性执行的。
   </details>
+
+![Picture3](https://github.com/user-attachments/assets/07a3386e-c440-4e43-a889-1d9983956282)
 
 #### 幻灯片4: 当前落地现状分析
   - 落地的真正含义：
@@ -182,9 +188,7 @@
   - 还有一个关键限制是模型自我纠错能力有限。我们观察到，大模型修复自身错误的能力是受限的。例如，如果模型第一次生成的SQL语句有错误，它在后续步骤中未必能自己正确修复。这是因为模型识别错误的能力不是100%，所以修复错误的能力必然更低。即使我们引入反馈机制，也不能从根本上解决这个问题，只能在某种程度上缓解它。
 </details>
 
-![svgviewer-output (17)](https://github.com/user-attachments/assets/05042334-052d-4980-bb5b-13bef1b25962)
-
-![svgviewer-output (16)](https://github.com/user-attachments/assets/ddfa94c1-230e-4cac-9759-2f80c66efb3d)
+![Picture4](https://github.com/user-attachments/assets/d96a44ff-6dc8-4432-aa57-bc24da052078)
 
 #### 幻灯片5: Agent的交互形式
   - 对话式交互：类似聊天界面的交互方式
@@ -209,6 +213,9 @@
 
   不同的交互形式适合不同的应用场景，选择合适的交互形式对用户体验至关重要。
 </details>
+
+![Picture5 png](https://github.com/user-attachments/assets/b3be1ed8-d02f-49fe-bd34-7e15f8030638)
+
 
 #### 幻灯片5.5: 人机协作式Agent设计
 
@@ -245,9 +252,8 @@
   在实际应用中，最佳实践是明确划分AI与人类的决策边界，设计友好且不造成决策疲劳的确认界面，并通过持续的用户反馈优化交互点的设计。记住，好的Agent设计不是最大化自动化，而是找到人机协作的最佳平衡点。
 </details>
 
-![svgviewer-output (20)](https://github.com/user-attachments/assets/98410ce2-7b1c-4072-86b8-0b6a32750f8b)
+![Picture6 png](https://github.com/user-attachments/assets/7bcd4d87-44f1-4f1f-9603-8fc1e2b2b36a)
 
-![svgviewer-output (21)](https://github.com/user-attachments/assets/e5717df5-a1fc-413e-b9e8-1c9a1a25647f)
 
 #### 幻灯片6: 案例分析：Microsoft Copilot的优缺点
   - 背景：微软推出的AI助手，承诺能完成复杂任务
@@ -279,6 +285,8 @@
   - 缺乏有效的错误恢复机制，一旦某一步出错，整个流程就会失败
   - 流程和结果难以校验，用户无法确认AI的输出是否正确
 </details>
+
+![Picture7](https://github.com/user-attachments/assets/81eeeab9-07e7-4b7a-8deb-f847b85d0d05)
 
 #### 幻灯片7: 互动环节 - 案例讨论
   - 分组讨论（4-5人一组）：
