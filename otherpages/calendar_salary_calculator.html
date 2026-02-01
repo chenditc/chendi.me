@@ -3,8 +3,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>日历工资计算（Web 单文件版）</title>
-    <meta name="description" content="无后端：点选上工日期，自动计入法定节假日带薪与加班增量，计算预估工资，并可保存工资单图片。" />
+    <title>日历工资计算</title>
+    <meta
+      name="description"
+      content="点选上工日期，自动计入法定节假日带薪与加班增量，计算预估工资，并可保存工资单图片。"
+    />
     <style>
       :root {
         --bg: #f6f7fb;
@@ -373,6 +376,87 @@
       .toast.show {
         opacity: 1;
       }
+
+      /* Snapshot modal (mobile-friendly) */
+      .modal-overlay {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.55);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding: 16px;
+        z-index: 9998;
+      }
+
+      .modal-sheet {
+        width: min(720px, 100%);
+        max-height: calc(100vh - 32px);
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 12px 10px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      }
+
+      .modal-title {
+        font-weight: 850;
+        font-size: 15px;
+        color: #111;
+      }
+
+      .modal-body {
+        padding: 12px;
+        overflow: auto;
+      }
+
+      .modal-tip {
+        font-size: 13px;
+        color: #333;
+        background: #f7f8fb;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 12px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+      }
+
+      .snapshot-img {
+        width: 100%;
+        border-radius: 14px;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        background: #f6f7fb;
+      }
+
+      .modal-actions {
+        display: flex;
+        gap: 10px;
+        padding: 12px;
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+        background: #fff;
+      }
+
+      .modal-actions .btn,
+      .modal-actions a.btn {
+        flex: 1;
+        text-align: center;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
     </style>
   </head>
   <body>
@@ -384,9 +468,9 @@
       </div>
 
       <div class="actions">
-        <button id="btnSelectAllMonth" class="btn secondary small" type="button">全选本月</button>
-        <button id="btnDeselectAllMonth" class="btn secondary small" type="button">取消本月</button>
-        <button id="btnClearStorage" class="btn danger small" type="button">重新选择</button>
+        <button id="btnSelectAllMonth" class="btn secondary small" type="button">全选当月</button>
+        <button id="btnDeselectAllMonth" class="btn secondary small" type="button">清空当月</button>
+        <button id="btnClearStorage" class="btn danger small" type="button">重置全部</button>
       </div>
 
       <div class="calendar" id="calendarArea">
@@ -400,17 +484,17 @@
           <input id="monthlySalaryInput" class="input" inputmode="numeric" type="number" min="0" step="1" />
         </div>
         <div class="row">
-          <div class="label">应出勤(天)</div>
+          <div class="label">应出勤天数</div>
           <input id="workDaysInput" class="input" inputmode="numeric" type="number" min="0" max="31" step="1" />
         </div>
       </div>
 
       <div class="card">
         <div class="result-top">
-          <div class="result-title">计算结果</div>
+          <div class="result-title">预估工资</div>
           <div class="result-right">
             <div class="result-amount" id="salaryAmount">￥0.00</div>
-            <button id="btnSaveSnapshot" class="btn primary small" type="button">保存工资截图</button>
+            <button id="btnSaveSnapshot" class="btn primary small" type="button">保存图片</button>
           </div>
         </div>
         <span class="muted result-breakdown" id="resultBreakdown"></span>
@@ -419,17 +503,34 @@
       </div>
 
       <div class="selectedbar">
-        <button id="btnToggleSelectedList" class="btn ghost small" type="button">显示明细</button>
+        <button id="btnToggleSelectedList" class="btn ghost small" type="button">查看明细</button>
       </div>
 
       <div class="card" id="selectedListCard" hidden>
         <div class="selected-list" id="selectedList"></div>
       </div>
 
-      <div class="status muted" id="storageStatus">未保存</div>
+      <div class="status muted" id="storageStatus">本地自动保存已开启</div>
     </div>
 
     <div class="toast" id="toast"></div>
+
+    <div class="modal-overlay" id="snapshotModal" hidden>
+      <div class="modal-sheet" role="dialog" aria-modal="true" aria-label="工资单图片预览">
+        <div class="modal-head">
+          <div class="modal-title" id="snapshotModalTitle">工资单图片</div>
+          <button id="btnSnapshotClose" class="btn ghost small" type="button">完成</button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-tip" id="snapshotModalTip"></div>
+          <img id="snapshotPreview" class="snapshot-img" alt="工资单图片" />
+        </div>
+        <div class="modal-actions">
+          <a id="snapshotDownloadLink" class="btn primary" href="#" download>下载图片</a>
+          <button id="btnSnapshotOpenTab" class="btn secondary" type="button">在新标签页打开</button>
+        </div>
+      </div>
+    </div>
 
     <script>
       ;(() => {
@@ -750,6 +851,13 @@
           btnClearStorage: $('btnClearStorage'),
           btnToggleSelectedList: $('btnToggleSelectedList'),
           btnSaveSnapshot: $('btnSaveSnapshot'),
+          snapshotModal: $('snapshotModal'),
+          snapshotModalTitle: $('snapshotModalTitle'),
+          snapshotModalTip: $('snapshotModalTip'),
+          snapshotPreview: $('snapshotPreview'),
+          snapshotDownloadLink: $('snapshotDownloadLink'),
+          btnSnapshotClose: $('btnSnapshotClose'),
+          btnSnapshotOpenTab: $('btnSnapshotOpenTab'),
         }
 
         let toastTimer = null
@@ -761,6 +869,18 @@
           toastTimer = setTimeout(() => {
             els.toast.classList.remove('show')
           }, ms)
+        }
+
+        function isIOS() {
+          const ua = navigator.userAgent || ''
+          const iOSLike = /iPhone|iPad|iPod/i.test(ua)
+          // iPadOS 13+ may identify as Mac; detect touch + Apple vendor as a fallback
+          const iPadOSLike =
+            !iOSLike &&
+            /Macintosh/i.test(ua) &&
+            (navigator.maxTouchPoints || 0) > 1 &&
+            String(navigator.vendor || '').includes('Apple')
+          return iOSLike || iPadOSLike
         }
 
         const state = {
@@ -779,7 +899,7 @@
           resultText:
             '预估工资 = (工作日上工0天 + 法定节假日带薪0天 + 节假日加班0天×2) / 应出勤26天 × 月薪8000 = 0.00',
           weekdayColumnAllSelected: [false, false, false, false, false, false, false],
-          storageStatus: '未保存',
+          storageStatus: '本地自动保存已开启',
           showSelectedList: false,
           selectedDatesDisplay: [],
         }
@@ -852,7 +972,7 @@
               state.storageStatus = `已保存 ${nowTimeText()}`
             } catch (e) {
               state.storageStatus = `保存失败 ${nowTimeText()}`
-              showToast('保存失败：浏览器禁止了本地存储')
+              showToast('无法保存：浏览器已禁用本地存储')
             }
           }
 
@@ -915,16 +1035,16 @@
           els.holidayCoverageWarning.hidden = !showWarn
           if (showWarn) {
             els.holidayCoverageWarning.textContent =
-              `提示：本页面内置的法定节假日数据目前仅包含 ${coveredYear} 年；` +
-              `你正在查看 ${state.year} 年，法定节假日将按“无”处理，结果可能偏差。`
+              `法定节假日数据目前仅覆盖 ${coveredYear} 年；当前为 ${state.year} 年，` +
+              `将不会自动计入法定节假日，结果可能偏差。`
           }
 
           // Selected list
           els.selectedListCard.hidden = !state.showSelectedList
-          els.btnToggleSelectedList.textContent = state.showSelectedList ? '隐藏明细' : '显示明细'
+          els.btnToggleSelectedList.textContent = state.showSelectedList ? '收起明细' : '查看明细'
           if (state.showSelectedList) {
             if (!state.selectedDatesDisplay.length) {
-              els.selectedList.innerHTML = `<div class="selected-empty muted">暂无选择</div>`
+              els.selectedList.innerHTML = `<div class="selected-empty muted">暂无明细</div>`
             } else {
               els.selectedList.innerHTML = state.selectedDatesDisplay
                 .map((item) => `<div class="selected-item">${escapeHtml(item.displayText)}</div>`)
@@ -976,7 +1096,7 @@
 
           if (!wasSelected && isStatutoryHoliday(dateStr) && !_holidayWorkToastShown) {
             _holidayWorkToastShown = true
-            showToast('已按节假日加班(额外×2)计入')
+            showToast('已按节假日加班（额外×2）计入')
           }
 
           applyState({ selectedDatesMap: next }, { save: true })
@@ -1021,7 +1141,7 @@
         }
 
         function onClearStorage() {
-          const ok = window.confirm('重新选择？\n\n会清空已保存的选择日期、月薪和应出勤天数，并恢复默认值。')
+          const ok = window.confirm('重置全部数据？\n\n将清空已保存的日期、月薪与应出勤天数，并恢复默认值。')
           if (!ok) return
           try {
             clearState()
@@ -1036,7 +1156,7 @@
             },
             { save: false }
           )
-          showToast('已重置')
+          showToast('已恢复默认设置')
         }
 
         function onSalaryInput(v) {
@@ -1068,7 +1188,7 @@
           if (rawStr == null || rawStr === '') return
           const n = Number(rawStr)
           if (!Number.isFinite(n)) return
-          if (n < 0 || n > 31) showToast('应出勤范围 0-31，已自动调整')
+          if (n < 0 || n > 31) showToast('应出勤天数需在 0–31 之间，已自动调整')
         }
 
         function onToggleSelectedList() {
@@ -1130,7 +1250,7 @@
             note:
               state.year === 2026
                 ? '法定节假日：已内置 2026 年数据'
-                : '法定节假日：当前仅内置 2026 年数据（其它年份按无处理）',
+                : '法定节假日：目前仅内置 2026 年数据（其它年份不自动计入）',
             generatedAt: `生成时间：${ts}`,
             filename: `工资单_${state.year}-${pad2(state.monthIndexPlus1)}.png`,
           }
@@ -1187,7 +1307,7 @@
           ctx.font = '650 36px system-ui, -apple-system, Segoe UI, Roboto, Arial'
           blocks.push({
             font: ctx.font,
-            lines: wrapText(ctx, `本月已选日期(日)：${data.selectedDaysText}`, contentW),
+            lines: wrapText(ctx, `本月已选日期（日）：${data.selectedDaysText}`, contentW),
             color: '#111',
             size: 36,
           })
@@ -1264,32 +1384,97 @@
           ctx.closePath()
         }
 
-        function downloadCanvasPng(canvas, filename) {
-          const url = canvas.toDataURL('image/png')
-          const a = document.createElement('a')
-          a.href = url
-          a.download = filename || '工资单.png'
-          a.rel = 'noopener'
-          document.body.appendChild(a)
-          a.click()
-          a.remove()
-          return url
+        function canvasToBlob(canvas, type = 'image/png', quality) {
+          return new Promise((resolve, reject) => {
+            try {
+              canvas.toBlob(
+                (blob) => {
+                  if (blob) resolve(blob)
+                  else reject(new Error('无法生成图片（toBlob 返回空）'))
+                },
+                type,
+                quality
+              )
+            } catch (e) {
+              reject(e)
+            }
+          })
         }
 
-        function onSaveSnapshot() {
+        let _snapshotObjectUrl = null
+        function closeSnapshotModal() {
+          els.snapshotModal.hidden = true
+          if (_snapshotObjectUrl) {
+            try {
+              URL.revokeObjectURL(_snapshotObjectUrl)
+            } catch (e) {}
+            _snapshotObjectUrl = null
+          }
+          els.snapshotPreview.removeAttribute('src')
+          els.snapshotDownloadLink.setAttribute('href', '#')
+        }
+
+        function openSnapshotModal(url, data) {
+          if (_snapshotObjectUrl) {
+            try {
+              URL.revokeObjectURL(_snapshotObjectUrl)
+            } catch (e) {}
+          }
+          _snapshotObjectUrl = url
+          els.snapshotModalTitle.textContent = data && data.title ? data.title : '工资单图片'
+
+          const tip = isIOS()
+            ? 'iPhone/iPad：长按图片即可“存储到照片”。如无法下载，这是最稳的保存方式。'
+            : '如果下载被拦截，可点击“在新标签页打开”后再保存。'
+          els.snapshotModalTip.textContent = tip
+
+          els.snapshotPreview.src = url
+          els.snapshotDownloadLink.href = url
+          els.snapshotDownloadLink.download = (data && data.filename) || '工资单.png'
+
+          els.snapshotModal.hidden = false
+        }
+
+        async function trySharePngFile(file, title, text) {
+          if (!navigator.share) return false
+          // canShare({files}) is not universally available; guard carefully
+          try {
+            if (navigator.canShare && !navigator.canShare({ files: [file] })) return false
+          } catch (e) {
+            // If canShare throws, we still can try share() and fallback on failure.
+          }
+          try {
+            await navigator.share({ title: title || '', text: text || '', files: [file] })
+            return true
+          } catch (e) {
+            return false
+          }
+        }
+
+        async function onSaveSnapshot() {
           try {
             const data = buildSnapshotData()
             const canvas = renderSnapshotToCanvas(data)
-            const url = downloadCanvasPng(canvas, data.filename)
-            // iOS Safari may ignore download; give a fallback hint
-            if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-              showToast('如未自动下载：图片已生成，可在新窗口中长按保存')
-              window.open(url, '_blank', 'noopener,noreferrer')
-            } else {
-              showToast('已生成工资单图片')
+            const blob = await canvasToBlob(canvas, 'image/png')
+            const file = new File([blob], data.filename, { type: 'image/png' })
+
+            // Best UX on mobile: system share sheet -> “存储到照片/保存图片”
+            const shared = await trySharePngFile(
+              file,
+              data.title,
+              `${data.title} ${data.amountText}`
+            )
+            if (shared) {
+              showToast(isIOS() ? '已打开系统分享，可选择“存储到照片”' : '已打开分享面板')
+              return
             }
+
+            // Fallback: modal preview + download/open-tab
+            const url = URL.createObjectURL(blob)
+            openSnapshotModal(url, data)
+            showToast(isIOS() ? '长按图片即可保存到相册' : '图片已生成')
           } catch (e) {
-            showToast('生成图片失败：' + (e && e.message ? e.message : '未知错误'))
+            showToast('生成图片失败：' + (e && e.message ? e.message : '请稍后重试'))
           }
         }
 
@@ -1303,8 +1488,8 @@
           const map = Object.create(null)
           for (const d of loaded.selectedDates) map[d] = true
 
-          if (loaded.droppedCount > 0) showToast(`已清理无效日期 ${loaded.droppedCount} 条`)
-          if (loaded.versionMismatch) showToast('检测到旧版本数据，已尝试兼容加载')
+          if (loaded.droppedCount > 0) showToast(`已修复本地数据（清理无效日期 ${loaded.droppedCount} 条）`)
+          if (loaded.versionMismatch) showToast('已升级本地数据格式')
 
           const monthlySalary = loaded.monthlySalary !== '' ? loaded.monthlySalary : '8000'
           const workDays = loaded.workDays !== '' ? loaded.workDays : '26'
@@ -1318,11 +1503,18 @@
               workDays,
               storageStatus:
                 loaded.selectedDates.length || loaded.monthlySalary || loaded.workDays
-                  ? `已加载 ${nowTimeText()}`
-                  : '未保存',
+                  ? `已恢复 ${nowTimeText()}`
+                  : '本地自动保存已开启',
             },
             { save: false }
           )
+
+          // Improve button label on mobile platforms
+          try {
+            const ios = isIOS()
+            const maybeShare = !!navigator.share
+            els.btnSaveSnapshot.textContent = ios ? '保存到相册' : maybeShare ? '保存图片' : '保存图片'
+          } catch (e) {}
 
           // Bind events
           els.btnPrevMonth.addEventListener('click', onPrevMonth)
@@ -1332,6 +1524,20 @@
           els.btnClearStorage.addEventListener('click', onClearStorage)
           els.btnToggleSelectedList.addEventListener('click', onToggleSelectedList)
           els.btnSaveSnapshot.addEventListener('click', onSaveSnapshot)
+
+          els.btnSnapshotClose.addEventListener('click', closeSnapshotModal)
+          els.btnSnapshotOpenTab.addEventListener('click', () => {
+            const href = els.snapshotDownloadLink.getAttribute('href') || ''
+            if (!href || href === '#') return
+            window.open(href, '_blank', 'noopener,noreferrer')
+          })
+          els.snapshotModal.addEventListener('click', (e) => {
+            // click on backdrop closes; click inside sheet doesn't
+            if (e.target === els.snapshotModal) closeSnapshotModal()
+          })
+          document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !els.snapshotModal.hidden) closeSnapshotModal()
+          })
 
           els.weekHeader.addEventListener('click', (e) => {
             const target = e.target && e.target.closest ? e.target.closest('.week-cell') : null
@@ -1355,7 +1561,7 @@
         try {
           init()
         } catch (e) {
-          showToast('初始化失败：' + (e && e.message ? e.message : '未知错误'), 2600)
+          showToast('页面加载失败：' + (e && e.message ? e.message : '请刷新重试'), 2600)
         }
       })()
     </script>
