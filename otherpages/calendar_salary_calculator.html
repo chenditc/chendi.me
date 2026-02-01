@@ -1,510 +1,1363 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <title>日历页面及工资计算器</title>
-  <!-- 引入 Bootstrap 5 CSS -->
-  <link rel="stylesheet" href="https://cdn.jsdmirror.com/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-  <style>
-    body {
-      padding-top: 20px;
-    }
-    .container-custom {
-      max-width: 800px;
-    }
-    .calendar-table td, .calendar-table th {
-      text-align: center;
-      vertical-align: middle;
-    }
-    .calendar-table input[type="checkbox"] {
-      margin-right: 5px;
-    }
-    .toast-container {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 1050;
-    }
-  </style>
-</head>
-<body>
-  <div class="container container-custom">
-    <!-- Toast 提示容器 -->
-    <div class="toast-container" id="toastContainer"></div>
-    
-    <!-- 月份切换与批量选择 -->
-    <div class="mb-4 text-center">
-      <button id="prevMonth" class="btn btn-primary me-2">上一月</button>
-      <span id="currentMonthYear" class="h4"></span>
-      <button id="nextMonth" class="btn btn-primary ms-2">下一月</button>
-    </div>
-    <div class="mb-4 text-center">
-      <button id="selectAll" class="btn btn-secondary me-2">全选当前月</button>
-      <button id="deselectAll" class="btn btn-secondary me-2">取消当前月</button>
-      <button id="clearStorage" class="btn btn-warning">清除保存的数据</button>
-    </div>
-    
-    <!-- 日历显示区 -->
-    <div id="calendar" class="mb-4"></div>
-    
-    <!-- 已选日期列表 -->
-    <div id="selectedDates" class="mb-4" hidden="true" ></div>
-    
-    <!-- 输入项：月薪和每月应上工天数 -->
-    <div class="row mb-4">
-      <div class="col-md-6">
-        <label for="monthlySalary" class="form-label">月薪：</label>
-        <input type="number" id="monthlySalary" class="form-control" value="8000" min="0">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>日历工资计算（Web 单文件版）</title>
+    <meta name="description" content="无后端：点选上工日期，自动计入法定节假日带薪与加班增量，计算预估工资，并可保存工资单图片。" />
+    <style>
+      :root {
+        --bg: #f6f7fb;
+        --card: #ffffff;
+        --text: #222;
+        --muted: #7a7a7a;
+        --border: rgba(17, 17, 17, 0.08);
+        --shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+        --shadow-soft: 0 6px 20px rgba(0, 0, 0, 0.06);
+        --green: #07c160;
+        --danger: #e64646;
+        --holiday: #fff7f0;
+        --holidayText: #d9480f;
+        --purple: #862e9c;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+        line-height: 1.4;
+      }
+
+      .container {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 16px 14px 32px;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .card {
+        margin-top: 14px;
+        background: var(--card);
+        border-radius: 16px;
+        padding: 14px;
+        box-shadow: var(--shadow-soft);
+      }
+
+      .monthbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        padding: 10px 0 12px;
+        background: var(--bg);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .monthtitle {
+        flex: 1;
+        text-align: center;
+        font-weight: 700;
+        font-size: 18px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 4px 0 12px;
+      }
+
+      .btn {
+        appearance: none;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-weight: 650;
+        font-size: 14px;
+        cursor: pointer;
+        user-select: none;
+        transition: transform 0.05s ease, opacity 0.12s ease;
+      }
+
+      .btn:active {
+        transform: translateY(1px);
+        opacity: 0.92;
+      }
+
+      .btn.secondary {
+        background: #fff;
+        color: #333;
+        border-color: var(--border);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      }
+
+      .btn.primary {
+        background: var(--green);
+        color: #fff;
+      }
+
+      .btn.danger {
+        background: var(--danger);
+        color: #fff;
+      }
+
+      .btn.ghost {
+        background: transparent;
+        border-color: var(--border);
+        color: #333;
+      }
+
+      .btn.small {
+        padding: 8px 10px;
+        font-size: 13px;
+      }
+
+      .calendar {
+        background: var(--card);
+        border-radius: 16px;
+        padding: 12px;
+        box-shadow: var(--shadow-soft);
+      }
+
+      .week-header {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .week-cell {
+        width: calc((100% - 6 * 8px) / 7);
+        text-align: center;
+        padding: 10px 0;
+        border-radius: 12px;
+        background: #f3f5fa;
+        position: relative;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .week-text {
+        font-size: 13px;
+        color: #444;
+        font-weight: 650;
+      }
+
+      .week-check {
+        position: absolute;
+        right: 8px;
+        top: 6px;
+        font-size: 13px;
+        color: var(--green);
+        font-weight: 800;
+      }
+
+      .grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 0;
+      }
+
+      .cell {
+        width: calc(100% / 7);
+        height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        position: relative;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .cell.empty {
+        background: #eef0f5;
+        cursor: default;
+      }
+
+      .cell.holiday {
+        background: var(--holiday);
+      }
+
+      .cell.holiday .cell-text {
+        color: var(--holidayText);
+        font-weight: 800;
+      }
+
+      .cell.selected {
+        background: var(--green);
+      }
+
+      .cell.selected .cell-text {
+        color: #fff;
+        font-weight: 750;
+      }
+
+      .cell.selected.holiday .cell-text {
+        color: #fff;
+      }
+
+      .cell.holiday-worked {
+        box-shadow: 0 0 0 3px rgba(134, 46, 156, 0.55) inset;
+      }
+
+      .cell.selected.holiday-worked {
+        background: var(--purple);
+      }
+
+      .badge-holiday {
+        position: absolute;
+        right: 8px;
+        top: 6px;
+        font-size: 11px;
+        line-height: 12px;
+        padding: 2px 6px;
+        border-radius: 8px;
+        background: #e8590c;
+        color: #fff;
+        font-weight: 900;
+      }
+
+      .cell.selected.holiday-worked .badge-holiday {
+        background: rgba(255, 255, 255, 0.92);
+        color: var(--purple);
+      }
+
+      .holiday-name {
+        position: absolute;
+        left: 7px;
+        bottom: 6px;
+        font-size: 11px;
+        color: #e8590c;
+        max-width: calc(100% - 14px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .cell.selected .holiday-name {
+        color: rgba(255, 255, 255, 0.95);
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 0;
+      }
+
+      .label {
+        width: 180px;
+        color: #333;
+        font-weight: 750;
+      }
+
+      .input {
+        flex: 1;
+        text-align: right;
+        padding: 10px 10px;
+        background: #f7f8fb;
+        border-radius: 12px;
+        border: 1px solid rgba(17, 17, 17, 0.06);
+        font-size: 14px;
+      }
+
+      .result-top {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+
+      .result-title {
+        font-weight: 850;
+        font-size: 16px;
+      }
+
+      .result-right {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+      }
+
+      .result-amount {
+        font-weight: 900;
+        font-size: 22px;
+        color: #111;
+      }
+
+      .result-breakdown {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 6px;
+      }
+
+      .result-formula {
+        display: block;
+        font-size: 13px;
+        word-break: break-word;
+      }
+
+      .warning {
+        margin-top: 8px;
+        font-size: 12px;
+        padding: 10px 12px;
+        background: #fffbe6;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 12px;
+        color: #7a5b00;
+      }
+
+      .selectedbar {
+        margin-top: 14px;
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .selected-list {
+        max-height: 260px;
+        overflow: auto;
+        padding-right: 4px;
+      }
+
+      .selected-item {
+        padding: 10px 0;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 14px;
+      }
+
+      .selected-empty {
+        padding: 14px 0;
+        text-align: center;
+        font-size: 14px;
+      }
+
+      .status {
+        margin-top: 14px;
+        text-align: center;
+        font-size: 12px;
+      }
+
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 18px;
+        transform: translateX(-50%);
+        background: rgba(17, 17, 17, 0.92);
+        color: #fff;
+        padding: 10px 12px;
+        border-radius: 12px;
+        font-size: 13px;
+        max-width: min(520px, calc(100vw - 24px));
+        box-shadow: 0 12px 26px rgba(0, 0, 0, 0.25);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s ease;
+        z-index: 9999;
+      }
+
+      .toast.show {
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="monthbar">
+        <button id="btnPrevMonth" class="btn secondary small" type="button">上月</button>
+        <div class="monthtitle" id="monthTitle">-</div>
+        <button id="btnNextMonth" class="btn secondary small" type="button">下月</button>
       </div>
-      <div class="col-md-6">
-        <label for="workDays" class="form-label">每月应上工天数：</label>
-        <input type="number" id="workDays" class="form-control" value="26" min="0">
+
+      <div class="actions">
+        <button id="btnSelectAllMonth" class="btn secondary small" type="button">全选本月</button>
+        <button id="btnDeselectAllMonth" class="btn secondary small" type="button">取消本月</button>
+        <button id="btnClearStorage" class="btn danger small" type="button">重新选择</button>
       </div>
-    </div>
-    
-    <!-- 工资计算器显示区 -->
-    <div id="salaryCalculator" class="alert alert-info"></div>
-    
-    <!-- 存储状态显示 -->
-    <div class="text-muted small text-center mt-3">
-      <span id="storageStatus">数据自动保存在本地浏览器中</span>
-    </div>
-  </div>
 
-  <script>
-    // 当前显示的年份和月份（0-11）
-    let currentDate = new Date();
-    let currentYear = currentDate.getFullYear();
-    let currentMonth = currentDate.getMonth();
+      <div class="calendar" id="calendarArea">
+        <div class="week-header" id="weekHeader"></div>
+        <div class="grid" id="calendarGrid"></div>
+      </div>
 
-    // 用于存储所有勾选的日期（格式：YYYY-MM-DD）
-    let selectedDates = new Set();
-    // 定义星期的中文名称
-    const weekdayNames = ["日", "一", "二", "三", "四", "五", "六"];
+      <div class="card">
+        <div class="row">
+          <div class="label">月薪</div>
+          <input id="monthlySalaryInput" class="input" inputmode="numeric" type="number" min="0" step="1" />
+        </div>
+        <div class="row">
+          <div class="label">应出勤(天)</div>
+          <input id="workDaysInput" class="input" inputmode="numeric" type="number" min="0" max="31" step="1" />
+        </div>
+      </div>
 
-    // localStorage 键名
-    const STORAGE_KEYS = {
-      selectedDates: 'salaryCalculator_selectedDates',
-      monthlySalary: 'salaryCalculator_monthlySalary',
-      workDays: 'salaryCalculator_workDays',
-      version: 'salaryCalculator_version' // 用于版本控制
-    };
-
-    // 当前数据版本
-    const CURRENT_VERSION = '1.0';
-
-    // 默认值
-    const DEFAULT_VALUES = {
-      monthlySalary: 8000,
-      workDays: 26
-    };
-
-    // 显示提示信息
-    function showToast(message, type = 'info') {
-      const toastContainer = document.getElementById('toastContainer');
-      const toastId = 'toast-' + Date.now();
-      const bgClass = type === 'error' ? 'bg-danger' : type === 'success' ? 'bg-success' : 'bg-info';
-      
-      const toastHtml = `
-        <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-          <div class="d-flex">
-            <div class="toast-body">
-              ${message}
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      <div class="card">
+        <div class="result-top">
+          <div class="result-title">计算结果</div>
+          <div class="result-right">
+            <div class="result-amount" id="salaryAmount">￥0.00</div>
+            <button id="btnSaveSnapshot" class="btn primary small" type="button">保存工资截图</button>
           </div>
         </div>
-      `;
-      
-      toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-      const toastElement = document.getElementById(toastId);
-      const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
-      toast.show();
-      
-      // 自动移除已隐藏的 toast
-      toastElement.addEventListener('hidden.bs.toast', function() {
-        toastElement.remove();
-      });
-    }
+        <span class="muted result-breakdown" id="resultBreakdown"></span>
+        <span class="muted result-formula" id="resultFormula"></span>
+        <div class="warning" id="holidayCoverageWarning" hidden></div>
+      </div>
 
-    // 验证日期格式
-    function isValidDateString(dateStr) {
-      const regex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!regex.test(dateStr)) return false;
-      
-      const date = new Date(dateStr);
-      return date instanceof Date && !isNaN(date);
-    }
+      <div class="selectedbar">
+        <button id="btnToggleSelectedList" class="btn ghost small" type="button">显示明细</button>
+      </div>
 
-    // 验证数字
-    function isValidNumber(value, min = 0, max = Infinity) {
-      const num = Number(value);
-      return !isNaN(num) && num >= min && num <= max;
-    }
+      <div class="card" id="selectedListCard" hidden>
+        <div class="selected-list" id="selectedList"></div>
+      </div>
 
-    // 保存数据到 localStorage
-    function saveToStorage() {
-      try {
-        // 保存版本号
-        localStorage.setItem(STORAGE_KEYS.version, CURRENT_VERSION);
-        
-        // 保存选中的日期
-        const datesArray = Array.from(selectedDates);
-        localStorage.setItem(STORAGE_KEYS.selectedDates, JSON.stringify(datesArray));
-        
-        // 保存月薪
-        const salary = document.getElementById('monthlySalary').value;
-        if (isValidNumber(salary, 0)) {
-          localStorage.setItem(STORAGE_KEYS.monthlySalary, salary);
-        }
-        
-        // 保存应上工天数
-        const days = document.getElementById('workDays').value;
-        if (isValidNumber(days, 0, 31)) {
-          localStorage.setItem(STORAGE_KEYS.workDays, days);
-        }
-        
-        updateStorageStatus('数据已保存 ' + new Date().toLocaleTimeString());
-      } catch (e) {
-        console.error('保存数据失败:', e);
-        showToast('保存数据失败: ' + e.message, 'error');
-        updateStorageStatus('保存失败', 'text-danger');
-      }
-    }
+      <div class="status muted" id="storageStatus">未保存</div>
+    </div>
 
-    // 从 localStorage 加载数据
-    function loadFromStorage() {
-      try {
-        // 检查版本
-        const savedVersion = localStorage.getItem(STORAGE_KEYS.version);
-        if (savedVersion && savedVersion !== CURRENT_VERSION) {
-          console.warn('数据版本不匹配，可能需要迁移');
-          // 这里可以添加数据迁移逻辑
+    <div class="toast" id="toast"></div>
+
+    <script>
+      ;(() => {
+        // ========= Utils (ported from utils/date.js) =========
+        function pad2(n) {
+          const s = String(n)
+          return s.length >= 2 ? s : '0' + s
         }
 
-        // 加载选中的日期
-        const savedDates = localStorage.getItem(STORAGE_KEYS.selectedDates);
-        if (savedDates) {
+        function formatDateStr(year, monthIndex, day) {
+          return `${year}-${pad2(monthIndex + 1)}-${pad2(day)}`
+        }
+
+        function daysInMonth(year, monthIndex) {
+          return new Date(year, monthIndex + 1, 0).getDate()
+        }
+
+        function weekdayOf(year, monthIndex, day) {
+          return new Date(year, monthIndex, day).getDay()
+        }
+
+        function isValidDateStr(dateStr) {
+          if (typeof dateStr !== 'string') return false
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false
+          const y = Number(dateStr.slice(0, 4))
+          const m = Number(dateStr.slice(5, 7))
+          const d = Number(dateStr.slice(8, 10))
+          if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return false
+          const dt = new Date(y, m - 1, d)
+          return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d
+        }
+
+        function parseWeekday(dateStr) {
+          if (!isValidDateStr(dateStr)) return null
+          const y = Number(dateStr.slice(0, 4))
+          const m = Number(dateStr.slice(5, 7))
+          const d = Number(dateStr.slice(8, 10))
+          return new Date(y, m - 1, d).getDay()
+        }
+
+        function clampInt(n, min, max) {
+          if (!Number.isFinite(n)) return min
+          const x = Math.floor(n)
+          if (x < min) return min
+          if (x > max) return max
+          return x
+        }
+
+        function nowTimeText() {
+          const d = new Date()
+          return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`
+        }
+
+        // ========= Holidays (ported from utils/holidays.js; 2026 only) =========
+        const HOLIDAY_NAME_BY_DATE = Object.freeze({
+          '2026-01-01': '元旦',
+          '2026-02-16': '春节',
+          '2026-02-17': '春节',
+          '2026-02-18': '春节',
+          '2026-02-19': '春节',
+          '2026-04-04': '清明节',
+          '2026-05-01': '劳动节',
+          '2026-05-02': '劳动节',
+          '2026-06-19': '端午节',
+          '2026-09-25': '中秋节',
+          '2026-10-01': '国庆节',
+          '2026-10-02': '国庆节',
+          '2026-10-03': '国庆节',
+        })
+
+        function isStatutoryHoliday(dateStr) {
+          return !!(dateStr && HOLIDAY_NAME_BY_DATE[dateStr])
+        }
+
+        function getHolidayName(dateStr) {
+          return (dateStr && HOLIDAY_NAME_BY_DATE[dateStr]) || ''
+        }
+
+        function listStatutoryHolidaysForMonth(year, monthIndex) {
+          if (!Number.isFinite(year) || !Number.isFinite(monthIndex)) return []
+          if (monthIndex < 0 || monthIndex > 11) return []
+          const prefix = `${year}-${pad2(monthIndex + 1)}-`
+          const res = []
+          for (const dateStr of Object.keys(HOLIDAY_NAME_BY_DATE)) {
+            if (!dateStr.startsWith(prefix)) continue
+            res.push({ dateStr, name: HOLIDAY_NAME_BY_DATE[dateStr] })
+          }
+          res.sort((a, b) => (a.dateStr < b.dateStr ? -1 : a.dateStr > b.dateStr ? 1 : 0))
+          return res
+        }
+
+        // ========= Storage (ported from utils/storage.js; wx -> localStorage) =========
+        const CURRENT_VERSION = 1
+        const STORAGE_KEYS = {
+          selectedDates: 'ayi_calendar_salary_selectedDates',
+          monthlySalary: 'ayi_calendar_salary_monthlySalary',
+          workDays: 'ayi_calendar_salary_workDays',
+          version: 'ayi_calendar_salary_version',
+        }
+
+        function normalizeNumberish(v) {
+          if (v == null) return ''
+          if (typeof v === 'number') return Number.isFinite(v) ? String(v) : ''
+          if (typeof v === 'string') return v
+          return ''
+        }
+
+        function loadState() {
+          let version = null
+          let selectedDatesRaw = null
+          let monthlySalary = ''
+          let workDays = ''
+
           try {
-            const datesArray = JSON.parse(savedDates);
-            if (Array.isArray(datesArray)) {
-              // 验证每个日期
-              const validDates = datesArray.filter(isValidDateString);
-              if (validDates.length !== datesArray.length) {
-                console.warn('部分日期数据无效已被忽略');
-                showToast('检测到部分无效日期数据，已自动修复', 'warning');
+            version = localStorage.getItem(STORAGE_KEYS.version)
+            selectedDatesRaw = localStorage.getItem(STORAGE_KEYS.selectedDates)
+            monthlySalary = normalizeNumberish(localStorage.getItem(STORAGE_KEYS.monthlySalary))
+            workDays = normalizeNumberish(localStorage.getItem(STORAGE_KEYS.workDays))
+          } catch (e) {
+            return {
+              version: null,
+              versionMismatch: false,
+              selectedDates: [],
+              monthlySalary: '',
+              workDays: '',
+              droppedCount: 0,
+            }
+          }
+
+          let selectedDatesParsed = null
+          try {
+            selectedDatesParsed = selectedDatesRaw ? JSON.parse(selectedDatesRaw) : null
+          } catch (e) {
+            selectedDatesParsed = null
+          }
+
+          const selectedDates = []
+          const seen = Object.create(null)
+          let droppedCount = 0
+
+          if (Array.isArray(selectedDatesParsed)) {
+            for (const d of selectedDatesParsed) {
+              if (!isValidDateStr(d)) {
+                droppedCount += 1
+                continue
               }
-              selectedDates = new Set(validDates);
+              if (seen[d]) continue
+              seen[d] = true
+              selectedDates.push(d)
+            }
+          } else if (selectedDatesRaw != null && selectedDatesRaw !== '') {
+            droppedCount += 1
+          }
+
+          selectedDates.sort()
+          const versionMismatch =
+            version != null && Number(version) !== Number(CURRENT_VERSION)
+
+          return {
+            version: version == null ? null : Number(version),
+            versionMismatch,
+            selectedDates,
+            monthlySalary,
+            workDays,
+            droppedCount,
+          }
+        }
+
+        function saveState({ selectedDatesMap, monthlySalary, workDays }) {
+          const map = selectedDatesMap || Object.create(null)
+          const salary = normalizeNumberish(monthlySalary)
+          const work = normalizeNumberish(workDays)
+
+          const selectedDates = Object.keys(map)
+            .filter((k) => map[k])
+            .filter(isValidDateStr)
+            .sort()
+
+          localStorage.setItem(STORAGE_KEYS.selectedDates, JSON.stringify(selectedDates))
+          localStorage.setItem(STORAGE_KEYS.monthlySalary, salary)
+          localStorage.setItem(STORAGE_KEYS.workDays, work)
+          localStorage.setItem(STORAGE_KEYS.version, String(CURRENT_VERSION))
+
+          return { selectedDatesCount: selectedDates.length }
+        }
+
+        function clearState() {
+          localStorage.removeItem(STORAGE_KEYS.selectedDates)
+          localStorage.removeItem(STORAGE_KEYS.monthlySalary)
+          localStorage.removeItem(STORAGE_KEYS.workDays)
+          localStorage.removeItem(STORAGE_KEYS.version)
+        }
+
+        // ========= Core logic (ported from pages/index/index.js) =========
+        const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
+        const WEEKDAY_LABELS = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
+
+        function buildCalendar(year, monthIndex, selectedDatesMap) {
+          const firstWeekday = new Date(year, monthIndex, 1).getDay()
+          const days = daysInMonth(year, monthIndex)
+          const cells = []
+
+          for (let i = 0; i < 42; i += 1) {
+            if (i < firstWeekday || i >= firstWeekday + days) {
+              cells.push({
+                empty: true,
+                day: null,
+                dateStr: null,
+                weekdayIndex: i % 7,
+                selected: false,
+                isHoliday: false,
+                holidayName: '',
+                isHolidayWorked: false,
+              })
+              continue
+            }
+
+            const day = i - firstWeekday + 1
+            const dateStr = formatDateStr(year, monthIndex, day)
+            const selected = !!(selectedDatesMap && selectedDatesMap[dateStr])
+            const isHoliday = isStatutoryHoliday(dateStr)
+            const holidayName = isHoliday ? getHolidayName(dateStr) : ''
+
+            cells.push({
+              empty: false,
+              day,
+              dateStr,
+              weekdayIndex: i % 7,
+              selected,
+              isHoliday,
+              holidayName,
+              isHolidayWorked: isHoliday && selected,
+            })
+          }
+
+          return cells
+        }
+
+        function computeWeekdayColumnAllSelected(cells) {
+          const res = []
+          for (let weekday = 0; weekday < 7; weekday += 1) {
+            let any = false
+            let all = true
+            for (let i = weekday; i < 42; i += 7) {
+              const c = cells[i]
+              if (!c || c.empty) continue
+              any = true
+              if (!c.selected) {
+                all = false
+                break
+              }
+            }
+            res.push(any && all)
+          }
+          return res
+        }
+
+        function buildSelectedDatesDisplay(selectedDatesMap, year, monthIndex) {
+          const prefix = `${year}-${pad2(monthIndex + 1)}-`
+          const keys = Object.keys(selectedDatesMap || {})
+            .filter((k) => selectedDatesMap[k])
+            .filter((k) => k.startsWith(prefix))
+          keys.sort()
+
+          return keys.map((dateStr) => {
+            const wd = parseWeekday(dateStr)
+            const isHoliday = isStatutoryHoliday(dateStr)
+            const holidayName = isHoliday ? getHolidayName(dateStr) : ''
+            const tag = isHoliday ? '节假日加班' : '工作日上工'
+            const holidayPart = holidayName ? ` ${holidayName}` : ''
+            return {
+              dateStr,
+              weekdayLabel: wd == null ? '' : WEEKDAY_LABELS[wd],
+              isHoliday,
+              holidayName,
+              tag,
+              displayText: `${dateStr} ${wd == null ? '' : WEEKDAY_LABELS[wd]}${holidayPart}（${tag}）`,
+            }
+          })
+        }
+
+        function computeSalaryResult(workedCount, holidayPaidCount, holidayWorkedCount, monthlySalary, workDays) {
+          const salary = Number(monthlySalary) || 0
+          const workRaw = Number(workDays) || 0
+          const work = clampInt(workRaw, 0, 31)
+          const payUnits =
+            (Number(workedCount) || 0) +
+            (Number(holidayPaidCount) || 0) +
+            2 * (Number(holidayWorkedCount) || 0)
+          const result = work > 0 ? (payUnits / work) * salary : 0
+          const salaryResultText = Number.isFinite(result) ? result.toFixed(2) : '0.00'
+          const resultText =
+            `预估工资 = (工作日上工${workedCount}天 + 法定节假日带薪${holidayPaidCount}天 + ` +
+            `节假日加班${holidayWorkedCount}天×2) / 应出勤${work}天 × 月薪${salary} = ${salaryResultText}`
+          return { salaryResult: result, salaryResultText, resultText, workDaysClamped: String(work), payUnits }
+        }
+
+        // ========= UI / State =========
+        const $ = (id) => document.getElementById(id)
+        const els = {
+          monthTitle: $('monthTitle'),
+          weekHeader: $('weekHeader'),
+          calendarGrid: $('calendarGrid'),
+          monthlySalaryInput: $('monthlySalaryInput'),
+          workDaysInput: $('workDaysInput'),
+          salaryAmount: $('salaryAmount'),
+          resultBreakdown: $('resultBreakdown'),
+          resultFormula: $('resultFormula'),
+          holidayCoverageWarning: $('holidayCoverageWarning'),
+          selectedListCard: $('selectedListCard'),
+          selectedList: $('selectedList'),
+          storageStatus: $('storageStatus'),
+          toast: $('toast'),
+          btnPrevMonth: $('btnPrevMonth'),
+          btnNextMonth: $('btnNextMonth'),
+          btnSelectAllMonth: $('btnSelectAllMonth'),
+          btnDeselectAllMonth: $('btnDeselectAllMonth'),
+          btnClearStorage: $('btnClearStorage'),
+          btnToggleSelectedList: $('btnToggleSelectedList'),
+          btnSaveSnapshot: $('btnSaveSnapshot'),
+        }
+
+        let toastTimer = null
+        function showToast(msg, ms = 1800) {
+          if (!els.toast) return
+          els.toast.textContent = String(msg || '')
+          els.toast.classList.add('show')
+          if (toastTimer) clearTimeout(toastTimer)
+          toastTimer = setTimeout(() => {
+            els.toast.classList.remove('show')
+          }, ms)
+        }
+
+        const state = {
+          year: 0,
+          monthIndex: 0,
+          monthIndexPlus1: 1,
+          calendarCells: [],
+          selectedDatesMap: Object.create(null),
+          monthlySalary: '8000',
+          workDays: '26',
+          workedCount: 0,
+          holidayPaidCount: 0,
+          holidayWorkedCount: 0,
+          payUnits: 0,
+          salaryResultText: '0.00',
+          resultText:
+            '预估工资 = (工作日上工0天 + 法定节假日带薪0天 + 节假日加班0天×2) / 应出勤26天 × 月薪8000 = 0.00',
+          weekdayColumnAllSelected: [false, false, false, false, false, false, false],
+          storageStatus: '未保存',
+          showSelectedList: false,
+          selectedDatesDisplay: [],
+        }
+
+        let _workDaysRawLast = null
+        let _holidayWorkToastShown = false
+
+        function applyState(partial, opts) {
+          const options = opts || {}
+          const nextYear = partial.year != null ? partial.year : state.year
+          const nextMonthIndex = partial.monthIndex != null ? partial.monthIndex : state.monthIndex
+          const nextSelectedDatesMap =
+            partial.selectedDatesMap != null ? partial.selectedDatesMap : state.selectedDatesMap
+          const nextMonthlySalary =
+            partial.monthlySalary != null ? partial.monthlySalary : state.monthlySalary
+          const nextWorkDays = partial.workDays != null ? partial.workDays : state.workDays
+
+          const calendarCells = buildCalendar(nextYear, nextMonthIndex, nextSelectedDatesMap)
+          const holidayList = listStatutoryHolidaysForMonth(nextYear, nextMonthIndex)
+          const holidaySet = Object.create(null)
+          for (const h of holidayList) holidaySet[h.dateStr] = true
+          const holidayPaidCount = holidayList.length
+
+          const monthPrefix = `${nextYear}-${pad2(nextMonthIndex + 1)}-`
+          let holidayWorkedCount = 0
+          let workedCount = 0
+          for (const dateStr of Object.keys(nextSelectedDatesMap || {})) {
+            if (!nextSelectedDatesMap[dateStr]) continue
+            if (!dateStr.startsWith(monthPrefix)) continue
+            if (holidaySet[dateStr]) holidayWorkedCount += 1
+            else workedCount += 1
+          }
+
+          const salaryComputed = computeSalaryResult(
+            workedCount,
+            holidayPaidCount,
+            holidayWorkedCount,
+            nextMonthlySalary,
+            nextWorkDays
+          )
+          const weekdayColumnAllSelected = computeWeekdayColumnAllSelected(calendarCells)
+          const selectedDatesDisplay = buildSelectedDatesDisplay(nextSelectedDatesMap, nextYear, nextMonthIndex)
+
+          state.year = nextYear
+          state.monthIndex = nextMonthIndex
+          state.monthIndexPlus1 = nextMonthIndex + 1
+          state.selectedDatesMap = nextSelectedDatesMap
+          state.monthlySalary = nextMonthlySalary
+          state.workDays = nextWorkDays === '' ? '' : salaryComputed.workDaysClamped
+          state.calendarCells = calendarCells
+          state.workedCount = workedCount
+          state.holidayPaidCount = holidayPaidCount
+          state.holidayWorkedCount = holidayWorkedCount
+          state.payUnits = salaryComputed.payUnits
+          state.salaryResultText = salaryComputed.salaryResultText
+          state.resultText = salaryComputed.resultText
+          state.weekdayColumnAllSelected = weekdayColumnAllSelected
+          state.selectedDatesDisplay = selectedDatesDisplay
+
+          if (partial.storageStatus != null) state.storageStatus = partial.storageStatus
+          if (partial.showSelectedList != null) state.showSelectedList = partial.showSelectedList
+
+          if (options.save) {
+            try {
+              saveState({
+                selectedDatesMap: state.selectedDatesMap,
+                monthlySalary: state.monthlySalary,
+                workDays: state.workDays,
+              })
+              state.storageStatus = `已保存 ${nowTimeText()}`
+            } catch (e) {
+              state.storageStatus = `保存失败 ${nowTimeText()}`
+              showToast('保存失败：浏览器禁止了本地存储')
+            }
+          }
+
+          render()
+        }
+
+        function render() {
+          els.monthTitle.textContent = `${state.year}年${state.monthIndexPlus1}月`
+
+          // Week header
+          els.weekHeader.innerHTML = ''
+          for (let i = 0; i < 7; i += 1) {
+            const div = document.createElement('div')
+            div.className = 'week-cell'
+            div.dataset.weekday = String(i)
+            div.innerHTML = `
+              <span class="week-text">周${WEEKDAYS[i]}</span>
+              ${state.weekdayColumnAllSelected[i] ? '<span class="week-check">✓</span>' : ''}
+            `
+            els.weekHeader.appendChild(div)
+          }
+
+          // Calendar grid (42 cells)
+          els.calendarGrid.innerHTML = ''
+          for (let idx = 0; idx < state.calendarCells.length; idx += 1) {
+            const c = state.calendarCells[idx]
+            const div = document.createElement('div')
+            const cls = ['cell']
+            if (c.empty) cls.push('empty')
+            if (c.selected) cls.push('selected')
+            if (c.isHoliday) cls.push('holiday')
+            if (c.isHolidayWorked) cls.push('holiday-worked')
+            div.className = cls.join(' ')
+            if (!c.empty && c.dateStr) div.dataset.datestr = c.dateStr
+            div.innerHTML = `
+              ${c.isHoliday ? '<span class="badge-holiday">法</span>' : ''}
+              <span class="cell-text">${c.empty ? '' : String(c.day)}</span>
+              ${c.isHoliday && c.holidayName ? `<span class="holiday-name">${c.holidayName}</span>` : ''}
+            `
+            els.calendarGrid.appendChild(div)
+          }
+
+          // Inputs (avoid cursor jump where possible)
+          if (els.monthlySalaryInput.value !== String(state.monthlySalary)) {
+            els.monthlySalaryInput.value = String(state.monthlySalary)
+          }
+          if (els.workDaysInput.value !== String(state.workDays)) {
+            els.workDaysInput.value = String(state.workDays)
+          }
+
+          // Result
+          els.salaryAmount.textContent = `￥${state.salaryResultText}`
+          els.resultBreakdown.textContent =
+            `工作日上工 ${state.workedCount} 天 + 法定节假日(带薪) ${state.holidayPaidCount} 天 + ` +
+            `节假日加班 ${state.holidayWorkedCount} 天(额外×2) = 计薪单位 ${state.payUnits} 天`
+          els.resultFormula.textContent = state.resultText
+
+          const coveredYear = 2026
+          const showWarn = state.year !== coveredYear
+          els.holidayCoverageWarning.hidden = !showWarn
+          if (showWarn) {
+            els.holidayCoverageWarning.textContent =
+              `提示：本页面内置的法定节假日数据目前仅包含 ${coveredYear} 年；` +
+              `你正在查看 ${state.year} 年，法定节假日将按“无”处理，结果可能偏差。`
+          }
+
+          // Selected list
+          els.selectedListCard.hidden = !state.showSelectedList
+          els.btnToggleSelectedList.textContent = state.showSelectedList ? '隐藏明细' : '显示明细'
+          if (state.showSelectedList) {
+            if (!state.selectedDatesDisplay.length) {
+              els.selectedList.innerHTML = `<div class="selected-empty muted">暂无选择</div>`
             } else {
-              throw new Error('日期数据格式错误');
+              els.selectedList.innerHTML = state.selectedDatesDisplay
+                .map((item) => `<div class="selected-item">${escapeHtml(item.displayText)}</div>`)
+                .join('')
+            }
+          }
+
+          // Storage status
+          els.storageStatus.textContent = state.storageStatus
+        }
+
+        function escapeHtml(s) {
+          const str = String(s)
+          return str
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;')
+        }
+
+        // ========= Interactions =========
+        function onPrevMonth() {
+          let y = state.year
+          let m = state.monthIndex - 1
+          if (m < 0) {
+            m = 11
+            y -= 1
+          }
+          applyState({ year: y, monthIndex: m }, { save: false })
+        }
+
+        function onNextMonth() {
+          let y = state.year
+          let m = state.monthIndex + 1
+          if (m > 11) {
+            m = 0
+            y += 1
+          }
+          applyState({ year: y, monthIndex: m }, { save: false })
+        }
+
+        function onToggleDay(dateStr) {
+          if (!dateStr) return
+          const wasSelected = !!(state.selectedDatesMap && state.selectedDatesMap[dateStr])
+          const next = { ...(state.selectedDatesMap || {}) }
+          if (next[dateStr]) delete next[dateStr]
+          else next[dateStr] = true
+
+          if (!wasSelected && isStatutoryHoliday(dateStr) && !_holidayWorkToastShown) {
+            _holidayWorkToastShown = true
+            showToast('已按节假日加班(额外×2)计入')
+          }
+
+          applyState({ selectedDatesMap: next }, { save: true })
+        }
+
+        function onToggleWeekdayColumn(weekdayIndex) {
+          const weekday = Number(weekdayIndex)
+          if (!Number.isFinite(weekday) || weekday < 0 || weekday > 6) return
+
+          const y = state.year
+          const m = state.monthIndex
+          const days = daysInMonth(y, m)
+          const next = { ...(state.selectedDatesMap || {}) }
+          const isAllSelected = !!state.weekdayColumnAllSelected[weekday]
+
+          for (let day = 1; day <= days; day += 1) {
+            if (weekdayOf(y, m, day) !== weekday) continue
+            const dateStr = formatDateStr(y, m, day)
+            if (isAllSelected) delete next[dateStr]
+            else next[dateStr] = true
+          }
+
+          applyState({ selectedDatesMap: next }, { save: true })
+        }
+
+        function onSelectAllMonth() {
+          const y = state.year
+          const m = state.monthIndex
+          const days = daysInMonth(y, m)
+          const next = { ...(state.selectedDatesMap || {}) }
+          for (let day = 1; day <= days; day += 1) next[formatDateStr(y, m, day)] = true
+          applyState({ selectedDatesMap: next }, { save: true })
+        }
+
+        function onDeselectAllMonth() {
+          const y = state.year
+          const m = state.monthIndex
+          const days = daysInMonth(y, m)
+          const next = { ...(state.selectedDatesMap || {}) }
+          for (let day = 1; day <= days; day += 1) delete next[formatDateStr(y, m, day)]
+          applyState({ selectedDatesMap: next }, { save: true })
+        }
+
+        function onClearStorage() {
+          const ok = window.confirm('重新选择？\n\n会清空已保存的选择日期、月薪和应出勤天数，并恢复默认值。')
+          if (!ok) return
+          try {
+            clearState()
+          } catch (e) {}
+          _holidayWorkToastShown = false
+          applyState(
+            {
+              selectedDatesMap: {},
+              monthlySalary: '8000',
+              workDays: '26',
+              storageStatus: `已重置 ${nowTimeText()}`,
+            },
+            { save: false }
+          )
+          showToast('已重置')
+        }
+
+        function onSalaryInput(v) {
+          const next = v === undefined || v === null ? '' : String(v)
+          applyState({ monthlySalary: next }, { save: true })
+        }
+
+        function onWorkDaysInput(raw) {
+          const rawStr = raw === undefined || raw === null ? '' : String(raw)
+          _workDaysRawLast = rawStr
+
+          if (rawStr === '') {
+            applyState({ workDays: '' }, { save: true })
+            return
+          }
+
+          const n = Number(rawStr)
+          if (!Number.isFinite(n)) {
+            applyState({ workDays: '' }, { save: true })
+            return
+          }
+
+          const clamped = clampInt(n, 0, 31)
+          applyState({ workDays: String(clamped) }, { save: true })
+        }
+
+        function onWorkDaysBlur() {
+          const rawStr = _workDaysRawLast
+          if (rawStr == null || rawStr === '') return
+          const n = Number(rawStr)
+          if (!Number.isFinite(n)) return
+          if (n < 0 || n > 31) showToast('应出勤范围 0-31，已自动调整')
+        }
+
+        function onToggleSelectedList() {
+          applyState({ showSelectedList: !state.showSelectedList }, { save: false })
+        }
+
+        // ========= Snapshot to PNG (canvas) =========
+        function getSelectedDaysForCurrentMonth() {
+          const prefix = `${state.year}-${pad2(state.monthIndexPlus1)}-`
+          const days = []
+          for (const dateStr of Object.keys(state.selectedDatesMap || {})) {
+            if (!state.selectedDatesMap[dateStr]) continue
+            if (!dateStr.startsWith(prefix)) continue
+            const day = Number(dateStr.slice(8, 10))
+            if (!Number.isFinite(day) || day < 1 || day > 31) continue
+            days.push(day)
+          }
+          days.sort((a, b) => a - b)
+          return days
+        }
+
+        function wrapText(ctx, text, maxWidth) {
+          const s = String(text || '')
+          if (!s) return ['']
+          const lines = []
+          let cur = ''
+          for (let i = 0; i < s.length; i += 1) {
+            const ch = s[i]
+            const next = cur + ch
+            if (ctx.measureText(next).width <= maxWidth) {
+              cur = next
+              continue
+            }
+            if (cur) lines.push(cur)
+            cur = ch
+          }
+          if (cur) lines.push(cur)
+          return lines.length ? lines : ['']
+        }
+
+        function buildSnapshotData() {
+          const selectedDays = getSelectedDaysForCurrentMonth()
+          const selectedDaysText = selectedDays.length ? selectedDays.join('，') : '（无）'
+          const timestamp = new Date()
+          const ts =
+            `${timestamp.getFullYear()}-${pad2(timestamp.getMonth() + 1)}-${pad2(timestamp.getDate())} ` +
+            `${pad2(timestamp.getHours())}:${pad2(timestamp.getMinutes())}:${pad2(timestamp.getSeconds())}`
+
+          return {
+            title: `${state.year}年${state.monthIndexPlus1}月工资单`,
+            amountText: `￥${state.salaryResultText}`,
+            monthlySalary: String(state.monthlySalary || '0'),
+            workDays: String(state.workDays || '0'),
+            breakdown:
+              `工作日上工 ${state.workedCount} 天 + 法定节假日(带薪) ${state.holidayPaidCount} 天 + ` +
+              `节假日加班 ${state.holidayWorkedCount} 天(额外×2) = 计薪单位 ${state.payUnits} 天`,
+            formula: state.resultText,
+            selectedDaysText,
+            note:
+              state.year === 2026
+                ? '法定节假日：已内置 2026 年数据'
+                : '法定节假日：当前仅内置 2026 年数据（其它年份按无处理）',
+            generatedAt: `生成时间：${ts}`,
+            filename: `工资单_${state.year}-${pad2(state.monthIndexPlus1)}.png`,
+          }
+        }
+
+        function renderSnapshotToCanvas(data) {
+          const W = 1080
+          const P = 64
+          const contentW = W - P * 2
+          const lineGap = 18
+
+          const canvas = document.createElement('canvas')
+          const ctx = canvas.getContext('2d')
+          if (!ctx) throw new Error('Canvas 不可用')
+
+          const blocks = []
+
+          // Title
+          ctx.font = '700 56px system-ui, -apple-system, Segoe UI, Roboto, Arial'
+          blocks.push({ font: ctx.font, lines: wrapText(ctx, data.title, contentW), color: '#111', size: 56 })
+
+          // Amount
+          ctx.font = '900 92px system-ui, -apple-system, Segoe UI, Roboto, Arial'
+          blocks.push({ font: ctx.font, lines: wrapText(ctx, data.amountText, contentW), color: '#111', size: 92 })
+
+          // Meta
+          ctx.font = '600 38px system-ui, -apple-system, Segoe UI, Roboto, Arial'
+          blocks.push({
+            font: ctx.font,
+            lines: [
+              `月薪：${data.monthlySalary}`,
+              `应出勤(天)：${data.workDays}`,
+            ],
+            color: '#333',
+            size: 38,
+          })
+
+          // Breakdown + formula
+          ctx.font = '500 34px system-ui, -apple-system, Segoe UI, Roboto, Arial'
+          blocks.push({
+            font: ctx.font,
+            lines: wrapText(ctx, data.breakdown, contentW),
+            color: '#555',
+            size: 34,
+          })
+          blocks.push({
+            font: ctx.font,
+            lines: wrapText(ctx, data.formula, contentW),
+            color: '#555',
+            size: 34,
+          })
+
+          // Selected days
+          ctx.font = '650 36px system-ui, -apple-system, Segoe UI, Roboto, Arial'
+          blocks.push({
+            font: ctx.font,
+            lines: wrapText(ctx, `本月已选日期(日)：${data.selectedDaysText}`, contentW),
+            color: '#111',
+            size: 36,
+          })
+
+          // Footer
+          ctx.font = '500 30px system-ui, -apple-system, Segoe UI, Roboto, Arial'
+          blocks.push({
+            font: ctx.font,
+            lines: wrapText(ctx, data.note, contentW),
+            color: '#666',
+            size: 30,
+          })
+          blocks.push({
+            font: ctx.font,
+            lines: wrapText(ctx, data.generatedAt, contentW),
+            color: '#666',
+            size: 30,
+          })
+
+          // Measure height
+          let H = P
+          for (const b of blocks) {
+            const lineH = Math.max(40, Math.floor(b.size * 1.25))
+            H += b.lines.length * lineH + lineGap
+          }
+          H += P
+
+          canvas.width = W
+          canvas.height = H
+
+          // Background
+          ctx.fillStyle = '#f6f7fb'
+          ctx.fillRect(0, 0, W, H)
+
+          // Card background
+          const cardX = 36
+          const cardY = 36
+          const cardW = W - 72
+          const cardH = H - 72
+          roundRect(ctx, cardX, cardY, cardW, cardH, 28)
+          ctx.fillStyle = '#fff'
+          ctx.fill()
+
+          // Accent bar
+          roundRect(ctx, cardX, cardY, cardW, 18, 18)
+          ctx.fillStyle = '#07c160'
+          ctx.fill()
+
+          // Text
+          let y = cardY + P
+          const x = cardX + P
+          for (const b of blocks) {
+            ctx.font = b.font
+            ctx.fillStyle = b.color
+            const lineH = Math.max(40, Math.floor(b.size * 1.25))
+            for (const line of b.lines) {
+              ctx.fillText(line, x, y)
+              y += lineH
+            }
+            y += lineGap
+          }
+
+          return canvas
+        }
+
+        function roundRect(ctx, x, y, w, h, r) {
+          const rr = Math.min(r, w / 2, h / 2)
+          ctx.beginPath()
+          ctx.moveTo(x + rr, y)
+          ctx.arcTo(x + w, y, x + w, y + h, rr)
+          ctx.arcTo(x + w, y + h, x, y + h, rr)
+          ctx.arcTo(x, y + h, x, y, rr)
+          ctx.arcTo(x, y, x + w, y, rr)
+          ctx.closePath()
+        }
+
+        function downloadCanvasPng(canvas, filename) {
+          const url = canvas.toDataURL('image/png')
+          const a = document.createElement('a')
+          a.href = url
+          a.download = filename || '工资单.png'
+          a.rel = 'noopener'
+          document.body.appendChild(a)
+          a.click()
+          a.remove()
+          return url
+        }
+
+        function onSaveSnapshot() {
+          try {
+            const data = buildSnapshotData()
+            const canvas = renderSnapshotToCanvas(data)
+            const url = downloadCanvasPng(canvas, data.filename)
+            // iOS Safari may ignore download; give a fallback hint
+            if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+              showToast('如未自动下载：图片已生成，可在新窗口中长按保存')
+              window.open(url, '_blank', 'noopener,noreferrer')
+            } else {
+              showToast('已生成工资单图片')
             }
           } catch (e) {
-            console.error('解析日期数据失败:', e);
-            showToast('日期数据损坏，已重置', 'error');
-            selectedDates = new Set();
+            showToast('生成图片失败：' + (e && e.message ? e.message : '未知错误'))
           }
         }
 
-        // 加载月薪
-        const savedSalary = localStorage.getItem(STORAGE_KEYS.monthlySalary);
-        if (savedSalary !== null) {
-          if (isValidNumber(savedSalary, 0)) {
-            document.getElementById('monthlySalary').value = savedSalary;
-          } else {
-            console.warn('月薪数据无效，使用默认值');
-            document.getElementById('monthlySalary').value = DEFAULT_VALUES.monthlySalary;
-          }
+        // ========= Init =========
+        function init() {
+          const today = new Date()
+          let initYear = today.getFullYear()
+          let initMonthIndex = today.getMonth()
+
+          const loaded = loadState()
+          const map = Object.create(null)
+          for (const d of loaded.selectedDates) map[d] = true
+
+          if (loaded.droppedCount > 0) showToast(`已清理无效日期 ${loaded.droppedCount} 条`)
+          if (loaded.versionMismatch) showToast('检测到旧版本数据，已尝试兼容加载')
+
+          const monthlySalary = loaded.monthlySalary !== '' ? loaded.monthlySalary : '8000'
+          const workDays = loaded.workDays !== '' ? loaded.workDays : '26'
+
+          applyState(
+            {
+              year: initYear,
+              monthIndex: initMonthIndex,
+              selectedDatesMap: map,
+              monthlySalary,
+              workDays,
+              storageStatus:
+                loaded.selectedDates.length || loaded.monthlySalary || loaded.workDays
+                  ? `已加载 ${nowTimeText()}`
+                  : '未保存',
+            },
+            { save: false }
+          )
+
+          // Bind events
+          els.btnPrevMonth.addEventListener('click', onPrevMonth)
+          els.btnNextMonth.addEventListener('click', onNextMonth)
+          els.btnSelectAllMonth.addEventListener('click', onSelectAllMonth)
+          els.btnDeselectAllMonth.addEventListener('click', onDeselectAllMonth)
+          els.btnClearStorage.addEventListener('click', onClearStorage)
+          els.btnToggleSelectedList.addEventListener('click', onToggleSelectedList)
+          els.btnSaveSnapshot.addEventListener('click', onSaveSnapshot)
+
+          els.weekHeader.addEventListener('click', (e) => {
+            const target = e.target && e.target.closest ? e.target.closest('.week-cell') : null
+            if (!target) return
+            onToggleWeekdayColumn(target.dataset.weekday)
+          })
+
+          els.calendarGrid.addEventListener('click', (e) => {
+            const target = e.target && e.target.closest ? e.target.closest('.cell') : null
+            if (!target) return
+            const dateStr = target.dataset.datestr
+            if (!dateStr) return
+            onToggleDay(dateStr)
+          })
+
+          els.monthlySalaryInput.addEventListener('input', (e) => onSalaryInput(e.target.value))
+          els.workDaysInput.addEventListener('input', (e) => onWorkDaysInput(e.target.value))
+          els.workDaysInput.addEventListener('blur', onWorkDaysBlur)
         }
 
-        // 加载应上工天数
-        const savedWorkDays = localStorage.getItem(STORAGE_KEYS.workDays);
-        if (savedWorkDays !== null) {
-          if (isValidNumber(savedWorkDays, 0, 31)) {
-            document.getElementById('workDays').value = savedWorkDays;
-          } else {
-            console.warn('工作天数数据无效，使用默认值');
-            document.getElementById('workDays').value = DEFAULT_VALUES.workDays;
-          }
-        }
-
-        updateStorageStatus('数据已从本地加载');
-        showToast('数据加载成功', 'success');
-      } catch (e) {
-        console.error('加载数据失败:', e);
-        showToast('加载数据失败，使用默认值', 'error');
-        updateStorageStatus('加载失败，使用默认值', 'text-danger');
-      }
-    }
-
-    // 清除所有保存的数据
-    function clearStorage() {
-      if (confirm('确定要清除所有保存的数据吗？此操作不可恢复。')) {
         try {
-          Object.values(STORAGE_KEYS).forEach(key => {
-            localStorage.removeItem(key);
-          });
-          
-          // 重置到默认状态
-          selectedDates = new Set();
-          document.getElementById('monthlySalary').value = DEFAULT_VALUES.monthlySalary;
-          document.getElementById('workDays').value = DEFAULT_VALUES.workDays;
-          
-          // 重新生成日历
-          generateCalendar(currentYear, currentMonth);
-          updateSelectedList();
-          
-          showToast('数据已清除', 'success');
-          updateStorageStatus('数据已清除');
+          init()
         } catch (e) {
-          console.error('清除数据失败:', e);
-          showToast('清除数据失败: ' + e.message, 'error');
+          showToast('初始化失败：' + (e && e.message ? e.message : '未知错误'), 2600)
         }
-      }
-    }
-
-    // 更新存储状态显示
-    function updateStorageStatus(message, className = 'text-muted') {
-      const statusElement = document.getElementById('storageStatus');
-      statusElement.textContent = message;
-      statusElement.className = 'small text-center mt-3 ' + className;
-    }
-
-    // 生成日历表格，包含 header（带复选框）和日期格
-    function generateCalendar(year, month) {
-      // 显示当前的年月
-      const currentMonthYearSpan = document.getElementById('currentMonthYear');
-      currentMonthYearSpan.textContent = year + '年 ' + (month + 1) + '月';
-
-      let calendarDiv = document.getElementById('calendar');
-      let firstDay = new Date(year, month, 1);
-      let startingDay = firstDay.getDay(); // 0代表星期日
-      let daysInMonth = new Date(year, month + 1, 0).getDate();
-
-      // 构建表格头部，每一列增加 header 复选框
-      let html = '<table class="table table-bordered calendar-table"><thead><tr>';
-      for (let i = 0; i < 7; i++) {
-        html += `<th>
-                   <div class="form-check">
-                     <input class="form-check-input header-checkbox" type="checkbox" id="header-col-${i}" data-col="${i}">
-                     <label class="form-check-label" for="header-col-${i}">${weekdayNames[i]}</label>
-                   </div>
-                 </th>`;
-      }
-      html += '</tr></thead><tbody>';
-
-      let date = 1;
-      // 最多6行日历
-      for (let i = 0; i < 6; i++) {
-        html += '<tr>';
-        for (let j = 0; j < 7; j++) {
-          if (i === 0 && j < startingDay) {
-            html += '<td></td>';
-          } else if (date > daysInMonth) {
-            html += '<td></td>';
-          } else {
-            let monthStr = (month + 1).toString().padStart(2, '0');
-            let dateStr = date.toString().padStart(2, '0');
-            let fullDateStr = year + '-' + monthStr + '-' + dateStr;
-            let checked = selectedDates.has(fullDateStr) ? 'checked' : '';
-            html += '<td>';
-            html += `<div class="form-check">
-                       <input class="form-check-input day-checkbox" type="checkbox" id="date-${fullDateStr}" ${checked} data-date="${fullDateStr}">
-                       <label class="form-check-label" for="date-${fullDateStr}">${date}</label>
-                     </div>`;
-            html += '</td>';
-            date++;
-          }
-        }
-        html += '</tr>';
-        if (date > daysInMonth) break;
-      }
-      html += '</tbody></table>';
-      calendarDiv.innerHTML = html;
-
-      // 为所有日期复选框绑定事件监听
-      let dayCheckboxes = calendarDiv.querySelectorAll('input.day-checkbox');
-      dayCheckboxes.forEach(function(checkbox) {
-        checkbox.addEventListener('change', function() {
-          let d = this.getAttribute('data-date');
-          if (this.checked) {
-            selectedDates.add(d);
-          } else {
-            selectedDates.delete(d);
-          }
-          updateSelectedList();
-          saveToStorage(); // 保存更改
-        });
-      });
-
-      // 为 header 复选框绑定事件：切换整列
-      let headerCheckboxes = calendarDiv.querySelectorAll('input.header-checkbox');
-      headerCheckboxes.forEach(function(headerCheckbox) {
-        headerCheckbox.addEventListener('change', function() {
-          let colIndex = parseInt(this.getAttribute('data-col'));
-          let checked = this.checked;
-          // 遍历所有行，处理对应列的复选框
-          let rows = calendarDiv.querySelectorAll('tbody tr');
-          rows.forEach(function(row) {
-            let cells = row.querySelectorAll('td');
-            if (cells.length > colIndex) {
-              let cell = cells[colIndex];
-              let checkbox = cell.querySelector('input.day-checkbox');
-              if (checkbox) {
-                checkbox.checked = checked;
-                let d = checkbox.getAttribute('data-date');
-                if (checked) {
-                  selectedDates.add(d);
-                } else {
-                  selectedDates.delete(d);
-                }
-              }
-            }
-          });
-          updateSelectedList();
-          saveToStorage(); // 保存更改
-        });
-      });
-    }
-
-    // 更新已选日期列表和工资计算器
-    function updateSelectedList() {
-      let selectedDiv = document.getElementById('selectedDates');
-      let selectedArray = Array.from(selectedDates);
-      selectedArray.sort();
-      let html = '<h4>已选日期</h4>';
-      html += '<ul class="list-group">';
-      selectedArray.forEach(function(dateStr) {
-        try {
-          let dateObj = new Date(dateStr);
-          if (!isNaN(dateObj)) {
-            let weekday = weekdayNames[dateObj.getDay()];
-            html += '<li class="list-group-item">' + dateStr + ' 星期' + weekday + '</li>';
-          }
-        } catch (e) {
-          console.error('无效日期:', dateStr);
-        }
-      });
-      html += '</ul>';
-      html += '<p class="mt-2">总共选择：' + selectedArray.length + ' 天</p>';
-      selectedDiv.innerHTML = html;
-
-      // 计算工资
-      let monthlySalary = parseFloat(document.getElementById('monthlySalary').value) || 0;
-      let workDays = parseFloat(document.getElementById('workDays').value) || 0;
-      let x = selectedArray.length;
-      let y = workDays === 0 ? 0 : (x / workDays * monthlySalary);
-      
-      let salaryHtml = `<h4>月应结工资计算器</h4>
-                        <p>${x} / ${workDays} * ${monthlySalary} = ${y.toFixed(2)}</p>`;
-      document.getElementById('salaryCalculator').innerHTML = salaryHtml;
-    }
-
-    // 批量选择当前月：选中当前月所有日期
-    function selectAllCurrentMonth() {
-      let daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-      for (let d = 1; d <= daysInMonth; d++) {
-        let monthStr = (currentMonth + 1).toString().padStart(2, '0');
-        let dateStr = d.toString().padStart(2, '0');
-        let fullDateStr = currentYear + '-' + monthStr + '-' + dateStr;
-        selectedDates.add(fullDateStr);
-      }
-      generateCalendar(currentYear, currentMonth);
-      updateSelectedList();
-      saveToStorage(); // 保存更改
-    }
-
-    // 批量取消当前月所有日期
-    function deselectAllCurrentMonth() {
-      let daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-      for (let d = 1; d <= daysInMonth; d++) {
-        let monthStr = (currentMonth + 1).toString().padStart(2, '0');
-        let dateStr = d.toString().padStart(2, '0');
-        let fullDateStr = currentYear + '-' + monthStr + '-' + dateStr;
-        selectedDates.delete(fullDateStr);
-      }
-      generateCalendar(currentYear, currentMonth);
-      updateSelectedList();
-      saveToStorage(); // 保存更改
-    }
-
-    // 月份切换事件
-    document.getElementById('prevMonth').addEventListener('click', function() {
-      currentMonth--;
-      if (currentMonth < 0) {
-        currentMonth = 11;
-        currentYear--;
-      }
-      generateCalendar(currentYear, currentMonth);
-      updateSelectedList();
-    });
-
-    document.getElementById('nextMonth').addEventListener('click', function() {
-      currentMonth++;
-      if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear++;
-      }
-      generateCalendar(currentYear, currentMonth);
-      updateSelectedList();
-    });
-
-    // 批量选择按钮事件
-    document.getElementById('selectAll').addEventListener('click', selectAllCurrentMonth);
-    document.getElementById('deselectAll').addEventListener('click', deselectAllCurrentMonth);
-    document.getElementById('clearStorage').addEventListener('click', clearStorage);
-
-    // 当月薪或工作天数变化时更新工资计算器并保存
-    document.getElementById('monthlySalary').addEventListener('input', function() {
-      // 验证输入
-      if (isValidNumber(this.value, 0)) {
-        updateSelectedList();
-        saveToStorage();
-      } else {
-        showToast('请输入有效的月薪数字', 'error');
-      }
-    });
-    
-    document.getElementById('workDays').addEventListener('input', function() {
-      // 验证输入
-      if (isValidNumber(this.value, 0, 31)) {
-        updateSelectedList();
-        saveToStorage();
-      } else {
-        showToast('请输入有效的工作天数（0-31）', 'error');
-      }
-    });
-
-    // 检测 localStorage 是否可用
-    function checkLocalStorageAvailable() {
-      try {
-        const test = '__localStorage_test__';
-        localStorage.setItem(test, test);
-        localStorage.removeItem(test);
-        return true;
-      } catch (e) {
-        return false;
-      }
-    }
-
-    // 页面加载时，先加载保存的数据，然后初始化日历和显示
-    window.addEventListener('load', function() {
-      if (!checkLocalStorageAvailable()) {
-        showToast('浏览器不支持本地存储，数据将无法保存', 'error');
-        updateStorageStatus('本地存储不可用', 'text-danger');
-      } else {
-        loadFromStorage(); // 加载保存的数据
-      }
-      generateCalendar(currentYear, currentMonth);
-      updateSelectedList();
-    });
-
-    // 页面卸载前尝试保存数据
-    window.addEventListener('beforeunload', function() {
-      saveToStorage();
-    });
-  </script>
-
-  <!-- 引入 Bootstrap 5 JS Bundle -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+      })()
+    </script>
+  </body>
 </html>
