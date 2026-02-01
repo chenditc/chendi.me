@@ -377,86 +377,7 @@
         opacity: 1;
       }
 
-      /* Snapshot modal (mobile-friendly) */
-      .modal-overlay {
-        position: fixed;
-        left: 0;
-        top: 0;
-        width: 100vw;
-        height: 100vh;
-        background: rgba(0, 0, 0, 0.55);
-        display: flex;
-        align-items: flex-end;
-        justify-content: center;
-        padding: 16px;
-        z-index: 9998;
-      }
-
-      .modal-sheet {
-        width: min(720px, 100%);
-        max-height: calc(100vh - 32px);
-        background: #fff;
-        border-radius: 18px;
-        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .modal-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        padding: 12px 12px 10px;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-      }
-
-      .modal-title {
-        font-weight: 850;
-        font-size: 15px;
-        color: #111;
-      }
-
-      .modal-body {
-        padding: 12px;
-        overflow: auto;
-      }
-
-      .modal-tip {
-        font-size: 13px;
-        color: #333;
-        background: #f7f8fb;
-        border: 1px solid rgba(0, 0, 0, 0.06);
-        border-radius: 12px;
-        padding: 10px 12px;
-        margin-bottom: 10px;
-      }
-
-      .snapshot-img {
-        width: 100%;
-        border-radius: 14px;
-        border: 1px solid rgba(0, 0, 0, 0.06);
-        background: #f6f7fb;
-      }
-
-      .modal-actions {
-        display: flex;
-        gap: 10px;
-        padding: 12px;
-        border-top: 1px solid rgba(0, 0, 0, 0.06);
-        background: #fff;
-      }
-
-      .modal-actions .btn,
-      .modal-actions a.btn {
-        flex: 1;
-        text-align: center;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-      }
+      /* (intentionally left blank) */
     </style>
   </head>
   <body>
@@ -494,7 +415,7 @@
           <div class="result-title">预估工资</div>
           <div class="result-right">
             <div class="result-amount" id="salaryAmount">￥0.00</div>
-            <button id="btnSaveSnapshot" class="btn primary small" type="button">保存图片</button>
+            <button id="btnCopyLink" class="btn primary small" type="button">复制工资单网址</button>
           </div>
         </div>
         <span class="muted result-breakdown" id="resultBreakdown"></span>
@@ -514,23 +435,6 @@
     </div>
 
     <div class="toast" id="toast"></div>
-
-    <div class="modal-overlay" id="snapshotModal" hidden>
-      <div class="modal-sheet" role="dialog" aria-modal="true" aria-label="工资单图片预览">
-        <div class="modal-head">
-          <div class="modal-title" id="snapshotModalTitle">工资单图片</div>
-          <button id="btnSnapshotClose" class="btn ghost small" type="button">完成</button>
-        </div>
-        <div class="modal-body">
-          <div class="modal-tip" id="snapshotModalTip"></div>
-          <img id="snapshotPreview" class="snapshot-img" alt="工资单图片" />
-        </div>
-        <div class="modal-actions">
-          <a id="snapshotDownloadLink" class="btn primary" href="#" download>下载图片</a>
-          <button id="btnSnapshotOpenTab" class="btn secondary" type="button">在新标签页打开</button>
-        </div>
-      </div>
-    </div>
 
     <script>
       ;(() => {
@@ -582,6 +486,128 @@
         function nowTimeText() {
           const d = new Date()
           return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`
+        }
+
+        // ========= Share (web URL; adapted from utils/share.js) =========
+        const SHARE_VERSION = 1
+
+        function safeDecode(v) {
+          const s = v == null ? '' : String(v)
+          try {
+            return decodeURIComponent(s)
+          } catch (e) {
+            return s
+          }
+        }
+
+        function getMonthPrefix(year, monthIndex) {
+          return `${year}-${pad2(monthIndex + 1)}-`
+        }
+
+        function extractSelectedDaysForMonth(selectedDatesMap, year, monthIndex) {
+          const prefix = getMonthPrefix(year, monthIndex)
+          const seen = Object.create(null)
+          const days = []
+
+          for (const dateStr of Object.keys(selectedDatesMap || {})) {
+            if (!selectedDatesMap[dateStr]) continue
+            if (!dateStr.startsWith(prefix)) continue
+            const day = Number(dateStr.slice(8, 10))
+            if (!Number.isFinite(day) || day < 1 || day > 31) continue
+            if (seen[day]) continue
+            seen[day] = true
+            days.push(day)
+          }
+
+          days.sort((a, b) => a - b)
+          return days
+        }
+
+        function buildShareQuery({ year, monthIndex, selectedDatesMap, monthlySalary, workDays }) {
+          const y = Number(year)
+          const m1 = Number(monthIndex) + 1
+          const m = clampInt(m1, 1, 12)
+
+          const days = extractSelectedDaysForMonth(selectedDatesMap, y, m - 1)
+          const d = days.join(',')
+
+          const salary = monthlySalary == null ? '' : String(monthlySalary)
+          const work = workDays == null ? '' : String(workDays)
+
+          const params = [
+            `s=1`,
+            `v=${SHARE_VERSION}`,
+            `y=${encodeURIComponent(String(y))}`,
+            `m=${encodeURIComponent(String(m))}`,
+            `d=${encodeURIComponent(d)}`,
+            `salary=${encodeURIComponent(salary)}`,
+            `work=${encodeURIComponent(work)}`,
+          ]
+
+          return params.join('&')
+        }
+
+        function parseSharedParamsFromLocation() {
+          let params = null
+          try {
+            params = new URLSearchParams(window.location.search || '')
+          } catch (e) {
+            return { ok: false }
+          }
+
+          const s = safeDecode(params.get('s'))
+          if (s !== '1') return { ok: false }
+
+          const vRaw = safeDecode(params.get('v'))
+          const v = vRaw == null || vRaw === '' ? SHARE_VERSION : Number(vRaw)
+          if (!Number.isFinite(v) || v !== SHARE_VERSION) return { ok: false }
+
+          const y = Number(safeDecode(params.get('y')))
+          const m = Number(safeDecode(params.get('m')))
+          if (!Number.isFinite(y) || !Number.isFinite(m)) return { ok: false }
+          if (m < 1 || m > 12) return { ok: false }
+
+          const dRaw = safeDecode(params.get('d'))
+          const parts = dRaw ? String(dRaw).split(',') : []
+          const daySeen = Object.create(null)
+          const dayList = []
+          for (const p of parts) {
+            const n = Number(p)
+            if (!Number.isFinite(n) || !Number.isInteger(n)) continue
+            if (n < 1 || n > 31) continue
+            const day = n
+            if (daySeen[day]) continue
+            daySeen[day] = true
+            dayList.push(day)
+          }
+          dayList.sort((a, b) => a - b)
+
+          const monthIndex = m - 1
+          const selectedDatesMap = Object.create(null)
+          for (const day of dayList) selectedDatesMap[formatDateStr(y, monthIndex, day)] = true
+
+          const monthlySalary = params.get('salary') == null ? '' : safeDecode(params.get('salary'))
+          const workDays = params.get('work') == null ? '' : safeDecode(params.get('work'))
+
+          return { ok: true, year: y, monthIndex, selectedDatesMap, monthlySalary, workDays, version: v }
+        }
+
+        function replaceMonthSelection(baseSelectedDatesMap, year, monthIndex, monthSelectedDatesMap) {
+          const prefix = getMonthPrefix(year, monthIndex)
+          const next = Object.create(null)
+
+          for (const k of Object.keys(baseSelectedDatesMap || {})) {
+            if (!baseSelectedDatesMap[k]) continue
+            if (k.startsWith(prefix)) continue
+            next[k] = true
+          }
+
+          for (const k of Object.keys(monthSelectedDatesMap || {})) {
+            if (!monthSelectedDatesMap[k]) continue
+            next[k] = true
+          }
+
+          return next
         }
 
         // ========= Holidays (ported from utils/holidays.js; 2026 only) =========
@@ -850,14 +876,7 @@
           btnDeselectAllMonth: $('btnDeselectAllMonth'),
           btnClearStorage: $('btnClearStorage'),
           btnToggleSelectedList: $('btnToggleSelectedList'),
-          btnSaveSnapshot: $('btnSaveSnapshot'),
-          snapshotModal: $('snapshotModal'),
-          snapshotModalTitle: $('snapshotModalTitle'),
-          snapshotModalTip: $('snapshotModalTip'),
-          snapshotPreview: $('snapshotPreview'),
-          snapshotDownloadLink: $('snapshotDownloadLink'),
-          btnSnapshotClose: $('btnSnapshotClose'),
-          btnSnapshotOpenTab: $('btnSnapshotOpenTab'),
+          btnCopyLink: $('btnCopyLink'),
         }
 
         let toastTimer = null
@@ -869,18 +888,6 @@
           toastTimer = setTimeout(() => {
             els.toast.classList.remove('show')
           }, ms)
-        }
-
-        function isIOS() {
-          const ua = navigator.userAgent || ''
-          const iOSLike = /iPhone|iPad|iPod/i.test(ua)
-          // iPadOS 13+ may identify as Mac; detect touch + Apple vendor as a fallback
-          const iPadOSLike =
-            !iOSLike &&
-            /Macintosh/i.test(ua) &&
-            (navigator.maxTouchPoints || 0) > 1 &&
-            String(navigator.vendor || '').includes('Apple')
-          return iOSLike || iPadOSLike
         }
 
         const state = {
@@ -1195,286 +1202,65 @@
           applyState({ showSelectedList: !state.showSelectedList }, { save: false })
         }
 
-        // ========= Snapshot to PNG (canvas) =========
-        function getSelectedDaysForCurrentMonth() {
-          const prefix = `${state.year}-${pad2(state.monthIndexPlus1)}-`
-          const days = []
-          for (const dateStr of Object.keys(state.selectedDatesMap || {})) {
-            if (!state.selectedDatesMap[dateStr]) continue
-            if (!dateStr.startsWith(prefix)) continue
-            const day = Number(dateStr.slice(8, 10))
-            if (!Number.isFinite(day) || day < 1 || day > 31) continue
-            days.push(day)
-          }
-          days.sort((a, b) => a - b)
-          return days
+        // ========= Copy share link =========
+        function getBaseUrlForShare() {
+          const href = String(window.location.href || '')
+          const noHash = href.split('#')[0]
+          const noQuery = noHash.split('?')[0]
+          return noQuery
         }
 
-        function wrapText(ctx, text, maxWidth) {
+        async function copyTextToClipboard(text) {
           const s = String(text || '')
-          if (!s) return ['']
-          const lines = []
-          let cur = ''
-          for (let i = 0; i < s.length; i += 1) {
-            const ch = s[i]
-            const next = cur + ch
-            if (ctx.measureText(next).width <= maxWidth) {
-              cur = next
-              continue
-            }
-            if (cur) lines.push(cur)
-            cur = ch
-          }
-          if (cur) lines.push(cur)
-          return lines.length ? lines : ['']
-        }
-
-        function buildSnapshotData() {
-          const selectedDays = getSelectedDaysForCurrentMonth()
-          const selectedDaysText = selectedDays.length ? selectedDays.join('，') : '（无）'
-          const timestamp = new Date()
-          const ts =
-            `${timestamp.getFullYear()}-${pad2(timestamp.getMonth() + 1)}-${pad2(timestamp.getDate())} ` +
-            `${pad2(timestamp.getHours())}:${pad2(timestamp.getMinutes())}:${pad2(timestamp.getSeconds())}`
-
-          return {
-            title: `${state.year}年${state.monthIndexPlus1}月工资单`,
-            amountText: `￥${state.salaryResultText}`,
-            monthlySalary: String(state.monthlySalary || '0'),
-            workDays: String(state.workDays || '0'),
-            breakdown:
-              `工作日上工 ${state.workedCount} 天 + 法定节假日(带薪) ${state.holidayPaidCount} 天 + ` +
-              `节假日加班 ${state.holidayWorkedCount} 天(额外×2) = 计薪单位 ${state.payUnits} 天`,
-            formula: state.resultText,
-            selectedDaysText,
-            note:
-              state.year === 2026
-                ? '法定节假日：已内置 2026 年数据'
-                : '法定节假日：目前仅内置 2026 年数据（其它年份不自动计入）',
-            generatedAt: `生成时间：${ts}`,
-            filename: `工资单_${state.year}-${pad2(state.monthIndexPlus1)}.png`,
-          }
-        }
-
-        function renderSnapshotToCanvas(data) {
-          const W = 1080
-          const P = 64
-          const contentW = W - P * 2
-          const lineGap = 18
-
-          const canvas = document.createElement('canvas')
-          const ctx = canvas.getContext('2d')
-          if (!ctx) throw new Error('Canvas 不可用')
-
-          const blocks = []
-
-          // Title
-          ctx.font = '700 56px system-ui, -apple-system, Segoe UI, Roboto, Arial'
-          blocks.push({ font: ctx.font, lines: wrapText(ctx, data.title, contentW), color: '#111', size: 56 })
-
-          // Amount
-          ctx.font = '900 92px system-ui, -apple-system, Segoe UI, Roboto, Arial'
-          blocks.push({ font: ctx.font, lines: wrapText(ctx, data.amountText, contentW), color: '#111', size: 92 })
-
-          // Meta
-          ctx.font = '600 38px system-ui, -apple-system, Segoe UI, Roboto, Arial'
-          blocks.push({
-            font: ctx.font,
-            lines: [
-              `月薪：${data.monthlySalary}`,
-              `应出勤(天)：${data.workDays}`,
-            ],
-            color: '#333',
-            size: 38,
-          })
-
-          // Breakdown + formula
-          ctx.font = '500 34px system-ui, -apple-system, Segoe UI, Roboto, Arial'
-          blocks.push({
-            font: ctx.font,
-            lines: wrapText(ctx, data.breakdown, contentW),
-            color: '#555',
-            size: 34,
-          })
-          blocks.push({
-            font: ctx.font,
-            lines: wrapText(ctx, data.formula, contentW),
-            color: '#555',
-            size: 34,
-          })
-
-          // Selected days
-          ctx.font = '650 36px system-ui, -apple-system, Segoe UI, Roboto, Arial'
-          blocks.push({
-            font: ctx.font,
-            lines: wrapText(ctx, `本月已选日期（日）：${data.selectedDaysText}`, contentW),
-            color: '#111',
-            size: 36,
-          })
-
-          // Footer
-          ctx.font = '500 30px system-ui, -apple-system, Segoe UI, Roboto, Arial'
-          blocks.push({
-            font: ctx.font,
-            lines: wrapText(ctx, data.note, contentW),
-            color: '#666',
-            size: 30,
-          })
-          blocks.push({
-            font: ctx.font,
-            lines: wrapText(ctx, data.generatedAt, contentW),
-            color: '#666',
-            size: 30,
-          })
-
-          // Measure height
-          let H = P
-          for (const b of blocks) {
-            const lineH = Math.max(40, Math.floor(b.size * 1.25))
-            H += b.lines.length * lineH + lineGap
-          }
-          H += P
-
-          canvas.width = W
-          canvas.height = H
-
-          // Background
-          ctx.fillStyle = '#f6f7fb'
-          ctx.fillRect(0, 0, W, H)
-
-          // Card background
-          const cardX = 36
-          const cardY = 36
-          const cardW = W - 72
-          const cardH = H - 72
-          roundRect(ctx, cardX, cardY, cardW, cardH, 28)
-          ctx.fillStyle = '#fff'
-          ctx.fill()
-
-          // Accent bar
-          roundRect(ctx, cardX, cardY, cardW, 18, 18)
-          ctx.fillStyle = '#07c160'
-          ctx.fill()
-
-          // Text
-          let y = cardY + P
-          const x = cardX + P
-          for (const b of blocks) {
-            ctx.font = b.font
-            ctx.fillStyle = b.color
-            const lineH = Math.max(40, Math.floor(b.size * 1.25))
-            for (const line of b.lines) {
-              ctx.fillText(line, x, y)
-              y += lineH
-            }
-            y += lineGap
-          }
-
-          return canvas
-        }
-
-        function roundRect(ctx, x, y, w, h, r) {
-          const rr = Math.min(r, w / 2, h / 2)
-          ctx.beginPath()
-          ctx.moveTo(x + rr, y)
-          ctx.arcTo(x + w, y, x + w, y + h, rr)
-          ctx.arcTo(x + w, y + h, x, y + h, rr)
-          ctx.arcTo(x, y + h, x, y, rr)
-          ctx.arcTo(x, y, x + w, y, rr)
-          ctx.closePath()
-        }
-
-        function canvasToBlob(canvas, type = 'image/png', quality) {
-          return new Promise((resolve, reject) => {
-            try {
-              canvas.toBlob(
-                (blob) => {
-                  if (blob) resolve(blob)
-                  else reject(new Error('无法生成图片（toBlob 返回空）'))
-                },
-                type,
-                quality
-              )
-            } catch (e) {
-              reject(e)
-            }
-          })
-        }
-
-        let _snapshotObjectUrl = null
-        function closeSnapshotModal() {
-          els.snapshotModal.hidden = true
-          if (_snapshotObjectUrl) {
-            try {
-              URL.revokeObjectURL(_snapshotObjectUrl)
-            } catch (e) {}
-            _snapshotObjectUrl = null
-          }
-          els.snapshotPreview.removeAttribute('src')
-          els.snapshotDownloadLink.setAttribute('href', '#')
-        }
-
-        function openSnapshotModal(url, data) {
-          if (_snapshotObjectUrl) {
-            try {
-              URL.revokeObjectURL(_snapshotObjectUrl)
-            } catch (e) {}
-          }
-          _snapshotObjectUrl = url
-          els.snapshotModalTitle.textContent = data && data.title ? data.title : '工资单图片'
-
-          const tip = isIOS()
-            ? 'iPhone/iPad：长按图片即可“存储到照片”。如无法下载，这是最稳的保存方式。'
-            : '如果下载被拦截，可点击“在新标签页打开”后再保存。'
-          els.snapshotModalTip.textContent = tip
-
-          els.snapshotPreview.src = url
-          els.snapshotDownloadLink.href = url
-          els.snapshotDownloadLink.download = (data && data.filename) || '工资单.png'
-
-          els.snapshotModal.hidden = false
-        }
-
-        async function trySharePngFile(file, title, text) {
-          if (!navigator.share) return false
-          // canShare({files}) is not universally available; guard carefully
+          if (!s) return false
           try {
-            if (navigator.canShare && !navigator.canShare({ files: [file] })) return false
-          } catch (e) {
-            // If canShare throws, we still can try share() and fallback on failure.
-          }
+            if (navigator.clipboard && window.isSecureContext) {
+              await navigator.clipboard.writeText(s)
+              return true
+            }
+          } catch (e) {}
+
+          // Fallback: execCommand
           try {
-            await navigator.share({ title: title || '', text: text || '', files: [file] })
-            return true
+            const ta = document.createElement('textarea')
+            ta.value = s
+            ta.setAttribute('readonly', 'true')
+            ta.style.position = 'fixed'
+            ta.style.left = '-9999px'
+            ta.style.top = '0'
+            document.body.appendChild(ta)
+            ta.select()
+            ta.setSelectionRange(0, ta.value.length)
+            const ok = document.execCommand && document.execCommand('copy')
+            ta.remove()
+            return !!ok
           } catch (e) {
             return false
           }
         }
 
-        async function onSaveSnapshot() {
+        async function onCopyLink() {
+          const query = buildShareQuery({
+            year: state.year,
+            monthIndex: state.monthIndex,
+            selectedDatesMap: state.selectedDatesMap,
+            monthlySalary: state.monthlySalary,
+            workDays: state.workDays,
+          })
+          const url = `${getBaseUrlForShare()}?${query}`
+
+          const ok = await copyTextToClipboard(url)
+          if (ok) {
+            showToast('已复制工资单网址，可发送给对方打开')
+            return
+          }
+
+          // Last resort: prompt for manual copy
           try {
-            const data = buildSnapshotData()
-            const canvas = renderSnapshotToCanvas(data)
-            const blob = await canvasToBlob(canvas, 'image/png')
-            const file = new File([blob], data.filename, { type: 'image/png' })
-
-            // Best UX on mobile: system share sheet -> “存储到照片/保存图片”
-            const shared = await trySharePngFile(
-              file,
-              data.title,
-              `${data.title} ${data.amountText}`
-            )
-            if (shared) {
-              showToast(isIOS() ? '已打开系统分享，可选择“存储到照片”' : '已打开分享面板')
-              return
-            }
-
-            // Fallback: modal preview + download/open-tab
-            const url = URL.createObjectURL(blob)
-            openSnapshotModal(url, data)
-            showToast(isIOS() ? '长按图片即可保存到相册' : '图片已生成')
+            window.prompt('复制工资单网址（手动复制）', url)
+            showToast('请手动复制并发送')
           } catch (e) {
-            showToast('生成图片失败：' + (e && e.message ? e.message : '请稍后重试'))
+            showToast('复制失败，请手动复制浏览器地址栏网址')
           }
         }
 
@@ -1494,6 +1280,28 @@
           const monthlySalary = loaded.monthlySalary !== '' ? loaded.monthlySalary : '8000'
           const workDays = loaded.workDays !== '' ? loaded.workDays : '26'
 
+          const shared = parseSharedParamsFromLocation()
+          if (shared.ok) {
+            initYear = shared.year
+            initMonthIndex = shared.monthIndex
+            const merged = replaceMonthSelection(map, shared.year, shared.monthIndex, shared.selectedDatesMap)
+            const shareMonthlySalary = shared.monthlySalary !== '' ? shared.monthlySalary : monthlySalary
+            const shareWorkDays = shared.workDays !== '' ? shared.workDays : workDays
+            applyState(
+              {
+                year: initYear,
+                monthIndex: initMonthIndex,
+                selectedDatesMap: merged,
+                monthlySalary: shareMonthlySalary,
+                workDays: shareWorkDays,
+                storageStatus: `已从工资单链接恢复并保存 ${nowTimeText()}`,
+              },
+              { save: true }
+            )
+            showToast('已从工资单链接恢复')
+            return
+          }
+
           applyState(
             {
               year: initYear,
@@ -1509,13 +1317,6 @@
             { save: false }
           )
 
-          // Improve button label on mobile platforms
-          try {
-            const ios = isIOS()
-            const maybeShare = !!navigator.share
-            els.btnSaveSnapshot.textContent = ios ? '保存到相册' : maybeShare ? '保存图片' : '保存图片'
-          } catch (e) {}
-
           // Bind events
           els.btnPrevMonth.addEventListener('click', onPrevMonth)
           els.btnNextMonth.addEventListener('click', onNextMonth)
@@ -1523,20 +1324,9 @@
           els.btnDeselectAllMonth.addEventListener('click', onDeselectAllMonth)
           els.btnClearStorage.addEventListener('click', onClearStorage)
           els.btnToggleSelectedList.addEventListener('click', onToggleSelectedList)
-          els.btnSaveSnapshot.addEventListener('click', onSaveSnapshot)
-
-          els.btnSnapshotClose.addEventListener('click', closeSnapshotModal)
-          els.btnSnapshotOpenTab.addEventListener('click', () => {
-            const href = els.snapshotDownloadLink.getAttribute('href') || ''
-            if (!href || href === '#') return
-            window.open(href, '_blank', 'noopener,noreferrer')
-          })
-          els.snapshotModal.addEventListener('click', (e) => {
-            // click on backdrop closes; click inside sheet doesn't
-            if (e.target === els.snapshotModal) closeSnapshotModal()
-          })
-          document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !els.snapshotModal.hidden) closeSnapshotModal()
+          els.btnCopyLink.addEventListener('click', () => {
+            // Fire-and-forget; errors are handled inside
+            onCopyLink()
           })
 
           els.weekHeader.addEventListener('click', (e) => {
