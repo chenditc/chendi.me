@@ -984,6 +984,8 @@
           }
 
           render()
+          // Keep address bar URL always share-ready (no refresh).
+          updateUrlFromState()
         }
 
         function render() {
@@ -1210,6 +1212,35 @@
           return noQuery
         }
 
+        function buildShareUrlFromState() {
+          const query = buildShareQuery({
+            year: state.year,
+            monthIndex: state.monthIndex,
+            selectedDatesMap: state.selectedDatesMap,
+            monthlySalary: state.monthlySalary,
+            workDays: state.workDays,
+          })
+          const base = getBaseUrlForShare()
+          const hash = window.location.hash || ''
+          return `${base}?${query}${hash}`
+        }
+
+        function updateUrlFromState() {
+          try {
+            if (!window.history || !window.history.replaceState) return
+            const nextUrl = buildShareUrlFromState()
+            if (!nextUrl) return
+
+            // Avoid unnecessary replaceState calls
+            const cur = String(window.location.href || '')
+            if (cur === nextUrl) return
+
+            window.history.replaceState(null, '', nextUrl)
+          } catch (e) {
+            // Ignore URL update failures (e.g., restrictive environments)
+          }
+        }
+
         async function copyTextToClipboard(text) {
           const s = String(text || '')
           if (!s) return false
@@ -1240,14 +1271,9 @@
         }
 
         async function onCopyLink() {
-          const query = buildShareQuery({
-            year: state.year,
-            monthIndex: state.monthIndex,
-            selectedDatesMap: state.selectedDatesMap,
-            monthlySalary: state.monthlySalary,
-            workDays: state.workDays,
-          })
-          const url = `${getBaseUrlForShare()}?${query}`
+          // Ensure URL is up-to-date before copying.
+          updateUrlFromState()
+          const url = buildShareUrlFromState()
 
           const ok = await copyTextToClipboard(url)
           if (ok) {
