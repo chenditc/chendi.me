@@ -1,0 +1,2007 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AI防不住的面试题 —— Anthropic的军备竞赛</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #F0F9FF; --bg-act2: #FAF5FF; --bg-act3: #ECFDF5;
+  --bg-dark: #0F172A;
+  --text: #1E293B; --text-muted: #64748B; --dim: #94A3B8;
+  --accent: #0891B2; --accent2: #9333EA;
+  --warm: #F59E0B; --danger: #EF4444;
+  --neutral: #94A3B8;
+  --card-bg: #FFFFFF;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Noto Sans SC', sans-serif; }
+
+.layer {
+  position: fixed; inset: 0; overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  visibility: hidden; opacity: 0;
+  will-change: transform, opacity;
+  scroll-snap-type: y proximity;
+}
+.layer.active { visibility: visible; opacity: 1; }
+
+.feed-section {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 80px 24px; scroll-snap-align: start;
+}
+.feed-section.dark { background: var(--bg-dark); color: #F1F5F9; }
+.feed-section.dark .body-text { color: #94A3B8; }
+.feed-section.dark .big-statement { color: #F1F5F9; }
+.feed-section.dark .drill-btn { border-color: rgba(8,145,178,0.4); }
+.section-inner { max-width: 600px; width: 100%; }
+
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-d1 { transition-delay: 0.15s; }
+.reveal-d2 { transition-delay: 0.3s; }
+.reveal-d3 { transition-delay: 0.45s; }
+.reveal-d4 { transition-delay: 0.6s; }
+
+.big-statement { font-family: 'Noto Serif SC', serif; font-size: clamp(22px, 5.5vw, 32px); font-weight: 700; line-height: 1.5; margin-bottom: 32px; color: var(--text); }
+.body-text { font-size: 16px; line-height: 1.9; color: var(--text); margin-bottom: 28px; }
+.body-text .hl { color: var(--accent); font-weight: 500; }
+.body-text .hl2 { color: var(--accent2); font-weight: 500; }
+.body-text .hl-danger { color: var(--danger); font-weight: 500; }
+
+.hook-line { font-size: 15px; color: var(--accent); font-weight: 500; margin: 20px 0 16px; line-height: 1.7; }
+.dark .hook-line { color: #22D3EE; }
+
+.anim-stage { margin: 32px 0; }
+.anim-stage > div{ width:100%; }
+
+.breadcrumb {
+  position: fixed; top: 16px; left: 16px; z-index: 1000;
+  display: flex; align-items: center; gap: 4px;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+  padding: 8px 14px; border-radius: 10px; box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+  font-size: 13px; font-weight: 500;
+}
+.breadcrumb span { color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
+.breadcrumb span:hover { color: var(--accent); }
+.breadcrumb span.current { color: var(--text); cursor: default; }
+.breadcrumb .sep { color: #CBD5E1; margin: 0 2px; cursor: default; }
+
+.back-btn {
+  position: fixed; top: 16px; left: 16px; z-index: 1001;
+  width: 38px; height: 38px; border-radius: 10px; border: none;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  font-size: 18px; cursor: pointer; display: none; align-items: center; justify-content: center;
+  color: var(--text); transition: all 0.2s;
+}
+.back-btn:hover { background: var(--accent); color: #fff; }
+
+.depth-dots {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1000;
+  display: flex; gap: 8px; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px);
+  padding: 8px 14px; border-radius: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #CBD5E1; transition: all 0.3s; }
+.dot.active { background: var(--accent); box-shadow: 0 0 8px rgba(8,145,178,0.5); transform: scale(1.2); }
+
+.drill-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border: 1.5px solid rgba(8,145,178,0.3); border-radius: 10px;
+  background: transparent; color: var(--accent); font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.25s;
+}
+.drill-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(8,145,178,0.3); }
+
+.source-panel {
+  margin-top: 24px; border-radius: 12px; overflow: hidden;
+  border: 1px solid rgba(8,145,178,0.15); background: rgba(8,145,178,0.03);
+}
+.dark .source-panel { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
+.source-toggle {
+  width: 100%; padding: 12px 16px; border: none; background: none;
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 600; color: var(--accent);
+}
+.dark .source-toggle { color: #22D3EE; }
+.source-toggle:hover { background: rgba(8,145,178,0.06); }
+.source-toggle .arrow { transition: transform 0.3s; font-size: 11px; }
+.source-toggle.open .arrow { transform: rotate(90deg); }
+.source-body {
+  max-height: 0; overflow: hidden; transition: max-height 0.4s ease; padding: 0 16px;
+}
+.source-body.open { max-height: 2000px; padding: 0 16px 16px; overflow-y: auto; }
+.source-body p { font-size: 13px; line-height: 1.8; color: var(--text-muted); margin: 0 0 12px; white-space: pre-wrap; }
+.dark .source-body p { color: #94A3B8; }
+.source-body .source-label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--accent); margin-bottom: 8px; display: block;
+}
+.dark .source-body .source-label { color: #22D3EE; }
+
+.act-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 16px;
+}
+.dark .act-label { color: #22D3EE; }
+
+/* === S1 Animation === */
+
+.s1_stage {
+  position: relative;
+  width: 340px;
+  height: 280px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.s1_stage.visible {
+  opacity: 1;
+}
+
+/* Common box style */
+.s1_box {
+  position: absolute;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* Left column: exam versions (gray) */
+.s1_v {
+  left: 30px;
+  width: 80px;
+  background: #94A3B8;
+  color: #fff;
+}
+
+/* Right column: models (purple) */
+.s1_m {
+  right: 30px;
+  width: 100px;
+  background: #9333EA;
+  color: #fff;
+}
+
+/* Row positions */
+.s1_row1 { top: 40px; }
+.s1_row2 { top: 122px; }
+.s1_row3 { top: 204px; }
+
+/* Lines via SVG */
+.s1_svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 340px;
+  height: 280px;
+  pointer-events: none;
+}
+
+.s1_line {
+  stroke: #94A3B8;
+  stroke-width: 2;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.s1_line_dash {
+  stroke: #94A3B8;
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.s1_xmark {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  fill: #EF4444;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* Animation keyframes triggered by .visible */
+.s1_stage.visible .s1_step1 {
+  opacity: 1; transform: scale(1);
+  transition-delay: 0.0s;
+}
+.s1_stage.visible .s1_step2 {
+  opacity: 1; transform: scale(1);
+  transition-delay: 0.5s;
+}
+.s1_stage.visible .s1_step3 {
+  opacity: 1;
+  transition-delay: 1.0s;
+}
+.s1_stage.visible .s1_step4 {
+  opacity: 1; transform: scale(1);
+  transition-delay: 1.5s;
+}
+.s1_stage.visible .s1_step5 {
+  opacity: 1; transform: scale(1);
+  transition-delay: 2.0s;
+}
+.s1_stage.visible .s1_step6 {
+  opacity: 1;
+  transition-delay: 2.5s;
+}
+.s1_stage.visible .s1_step7 {
+  opacity: 1; transform: scale(1);
+  transition-delay: 3.0s;
+}
+.s1_stage.visible .s1_step8 {
+  opacity: 1; transform: scale(1);
+  transition-delay: 3.5s;
+}
+.s1_stage.visible .s1_step9 {
+  opacity: 1;
+  transition-delay: 4.0s;
+}
+
+/* === S2 Animation === */
+
+.s2_stage {
+  position: relative;
+  width: 340px;
+  height: 260px;
+  margin: 0 auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.s2_box {
+  width: 200px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(12px);
+  position: relative;
+  background: #fff;
+  overflow: hidden;
+}
+
+.s2_box_cyan {
+  border: 1.5px solid #0891B2;
+  color: #0891B2;
+}
+
+.s2_box_purple {
+  border: 1.5px solid #9333EA;
+  color: #9333EA;
+}
+
+/* left accent bar */
+.s2_bar {
+  width: 4px;
+  height: 100%;
+  flex-shrink: 0;
+}
+
+.s2_box_cyan .s2_bar {
+  background: #0891B2;
+}
+
+.s2_box_purple .s2_bar {
+  background: #9333EA;
+}
+
+.s2_text {
+  padding-left: 12px;
+  white-space: nowrap;
+}
+
+/* --- keyframes --- */
+@keyframes s2_slidein {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* --- triggered animations --- */
+.s2_stage.visible .s2_item1 {
+  animation: s2_slidein 0.5s ease-out 0.2s forwards;
+}
+
+.s2_stage.visible .s2_item2 {
+  animation: s2_slidein 0.5s ease-out 0.6s forwards;
+}
+
+.s2_stage.visible .s2_item3 {
+  animation: s2_slidein 0.5s ease-out 1.0s forwards;
+}
+
+.s2_stage.visible .s2_item4 {
+  animation: s2_slidein 0.5s ease-out 1.4s forwards;
+}
+
+/* === S3 Animation === */
+
+.s3_stage {
+  width: 340px;
+  height: 280px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+}
+.s3_stage * { box-sizing: border-box; }
+
+/* Center box: 模拟加速器 (5 chars -> rounded rect) */
+.s3_center {
+  position: absolute;
+  width: 180px;
+  height: 44px;
+  border-radius: 12px;
+  border: 2.5px solid #0891B2;
+  background: transparent;
+  color: #E2E8F0;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  left: 80px;
+  top: 118px;
+  opacity: 0;
+  z-index: 2;
+  letter-spacing: 2px;
+}
+
+/* Feature circles — 48px diameter */
+.s3_node {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2.5px solid;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  z-index: 2;
+}
+
+.s3_cyan  { border-color: #0891B2; color: #67E8F9; }
+.s3_purple { border-color: #9333EA; color: #C084FC; }
+
+/* Positions: center of stage is (170, 140) */
+/* 内存: left-top */
+.s3_mem  { left: 42px;  top: 18px; }
+/* VLIW: right-top */
+.s3_vliw { left: 250px; top: 18px; }
+/* SIMD: left-bottom */
+.s3_simd { left: 42px;  top: 214px; }
+/* 多核: right-bottom */
+.s3_core { left: 250px; top: 214px; }
+
+/* SVG lines layer */
+.s3_svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 340px;
+  height: 280px;
+  z-index: 1;
+}
+
+.s3_line {
+  stroke: #94A3B8;
+  stroke-width: 2;
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  fill: none;
+}
+
+/* Keyframes */
+@keyframes s3_fadeIn {
+  from { opacity: 0; transform: scale(0.7); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s3_drawLine {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Entrance: center first */
+.s3_stage.visible .s3_center {
+  animation: s3_fadeIn 0.5s ease forwards;
+  animation-delay: 0s;
+}
+
+/* Lines + circles: each pair appears together, delay >= 0.4s apart */
+/* Line to 内存 + circle */
+.s3_stage.visible .s3_line_mem {
+  animation: s3_drawLine 0.4s ease forwards;
+  animation-delay: 0.6s;
+}
+.s3_stage.visible .s3_mem {
+  animation: s3_fadeIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  animation-delay: 0.9s;
+}
+
+/* Line to VLIW + circle */
+.s3_stage.visible .s3_line_vliw {
+  animation: s3_drawLine 0.4s ease forwards;
+  animation-delay: 1.4s;
+}
+.s3_stage.visible .s3_vliw {
+  animation: s3_fadeIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  animation-delay: 1.7s;
+}
+
+/* Line to SIMD + circle */
+.s3_stage.visible .s3_line_simd {
+  animation: s3_drawLine 0.4s ease forwards;
+  animation-delay: 2.2s;
+}
+.s3_stage.visible .s3_simd {
+  animation: s3_fadeIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  animation-delay: 2.5s;
+}
+
+/* Line to 多核 + circle */
+.s3_stage.visible .s3_line_core {
+  animation: s3_drawLine 0.4s ease forwards;
+  animation-delay: 3.0s;
+}
+.s3_stage.visible .s3_core {
+  animation: s3_fadeIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  animation-delay: 3.3s;
+}
+
+/* === S4 Animation === */
+
+.s4_stage {
+  position: relative;
+  width: 340px;
+  height: 220px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* Axis labels */
+.s4_axis_label {
+  position: absolute;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #94A3B8;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s4_label_0 { left: 22px; top: 170px; }
+.s4_label_100 { right: 18px; top: 170px; }
+
+/* Axis line */
+.s4_axis_line {
+  position: absolute;
+  left: 22px;
+  top: 186px;
+  width: 296px;
+  height: 1.5px;
+  background: #CBD5E1;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* Bar rows */
+.s4_row {
+  position: absolute;
+  left: 22px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+}
+
+.s4_row1 { top: 50px; }
+.s4_row2 { top: 98px; }
+
+/* Bar label (left side) */
+.s4_bar_label {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  width: 56px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.s4_bar_label_gray { color: #64748B; }
+.s4_bar_label_purple { color: #9333EA; }
+
+/* Bar track */
+.s4_bar_track {
+  width: 240px;
+  height: 24px;
+  background: #E2E8F0;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* Bar fill */
+.s4_bar_fill_gray {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 0;
+  background: #94A3B8;
+  border-radius: 4px;
+  transition: width 0.8s ease-out;
+}
+
+.s4_bar_fill_purple {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 0;
+  background: #9333EA;
+  border-radius: 4px;
+  transition: width 1.0s ease-out;
+}
+
+/* Bar percentage */
+.s4_bar_pct {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* V2 marker */
+.s4_v2_marker {
+  position: absolute;
+  top: 135px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.s4_v2_line {
+  position: absolute;
+  width: 2px;
+  height: 20px;
+  background: #0891B2;
+}
+
+.s4_v2_dot {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #0891B2;
+}
+
+.s4_v2_label {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0891B2;
+  white-space: nowrap;
+}
+
+.s4_v2_sublabel {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: #0891B2;
+  white-space: nowrap;
+  opacity: 0.8;
+}
+
+/* --- triggered animations --- */
+.s4_stage.visible .s4_step1 {
+  opacity: 1;
+  transition-delay: 0.0s;
+}
+
+.s4_stage.visible .s4_step2 {
+  opacity: 1;
+  transition-delay: 0.4s;
+}
+
+.s4_stage.visible .s4_step3 {
+  opacity: 1;
+  transition-delay: 0.8s;
+}
+
+/* Human bar fill */
+.s4_stage.visible .s4_bar_fill_gray {
+  width: 40%;
+  transition-delay: 0.9s;
+}
+
+.s4_stage.visible .s4_step3_pct {
+  opacity: 1;
+  transition-delay: 1.4s;
+}
+
+.s4_stage.visible .s4_step4 {
+  opacity: 1;
+  transition-delay: 1.8s;
+}
+
+/* Opus bar fill */
+.s4_stage.visible .s4_bar_fill_purple {
+  width: 80%;
+  transition-delay: 2.0s;
+}
+
+.s4_stage.visible .s4_step4_pct {
+  opacity: 1;
+  transition-delay: 2.8s;
+}
+
+/* V2 marker */
+.s4_stage.visible .s4_step5 {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 3.4s;
+}
+
+/* === S5 Animation === */
+
+.s5_stage {
+  position: relative;
+  width: 340px;
+  height: 300px;
+  margin: 0 auto;
+}
+
+/* Timeline vertical line */
+.s5_timeline {
+  position: absolute;
+  left: 50px;
+  top: 24px;
+  width: 2px;
+  height: 0;
+  background: #94A3B8;
+  transition: height 0.6s ease;
+}
+.s5_stage.visible .s5_timeline {
+  height: 252px;
+  transition-delay: 0.2s;
+}
+
+/* Time labels on the left */
+.s5_time {
+  position: absolute;
+  left: 0;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #94A3B8;
+  text-align: right;
+  width: 40px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* Rounded rectangle nodes */
+.s5_node {
+  position: absolute;
+  left: 70px;
+  width: 150px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0;
+  transform: translateX(12px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* Small circle node */
+.s5_dot {
+  position: absolute;
+  left: 70px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* Connector dots on the timeline */
+.s5_tick {
+  position: absolute;
+  left: 45px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* Annotation text */
+.s5_anno {
+  position: absolute;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 12px;
+  color: #94A3B8;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* Row positions */
+.s5_r1 { top: 18px; }
+.s5_r2 { top: 98px; }
+.s5_r3 { top: 178px; }
+.s5_r4 { top: 258px; }
+
+/* Colors */
+.s5_cyan { background: #0891B2; }
+.s5_gray { background: #94A3B8; }
+.s5_purple { background: #9333EA; }
+
+/* Step animations triggered by .visible */
+.s5_stage.visible .s5_step1 {
+  opacity: 1; transform: translateX(0) scale(1);
+  transition-delay: 0.6s;
+}
+.s5_stage.visible .s5_step2 {
+  opacity: 1; transform: translateX(0) scale(1);
+  transition-delay: 1.2s;
+}
+.s5_stage.visible .s5_step3 {
+  opacity: 1; transform: translateX(0) scale(1);
+  transition-delay: 1.8s;
+}
+.s5_stage.visible .s5_step4 {
+  opacity: 1; transform: translateX(0) scale(1);
+  transition-delay: 2.4s;
+}
+
+/* === S6 Animation === */
+
+.s6_stage {
+  position: relative;
+  width: 340px;
+  height: 300px;
+  margin: 0 auto;
+}
+
+.s6_box {
+  position: absolute;
+  width: 160px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.s6_mark {
+  position: absolute;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* Row positions — centered boxes at x=90, marks at x=264 */
+.s6_r1 { top: 16px; }
+.s6_r2 { top: 76px; }
+.s6_r3 { top: 136px; }
+.s6_r4 { top: 196px; }
+.s6_r5 { top: 256px; }
+
+.s6_box_pos { left: 90px; }
+.s6_mark_pos { left: 264px; top: 22px; }
+
+/* Color variants */
+.s6_gray { background: #94A3B8; }
+.s6_purple { background: #9333EA; }
+.s6_red_border {
+  background: transparent;
+  border: 2px solid #EF4444;
+  color: #EF4444;
+}
+
+.s6_xmark { color: #EF4444; }
+.s6_check { color: #22C55E; }
+
+/* Arrow between row1 and row2 */
+.s6_arrow {
+  position: absolute;
+  left: 170px;
+  top: 54px;
+  font-size: 16px;
+  color: #94A3B8;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* ultrathink pulse */
+@keyframes s6_pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(147, 51, 234, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(147, 51, 234, 0); }
+}
+
+.s6_pulse_anim {
+  animation: s6_pulse 1.5s ease-in-out infinite;
+}
+
+/* Stepped reveal on .visible */
+.s6_stage.visible .s6_step1 {
+  opacity: 1; transform: scale(1);
+  transition-delay: 0.0s;
+}
+.s6_stage.visible .s6_step2 {
+  opacity: 1; transform: scale(1);
+  transition-delay: 0.5s;
+}
+.s6_stage.visible .s6_step3 {
+  opacity: 1; transform: scale(1);
+  transition-delay: 1.0s;
+}
+.s6_stage.visible .s6_step4 {
+  opacity: 1; transform: scale(1);
+  transition-delay: 1.5s;
+}
+.s6_stage.visible .s6_step5 {
+  opacity: 1;
+  transition-delay: 2.0s;
+}
+.s6_stage.visible .s6_step6 {
+  opacity: 1; transform: scale(1);
+  transition-delay: 2.5s;
+}
+.s6_stage.visible .s6_step7 {
+  opacity: 1; transform: scale(1);
+  transition-delay: 3.0s;
+}
+.s6_stage.visible .s6_step8 {
+  opacity: 1; transform: scale(1);
+  transition-delay: 3.5s;
+}
+
+/* === S7 Animation === */
+
+.s7_stage {
+  position: relative;
+  width: 340px;
+  height: 280px;
+  margin: 0 auto;
+}
+
+.s7_box {
+  position: absolute;
+  width: 120px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.s7_label {
+  position: absolute;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  color: #94A3B8;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.s7_mark {
+  position: absolute;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 36px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.s7_divider {
+  position: absolute;
+  top: 126px;
+  left: 30px;
+  width: 280px;
+  height: 1px;
+  background: #CBD5E1;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* Upper left: 常规问题 (gray) + red cross on its left */
+.s7_conventional { left: 28px; top: 32px; background: #94A3B8; }
+.s7_conventional_label { left: 28px; top: 74px; width: 120px; }
+.s7_conventional_mark { left: 8px; top: 32px; color: #EF4444; }
+
+/* Upper right: 受限谜题 (cyan) + green check on its right */
+.s7_puzzle { right: 28px; top: 32px; background: #0891B2; }
+.s7_puzzle_label { right: 28px; top: 74px; width: 120px; }
+.s7_puzzle_mark { right: 8px; top: 32px; color: #10B981; }
+
+/* Lower left: Claude (purple) + red cross on its left */
+.s7_claude { left: 28px; top: 160px; background: #9333EA; }
+.s7_claude_label { left: 28px; top: 202px; width: 120px; }
+.s7_claude_mark { left: 8px; top: 160px; color: #EF4444; }
+
+/* Lower right: 人类 (cyan) + green check on its right */
+.s7_human { right: 28px; top: 160px; background: #0891B2; }
+.s7_human_label { right: 28px; top: 202px; width: 120px; }
+.s7_human_mark { right: 8px; top: 160px; color: #10B981; }
+
+/* Section titles */
+.s7_section_title {
+  position: absolute;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748B;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s7_title_top { top: 10px; left: 50%; transform: translateX(-50%); }
+.s7_title_bottom { top: 138px; left: 50%; transform: translateX(-50%); }
+
+/* Step animations */
+.s7_stage.visible .s7_step1 { opacity: 1; transform: scale(1); transition-delay: 0.0s; }
+.s7_stage.visible .s7_step1l { opacity: 1; transition-delay: 0.2s; }
+.s7_stage.visible .s7_step1m { opacity: 1; transition-delay: 0.4s; }
+.s7_stage.visible .s7_step2 { opacity: 1; transform: scale(1); transition-delay: 0.8s; }
+.s7_stage.visible .s7_step2l { opacity: 1; transition-delay: 1.0s; }
+.s7_stage.visible .s7_step2m { opacity: 1; transition-delay: 1.2s; }
+.s7_stage.visible .s7_step3 { opacity: 1; transition-delay: 1.6s; }
+.s7_stage.visible .s7_step4 { opacity: 1; transform: scale(1); transition-delay: 2.0s; }
+.s7_stage.visible .s7_step4m { opacity: 1; transition-delay: 2.4s; }
+.s7_stage.visible .s7_step4l { opacity: 1; transition-delay: 2.6s; }
+.s7_stage.visible .s7_step5 { opacity: 1; transform: scale(1); transition-delay: 2.8s; }
+.s7_stage.visible .s7_step5m { opacity: 1; transition-delay: 3.2s; }
+.s7_stage.visible .s7_step5l { opacity: 1; transition-delay: 3.4s; }
+
+/* === S8 Animation === */
+
+.s8_stage {
+  width: 340px;
+  height: 280px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+}
+.s8_stage * { box-sizing: border-box; }
+
+/* Each bar row */
+.s8_row {
+  position: absolute;
+  left: 16px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* Row positions: start at top 20px, each row = 24px bar + 10px gap = 34px spacing, then label row at bottom */
+.s8_r1 { top: 28px; }
+.s8_r2 { top: 72px; }
+.s8_r3 { top: 116px; }
+.s8_r4 { top: 160px; }
+.s8_r5 { top: 204px; }
+
+/* The bar itself, grows from 0 width */
+.s8_bar {
+  height: 24px;
+  border-radius: 4px;
+  width: 0;
+  transition: width 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Cycle count label */
+.s8_val {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 8px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* Row label (inline approach) */
+.s8_name {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #94A3B8;
+  width: 76px;
+  flex-shrink: 0;
+  text-align: right;
+  margin-right: 8px;
+  white-space: nowrap;
+}
+
+/* Colors */
+.s8_bar_gray { background: #94A3B8; }
+.s8_bar_p1 { background: #A855F7; }
+.s8_bar_p2 { background: #7C3AED; }
+.s8_bar_p3 { background: #6D28D9; }
+.s8_bar_cyan { background: #0891B2; }
+
+.s8_val_gray { color: #94A3B8; }
+.s8_val_purple { color: #9333EA; }
+.s8_val_cyan { color: #0891B2; }
+
+/* Blink for the "?" */
+@keyframes s8_blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+.s8_blink {
+  animation: s8_blink 1.2s ease-in-out infinite;
+}
+
+/* Bottom label */
+.s8_bottom {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0891B2;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* Step entrance animations triggered by .visible on parent */
+.s8_stage.visible .s8_step1 {
+  opacity: 1; transform: translateY(0);
+  transition: opacity 0.4s ease 0.4s, transform 0.4s ease 0.4s;
+}
+.s8_stage.visible .s8_step1 .s8_bar {
+  transition-delay: 0.6s;
+}
+.s8_stage.visible .s8_step1 .s8_val {
+  opacity: 1;
+  transition-delay: 1.0s;
+}
+
+.s8_stage.visible .s8_step2 {
+  opacity: 1; transform: translateY(0);
+  transition: opacity 0.4s ease 1.2s, transform 0.4s ease 1.2s;
+}
+.s8_stage.visible .s8_step2 .s8_bar {
+  transition-delay: 1.4s;
+}
+.s8_stage.visible .s8_step2 .s8_val {
+  opacity: 1;
+  transition-delay: 1.8s;
+}
+
+.s8_stage.visible .s8_step3 {
+  opacity: 1; transform: translateY(0);
+  transition: opacity 0.4s ease 2.0s, transform 0.4s ease 2.0s;
+}
+.s8_stage.visible .s8_step3 .s8_bar {
+  transition-delay: 2.2s;
+}
+.s8_stage.visible .s8_step3 .s8_val {
+  opacity: 1;
+  transition-delay: 2.6s;
+}
+
+.s8_stage.visible .s8_step4 {
+  opacity: 1; transform: translateY(0);
+  transition: opacity 0.4s ease 2.8s, transform 0.4s ease 2.8s;
+}
+.s8_stage.visible .s8_step4 .s8_bar {
+  transition-delay: 3.0s;
+}
+.s8_stage.visible .s8_step4 .s8_val {
+  opacity: 1;
+  transition-delay: 3.4s;
+}
+
+.s8_stage.visible .s8_step5 {
+  opacity: 1; transform: translateY(0);
+  transition: opacity 0.4s ease 3.6s, transform 0.4s ease 3.6s;
+}
+.s8_stage.visible .s8_step5 .s8_bar {
+  transition-delay: 3.8s;
+}
+.s8_stage.visible .s8_step5 .s8_val {
+  opacity: 1;
+  transition-delay: 4.2s;
+}
+
+.s8_stage.visible .s8_stepB {
+  opacity: 1;
+  transition-delay: 4.4s;
+}
+
+/* Bar target widths: max 190px, proportional to cycles (2164 max) */
+.s8_stage.visible .s8_w1 { width: 190px; }  /* 2164 */
+.s8_stage.visible .s8_w2 { width: 157px; }  /* 1790 */
+.s8_stage.visible .s8_w3 { width: 131px; }  /* 1487 */
+.s8_stage.visible .s8_w4 { width: 120px; }  /* 1363 */
+.s8_stage.visible .s8_w5 { width: 56px; }   /* ? */
+
+/* === D1 Animation === */
+
+.d1_stage {
+  width: 340px;
+  height: 220px;
+  position: relative;
+  opacity: 0;
+  transition: opacity 0.4s;
+  font-family: 'Noto Sans SC', sans-serif;
+}
+.d1_stage.visible {
+  opacity: 1;
+}
+
+/* Timeline horizontal line */
+.d1_timeline {
+  position: absolute;
+  top: 90px;
+  left: 30px;
+  width: 280px;
+  height: 2px;
+  background: #94A3B8;
+  opacity: 0;
+  transform-origin: left;
+  transform: scaleX(0);
+}
+.d1_stage.visible .d1_timeline {
+  animation: d1_lineGrow 0.6s 0.2s both;
+}
+
+/* Arrow tip */
+.d1_arrow {
+  position: absolute;
+  top: 84px;
+  left: 306px;
+  width: 0; height: 0;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-left: 10px solid #94A3B8;
+  opacity: 0;
+}
+.d1_stage.visible .d1_arrow {
+  animation: d1_fadeIn 0.3s 0.7s both;
+}
+
+/* Version circles */
+.d1_circle {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+  z-index: 2;
+}
+.d1_c1 {
+  top: 67px;
+  left: 36px;
+  background: #0891B2;
+}
+.d1_c2 {
+  top: 67px;
+  left: 142px;
+  background: #0891B2;
+}
+.d1_c3 {
+  top: 67px;
+  left: 248px;
+  background: #9333EA;
+}
+
+.d1_stage.visible .d1_c1 { animation: d1_pop 0.4s 1.0s both; }
+.d1_stage.visible .d1_c2 { animation: d1_pop 0.4s 2.0s both; }
+.d1_stage.visible .d1_c3 { animation: d1_pop 0.4s 3.0s both; }
+
+/* Time labels above circles */
+.d1_time {
+  position: absolute;
+  font-size: 11px;
+  color: #94A3B8;
+  font-weight: 500;
+  text-align: center;
+  opacity: 0;
+  z-index: 2;
+}
+.d1_t1 { top: 50px; left: 24px; width: 72px; }
+.d1_t2 { top: 50px; left: 130px; width: 72px; }
+.d1_t3 { top: 50px; left: 232px; width: 80px; }
+
+.d1_stage.visible .d1_t1 { animation: d1_fadeIn 0.3s 1.2s both; }
+.d1_stage.visible .d1_t2 { animation: d1_fadeIn 0.3s 2.2s both; }
+.d1_stage.visible .d1_t3 { animation: d1_fadeIn 0.3s 3.2s both; }
+
+/* Bottom labels */
+.d1_label {
+  position: absolute;
+  font-size: 11px;
+  font-weight: 500;
+  text-align: center;
+  opacity: 0;
+  z-index: 2;
+}
+.d1_l1 {
+  top: 122px;
+  left: 12px;
+  width: 96px;
+  color: #64748B;
+}
+.d1_l2 {
+  top: 122px;
+  left: 108px;
+  width: 116px;
+  color: #64748B;
+  line-height: 1.3;
+}
+.d1_l3 {
+  top: 122px;
+  left: 230px;
+  width: 84px;
+  color: #9333EA;
+  font-weight: 600;
+}
+
+.d1_stage.visible .d1_l1 { animation: d1_fadeIn 0.3s 1.4s both; }
+.d1_stage.visible .d1_l2 { animation: d1_fadeIn 0.3s 2.4s both; }
+.d1_stage.visible .d1_l3 { animation: d1_fadeIn 0.3s 3.4s both; }
+
+/* Mid-segment label (between V1 and V2) */
+.d1_mid {
+  position: absolute;
+  top: 155px;
+  left: 72px;
+  width: 90px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #DC2626;
+  text-align: center;
+  opacity: 0;
+  z-index: 2;
+}
+.d1_stage.visible .d1_mid {
+  animation: d1_fadeIn 0.4s 1.8s both;
+}
+
+/* Connector segments between circles */
+.d1_seg {
+  position: absolute;
+  top: 90px;
+  height: 2px;
+  background: #0891B2;
+  opacity: 0;
+  transform-origin: left;
+  transform: scaleX(0);
+}
+.d1_seg1 {
+  left: 84px;
+  width: 58px;
+}
+.d1_seg2 {
+  left: 190px;
+  width: 58px;
+  background: #9333EA;
+}
+.d1_stage.visible .d1_seg1 { animation: d1_lineGrow 0.4s 1.6s both; }
+.d1_stage.visible .d1_seg2 { animation: d1_lineGrow 0.4s 2.8s both; }
+
+@keyframes d1_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes d1_pop {
+  0% { opacity: 0; transform: scale(0); }
+  70% { transform: scale(1.15); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes d1_lineGrow {
+  from { opacity: 1; transform: scaleX(0); }
+  to { opacity: 1; transform: scaleX(1); }
+}
+
+/* === D2 Animation === */
+
+.d2_stage {
+  width: 340px;
+  height: 280px;
+  position: relative;
+  margin: 24px auto;
+  background: #0F172A;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px 0;
+}
+
+.d2_row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  animation: d2_fadeIn 0.5s ease-out forwards;
+}
+
+.d2_row:nth-child(1) { animation-delay: 0.4s; }
+.d2_row:nth-child(2) { animation-delay: 0.8s; }
+.d2_row:nth-child(3) { animation-delay: 1.2s; }
+.d2_row:nth-child(4) { animation-delay: 1.6s; }
+
+@keyframes d2_fadeIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.d2_box {
+  width: 160px;
+  height: 36px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: #E2E8F0;
+  background: #334155;
+  flex-shrink: 0;
+}
+
+.d2_box--active {
+  background: #0891B2;
+  color: #FFFFFF;
+}
+
+.d2_mark {
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+}
+
+.d2_mark--reject {
+  color: #EF4444;
+}
+
+.d2_mark--accept {
+  color: #22C55E;
+}
+
+.d2_label {
+  font-size: 12px;
+  color: #94A3B8;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+</style>
+
+<meta name="description" content="Anthropic的性能优化团队有一道著名的take-home面试题：候选人需要在一个模拟加速器上优化代码。超过1000人做过这道题，几十位工程师因此被录用——包括那些后来负责Trainium集群调优、参与了从Claude 3 Opus到最新每个模型发布的核心工程师。但问题是： 每次发布新模型，这道题就得重新设计 。因为Claude Opus 4在4小时时限">
+<link rel="canonical" href="https://chendi.me/readings/ai-resistant-evals/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">&#8592;</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ 概览层 ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+  <!-- S1: Hero -->
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <div class="act-label reveal">ACT I &mdash; 军备竞赛</div>
+      <h2 class="big-statement reveal reveal-d1">每个新模型，<br>都击败了我们的面试题</h2>
+      <p class="body-text reveal reveal-d2">Anthropic的性能优化团队有一道著名的take-home面试题：候选人需要在一个模拟加速器上优化代码。超过1000人做过这道题，几十位工程师因此被录用——包括那些后来负责Trainium集群调优、参与了从Claude 3 Opus到最新每个模型发布的核心工程师。但问题是：<span class="hl">每次发布新模型，这道题就得重新设计</span>。因为Claude Opus 4在4小时时限内超过了大多数人类候选人，而<span class="hl2">Claude Opus 4.5在2小时内就追平了最强的人类表现</span>。出题者Tristan Hume已经迭代了三个版本，每次都学到了新的东西：什么样的考核能抵挡住AI，什么样的不能。</p>
+      <div class="anim-stage reveal reveal-d3" id="s1-anim">
+        <div class="s1_stage">
+  <!-- SVG lines layer -->
+  <svg class="s1_svg" xmlns="http://www.w3.org/2000/svg">
+    <!-- V1 -> Opus 4 line -->
+    <line class="s1_line s1_step3" x1="110" y1="58" x2="210" y2="58" />
+    <text class="s1_xmark s1_step3" x="155" y="53">&#x2717;</text>
+
+    <!-- V2 -> Opus 4.5 line -->
+    <line class="s1_line s1_step6" x1="110" y1="140" x2="210" y2="140" />
+    <text class="s1_xmark s1_step6" x="155" y="135">&#x2717;</text>
+
+    <!-- V3 -> ? dashed line -->
+    <line class="s1_line_dash s1_step9" x1="110" y1="222" x2="210" y2="222" />
+  </svg>
+
+  <!-- Left: Exam versions -->
+  <div class="s1_box s1_v s1_row1 s1_step1">V1</div>
+  <div class="s1_box s1_v s1_row2 s1_step4">V2</div>
+  <div class="s1_box s1_v s1_row3 s1_step7">V3</div>
+
+  <!-- Right: Models -->
+  <div class="s1_box s1_m s1_row1 s1_step2">Opus 4</div>
+  <div class="s1_box s1_m s1_row2 s1_step5">Opus 4.5</div>
+  <div class="s1_box s1_m s1_row3 s1_step8">?</div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>Since early 2024, our performance engineering team has used a take-home test where candidates optimize code for a simulated accelerator. Over 1,000 candidates have completed it, and dozens now work here, including engineers who brought up our Trainium cluster and shipped every model since Claude 3 Opus.</p><p>But each new Claude model has forced us to redesign the test. When given the same time limit, Claude Opus 4 outperformed most human applicants. That still allowed us to distinguish the strongest candidates—but then Claude Opus 4.5 matched even those.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S2: Design Goals -->
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">好的面试题长什么样？</h2>
+      <p class="body-text reveal reveal-d1">Tristan的设计目标和大多数take-home完全不同。大多数take-home充满了<span class="hl-danger">无聊的通用题目</span>，既不好玩也筛不出人。他的目标是做一道<span class="hl">让候选人兴奋到停不下来</span>的题：4小时时限到了还想继续做。具体原则包括：必须<span class="hl2">代表真实工作</span>——候选人做题时就能感受到这份工作的样子；必须<span class="hl">高信号</span>——避免单一洞察力决定成败，给候选人多次展示能力的机会；不要求特定领域知识——基础扎实的人入职后能学会细节；最后也是最重要的：<span class="hl2">好玩</span>——快速开发循环、有深度的有趣问题、发挥创意的空间。</p>
+      <div class="anim-stage reveal reveal-d2" id="s2-anim">
+        <div class="s2_stage">
+  <div class="s2_box s2_box_cyan s2_item1">
+    <div class="s2_bar"></div>
+    <span class="s2_text">代表真实工作</span>
+  </div>
+  <div class="s2_box s2_box_purple s2_item2">
+    <div class="s2_bar"></div>
+    <span class="s2_text">高信号</span>
+  </div>
+  <div class="s2_box s2_box_cyan s2_item3">
+    <div class="s2_bar"></div>
+    <span class="s2_text">无需特定知识</span>
+  </div>
+  <div class="s2_box s2_box_purple s2_item4">
+    <div class="s2_bar"></div>
+    <span class="s2_text">好玩</span>
+  </div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>Take-homes have a bad reputation. Usually they're filled with generic problems which engineers find boring, and which make for poor filters. My goal was different: create something genuinely engaging that would make candidates excited to participate and allow us to capture their technical skills at a high-level of resolution.</p><p>Representative of real work: The problem should give candidates a taste of what the job actually involves. High signal: The take-home should avoid problems that hinge on a single insight and ensure candidates have many chances to show their full abilities. No specific domain knowledge: People with good fundamentals can learn specifics on the job. Fun: Fast development loops, interesting problems with depth, and room for creativity.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S3: Simulated Machine -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="act-label reveal">ACT II &mdash; 原始设计</div>
+      <h2 class="big-statement reveal reveal-d1">一台假的加速器，<br>一道真的优化题</h2>
+      <p class="body-text reveal reveal-d2">Tristan用Python写了一个模拟加速器——特征酷似TPU：<span class="hl">手动管理的暂存内存</span>（不像CPU自动缓存，加速器要求你显式管理数据搬运）、<span class="hl2">VLIW超长指令字</span>（多个执行单元每个时钟周期并行运行，需要高效的指令打包）、SIMD向量操作、以及多核心。任务是并行树遍历——故意不选深度学习方向，因为大多数性能工程师入职时并没有深度学习经验。候选人从一个完全串行的实现开始，逐步挖掘机器的并行性。最强的无限时间提交甚至包含了完整的迷你优化编译器和Tristan没预料到的巧妙优化。</p>
+      <div class="anim-stage reveal reveal-d3" id="s3-anim">
+        <div class="s3_stage">
+<!-- SVG lines from center box edges to each feature circle -->
+<svg class="s3_svg" viewBox="0 0 340 280">
+  <!-- Center box center: (170, 140) -->
+  <!-- 内存 circle center: (66, 42) — line from box top-left area to circle bottom-right -->
+  <line class="s3_line s3_line_mem"  x1="110" y1="118" x2="76"  y2="66" />
+  <!-- VLIW circle center: (274, 42) — line from box top-right area to circle bottom-left -->
+  <line class="s3_line s3_line_vliw" x1="230" y1="118" x2="264" y2="66" />
+  <!-- SIMD circle center: (66, 238) — line from box bottom-left to circle top-right -->
+  <line class="s3_line s3_line_simd" x1="110" y1="162" x2="76"  y2="214" />
+  <!-- 多核 circle center: (274, 238) — line from box bottom-right to circle top-left -->
+  <line class="s3_line s3_line_core" x1="230" y1="162" x2="264" y2="214" />
+</svg>
+
+<!-- Center box -->
+<div class="s3_center">模拟加速器</div>
+
+<!-- Feature circles -->
+<div class="s3_node s3_cyan s3_mem">内存</div>
+<div class="s3_node s3_purple s3_vliw">VLIW</div>
+<div class="s3_node s3_cyan s3_simd">SIMD</div>
+<div class="s3_node s3_purple s3_core">多核</div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>I built a Python simulator for a fake accelerator with characteristics that resemble TPUs. Candidates optimize code running on this machine, using a hot-reloading Perfetto trace that shows every instruction.</p><p>The machine includes features that make accelerator optimization interesting: manually managed scratchpad memory, VLIW (multiple execution units running in parallel each cycle), SIMD (vector operations on many elements per instruction), and multicore (distributing work across cores).</p><p>The task is a parallel tree traversal, deliberately not deep learning flavored. Candidates start with a fully serial implementation and progressively exploit the machine's parallelism.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S4: Opus 4 Defeats It -->
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">然后 Claude Opus 4<br>把它打败了</h2>
+      <p class="body-text reveal reveal-d1">到2025年5月，Claude 3.7 Sonnet已经让超过50%的候选人还不如直接把题交给Claude Code来做。然后Tristan用预发布版的<span class="hl">Claude Opus 4</span>测试——它在4小时时限内做出了比几乎所有人类都更优化的方案。Tristan的对策是：用Opus 4找到它开始挣扎的地方，把那里作为<span class="hl2">新的起点</span>。他重写了更干净的起始代码，增加了新的机器特征来增加深度，移除了Claude已经能轻松解决的多核部分。时间限制也从4小时缩短到2小时。第二版在几个月里运作良好。</p>
+      <div class="anim-stage reveal reveal-d2" id="s4-anim">
+        <div class="s4_stage">
+  <!-- Axis -->
+  <div class="s4_axis_line s4_step1"></div>
+  <div class="s4_axis_label s4_label_0 s4_step1">0%</div>
+  <div class="s4_axis_label s4_label_100 s4_step1">100%</div>
+
+  <!-- Row 1: Human average -->
+  <div class="s4_row s4_row1">
+    <div class="s4_bar_label s4_bar_label_gray s4_step2">人类</div>
+    <div class="s4_bar_track s4_step2">
+      <div class="s4_bar_fill_gray"></div>
+      <div class="s4_bar_pct s4_step3_pct" style="right: auto; left: calc(40% - 30px);">~50%</div>
+    </div>
+  </div>
+
+  <!-- Row 2: Opus 4 -->
+  <div class="s4_row s4_row2">
+    <div class="s4_bar_label s4_bar_label_purple s4_step4">Opus 4</div>
+    <div class="s4_bar_track s4_step4">
+      <div class="s4_bar_fill_purple"></div>
+      <div class="s4_bar_pct s4_step4_pct" style="right: auto; left: calc(80% - 30px);">~80%</div>
+    </div>
+  </div>
+
+  <!-- V2 start marker - positioned at 80% of bar (56px label + 80% of 240px = 56 + 192 = 248) -->
+  <div class="s4_v2_marker s4_step5" style="left: 246px;">
+    <div class="s4_v2_dot"></div>
+    <div class="s4_v2_line"></div>
+    <div class="s4_v2_label">V2起点</div>
+    <div class="s4_v2_sublabel">从这里开始</div>
+  </div>
+</div>
+      </div>
+      <p class="hook-line reveal reveal-d3">从V1到V2的完整迭代细节，以及为什么坚持不禁用AI ↓</p>
+      <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-defeat', this)">深入了解迭代过程 ↓</button>
+    </div>
+  </section>
+
+  <!-- S5: Opus 4.5 Defeats V2 -->
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">Opus 4.5：<br>两小时追平最强人类</h2>
+      <p class="body-text reveal reveal-d1">当Tristan用预发布版的Claude Opus 4.5测试第二版时，他<span class="hl2">眼看着</span>Claude Code在2小时内逐步改进方案：解决了初始瓶颈、实现了所有常见的微优化、不到一小时就过了及格线。然后它停下来了，认为遇到了不可逾越的内存带宽瓶颈——大多数人类也会到此为止。但当Tristan告诉它理论上可以达到的cycle数时，<span class="hl">它想了一会儿就找到了绕过瓶颈的巧妙方法</span>。到2小时结束时，它的分数追平了最强的人类表现——而那个人类还大量使用了Claude 4辅助。问题来了：即将发布的这个模型，会让最优策略变成「什么都不做，把题交给Claude Code」。</p>
+      <div class="anim-stage reveal reveal-d2" id="s5-anim">
+        <div class="s5_stage">
+  <!-- Vertical timeline -->
+  <div class="s5_timeline"></div>
+
+  <!-- Row 1: < 1 hour — pass -->
+  <div class="s5_tick s5_cyan s5_r1 s5_step1"></div>
+  <div class="s5_time s5_r1 s5_step1" style="top:20px;">< 1h</div>
+  <div class="s5_node s5_cyan s5_r1 s5_step1">过及格线</div>
+
+  <!-- Row 2: bottleneck -->
+  <div class="s5_tick s5_gray s5_r2 s5_step2"></div>
+  <div class="s5_node s5_gray s5_r2 s5_step2">内存带宽瓶颈</div>
+  <div class="s5_anno s5_step2" style="left:230px; top:102px;">卡住</div>
+
+  <!-- Row 3: hint (purple dot) -->
+  <div class="s5_tick s5_purple s5_r3 s5_step3"></div>
+  <div class="s5_dot s5_purple s5_step3" style="top:172px;">提示</div>
+  <div class="s5_anno s5_step3" style="left:130px; top:182px; font-size:11px; max-width:160px;">被告知目标 cycle 数</div>
+
+  <!-- Row 4: 2 hours — match human -->
+  <div class="s5_tick s5_purple s5_r4 s5_step4"></div>
+  <div class="s5_time s5_step4" style="top:260px;">2h</div>
+  <div class="s5_node s5_purple s5_r4 s5_step4">追平最强人类</div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>When I tested a pre-release Claude Opus 4.5 checkpoint, I watched Claude Code work on the problem for 2 hours, gradually improving its solution. It solved the initial bottlenecks, implemented all the common micro-optimizations, and met our passing threshold in under an hour.</p><p>Then it stopped, convinced it had hit an insurmountable memory bandwidth bottleneck. Most humans reach the same conclusion. But there are clever tricks that exploit the problem structure to work around that bottleneck. When I told Claude the cycle count it was possible to achieve, it thought for a while and found the trick.</p><p>By the 2-hour mark, its score matched the best human performance within that time limit—and that human had made heavy use of Claude 4 with steering.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S6: Attempt 1 - Transposition -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="act-label reveal">ACT III &mdash; 反击</div>
+      <h2 class="big-statement reveal reveal-d1">尝试一：数据转置<br>——Claude找到了意外解法</h2>
+      <p class="body-text reveal reveal-d2">Tristan选了一个他在Anthropic做过的最棘手的内核优化问题：在2D TPU寄存器上做高效的<span class="hl">数据转置</span>，同时避免bank conflict。他把这个问题简化后做成新题，Claude帮他一天之内就实现了。但Claude Opus 4.5做出了一个<span class="hl2">他从没想过的优化</span>：通过仔细分析，它意识到可以转置整个计算过程而不是转置数据本身——整个程序被重写了。Tristan堵上了这条路之后，Claude一开始确实做不出最优解。但当他用Claude Code的<span class="hl-danger">「ultrathink」模式</span>给更长的思考预算时，它又解出来了——它甚至知道修复bank conflict的技巧。回想起来，这不是个好选择：太多工程师在不同平台上都跟数据转置和bank conflict较劲过，Claude有大量训练数据可以借鉴。</p>
+      <div class="anim-stage reveal reveal-d3" id="s6-anim">
+        <div class="s6_stage">
+  <!-- Row 1: expected solution (gray) + X -->
+  <div class="s6_box s6_box_pos s6_r1 s6_gray s6_step1">转置数据</div>
+  <div class="s6_mark s6_xmark s6_step2" style="left:264px; top:20px; font-size:26px;">X</div>
+
+  <!-- Arrow down -->
+  <div class="s6_arrow s6_step3">&#x25BC;</div>
+
+  <!-- Row 2: Claude's unexpected solution (purple) + check -->
+  <div class="s6_box s6_box_pos s6_r2 s6_purple s6_step3">转置计算</div>
+  <div class="s6_mark s6_check s6_step4" style="left:264px; top:82px;">&#x2713;</div>
+
+  <!-- Row 3: block it, then ultrathink (purple + pulse) + check -->
+  <div class="s6_box s6_box_pos s6_r3 s6_purple s6_step5 s6_pulse_anim">ultrathink</div>
+  <div class="s6_mark s6_check s6_step6" style="left:264px; top:142px;">&#x2713;</div>
+
+  <!-- Row 4: conclusion — red border -->
+  <div class="s6_box s6_box_pos s6_r4 s6_red_border s6_step7">训练数据太多</div>
+
+  <!-- Bottom verdict -->
+  <div class="s6_mark s6_xmark s6_step8" style="left:160px; top:262px; font-size:14px; color:#EF4444;">此路不通</div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>I chose a problem based on one of the trickier kernel optimizations I'd done at Anthropic: an efficient data transposition on 2D TPU registers while avoiding bank conflicts.</p><p>Claude Opus 4.5 found a great optimization I hadn't even thought of. Through careful analysis, it realized it could transpose the entire computation rather than figuring out how to transpose the data, and it rewrote the whole program accordingly.</p><p>I patched the problem to remove that approach. Claude then made progress but couldn't find the most efficient solution. But I had some nagging doubt, so I double-checked using Claude Code's "ultrathink" feature with longer thinking budgets ... and it solved it.</p><p>In hindsight, this wasn't the right problem to try. Engineers across many platforms have struggled with data transposition and bank conflicts, so Claude has substantial training data to draw on.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S7: Attempt 2 - Zachtronics -->
+  <section class="feed-section" style="background: var(--bg-act3);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">尝试二：Zachtronics谜题<br>——终于赢了</h2>
+      <p class="body-text reveal reveal-d1">Tristan需要的是一种<span class="hl">人类推理能赢过Claude庞大经验库</span>的问题——足够离谱、足够out of distribution。他想到了<span class="hl2">Zachtronics</span>编程解谜游戏：这些游戏使用极度受限的指令集，迫使你用非常规的方式编程。比如在Shenzhen I/O里，程序被分散到多个通信芯片上，每个只能存10条指令和一两个寄存器。他设计了一组使用极简受限指令集的谜题，优化目标是最少指令数。而且他<span class="hl">故意不提供可视化和调试工具</span>——判断是否值得投入时间自建工具本身就是在考察能力。Claude Opus 4.5做不出来。同事们验证了人类确实能超过Claude。Tristan对新题比较满意，但也感慨：<span class="hl-danger">「现实性可能是我们已经负担不起的奢侈品了」</span>。原来的题之所以好用，是因为它像真实工作；新题之所以好用，是因为它模拟了全新的工作。</p>
+      <div class="anim-stage reveal reveal-d2" id="s7-anim">
+        <div class="s7_stage">
+  <div class="s7_section_title s7_title_top s7_step1l">问题类型选择</div>
+  <div class="s7_section_title s7_title_bottom s7_step3">测试结果</div>
+
+  <div class="s7_mark s7_conventional_mark s7_step1m">&#x2717;</div>
+  <div class="s7_box s7_conventional s7_step1">常规问题</div>
+  <div class="s7_label s7_conventional_label s7_step1l">训练数据丰富</div>
+
+  <div class="s7_box s7_puzzle s7_step2">受限谜题</div>
+  <div class="s7_label s7_puzzle_label s7_step2l">out of distribution</div>
+  <div class="s7_mark s7_puzzle_mark s7_step2m">&#x2713;</div>
+
+  <div class="s7_divider s7_step3"></div>
+
+  <div class="s7_mark s7_claude_mark s7_step4m">&#x2717;</div>
+  <div class="s7_box s7_claude s7_step4">Claude</div>
+  <div class="s7_label s7_claude_label s7_step4l">失败</div>
+
+  <div class="s7_box s7_human s7_step5">人类</div>
+  <div class="s7_label s7_human_label s7_step5l">成功</div>
+  <div class="s7_mark s7_human_mark s7_step5m">&#x2713;</div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>I needed a problem where human reasoning could win over Claude's larger experience base: something sufficiently out of distribution.</p><p>I thought about the most unusual optimization problems I'd enjoyed and landed on Zachtronics games. These programming puzzle games use unusual, highly constrained instruction sets that force you to program in unconventional ways.</p><p>I designed a new take-home consisting of puzzles using a tiny, heavily constrained instruction set, optimizing solutions for minimal instruction count. I implemented one medium-hard puzzle and tested it on Claude Opus 4.5. It failed.</p><p>I'm still sad to have given up the realism and varied depth of the original. But realism may be a luxury we no longer have. The original worked because it resembled real work. The replacement works because it simulates novel work.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S8: Open Challenge -->
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <div class="act-label reveal">ACT IV &mdash; 公开挑战</div>
+      <h2 class="big-statement reveal reveal-d1">开源面试题：<br>你能打败 Opus 4.5 吗？</h2>
+      <p class="body-text reveal reveal-d2">Anthropic把原版take-home开源了——因为在无限时间下，<span class="hl">人类专家仍然能超过当前模型</span>。基准测试结果：Claude Opus 4经过长时间test-time compute得到2164 cycles；Opus 4.5在随意的Claude Code会话中得到1790 cycles（约等于人类2小时最佳）；经过11.5小时harness优化后得到<span class="hl2">1487 cycles</span>；改进harness后进一步到1363 cycles。但有史以来最快的人类提交<span class="hl">远超Claude即使用了大量test-time compute的成绩</span>。如果你能优化到1487 cycles以下，可以发简历到performance-recruiting@anthropic.com。或者你也可以走正常招聘流程——用那道（目前还）Claude解不出的新题。Tristan最后说：「我很好奇它能撑多久。」</p>
+      <div class="anim-stage reveal reveal-d3" id="s8-anim">
+        <div class="s8_stage">
+  <!-- Row 1: Opus 4 — 2164 cycles, gray -->
+  <div class="s8_row s8_r1 s8_step1">
+    <div class="s8_name">Opus 4</div>
+    <div class="s8_bar s8_bar_gray s8_w1"></div>
+    <span class="s8_val s8_val_gray">2164</span>
+  </div>
+
+  <!-- Row 2: Opus 4.5 — 1790 cycles, purple light -->
+  <div class="s8_row s8_r2 s8_step2">
+    <div class="s8_name">Opus 4.5</div>
+    <div class="s8_bar s8_bar_p1 s8_w2"></div>
+    <span class="s8_val s8_val_purple">1790</span>
+  </div>
+
+  <!-- Row 3: 4.5 harness — 1487 cycles, purple medium -->
+  <div class="s8_row s8_r3 s8_step3">
+    <div class="s8_name">4.5 harness</div>
+    <div class="s8_bar s8_bar_p2 s8_w3"></div>
+    <span class="s8_val s8_val_purple">1487</span>
+  </div>
+
+  <!-- Row 4: improved harness — 1363 cycles, purple deep -->
+  <div class="s8_row s8_r4 s8_step4">
+    <div class="s8_name">改进harness</div>
+    <div class="s8_bar s8_bar_p3 s8_w4"></div>
+    <span class="s8_val s8_val_purple">1363</span>
+  </div>
+
+  <!-- Row 5: human best — ?, cyan -->
+  <div class="s8_row s8_r5 s8_step5">
+    <div class="s8_name">人类最佳</div>
+    <div class="s8_bar s8_bar_cyan s8_w5"></div>
+    <span class="s8_val s8_val_cyan s8_blink">?</span>
+  </div>
+
+  <!-- Bottom label -->
+  <div class="s8_bottom s8_stepB">你能打败它吗?</div>
+</div>
+      </div>
+      <p class="body-text reveal reveal-d4" style="font-size:14px; color: var(--dim); text-align: center; margin-top: 40px;">基于 Anthropic Engineering Blog「Designing AI-Resistant Technical Evaluations」制作</p>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ 迭代过程深入层 ═══ -->
+<div class="layer" id="layer-defeat" data-depth="1">
+
+  <!-- D1: Model Progression -->
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">三个版本，三次溃败</h2>
+      <p class="body-text reveal reveal-d1">这道面试题的历史就是一部<span class="hl">AI军备竞赛</span>的缩影。2023年11月，Tristan设计了V1——为了给即将到来的Claude 3 Opus训练和新集群做准备而大规模招人。V1运行了一年半，成功筛选了1000+候选人。但到2025年5月，<span class="hl2">Claude 3.7 Sonnet</span>已经让超过50%的人类候选人表现不如直接用AI。于是他设计了V2：用Opus 4找到它开始挣扎的地方作为新起点，移除多核（Claude已解决的部分），增加新机器特征，时间从4小时缩到2小时。V2强调<span class="hl">巧妙的优化洞察力</span>而非调试能力和代码量。这个版本扛了几个月——直到Opus 4.5测试版在2小时内追平了最强人类。</p>
+      <div class="anim-stage reveal reveal-d2" id="d1-anim">
+        <div class="d1_stage">
+  <!-- Base timeline -->
+  <div class="d1_timeline"></div>
+  <div class="d1_arrow"></div>
+
+  <!-- V1 -->
+  <div class="d1_circle d1_c1">V1</div>
+  <div class="d1_time d1_t1">2023.11</div>
+  <div class="d1_label d1_l1">1000+候选人</div>
+
+  <!-- Connector V1→V2 -->
+  <div class="d1_seg d1_seg1"></div>
+  <div class="d1_mid">50% &lt; AI</div>
+
+  <!-- V2 -->
+  <div class="d1_circle d1_c2">V2</div>
+  <div class="d1_time d1_t2">2025.5</div>
+  <div class="d1_label d1_l2">2小时<br>巧妙优化</div>
+
+  <!-- Connector V2→溃败 -->
+  <div class="d1_seg d1_seg2"></div>
+
+  <!-- 溃败 -->
+  <div class="d1_circle d1_c3">溃败</div>
+  <div class="d1_time d1_t3">Opus 4.5</div>
+  <div class="d1_label d1_l3">追平人类</div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>In November 2023, we were preparing to train and launch Claude Opus 3. We needed a way to evaluate candidates more efficiently. So, I took two weeks to design a take-home test.</p><p>Over the next year and a half, about 1,000 candidates completed the take-home. By May 2025, Claude 3.7 Sonnet had already crept up to the point where over 50% of candidates would have been better off delegating to Claude Code entirely.</p><p>For the take-home, there was a straightforward fix. I used Claude Opus 4 to identify where it started struggling. That became the new starting point for version 2. I wrote cleaner starter code, added new machine features for more depth, and removed multicore. I also shortened the time limit from 4 hours to 2 hours. Version 2 emphasized clever optimization insights over debugging and code volume.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- D2: Why Not Ban AI -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">为什么不禁用AI？</h2>
+      <p class="body-text reveal reveal-d1">面对Opus 4.5即将击败面试题的现实，有同事建议<span class="hl-danger">直接禁止AI辅助</span>。Tristan不想这么做。除了执行难度，他有一个更深层的信念：既然人在实际工作中仍然扮演关键角色，那他<span class="hl">应该能找到某种方式</span>，让人在有AI辅助的环境下依然能区分出来——就像他们在真实工作中一样。他还不想向「人类只在超过几小时的任务上才有优势」这个观点投降。另一个建议是「要求大幅超过Claude单独完成的水平」，但问题是<span class="hl2">Claude工作太快了</span>——人类通常要花一半时间读题理解问题才开始优化，而试图引导Claude的人总是在追赶、只能事后才理解Claude做了什么。主导策略可能变成坐着看。如今Anthropic的性能工程师仍有大量工作，但更像是<span class="hl">调试、系统设计、性能分析、验证正确性</span>——这些很难在客观的短时考核中测量。</p>
+      <div class="anim-stage reveal reveal-d2" id="d2-anim">
+        <div class="d2_stage">
+  <div class="d2_row">
+    <div class="d2_box">禁用 AI</div>
+    <span class="d2_mark d2_mark--reject">&#x2717;</span>
+    <span class="d2_label">执行难</span>
+  </div>
+  <div class="d2_row">
+    <div class="d2_box">要求超过 AI</div>
+    <span class="d2_mark d2_mark--reject">&#x2717;</span>
+    <span class="d2_label">AI太快</span>
+  </div>
+  <div class="d2_row">
+    <div class="d2_box">放弃设计</div>
+    <span class="d2_mark d2_mark--reject">&#x2717;</span>
+    <span class="d2_label">不甘心</span>
+  </div>
+  <div class="d2_row">
+    <div class="d2_box d2_box--active">设计新题</div>
+    <span class="d2_mark d2_mark--accept">&#x2713;</span>
+    <span class="d2_label"></span>
+  </div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>Some colleagues suggested banning AI assistance. I didn't want to do this. Beyond the enforcement challenges, I had a sense that given people continue to play a vital role in our work, I should be able to figure out some way for them to distinguish themselves in a setting with AI—like they'd have on the job.</p><p>Others suggested raising the bar to "substantially outperform what Claude Code achieves alone." The concern here was that Claude works fast. Humans typically spend half the 2 hours reading and understanding the problem before they start optimizing. A human trying to steer Claude would likely be constantly behind. The dominant strategy might become sitting back and watching.</p><p>Nowadays performance engineers at Anthropic still have lots of work to do, but it looks more like tough debugging, systems design, performance analysis, figuring out how to verify the correctness of our systems.</p></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+var layerStack = ['layer-overview'];
+var transitioning = false;
+var layerNames = {
+  'layer-overview': '概览',
+  'layer-defeat': '迭代过程'
+};
+
+var observers = new Map();
+
+function setupObserver(layerId) {
+  if (observers.has(layerId)) return;
+  var layer = document.getElementById(layerId);
+  var reveals = layer.querySelectorAll('.reveal, [class*=\"_stage\"]');
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        var stage = e.target.querySelector('[class*="_stage"]');
+        if (stage) stage.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.15, root: layer });
+  reveals.forEach(function(el) { obs.observe(el); });
+  observers.set(layerId, obs);
+}
+
+function resetReveals(layerId) {
+  var layer = document.getElementById(layerId);
+  layer.querySelectorAll('.reveal').forEach(function(el) { el.classList.remove('visible'); });
+  layer.querySelectorAll('[class*="_stage"]').forEach(function(el) { el.classList.remove('visible'); });
+}
+
+function activateReveals(layerId) {
+  resetReveals(layerId);
+  if (observers.has(layerId)) { observers.get(layerId).disconnect(); observers.delete(layerId); }
+  requestAnimationFrame(function() { setupObserver(layerId); });
+}
+
+function updateBreadcrumb() {
+  var bc = document.getElementById('breadcrumb');
+  bc.innerHTML = '';
+  layerStack.forEach(function(id, i) {
+    if (i > 0) {
+      var sep = document.createElement('span');
+      sep.className = 'sep'; sep.textContent = '>';
+      bc.appendChild(sep);
+    }
+    var span = document.createElement('span');
+    span.textContent = layerNames[id] || id;
+    if (i === layerStack.length - 1) { span.className = 'current'; }
+    else { (function(idx) { span.addEventListener('click', function() { goBackTo(idx); }); })(i); }
+    bc.appendChild(span);
+  });
+  var backBtn = document.getElementById('backBtn');
+  backBtn.style.display = layerStack.length > 1 ? 'flex' : 'none';
+  bc.style.left = layerStack.length > 1 ? '60px' : '16px';
+  var dots = document.getElementById('depthDots');
+  var depth = layerStack.length - 1;
+  dots.querySelectorAll('.dot').forEach(function(d, i) { d.classList.toggle('active', i === depth); });
+}
+
+function drillDown(targetId, btnEl) {
+  if (transitioning) return;
+  transitioning = true;
+  var currentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var targetLayer = document.getElementById(targetId);
+  targetLayer.scrollTop = 0;
+  resetReveals(targetId);
+  targetLayer.style.visibility = 'visible';
+  var duration = 600;
+  currentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  currentLayer.style.transformOrigin = 'center center';
+  currentLayer.style.transform = 'scale(1.3)';
+  currentLayer.style.opacity = '0';
+  targetLayer.classList.add('active');
+  targetLayer.style.opacity = '0';
+  targetLayer.style.transform = 'scale(0.85)';
+  targetLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  requestAnimationFrame(function() { requestAnimationFrame(function() {
+    targetLayer.style.opacity = '1'; targetLayer.style.transform = 'scale(1)';
+  }); });
+  setTimeout(function() {
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition = ''; currentLayer.style.transform = ''; currentLayer.style.opacity = '';
+    targetLayer.style.transition = ''; targetLayer.style.transform = '';
+    activateReveals(targetId);
+    transitioning = false;
+  }, duration + 50);
+  layerStack.push(targetId);
+  updateBreadcrumb();
+}
+
+function goBack() {
+  if (layerStack.length <= 1 || transitioning) return;
+  transitioning = true;
+  var currentId = layerStack.pop();
+  var parentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var parentLayer = document.getElementById(parentId);
+  var duration = 600;
+  currentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  currentLayer.style.transform = 'scale(0.85)'; currentLayer.style.opacity = '0';
+  parentLayer.classList.add('active');
+  parentLayer.style.transform = 'scale(1.3)'; parentLayer.style.opacity = '0';
+  parentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  requestAnimationFrame(function() { requestAnimationFrame(function() {
+    parentLayer.style.transform = 'scale(1)'; parentLayer.style.opacity = '1';
+  }); });
+  setTimeout(function() {
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition = ''; currentLayer.style.transform = '';
+    currentLayer.style.opacity = ''; currentLayer.style.visibility = '';
+    parentLayer.style.transition = ''; parentLayer.style.transform = '';
+    transitioning = false;
+  }, duration + 50);
+  updateBreadcrumb();
+}
+
+function goBackTo(targetIndex) {
+  if (transitioning) return;
+  while (layerStack.length - 1 > targetIndex) { if (layerStack.length <= 1) break; goBack(); return; }
+}
+
+function toggleSource(btn) { btn.classList.toggle('open'); btn.nextElementSibling.classList.toggle('open'); }
+
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+
+</body>
+</html>

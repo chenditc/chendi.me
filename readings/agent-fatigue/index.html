@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>为什么用了 Agent 之后，反而更累了</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --accent: #7C3AED;
+  --accent2: #F59E0B;
+  --warm: #F97316;
+  --danger: #EF4444;
+  --bg-act1: #FAF5FF;
+  --bg-act2: #FFFBEB;
+  --bg-act3: #0F172A;
+  --bg-close: #1E293B;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --dim: #94A3B8;
+  --card-bg: #FFFFFF;
+  --neutral: #CBD5E1;
+}
+
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--bg-act1); font-family: 'Noto Sans SC', -apple-system, 'PingFang SC', sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; }
+
+.space { display: flex; width: 200%; height: 100%; transition: transform 0.55s cubic-bezier(0.32,0.72,0,1); will-change: transform; }
+.main-scroll { flex: 0 0 50%; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; transition: transform 0.55s cubic-bezier(0.32,0.72,0,1); transform-origin: right center; }
+.detail-scroll { flex: 0 0 50%; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; background: #FAFAF8; visibility: hidden; transition: visibility 0s 0.55s; }
+body.dd-active .space { transform: translateX(calc(-50% + 24px)); }
+body.dd-active .main-scroll { transform: scale(0.96); pointer-events: none; border-radius: 12px; overflow: hidden; }
+body.dd-active .detail-scroll { visibility: visible; transition: visibility 0s 0s; }
+
+.content-width { max-width: 640px; margin: 0 auto; padding: 0 28px; }
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.15s; }
+.reveal-delay-2 { transition-delay: 0.3s; }
+.reveal-delay-3 { transition-delay: 0.45s; }
+.reveal-delay-4 { transition-delay: 0.6s; }
+
+.big-statement { font-family: 'Noto Serif SC', serif; font-size: clamp(22px, 5.5vw, 32px); font-weight: 700; line-height: 1.5; margin-bottom: 32px; }
+.body-text { font-size: 16px; line-height: 1.9; color: var(--text); margin-bottom: 28px; }
+.body-text .hl { color: var(--accent); font-weight: 500; }
+.body-text .hl2 { color: var(--accent2); font-weight: 500; }
+.body-text .hl-danger { color: var(--danger); font-weight: 500; }
+
+.hero { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 28px; background: linear-gradient(180deg, var(--bg-act1) 0%, #EDE9FE 100%); }
+.hero-label { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 20px; }
+.hero-title { font-family: 'Noto Serif SC', serif; font-size: clamp(28px, 7vw, 44px); font-weight: 700; line-height: 1.4; margin-bottom: 20px; color: var(--text); }
+.hero-sub { font-size: 16px; color: var(--text-muted); max-width: 480px; line-height: 1.7; }
+.hero-meta { margin-top: 32px; font-size: 13px; color: var(--dim); }
+
+.section { padding: 80px 0; }
+.section-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; }
+.section-dark { background: var(--bg-close); color: #F1F5F9; }
+.section-dark .section-label { color: var(--accent2); }
+.section-dark .body-text { color: #CBD5E1; }
+.section-dark .big-statement { color: #F1F5F9; }
+.section-dark .body-text .hl { color: var(--accent2); }
+.section-dark .deep-dive-trigger { color: var(--accent2); }
+
+.act-transition { padding: 60px 0; text-align: center; }
+.act-num { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); }
+.act-title { font-family: 'Noto Serif SC', serif; font-size: clamp(20px, 5vw, 28px); font-weight: 700; margin-top: 12px; }
+.act-transition-dark { background: var(--bg-act3); color: #F1F5F9; }
+.act-transition-dark .act-num { color: var(--accent2); }
+.act-transition-dark .act-title { color: #F1F5F9; }
+
+.deep-dive-trigger { text-align: center; color: var(--accent); font-size: 14px; padding: 16px 0; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; }
+.deep-dive-trigger:hover { opacity: 1; }
+
+.detail-header { padding: 20px 24px; font-size: 14px; color: var(--accent); cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.06); position: sticky; top: 0; background: #FAFAF8; z-index: 10; }
+.detail-body { padding: 24px; }
+.detail-body h4 { font-size: 18px; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+.detail-body p { font-size: 15px; line-height: 1.8; color: var(--text-muted); margin-bottom: 16px; }
+.detail-body .original-text { margin-top: 24px; padding: 16px; background: rgba(0,0,0,0.03); border-radius: 8px; border-left: 3px solid var(--accent); }
+.detail-body .original-text p { font-size: 14px; color: var(--dim); margin-bottom: 8px; }
+
+.dd-anim { opacity: 0; animation-fill-mode: forwards; animation-duration: 0.5s; }
+body.dd-active .dd-anim { animation-name: ddFadeIn; }
+.dd-slide { opacity: 0; transform: translateY(20px); animation-fill-mode: forwards; animation-duration: 0.5s; }
+body.dd-active .dd-slide { animation-name: ddSlideUp; }
+.dd-pop { opacity: 0; transform: scale(0.7); animation-fill-mode: forwards; animation-duration: 0.4s; }
+body.dd-active .dd-pop { animation-name: ddPop; }
+.dd-d1 { animation-delay: 0.3s !important; }
+.dd-d2 { animation-delay: 0.6s !important; }
+.dd-d3 { animation-delay: 0.9s !important; }
+@keyframes ddFadeIn { to { opacity: 1; } }
+@keyframes ddSlideUp { to { opacity: 1; transform: translateY(0); } }
+@keyframes ddPop { to { opacity: 1; transform: scale(1); } }
+
+.takeaway { padding: 80px 0; background: var(--bg-act3); color: #F1F5F9; text-align: center; }
+.takeaway .big-statement { color: #F8FAFC; max-width: 560px; margin: 0 auto 24px; }
+.takeaway .body-text { color: #94A3B8; max-width: 520px; margin: 0 auto; }
+
+.footer { padding: 40px 0; background: #0B1120; text-align: center; font-size: 12px; color: #475569; }
+
+.source-horizon { position: fixed; bottom: 0; left: 0; right: 0; height: 32px; z-index: 200; background: transparent; transition: height 0.35s cubic-bezier(0.32,0.72,0,1), background 0.35s ease; overflow: hidden; cursor: pointer; padding-bottom: env(safe-area-inset-bottom, 0); }
+.source-horizon.expanded { height: 72px; background: rgba(15,23,42,0.95); backdrop-filter: blur(8px); }
+.horizon-track { position: absolute; bottom: 0; left: 8px; right: 8px; height: 3px; }
+.source-horizon.expanded .horizon-track { bottom: auto; top: 8px; height: 4px; }
+.horizon-seg { position: absolute; top: 0; height: 100%; border-radius: 2px; }
+.horizon-seg.covered { background: var(--accent); }
+.horizon-seg.covered.deep-dive { background: var(--accent2); }
+.horizon-seg.gap { background: transparent; }
+.horizon-detail { position: absolute; top: 16px; left: 8px; right: 8px; bottom: 4px; opacity: 0; transition: opacity 0.25s ease 0.1s; pointer-events: none; }
+.source-horizon.expanded .horizon-detail { opacity: 1; pointer-events: auto; }
+.horizon-marker { position: absolute; top: 0; transform: translateX(-50%); text-align: center; }
+.marker-tick { width: 2px; height: 10px; background: rgba(255,255,255,0.5); margin: 0 auto 4px; border-radius: 1px; }
+.marker-tick.active { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+.marker-label { font-size: 9px; color: rgba(255,255,255,0.7); white-space: nowrap; font-family: 'Noto Sans SC', sans-serif; }
+.horizon-pct { position: absolute; right: 0; top: 2px; font-size: 11px; font-weight: 600; color: var(--accent); font-family: 'Noto Sans SC', sans-serif; }
+@keyframes markerPulse { 0%,100% { box-shadow: 0 0 4px var(--accent2); } 50% { box-shadow: 0 0 10px var(--accent2); } }
+.marker-tick.active { animation: markerPulse 2s ease-in-out infinite; }
+
+.coverage-gap-inline { display: flex; align-items: center; gap: 12px; padding: 8px 28px; max-width: 640px; margin: 0 auto; }
+.coverage-gap-inline .gap-line { flex: 1; height: 1px; background: var(--dim); opacity: 0.25; }
+.coverage-gap-inline .gap-text { font-size: 12px; font-style: italic; color: var(--dim); white-space: nowrap; opacity: 0.5; }
+
+.coverage-map { margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.06); }
+.coverage-map-title { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--dim); margin-bottom: 14px; }
+.coverage-bars { display: flex; flex-direction: column; gap: 6px; }
+.cbar-row { display: flex; align-items: center; gap: 10px; height: 28px; cursor: pointer; border-radius: 6px; padding: 4px 6px; margin: 0 -6px; transition: background 0.15s; }
+.cbar-row:hover { background: rgba(0,0,0,0.03); }
+.cbar-label { width: 120px; flex-shrink: 0; font-size: 12px; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cbar-track { flex: 1; height: 12px; background: rgba(0,0,0,0.03); border-radius: 6px; overflow: hidden; position: relative; }
+.cbar-fill { height: 100%; border-radius: 6px; transform-origin: left; }
+.cbar-fill.included { background: var(--accent); }
+.cbar-fill.deep-dive-bar { background: repeating-linear-gradient(-45deg, var(--accent2), var(--accent2) 3px, rgba(245,158,11,0.5) 3px, rgba(245,158,11,0.5) 6px); }
+.cbar-fill.compressed-bar { background: var(--dim); opacity: 0.4; }
+.cbar-row.included .cbar-label { color: var(--text); }
+.cbar-row.deep-dive .cbar-label { color: var(--accent2); }
+.cbar-row.compressed .cbar-label { color: var(--dim); text-decoration: line-through; }
+.cbar-excerpt { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.22,1,0.36,1); margin: 0 0 0 130px; }
+.cbar-excerpt.open { max-height: 300px; }
+.cbar-excerpt-inner { font-size: 13px; line-height: 1.7; color: var(--text-muted); padding: 8px 12px; margin: 4px 0 8px; background: rgba(0,0,0,0.02); border-radius: 8px; border-left: 3px solid var(--accent); }
+.cbar-row.compressed + .cbar-excerpt .cbar-excerpt-inner { border-left-color: var(--dim); }
+.cbar-row.deep-dive + .cbar-excerpt .cbar-excerpt-inner { border-left-color: var(--accent2); }
+.cbar-expand-hint { font-size: 10px; color: var(--dim); opacity: 0.6; margin-left: 4px; }
+
+@media (max-width: 420px) {
+  .hero-title { font-size: 26px; }
+  .big-statement { font-size: 20px; }
+}
+.anim-stage > div{ width:100%; }
+</style>
+
+<meta name="description" content="最近跟很多深度用 Agent 的朋友聊，发现一个共同感受：号称 10x 的生产力工具用上之后， 到了下午四五点，脑子比以前还转不动 。效率是高了，但人也是真的更累了。想了想，原因有三个。">
+<link rel="canonical" href="https://chendi.me/readings/agent-fatigue/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+<div class="space" id="space">
+<div class="main-scroll" id="mainScroll">
+
+<!-- ========== HERO ========== -->
+<div class="hero">
+  <div class="hero-label reveal">Visual Essay</div>
+  <h1 class="hero-title reveal reveal-delay-1">用了 Agent 之后<br>为什么反而更累了</h1>
+  <p class="hero-sub reveal reveal-delay-2">不是说好了 10x 工程师吗？怎么到了下午四五点，脑子比以前还转不动？</p>
+  <p class="hero-meta reveal reveal-delay-3">公众号文章 · 约 1100 字 · 3 分钟</p>
+</div>
+
+<!-- ========== ACT I ========== -->
+<div class="act-transition reveal" style="background: var(--bg-act1);">
+  <div class="content-width">
+    <p class="act-num">Act I</p>
+    <p class="act-title">隐形的代价</p>
+  </div>
+</div>
+
+<!-- ===== S1: 10x 的悖论 ===== -->
+<div class="section" style="background: var(--bg-act1);">
+  <div class="content-width">
+    <p class="section-label reveal">01 — 10x 的悖论</p>
+    <h2 class="big-statement reveal reveal-delay-1">工作量其实并没有减少，甚至休息时间也没变多。</h2>
+    <p class="body-text reveal reveal-delay-2">最近跟很多深度用 Agent 的朋友聊，发现一个共同感受：号称 10x 的生产力工具用上之后，<span class="hl">到了下午四五点，脑子比以前还转不动</span>。效率是高了，但人也是真的更累了。想了想，原因有三个。</p>
+    <div id="s1-anim" class="reveal reveal-delay-3">
+<style>
+.s1_stage {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  height: 280px;
+  margin: 0 auto;
+}
+
+.s1_circle_10x {
+  position: absolute;
+  left: 20px;
+  top: 80px;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: #7C3AED;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 36px;
+  font-weight: 700;
+  opacity: 0;
+  font-family: sans-serif;
+}
+
+.s1_neq {
+  position: absolute;
+  left: 148px;
+  top: 100px;
+  font-size: 48px;
+  font-weight: 700;
+  color: #EF4444;
+  opacity: 0;
+  font-family: sans-serif;
+}
+
+.s1_battery {
+  position: absolute;
+  right: 20px;
+  top: 60px;
+  width: 80px;
+  height: 140px;
+  border: 4px solid #CBD5E1;
+  border-radius: 8px;
+  overflow: hidden;
+  opacity: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  transition: border-color 0.5s ease;
+}
+
+.s1_battery_cap {
+  position: absolute;
+  right: 46px;
+  top: 50px;
+  width: 28px;
+  height: 10px;
+  background: #CBD5E1;
+  border-radius: 4px 4px 0 0;
+  opacity: 0;
+}
+
+.s1_bar {
+  width: 100%;
+  flex: 0 0 25%;
+  transition: flex-basis 0.5s ease, opacity 0.3s ease;
+}
+.s1_bar_1 { background: #EF4444; }
+.s1_bar_2 { background: #F59E0B; }
+.s1_bar_3 { background: #F59E0B; }
+.s1_bar_4 { background: #22C55E; }
+
+.s1_label_eff {
+  position: absolute;
+  left: 30px;
+  top: 35px;
+  font-size: 14px;
+  color: #7C3AED;
+  font-weight: 600;
+  letter-spacing: 1px;
+  opacity: 0;
+  font-family: sans-serif;
+}
+
+.s1_label_energy {
+  position: absolute;
+  right: 24px;
+  top: 35px;
+  font-size: 14px;
+  color: #CBD5E1;
+  font-weight: 600;
+  letter-spacing: 1px;
+  opacity: 0;
+  transition: color 0.5s ease;
+  font-family: sans-serif;
+}
+
+.s1_caption {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 13px;
+  color: #94A3B8;
+  opacity: 0;
+  font-family: sans-serif;
+}
+
+@keyframes s1_scaleIn {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes s1_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes s1_fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.s1_stage.visible .s1_label_eff {
+  animation: s1_fadeSlideUp 0.4s 0.2s both;
+}
+.s1_stage.visible .s1_circle_10x {
+  animation: s1_scaleIn 0.5s 0.3s both;
+}
+.s1_stage.visible .s1_label_energy {
+  animation: s1_fadeSlideUp 0.4s 0.9s both;
+}
+.s1_stage.visible .s1_battery_cap {
+  animation: s1_fadeIn 0.3s 1.0s both;
+}
+.s1_stage.visible .s1_battery {
+  animation: s1_fadeIn 0.3s 1.0s both;
+}
+.s1_stage.visible .s1_neq {
+  animation: s1_fadeIn 0.4s 4.4s both;
+}
+.s1_stage.visible .s1_caption {
+  animation: s1_fadeSlideUp 0.4s 5.0s both;
+}
+</style>
+
+<div class="s1_stage">
+  <div class="s1_label_eff">效率</div>
+  <div class="s1_label_energy">精力</div>
+  <div class="s1_circle_10x">10x</div>
+  <div class="s1_neq">&ne;</div>
+  <div class="s1_battery_cap"></div>
+  <div class="s1_battery">
+    <div class="s1_bar s1_bar_4"></div>
+    <div class="s1_bar s1_bar_3"></div>
+    <div class="s1_bar s1_bar_2"></div>
+    <div class="s1_bar s1_bar_1"></div>
+  </div>
+  <div class="s1_caption">效率 10x &ne; 轻松 10x</div>
+</div>
+
+<script>
+(function() {
+  var stage = document.querySelector('.s1_stage');
+  if (!stage) return;
+  function runBatteryDrain() {
+    var bars = [
+      stage.querySelector('.s1_bar_4'),
+      stage.querySelector('.s1_bar_3'),
+      stage.querySelector('.s1_bar_2')
+    ];
+    var battery = stage.querySelector('.s1_battery');
+    var labelEnergy = stage.querySelector('.s1_label_energy');
+    setTimeout(function() { bars[0].style.flexBasis = '0%'; bars[0].style.opacity = '0'; }, 2800);
+    setTimeout(function() { bars[1].style.flexBasis = '0%'; bars[1].style.opacity = '0'; }, 3300);
+    setTimeout(function() { bars[2].style.flexBasis = '0%'; bars[2].style.opacity = '0'; }, 3800);
+    setTimeout(function() { battery.style.borderColor = '#EF4444'; labelEnergy.style.color = '#EF4444'; }, 4200);
+  }
+  var obs = new MutationObserver(function() {
+    if (stage.classList.contains('visible')) { runBatteryDrain(); obs.disconnect(); }
+  });
+  obs.observe(stage, { attributes: true, attributeFilter: ['class'] });
+  if (stage.classList.contains('visible')) { runBatteryDrain(); obs.disconnect(); }
+})();
+</script>
+    </div>
+    <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(1)">↓ 深入了解：Agent 疲劳的底层机制</div>
+  </div>
+</div>
+
+<!-- ===== S2: 机械化缓冲消失 ===== -->
+<div class="section" style="background: var(--bg-act1);">
+  <div class="content-width">
+    <p class="section-label reveal">02 — 机械化缓冲消失了</p>
+    <h2 class="big-statement reveal reveal-delay-1">以前做 PPT 拖元素的那几分钟，脑子其实在偷偷休息。现在 Agent 三秒搞定，然后等你下一个指令。</h2>
+    <p class="body-text reveal reveal-delay-2">以前的工作里有很多已经熟悉、甚至机械化可以做的部分。想好了逻辑之后敲键盘的那几分钟，想好了 PPT 怎么做之后拖元素的那个过程——<span class="hl">脑子其实是在休息的</span>。这些「缓冲时间」被 Agent 全部替代了。你说完想法，Agent 三秒执行完，<span class="hl-danger">然后你的脑子就得不停地转</span>。</p>
+    <div id="s2-anim" class="reveal reveal-delay-3">
+<style>
+.s2_stage {
+  position: relative;
+  width: 390px;
+  height: 380px;
+  margin: 0 auto;
+  overflow: hidden;
+  font-family: -apple-system, sans-serif;
+}
+
+@keyframes s2_fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes s2_growX {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+@keyframes s2_flash {
+  0%   { opacity: 0; transform: scale(0.5); }
+  30%  { opacity: 1; transform: scale(1); }
+  70%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.5); }
+}
+
+.s2_label {
+  position: absolute;
+  font-size: 14px;
+  font-weight: 700;
+  color: #64748B;
+  opacity: 0;
+}
+.s2_label_before { left: 24px; top: 72px; }
+.s2_label_now { left: 24px; top: 232px; }
+
+.s2_timeline {
+  position: absolute;
+  height: 3px;
+  background: #E2E8F0;
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+.s2_tl_before { left: 68px; top: 98px; width: 296px; }
+.s2_tl_now { left: 68px; top: 258px; width: 296px; }
+
+.s2_block {
+  position: absolute;
+  height: 48px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+}
+
+.s2_b_think1 { left: 68px; top: 74px; width: 56px; background: #7C3AED; }
+.s2_b_exec1 { left: 132px; top: 74px; width: 56px; background: #CBD5E1; color: #64748B; }
+.s2_b_think2 { left: 196px; top: 74px; width: 56px; background: #7C3AED; }
+.s2_b_exec2 { left: 260px; top: 74px; width: 56px; background: #CBD5E1; color: #64748B; }
+
+.s2_rest {
+  position: absolute;
+  font-size: 11px;
+  color: #94A3B8;
+  font-weight: 500;
+  opacity: 0;
+  text-align: center;
+}
+.s2_rest1 { left: 132px; top: 126px; width: 56px; }
+.s2_rest2 { left: 260px; top: 126px; width: 56px; }
+
+.s2_n_think1 { left: 68px; top: 234px; width: 64px; background: #7C3AED; }
+.s2_n_think2 { left: 132px; top: 234px; width: 64px; background: #7C3AED; }
+.s2_n_think3 { left: 196px; top: 234px; width: 64px; background: #7C3AED; }
+.s2_n_think4 { left: 260px; top: 234px; width: 64px; background: #7C3AED; }
+
+.s2_agent {
+  position: absolute;
+  top: 240px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #F59E0B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+  z-index: 3;
+}
+.s2_agent1 { left: 114px; }
+.s2_agent2 { left: 178px; }
+.s2_agent3 { left: 242px; }
+
+.s2_agent_label {
+  position: absolute;
+  top: 286px;
+  font-size: 10px;
+  color: #F59E0B;
+  font-weight: 600;
+  opacity: 0;
+  white-space: nowrap;
+}
+.s2_al1 { left: 108px; }
+.s2_al2 { left: 172px; }
+.s2_al3 { left: 236px; }
+
+.s2_title {
+  position: absolute;
+  left: 24px;
+  top: 20px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #334155;
+  opacity: 0;
+}
+
+.s2_bracket {
+  position: absolute;
+  left: 68px;
+  top: 310px;
+  width: 256px;
+  height: 20px;
+  border: 2px solid #7C3AED;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  opacity: 0;
+}
+.s2_bracket_label {
+  position: absolute;
+  left: 130px;
+  top: 334px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #7C3AED;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+.s2_stage.visible .s2_title { animation: s2_fadeIn 0.5s ease 0.2s both; }
+.s2_stage.visible .s2_label_before { animation: s2_fadeIn 0.4s ease 0.6s both; }
+.s2_stage.visible .s2_tl_before { animation: s2_growX 0.5s ease 0.8s both; }
+.s2_stage.visible .s2_b_think1 { animation: s2_fadeIn 0.4s ease 1.2s both; }
+.s2_stage.visible .s2_b_exec1 { animation: s2_fadeIn 0.4s ease 1.6s both; }
+.s2_stage.visible .s2_rest1 { animation: s2_fadeIn 0.3s ease 1.8s both; }
+.s2_stage.visible .s2_b_think2 { animation: s2_fadeIn 0.4s ease 2.0s both; }
+.s2_stage.visible .s2_b_exec2 { animation: s2_fadeIn 0.4s ease 2.4s both; }
+.s2_stage.visible .s2_rest2 { animation: s2_fadeIn 0.3s ease 2.6s both; }
+.s2_stage.visible .s2_label_now { animation: s2_fadeIn 0.4s ease 3.0s both; }
+.s2_stage.visible .s2_tl_now { animation: s2_growX 0.5s ease 3.2s both; }
+.s2_stage.visible .s2_n_think1 { animation: s2_fadeIn 0.4s ease 3.6s both; }
+.s2_stage.visible .s2_agent1 { animation: s2_flash 0.6s ease 3.9s both; }
+.s2_stage.visible .s2_al1 { animation: s2_flash 0.6s ease 3.9s both; }
+.s2_stage.visible .s2_n_think2 { animation: s2_fadeIn 0.4s ease 4.0s both; }
+.s2_stage.visible .s2_agent2 { animation: s2_flash 0.6s ease 4.3s both; }
+.s2_stage.visible .s2_al2 { animation: s2_flash 0.6s ease 4.3s both; }
+.s2_stage.visible .s2_n_think3 { animation: s2_fadeIn 0.4s ease 4.4s both; }
+.s2_stage.visible .s2_agent3 { animation: s2_flash 0.6s ease 4.7s both; }
+.s2_stage.visible .s2_al3 { animation: s2_flash 0.6s ease 4.7s both; }
+.s2_stage.visible .s2_n_think4 { animation: s2_fadeIn 0.4s ease 4.8s both; }
+.s2_stage.visible .s2_bracket { animation: s2_fadeIn 0.4s ease 5.2s both; }
+.s2_stage.visible .s2_bracket_label { animation: s2_fadeIn 0.4s ease 5.4s both; }
+</style>
+
+<div class="s2_stage">
+  <div class="s2_title">机械化缓冲消失了</div>
+  <div class="s2_label s2_label_before">以前</div>
+  <div class="s2_timeline s2_tl_before"></div>
+  <div class="s2_block s2_b_think1">思考</div>
+  <div class="s2_block s2_b_exec1">执行</div>
+  <div class="s2_rest s2_rest1">脑子休息</div>
+  <div class="s2_block s2_b_think2">思考</div>
+  <div class="s2_block s2_b_exec2">执行</div>
+  <div class="s2_rest s2_rest2">脑子休息</div>
+  <div class="s2_label s2_label_now">现在</div>
+  <div class="s2_timeline s2_tl_now"></div>
+  <div class="s2_block s2_n_think1">思考</div>
+  <div class="s2_block s2_n_think2">思考</div>
+  <div class="s2_block s2_n_think3">思考</div>
+  <div class="s2_block s2_n_think4">思考</div>
+  <div class="s2_agent s2_agent1">3s</div>
+  <div class="s2_agent s2_agent2">3s</div>
+  <div class="s2_agent s2_agent3">3s</div>
+  <div class="s2_agent_label s2_al1">Agent</div>
+  <div class="s2_agent_label s2_al2">Agent</div>
+  <div class="s2_agent_label s2_al3">Agent</div>
+  <div class="s2_bracket"></div>
+  <div class="s2_bracket_label">脑子一刻不停</div>
+</div>
+    </div>
+    <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(2)">↓ 深入了解：「隐性休息」的科学解释</div>
+  </div>
+</div>
+
+<!-- ===== S3: 给 Agent 擦屁股 ===== -->
+<div class="section" style="background: var(--bg-act2);">
+  <div class="content-width">
+    <p class="section-label reveal">03 — 给 Agent 擦屁股</p>
+    <h2 class="big-statement reveal reveal-delay-1">以前要给其他人擦屁股，好在别人拉得不够快。现在有了 Agent，拉得又快又多，擦都来不及擦。</h2>
+    <p class="body-text reveal reveal-delay-2">很多同事用了 Agent 之后，<span class="hl">看起来不像是用 Agent 的人，反而像是被 Agent 用的人</span>。工单出了问题，他就负责把 Agent 发回来的结果直接复制给用户，或者转发给下游同事——仿佛他只是一个无情的信息转发工具。Agent 生产内容的速度远远超过人类审核的速度，<span class="hl2">你一整天都在追着 Agent 的产出跑</span>。</p>
+    <div id="s3-anim" class="reveal reveal-delay-3">
+<style>
+.s3_stage {
+  position: relative;
+  width: 340px;
+  max-width: 90vw;
+  height: 380px;
+  margin: 20px auto;
+  font-family: -apple-system, 'PingFang SC', sans-serif;
+  overflow: hidden;
+}
+
+.s3_speed_area {
+  position: absolute;
+  top: 0;
+  left: 0; right: 0;
+  opacity: 0;
+  transform: translateY(-12px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.s3_stage.visible .s3_speed_area {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.s3_speed_label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748B;
+  margin-bottom: 4px;
+}
+.s3_bar_row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.s3_bar_tag {
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+  width: 72px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.s3_bar {
+  height: 22px;
+  border-radius: 4px;
+  width: 0;
+  transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.s3_bar_agent { background: #7C3AED; }
+.s3_bar_you { background: #F59E0B; }
+.s3_stage.visible .s3_bar_agent {
+  width: 220px;
+  transition-delay: 0.5s;
+}
+.s3_stage.visible .s3_bar_you {
+  width: 64px;
+  transition-delay: 0.9s;
+}
+
+.s3_scene {
+  position: absolute;
+  top: 100px;
+  left: 0; right: 0;
+  height: 260px;
+}
+
+.s3_agent_box {
+  position: absolute;
+  left: 4px;
+  top: 60px;
+  width: 80px;
+  height: 52px;
+  border-radius: 12px;
+  background: #7C3AED;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s3_stage.visible .s3_agent_box {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 0.4s;
+}
+
+.s3_you_box {
+  position: absolute;
+  left: 50%;
+  top: 50px;
+  transform: translateX(-50%) scale(0);
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
+  border: 3px solid #F59E0B;
+  background: #FFFBEB;
+  color: #92400E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  z-index: 10;
+}
+.s3_stage.visible .s3_you_box {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+  transition-delay: 0.8s;
+}
+
+.s3_downstream_box {
+  position: absolute;
+  right: 4px;
+  top: 56px;
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  background: #CBD5E1;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s3_stage.visible .s3_downstream_box {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 1.2s;
+}
+
+.s3_block {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  background: #7C3AED;
+  opacity: 0;
+}
+
+.s3_block_1 { left: 100px; top: 44px; }
+.s3_block_2 { left: 110px; top: 74px; }
+.s3_block_3 { left: 118px; top: 104px; }
+.s3_block_4 { left: 130px; top: 50px; }
+.s3_block_5 { left: 138px; top: 80px; }
+.s3_block_6 { left: 128px; top: 110px; }
+.s3_block_7 { left: 146px; top: 44px; }
+.s3_block_8 { left: 154px; top: 72px; }
+.s3_block_9 { left: 108px; top: 134px; }
+.s3_block_10 { left: 140px; top: 130px; }
+.s3_block_11 { left: 156px; top: 102px; }
+.s3_block_12 { left: 122px; top: 138px; }
+
+@keyframes s3_pile {
+  0% { opacity: 0; transform: translateX(-40px) scale(0.4); }
+  60% { opacity: 0.85; transform: translateX(0) scale(1); }
+  100% { opacity: 0.75; transform: translateX(0) scale(1); }
+}
+
+.s3_stage.visible .s3_block_1  { animation: s3_pile 0.5s ease 1.6s forwards; }
+.s3_stage.visible .s3_block_2  { animation: s3_pile 0.5s ease 1.9s forwards; }
+.s3_stage.visible .s3_block_3  { animation: s3_pile 0.5s ease 2.2s forwards; }
+.s3_stage.visible .s3_block_4  { animation: s3_pile 0.5s ease 2.4s forwards; }
+.s3_stage.visible .s3_block_5  { animation: s3_pile 0.5s ease 2.6s forwards; }
+.s3_stage.visible .s3_block_6  { animation: s3_pile 0.5s ease 2.8s forwards; }
+.s3_stage.visible .s3_block_7  { animation: s3_pile 0.5s ease 3.0s forwards; }
+.s3_stage.visible .s3_block_8  { animation: s3_pile 0.5s ease 3.2s forwards; }
+.s3_stage.visible .s3_block_9  { animation: s3_pile 0.5s ease 3.4s forwards; }
+.s3_stage.visible .s3_block_10 { animation: s3_pile 0.5s ease 3.6s forwards; }
+.s3_stage.visible .s3_block_11 { animation: s3_pile 0.5s ease 3.8s forwards; }
+.s3_stage.visible .s3_block_12 { animation: s3_pile 0.5s ease 4.0s forwards; }
+
+@keyframes s3_sink {
+  0% { transform: translateX(-50%) scale(1); }
+  100% { transform: translateX(-50%) scale(0.7); opacity: 0.5; }
+}
+.s3_stage.visible .s3_you_box {
+  animation: s3_sink 1.5s ease 3.5s forwards;
+}
+
+.s3_caption {
+  position: absolute;
+  bottom: 8px;
+  left: 0; right: 0;
+  text-align: center;
+  font-size: 13px;
+  color: #64748B;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.s3_stage.visible .s3_caption {
+  opacity: 1;
+  transition-delay: 4.2s;
+}
+</style>
+
+<div class="s3_stage">
+  <div class="s3_speed_area">
+    <div class="s3_speed_label">速度对比</div>
+    <div class="s3_bar_row">
+      <span class="s3_bar_tag">Agent</span>
+      <div class="s3_bar s3_bar_agent"></div>
+    </div>
+    <div class="s3_bar_row">
+      <span class="s3_bar_tag">你的审核</span>
+      <div class="s3_bar s3_bar_you"></div>
+    </div>
+  </div>
+  <div class="s3_scene">
+    <div class="s3_agent_box">Agent</div>
+    <div class="s3_block s3_block_1"></div>
+    <div class="s3_block s3_block_2"></div>
+    <div class="s3_block s3_block_3"></div>
+    <div class="s3_block s3_block_4"></div>
+    <div class="s3_block s3_block_5"></div>
+    <div class="s3_block s3_block_6"></div>
+    <div class="s3_block s3_block_7"></div>
+    <div class="s3_block s3_block_8"></div>
+    <div class="s3_block s3_block_9"></div>
+    <div class="s3_block s3_block_10"></div>
+    <div class="s3_block s3_block_11"></div>
+    <div class="s3_block s3_block_12"></div>
+    <div class="s3_you_box">你</div>
+    <div class="s3_downstream_box">用户</div>
+  </div>
+  <div class="s3_caption">产出堆积，审核成了瓶颈</div>
+</div>
+    </div>
+    <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(3)">↓ 深入了解：生产速度 vs 审核速度</div>
+  </div>
+</div>
+
+<!-- ========== ACT II ========== -->
+<div class="act-transition reveal" style="background: var(--bg-act2);">
+  <div class="content-width">
+    <p class="act-num">Act II</p>
+    <p class="act-title">脑子空了</p>
+  </div>
+</div>
+
+<!-- ===== S4: 多任务频繁切换 ===== -->
+<div class="section" style="background: var(--bg-act2);">
+  <div class="content-width">
+    <p class="section-label reveal">04 — 多任务频繁切换</p>
+    <h2 class="big-statement reveal reveal-delay-1">以前一件事做两个小时，脑子是连续的。现在一小时内同时让 Agent 做三四件事，你的脑子要不断切换。</h2>
+    <p class="body-text reveal reveal-delay-2">人的大脑并不是为了这种工作模式设计的。每次切换都有成本，而且<span class="hl-danger">这个成本你感受不到</span>——你只是觉得到了下午，脑子已经完全空了。以前效率不高，但脑子是连续的；现在效率高了，但<span class="hl">认知负担被碎片化分摊到了每一分钟</span>。</p>
+    <div id="s4-anim" class="reveal reveal-delay-3">
+<style>
+.s4_stage {
+  position: relative;
+  width: 340px;
+  height: 340px;
+  margin: 0 auto;
+  overflow: hidden;
+  font-family: -apple-system, 'Noto Sans SC', sans-serif;
+}
+
+@keyframes s4_fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes s4_growX {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+@keyframes s4_drain {
+  from { height: 100%; }
+  to   { height: 10%; }
+}
+@keyframes s4_popX {
+  0%   { opacity: 0; transform: scale(0.3); }
+  60%  { opacity: 1; transform: scale(1.15); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.s4_title {
+  position: absolute;
+  left: 16px;
+  top: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #334155;
+  opacity: 0;
+}
+
+.s4_label {
+  position: absolute;
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748B;
+  opacity: 0;
+}
+.s4_label_before { left: 12px; top: 58px; }
+.s4_label_now    { left: 12px; top: 178px; }
+
+.s4_timeline {
+  position: absolute;
+  height: 3px;
+  background: #E2E8F0;
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+.s4_tl_before { left: 48px; top: 84px; width: 196px; }
+.s4_tl_now    { left: 48px; top: 204px; width: 196px; }
+
+.s4_block {
+  position: absolute;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+}
+
+.s4_b_taskA { left: 48px; top: 64px; width: 196px; background: #7C3AED; }
+
+.s4_ann_before {
+  position: absolute;
+  left: 48px;
+  top: 108px;
+  font-size: 11px;
+  color: #7C3AED;
+  font-weight: 600;
+  opacity: 0;
+}
+
+.s4_n_a { left: 48px;  top: 184px; width: 42px; background: #7C3AED; }
+.s4_n_b { left: 100px; top: 184px; width: 42px; background: #F59E0B; }
+.s4_n_c { left: 152px; top: 184px; width: 42px; background: #7C3AED; }
+.s4_n_d { left: 204px; top: 184px; width: 42px; background: #F59E0B; }
+
+.s4_cost {
+  position: absolute;
+  top: 190px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #EF4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+  z-index: 3;
+}
+.s4_cost1 { left: 81px; }
+.s4_cost2 { left: 133px; }
+.s4_cost3 { left: 185px; }
+
+.s4_cost_label {
+  position: absolute;
+  top: 228px;
+  font-size: 10px;
+  color: #EF4444;
+  font-weight: 600;
+  opacity: 0;
+  white-space: nowrap;
+}
+.s4_cl1 { left: 74px; }
+.s4_cl2 { left: 126px; }
+.s4_cl3 { left: 178px; }
+
+.s4_energy_box {
+  position: absolute;
+  right: 16px;
+  top: 52px;
+  width: 36px;
+  height: 140px;
+  border: 3px solid #CBD5E1;
+  border-radius: 8px;
+  overflow: hidden;
+  opacity: 0;
+}
+.s4_energy_fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: linear-gradient(to top, #EF4444 0%, #F59E0B 40%, #22C55E 100%);
+  border-radius: 0 0 5px 5px;
+}
+.s4_energy_label {
+  position: absolute;
+  right: 14px;
+  top: 196px;
+  font-size: 11px;
+  color: #64748B;
+  font-weight: 600;
+  opacity: 0;
+  text-align: center;
+  width: 40px;
+}
+
+.s4_bracket {
+  position: absolute;
+  left: 48px;
+  top: 248px;
+  width: 198px;
+  height: 16px;
+  border: 2px solid #EF4444;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  opacity: 0;
+}
+.s4_bracket_label {
+  position: absolute;
+  left: 62px;
+  top: 268px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #EF4444;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+.s4_stage.visible .s4_title { animation: s4_fadeIn 0.5s ease 0.2s both; }
+.s4_stage.visible .s4_label_before { animation: s4_fadeIn 0.4s ease 0.6s both; }
+.s4_stage.visible .s4_tl_before { animation: s4_growX 0.5s ease 0.8s both; }
+.s4_stage.visible .s4_b_taskA { animation: s4_fadeIn 0.5s ease 1.2s both; }
+.s4_stage.visible .s4_ann_before { animation: s4_fadeIn 0.4s ease 1.6s both; }
+.s4_stage.visible .s4_energy_box { animation: s4_fadeIn 0.4s ease 1.8s both; }
+.s4_stage.visible .s4_energy_label { animation: s4_fadeIn 0.4s ease 1.8s both; }
+.s4_stage.visible .s4_label_now { animation: s4_fadeIn 0.4s ease 2.2s both; }
+.s4_stage.visible .s4_tl_now { animation: s4_growX 0.5s ease 2.4s both; }
+.s4_stage.visible .s4_n_a { animation: s4_fadeIn 0.4s ease 2.8s both; }
+.s4_stage.visible .s4_cost1 { animation: s4_popX 0.4s ease 3.2s both; }
+.s4_stage.visible .s4_cl1 { animation: s4_fadeIn 0.3s ease 3.3s both; }
+.s4_stage.visible .s4_n_b { animation: s4_fadeIn 0.4s ease 3.6s both; }
+.s4_stage.visible .s4_cost2 { animation: s4_popX 0.4s ease 4.0s both; }
+.s4_stage.visible .s4_cl2 { animation: s4_fadeIn 0.3s ease 4.1s both; }
+.s4_stage.visible .s4_n_c { animation: s4_fadeIn 0.4s ease 4.4s both; }
+.s4_stage.visible .s4_cost3 { animation: s4_popX 0.4s ease 4.8s both; }
+.s4_stage.visible .s4_cl3 { animation: s4_fadeIn 0.3s ease 4.9s both; }
+.s4_stage.visible .s4_n_d { animation: s4_fadeIn 0.4s ease 5.2s both; }
+.s4_stage.visible .s4_energy_fill { animation: s4_drain 3.0s ease 2.8s both; }
+.s4_stage.visible .s4_bracket { animation: s4_fadeIn 0.4s ease 5.6s both; }
+.s4_stage.visible .s4_bracket_label { animation: s4_fadeIn 0.4s ease 5.8s both; }
+</style>
+
+<div class="s4_stage">
+  <div class="s4_title">多任务频繁切换</div>
+  <div class="s4_label s4_label_before">以前</div>
+  <div class="s4_timeline s4_tl_before"></div>
+  <div class="s4_block s4_b_taskA">任务A · 2小时</div>
+  <div class="s4_ann_before">脑子连续</div>
+  <div class="s4_energy_box">
+    <div class="s4_energy_fill"></div>
+  </div>
+  <div class="s4_energy_label">能量</div>
+  <div class="s4_label s4_label_now">现在</div>
+  <div class="s4_timeline s4_tl_now"></div>
+  <div class="s4_block s4_n_a">A</div>
+  <div class="s4_block s4_n_b">B</div>
+  <div class="s4_block s4_n_c">C</div>
+  <div class="s4_block s4_n_d">D</div>
+  <div class="s4_cost s4_cost1">x</div>
+  <div class="s4_cost s4_cost2">x</div>
+  <div class="s4_cost s4_cost3">x</div>
+  <div class="s4_cost_label s4_cl1">切换</div>
+  <div class="s4_cost_label s4_cl2">切换</div>
+  <div class="s4_cost_label s4_cl3">切换</div>
+  <div class="s4_bracket"></div>
+  <div class="s4_bracket_label">到下午脑子就空了</div>
+</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== S5: 发呆的三分钟 ===== -->
+<div class="section section-dark" style="background: var(--bg-act3);">
+  <div class="content-width">
+    <p class="section-label reveal">05 — 发呆的三分钟</p>
+    <h2 class="big-statement reveal reveal-delay-1">AI 替代掉的不是你的工作量，是你两个任务之间发呆的那三分钟。</h2>
+    <p class="body-text reveal reveal-delay-2">以前效率低，但有喘息。现在效率高了，大脑从早转到晚，一刻不停。所以如果你用了 Agent 之后觉得更累了，不是你的问题。<span class="hl">真正的提效不是把空闲时间填满，是把省下来的时间还给自己。</span></p>
+    <div id="s5-anim" class="reveal reveal-delay-3">
+<style>
+.s5_stage {
+  position: relative;
+  width: 390px;
+  height: 380px;
+  margin: 0 auto;
+  overflow: hidden;
+  font-family: -apple-system, 'Noto Sans SC', sans-serif;
+}
+
+@keyframes s5_fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes s5_growX {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+@keyframes s5_shrink {
+  from { width: var(--gap-w); opacity: 1; }
+  to   { width: 0px; opacity: 0; }
+}
+@keyframes s5_glow {
+  from { opacity: 0; transform: scale(0.8); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.s5_title {
+  position: absolute;
+  left: 24px;
+  top: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #F1F5F9;
+  opacity: 0;
+}
+
+.s5_label {
+  position: absolute;
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0;
+}
+.s5_label_before { left: 24px; top: 68px; color: #94A3B8; }
+.s5_label_now { left: 24px; top: 218px; color: #94A3B8; }
+
+.s5_timeline {
+  position: absolute;
+  height: 2px;
+  background: #334155;
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+.s5_tl_before { left: 68px; top: 130px; width: 296px; }
+.s5_tl_now { left: 68px; top: 280px; width: 296px; }
+
+.s5_work {
+  position: absolute;
+  height: 48px;
+  border-radius: 6px;
+  background: #7C3AED;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0;
+}
+
+.s5_gap {
+  position: absolute;
+  height: 48px;
+  border-radius: 6px;
+  background: rgba(245, 158, 11, 0.25);
+  border: 2px dashed #F59E0B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: #F59E0B;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.s5_w1 { left: 68px;  top: 88px; width: 64px; }
+.s5_g1 { left: 136px; top: 88px; width: 52px; --gap-w: 52px; }
+.s5_w2 { left: 192px; top: 88px; width: 64px; }
+.s5_g2 { left: 260px; top: 88px; width: 44px; --gap-w: 44px; }
+.s5_w3 { left: 308px; top: 88px; width: 56px; }
+
+.s5_gap_label {
+  position: absolute;
+  font-size: 11px;
+  color: #F59E0B;
+  font-weight: 500;
+  opacity: 0;
+  text-align: center;
+  white-space: nowrap;
+}
+.s5_gl1 { left: 136px; top: 140px; width: 52px; }
+.s5_gl2 { left: 260px; top: 140px; width: 44px; }
+
+.s5_nw1 { left: 68px;  top: 238px; width: 60px; border-radius: 6px 0 0 6px; }
+.s5_nw2 { left: 128px; top: 238px; width: 60px; border-radius: 0; border-left: 1px solid rgba(15,23,42,0.5); }
+.s5_nw3 { left: 188px; top: 238px; width: 60px; border-radius: 0; border-left: 1px solid rgba(15,23,42,0.5); }
+.s5_nw4 { left: 248px; top: 238px; width: 56px; border-radius: 0; border-left: 1px solid rgba(15,23,42,0.5); }
+.s5_nw5 { left: 304px; top: 238px; width: 60px; border-radius: 0 6px 6px 0; }
+
+.s5_bracket {
+  position: absolute;
+  left: 68px;
+  top: 290px;
+  width: 296px;
+  height: 16px;
+  border: 2px solid #EF4444;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  opacity: 0;
+}
+.s5_bracket_label {
+  position: absolute;
+  left: 120px;
+  top: 310px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #EF4444;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+.s5_gold {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 12px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #F59E0B;
+  opacity: 0;
+}
+
+.s5_stage.visible .s5_title { animation: s5_fadeIn 0.5s ease 0.2s both; }
+.s5_stage.visible .s5_label_before { animation: s5_fadeIn 0.4s ease 0.5s both; }
+.s5_stage.visible .s5_tl_before { animation: s5_growX 0.5s ease 0.7s both; }
+.s5_stage.visible .s5_w1 { animation: s5_fadeIn 0.4s ease 1.0s both; }
+.s5_stage.visible .s5_g1 { animation: s5_fadeIn 0.4s ease 1.4s both; }
+.s5_stage.visible .s5_gl1 { animation: s5_fadeIn 0.3s ease 1.6s both; }
+.s5_stage.visible .s5_w2 { animation: s5_fadeIn 0.4s ease 1.8s both; }
+.s5_stage.visible .s5_g2 { animation: s5_fadeIn 0.4s ease 2.2s both; }
+.s5_stage.visible .s5_gl2 { animation: s5_fadeIn 0.3s ease 2.4s both; }
+.s5_stage.visible .s5_w3 { animation: s5_fadeIn 0.4s ease 2.6s both; }
+.s5_stage.visible .s5_label_now { animation: s5_fadeIn 0.4s ease 3.0s both; }
+.s5_stage.visible .s5_tl_now { animation: s5_growX 0.5s ease 3.2s both; }
+.s5_stage.visible .s5_nw1 { animation: s5_fadeIn 0.3s ease 3.6s both; }
+.s5_stage.visible .s5_nw2 { animation: s5_fadeIn 0.3s ease 3.9s both; }
+.s5_stage.visible .s5_nw3 { animation: s5_fadeIn 0.3s ease 4.2s both; }
+.s5_stage.visible .s5_nw4 { animation: s5_fadeIn 0.3s ease 4.5s both; }
+.s5_stage.visible .s5_nw5 { animation: s5_fadeIn 0.3s ease 4.8s both; }
+.s5_stage.visible .s5_bracket { animation: s5_fadeIn 0.4s ease 5.1s both; }
+.s5_stage.visible .s5_bracket_label { animation: s5_fadeIn 0.4s ease 5.3s both; }
+.s5_stage.visible .s5_gold { animation: s5_glow 0.6s ease 5.6s both; }
+</style>
+
+<div class="s5_stage">
+  <div class="s5_title">发呆的三分钟</div>
+  <div class="s5_label s5_label_before">以前</div>
+  <div class="s5_timeline s5_tl_before"></div>
+  <div class="s5_work s5_w1">工作</div>
+  <div class="s5_gap s5_g1">发呆</div>
+  <div class="s5_gap_label s5_gl1">喘息</div>
+  <div class="s5_work s5_w2">工作</div>
+  <div class="s5_gap s5_g2">看窗</div>
+  <div class="s5_gap_label s5_gl2">充电</div>
+  <div class="s5_work s5_w3">工作</div>
+  <div class="s5_label s5_label_now">现在</div>
+  <div class="s5_timeline s5_tl_now"></div>
+  <div class="s5_work s5_nw1">工作</div>
+  <div class="s5_work s5_nw2">工作</div>
+  <div class="s5_work s5_nw3">工作</div>
+  <div class="s5_work s5_nw4">工作</div>
+  <div class="s5_work s5_nw5">工作</div>
+  <div class="s5_bracket"></div>
+  <div class="s5_bracket_label">空隙全部消失</div>
+  <div class="s5_gold">把省下来的时间，还给自己</div>
+</div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== TAKEAWAY ========== -->
+<div class="takeaway">
+  <div class="content-width">
+    <h2 class="big-statement reveal">真正的提效，是把省下来的时间还给自己。</h2>
+    <p class="body-text reveal reveal-delay-1">Agent 提升的是吞吐量，不是带宽。如果你不主动为自己留出喘息的空间，效率工具只会让你更快地耗尽。</p>
+  </div>
+</div>
+
+<div class="footer">
+  <p>基于公众号文章 · 视觉叙事由 AI 生成 · 内容以原文为准</p>
+</div>
+
+</div>
+<div class="detail-scroll" id="detailScroll">
+  <div class="detail-header" id="detailBack">← 返回</div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+</div>
+
+<div class="source-horizon" id="sourceHorizon">
+  <div class="horizon-track" id="horizonTrack"></div>
+  <div class="horizon-detail" id="horizonDetail"></div>
+</div>
+
+<script>
+var deepDiveData = {};
+
+deepDiveData[1] = {
+  title: "Agent 疲劳的底层机制",
+  sections: [
+    {
+      heading: "认知负荷理论：总量守恒",
+      body: "John Sweller 的认知负荷理论将工作记忆的消耗分为三类：内在负荷（任务本身的复杂度）、外在负荷（工具界面带来的额外开销）、生成负荷（你主动思考和整合信息的投入）。Agent 接管了大量执行层面的工作，看起来释放了你的双手，但你的大脑并没有闲下来——你需要不断审查 Agent 的输出、判断它的方向是否正确、在它偏离时纠正。这些「监督」和「决策」活动属于高阶认知，消耗的是生成负荷，也就是最宝贵、最容易耗竭的那部分心理资源。\n\n换句话说，Agent 帮你省掉的是打字和查文档的时间（外在负荷），但审查、判断、纠偏这些高阶认知活动（生成负荷）一点都没少，甚至因为 Agent 产出速度极快，单位时间内需要你做出的判断反而更多了。",
+      diagram: '<div class="dd-slide dd-d1" style="text-align:center;padding:16px 0;"><div style="display:inline-flex;gap:8px;align-items:flex-end;"><div style="width:60px;height:40px;background:#CBD5E1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#334155;">外在</div><div style="width:60px;height:80px;background:#F59E0B;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;">内在</div><div style="width:60px;height:100px;background:#7C3AED;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;">生成</div></div><div style="margin-top:8px;font-size:12px;color:#94A3B8;">Agent 削减了外在负荷，但生成负荷不减反增</div></div>'
+    },
+    {
+      heading: "Flow State 被打断：从心流到监工",
+      body: "Mihaly Csikszentmihalyi 定义的心流状态有一个关键前提：你必须对正在做的事有即时反馈和持续掌控感。传统编码时，你写一行、想一行、测一行，大脑处于连续的「生成-验证」循环中，很容易进入心流。但与 Agent 协作时，你的角色从「创造者」变成了「审查者」。Agent 每隔几秒就抛出一大段代码或决策，你被迫中断自己的思路去评估它的输出。这种被动的、碎片化的注意力切换正是心流的天敌。\n\n研究表明，一次注意力中断后平均需要 23 分钟才能恢复到之前的专注状态（Gloria Mark, UC Irvine）。如果你每 5 分钟就要审查一次 Agent 的输出，心流状态根本无法建立。你一天下来做了大量的「微决策」，但从未进入过真正的深度工作。"
+    },
+    {
+      heading: "决策疲劳：意志力是有限资源",
+      body: "Roy Baumeister 的自我损耗理论指出，做决策会消耗一种有限的心理资源。每一次你判断 Agent 的输出是否正确、选择接受还是修改、决定下一步让它做什么——这些都是决策行为。Agent 的高产出速度意味着你在单位时间内做出的决策数量远超传统工作方式。到了下午四五点，你并不是因为体力劳动而疲惫，而是决策预算已经耗尽。\n\n这就是「10x 悖论」的根源：产出确实翻了好几倍，但你的认知资源消耗速度也翻了好几倍。净效果是一天结束时，你比以前更加精疲力竭，尽管屏幕上的代码行数比以前多得多。"
+    }
+  ],
+  originalText: "I have been mass-delegating work to AI agents and it has been amazing. My productivity is through the roof! But I have a confession: by 4-5pm, my brain feels more fried than it ever did before."
+};
+
+deepDiveData[2] = {
+  title: "「隐性休息」的科学解释",
+  sections: [
+    {
+      body: "认知科学把大脑分为两种工作模式：任务正性网络（TPN）和默认模式网络（DMN）。TPN 负责专注执行，DMN 在你发呆、做机械动作时自动激活——它不是「摸鱼」，而是在整理记忆、建立远距离联想、恢复认知资源。"
+    },
+    {
+      body: "以前拖 PPT 元素、格式化表格、敲重复代码时，TPN 只需低负荷运转，DMN 有机会「偷偷上线」。这就是隐性认知恢复——你以为自己在干活，其实大脑正在后台充电。研究表明，DMN 活跃期产生的 alpha 波与创造力高度相关。"
+    },
+    {
+      body: "Agent 把机械执行压缩到三秒，等于直接砍掉了 DMN 的激活窗口。你从「思考 → 休息（伪装成执行）→ 思考」变成「思考 → 思考 → 思考」，认知负荷曲线从锯齿形变成一条直线。持续高负荷下，前额叶皮层的葡萄糖消耗加速，决策质量在 90 分钟后显著下降——这就是为什么用 Agent 干了一天活后，你会觉得「比以前累多了」。"
+    },
+    {
+      body: "应对策略：主动制造缓冲。每 25 分钟给自己一个 5 分钟的「假执行」时间——散步、看窗外、甚至发呆。这不是效率损失，而是在替代被 Agent 消灭的那段隐性恢复期。"
+    }
+  ]
+};
+
+deepDiveData[3] = {
+  title: "给 Agent 擦屁股",
+  sections: [
+    {
+      body: "Agent 的生产速度远超人类的审核速度。你以为自己在用 Agent，其实是在给 Agent 当质检员。以前同事写得慢，你审得过来；现在 Agent 一天拉出 20 个 PR，每个都要你逐行看。"
+    },
+    {
+      body: "这就是「信息过载」的新变种：不是信息太多读不完，而是产出太多审不完。Decision fatigue（决策疲劳）在这里被放大了——每个 PR 都需要你判断「这样写对不对」「有没有隐含 bug」「风格一致吗」。一天下来，你做了几百个微决策，大脑早就罢工了。"
+    },
+    {
+      body: "更糟糕的是，Agent 不知道你累了。它不会因为你审得慢就少产出，反而会继续堆积。这形成了一个恶性循环：你越审不过来，积压越多；积压越多，你越焦虑，审核质量越差；质量越差，线上 bug 越多，修 bug 又要占用审核时间。"
+    },
+    {
+      body: "本质上，这是一个「速率不匹配」问题。Agent 是流水线上的高速机器，而你是那个跟不上节拍的工人。解决方案不是让你变快，而是在 Agent 和你之间建立缓冲机制——自动化测试、分级审核、CI 卡点——让机器先替你挡掉 80% 的低级问题。"
+    }
+  ]
+};
+
+deepDiveData[4] = {
+  title: "认知切换成本与注意力碎片化",
+  sections: [
+    {
+      body: "心理学中有个经典概念叫「切换成本」（switch cost）。每次你从一个任务跳到另一个任务，大脑需要重新加载上下文——前一个任务的工作记忆要清掉，新任务的规则和目标要重新激活。这个过程大约消耗 15 到 25 分钟才能完全恢复到深度专注状态。\n\n问题在于，当你同时让 Agent 做三四件事时，你不会等任何一件做完再看下一件。Agent 完成一个，你就切过去审核，审核完切回来继续另一个。表面上你在「高效并行」，实际上大脑在高频切换中反复支付切换成本——而且你感受不到这个成本，因为每次切换只花几秒。"
+    },
+    {
+      heading: "碎片化的注意力",
+      body: "加州大学欧文分校的 Gloria Mark 教授发现，办公室员工平均每 3 分钟就被打断一次，而每次打断后需要 23 分钟才能回到原来的专注状态。Agent 时代的工作模式把这个打断频率提高了数倍——因为 Agent 完成任务的速度远快于人类，你会不断收到「完成」的信号，每个信号都是一次微切换。\n\n结果就是你的注意力被切成了碎片。每一片都太短，不够进入深度思考；但每一片又都需要你全神贯注去审核 Agent 的产出。这种「高负荷浅层思考」是最消耗认知资源的模式。"
+    },
+    {
+      heading: "为什么下午会空",
+      body: "前额叶皮层是大脑中负责执行控制、任务切换和工作记忆的区域，它的燃料是葡萄糖。高频切换意味着前额叶持续高负荷运转，葡萄糖消耗速度远超正常工作模式。到了下午三四点，前额叶的资源几乎耗尽——你会觉得脑子里一片空白，什么都不想做。\n\n这不是懒，是生理性的认知枯竭。对策也很简单：减少并行数量，一次只盯一个 Agent 任务。让其他任务在后台跑，等你当前这件做完了再去看下一件的结果。宁可表面上慢一点，也要保住大脑的连续性。"
+    }
+  ],
+  originalText: "以前每个人可能就做一件事，一件事做两个小时。虽然效率不高，但脑子是连续的。现在变成了一个小时内，你可能同时让 Agent 做三四件事情，你的脑子就要在这几件事上面不断切换。人的大脑并不是为了这种工作模式设计的。每次切换都有成本，而且这个成本你感受不到——你只是觉得到了下午，脑子已经完全空了。"
+};
+
+deepDiveData[5] = {
+  title: "「留白」的价值",
+  sections: [
+    {
+      heading: "无聊是创造力的燃料",
+      body: "Sandi Mann 和 Rebekah Cadman 在 2014 年的经典实验中发现，经历过无聊任务的被试在随后的创意测试中表现显著优于对照组。无聊迫使大脑进入「白日梦」模式——即默认模式网络（DMN）激活状态，这恰恰是产生新颖联想和灵感的温床。当你在两个任务之间发呆三分钟时，DMN 正在后台整理碎片化的信息，把看似无关的经验编织成新的想法。AI Agent 消灭了这段发呆时间，也就切断了这条隐性的创造力管道。"
+    },
+    {
+      heading: "散步解决问题：斯坦福的证据",
+      body: "斯坦福大学 Marily Oppezzo 和 Daniel Schwartz 的研究表明，散步能将发散性思维的产出提高 60%。关键不在于运动本身，而在于「低认知负荷 + 环境变化」的组合效应。以前你从工位走到茶水间倒杯水，大脑不自觉地切换到扩散模式，让卡住的问题有机会从另一个角度浮现出来。现在 Agent 三秒出结果，你根本没有起身的理由，等于主动放弃了这个免费的思维加速器。"
+    },
+    {
+      heading: "注意力恢复理论（ART）",
+      body: "Rachel 和 Stephen Kaplan 提出的注意力恢复理论认为，直接注意力（即需要意志力维持的专注）是有限资源，必须通过接触「柔和刺激」来恢复——比如看看窗外的树、听听环境白噪音、或者什么都不想。以前工作节奏里自带这些恢复性微暂停；现在 Agent 把节奏压缩到极致，你的直接注意力从早上 9 点一直被榨取到下午 6 点，恢复窗口几乎为零。长期下来，不是效率问题，是可持续性问题。"
+    },
+    {
+      heading: "真正的提效公式",
+      body: "真正的提效不是把 8 小时的活压缩到 4 小时，然后用剩下的 4 小时再干 4 小时的活。而是把 8 小时的活压缩到 4 小时后，把省下来的时间还给自己——散步、阅读、发呆、甚至午睡。这不是偷懒，这是在维护你最重要的生产工具：大脑。最反直觉的真相是：每天「浪费」2 小时在看似无用的留白上，你的周产出反而会更高，因为你的每一个决策都来自一个恢复充分的认知系统。"
+    }
+  ],
+  originalText: "AI replaced not the work itself, but the three minutes of spacing out between tasks. Before, you were less efficient but had breathing room. Now your brain runs non-stop from morning to night. True efficiency means giving the saved time back to yourself."
+};
+
+var ddCurrentN = null;
+
+var coverageData = {
+  sourceType: "text",
+  totalLength: 1100,
+  segments: [
+    { start: 0, end: 120, section: 1, reason: null },
+    { start: 120, end: 330, section: 2, reason: null },
+    { start: 330, end: 610, section: 3, reason: null },
+    { start: 610, end: 810, section: 4, reason: null },
+    { start: 810, end: 1100, section: 5, reason: null }
+  ]
+};
+
+var topicData = {
+  1: [
+    { name: "10x工程师悖论", status: "included", excerpt: "最近跟很多深度用 Agent 的朋友聊，发现一个共同感受：工作量其实并没有减少，甚至休息时间也没变多。" },
+    { name: "下午四五点的疲劳", status: "included", excerpt: "不是说好了 10x 工程师吗？怎么感觉到了下午四五点，脑子比以前还转不动？" },
+    { name: "三个原因", status: "included", excerpt: "我想了想，觉得原因有三个。" }
+  ],
+  2: [
+    { name: "机械化即休息", status: "included", excerpt: "以前的工作里，其实有很多我们已经熟悉、甚至机械化可以做的部分。做这些内容的时候，脑子其实是在休息的。" },
+    { name: "PPT拖元素的隐性休息", status: "included", excerpt: "比如你想好了一个 PPT 怎么做，把每个元素拖到页面上的那个过程，脑子就隐性地歇了一会儿。写代码也是，想清楚逻辑之后敲键盘的那几分钟，其实是放松的。" },
+    { name: "三秒执行完", status: "included", excerpt: "现在这些全被 Agent 替代了。你说完想法，Agent 三秒钟执行完，然后等你下一个指令。你的脑子就得不停地转。" }
+  ],
+  3: [
+    { name: "被Agent用的人", status: "included", excerpt: "我观察到一个很有意思的现象：很多同事用了 Agent 之后，看起来不像是用 Agent 的人，反而像是被 Agent 用的人。" },
+    { name: "无情的转发工具", status: "included", excerpt: "比如工单出了问题，他就负责把 Agent 发回来的结果直接复制给用户，或者直接转发给下游的其他同事。仿佛他这个人只是一个无情的信息转发工具。" },
+    { name: "拉得又快又多", status: "included", excerpt: "以前要给其他人擦屁股，但还好其他人拉得不够快。现在有了 Agent，其他人真是拉得又快又多，擦都来不及擦。" },
+    { name: "生产>审核", status: "included", excerpt: "Agent 生产内容的速度远远超过人类审核内容的速度。结果就是，你一整天都在追着 Agent 的产出跑，根本停不下来。" }
+  ],
+  4: [
+    { name: "从2小时到1小时", status: "included", excerpt: "以前每个人可能就做一件事，一件事做两个小时。虽然效率不高，但脑子是连续的。" },
+    { name: "同时三四件事", status: "included", excerpt: "现在变成了一个小时内，你可能同时让 Agent 做三四件事情，你的脑子就要在这几件事上面不断切换。" },
+    { name: "切换成本隐形", status: "included", excerpt: "人的大脑并不是为了这种工作模式设计的。每次切换都有成本，而且这个成本你感受不到——你只是觉得到了下午，脑子已经完全空了。" }
+  ],
+  5: [
+    { name: "替代的是发呆", status: "included", excerpt: "总的一天下来，你会发现一个很反直觉的事情：AI 替代掉的不是你的工作量，是你两个任务之间发呆的那三分钟。" },
+    { name: "效率高但无喘息", status: "included", excerpt: "以前效率低，但有喘息。现在效率高了，大脑从早转到晚，一刻不停。" },
+    { name: "还给自己", status: "included", excerpt: "所以如果你用了 Agent 之后觉得更累了，不是你的问题。真正的提效不是把空闲时间填满，是把省下来的时间还给自己。" }
+  ]
+};
+
+function toggleDeepDive(n) {
+  if (document.body.classList.contains('dd-active') && ddCurrentN === n) { closeDeepDive(); return; }
+  ddCurrentN = n;
+  var body = document.getElementById('detailBody');
+  if (deepDiveData[n]) {
+    var d = deepDiveData[n];
+    var html = '<h4>' + d.title + '</h4>';
+    d.sections.forEach(function(s) {
+      if (s.heading) html += '<h4>' + s.heading + '</h4>';
+      if (s.diagram) html += s.diagram;
+      html += s.body.split('\n\n').map(function(p) { return '<p>' + p + '</p>'; }).join('');
+    });
+    if (d.originalText) html += '<div class="original-text"><p><strong>原文：</strong>' + d.originalText + '</p></div>';
+    if (topicData[n]) {
+      html += '<div class="coverage-map"><div class="coverage-map-title">本节话题覆盖</div><div class="coverage-bars">';
+      topicData[n].forEach(function(t) {
+        var cls = t.status;
+        var pct = cls === 'included' ? 100 : cls === 'deep-dive' ? 80 : 40;
+        var fillCls = cls === 'included' ? 'included' : cls === 'deep-dive' ? 'deep-dive-bar' : 'compressed-bar';
+        html += '<div class="cbar-row ' + cls + '" onclick="this.nextElementSibling.classList.toggle(\'open\')"><div class="cbar-label">' + t.name + '<span class="cbar-expand-hint">\u25B8</span></div><div class="cbar-track"><div class="cbar-fill ' + fillCls + '" style="width:' + pct + '%"></div></div></div>';
+        html += '<div class="cbar-excerpt"><div class="cbar-excerpt-inner">' + (t.excerpt || '') + '</div></div>';
+      });
+      html += '</div></div>';
+    }
+    body.innerHTML = html;
+  }
+  document.getElementById('detailScroll').scrollTop = 0;
+  document.body.classList.add('dd-active');
+}
+function closeDeepDive() {
+  document.body.classList.remove('dd-active');
+  document.getElementById('space').style.transform = '';
+  document.getElementById('mainScroll').style.transform = '';
+  ddCurrentN = null;
+}
+
+document.getElementById('detailBack').addEventListener('click', closeDeepDive);
+document.getElementById('mainScroll').addEventListener('click', function(e) {
+  if (document.body.classList.contains('dd-active') && !e.target.closest('.deep-dive-trigger')) closeDeepDive();
+});
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && document.body.classList.contains('dd-active')) closeDeepDive(); });
+
+var mainScrollRoot = document.getElementById('mainScroll');
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+}, { threshold: 0.15, root: mainScrollRoot });
+document.querySelectorAll('.reveal, [class*=\"_stage\"]').forEach(function(el) { observer.observe(el); });
+document.querySelectorAll('.s1_stage,.s2_stage,.s3_stage,.s4_stage,.s5_stage').forEach(function(el) { observer.observe(el); });
+
+(function() {
+  if (typeof coverageData === 'undefined') return;
+  var horizon = document.getElementById('sourceHorizon');
+  var track = document.getElementById('horizonTrack');
+  var detail = document.getElementById('horizonDetail');
+  if (!horizon || !track || !coverageData.segments) return;
+  function toNum(v) {
+    if (typeof v === 'number') return v;
+    var parts = String(v).split(':').map(Number);
+    return parts.length === 3 ? parts[0]*3600+parts[1]*60+parts[2] : parts.length === 2 ? parts[0]*60+parts[1] : parts[0];
+  }
+  var total = toNum(coverageData.totalLength);
+  var coveredLen = 0;
+  coverageData.segments.forEach(function(seg) {
+    var s = toNum(seg.start), e = toNum(seg.end);
+    var leftPct = (s / total * 100).toFixed(2) + '%';
+    var widthPct = ((e - s) / total * 100).toFixed(2) + '%';
+    var div = document.createElement('div');
+    div.className = 'horizon-seg ' + (seg.section ? (seg.deepDive ? 'covered deep-dive' : 'covered') : 'gap');
+    div.style.left = leftPct; div.style.width = widthPct;
+    track.appendChild(div);
+    if (seg.section) coveredLen += (e - s);
+    if (seg.section && !seg.deepDive) {
+      var mk = document.createElement('div');
+      mk.className = 'horizon-marker';
+      mk.style.left = ((s + (e-s)/2) / total * 100).toFixed(2) + '%';
+      mk.innerHTML = '<div class="marker-tick"></div><div class="marker-label">S' + seg.section + '</div>';
+      mk.addEventListener('click', function(ev) {
+        ev.stopPropagation();
+        var target = document.getElementById('s' + seg.section + '-anim');
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+      detail.appendChild(mk);
+    }
+  });
+  var pct = document.createElement('div');
+  pct.className = 'horizon-pct';
+  pct.textContent = Math.round(coveredLen / total * 100) + '%';
+  detail.appendChild(pct);
+  horizon.addEventListener('click', function() { horizon.classList.toggle('expanded'); });
+  var collapseTimer;
+  mainScrollRoot.addEventListener('scroll', function() {
+    clearTimeout(collapseTimer);
+    var markers = detail.querySelectorAll('.marker-tick');
+    markers.forEach(function(m) { m.classList.remove('active'); });
+    var scrollTop = mainScrollRoot.scrollTop;
+    var closest = null, closestDist = Infinity;
+    coverageData.segments.forEach(function(seg) {
+      if (!seg.section || seg.deepDive) return;
+      var el = document.getElementById('s' + seg.section + '-anim');
+      if (!el) return;
+      var dist = Math.abs(el.offsetTop - scrollTop - window.innerHeight/2);
+      if (dist < closestDist) { closestDist = dist; closest = seg.section; }
+    });
+    if (closest) {
+      detail.querySelectorAll('.horizon-marker').forEach(function(mk) {
+        if (mk.querySelector('.marker-label').textContent === 'S' + closest)
+          mk.querySelector('.marker-tick').classList.add('active');
+      });
+    }
+    collapseTimer = setTimeout(function() { horizon.classList.remove('expanded'); }, 2000);
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,3159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Cursor Agent Harness 持续改进之道</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #F0FDFA;
+  --bg-act2: #FFFBEB;
+  --bg-act3: #F0F9FF;
+  --bg-dark: #0F172A;
+  --bg-close: #0F172A;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --dim: #94A3B8;
+  --accent: #0891B2;
+  --accent2: #CA8A04;
+  --warm: #D97706;
+  --danger: #DC2626;
+  --neutral: #94A3B8;
+  --card-bg: #FFFFFF;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Noto Sans SC',sans-serif;color:var(--text);-webkit-font-smoothing:antialiased;}
+.content-width{max-width:640px;margin:0 auto;padding:0 28px;}
+.reveal{opacity:0;transform:translateY(40px);transition:opacity 0.8s ease,transform 0.8s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-delay-1{transition-delay:0.15s;}
+.reveal-delay-2{transition-delay:0.3s;}
+.reveal-delay-3{transition-delay:0.45s;}
+.reveal-delay-4{transition-delay:0.6s;}
+.big-statement{font-family:'Noto Serif SC',serif;font-size:clamp(22px,5.5vw,32px);font-weight:700;line-height:1.5;margin-bottom:32px;}
+.body-text{font-size:16px;line-height:1.9;color:var(--text);margin-bottom:28px;}
+.body-text .hl{color:var(--accent);font-weight:500;}
+.body-text .hl2{color:var(--accent2);font-weight:500;}
+.body-text .hl-danger{color:var(--danger);font-weight:500;}
+.layer{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;visibility:hidden;opacity:0;will-change:transform,opacity;scroll-snap-type:y proximity;}
+.layer.active{visibility:visible;opacity:1;}
+.layer.transitioning{transition-property:transform,opacity;transition-timing-function:cubic-bezier(0.4,0,0.2,1);}
+.feed-section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;scroll-snap-align:start;}
+.feed-section.dark{background:var(--bg-dark);color:#F1F5F9;}
+.feed-section.dark .body-text{color:#94A3B8;}
+.feed-section.dark .big-statement{color:#F1F5F9;}
+.section-inner{max-width:600px;width:100%;}
+.breadcrumb{position:fixed;top:16px;left:16px;z-index:1000;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);padding:8px 14px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,0.1);font-size:13px;font-weight:500;}
+.breadcrumb span{color:var(--text-muted);cursor:pointer;transition:color 0.2s;}
+.breadcrumb span:hover{color:var(--accent);}
+.breadcrumb span.current{color:var(--text);cursor:default;}
+.breadcrumb .sep{color:#CBD5E1;margin:0 2px;cursor:default;}
+.back-btn{position:fixed;top:16px;left:16px;z-index:1001;width:38px;height:38px;border-radius:10px;border:none;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(0,0,0,0.1);font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--text);transition:all 0.2s;}
+.back-btn:hover{background:var(--accent);color:#fff;}
+.depth-dots{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;gap:8px;background:rgba(255,255,255,0.9);backdrop-filter:blur(8px);padding:8px 14px;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,0.1);}
+.dot{width:10px;height:10px;border-radius:50%;background:#CBD5E1;transition:all 0.3s;}
+.dot.active{background:var(--accent);box-shadow:0 0 8px rgba(8,145,178,0.5);transform:scale(1.2);}
+.drill-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:1.5px solid rgba(8,145,178,0.3);border-radius:10px;background:transparent;color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.25s;}
+.drill-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(8,145,178,0.3);}
+.dark .drill-btn{border-color:rgba(8,145,178,0.4);}
+.source-panel{margin-top:24px;border-radius:12px;overflow:hidden;border:1px solid rgba(8,145,178,0.15);background:rgba(8,145,178,0.03);}
+.dark .source-panel{border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);}
+.source-toggle{width:100%;padding:12px 16px;border:none;background:none;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);}
+.dark .source-toggle{color:#67E8F9;}
+.source-toggle:hover{background:rgba(8,145,178,0.06);}
+.source-toggle .arrow{transition:transform 0.3s;font-size:11px;}
+.source-toggle.open .arrow{transform:rotate(90deg);}
+.source-body{max-height:0;overflow:hidden;transition:max-height 0.4s ease;padding:0 16px;}
+.source-body.open{max-height:2000px;padding:0 16px 16px;overflow-y:auto;}
+.source-body p{font-size:13px;line-height:1.8;color:var(--text-muted);margin:0 0 12px 0;white-space:pre-wrap;}
+.dark .source-body p{color:#94A3B8;}
+.source-body .source-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--accent);margin-bottom:8px;display:block;}
+.dark .source-body .source-label{color:#67E8F9;}
+.anim-stage{width:100%;display:flex;justify-content:center;margin:28px 0;min-height:180px;}
+.anim-stage>div{width:100%;}
+.hook-line{font-size:14px;color:var(--accent);font-weight:500;margin:16px 0;line-height:1.7;}
+.dark .hook-line{color:#67E8F9;}
+
+/* === S1 Animation === */
+
+.s1_stage {
+  position: relative;
+  width: 390px;
+  height: 400px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* Center harness node */
+.s1_center {
+  position: absolute;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #0891B2;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  left: 159px;
+  top: 126px;
+  opacity: 0;
+  z-index: 10;
+}
+.s1_stage.visible .s1_center {
+  animation: s1_fadeScale 0.5s ease forwards;
+  animation-delay: 0.3s;
+}
+
+/* Cycle nodes */
+.s1_node {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #0891B2;
+  color: #0891B2;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  z-index: 5;
+}
+
+/* 5 nodes around the center in a cycle: 愿景, 假设, 实验, 信号, 迭代 */
+/* Positions on a circle of radius ~110px from center (195, 176) */
+/* Top: 愿景 */
+.s1_n1 { left: 167px; top: 16px; }
+/* Right: 假设 */
+.s1_n2 { left: 280px; top: 96px; }
+/* Bottom-right: 实验 */
+.s1_n3 { left: 260px; top: 218px; }
+/* Bottom-left: 信号 */
+.s1_n4 { left: 72px; top: 218px; }
+/* Left: 迭代 */
+.s1_n5 { left: 52px; top: 96px; }
+
+.s1_stage.visible .s1_n1 {
+  animation: s1_fadeScale 0.4s ease forwards;
+  animation-delay: 0.9s;
+}
+.s1_stage.visible .s1_n2 {
+  animation: s1_fadeScale 0.4s ease forwards;
+  animation-delay: 1.4s;
+}
+.s1_stage.visible .s1_n3 {
+  animation: s1_fadeScale 0.4s ease forwards;
+  animation-delay: 1.9s;
+}
+.s1_stage.visible .s1_n4 {
+  animation: s1_fadeScale 0.4s ease forwards;
+  animation-delay: 2.4s;
+}
+.s1_stage.visible .s1_n5 {
+  animation: s1_fadeScale 0.4s ease forwards;
+  animation-delay: 2.9s;
+}
+
+/* SVG arrows layer */
+.s1_svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 390px;
+  height: 400px;
+  z-index: 2;
+}
+
+.s1_arrow {
+  fill: none;
+  stroke: #94A3B8;
+  stroke-width: 2;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  marker-end: url(#s1_arrowhead);
+}
+
+.s1_stage.visible .s1_a1 {
+  animation: s1_drawLine 0.4s ease forwards;
+  animation-delay: 1.1s;
+}
+.s1_stage.visible .s1_a2 {
+  animation: s1_drawLine 0.4s ease forwards;
+  animation-delay: 1.6s;
+}
+.s1_stage.visible .s1_a3 {
+  animation: s1_drawLine 0.4s ease forwards;
+  animation-delay: 2.1s;
+}
+.s1_stage.visible .s1_a4 {
+  animation: s1_drawLine 0.4s ease forwards;
+  animation-delay: 2.6s;
+}
+.s1_stage.visible .s1_a5 {
+  animation: s1_drawLine 0.4s ease forwards;
+  animation-delay: 3.1s;
+}
+
+/* Spokes from center to each node */
+.s1_spoke {
+  fill: none;
+  stroke: #0891B2;
+  stroke-width: 1.5;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  opacity: 0.4;
+}
+
+.s1_stage.visible .s1_s1 { animation: s1_drawLine 0.3s ease forwards; animation-delay: 0.9s; }
+.s1_stage.visible .s1_s2 { animation: s1_drawLine 0.3s ease forwards; animation-delay: 1.4s; }
+.s1_stage.visible .s1_s3 { animation: s1_drawLine 0.3s ease forwards; animation-delay: 1.9s; }
+.s1_stage.visible .s1_s4 { animation: s1_drawLine 0.3s ease forwards; animation-delay: 2.4s; }
+.s1_stage.visible .s1_s5 { animation: s1_drawLine 0.3s ease forwards; animation-delay: 2.9s; }
+
+/* Bottom accumulation bar */
+.s1_accum_label {
+  position: absolute;
+  bottom: 38px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  font-weight: 700;
+  color: #CA8A04;
+  white-space: nowrap;
+  opacity: 0;
+}
+.s1_stage.visible .s1_accum_label {
+  animation: s1_fadeUp 0.5s ease forwards;
+  animation-delay: 3.8s;
+}
+
+.s1_bar_track {
+  position: absolute;
+  bottom: 22px;
+  left: 40px;
+  width: 310px;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  opacity: 0;
+}
+.s1_stage.visible .s1_bar_track {
+  animation: s1_fadeIn 0.3s ease forwards;
+  animation-delay: 3.5s;
+}
+
+.s1_bar_fill {
+  position: absolute;
+  bottom: 22px;
+  left: 40px;
+  width: 0;
+  height: 8px;
+  background: linear-gradient(90deg, #0891B2, #CA8A04);
+  border-radius: 4px;
+  opacity: 0;
+}
+.s1_stage.visible .s1_bar_fill {
+  animation: s1_fadeIn 0.3s ease forwards, s1_growBar 1.2s ease forwards;
+  animation-delay: 3.6s;
+}
+
+/* Cycle pulse on center after all nodes appear */
+.s1_stage.visible .s1_center_pulse {
+  animation: s1_pulse 1.5s ease-in-out infinite;
+  animation-delay: 3.5s;
+}
+
+.s1_center_pulse {
+  position: absolute;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid #0891B2;
+  left: 159px;
+  top: 126px;
+  opacity: 0;
+  z-index: 9;
+}
+
+/* Keyframes */
+@keyframes s1_fadeScale {
+  from { opacity: 0; transform: scale(0.3); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s1_drawLine {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes s1_fadeIn {
+  to { opacity: 1; }
+}
+
+@keyframes s1_fadeUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes s1_growBar {
+  from { width: 0; }
+  to { width: 310px; }
+}
+
+@keyframes s1_pulse {
+  0% { opacity: 0; transform: scale(1); }
+  50% { opacity: 0.5; }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+
+/* === S2 Animation === */
+
+/* S2 — Context Window 演化 */
+.s2_stage {
+  position: relative;
+  width: 100%;
+  max-width: 390px;
+  min-height: 340px;
+  margin: 0 auto;
+  opacity: 0;
+  transition: opacity 0.4s;
+  overflow: hidden;
+}
+.s2_stage.visible {
+  opacity: 1;
+}
+
+/* Title */
+.s2_title {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #F1F5F9;
+  margin-bottom: 18px;
+  opacity: 0;
+}
+.s2_stage.visible .s2_title {
+  animation: s2_fadeIn 0.5s ease forwards;
+  animation-delay: 0s;
+}
+
+/* Layout: two columns with arrow between */
+.s2_columns {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 28px;
+}
+
+/* Column panels */
+.s2_panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 155px;
+  opacity: 0;
+}
+
+.s2_panel_label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94A3B8;
+  margin-bottom: 10px;
+  letter-spacing: 0.5px;
+}
+
+/* LEFT panel: static context era */
+.s2_stage.visible .s2_panel_left {
+  animation: s2_fadeIn 0.5s ease forwards;
+  animation-delay: 0.4s;
+}
+
+/* Big box representing the model stuffed with context */
+.s2_box_outer {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  border: 2px solid #0891B2;
+  border-radius: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  padding: 8px;
+  gap: 5px;
+  box-sizing: border-box;
+}
+
+/* Small blocks = static context chunks */
+.s2_chunk {
+  width: 28px;
+  height: 22px;
+  background: #0891B2;
+  border-radius: 3px;
+  opacity: 0;
+}
+
+.s2_stage.visible .s2_chunk:nth-child(1) { animation: s2_fadeIn 0.3s ease forwards; animation-delay: 0.8s; }
+.s2_stage.visible .s2_chunk:nth-child(2) { animation: s2_fadeIn 0.3s ease forwards; animation-delay: 1.0s; }
+.s2_stage.visible .s2_chunk:nth-child(3) { animation: s2_fadeIn 0.3s ease forwards; animation-delay: 1.2s; }
+.s2_stage.visible .s2_chunk:nth-child(4) { animation: s2_fadeIn 0.3s ease forwards; animation-delay: 1.4s; }
+.s2_stage.visible .s2_chunk:nth-child(5) { animation: s2_fadeIn 0.3s ease forwards; animation-delay: 1.6s; }
+.s2_stage.visible .s2_chunk:nth-child(6) { animation: s2_fadeIn 0.3s ease forwards; animation-delay: 1.8s; }
+.s2_stage.visible .s2_chunk:nth-child(7) { animation: s2_fadeIn 0.3s ease forwards; animation-delay: 2.0s; }
+.s2_stage.visible .s2_chunk:nth-child(8) { animation: s2_fadeIn 0.3s ease forwards; animation-delay: 2.2s; }
+.s2_stage.visible .s2_chunk:nth-child(9) { animation: s2_fadeIn 0.3s ease forwards; animation-delay: 2.4s; }
+
+/* Inward arrows on left panel */
+.s2_arrows_in {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none;
+}
+.s2_arrow_in {
+  position: absolute;
+  font-size: 16px;
+  color: #94A3B8;
+  opacity: 0;
+}
+.s2_arrow_in_top { top: -20px; left: 50%; transform: translateX(-50%); }
+.s2_arrow_in_left { left: -16px; top: 50%; transform: translateY(-50%); }
+.s2_arrow_in_right { right: -20px; top: 50%; transform: translateY(-50%); }
+
+.s2_stage.visible .s2_arrow_in {
+  animation: s2_fadeIn 0.4s ease forwards;
+  animation-delay: 2.6s;
+}
+
+/* Model circle inside box */
+.s2_model_circle_left {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #1E293B;
+  border: 2px solid #CA8A04;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #CA8A04;
+  opacity: 0;
+}
+.s2_stage.visible .s2_model_circle_left {
+  animation: s2_fadeIn 0.4s ease forwards;
+  animation-delay: 0.6s;
+}
+
+/* Left caption */
+.s2_caption_left {
+  font-size: 11px;
+  color: #94A3B8;
+  margin-top: 8px;
+  text-align: center;
+  opacity: 0;
+}
+.s2_stage.visible .s2_caption_left {
+  animation: s2_fadeIn 0.4s ease forwards;
+  animation-delay: 2.8s;
+}
+
+/* Center arrow for transition */
+.s2_transition_arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #CA8A04;
+  margin-top: 80px;
+  opacity: 0;
+  min-width: 30px;
+}
+.s2_stage.visible .s2_transition_arrow {
+  animation: s2_fadeIn 0.5s ease forwards;
+  animation-delay: 3.2s;
+}
+
+/* RIGHT panel: dynamic context era */
+.s2_stage.visible .s2_panel_right {
+  animation: s2_fadeIn 0.5s ease forwards;
+  animation-delay: 3.6s;
+}
+
+/* Model circle in center, larger */
+.s2_model_area {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.s2_model_circle_right {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #CA8A04;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0F172A;
+  z-index: 2;
+  position: relative;
+}
+
+/* Outward reaching arrows from model */
+.s2_reach {
+  position: absolute;
+  background: #0891B2;
+  border-radius: 2px;
+  opacity: 0;
+  transform-origin: center center;
+}
+
+/* Lines going outward */
+.s2_reach_top {
+  width: 2px;
+  height: 36px;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.s2_reach_bottom {
+  width: 2px;
+  height: 36px;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.s2_reach_left {
+  width: 36px;
+  height: 2px;
+  left: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.s2_reach_right {
+  width: 36px;
+  height: 2px;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.s2_reach_tl {
+  width: 2px;
+  height: 30px;
+  top: 14px;
+  left: 22px;
+  transform: rotate(-45deg);
+}
+.s2_reach_tr {
+  width: 2px;
+  height: 30px;
+  top: 14px;
+  right: 22px;
+  transform: rotate(45deg);
+}
+.s2_reach_bl {
+  width: 2px;
+  height: 30px;
+  bottom: 14px;
+  left: 22px;
+  transform: rotate(45deg);
+}
+.s2_reach_br {
+  width: 2px;
+  height: 30px;
+  bottom: 14px;
+  right: 22px;
+  transform: rotate(-45deg);
+}
+
+/* Dots at the end of reach lines */
+.s2_dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #0891B2;
+  opacity: 0;
+}
+.s2_dot_top { top: -4px; left: 50%; transform: translateX(-50%); }
+.s2_dot_bottom { bottom: -4px; left: 50%; transform: translateX(-50%); }
+.s2_dot_left { left: -4px; top: 50%; transform: translateY(-50%); }
+.s2_dot_right { right: -4px; top: 50%; transform: translateY(-50%); }
+.s2_dot_tl { top: 6px; left: 14px; }
+.s2_dot_tr { top: 6px; right: 14px; }
+.s2_dot_bl { bottom: 6px; left: 14px; }
+.s2_dot_br { bottom: 6px; right: 14px; }
+
+.s2_stage.visible .s2_reach {
+  animation: s2_growIn 0.4s ease forwards;
+}
+.s2_stage.visible .s2_reach_top { animation-delay: 4.0s; }
+.s2_stage.visible .s2_reach_right { animation-delay: 4.2s; }
+.s2_stage.visible .s2_reach_bottom { animation-delay: 4.4s; }
+.s2_stage.visible .s2_reach_left { animation-delay: 4.6s; }
+.s2_stage.visible .s2_reach_tl { animation-delay: 4.8s; }
+.s2_stage.visible .s2_reach_tr { animation-delay: 5.0s; }
+.s2_stage.visible .s2_reach_bl { animation-delay: 5.2s; }
+.s2_stage.visible .s2_reach_br { animation-delay: 5.4s; }
+
+.s2_stage.visible .s2_dot {
+  animation: s2_popIn 0.3s ease forwards;
+}
+.s2_stage.visible .s2_dot_top { animation-delay: 4.2s; }
+.s2_stage.visible .s2_dot_right { animation-delay: 4.4s; }
+.s2_stage.visible .s2_dot_bottom { animation-delay: 4.6s; }
+.s2_stage.visible .s2_dot_left { animation-delay: 4.8s; }
+.s2_stage.visible .s2_dot_tl { animation-delay: 5.0s; }
+.s2_stage.visible .s2_dot_tr { animation-delay: 5.2s; }
+.s2_stage.visible .s2_dot_bl { animation-delay: 5.4s; }
+.s2_stage.visible .s2_dot_br { animation-delay: 5.6s; }
+
+/* Right caption */
+.s2_caption_right {
+  font-size: 11px;
+  color: #94A3B8;
+  margin-top: 8px;
+  text-align: center;
+  opacity: 0;
+}
+.s2_stage.visible .s2_caption_right {
+  animation: s2_fadeIn 0.4s ease forwards;
+  animation-delay: 5.6s;
+}
+
+/* Keyframes */
+@keyframes s2_fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes s2_growIn {
+  from { opacity: 0; }
+  to   { opacity: 0.7; }
+}
+@keyframes s2_popIn {
+  from { opacity: 0; transform: scale(0); }
+  to   { opacity: 1; transform: scale(1); }
+}
+/* Override transform for dots that already have transforms */
+.s2_dot_top, .s2_dot_bottom, .s2_dot_left, .s2_dot_right {
+  /* keep positional transforms */
+}
+
+/* === S3 Animation === */
+
+/* === S3 Stage === */
+.s3_stage {
+  padding: 32px 20px;
+  max-width: 390px;
+  margin: 0 auto;
+  font-family: 'Noto Sans SC', sans-serif;
+  color: #1E293B;
+}
+.s3_stage .s3_title {
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 28px;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.s3_stage.visible .s3_title {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* --- Keep Rate Section --- */
+.s3_kr_section {
+  margin-bottom: 28px;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s ease 0.4s, transform 0.6s ease 0.4s;
+}
+.s3_stage.visible .s3_kr_section {
+  opacity: 1;
+  transform: translateY(0);
+}
+.s3_kr_label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #94A3B8;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+.s3_kr_timeline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.s3_kr_timeline_label {
+  font-size: 12px;
+  color: #94A3B8;
+  width: 40px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.s3_kr_blocks {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+}
+.s3_kr_block {
+  width: 28px;
+  height: 36px;
+  border-radius: 4px;
+  background: #0891B2;
+  transition: background 0.5s ease, opacity 0.5s ease;
+}
+/* Day 0: all bright */
+/* Day 7: some fade */
+.s3_kr_row2 .s3_kr_block:nth-child(3),
+.s3_kr_row2 .s3_kr_block:nth-child(5) {
+  background: #CBD5E1;
+  opacity: 0.5;
+}
+/* Day 30: more fade */
+.s3_kr_row3 .s3_kr_block:nth-child(2),
+.s3_kr_row3 .s3_kr_block:nth-child(3),
+.s3_kr_row3 .s3_kr_block:nth-child(5),
+.s3_kr_row3 .s3_kr_block:nth-child(7) {
+  background: #CBD5E1;
+  opacity: 0.5;
+}
+
+/* Animate rows sequentially */
+.s3_kr_row1, .s3_kr_row2, .s3_kr_row3 {
+  opacity: 0;
+  transform: translateX(-12px);
+}
+.s3_stage.visible .s3_kr_row1 {
+  animation: s3_slideIn 0.5s ease 0.8s forwards;
+}
+.s3_stage.visible .s3_kr_row2 {
+  animation: s3_slideIn 0.5s ease 1.4s forwards;
+}
+.s3_stage.visible .s3_kr_row3 {
+  animation: s3_slideIn 0.5s ease 2.0s forwards;
+}
+@keyframes s3_slideIn {
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.s3_kr_result {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  opacity: 0;
+}
+.s3_stage.visible .s3_kr_result {
+  animation: s3_fadeIn 0.5s ease 2.6s forwards;
+}
+.s3_kr_result_circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #0891B2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+}
+.s3_kr_result_text {
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.5;
+}
+.s3_kr_result_text strong {
+  color: #0891B2;
+  font-weight: 700;
+}
+
+/* --- Divider --- */
+.s3_divider {
+  height: 1px;
+  background: #E2E8F0;
+  margin: 20px 0;
+  opacity: 0;
+}
+.s3_stage.visible .s3_divider {
+  animation: s3_fadeIn 0.4s ease 3.0s forwards;
+}
+
+/* --- LLM Judge Section --- */
+.s3_judge_section {
+  opacity: 0;
+  transform: translateY(16px);
+}
+.s3_stage.visible .s3_judge_section {
+  animation: s3_judgeIn 0.6s ease 3.4s forwards;
+}
+@keyframes s3_judgeIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+.s3_judge_label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #94A3B8;
+  letter-spacing: 1px;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+.s3_judge_flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.s3_judge_box {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.4;
+  opacity: 0;
+}
+.s3_judge_user {
+  background: #F1F5F9;
+  color: #475569;
+  max-width: 80px;
+}
+.s3_judge_llm {
+  background: #0891B2;
+  color: #fff;
+  min-width: 56px;
+}
+.s3_judge_arrow {
+  font-size: 16px;
+  color: #94A3B8;
+  opacity: 0;
+}
+.s3_stage.visible .s3_judge_user {
+  animation: s3_fadeIn 0.4s ease 3.8s forwards;
+}
+.s3_stage.visible .s3_judge_arrow1 {
+  animation: s3_fadeIn 0.3s ease 4.2s forwards;
+}
+.s3_stage.visible .s3_judge_llm {
+  animation: s3_fadeIn 0.4s ease 4.5s forwards;
+}
+.s3_judge_down_arrow {
+  text-align: center;
+  font-size: 18px;
+  color: #94A3B8;
+  margin: 6px 0;
+  opacity: 0;
+}
+.s3_stage.visible .s3_judge_down_arrow {
+  animation: s3_fadeIn 0.3s ease 4.9s forwards;
+}
+
+/* Result branches */
+.s3_judge_results {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 14px;
+}
+.s3_judge_result_item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+}
+.s3_judge_result_circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+.s3_judge_good .s3_judge_result_circle {
+  background: #0891B2;
+}
+.s3_judge_bad .s3_judge_result_circle {
+  background: #94A3B8;
+}
+.s3_judge_result_desc {
+  font-size: 11px;
+  color: #94A3B8;
+  text-align: center;
+  max-width: 80px;
+  line-height: 1.4;
+}
+.s3_stage.visible .s3_judge_good {
+  animation: s3_fadeIn 0.4s ease 5.2s forwards;
+}
+.s3_stage.visible .s3_judge_bad {
+  animation: s3_fadeIn 0.4s ease 5.2s forwards;
+}
+
+@keyframes s3_fadeIn {
+  to { opacity: 1; }
+}
+
+/* --- Footnote --- */
+.s3_footnote {
+  margin-top: 20px;
+  padding: 10px 14px;
+  background: #F8FAFC;
+  border-left: 3px solid #CA8A04;
+  border-radius: 0 6px 6px 0;
+  font-size: 12px;
+  color: #64748B;
+  line-height: 1.6;
+  opacity: 0;
+}
+.s3_stage.visible .s3_footnote {
+  animation: s3_fadeIn 0.5s ease 5.6s forwards;
+}
+.s3_footnote strong {
+  color: #CA8A04;
+  font-weight: 600;
+}
+
+/* === S4 Animation === */
+
+.s4_stage {
+  position: relative;
+  width: 390px;
+  height: 360px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* Title label */
+.s4_title {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  font-weight: 700;
+  color: #94A3B8;
+  letter-spacing: 2px;
+  opacity: 0;
+  white-space: nowrap;
+}
+.s4_stage.visible .s4_title {
+  animation: s4_fadeIn 0.5s ease forwards;
+  animation-delay: 0.2s;
+}
+
+/* Context window container - vertical bar */
+.s4_window {
+  position: absolute;
+  left: 50%;
+  top: 32px;
+  transform: translateX(-50%);
+  width: 240px;
+  height: 266px;
+  border: 2px solid #334155;
+  border-radius: 8px;
+  overflow: hidden;
+  opacity: 0;
+}
+.s4_stage.visible .s4_window {
+  animation: s4_fadeIn 0.5s ease forwards;
+  animation-delay: 0.3s;
+}
+
+/* Window header */
+.s4_win_header {
+  width: 100%;
+  height: 26px;
+  background: #1E293B;
+  border-bottom: 1px solid #334155;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748B;
+  letter-spacing: 1px;
+}
+
+/* Tool call rows */
+.s4_row {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  border-bottom: 1px solid #1E293B;
+  opacity: 0;
+}
+
+.s4_row_icon {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.s4_row_text {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Row types */
+.s4_row_ok .s4_row_icon { background: #0891B2; }
+.s4_row_ok .s4_row_text { color: #CBD5E1; }
+
+.s4_row_err .s4_row_icon { background: #DC2626; }
+.s4_row_err .s4_row_text { color: #DC2626; font-weight: 700; }
+
+.s4_row_rot1 .s4_row_icon { background: #7A8594; }
+.s4_row_rot1 .s4_row_text { color: #7A8594; }
+
+.s4_row_rot2 .s4_row_icon { background: #5C6878; }
+.s4_row_rot2 .s4_row_text { color: #5C6878; }
+
+.s4_row_rot3 .s4_row_icon { background: #445060; }
+.s4_row_rot3 .s4_row_text { color: #445060; }
+
+/* Animated appearances */
+.s4_stage.visible .s4_r1 { animation: s4_slideIn 0.3s ease forwards; animation-delay: 0.8s; }
+.s4_stage.visible .s4_r2 { animation: s4_slideIn 0.3s ease forwards; animation-delay: 1.2s; }
+.s4_stage.visible .s4_r3 { animation: s4_slideIn 0.3s ease forwards; animation-delay: 1.6s; }
+.s4_stage.visible .s4_r4 { animation: s4_errFlash 0.5s ease forwards; animation-delay: 2.2s; }
+.s4_stage.visible .s4_r5 { animation: s4_slideIn 0.3s ease forwards; animation-delay: 3.0s; }
+.s4_stage.visible .s4_r6 { animation: s4_slideIn 0.3s ease forwards; animation-delay: 3.4s; }
+.s4_stage.visible .s4_r7 { animation: s4_slideIn 0.3s ease forwards; animation-delay: 3.8s; }
+
+/* Error spread overlay - darkens rows above error */
+.s4_rot_overlay {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 240px;
+  top: 72px;
+  height: 0;
+  background: linear-gradient(180deg, rgba(220, 38, 38, 0.03) 0%, rgba(220, 38, 38, 0.15) 100%);
+  border-radius: 0 0 6px 6px;
+  pointer-events: none;
+  opacity: 0;
+}
+.s4_stage.visible .s4_rot_overlay {
+  animation: s4_rotSpread 1.2s ease forwards;
+  animation-delay: 2.8s;
+}
+
+/* Rot indicator - side bar that grows */
+.s4_rot_bar {
+  position: absolute;
+  right: 50%;
+  margin-right: -122px;
+  top: 154px;
+  width: 4px;
+  height: 0;
+  background: linear-gradient(180deg, #DC2626, #475569);
+  border-radius: 2px;
+  opacity: 0;
+}
+.s4_stage.visible .s4_rot_bar {
+  animation: s4_fadeIn 0.3s ease forwards, s4_barGrow 1.5s ease forwards;
+  animation-delay: 2.5s;
+}
+
+/* Bottom label */
+.s4_label {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  font-weight: 700;
+  color: #CA8A04;
+  white-space: nowrap;
+  opacity: 0;
+}
+.s4_stage.visible .s4_label {
+  animation: s4_fadeUp 0.5s ease forwards;
+  animation-delay: 4.5s;
+}
+
+/* Error pulse ring */
+.s4_pulse_ring {
+  position: absolute;
+  left: 50%;
+  top: 154px;
+  transform: translateX(-50%);
+  width: 240px;
+  height: 32px;
+  border: 2px solid #DC2626;
+  border-radius: 4px;
+  opacity: 0;
+  pointer-events: none;
+}
+.s4_stage.visible .s4_pulse_ring {
+  animation: s4_errPulse 0.8s ease forwards;
+  animation-delay: 2.2s;
+}
+
+/* Keyframes */
+@keyframes s4_fadeIn {
+  to { opacity: 1; }
+}
+
+@keyframes s4_slideIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes s4_errFlash {
+  0% { opacity: 0; transform: translateX(0); }
+  30% { opacity: 1; transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes s4_fadeUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes s4_rotSpread {
+  from { height: 0; opacity: 0; top: 186px; }
+  to { height: 112px; opacity: 1; top: 186px; }
+}
+
+@keyframes s4_barGrow {
+  from { height: 0; }
+  to { height: 112px; }
+}
+
+@keyframes s4_errPulse {
+  0% { opacity: 0; transform: translateX(-50%) scale(1); }
+  40% { opacity: 0.8; transform: translateX(-50%) scale(1.05); }
+  100% { opacity: 0; transform: translateX(-50%) scale(1.15); }
+}
+
+/* === S5 Animation === */
+
+.s5_stage {
+  position: relative;
+  width: 310px;
+  height: 380px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* Center Harness box */
+.s5_harness {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  background: #0891B2;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  left: 115px;
+  top: 16px;
+  opacity: 0;
+  z-index: 10;
+}
+.s5_stage.visible .s5_harness {
+  animation: s5_fadeScale 0.5s ease forwards;
+  animation-delay: 0.3s;
+}
+
+/* Branch model circles */
+.s5_model {
+  position: absolute;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #0891B2;
+  color: #0891B2;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  z-index: 10;
+}
+/* OpenAI on left */
+.s5_m_openai { left: 16px; top: 130px; }
+/* Claude on right */
+.s5_m_claude { left: 226px; top: 130px; }
+
+.s5_stage.visible .s5_m_openai {
+  animation: s5_fadeScale 0.4s ease forwards;
+  animation-delay: 1.0s;
+}
+.s5_stage.visible .s5_m_claude {
+  animation: s5_fadeScale 0.4s ease forwards;
+  animation-delay: 1.5s;
+}
+
+/* Config item boxes */
+.s5_config {
+  position: absolute;
+  height: 30px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  z-index: 10;
+  white-space: nowrap;
+  padding: 0 10px;
+  background: #fff;
+  border: 2px solid #94A3B8;
+  color: #475569;
+}
+
+/* OpenAI configs (left side) */
+.s5_c1 { left: 4px; top: 218px; width: 112px; }
+.s5_c2 { left: 4px; top: 256px; width: 112px; }
+
+/* Claude configs (right side) */
+.s5_c3 { left: 194px; top: 218px; width: 112px; }
+.s5_c4 { left: 194px; top: 256px; width: 112px; }
+
+.s5_stage.visible .s5_c1 {
+  animation: s5_fadeUp 0.4s ease forwards;
+  animation-delay: 1.6s;
+}
+.s5_stage.visible .s5_c2 {
+  animation: s5_fadeUp 0.4s ease forwards;
+  animation-delay: 2.0s;
+}
+.s5_stage.visible .s5_c3 {
+  animation: s5_fadeUp 0.4s ease forwards;
+  animation-delay: 2.4s;
+}
+.s5_stage.visible .s5_c4 {
+  animation: s5_fadeUp 0.4s ease forwards;
+  animation-delay: 2.8s;
+}
+
+/* Highlight glow on tool-format configs */
+.s5_c1::after,
+.s5_c3::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 8px;
+  border: 2px solid #CA8A04;
+  opacity: 0;
+}
+.s5_stage.visible .s5_c1::after {
+  animation: s5_glowIn 0.5s ease forwards;
+  animation-delay: 3.4s;
+}
+.s5_stage.visible .s5_c3::after {
+  animation: s5_glowIn 0.5s ease forwards;
+  animation-delay: 3.4s;
+}
+
+/* Bottom label */
+.s5_bottom_label {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  font-weight: 700;
+  color: #CA8A04;
+  white-space: nowrap;
+  opacity: 0;
+}
+.s5_stage.visible .s5_bottom_label {
+  animation: s5_fadeUpCenter 0.5s ease forwards;
+  animation-delay: 4.0s;
+}
+
+/* "vs" divider label */
+.s5_vs {
+  position: absolute;
+  left: 50%;
+  top: 236px;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 600;
+  color: #94A3B8;
+  opacity: 0;
+}
+.s5_stage.visible .s5_vs {
+  animation: s5_fadeIn 0.4s ease forwards;
+  animation-delay: 3.0s;
+}
+
+/* SVG layer */
+.s5_svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 310px;
+  height: 380px;
+  z-index: 2;
+}
+
+.s5_line {
+  fill: none;
+  stroke: #94A3B8;
+  stroke-width: 2;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+}
+
+.s5_stage.visible .s5_l1 {
+  animation: s5_drawLine 0.4s ease forwards;
+  animation-delay: 0.8s;
+}
+.s5_stage.visible .s5_l2 {
+  animation: s5_drawLine 0.4s ease forwards;
+  animation-delay: 1.3s;
+}
+
+/* Vertical lines from models to configs */
+.s5_vline {
+  fill: none;
+  stroke: #94A3B8;
+  stroke-width: 1.5;
+  stroke-dasharray: 80;
+  stroke-dashoffset: 80;
+  opacity: 0.5;
+}
+.s5_stage.visible .s5_v1 {
+  animation: s5_drawLine 0.3s ease forwards;
+  animation-delay: 1.6s;
+}
+.s5_stage.visible .s5_v2 {
+  animation: s5_drawLine 0.3s ease forwards;
+  animation-delay: 2.4s;
+}
+
+/* Keyframes */
+@keyframes s5_fadeScale {
+  from { opacity: 0; transform: scale(0.3); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s5_drawLine {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes s5_fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s5_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes s5_fadeUpCenter {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes s5_glowIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* === S6 Animation === */
+
+/* S6 — Harness orchestrates expert agents */
+.s6_stage {
+  position: relative;
+  width: 310px;
+  height: 360px;
+  overflow: visible;
+  font-family: 'Noto Sans SC', sans-serif;
+}
+
+/* Harness top box */
+.s6_harness_top {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 140px;
+  height: 44px;
+  border: 2.5px solid #0891B2;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0891B2;
+  opacity: 0;
+  background: rgba(8,145,178,0.08);
+}
+.s6_stage.visible .s6_harness_top {
+  animation: s6_fadeInNoShift 0.5s 0.2s both;
+}
+
+/* Lines from harness down to agents */
+.s6_line_down {
+  position: absolute;
+  width: 2px;
+  height: 0;
+  background: #94A3B8;
+  top: 52px;
+}
+.s6_line_down_1 { left: 55px; }
+.s6_line_down_2 { left: 155px; }
+.s6_line_down_3 { left: 255px; }
+
+.s6_stage.visible .s6_line_down {
+  animation: s6_growDown 0.4s 0.8s both;
+}
+
+/* Dispatch arrows */
+.s6_arrow_down {
+  position: absolute;
+  top: 72px;
+  width: 0; height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid #94A3B8;
+  opacity: 0;
+}
+.s6_arrow_down_1 { left: 50px; }
+.s6_arrow_down_2 { left: 150px; }
+.s6_arrow_down_3 { left: 250px; }
+
+.s6_stage.visible .s6_arrow_down { animation: s6_fadeInNoShift 0.3s 1.2s both; }
+
+/* Agent circles — 2 chars = 48px min per spec, using 56px */
+.s6_agent {
+  position: absolute;
+  top: 92px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2.5px solid #CA8A04;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: #CA8A04;
+  opacity: 0;
+  background: rgba(202,138,4,0.08);
+}
+.s6_agent_1 { left: 27px; }
+.s6_agent_2 { left: 127px; }
+.s6_agent_3 { left: 227px; }
+
+.s6_stage.visible .s6_agent_1 { animation: s6_fadeIn 0.4s 1.3s both; }
+.s6_stage.visible .s6_agent_2 { animation: s6_fadeIn 0.4s 1.7s both; }
+.s6_stage.visible .s6_agent_3 { animation: s6_fadeIn 0.4s 2.1s both; }
+
+/* Lines from agents down to task boxes */
+.s6_line_task {
+  position: absolute;
+  width: 2px;
+  height: 0;
+  background: #94A3B8;
+  top: 150px;
+}
+.s6_line_task_1 { left: 55px; }
+.s6_line_task_2 { left: 155px; }
+.s6_line_task_3 { left: 255px; }
+
+.s6_stage.visible .s6_line_task_1 { animation: s6_growTask 0.3s 1.8s both; }
+.s6_stage.visible .s6_line_task_2 { animation: s6_growTask 0.3s 2.2s both; }
+.s6_stage.visible .s6_line_task_3 { animation: s6_growTask 0.3s 2.6s both; }
+
+/* Task boxes */
+.s6_task {
+  position: absolute;
+  top: 178px;
+  width: 52px;
+  height: 32px;
+  border: 2px solid #94A3B8;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 400;
+  color: #94A3B8;
+  opacity: 0;
+  background: rgba(148,163,184,0.06);
+}
+.s6_task_1 { left: 29px; }
+.s6_task_2 { left: 129px; }
+.s6_task_3 { left: 229px; }
+
+.s6_stage.visible .s6_task_1 { animation: s6_fadeIn 0.4s 2.2s both; }
+.s6_stage.visible .s6_task_2 { animation: s6_fadeIn 0.4s 2.6s both; }
+.s6_stage.visible .s6_task_3 { animation: s6_fadeIn 0.4s 3.0s both; }
+
+/* Converge lines from tasks down to bar */
+.s6_line_up {
+  position: absolute;
+  width: 2px;
+  height: 0;
+  background: #0891B2;
+  top: 210px;
+}
+.s6_line_up_1 { left: 55px; }
+.s6_line_up_2 { left: 155px; }
+.s6_line_up_3 { left: 255px; }
+
+.s6_stage.visible .s6_line_up_1 { animation: s6_growConverge 0.4s 3.5s both; }
+.s6_stage.visible .s6_line_up_2 { animation: s6_growConverge 0.4s 3.5s both; }
+.s6_stage.visible .s6_line_up_3 { animation: s6_growConverge 0.4s 3.5s both; }
+
+/* Converge arrows */
+.s6_arrow_up {
+  position: absolute;
+  top: 242px;
+  width: 0; height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 7px solid #0891B2;
+  opacity: 0;
+}
+.s6_arrow_up_1 { left: 50px; }
+.s6_arrow_up_2 { left: 150px; }
+.s6_arrow_up_3 { left: 250px; }
+
+.s6_stage.visible .s6_arrow_up_1 { animation: s6_fadeInNoShift 0.3s 3.9s both; }
+.s6_stage.visible .s6_arrow_up_2 { animation: s6_fadeInNoShift 0.3s 3.9s both; }
+.s6_stage.visible .s6_arrow_up_3 { animation: s6_fadeInNoShift 0.3s 3.9s both; }
+
+/* Horizontal converge bar */
+.s6_bar {
+  position: absolute;
+  top: 254px;
+  left: 55px;
+  width: 0;
+  height: 2px;
+  background: #0891B2;
+}
+.s6_stage.visible .s6_bar {
+  animation: s6_growBar 0.4s 4.0s both;
+}
+
+/* Final line down to bottom harness */
+.s6_line_final {
+  position: absolute;
+  top: 254px;
+  left: 155px;
+  width: 2px;
+  height: 0;
+  background: #0891B2;
+}
+.s6_stage.visible .s6_line_final {
+  animation: s6_growFinal 0.3s 4.4s both;
+}
+
+/* Harness bottom box */
+.s6_harness_bot {
+  position: absolute;
+  top: 288px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 140px;
+  height: 40px;
+  border: 2.5px solid #0891B2;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0891B2;
+  opacity: 0;
+  background: rgba(8,145,178,0.12);
+}
+.s6_stage.visible .s6_harness_bot {
+  animation: s6_fadeIn 0.5s 4.8s both;
+}
+
+/* Keyframes */
+@keyframes s6_fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes s6_fadeInNoShift {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes s6_growDown {
+  from { height: 0; }
+  to   { height: 40px; }
+}
+@keyframes s6_growTask {
+  from { height: 0; }
+  to   { height: 28px; }
+}
+@keyframes s6_growConverge {
+  from { height: 0; }
+  to   { height: 44px; }
+}
+@keyframes s6_growBar {
+  from { width: 0; }
+  to   { width: 200px; }
+}
+@keyframes s6_growFinal {
+  from { height: 0; }
+  to   { height: 34px; }
+}
+
+/* === A1 Animation === */
+
+.a1_stage {
+  position: relative;
+  width: 310px;
+  margin: 0 auto;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.a1_stage.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Main context window frame */
+.a1_frame {
+  border: 3px solid #0891B2;
+  border-radius: 12px;
+  padding: 16px 14px 14px;
+  position: relative;
+  background: rgba(255,255,255,0.6);
+}
+.a1_frame_label {
+  position: absolute;
+  top: -14px;
+  left: 20px;
+  background: #0891B2;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 2px 12px;
+  border-radius: 6px;
+  letter-spacing: 1px;
+}
+
+/* Shared block style */
+.a1_block {
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(12px);
+}
+.a1_stage.visible .a1_block {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* System prompt — top */
+.a1_b_system {
+  background: #0891B2;
+  margin-bottom: 10px;
+  transition-delay: 0.5s;
+  transition: opacity 0.4s ease 0.5s, transform 0.4s ease 0.5s;
+}
+
+/* Divider label */
+.a1_divider {
+  font-size: 12px;
+  font-weight: 700;
+  color: #94A3B8;
+  text-align: left;
+  padding: 4px 0 6px 2px;
+  opacity: 0;
+}
+.a1_stage.visible .a1_divider {
+  opacity: 1;
+}
+.a1_div1 { transition: opacity 0.3s ease 0.9s; }
+.a1_div2 { transition: opacity 0.3s ease 2.0s; }
+
+/* Static context blocks */
+.a1_static_row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.a1_b_static {
+  flex: 1;
+  background: #0E7490;
+  font-size: 13px;
+  padding: 9px 6px;
+}
+.a1_b_s1 { transition: opacity 0.4s ease 1.2s, transform 0.4s ease 1.2s; }
+.a1_b_s2 { transition: opacity 0.4s ease 1.5s, transform 0.4s ease 1.5s; }
+.a1_b_s3 { transition: opacity 0.4s ease 1.8s, transform 0.4s ease 1.8s; }
+
+/* Guardrail blocks */
+.a1_guard_row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.a1_b_guard {
+  background: #CA8A04;
+  font-size: 13px;
+  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.a1_b_g1 { transition: opacity 0.4s ease 2.3s, transform 0.4s ease 2.3s; }
+.a1_b_g2 { transition: opacity 0.4s ease 2.7s, transform 0.4s ease 2.7s; }
+.a1_b_g3 { transition: opacity 0.4s ease 3.1s, transform 0.4s ease 3.1s; }
+
+.a1_guard_icon {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255,255,255,0.7);
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.a1_guard_text {
+  flex: 1;
+  text-align: left;
+}
+
+/* Caption */
+.a1_caption {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #94A3B8;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.5s ease 3.6s;
+}
+.a1_stage.visible .a1_caption {
+  opacity: 1;
+}
+
+/* === A2 Animation === */
+
+.a2_stage {
+  position: relative;
+  width: 100%;
+  max-width: 390px;
+  margin: 0 auto;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.a2_stage.visible {
+  opacity: 1;
+}
+
+/* Title */
+.a2_title {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1E293B;
+  margin-bottom: 20px;
+  opacity: 0;
+}
+.visible .a2_title {
+  animation: a2_fadeIn 0.5s 0.2s forwards;
+}
+
+/* Layout: two panels side by side with arrow */
+.a2_compare {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* Each panel */
+.a2_panel {
+  width: 155px;
+  height: 240px;
+  position: relative;
+}
+
+.a2_panel_label {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  font-weight: 600;
+  color: #94A3B8;
+  opacity: 0;
+  white-space: nowrap;
+}
+.visible .a2_panel_label {
+  animation: a2_fadeIn 0.5s 0.4s forwards;
+}
+.a2_panel_label_new {
+  color: #0891B2;
+}
+
+/* Model circle - old */
+.a2_model_old {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  position: absolute;
+  top: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  background: #94A3B8;
+}
+.visible .a2_model_old {
+  animation: a2_fadeIn 0.5s 0.6s forwards;
+}
+
+/* Model circle - new */
+.a2_model_new {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  position: absolute;
+  top: 88px;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  background: #0891B2;
+}
+.visible .a2_model_new {
+  animation: a2_fadeIn 0.5s 2.6s forwards;
+}
+
+/* Harness box (old side) */
+.a2_harness {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 36px;
+  border: 2px solid #94A3B8;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #94A3B8;
+  opacity: 0;
+}
+.visible .a2_harness {
+  animation: a2_fadeIn 0.5s 0.8s forwards;
+}
+
+/* Arrow from harness down to model (old side) */
+.a2_arrow_push {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 64px;
+  width: 2px;
+  height: 0;
+  background: #94A3B8;
+  opacity: 0;
+}
+.visible .a2_arrow_push {
+  animation: a2_fadeIn 0.3s 1.0s forwards, a2_growDown 0.5s 1.0s forwards;
+}
+.a2_arrow_push::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: -4px;
+  width: 0; height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #94A3B8;
+}
+
+/* Data blocks falling from harness (old side) */
+.a2_data_block {
+  position: absolute;
+  width: 26px;
+  height: 14px;
+  border-radius: 3px;
+  background: #94A3B8;
+  opacity: 0;
+}
+.a2_d1 { top: 72px; left: 14px; }
+.a2_d2 { top: 68px; left: 112px; }
+.a2_d3 { top: 86px; left: 36px; }
+.a2_d4 { top: 82px; left: 96px; }
+.a2_d5 { top: 100px; left: 56px; }
+.visible .a2_d1 { animation: a2_fadeIn 0.3s 1.2s forwards; }
+.visible .a2_d2 { animation: a2_fadeIn 0.3s 1.3s forwards; }
+.visible .a2_d3 { animation: a2_fadeIn 0.3s 1.5s forwards; }
+.visible .a2_d4 { animation: a2_fadeIn 0.3s 1.6s forwards; }
+.visible .a2_d5 { animation: a2_fadeIn 0.3s 1.8s forwards; }
+
+/* Old side desc */
+.a2_old_desc {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: #94A3B8;
+  white-space: nowrap;
+  opacity: 0;
+}
+.visible .a2_old_desc {
+  animation: a2_fadeIn 0.4s 2.0s forwards;
+}
+
+/* Transition arrow */
+.a2_transition {
+  font-size: 28px;
+  color: #CA8A04;
+  font-weight: 700;
+  opacity: 0;
+  flex-shrink: 0;
+  margin-top: 20px;
+}
+.visible .a2_transition {
+  animation: a2_fadeIn 0.4s 2.4s forwards;
+}
+
+/* New side: source circles at 4 corners */
+.a2_source {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #0891B2;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0891B2;
+  opacity: 0;
+}
+.a2_s_file { top: 22px; left: 4px; }
+.a2_s_git  { top: 22px; right: 4px; }
+.a2_s_web  { top: 170px; left: 4px; }
+.a2_s_tool { top: 170px; right: 4px; }
+
+.visible .a2_s_file { animation: a2_fadeIn 0.3s 3.0s forwards; }
+.visible .a2_s_git  { animation: a2_fadeIn 0.3s 3.2s forwards; }
+.visible .a2_s_web  { animation: a2_fadeIn 0.3s 3.4s forwards; }
+.visible .a2_s_tool { animation: a2_fadeIn 0.3s 3.6s forwards; }
+
+/* SVG pull arrows */
+.a2_pull_svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 155px;
+  height: 240px;
+  pointer-events: none;
+}
+.a2_pull_line {
+  stroke: #CA8A04;
+  stroke-width: 2;
+  fill: none;
+  opacity: 0;
+  marker-end: url(#a2_arrowhead);
+}
+.visible .a2_pl1 { animation: a2_fadeIn 0.3s 3.8s forwards; }
+.visible .a2_pl2 { animation: a2_fadeIn 0.3s 4.0s forwards; }
+.visible .a2_pl3 { animation: a2_fadeIn 0.3s 4.2s forwards; }
+.visible .a2_pl4 { animation: a2_fadeIn 0.3s 4.4s forwards; }
+
+/* New side desc */
+.a2_new_desc {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: #0891B2;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+}
+.visible .a2_new_desc {
+  animation: a2_fadeIn 0.4s 4.6s forwards;
+}
+
+/* Bottom summary */
+.a2_summary {
+  text-align: center;
+  font-size: 13px;
+  color: #CA8A04;
+  font-weight: 600;
+  margin-top: 16px;
+  opacity: 0;
+}
+.visible .a2_summary {
+  animation: a2_fadeIn 0.5s 5.0s forwards;
+}
+
+/* Keyframes */
+@keyframes a2_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes a2_growDown {
+  from { height: 0; }
+  to { height: 48px; }
+}
+
+/* === A3 Animation === */
+
+.a3_stage{position:relative;width:100%;max-width:360px;height:420px;margin:0 auto;font-family:'Noto Sans SC',system-ui,sans-serif}
+.a3_stage *{box-sizing:border-box}
+
+/* Entry node */
+.a3_entry{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:72px;height:72px;border-radius:50%;background:#94A3B8;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:700;opacity:0}
+
+/* Lines */
+.a3_line{position:absolute;background:#94A3B8;opacity:0}
+.a3_vline1{width:2px;height:32px;top:80px;left:50%;transform:translateX(-50%)}
+.a3_hline{width:220px;height:2px;top:112px;left:50%;transform:translateX(-50%)}
+.a3_vline_l{width:2px;height:32px;top:112px;left:calc(50% - 110px)}
+.a3_vline_r{width:2px;height:32px;top:112px;left:calc(50% + 110px)}
+
+/* Unknown branch (left, red) */
+.a3_unknown{position:absolute;top:144px;left:calc(50% - 110px);transform:translateX(-50%);width:80px;height:80px;border-radius:50%;background:#DC2626;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:700;opacity:0}
+.a3_bug_tag{position:absolute;top:230px;left:calc(50% - 110px);transform:translateX(-50%);background:#DC2626;color:#fff;font-size:12px;font-weight:700;padding:4px 12px;border-radius:12px;white-space:nowrap;opacity:0}
+
+/* Expected branch (right, blue) */
+.a3_expected{position:absolute;top:144px;left:calc(50% + 110px);transform:translateX(-50%);width:80px;height:80px;border-radius:50%;background:#0891B2;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:700;opacity:0}
+
+/* Connectors from expected to 5-way spread */
+.a3_conn{position:absolute;background:#0891B2;opacity:0}
+.a3_conn_v{width:2px;height:20px;top:224px;left:calc(50% + 110px);transform:translateX(-50%)}
+.a3_conn_h{height:2px;top:244px;left:46px;width:260px}
+
+/* Vertical drops to boxes (centered on each box: box_left + 30) */
+.a3_fanv{width:2px;background:#0891B2;height:28px;top:244px;opacity:0}
+.a3_fl0{left:46px}
+.a3_fl1{left:110px}
+.a3_fl2{left:174px}
+.a3_fl3{left:238px}
+.a3_fl4{left:306px}
+
+/* 5 classification boxes */
+.a3_cat{position:absolute;top:272px;width:60px;height:60px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;border:2px solid #0891B2}
+.a3_cat span{font-size:11px;font-weight:700;color:#0891B2;text-align:center;line-height:1.2}
+.a3_c0{left:16px}
+.a3_c1{left:80px}
+.a3_c2{left:144px}
+.a3_c3{left:208px}
+.a3_c4{left:276px}
+
+/* English labels */
+.a3_cat_label{position:absolute;top:338px;font-size:9px;color:#64748B;text-align:center;line-height:1.3;opacity:0}
+.a3_cl0{left:16px;width:60px}
+.a3_cl1{left:80px;width:60px}
+.a3_cl2{left:144px;width:60px}
+.a3_cl3{left:208px;width:60px}
+.a3_cl4{left:276px;width:60px}
+
+/* Baseline badge */
+.a3_baseline{position:absolute;top:382px;left:50%;transform:translateX(-50%);background:#0891B215;border:1px solid #0891B2;border-radius:16px;padding:6px 16px;font-size:11px;color:#0891B2;font-weight:600;white-space:nowrap;opacity:0}
+
+/* ---- Animations triggered by .visible ---- */
+.a3_stage.visible .a3_entry{animation:a3_pop .5s .2s both}
+.a3_stage.visible .a3_vline1{animation:a3_fade .3s .6s both}
+.a3_stage.visible .a3_hline{animation:a3_fade .3s .8s both}
+.a3_stage.visible .a3_vline_l{animation:a3_fade .3s 1s both}
+.a3_stage.visible .a3_vline_r{animation:a3_fade .3s 1s both}
+.a3_stage.visible .a3_unknown{animation:a3_pop .5s 1.4s both}
+.a3_stage.visible .a3_bug_tag{animation:a3_pop .4s 1.9s both}
+.a3_stage.visible .a3_expected{animation:a3_pop .5s 2.4s both}
+.a3_stage.visible .a3_conn_v{animation:a3_fade .3s 2.9s both}
+.a3_stage.visible .a3_conn_h{animation:a3_fade .3s 3.1s both}
+.a3_stage.visible .a3_fl0{animation:a3_fade .3s 3.3s both}
+.a3_stage.visible .a3_fl1{animation:a3_fade .3s 3.4s both}
+.a3_stage.visible .a3_fl2{animation:a3_fade .3s 3.5s both}
+.a3_stage.visible .a3_fl3{animation:a3_fade .3s 3.6s both}
+.a3_stage.visible .a3_fl4{animation:a3_fade .3s 3.7s both}
+.a3_stage.visible .a3_c0{animation:a3_box_pop .4s 3.5s both}
+.a3_stage.visible .a3_c1{animation:a3_box_pop .4s 3.7s both}
+.a3_stage.visible .a3_c2{animation:a3_box_pop .4s 3.9s both}
+.a3_stage.visible .a3_c3{animation:a3_box_pop .4s 4.1s both}
+.a3_stage.visible .a3_c4{animation:a3_box_pop .4s 4.3s both}
+.a3_stage.visible .a3_cl0{animation:a3_fade .3s 3.9s both}
+.a3_stage.visible .a3_cl1{animation:a3_fade .3s 4.1s both}
+.a3_stage.visible .a3_cl2{animation:a3_fade .3s 4.3s both}
+.a3_stage.visible .a3_cl3{animation:a3_fade .3s 4.5s both}
+.a3_stage.visible .a3_cl4{animation:a3_fade .3s 4.7s both}
+.a3_stage.visible .a3_baseline{animation:a3_fade .5s 5s both}
+
+@keyframes a3_pop{
+  0%{opacity:0;transform:translateX(-50%) scale(.3)}
+  60%{opacity:1;transform:translateX(-50%) scale(1.08)}
+  100%{opacity:1;transform:translateX(-50%) scale(1)}
+}
+@keyframes a3_box_pop{
+  0%{opacity:0;transform:scale(.4)}
+  60%{opacity:1;transform:scale(1.06)}
+  100%{opacity:1;transform:scale(1)}
+}
+@keyframes a3_fade{
+  0%{opacity:0}
+  100%{opacity:1}
+}
+
+/* === A4 Animation === */
+
+.a4_stage {
+  position: relative;
+  width: 310px;
+  margin: 0 auto;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.a4_stage.visible {
+  opacity: 1;
+}
+
+/* Title */
+.a4_title {
+  text-align: center;
+  font-size: 17px;
+  font-weight: 700;
+  color: #1E293B;
+  margin-bottom: 20px;
+  opacity: 0;
+}
+.visible .a4_title {
+  animation: a4_fadeIn 0.5s 0.2s forwards;
+}
+
+/* Circular loop container */
+.a4_loop {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  margin: 0 auto;
+}
+
+/* Central ring (SVG circle path) */
+.a4_ring {
+  position: absolute;
+  top: 0; left: 0;
+  width: 280px;
+  height: 280px;
+}
+.a4_ring circle {
+  fill: none;
+  stroke: #E2E8F0;
+  stroke-width: 2;
+}
+.a4_ring_active {
+  fill: none;
+  stroke: #0891B2;
+  stroke-width: 2.5;
+  stroke-dasharray: 565;
+  stroke-dashoffset: 565;
+  opacity: 0;
+}
+.visible .a4_ring_active {
+  animation: a4_fadeIn 0.3s 0.6s forwards, a4_drawRing 3.0s 0.8s forwards;
+}
+
+/* Loop nodes — positioned around the circle */
+.a4_node {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+  z-index: 2;
+}
+
+/* Node positions: 6 nodes evenly around 280px circle (r=108, center=140,140) */
+/* Top: 日志 */
+.a4_n1 { top: 0px;   left: 108px; background: #0891B2; }
+/* Top-right: 扫描 */
+.a4_n2 { top: 46px;  left: 209px; background: #0891B2; }
+/* Bottom-right: 工单 */
+.a4_n3 { top: 170px; left: 209px; background: #CA8A04; }
+/* Bottom: 修复 */
+.a4_n4 { top: 216px; left: 108px; background: #CA8A04; }
+/* Bottom-left: 验证 */
+.a4_n5 { top: 170px; left: 7px;   background: #0891B2; }
+/* Top-left: 回归 */
+.a4_n6 { top: 46px;  left: 7px;   background: #0891B2; }
+
+.visible .a4_n1 { animation: a4_popIn 0.4s 0.8s forwards; }
+.visible .a4_n2 { animation: a4_popIn 0.4s 1.2s forwards; }
+.visible .a4_n3 { animation: a4_popIn 0.4s 1.6s forwards; }
+.visible .a4_n4 { animation: a4_popIn 0.4s 2.0s forwards; }
+.visible .a4_n5 { animation: a4_popIn 0.4s 2.4s forwards; }
+.visible .a4_n6 { animation: a4_popIn 0.4s 2.8s forwards; }
+
+/* Arrow indicators between nodes (small triangles on the ring) */
+.a4_arrow {
+  position: absolute;
+  width: 0; height: 0;
+  z-index: 3;
+  opacity: 0;
+}
+/* Arrow between n1→n2 (top to top-right) */
+.a4_ar1 { top: 16px; left: 182px; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #0891B2; transform: rotate(60deg); }
+/* Arrow between n2→n3 */
+.a4_ar2 { top: 128px; left: 236px; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #0891B2; transform: rotate(120deg); }
+/* Arrow between n3→n4 */
+.a4_ar3 { top: 216px; left: 182px; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #CA8A04; transform: rotate(180deg); }
+/* Arrow between n4→n5 */
+.a4_ar4 { top: 216px; left: 86px; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #0891B2; transform: rotate(240deg); }
+/* Arrow between n5→n6 */
+.a4_ar5 { top: 128px; left: 32px; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #0891B2; transform: rotate(300deg); }
+/* Arrow between n6→n1 */
+.a4_ar6 { top: 16px; left: 86px; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #0891B2; transform: rotate(0deg); }
+
+.visible .a4_ar1 { animation: a4_fadeIn 0.3s 1.0s forwards; }
+.visible .a4_ar2 { animation: a4_fadeIn 0.3s 1.4s forwards; }
+.visible .a4_ar3 { animation: a4_fadeIn 0.3s 1.8s forwards; }
+.visible .a4_ar4 { animation: a4_fadeIn 0.3s 2.2s forwards; }
+.visible .a4_ar5 { animation: a4_fadeIn 0.3s 2.6s forwards; }
+.visible .a4_ar6 { animation: a4_fadeIn 0.3s 3.0s forwards; }
+
+/* Center badge: 10x 降低 */
+.a4_center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 4;
+  text-align: center;
+  opacity: 0;
+}
+.visible .a4_center {
+  animation: a4_scaleIn 0.6s 3.4s forwards;
+}
+.a4_center_num {
+  font-size: 32px;
+  font-weight: 700;
+  color: #CA8A04;
+  line-height: 1;
+}
+.a4_center_label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #CA8A04;
+  margin-top: 2px;
+}
+
+/* Pulse ring on the loop after completion */
+.a4_pulse_ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200px;
+  height: 200px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid #0891B2;
+  opacity: 0;
+  z-index: 1;
+}
+.visible .a4_pulse_ring {
+  animation: a4_pulse 2s 3.8s ease-out infinite;
+}
+
+/* Bottom caption */
+.a4_caption {
+  text-align: center;
+  font-size: 13px;
+  color: #94A3B8;
+  margin-top: 16px;
+  opacity: 0;
+}
+.visible .a4_caption {
+  animation: a4_fadeIn 0.5s 4.0s forwards;
+}
+
+/* Keyframes */
+@keyframes a4_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes a4_popIn {
+  0% { opacity: 0; transform: scale(0.3); }
+  70% { transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes a4_scaleIn {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  70% { transform: translate(-50%, -50%) scale(1.1); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes a4_drawRing {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes a4_pulse {
+  0% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3); }
+}
+
+</style>
+
+<meta name="description" content="Cursor 团队把 agent harness 当作一个严肃的软件产品来打造。他们的方法论是「愿景驱动」——先对理想体验形成观点，然后提出假设、跑实验、用定量和定性信号迭代。偶尔会发现质变式的突破，但更多时候， 进步来自对微小优化的偏执式叠加 。当拿到新模型的早期访问时，团队会花数周时间定制 harness，直到同一个模型在精调后的 harness 里明显">
+<link rel="canonical" href="https://chendi.me/readings/cursor-agent-harness/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<!-- Back button -->
+<button class="back-btn" id="backBtn" onclick="goBack()">&#8592;</button>
+<!-- Depth dots -->
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ Layer 0: 概览 ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+  <!-- S1: Hero — Harness 持续迭代哲学 -->
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <p class="reveal" style="font-size:12px;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent);font-weight:600;margin-bottom:16px;">Cursor Engineering Blog · 2026.04.30</p>
+      <h2 class="big-statement reveal reveal-delay-1">一个 Agent 好不好，<br>一半取决于模型，<br>另一半取决于 <span style="color:var(--accent)">Harness</span></h2>
+      <p class="body-text reveal reveal-delay-2">Cursor 团队把 agent harness 当作一个严肃的软件产品来打造。他们的方法论是「愿景驱动」——先对理想体验形成观点，然后提出假设、跑实验、用定量和定性信号迭代。偶尔会发现质变式的突破，但更多时候，<span class="hl">进步来自对微小优化的偏执式叠加</span>。当拿到新模型的早期访问时，团队会花数周时间定制 harness，直到同一个模型在精调后的 harness 里明显更快、更聪明、更高效。</p>
+      <div class="anim-stage reveal reveal-delay-3" id="s1-anim"><div class="s1_stage">
+  <!-- SVG layer for arrows and spokes -->
+  <svg class="s1_svg" viewBox="0 0 390 400">
+    <defs>
+      <marker id="s1_arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#94A3B8"/>
+      </marker>
+    </defs>
+
+    <!-- Spokes: center(195,162) to each node center -->
+    <line class="s1_spoke s1_s1" x1="195" y1="162" x2="195" y2="48" />
+    <line class="s1_spoke s1_s2" x1="195" y1="162" x2="311" y2="127" />
+    <line class="s1_spoke s1_s3" x1="195" y1="162" x2="291" y2="249" />
+    <line class="s1_spoke s1_s4" x1="195" y1="162" x2="103" y2="249" />
+    <line class="s1_spoke s1_s5" x1="195" y1="162" x2="83" y2="127" />
+
+    <!-- Cycle arrows: node edge to next node edge (curved) -->
+    <!-- 愿景→假设 -->
+    <path class="s1_arrow s1_a1" d="M 218,60 Q 290,36 305,104" />
+    <!-- 假设→实验 -->
+    <path class="s1_arrow s1_a2" d="M 325,140 Q 340,195 300,228" />
+    <!-- 实验→信号 -->
+    <path class="s1_arrow s1_a3" d="M 262,263 Q 195,298 130,263" />
+    <!-- 信号→迭代 -->
+    <path class="s1_arrow s1_a4" d="M 78,223 Q 45,175 72,134" />
+    <!-- 迭代→愿景 -->
+    <path class="s1_arrow s1_a5" d="M 72,90 Q 60,36 172,40" />
+  </svg>
+
+  <!-- Center node -->
+  <div class="s1_center">Harness</div>
+  <div class="s1_center_pulse"></div>
+
+  <!-- Cycle nodes -->
+  <div class="s1_node s1_n1">愿景</div>
+  <div class="s1_node s1_n2">假设</div>
+  <div class="s1_node s1_n3">实验</div>
+  <div class="s1_node s1_n4">信号</div>
+  <div class="s1_node s1_n5">迭代</div>
+
+  <!-- Accumulation bar -->
+  <div class="s1_bar_track"></div>
+  <div class="s1_bar_fill"></div>
+  <div class="s1_accum_label">小优化叠加 = 大进步</div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>We approach building the Cursor agent harness the way we'd approach any ambitious software product. Much of the work is vision-driven, where we start with an opinion about what the ideal agent experience should look like.</p>
+          <p>From there, we form hypotheses about how to get closer to that vision, run experiments to test them, and iterate using quantitative and qualitative signals from evals and real usage. That process depends on having the right online and offline instrumentation, so we can tell when a change actually makes the harness better.</p>
+          <p>When we get early access to new models, all of these approaches converge. We spend weeks customizing our harness to a model's strengths and quirks until the same model inside our specially tuned harness is noticeably faster, smarter, and more efficient.</p>
+          <p>Occasionally we discover step-change improvements. More often, though, improving the harness is a matter of obsessively stacking small optimizations that together make agents better at building software.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S2: Context Window 演化 (drill) -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">Context Window 的进化：<br>从「喂饱它」到<span style="color:#67E8F9">「让它自己找」</span></h2>
+      <p class="body-text reveal reveal-delay-1">2024 年底 Cursor 刚做 coding agent 时，模型还不擅长自己选择上下文，团队不得不投入大量「context engineering」护栏——比如每次编辑后主动塞入 lint 错误，模型读文件行数不够就帮它重写请求，甚至限制单轮工具调用次数。同时还在每个 session 开头塞入大量静态上下文：代码库目录结构、语义匹配的代码片段、用户手动附加文件的压缩版本。<span class="hl">但这些现在基本都不用了</span>。随着模型能力提升，团队逐步拆除护栏，转向让 agent 在工作中动态拉取自己需要的上下文。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s2-anim"><div class="s2_stage">
+  <div class="s2_title">Context Window 演化</div>
+
+  <div class="s2_columns">
+    <!-- LEFT: 2024 Early — stuff everything in -->
+    <div class="s2_panel s2_panel_left">
+      <div class="s2_panel_label">2024 早期</div>
+      <div class="s2_box_outer">
+        <div class="s2_chunk"></div>
+        <div class="s2_chunk"></div>
+        <div class="s2_chunk"></div>
+        <div class="s2_chunk"></div>
+        <div class="s2_chunk"></div>
+        <div class="s2_chunk"></div>
+        <div class="s2_chunk"></div>
+        <div class="s2_chunk"></div>
+        <div class="s2_chunk"></div>
+        <div class="s2_arrows_in">
+          <div class="s2_arrow_in s2_arrow_in_top">&darr;</div>
+          <div class="s2_arrow_in s2_arrow_in_left">&rarr;</div>
+          <div class="s2_arrow_in s2_arrow_in_right">&larr;</div>
+        </div>
+        <div class="s2_model_circle_left">模型</div>
+      </div>
+      <div class="s2_caption_left">手动塞上下文</div>
+    </div>
+
+    <!-- CENTER: transition arrow -->
+    <div class="s2_transition_arrow">&rArr;</div>
+
+    <!-- RIGHT: Now — model reaches out -->
+    <div class="s2_panel s2_panel_right">
+      <div class="s2_panel_label">现在</div>
+      <div class="s2_model_area">
+        <div class="s2_model_circle_right">模型</div>
+        <div class="s2_reach s2_reach_top"></div>
+        <div class="s2_reach s2_reach_bottom"></div>
+        <div class="s2_reach s2_reach_left"></div>
+        <div class="s2_reach s2_reach_right"></div>
+        <div class="s2_reach s2_reach_tl"></div>
+        <div class="s2_reach s2_reach_tr"></div>
+        <div class="s2_reach s2_reach_bl"></div>
+        <div class="s2_reach s2_reach_br"></div>
+        <div class="s2_dot s2_dot_top"></div>
+        <div class="s2_dot s2_dot_bottom"></div>
+        <div class="s2_dot s2_dot_left"></div>
+        <div class="s2_dot s2_dot_right"></div>
+        <div class="s2_dot s2_dot_tl"></div>
+        <div class="s2_dot s2_dot_tr"></div>
+        <div class="s2_dot s2_dot_bl"></div>
+        <div class="s2_dot s2_dot_br"></div>
+      </div>
+      <div class="s2_caption_right">主动拉取上下文</div>
+    </div>
+  </div>
+</div></div>
+      <p class="hook-line reveal reveal-delay-3">从静态上下文到动态发现，这条路是怎么走的？</p>
+      <button class="drill-btn reveal reveal-delay-4" onclick="drillDown('layer-context',this)">深入 Context Window ↓</button>
+    </div>
+  </section>
+
+  <!-- S3: 度量 Agent 质量 -->
+  <section class="feed-section" style="background:var(--bg-act2)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">怎么衡量 Agent「好不好」？<br><span style="color:var(--accent2)">Keep Rate</span> + <span style="color:var(--accent)">LLM 裁判</span></h2>
+      <p class="body-text reveal reveal-delay-1">「好」这个词很模糊，所以 Cursor 搭建了多层度量体系。他们维护公开 benchmark 和自研的 CursorBench 做离线评估，但真正有说服力的信号来自线上 A/B 测试。除了延迟、token 效率、缓存命中率这些「硬指标」，他们还发明了两个更精准的质量信号。第一个叫 <span class="hl2">Keep Rate</span>——agent 提出的代码改动，过一段时间后还有多少留在用户代码库里。如果用户需要手动调整或让 agent 修修补补，说明初始质量不够。第二个是<span class="hl">用 LLM 阅读用户后续回复</span>来判断满意度：用户直接开始下一个功能是好信号，用户粘贴一个 stack trace 则是坏信号。有一次他们尝试用更贵的模型做上下文摘要，结果发现<span class="hl-danger">质量提升可以忽略不计，不值得多花的钱</span>。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s3-anim"><div class="s3_stage">
+  <div class="s3_title">度量 Agent 质量</div>
+
+  <!-- Keep Rate -->
+  <div class="s3_kr_section">
+    <div class="s3_kr_label">Keep Rate</div>
+
+    <div class="s3_kr_timeline s3_kr_row1">
+      <span class="s3_kr_timeline_label">Day 0</span>
+      <div class="s3_kr_blocks">
+        <div class="s3_kr_block"></div>
+        <div class="s3_kr_block"></div>
+        <div class="s3_kr_block"></div>
+        <div class="s3_kr_block"></div>
+        <div class="s3_kr_block"></div>
+        <div class="s3_kr_block"></div>
+        <div class="s3_kr_block"></div>
+        <div class="s3_kr_block"></div>
+      </div>
+    </div>
+
+    <div class="s3_kr_timeline s3_kr_row2">
+      <span class="s3_kr_timeline_label">Day 7</span>
+      <div class="s3_kr_blocks">
+        <div class="s3_kr_block"></div>
+        <div class="s3_kr_block"></div>
+        <div class="s3_kr_block"></div>
+        <div class="s3_kr_block"></div>
+        <div class="s3_kr_block"></div>
+        <div class="s3_kr_block"></div>
+        <div class="s3_kr_block"></div>
+        <div class="s3_kr_block"></div>
+      </div>
+    </div>
+
+    <div class="s3_kr_timeline s3_kr_row3">
+      <span class="s3_kr_timeline_label">Day 30</span>
+      <div class="s3_kr_blocks">
+        <div class="s3_kr_block"></div>
+        <div class="s3_kr_block"></div>
+        <div class="s3_kr_block"></div>
+        <div class="s3_kr_block"></div>
+        <div class="s3_kr_block"></div>
+        <div class="s3_kr_block"></div>
+        <div class="s3_kr_block"></div>
+        <div class="s3_kr_block"></div>
+      </div>
+    </div>
+
+    <div class="s3_kr_result">
+      <div class="s3_kr_result_circle">62%</div>
+      <div class="s3_kr_result_text">代码留存率<br><strong>越高越好</strong></div>
+    </div>
+  </div>
+
+  <div class="s3_divider"></div>
+
+  <!-- LLM Judge -->
+  <div class="s3_judge_section">
+    <div class="s3_judge_label">LLM 裁判</div>
+
+    <div class="s3_judge_flow">
+      <div class="s3_judge_box s3_judge_user">用户回复</div>
+      <span class="s3_judge_arrow s3_judge_arrow1">&rarr;</span>
+      <div class="s3_judge_box s3_judge_llm">LLM<br>判读</div>
+    </div>
+
+    <div class="s3_judge_down_arrow">&darr;</div>
+
+    <div class="s3_judge_results">
+      <div class="s3_judge_result_item s3_judge_good">
+        <div class="s3_judge_result_circle">满意</div>
+        <div class="s3_judge_result_desc">继续下个功能</div>
+      </div>
+      <div class="s3_judge_result_item s3_judge_bad">
+        <div class="s3_judge_result_circle">不满</div>
+        <div class="s3_judge_result_desc">粘贴报错信息</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footnote -->
+  <div class="s3_footnote">
+    <strong>反面案例：</strong>用更贵模型做摘要，质量无差别 -- 不是所有投入都有回报
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>The harness and the model together determine how good the agent is, but "good" is hard to pin down. To locate it, we've built several layers of measurement.</p>
+          <p>We maintain public benchmarks alongside our own eval suite, CursorBench, which gives us a fast, standardized read on quality and lets us compare across time. But even the best benchmarks only approximate real usage, meaning we'd miss important signals if we relied on them entirely.</p>
+          <p>So we also run online experiments where we deploy two or more harness variants side by side and A/B test them on real usage. We measure agent quality in these tests through a variety of metrics. Some are straightforward like latency, token efficiency, tool call count, and cache hit rate. Those are directionally useful but still don't get at fuzzier and more important questions of whether the agent actually did a good job. We measure those in two ways.</p>
+          <p>The first is the "Keep Rate" of agent-generated code. For a given set of code changes that the agent proposed, we track what fraction of those remain in the user's codebase after fixed intervals of time. This allows us to understand when users have to manually adjust the agent's output, or need to iterate and have the agent fix things, indicating the agent's initial response was of lower quality.</p>
+          <p>Second, we use a language model to read the user's responses to the agent's initial output in order to capture semantically whether the user was satisfied or not. A user moving on to the next feature is a strong signal the agent did its job, while a user pasting a stack trace is a reliable signal that it didn't.</p>
+          <p>Sometimes these online tests tell us to shelve an idea that seems promising. In one experiment, we tried a more expensive model for context summarization and observed it made a negligible difference in agent quality that wasn't worth the higher cost.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S4: 退化追踪与修复 (drill) -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">工具调用错误 = <span style="color:#FCA5A5">Context Rot</span><br>越积越毒的隐形杀手</h2>
+      <p class="body-text reveal reveal-delay-1">随着模型和功能增加，harness 的状态空间不断膨胀，bug 的表面积也在扩大。其中最致命的是工具调用错误——虽然 agent 经常能自我修正，但<span class="hl-danger">错误会留在上下文里，浪费 token 并导致「context rot」</span>：积累的错误会逐步降低模型后续决策的质量。有时一次失败的工具调用就能让 agent 完全跑偏。Cursor 的做法是：<span class="hl">任何未知错误都被视为 harness 的 bug</span>，然后把「预期内的错误」按原因分类——模型参数错误、环境矛盾、供应商故障、用户中断、超时——再针对每种分类设计不同的异常检测和告警。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s4-anim"><div class="s4_stage">
+  <div class="s4_title">CONTEXT WINDOW</div>
+
+  <div class="s4_window">
+    <div class="s4_win_header">CONTEXT</div>
+
+    <!-- Good calls -->
+    <div class="s4_row s4_row_ok s4_r1">
+      <div class="s4_row_icon"></div>
+      <div class="s4_row_text">read_file --- 成功</div>
+    </div>
+    <div class="s4_row s4_row_ok s4_r2">
+      <div class="s4_row_icon"></div>
+      <div class="s4_row_text">search_code --- 成功</div>
+    </div>
+    <div class="s4_row s4_row_ok s4_r3">
+      <div class="s4_row_icon"></div>
+      <div class="s4_row_text">edit_file --- 成功</div>
+    </div>
+
+    <!-- Error call -->
+    <div class="s4_row s4_row_err s4_r4">
+      <div class="s4_row_icon"></div>
+      <div class="s4_row_text">run_test --- 失败</div>
+    </div>
+
+    <!-- Degraded calls -->
+    <div class="s4_row s4_row_rot1 s4_r5">
+      <div class="s4_row_icon"></div>
+      <div class="s4_row_text">edit_file --- 质量下降</div>
+    </div>
+    <div class="s4_row s4_row_rot2 s4_r6">
+      <div class="s4_row_icon"></div>
+      <div class="s4_row_text">run_test --- 再次失败</div>
+    </div>
+    <div class="s4_row s4_row_rot3 s4_r7">
+      <div class="s4_row_icon"></div>
+      <div class="s4_row_text">debug --- 无效决策</div>
+    </div>
+  </div>
+
+  <!-- Rot spread overlay -->
+  <div class="s4_rot_overlay"></div>
+
+  <!-- Side rot bar -->
+  <div class="s4_rot_bar"></div>
+
+  <!-- Error pulse -->
+  <div class="s4_pulse_ring"></div>
+
+  <!-- Bottom label -->
+  <div class="s4_label">错误积累 = Context Rot</div>
+</div></div>
+      <p class="hook-line reveal reveal-delay-3">错误分类体系和自动化修复工厂是怎么运转的？</p>
+      <button class="drill-btn reveal reveal-delay-4" onclick="drillDown('layer-errors',this)">深入错误追踪 ↓</button>
+    </div>
+  </section>
+
+  <!-- S5: 模型定制与切换 -->
+  <section class="feed-section" style="background:var(--bg-act3)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">同一个 Harness，<br><span style="color:var(--accent)">不同模型</span>看到的世界不一样</h2>
+      <p class="body-text reveal reveal-delay-1">Cursor 的 harness 抽象层是模型无关的，但深度定制到每个模型甚至每个版本。比如 OpenAI 的模型训练时用的是 patch 格式编辑文件，而 Anthropic 的模型训练时用的是字符串替换——给模型一个不熟悉的工具格式会浪费推理 token 并产生更多错误，所以<span class="hl">每个模型都配发它训练时用过的工具格式</span>。在提示词层面也有深度定制：OpenAI 的模型偏向字面精确地遵循指令，而 Claude 更直觉化、对不精确指令的容忍度更高。团队还发现一个模型在上下文快满时会出现「<span class="hl2">context anxiety</span>」——开始推辞说任务太大了，最终通过 prompt 调整成功缓解。中途切换模型更棘手：不同模型有不同的 prompt、工具集和缓存，切换意味着 cache miss 和更慢更贵的第一轮。他们的建议是除非有充分理由，<span class="hl-danger">尽量一个会话用到底</span>。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s5-anim"><div class="s5_stage">
+  <!-- SVG lines -->
+  <svg class="s5_svg" viewBox="0 0 310 380">
+    <defs>
+      <marker id="s5_arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#94A3B8"/>
+      </marker>
+    </defs>
+
+    <!-- Harness(155,56) to OpenAI(50,164) -->
+    <path class="s5_line s5_l1" d="M 135,96 Q 90,115 58,132" marker-end="url(#s5_arrow)" />
+    <!-- Harness(155,56) to Claude(260,164) -->
+    <path class="s5_line s5_l2" d="M 175,96 Q 220,115 252,132" marker-end="url(#s5_arrow)" />
+
+    <!-- Model to config vertical connectors -->
+    <line class="s5_vline s5_v1" x1="50" y1="198" x2="60" y2="218" />
+    <line class="s5_vline s5_v2" x1="260" y1="198" x2="250" y2="218" />
+  </svg>
+
+  <!-- Center harness box -->
+  <div class="s5_harness">Harness</div>
+
+  <!-- Model nodes -->
+  <div class="s5_model s5_m_openai">OpenAI</div>
+  <div class="s5_model s5_m_claude">Claude</div>
+
+  <!-- OpenAI config items -->
+  <div class="s5_config s5_c1">patch 格式</div>
+  <div class="s5_config s5_c2">简洁 prompt</div>
+
+  <!-- Claude config items -->
+  <div class="s5_config s5_c3">字符串替换</div>
+  <div class="s5_config s5_c4">详细 prompt</div>
+
+  <!-- VS divider -->
+  <div class="s5_vs">VS</div>
+
+  <!-- Bottom insight -->
+  <div class="s5_bottom_label">同一抽象，不同视角</div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>All of our harness abstractions are model agnostic and can be heavily customized for every model we support. For instance, OpenAI's models are trained to edit files using a patch-based format, while Anthropic's models are trained on string replacement. Either model could use either tool, but giving it the unfamiliar one costs extra reasoning tokens and produces more mistakes. So in our harness, we provision each model with the tool format it had during training.</p>
+          <p>This customization goes very deep, and includes custom prompting for different providers and even for different model versions. OpenAI's models tend to be more literal and precise in their instruction following, whereas Claude is a bit more intuitive and more tolerant to imprecise instructions.</p>
+          <p>When we get early access to a new model ahead of launch, we start from the closest existing model's harness and begin iterating. We run offline evals to find where the model gets confused, have people on our team use it and surface problems, and tweak the harness in response. We iterate like this until we have a model-harness combination we feel good about shipping.</p>
+          <p>Much of this tuning process is about customizing the harness to a new model's strengths, but sometimes we encounter genuine model quirks that we can mitigate with the harness. For example, we observed one model develop what we came to call context anxiety: As its context window filled up, it would start refusing work, hedging that the task seemed too big. We were able to reduce the behavior through prompt adjustments.</p>
+          <p>It's especially tricky to design the harness to support users switching models mid conversation, because different models have different behaviors, prompts, and tool shapes.</p>
+          <p>When a user switches models, Cursor automatically switches to the appropriate harness, with that model's customized set of prompts and tools. However, the model still has to apply those tools to a conversation history that was produced by a different model and is out of distribution from what it was trained on.</p>
+          <p>To address this, we add custom instructions that tell the model when it's taking over mid-chat from another model. These instructions also steer it away from calling tools that appear in the conversation history but aren't part of its own tool set.</p>
+          <p>A second challenge is that caches are provider- and model-specific, so switching means a cache miss and a slower, more expensive first turn. We have experimented with mitigating this by summarizing the conversation at switch time, which provides the model with a clean summary that reduces the cache penalty. But if the user is deep into a complex task, the summary can lose important details. We generally recommend staying with one model for the duration of a conversation unless you have a reason to switch.</p>
+          <p>Another way to sidestep the challenges of mid-conversation model switching is to instead use a subagent, which starts from a fresh context window. We recently added to the harness the ability for users to directly ask for a subagent to be run with a particular model.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S6: 未来 — 多Agent编排 -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">未来不是一个 Agent 干所有事，<br>而是 <span style="color:#67E8F9">Harness 调度</span>一群专家</h2>
+      <p class="body-text reveal reveal-delay-1">Cursor 认为 AI 辅助软件开发的未来是多 agent 系统。不再是一个 agent 跑完所有子任务，而是系统学会把任务分派给专门化的 agent 和 subagent——<span class="hl">一个负责规划，一个负责快速编辑，一个负责调试</span>，每个都限定在它最擅长的范围内。让这套系统运转的核心挑战是 harness 工程：系统需要知道该派哪个 agent、如何为那个 agent 的优势量身组织任务描述、如何把结果拼回一个连贯的工作流。这种协调编排能力将存在于 harness 而非任何单个 agent 里。这意味着 <span class="hl2">harness 工程从来就是 agent 成功的关键，而它在未来只会变得更关键</span>。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s6-anim"><div class="s6_stage">
+  <!-- Top Harness box -->
+  <div class="s6_harness_top">Harness</div>
+
+  <!-- Lines down to agents -->
+  <div class="s6_line_down s6_line_down_1"></div>
+  <div class="s6_line_down s6_line_down_2"></div>
+  <div class="s6_line_down s6_line_down_3"></div>
+
+  <!-- Dispatch arrows -->
+  <div class="s6_arrow_down s6_arrow_down_1"></div>
+  <div class="s6_arrow_down s6_arrow_down_2"></div>
+  <div class="s6_arrow_down s6_arrow_down_3"></div>
+
+  <!-- Agent circles (2-char: >=48px) -->
+  <div class="s6_agent s6_agent_1">规划</div>
+  <div class="s6_agent s6_agent_2">编辑</div>
+  <div class="s6_agent s6_agent_3">调试</div>
+
+  <!-- Lines down to tasks -->
+  <div class="s6_line_task s6_line_task_1"></div>
+  <div class="s6_line_task s6_line_task_2"></div>
+  <div class="s6_line_task s6_line_task_3"></div>
+
+  <!-- Task boxes -->
+  <div class="s6_task s6_task_1">拆解</div>
+  <div class="s6_task s6_task_2">修改</div>
+  <div class="s6_task s6_task_3">修复</div>
+
+  <!-- Converge lines down -->
+  <div class="s6_line_up s6_line_up_1"></div>
+  <div class="s6_line_up s6_line_up_2"></div>
+  <div class="s6_line_up s6_line_up_3"></div>
+
+  <!-- Converge arrows -->
+  <div class="s6_arrow_up s6_arrow_up_1"></div>
+  <div class="s6_arrow_up s6_arrow_up_2"></div>
+  <div class="s6_arrow_up s6_arrow_up_3"></div>
+
+  <!-- Horizontal bar -->
+  <div class="s6_bar"></div>
+
+  <!-- Final line down -->
+  <div class="s6_line_final"></div>
+
+  <!-- Bottom Harness box -->
+  <div class="s6_harness_bot">汇聚结果</div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>The future of AI-assisted software engineering will be multi-agent. Instead of running every subtask through a single agent, the system will learn to delegate across specialized agents and subagents: one for planning, another for fast edits, and a third for debugging, each scoped to what it does best.</p>
+          <p>Making that work well is fundamentally a harness challenge. The system needs to know which agent to dispatch, how to frame the task for that agent's strengths, and how to stitch the results into a coherent workflow. The ability to orchestrate that kind of coordination will live in the harness rather than any single agent. This means that, while harness engineering has always been important for agent success, it's only going to be more critical going forward.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /layer-overview -->
+
+<!-- ═══ Layer 1: Context Window 详解 ═══ -->
+<div class="layer" id="layer-context" data-depth="1">
+
+  <!-- A1: 早期护栏时代 -->
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">2024：模型还不会自己找东西<br>团队只能<span style="color:var(--accent)">手动喂</span></h2>
+      <p class="body-text reveal reveal-delay-1">2024 年底 Cursor 团队第一次做 coding agent 时，模型在自主选择上下文方面还很弱。团队不得不构建大量「context engineering 护栏」来弥补这个缺陷：每次 agent 编辑代码后，harness 会自动把 lint 和类型错误塞回上下文，让模型看到自己犯的错；当模型请求读取的文件行数太少时，harness 会帮它重写请求以获取更多上下文；甚至要限制单轮最大工具调用次数，防止模型在错误方向上跑太远。除此之外，每个 session 开头都会预装大量静态上下文——代码库的目录结构、与查询语义匹配的代码片段、用户手动附加文件的压缩版本。所有这些都是在模型能力不足时，<span class="hl">harness 替模型做决策</span>的权宜之计。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a1-anim"><div class="a1_stage">
+  <div class="a1_frame">
+    <span class="a1_frame_label">Context Window</span>
+
+    <div class="a1_block a1_b_system">System Prompt</div>
+
+    <div class="a1_divider a1_div1">-- 静态上下文 --</div>
+    <div class="a1_static_row">
+      <div class="a1_block a1_b_static a1_b_s1">目录结构</div>
+      <div class="a1_block a1_b_static a1_b_s2">语义片段</div>
+      <div class="a1_block a1_b_static a1_b_s3">压缩附件</div>
+    </div>
+
+    <div class="a1_divider a1_div2">-- 护栏规则 --</div>
+    <div class="a1_guard_row">
+      <div class="a1_block a1_b_guard a1_b_g1">
+        <div class="a1_guard_icon"></div>
+        <span class="a1_guard_text">每次编辑后塞入 lint 错误</span>
+      </div>
+      <div class="a1_block a1_b_guard a1_b_g2">
+        <div class="a1_guard_icon"></div>
+        <span class="a1_guard_text">重写行数不够的文件读取</span>
+      </div>
+      <div class="a1_block a1_b_guard a1_b_g3">
+        <div class="a1_guard_icon"></div>
+        <span class="a1_guard_text">限制单轮工具调用次数</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="a1_caption">2024 早期 — 模型不会选上下文，团队手动塞满窗口</div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>At the heart of interacting with large language models is the context window. When asking the agent to build something, the context window starts with the system prompt and tool descriptions, followed by the current state of the conversation, and finally the user's request.</p>
+          <p>The way we populate and manage that window has evolved significantly over the history of Cursor.</p>
+          <p>When we first developed our coding agent in late 2024, models were much worse at choosing their own context and we invested lots of context engineering work into creating guardrails--for example, surfacing lint and type errors to the agent after every edit, rewriting its file reads when it requested too few lines, and even limiting the maximum number of tools it could call in one turn.</p>
+          <p>We also provided substantial amounts of static context that was always available to the agent at the start of each session. At various points, that included the folder layout of the codebase, code snippets that semantically matched the query, and compressed versions of files that the user manually attached.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- A2: 动态上下文革命 -->
+  <section class="feed-section" style="background:var(--bg-act2)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">拆除护栏，<br>让 Agent <span style="color:var(--accent2)">自己拉取</span>需要的一切</h2>
+      <p class="body-text reveal reveal-delay-1">随着模型能力提升，那些早期护栏「基本都不用了」。Cursor 团队仍然保留了一些有用的静态上下文——操作系统信息、git 状态、当前和最近查看的文件——但核心策略已经转向动态上下文：让 agent 在工作过程中自己去拉取需要的信息，而不是在开头一股脑塞给它。团队早先发表过一篇深度文章，详细介绍了他们的动态上下文技术，其中很多已经被其他 coding agent 采用。现在他们的工作重心是<span class="hl">提供更多方式让 agent 动态地拉取上下文并与外部世界交互</span>。这个演变的核心逻辑是：与其让 harness 替模型做决策，不如让越来越强的模型自己做决策，harness 只需要提供「拉取上下文的通道」就够了。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a2-anim"><div class="a2_stage">
+  <div class="a2_title">动态上下文革命</div>
+
+  <div class="a2_compare">
+    <!-- Old mode: harness pushes context to passive model -->
+    <div class="a2_panel">
+      <div class="a2_panel_label">旧模式</div>
+      <div class="a2_harness">护栏</div>
+      <div class="a2_arrow_push"></div>
+      <div class="a2_data_block a2_d1"></div>
+      <div class="a2_data_block a2_d2"></div>
+      <div class="a2_data_block a2_d3"></div>
+      <div class="a2_data_block a2_d4"></div>
+      <div class="a2_data_block a2_d5"></div>
+      <div class="a2_model_old">模型</div>
+      <div class="a2_old_desc">被动接收</div>
+    </div>
+
+    <!-- Transition arrow -->
+    <div class="a2_transition">&rarr;</div>
+
+    <!-- New mode: agent actively pulls context -->
+    <div class="a2_panel">
+      <div class="a2_panel_label a2_panel_label_new">新模式</div>
+      <div class="a2_source a2_s_file">文件</div>
+      <div class="a2_source a2_s_git">Git</div>
+      <div class="a2_model_new">Agent</div>
+      <!-- SVG arrows from Agent center to each source -->
+      <svg class="a2_pull_svg">
+        <defs>
+          <marker id="a2_arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#CA8A04"/>
+          </marker>
+        </defs>
+        <!-- Agent center: ~77,120. File center: ~28,46. Git: ~127,46. Web: ~28,194. Tool: ~127,194 -->
+        <line x1="68" y1="100" x2="38" y2="64" class="a2_pull_line a2_pl1"/>
+        <line x1="87" y1="100" x2="117" y2="64" class="a2_pull_line a2_pl2"/>
+        <line x1="68" y1="140" x2="38" y2="176" class="a2_pull_line a2_pl3"/>
+        <line x1="87" y1="140" x2="117" y2="176" class="a2_pull_line a2_pl4"/>
+      </svg>
+      <div class="a2_source a2_s_web">Web</div>
+      <div class="a2_source a2_s_tool">工具</div>
+      <div class="a2_new_desc">主动拉取</div>
+    </div>
+  </div>
+
+  <div class="a2_summary">Harness 从「喂数据」变为「提供拉取通道」</div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>That is mostly long gone.</p>
+          <p>We still include some useful static context (e.g., operating system, git status, current and recently viewed files). But we've adapted to increasing model capability by knocking down guardrails and providing more dynamic context, which can be fetched by the agent while it works. In an earlier post, we did a deep dive into some of our techniques behind dynamic context, many of which have since been adopted by other coding agents. Much of our work now focuses on providing more ways for the agent to dynamically pull context and interact with the world.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /layer-context -->
+
+<!-- ═══ Layer 1: 错误追踪详解 ═══ -->
+<div class="layer" id="layer-errors" data-depth="1">
+
+  <!-- A3: 错误分类体系 -->
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">五种分类，<br>把错误从「未知」变成<span style="color:var(--accent)">可治理的</span></h2>
+      <p class="body-text reveal reveal-delay-1">Cursor 的错误治理逻辑很清晰：任何未知错误都是 bug，必须修。而「预期内的错误」则按原因分为五类。<span class="hl">InvalidArguments</span> 和 <span class="hl">UnexpectedEnvironment</span> 捕捉的是模型犯的错——比如参数格式不对，或者上下文窗口里存在相互矛盾的信息。<span class="hl2">ProviderError</span> 捕捉的是外部供应商（如 GenerateImage、WebSearch 等工具）的故障。还有 <span class="hl-danger">UserAborted</span>（用户主动中断）和 <span class="hl-danger">Timeout</span>（超时）。这套分类体系的关键在于区分「这是模型的问题还是工具的问题还是环境的问题」，因为不同原因对应完全不同的修复路径。例如一个 grep 超时，可能是工具本身的性能问题，也可能只是代码库太大且模型写了个低效查询——如果不分类，就无法判断该修什么。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a3-anim"><div class="a3_stage">
+  <!-- Entry -->
+  <div class="a3_entry">错误</div>
+
+  <!-- Split lines -->
+  <div class="a3_line a3_vline1"></div>
+  <div class="a3_line a3_hline"></div>
+  <div class="a3_line a3_vline_l"></div>
+  <div class="a3_line a3_vline_r"></div>
+
+  <!-- Unknown branch -->
+  <div class="a3_unknown">未知</div>
+  <div class="a3_bug_tag">= Bug</div>
+
+  <!-- Expected branch -->
+  <div class="a3_expected">预期</div>
+
+  <!-- Connectors to 5 categories -->
+  <div class="a3_conn a3_conn_v"></div>
+  <div class="a3_conn a3_conn_h"></div>
+  <div class="a3_line a3_fanv a3_fl0"></div>
+  <div class="a3_line a3_fanv a3_fl1"></div>
+  <div class="a3_line a3_fanv a3_fl2"></div>
+  <div class="a3_line a3_fanv a3_fl3"></div>
+  <div class="a3_line a3_fanv a3_fl4"></div>
+
+  <!-- 5 Classification boxes -->
+  <div class="a3_cat a3_c0"><span>参数错</span></div>
+  <div class="a3_cat a3_c1"><span>上下文<br>矛盾</span></div>
+  <div class="a3_cat a3_c2"><span>外部<br>故障</span></div>
+  <div class="a3_cat a3_c3"><span>用户<br>中断</span></div>
+  <div class="a3_cat a3_c4"><span>超时</span></div>
+
+  <!-- Labels -->
+  <div class="a3_cat_label a3_cl0">Invalid<br>Arguments</div>
+  <div class="a3_cat_label a3_cl1">Unexpected<br>Environment</div>
+  <div class="a3_cat_label a3_cl2">Provider<br>Error</div>
+  <div class="a3_cat_label a3_cl3">User<br>Aborted</div>
+  <div class="a3_cat_label a3_cl4">Timeout</div>
+
+  <!-- Baseline badge -->
+  <div class="a3_baseline">per-tool / per-model 基线异常检测</div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>Any unknown error represents a bug in the harness, and we treat it accordingly. But many errors are "expected," for example the model occasionally proposing an incorrect edit or trying to read a file that doesn't exist. We classify these expected errors by cause. InvalidArguments and UnexpectedEnvironment capture model mistakes and contradictions in the context window, while ProviderError captures vendor outages from tools like GenerateImage or WebSearch.</p>
+          <p>We have several other classifications like UserAborted and Timeout which altogether encompass most expected errors.</p>
+          <p>We define alerts based on these metrics to catch significant regressions that make it into production. Since unknown errors are always bugs, we alert whenever the unknown error rate for any tool exceeds a fixed threshold. But it can be tricky to tell whether expected errors represent a bug in the harness or expected behavior.</p>
+          <p>For example, a grep search timeout might be because of a performance issue with the tool, or the codebase might just be huge and the model formed an inefficient query. To deal with this, we have anomaly detection alerts which fire when expected errors significantly exceed the baseline. We compute baselines per-tool and per-model, because different models may mess up tool calls at different rates.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- A4: 自动化修复工厂 -->
+  <section class="feed-section" style="background:var(--bg-act2)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">用 Agent 修 Agent：<br><span style="color:var(--accent2)">自动化软件工厂</span>的雏形</h2>
+      <p class="body-text reveal reveal-delay-1">Cursor 的错误修复流程本身也在自动化。他们跑一个每周执行的 Automation，这个 Automation 配备了一个专门的 skill，教模型如何搜索日志、发现新出现或最近激增的问题，然后在待办清单里自动创建或更新工单并附上调查结果。团队大量使用 <span class="hl">Cloud Agents</span> 来同时启动多个问题的修复工作，甚至可以直接从 Linear 触发。这个流程是他们所说的「<span class="hl2">自动化软件工厂</span>」在 agent harness 上的实例化。在今年早些时候的一次专项冲刺中，他们把未预期的工具调用错误<span class="hl-danger">降低了一个数量级</span>。这意味着 harness 的可靠性工程本身也在遵循 harness 的哲学——用 agent 能力来提升 agent 基础设施。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a4-anim"><div class="a4_stage">
+  <div class="a4_title">Agent 修 Agent：自动化闭环</div>
+
+  <div class="a4_loop">
+    <!-- Background ring -->
+    <svg class="a4_ring" viewBox="0 0 280 280">
+      <circle cx="140" cy="140" r="90"/>
+      <circle class="a4_ring_active" cx="140" cy="140" r="90"/>
+    </svg>
+
+    <!-- 6 nodes around the loop -->
+    <div class="a4_node a4_n1">日志</div>
+    <div class="a4_node a4_n2">扫描</div>
+    <div class="a4_node a4_n3">工单</div>
+    <div class="a4_node a4_n4">修复</div>
+    <div class="a4_node a4_n5">验证</div>
+    <div class="a4_node a4_n6">部署</div>
+
+    <!-- Flow arrows -->
+    <div class="a4_arrow a4_ar1"></div>
+    <div class="a4_arrow a4_ar2"></div>
+    <div class="a4_arrow a4_ar3"></div>
+    <div class="a4_arrow a4_ar4"></div>
+    <div class="a4_arrow a4_ar5"></div>
+    <div class="a4_arrow a4_ar6"></div>
+
+    <!-- Center highlight -->
+    <div class="a4_center">
+      <div class="a4_center_num">10x</div>
+      <div class="a4_center_label">错误降低</div>
+    </div>
+
+    <!-- Pulsing ring -->
+    <div class="a4_pulse_ring"></div>
+  </div>
+
+  <div class="a4_caption">每周自动扫描 → 创建工单 → Agent 并行修复 → 循环不止</div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>We also run a weekly Automation equipped with a skill that teaches the model how to search through our logs, surface issues that are new or recently spiked, and create or update tickets in a backlog with an investigation. We lean heavily on Cloud Agents to kick off fixes for many issues at once, and can even trigger them directly from Linear.</p>
+          <p>This process is part of the way we're instantiating an automated "software factory" for our agent harness. Over the course of a focused sprint earlier this year, we drove unexpected tool call errors down by an order of magnitude.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /layer-errors -->
+
+<script>
+var currentMode='zoom';
+var layerStack=['layer-overview'];
+var transitioning=false;
+var layerNames={'layer-overview':'概览','layer-context':'Context Window','layer-errors':'错误追踪'};
+var observers=new Map();
+
+function setupObserver(layerId){
+  if(observers.has(layerId))return;
+  var layer=document.getElementById(layerId);
+  var reveals=layer.querySelectorAll('.reveal, [class*="_stage"]');
+  var obs=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});
+  },{threshold:0.15,root:layer});
+  reveals.forEach(function(el){obs.observe(el);});
+  observers.set(layerId,obs);
+}
+
+function resetReveals(layerId){
+  var layer=document.getElementById(layerId);
+  layer.querySelectorAll('.reveal').forEach(function(el){el.classList.remove('visible');});
+  layer.querySelectorAll('[class*="_stage"]').forEach(function(el){el.classList.remove('visible');});
+}
+
+function activateReveals(layerId){
+  resetReveals(layerId);
+  if(observers.has(layerId)){observers.get(layerId).disconnect();observers.delete(layerId);}
+  requestAnimationFrame(function(){setupObserver(layerId);});
+}
+
+function updateBreadcrumb(){
+  var bc=document.getElementById('breadcrumb');
+  bc.innerHTML='';
+  layerStack.forEach(function(id,i){
+    if(i>0){var sep=document.createElement('span');sep.className='sep';sep.textContent='>';bc.appendChild(sep);}
+    var span=document.createElement('span');
+    span.textContent=layerNames[id]||id;
+    if(i===layerStack.length-1){span.className='current';}
+    else{span.addEventListener('click',function(){goBackTo(i);});}
+    bc.appendChild(span);
+  });
+  var backBtn=document.getElementById('backBtn');
+  backBtn.style.display=layerStack.length>1?'flex':'none';
+  bc.style.left=layerStack.length>1?'60px':'16px';
+  var dots=document.getElementById('depthDots');
+  var depth=layerStack.length-1;
+  dots.querySelectorAll('.dot').forEach(function(d,i){d.classList.toggle('active',i===depth);});
+}
+
+function drillDown(targetId,btnEl){
+  if(transitioning)return;
+  transitioning=true;
+  var currentId=layerStack[layerStack.length-1];
+  var currentLayer=document.getElementById(currentId);
+  var targetLayer=document.getElementById(targetId);
+  targetLayer.scrollTop=0;
+  resetReveals(targetId);
+  targetLayer.style.visibility='visible';
+  var duration=600;
+  currentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  currentLayer.style.transformOrigin='center center';
+  currentLayer.style.transform='scale(1.3)';
+  currentLayer.style.opacity='0';
+  targetLayer.classList.add('active');
+  targetLayer.style.opacity='0';
+  targetLayer.style.transform='scale(0.85)';
+  targetLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  requestAnimationFrame(function(){requestAnimationFrame(function(){
+    targetLayer.style.opacity='1';targetLayer.style.transform='scale(1)';
+  });});
+  setTimeout(function(){
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';
+    targetLayer.style.transition='';targetLayer.style.transform='';
+    activateReveals(targetId);
+    transitioning=false;
+  },duration+50);
+  layerStack.push(targetId);
+  updateBreadcrumb();
+}
+
+function goBack(){
+  if(layerStack.length<=1||transitioning)return;
+  transitioning=true;
+  var currentId=layerStack.pop();
+  var parentId=layerStack[layerStack.length-1];
+  var currentLayer=document.getElementById(currentId);
+  var parentLayer=document.getElementById(parentId);
+  var duration=600;
+  currentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  currentLayer.style.transform='scale(0.85)';
+  currentLayer.style.opacity='0';
+  parentLayer.classList.add('active');
+  parentLayer.style.transform='scale(1.3)';
+  parentLayer.style.opacity='0';
+  parentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  requestAnimationFrame(function(){requestAnimationFrame(function(){
+    parentLayer.style.transform='scale(1)';parentLayer.style.opacity='1';
+  });});
+  setTimeout(function(){
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition='';currentLayer.style.transform='';
+    currentLayer.style.opacity='';currentLayer.style.visibility='';
+    parentLayer.style.transition='';parentLayer.style.transform='';
+    transitioning=false;
+  },duration+50);
+  updateBreadcrumb();
+}
+
+function goBackTo(targetIndex){
+  if(transitioning)return;
+  while(layerStack.length-1>targetIndex){
+    if(layerStack.length<=1)break;
+    goBack();return;
+  }
+}
+
+function toggleSource(btn){btn.classList.toggle('open');btn.nextElementSibling.classList.toggle('open');}
+
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+</body>
+</html>

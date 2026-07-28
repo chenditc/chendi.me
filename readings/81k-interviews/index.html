@@ -1,0 +1,2331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>81,000 人的 AI 心声</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --c1: #14B8A6;
+  --c2: #F43F5E;
+  --bg-act1: #F0FDFA;
+  --bg-act2: #FFF1F2;
+  --bg-act3: #F0FDF4;
+  --font: 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+}
+*{ margin:0; padding:0; box-sizing:border-box; }
+body{ font-family:var(--font); background:#111; overflow:hidden; -webkit-font-smoothing:antialiased; }
+
+/* ── Layer system ── */
+.layer{ position:fixed; inset:0; overflow-y:auto; overflow-x:hidden; opacity:0; pointer-events:none; transition:opacity .6s ease; z-index:0; scroll-behavior:smooth; }
+.layer.active{ opacity:1; pointer-events:auto; z-index:1; }
+
+/* ── Breadcrumb ── */
+.breadcrumb{ position:fixed; top:12px; left:12px; z-index:900; background:rgba(255,255,255,.92); backdrop-filter:blur(8px); border-radius:20px; padding:6px 16px; font-size:13px; color:#334155; display:flex; align-items:center; gap:6px; box-shadow:0 2px 12px rgba(0,0,0,.08); }
+.breadcrumb .sep{ opacity:.4; }
+.back-btn{ position:fixed; top:10px; left:12px; z-index:901; background:rgba(255,255,255,.92); backdrop-filter:blur(8px); border:none; border-radius:50%; width:36px; height:36px; font-size:18px; cursor:pointer; display:none; align-items:center; justify-content:center; box-shadow:0 2px 12px rgba(0,0,0,.08); }
+
+/* ── Feed section ── */
+.feed-section{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:60px 20px; position:relative; }
+.feed-section.dark{ background:#0F172A; color:#F1F5F9; }
+.feed-section.dark .body-text{ color:#CBD5E1; }
+.feed-section.dark .hl{ color:var(--c1); }
+.feed-section.dark .hl2{ color:#FDA4AF; }
+.section-inner{ max-width:380px; width:100%; }
+
+/* ── Typography ── */
+.act-label{ font-size:12px; letter-spacing:4px; text-transform:uppercase; color:var(--c1); margin-bottom:12px; font-weight:700; }
+.big-statement{ font-size:28px; font-weight:900; line-height:1.35; margin-bottom:24px; color:#1E293B; }
+.feed-section.dark .big-statement{ color:#F1F5F9; }
+.body-text{ font-size:15px; line-height:1.85; color:#334155; margin-bottom:24px; }
+.hl{ color:var(--c1); font-weight:700; }
+.hl2{ color:var(--c2); font-weight:700; }
+.hook-line{ font-size:14px; color:var(--c1); margin-bottom:16px; font-weight:700; }
+
+/* ── Animations ── */
+.anim-stage{ width:100%; display:flex; justify-content:center; margin:28px 0; min-height:180px; }
+.anim-stage > div{ width:100%; }
+
+/* ── Reveal ── */
+.reveal{ opacity:0; transform:translateY(30px); transition:opacity .6s ease, transform .6s ease; }
+.reveal.visible{ opacity:1; transform:translateY(0); }
+.reveal-d1{ transition-delay:.15s; }
+.reveal-d2{ transition-delay:.3s; }
+.reveal-d3{ transition-delay:.45s; }
+
+/* ── Source panel ── */
+.source-panel{ margin-top:12px; border-radius:12px; overflow:hidden; }
+.source-toggle{ background:none; border:1px solid #E2E8F0; border-radius:12px; padding:8px 16px; font-size:13px; color:#94A3B8; cursor:pointer; display:flex; align-items:center; gap:6px; font-family:var(--font); transition:all .3s; }
+.source-toggle .arrow{ font-size:10px; transition:transform .3s; display:inline-block; }
+.source-toggle.open{ border-radius:12px 12px 0 0; background:#F8FAFC; border-color:#CBD5E1; }
+.source-toggle.open .arrow{ transform:rotate(90deg); }
+.feed-section.dark .source-toggle{ border-color:#334155; color:#64748B; }
+.feed-section.dark .source-toggle.open{ background:#0F172A; border-color:#475569; }
+.source-body{ display:none; padding:14px 16px; background:#F8FAFC; border:1px solid #E2E8F0; border-top:none; border-radius:0 0 12px 12px; font-size:13px; line-height:1.7; color:#64748B; }
+.feed-section.dark .source-body{ background:#0F172A; border-color:#334155; color:#94A3B8; }
+.source-label{ display:inline-block; background:var(--c1); color:#fff; font-size:11px; padding:2px 8px; border-radius:4px; margin-bottom:8px; font-weight:700; }
+
+/* ── Drill button ── */
+.drill-btn{ display:inline-block; padding:12px 28px; background:var(--c1); color:#fff; border:none; border-radius:24px; font-size:15px; font-weight:700; cursor:pointer; font-family:var(--font); transition:transform .2s, box-shadow .2s; box-shadow:0 4px 16px rgba(20,184,166,.3); }
+.drill-btn:active{ transform:scale(.96); }
+
+/* ── Page dots ── */
+.page-dots{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:800; display:flex; gap:8px; }
+.page-dots .dot{ width:8px; height:8px; border-radius:50%; background:#CBD5E1; transition:all .3s; }
+.page-dots .dot.active{ background:var(--c1); width:20px; border-radius:4px; }
+
+/* === S1 Animation === */
+
+.s1_stage {
+  max-width: 360px;
+  height: 220px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.s1_counter {
+  font-size: 48px;
+  font-weight: 800;
+  color: #14B8A6;
+  letter-spacing: -1px;
+  opacity: 0;
+  transform: scale(0.3);
+  transition: none;
+}
+
+.s1_stage.visible .s1_counter {
+  animation: s1_countIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+}
+
+.s1_subtitle {
+  font-size: 15px;
+  color: #1E293B;
+  margin-top: 2px;
+  opacity: 0;
+  font-weight: 500;
+}
+
+.s1_stage.visible .s1_subtitle {
+  animation: s1_fadeUp 0.5s ease 0.6s forwards;
+}
+
+.s1_label {
+  position: absolute;
+  font-size: 11px;
+  font-weight: 600;
+  color: #F43F5E;
+  background: rgba(244, 63, 94, 0.08);
+  border: 1px solid rgba(244, 63, 94, 0.15);
+  padding: 3px 10px;
+  border-radius: 20px;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+.s1_stage.visible .s1_label {
+  animation: s1_labelIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.s1_l1 { top: 18px; left: 24px; animation-delay: 0.8s !important; }
+.s1_l2 { top: 14px; right: 40px; animation-delay: 1.0s !important; }
+.s1_l3 { top: 52px; left: 8px; animation-delay: 1.2s !important; }
+.s1_l4 { top: 48px; right: 12px; animation-delay: 1.4s !important; }
+.s1_l5 { bottom: 58px; left: 16px; animation-delay: 1.6s !important; }
+.s1_l6 { bottom: 54px; right: 28px; animation-delay: 1.8s !important; }
+.s1_l7 { top: 84px; left: 40px; animation-delay: 2.0s !important; }
+.s1_l8 { top: 80px; right: 48px; animation-delay: 2.2s !important; }
+
+.s1_stage.visible .s1_l1 { animation-delay: 0.8s; }
+.s1_stage.visible .s1_l2 { animation-delay: 1.0s; }
+.s1_stage.visible .s1_l3 { animation-delay: 1.2s; }
+.s1_stage.visible .s1_l4 { animation-delay: 1.4s; }
+.s1_stage.visible .s1_l5 { animation-delay: 1.6s; }
+.s1_stage.visible .s1_l6 { animation-delay: 1.8s; }
+.s1_stage.visible .s1_l7 { animation-delay: 2.0s; }
+.s1_stage.visible .s1_l8 { animation-delay: 2.2s; }
+
+.s1_footer {
+  font-size: 12px;
+  color: #64748B;
+  margin-top: 8px;
+  opacity: 0;
+  font-weight: 500;
+}
+
+.s1_stage.visible .s1_footer {
+  animation: s1_fadeUp 0.5s ease 2.5s forwards;
+}
+
+@keyframes s1_countIn {
+  0% { opacity: 0; transform: scale(0.3); }
+  50% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s1_fadeUp {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s1_labelIn {
+  0% { opacity: 0; transform: scale(0.5) translateY(6px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@property --s1_num {
+  syntax: '<integer>';
+  initial-value: 0;
+  inherits: false;
+}
+
+.s1_counter {
+  counter-reset: s1c var(--s1_num);
+}
+
+.s1_counter::after {
+  content: counter(s1c, decimal);
+}
+
+.s1_stage.visible .s1_counter {
+  --s1_num: 80508;
+  animation: s1_countIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards,
+             s1_roll 2.2s cubic-bezier(0.22, 1, 0.36, 1) 0.3s forwards;
+}
+
+@keyframes s1_roll {
+  0% { --s1_num: 0; }
+  100% { --s1_num: 80508; }
+}
+
+/* === S2 Animation === */
+
+.s2_stage {
+  max-width: 360px;
+  height: 280px;
+  font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  padding: 16px 12px;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: transparent;
+}
+.s2_title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 10px;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 0.4s, transform 0.4s;
+}
+.s2_stage.visible .s2_title {
+  opacity: 1;
+  transform: translateY(0);
+}
+.s2_row {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  margin-bottom: 3px;
+}
+.s2_label {
+  width: 68px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #334155;
+  text-align: right;
+  padding-right: 8px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.s2_stage.visible .s2_label {
+  opacity: 1;
+}
+.s2_track {
+  flex: 1;
+  height: 16px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+.s2_bar {
+  height: 100%;
+  border-radius: 4px;
+  width: 0;
+  background: linear-gradient(90deg, #14B8A6, #5eead4);
+  transition: none;
+}
+.s2_bar.top {
+  background: linear-gradient(90deg, #F43F5E, #fb7185);
+}
+.s2_pct {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  width: 38px;
+  text-align: right;
+  flex-shrink: 0;
+  padding-left: 4px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.s2_stage.visible .s2_pct {
+  opacity: 1;
+}
+
+.s2_stage.visible .s2_bar {
+  animation: s2_grow 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.s2_stage.visible .s2_r1 .s2_bar { animation-delay: 0.15s; }
+.s2_stage.visible .s2_r1 .s2_label, .s2_stage.visible .s2_r1 .s2_pct { transition-delay: 0.15s; }
+.s2_stage.visible .s2_r2 .s2_bar { animation-delay: 0.28s; }
+.s2_stage.visible .s2_r2 .s2_label, .s2_stage.visible .s2_r2 .s2_pct { transition-delay: 0.28s; }
+.s2_stage.visible .s2_r3 .s2_bar { animation-delay: 0.41s; }
+.s2_stage.visible .s2_r3 .s2_label, .s2_stage.visible .s2_r3 .s2_pct { transition-delay: 0.41s; }
+.s2_stage.visible .s2_r4 .s2_bar { animation-delay: 0.54s; }
+.s2_stage.visible .s2_r4 .s2_label, .s2_stage.visible .s2_r4 .s2_pct { transition-delay: 0.54s; }
+.s2_stage.visible .s2_r5 .s2_bar { animation-delay: 0.67s; }
+.s2_stage.visible .s2_r5 .s2_label, .s2_stage.visible .s2_r5 .s2_pct { transition-delay: 0.67s; }
+.s2_stage.visible .s2_r6 .s2_bar { animation-delay: 0.80s; }
+.s2_stage.visible .s2_r6 .s2_label, .s2_stage.visible .s2_r6 .s2_pct { transition-delay: 0.80s; }
+.s2_stage.visible .s2_r7 .s2_bar { animation-delay: 0.93s; }
+.s2_stage.visible .s2_r7 .s2_label, .s2_stage.visible .s2_r7 .s2_pct { transition-delay: 0.93s; }
+.s2_stage.visible .s2_r8 .s2_bar { animation-delay: 1.06s; }
+.s2_stage.visible .s2_r8 .s2_label, .s2_stage.visible .s2_r8 .s2_pct { transition-delay: 1.06s; }
+.s2_stage.visible .s2_r9 .s2_bar { animation-delay: 1.19s; }
+.s2_stage.visible .s2_r9 .s2_label, .s2_stage.visible .s2_r9 .s2_pct { transition-delay: 1.19s; }
+
+@keyframes s2_grow {
+  from { width: 0; }
+}
+.s2_r1 .s2_bar { --w: 100%; }
+.s2_r2 .s2_bar { --w: 72.9%; }
+.s2_r3 .s2_bar { --w: 71.8%; }
+.s2_r4 .s2_bar { --w: 59%; }
+.s2_r5 .s2_bar { --w: 51.6%; }
+.s2_r6 .s2_bar { --w: 50%; }
+.s2_r7 .s2_bar { --w: 46.3%; }
+.s2_r8 .s2_bar { --w: 44.7%; }
+.s2_r9 .s2_bar { --w: 29.8%; }
+
+.s2_stage.visible .s2_r1 .s2_bar { animation-name: s2_g1; }
+.s2_stage.visible .s2_r2 .s2_bar { animation-name: s2_g2; }
+.s2_stage.visible .s2_r3 .s2_bar { animation-name: s2_g3; }
+.s2_stage.visible .s2_r4 .s2_bar { animation-name: s2_g4; }
+.s2_stage.visible .s2_r5 .s2_bar { animation-name: s2_g5; }
+.s2_stage.visible .s2_r6 .s2_bar { animation-name: s2_g6; }
+.s2_stage.visible .s2_r7 .s2_bar { animation-name: s2_g7; }
+.s2_stage.visible .s2_r8 .s2_bar { animation-name: s2_g8; }
+.s2_stage.visible .s2_r9 .s2_bar { animation-name: s2_g9; }
+
+@keyframes s2_g1 { from { width: 0; } to { width: 100%; } }
+@keyframes s2_g2 { from { width: 0; } to { width: 72.9%; } }
+@keyframes s2_g3 { from { width: 0; } to { width: 71.8%; } }
+@keyframes s2_g4 { from { width: 0; } to { width: 59%; } }
+@keyframes s2_g5 { from { width: 0; } to { width: 51.6%; } }
+@keyframes s2_g6 { from { width: 0; } to { width: 50%; } }
+@keyframes s2_g7 { from { width: 0; } to { width: 46.3%; } }
+@keyframes s2_g8 { from { width: 0; } to { width: 44.7%; } }
+@keyframes s2_g9 { from { width: 0; } to { width: 29.8%; } }
+
+/* === S3 Animation === */
+
+.s3_stage {
+  max-width: 360px;
+  height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  position: relative;
+  gap: 12px;
+}
+
+.s3_donut {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: conic-gradient(#E2E8F0 0deg, #E2E8F0 360deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.s3_donut_inner {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.s3_pct {
+  font-size: 28px;
+  font-weight: 800;
+  color: #14B8A6;
+  line-height: 1;
+  opacity: 0;
+}
+
+.s3_label {
+  font-size: 11px;
+  color: #475569;
+  margin-top: 2px;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+.s3_quote {
+  font-size: 13px;
+  color: #64748B;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(6px);
+  padding: 0 20px;
+}
+
+.s3_quote span {
+  color: #F43F5E;
+  font-weight: 600;
+}
+
+/* Animations */
+@keyframes s3_fill {
+  from { background: conic-gradient(#14B8A6 0deg, #E2E8F0 0deg, #E2E8F0 360deg); }
+  to { background: conic-gradient(#14B8A6 0deg, #14B8A6 291.6deg, #E2E8F0 291.6deg, #E2E8F0 360deg); }
+}
+
+@keyframes s3_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes s3_quoteIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.s3_stage.visible .s3_donut {
+  animation: s3_fill 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.s3_stage.visible .s3_pct {
+  animation: s3_fadeIn 0.4s ease forwards;
+  animation-delay: 0.6s;
+}
+
+.s3_stage.visible .s3_label {
+  animation: s3_fadeIn 0.4s ease forwards;
+  animation-delay: 0.9s;
+}
+
+.s3_stage.visible .s3_quote {
+  animation: s3_quoteIn 0.5s ease forwards;
+  animation-delay: 1.4s;
+}
+
+/* === S4 Animation === */
+
+.s4_stage {
+  max-width: 360px;
+  height: 240px;
+  font-family: -apple-system, 'Helvetica Neue', 'PingFang SC', sans-serif;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 20px;
+  box-sizing: border-box;
+}
+
+.s4_card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(244, 63, 94, 0.06);
+  border-left: 3px solid #F43F5E;
+  border-radius: 8px;
+  padding: 10px 14px;
+  opacity: 0;
+  transform: translateX(40px);
+  transition: none;
+}
+
+.s4_stage.visible .s4_card {
+  animation: s4_slideIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.s4_stage.visible .s4_card:nth-child(1) { animation-delay: 0s; }
+.s4_stage.visible .s4_card:nth-child(2) { animation-delay: 0.15s; }
+.s4_stage.visible .s4_card:nth-child(3) { animation-delay: 0.3s; }
+
+.s4_icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.s4_card:nth-child(1) .s4_icon { background: rgba(244, 63, 94, 0.12); }
+.s4_card:nth-child(2) .s4_icon { background: rgba(244, 63, 94, 0.09); }
+.s4_card:nth-child(3) .s4_icon { background: rgba(244, 63, 94, 0.09); }
+
+.s4_card:nth-child(2) { border-left-color: rgba(244, 63, 94, 0.7); }
+.s4_card:nth-child(3) { border-left-color: rgba(244, 63, 94, 0.7); }
+
+.s4_text {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.s4_label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.s4_pct {
+  font-size: 18px;
+  font-weight: 700;
+  color: #14B8A6;
+  font-variant-numeric: tabular-nums;
+}
+
+.s4_footer {
+  text-align: center;
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 4px;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.s4_stage.visible .s4_footer {
+  animation: s4_fadeUp 0.4s ease forwards;
+  animation-delay: 0.55s;
+}
+
+.s4_footer span {
+  color: #14B8A6;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+@keyframes s4_slideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes s4_fadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === S5 Animation === */
+
+.s5_stage {
+  max-width: 360px;
+  height: 220px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s5_stage.visible {
+  opacity: 1;
+}
+
+.s5_arena {
+  position: relative;
+  width: 280px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Person silhouette */
+.s5_person {
+  position: absolute;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.s5_head {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2.5px solid #e2e8f0;
+  background: transparent;
+  position: relative;
+  z-index: 10;
+}
+.s5_body {
+  width: 2.5px;
+  height: 22px;
+  background: #e2e8f0;
+  margin-top: -1px;
+}
+.s5_arms {
+  position: absolute;
+  top: 46px;
+  width: 36px;
+  height: 2.5px;
+  background: #e2e8f0;
+  border-radius: 1px;
+}
+
+/* Ray containers */
+.s5_rays {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-60%);
+  width: 110px;
+  height: 80px;
+  overflow: hidden;
+}
+.s5_rays--left {
+  right: 50%;
+  margin-right: 10px;
+  direction: rtl;
+}
+.s5_rays--right {
+  left: 50%;
+  margin-left: 10px;
+}
+
+/* Individual rays */
+.s5_ray {
+  position: absolute;
+  top: 50%;
+  height: 3px;
+  border-radius: 2px;
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.s5_rays--left .s5_ray {
+  right: 0;
+  transform-origin: right center;
+  background: #14B8A6;
+}
+.s5_rays--right .s5_ray {
+  left: 0;
+  transform-origin: left center;
+  background: #F43F5E;
+}
+
+.s5_ray:nth-child(1) { top: 15%; width: 60px; }
+.s5_ray:nth-child(2) { top: 30%; width: 80px; }
+.s5_ray:nth-child(3) { top: 45%; width: 95px; }
+.s5_ray:nth-child(4) { top: 60%; width: 80px; }
+.s5_ray:nth-child(5) { top: 75%; width: 55px; }
+
+/* Wave rings */
+.s5_wave {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+.s5_wave--teal {
+  right: 50%;
+  top: 50%;
+  margin-right: -20px;
+  margin-top: -40px;
+  width: 80px;
+  height: 80px;
+  border: 1.5px solid #14B8A6;
+}
+.s5_wave--rose {
+  left: 50%;
+  top: 50%;
+  margin-left: -20px;
+  margin-top: -40px;
+  width: 80px;
+  height: 80px;
+  border: 1.5px solid #F43F5E;
+}
+
+/* Tension blend zone */
+.s5_blend {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -60%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(20,184,166,0.25) 0%, rgba(244,63,94,0.25) 100%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  z-index: 5;
+}
+
+/* Labels */
+.s5_label {
+  position: absolute;
+  top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  opacity: 0;
+  transform: translateY(6px);
+}
+.s5_label--hope {
+  left: 12px;
+  color: #14B8A6;
+}
+.s5_label--fear {
+  right: 12px;
+  color: #F43F5E;
+}
+
+/* Bottom stat */
+.s5_stat {
+  text-align: center;
+  margin-top: 8px;
+  opacity: 0;
+  transform: translateY(10px);
+}
+.s5_stat__num {
+  font-size: 36px;
+  font-weight: 800;
+  background: linear-gradient(90deg, #14B8A6, #F43F5E);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+.s5_stat__desc {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+/* ---- Animations (only when visible) ---- */
+.s5_stage.visible .s5_ray {
+  animation: s5_rayPulse 2.4s ease-in-out infinite;
+}
+.s5_rays--left .s5_ray:nth-child(1) { animation-delay: 0s; }
+.s5_rays--left .s5_ray:nth-child(2) { animation-delay: 0.12s; }
+.s5_rays--left .s5_ray:nth-child(3) { animation-delay: 0.2s; }
+.s5_rays--left .s5_ray:nth-child(4) { animation-delay: 0.12s; }
+.s5_rays--left .s5_ray:nth-child(5) { animation-delay: 0s; }
+
+.s5_stage.visible .s5_rays--right .s5_ray {
+  animation: s5_rayPulse 2.4s ease-in-out infinite;
+  animation-delay: 1.2s;
+}
+.s5_stage.visible .s5_rays--right .s5_ray:nth-child(1) { animation-delay: 1.2s; }
+.s5_stage.visible .s5_rays--right .s5_ray:nth-child(2) { animation-delay: 1.32s; }
+.s5_stage.visible .s5_rays--right .s5_ray:nth-child(3) { animation-delay: 1.4s; }
+.s5_stage.visible .s5_rays--right .s5_ray:nth-child(4) { animation-delay: 1.32s; }
+.s5_stage.visible .s5_rays--right .s5_ray:nth-child(5) { animation-delay: 1.2s; }
+
+@keyframes s5_rayPulse {
+  0% { opacity: 0; transform: scaleX(0); }
+  15% { opacity: 0.8; transform: scaleX(0.6); }
+  35% { opacity: 0.9; transform: scaleX(1); }
+  50% { opacity: 0.4; transform: scaleX(0.8); }
+  65% { opacity: 0; transform: scaleX(0); }
+  100% { opacity: 0; transform: scaleX(0); }
+}
+
+.s5_stage.visible .s5_wave--teal {
+  animation: s5_waveExpand 2.4s ease-out infinite;
+}
+.s5_stage.visible .s5_wave--rose {
+  animation: s5_waveExpand 2.4s ease-out infinite 1.2s;
+}
+
+@keyframes s5_waveExpand {
+  0% { opacity: 0.5; transform: scale(0.3); }
+  60% { opacity: 0.15; transform: scale(1.4); }
+  100% { opacity: 0; transform: scale(1.8); }
+}
+
+.s5_stage.visible .s5_blend {
+  animation: s5_blendPulse 2.4s ease-in-out infinite;
+}
+@keyframes s5_blendPulse {
+  0%, 100% { opacity: 0.3; transform: translate(-50%, -60%) scale(0.9); }
+  25% { opacity: 0.7; transform: translate(-50%, -60%) scale(1.1); background: radial-gradient(circle, rgba(20,184,166,0.4) 0%, rgba(244,63,94,0.15) 100%); }
+  75% { opacity: 0.7; transform: translate(-50%, -60%) scale(1.1); background: radial-gradient(circle, rgba(20,184,166,0.15) 0%, rgba(244,63,94,0.4) 100%); }
+}
+
+.s5_stage.visible .s5_label {
+  animation: s5_fadeUp 0.6s ease forwards;
+}
+.s5_label--hope { animation-delay: 0.3s !important; }
+.s5_label--fear { animation-delay: 0.6s !important; }
+
+.s5_stage.visible .s5_stat {
+  animation: s5_fadeUp 0.7s ease forwards 0.9s;
+}
+
+@keyframes s5_fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === S6 Animation === */
+
+.s6_stage {
+  max-width: 360px;
+  height: 240px;
+  font-family: -apple-system, 'Helvetica Neue', sans-serif;
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.s6_half {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  position: relative;
+  gap: 14px;
+}
+
+.s6_top {
+  background: linear-gradient(135deg, rgba(20,184,166,0.12) 0%, rgba(20,184,166,0.06) 100%);
+}
+
+.s6_bottom {
+  background: linear-gradient(135deg, rgba(244,63,94,0.12) 0%, rgba(244,63,94,0.06) 100%);
+}
+
+.s6_divider {
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent 0%, rgba(120,120,140,0.3) 20%, rgba(120,120,140,0.3) 80%, transparent 100%);
+  flex-shrink: 0;
+}
+
+.s6_brain {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.s6_brain svg {
+  width: 48px;
+  height: 48px;
+}
+
+.s6_brain_fill {
+  opacity: 0.15;
+  transition: none;
+}
+
+.s6_stage.visible .s6_top .s6_brain_fill {
+  animation: s6_fillUp 1.8s ease-out 0.5s forwards;
+}
+
+.s6_stage.visible .s6_bottom .s6_brain_fill {
+  animation: s6_fillDown 1.8s ease-out 0.5s forwards;
+}
+
+@keyframes s6_fillUp {
+  0% { opacity: 0.15; }
+  100% { opacity: 1; }
+}
+
+@keyframes s6_fillDown {
+  0% { opacity: 0.5; }
+  100% { opacity: 0.15; }
+}
+
+.s6_brain_glow {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.s6_stage.visible .s6_top .s6_brain_glow {
+  animation: s6_glowIn 2s ease-out 0.8s forwards;
+  background: radial-gradient(circle, rgba(20,184,166,0.3) 0%, transparent 70%);
+}
+
+@keyframes s6_glowIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.s6_info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.s6_headline {
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.s6_top .s6_headline { color: #14B8A6; }
+.s6_bottom .s6_headline { color: #F43F5E; }
+
+.s6_pct {
+  font-size: 22px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.s6_sub {
+  font-size: 11px;
+  color: rgba(120,120,140,0.8);
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+.s6_stage.visible .s6_sub {
+  animation: s6_fadeUp 0.6s ease-out forwards;
+}
+
+.s6_stage.visible .s6_top .s6_sub {
+  animation-delay: 1.6s;
+}
+
+.s6_stage.visible .s6_bottom .s6_sub {
+  animation-delay: 1.8s;
+}
+
+@keyframes s6_fadeUp {
+  0% { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.s6_callout {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(244,63,94,0.1);
+  border: 1px solid rgba(244,63,94,0.25);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #F43F5E;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+.s6_stage.visible .s6_callout {
+  animation: s6_popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) 2.2s forwards;
+}
+
+@keyframes s6_popIn {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.8); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+/* Counter animations using CSS steps */
+.s6_counter {
+  display: inline-block;
+  overflow: hidden;
+  height: 1.2em;
+  vertical-align: baseline;
+  position: relative;
+}
+
+.s6_counter_inner {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2em;
+}
+
+.s6_counter_inner span {
+  height: 1.2em;
+  display: flex;
+  align-items: center;
+}
+
+.s6_top .s6_counter .s6_counter_inner {
+  transform: translateY(0);
+}
+
+.s6_stage.visible .s6_top .s6_counter .s6_counter_inner {
+  animation: s6_countTo33 1.8s ease-out 0.3s forwards;
+}
+
+.s6_bottom .s6_counter .s6_counter_inner {
+  transform: translateY(0);
+}
+
+.s6_stage.visible .s6_bottom .s6_counter .s6_counter_inner {
+  animation: s6_countTo17 1.8s ease-out 0.3s forwards;
+}
+
+@keyframes s6_countTo33 {
+  0% { transform: translateY(0); }
+  10% { transform: translateY(-10%); }
+  20% { transform: translateY(-20%); }
+  30% { transform: translateY(-30%); }
+  40% { transform: translateY(-40%); }
+  50% { transform: translateY(-50%); }
+  60% { transform: translateY(-60%); }
+  70% { transform: translateY(-70%); }
+  80% { transform: translateY(-80%); }
+  90% { transform: translateY(-90%); }
+  100% { transform: translateY(calc(-100% + 1.2em)); }
+}
+
+@keyframes s6_countTo17 {
+  0% { transform: translateY(0); }
+  15% { transform: translateY(-15%); }
+  30% { transform: translateY(-30%); }
+  50% { transform: translateY(-50%); }
+  70% { transform: translateY(-70%); }
+  85% { transform: translateY(-85%); }
+  100% { transform: translateY(calc(-100% + 1.2em)); }
+}
+
+/* Pulse on the teal brain */
+.s6_stage.visible .s6_top .s6_brain svg {
+  animation: s6_pulse 2s ease-in-out 1.5s infinite;
+}
+
+@keyframes s6_pulse {
+  0%, 100% { filter: drop-shadow(0 0 0px transparent); }
+  50% { filter: drop-shadow(0 0 6px rgba(20,184,166,0.4)); }
+}
+
+/* Dim pulse on rose brain */
+.s6_stage.visible .s6_bottom .s6_brain svg {
+  animation: s6_dimPulse 2.5s ease-in-out 1.5s infinite;
+}
+
+@keyframes s6_dimPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* === S7 Animation === */
+
+.s7_stage {
+  max-width: 360px;
+  height: 280px;
+  font-family: -apple-system, 'Helvetica Neue', sans-serif;
+  color: #1e293b;
+  position: relative;
+  overflow: hidden;
+  padding: 16px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.s7_header {
+  text-align: center;
+  margin-bottom: 12px;
+  opacity: 0;
+}
+
+.s7_stage.visible .s7_header {
+  animation: s7_fadeIn 0.5s ease forwards;
+}
+
+.s7_header_num {
+  font-size: 28px;
+  font-weight: 700;
+  color: #14B8A6;
+}
+
+.s7_header_label {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.s7_rows {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.s7_row {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  opacity: 0;
+}
+
+.s7_stage.visible .s7_row {
+  animation: s7_fadeIn 0.4s ease forwards;
+}
+
+.s7_stage.visible .s7_row:nth-child(1) { animation-delay: 0.3s; }
+.s7_stage.visible .s7_row:nth-child(2) { animation-delay: 0.45s; }
+.s7_stage.visible .s7_row:nth-child(3) { animation-delay: 0.6s; }
+.s7_stage.visible .s7_row:nth-child(4) { animation-delay: 0.75s; }
+.s7_stage.visible .s7_row:nth-child(5) { animation-delay: 0.9s; }
+.s7_stage.visible .s7_row:nth-child(6) { animation-delay: 1.05s; }
+.s7_stage.visible .s7_row:nth-child(7) { animation-delay: 1.2s; }
+
+.s7_region {
+  width: 100px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: right;
+  padding-right: 10px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.s7_bar_wrap {
+  flex: 1;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.s7_bar_neg {
+  height: 100%;
+  background: #F43F5E;
+  border-radius: 3px 0 0 3px;
+  transform-origin: right center;
+  transform: scaleX(0);
+  position: absolute;
+  right: 50%;
+}
+
+.s7_bar_pos {
+  height: 100%;
+  background: #14B8A6;
+  border-radius: 0 3px 3px 0;
+  transform-origin: left center;
+  transform: scaleX(0);
+  position: absolute;
+  left: 50%;
+}
+
+.s7_stage.visible .s7_row:nth-child(1) .s7_bar_neg,
+.s7_stage.visible .s7_row:nth-child(1) .s7_bar_pos { animation: s7_growBar 0.6s ease forwards; animation-delay: 0.5s; }
+.s7_stage.visible .s7_row:nth-child(2) .s7_bar_neg,
+.s7_stage.visible .s7_row:nth-child(2) .s7_bar_pos { animation: s7_growBar 0.6s ease forwards; animation-delay: 0.65s; }
+.s7_stage.visible .s7_row:nth-child(3) .s7_bar_neg,
+.s7_stage.visible .s7_row:nth-child(3) .s7_bar_pos { animation: s7_growBar 0.6s ease forwards; animation-delay: 0.8s; }
+.s7_stage.visible .s7_row:nth-child(4) .s7_bar_neg,
+.s7_stage.visible .s7_row:nth-child(4) .s7_bar_pos { animation: s7_growBar 0.6s ease forwards; animation-delay: 0.95s; }
+.s7_stage.visible .s7_row:nth-child(5) .s7_bar_neg,
+.s7_stage.visible .s7_row:nth-child(5) .s7_bar_pos { animation: s7_growBar 0.6s ease forwards; animation-delay: 1.1s; }
+.s7_stage.visible .s7_row:nth-child(6) .s7_bar_neg,
+.s7_stage.visible .s7_row:nth-child(6) .s7_bar_pos { animation: s7_growBar 0.6s ease forwards; animation-delay: 1.25s; }
+.s7_stage.visible .s7_row:nth-child(7) .s7_bar_neg,
+.s7_stage.visible .s7_row:nth-child(7) .s7_bar_pos { animation: s7_growBar 0.6s ease forwards; animation-delay: 1.4s; }
+
+.s7_pct {
+  font-size: 10px;
+  font-weight: 600;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+}
+
+.s7_pct_neg {
+  color: #F43F5E;
+}
+
+.s7_pct_pos {
+  color: #14B8A6;
+}
+
+.s7_stage.visible .s7_row:nth-child(1) .s7_pct { animation: s7_fadeIn 0.3s ease forwards; animation-delay: 1.1s; }
+.s7_stage.visible .s7_row:nth-child(2) .s7_pct { animation: s7_fadeIn 0.3s ease forwards; animation-delay: 1.25s; }
+.s7_stage.visible .s7_row:nth-child(3) .s7_pct { animation: s7_fadeIn 0.3s ease forwards; animation-delay: 1.4s; }
+.s7_stage.visible .s7_row:nth-child(4) .s7_pct { animation: s7_fadeIn 0.3s ease forwards; animation-delay: 1.55s; }
+.s7_stage.visible .s7_row:nth-child(5) .s7_pct { animation: s7_fadeIn 0.3s ease forwards; animation-delay: 1.7s; }
+.s7_stage.visible .s7_row:nth-child(6) .s7_pct { animation: s7_fadeIn 0.3s ease forwards; animation-delay: 1.85s; }
+.s7_stage.visible .s7_row:nth-child(7) .s7_pct { animation: s7_fadeIn 0.3s ease forwards; animation-delay: 2.0s; }
+
+.s7_center_line {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #cbd5e1;
+}
+
+@keyframes s7_fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s7_growBar {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* === S8 Animation === */
+
+.s8_stage {
+  position: relative;
+  max-width: 360px;
+  height: 220px;
+  background: transparent;
+  overflow: hidden;
+  font-family: -apple-system, 'Helvetica Neue', sans-serif;
+}
+
+.s8_darkness {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 40%, #1e293b 0%, #0F172A 70%);
+  opacity: 0;
+}
+
+.s8_stage.visible .s8_darkness {
+  animation: s8_fadeIn 1.5s ease forwards;
+}
+
+.s8_core {
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #14B8A6;
+  opacity: 0;
+}
+
+.s8_stage.visible .s8_core {
+  animation: s8_coreAppear 1s ease 1s forwards, s8_heartbeat 1.8s ease-in-out 2s infinite;
+}
+
+.s8_glow {
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(20,184,166,0.35) 0%, rgba(20,184,166,0.08) 50%, transparent 70%);
+  opacity: 0;
+}
+
+.s8_stage.visible .s8_glow {
+  animation: s8_glowExpand 4s ease 2.5s forwards;
+}
+
+.s8_glow_outer {
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(20,184,166,0.12) 0%, rgba(20,184,166,0.03) 40%, transparent 65%);
+  opacity: 0;
+}
+
+.s8_stage.visible .s8_glow_outer {
+  animation: s8_glowOuterExpand 5s ease 3s forwards;
+}
+
+.s8_frag {
+  position: absolute;
+  background: #F43F5E;
+  opacity: 0;
+  border-radius: 1px;
+}
+
+.s8_frag--1 { top: 38px; left: 95px; width: 18px; height: 1.5px; transform: rotate(25deg); }
+.s8_frag--2 { top: 52px; left: 235px; width: 14px; height: 1.5px; transform: rotate(-40deg); }
+.s8_frag--3 { top: 95px; left: 72px; width: 20px; height: 1.5px; transform: rotate(65deg); }
+.s8_frag--4 { top: 88px; left: 260px; width: 12px; height: 1.5px; transform: rotate(-15deg); }
+.s8_frag--5 { top: 110px; left: 120px; width: 16px; height: 1.5px; transform: rotate(80deg); }
+.s8_frag--6 { top: 45px; left: 170px; width: 10px; height: 1.5px; transform: rotate(-55deg); }
+.s8_frag--7 { top: 100px; left: 210px; width: 15px; height: 1.5px; transform: rotate(35deg); }
+
+.s8_stage.visible .s8_frag--1 { animation: s8_fragAppear 2s ease 1.5s forwards, s8_fragFade 3s ease 4s forwards; }
+.s8_stage.visible .s8_frag--2 { animation: s8_fragAppear 2s ease 1.8s forwards, s8_fragFade 3s ease 4.2s forwards; }
+.s8_stage.visible .s8_frag--3 { animation: s8_fragAppear 2s ease 1.6s forwards, s8_fragFade 3s ease 4.5s forwards; }
+.s8_stage.visible .s8_frag--4 { animation: s8_fragAppear 2s ease 2s forwards, s8_fragFade 3s ease 4.3s forwards; }
+.s8_stage.visible .s8_frag--5 { animation: s8_fragAppear 2s ease 1.7s forwards, s8_fragFade 3s ease 4.6s forwards; }
+.s8_stage.visible .s8_frag--6 { animation: s8_fragAppear 2s ease 1.9s forwards, s8_fragFade 3s ease 4.1s forwards; }
+.s8_stage.visible .s8_frag--7 { animation: s8_fragAppear 2s ease 2.1s forwards, s8_fragFade 3s ease 4.4s forwards; }
+
+.s8_dot {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(244,63,94,0.4);
+  opacity: 0;
+}
+
+.s8_dot--1 { top: 30px; left: 140px; }
+.s8_dot--2 { top: 60px; left: 80px; }
+.s8_dot--3 { top: 48px; left: 280px; }
+.s8_dot--4 { top: 105px; left: 55px; }
+.s8_dot--5 { top: 92px; left: 290px; }
+
+.s8_stage.visible .s8_dot--1 { animation: s8_fragAppear 1.5s ease 1.8s forwards, s8_fragFade 2s ease 4.5s forwards; }
+.s8_stage.visible .s8_dot--2 { animation: s8_fragAppear 1.5s ease 2s forwards, s8_fragFade 2s ease 4.8s forwards; }
+.s8_stage.visible .s8_dot--3 { animation: s8_fragAppear 1.5s ease 1.6s forwards, s8_fragFade 2s ease 4.2s forwards; }
+.s8_stage.visible .s8_dot--4 { animation: s8_fragAppear 1.5s ease 2.2s forwards, s8_fragFade 2s ease 5s forwards; }
+.s8_stage.visible .s8_dot--5 { animation: s8_fragAppear 1.5s ease 1.9s forwards, s8_fragFade 2s ease 4.6s forwards; }
+
+.s8_ring {
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(20,184,166,0.15);
+  opacity: 0;
+}
+
+.s8_stage.visible .s8_ring {
+  animation: s8_ringPulse 3s ease-in-out 3s infinite;
+}
+
+.s8_quote {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  opacity: 0;
+  padding: 0 24px;
+}
+
+.s8_quote_text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(20,184,166,0.85);
+  letter-spacing: 0.5px;
+  margin: 0 0 4px 0;
+}
+
+.s8_quote_attr {
+  font-size: 10px;
+  color: rgba(148,163,184,0.6);
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.s8_stage.visible .s8_quote {
+  animation: s8_quoteFade 3s ease 5s forwards;
+}
+
+.s8_line_h {
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(20,184,166,0.1), transparent);
+  opacity: 0;
+}
+
+.s8_stage.visible .s8_line_h {
+  animation: s8_lineExpand 4s ease 3.5s forwards;
+}
+
+@keyframes s8_fadeIn {
+  to { opacity: 1; }
+}
+
+@keyframes s8_coreAppear {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes s8_heartbeat {
+  0% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 8px rgba(20,184,166,0.4); }
+  15% { transform: translate(-50%, -50%) scale(1.3); box-shadow: 0 0 16px rgba(20,184,166,0.6); }
+  30% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 8px rgba(20,184,166,0.4); }
+  45% { transform: translate(-50%, -50%) scale(1.15); box-shadow: 0 0 12px rgba(20,184,166,0.5); }
+  60% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 8px rgba(20,184,166,0.4); }
+  100% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 8px rgba(20,184,166,0.4); }
+}
+
+@keyframes s8_glowExpand {
+  0% { opacity: 0; width: 12px; height: 12px; }
+  30% { opacity: 0.7; }
+  100% { opacity: 1; width: 160px; height: 160px; }
+}
+
+@keyframes s8_glowOuterExpand {
+  0% { opacity: 0; width: 12px; height: 12px; }
+  30% { opacity: 0.5; }
+  100% { opacity: 0.8; width: 260px; height: 260px; }
+}
+
+@keyframes s8_fragAppear {
+  0% { opacity: 0; }
+  100% { opacity: 0.45; }
+}
+
+@keyframes s8_fragFade {
+  0% { opacity: 0.45; }
+  100% { opacity: 0; }
+}
+
+@keyframes s8_ringPulse {
+  0% { opacity: 0; width: 40px; height: 40px; }
+  50% { opacity: 0.3; width: 80px; height: 80px; }
+  100% { opacity: 0; width: 120px; height: 120px; }
+}
+
+@keyframes s8_quoteFade {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s8_lineExpand {
+  0% { opacity: 0; width: 0; }
+  100% { opacity: 0.5; width: 200px; }
+}
+
+/* === A1 Animation === */
+
+.a1_stage {
+  max-width: 360px;
+  height: 220px;
+  margin: 0 auto;
+  font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.a1_stage.visible {
+  opacity: 1;
+}
+
+.a1_row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+/* Left card - time saved */
+.a1_left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  transform: translateX(-30px);
+}
+.a1_stage.visible .a1_left {
+  animation: a1_slideInLeft 0.6s ease 0.2s forwards;
+}
+
+.a1_left .a1_num {
+  font-size: 48px;
+  font-weight: 800;
+  color: #14B8A6;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+.a1_left .a1_icon {
+  font-size: 28px;
+  margin: 4px 0;
+}
+.a1_left .a1_label {
+  font-size: 13px;
+  color: #14B8A6;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+/* VS divider */
+.a1_vs {
+  font-size: 16px;
+  font-weight: 800;
+  color: #94a3b8;
+  background: rgba(148,163,184,0.12);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0;
+  transform: scale(0.3);
+}
+.a1_stage.visible .a1_vs {
+  animation: a1_popIn 0.4s ease 0.5s forwards;
+}
+
+/* Right card - treadmill */
+.a1_right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  transform: translateX(30px);
+}
+.a1_stage.visible .a1_right {
+  animation: a1_slideInRight 0.6s ease 0.3s forwards;
+}
+
+.a1_right .a1_num {
+  font-size: 48px;
+  font-weight: 800;
+  color: #F43F5E;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+
+/* Treadmill scene */
+.a1_treadmill {
+  position: relative;
+  width: 64px;
+  height: 40px;
+  margin: 4px 0;
+  overflow: hidden;
+}
+
+.a1_runner {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 24px;
+  z-index: 2;
+}
+.a1_stage.visible .a1_runner {
+  animation: a1_bounce 0.45s ease-in-out 0.6s infinite alternate;
+}
+
+.a1_belt {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 10px;
+  background: repeating-linear-gradient(
+    90deg,
+    #F43F5E 0px,
+    #F43F5E 8px,
+    rgba(244,63,94,0.25) 8px,
+    rgba(244,63,94,0.25) 16px
+  );
+  background-size: 16px 10px;
+  border-radius: 3px;
+}
+.a1_stage.visible .a1_belt {
+  animation: a1_beltScroll 0.5s linear 0.6s infinite;
+}
+
+.a1_right .a1_label {
+  font-size: 13px;
+  color: #F43F5E;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+/* Bottom tagline */
+.a1_tagline {
+  margin-top: 18px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #334155;
+  opacity: 0;
+  transform: translateY(10px);
+  letter-spacing: 0.5px;
+}
+.a1_stage.visible .a1_tagline {
+  animation: a1_fadeUp 0.7s ease 1s forwards;
+}
+.a1_tagline span {
+  color: #F43F5E;
+}
+
+/* Keyframes */
+@keyframes a1_slideInLeft {
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes a1_slideInRight {
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes a1_popIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes a1_fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes a1_beltScroll {
+  to { background-position: -16px 0; }
+}
+@keyframes a1_bounce {
+  0% { transform: translateX(-50%) translateY(0); }
+  100% { transform: translateX(-50%) translateY(-3px); }
+}
+
+/* === A2 Animation === */
+
+.a2_stage{max-width:360px;margin:0 auto;font-family:-apple-system,sans-serif;padding:20px 16px 18px;box-sizing:border-box}
+.a2_title{font-size:11px;color:#94a3b8;letter-spacing:.5px;margin-bottom:16px;text-transform:uppercase}
+.a2_legend{display:flex;gap:16px;margin-bottom:14px;font-size:11px;color:#64748b}
+.a2_legend span{display:flex;align-items:center;gap:5px}
+.a2_legend span::before{content:'';width:10px;height:10px;border-radius:2px;display:inline-block}
+.a2_leg_t::before{background:#14B8A6}
+.a2_leg_r::before{background:#F43F5E}
+.a2_row{margin-bottom:14px;position:relative}
+.a2_row:last-of-type{margin-bottom:18px}
+.a2_label{font-size:13px;color:#e2e8f0;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.a2_bars{display:flex;gap:6px;align-items:center}
+.a2_bar_wrap{height:22px;border-radius:4px;overflow:hidden;position:relative}
+.a2_bar{height:100%;width:0;border-radius:4px;position:relative}
+.a2_bar_t{background:linear-gradient(90deg,#14B8A6,#2dd4bf)}
+.a2_bar_r{background:linear-gradient(90deg,#F43F5E,#fb7185)}
+.a2_pct{font-size:10px;color:#cbd5e1;margin-left:4px;opacity:0;white-space:nowrap;transition:opacity .3s}
+.a2_near{display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:#fbbf24;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.25);border-radius:10px;padding:1px 8px;margin-left:6px;opacity:0;transform:scale(.7);transition:opacity .4s,transform .4s}
+.a2_foot{font-size:12px;color:#94a3b8;text-align:center;border-top:1px solid rgba(148,163,184,.15);padding-top:12px;opacity:0;transform:translateY(8px);transition:opacity .5s,transform .5s}
+.a2_foot em{font-style:normal;color:#e2e8f0}
+
+/* Animations */
+.a2_stage.visible .a2_row:nth-child(1) .a2_bar_t{animation:a2grow .7s .2s ease-out forwards}
+.a2_stage.visible .a2_row:nth-child(1) .a2_bar_r{animation:a2grow .7s .35s ease-out forwards}
+.a2_stage.visible .a2_row:nth-child(2) .a2_bar_t{animation:a2grow .7s .5s ease-out forwards}
+.a2_stage.visible .a2_row:nth-child(2) .a2_bar_r{animation:a2grow .7s .65s ease-out forwards}
+.a2_stage.visible .a2_row:nth-child(3) .a2_bar_t{animation:a2grow .7s .8s ease-out forwards}
+.a2_stage.visible .a2_row:nth-child(3) .a2_bar_r{animation:a2grow .7s .95s ease-out forwards}
+
+.a2_stage.visible .a2_row:nth-child(1) .a2_pct_t{opacity:1;transition-delay:.7s}
+.a2_stage.visible .a2_row:nth-child(1) .a2_pct_r{opacity:1;transition-delay:.85s}
+.a2_stage.visible .a2_row:nth-child(2) .a2_pct_t{opacity:1;transition-delay:1s}
+.a2_stage.visible .a2_row:nth-child(2) .a2_pct_r{opacity:1;transition-delay:1.15s}
+.a2_stage.visible .a2_row:nth-child(3) .a2_pct_t{opacity:1;transition-delay:1.3s}
+.a2_stage.visible .a2_row:nth-child(3) .a2_pct_r{opacity:1;transition-delay:1.45s}
+
+.a2_stage.visible .a2_near{opacity:1;transform:scale(1);transition-delay:1.6s}
+.a2_stage.visible .a2_foot{opacity:1;transform:translateY(0);transition-delay:1.8s}
+
+@keyframes a2grow{
+  from{width:0}
+  to{width:var(--w)}
+}
+
+</style>
+
+<meta name="description" content="去年 12 月，Anthropic 做了一件前所未有的事：让 Claude 充当访谈者，邀请全球用户坐下来聊聊他们对 AI 的看法。一周之内， 80,508 人 参与了对话，覆盖 159 个国家、70 种语言 。这可能是人类历史上规模最大、语言最多元的质性研究。不是问卷打分，不是 A/B 选择——而是 开放式的深度对话 ，让每个人用自己的话说出希望与恐惧。">
+<link rel="canonical" href="https://chendi.me/readings/81k-interviews/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb" id="breadcrumb"><span id="bc-text">概览</span></div>
+<button class="back-btn" id="back-btn" onclick="goBack()">←</button>
+
+<!-- ═══ 概览层 ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+  <!-- S1: Hero -->
+  <section class="feed-section" style="background:var(--bg-act1);">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT I — 倾听</p>
+      <h2 class="big-statement reveal">81,000 人<br>的 AI 心声</h2>
+      <p class="body-text reveal reveal-d1">去年 12 月，Anthropic 做了一件前所未有的事：让 Claude 充当访谈者，邀请全球用户坐下来聊聊他们对 AI 的看法。一周之内，<span class="hl">80,508 人</span>参与了对话，覆盖 <span class="hl2">159 个国家、70 种语言</span>。这可能是人类历史上规模最大、语言最多元的质性研究。不是问卷打分，不是 A/B 选择——而是<span class="hl">开放式的深度对话</span>，让每个人用自己的话说出希望与恐惧。</p>
+      <div class="anim-stage reveal reveal-d2" id="s1-anim">
+        <div class="s1_stage">
+  <span class="s1_label s1_l1">English</span>
+  <span class="s1_label s1_l2">中文</span>
+  <span class="s1_label s1_l3">Español</span>
+  <span class="s1_label s1_l4">العربية</span>
+  <span class="s1_label s1_l5">日本語</span>
+  <span class="s1_label s1_l6">한국어</span>
+  <span class="s1_label s1_l7">Français</span>
+  <span class="s1_label s1_l8">Português</span>
+  <div class="s1_counter"></div>
+  <div class="s1_subtitle">人参与对话</div>
+  <div class="s1_footer">159 国家 · 70 种语言</div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>Over one week in December, Anthropic invited everyone with a Claude.ai account to sit down with Anthropic Interviewer—a version of Claude prompted to conduct a conversational interview. 80,508 people, across 159 countries and 70 languages, took the interview.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S2: What people want -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT I — 愿景</p>
+      <h2 class="big-statement reveal">他们最想要什么？</h2>
+      <p class="body-text reveal reveal-d1">排名第一的愿望是<span class="hl">专业卓越</span>（18.8%）——让 AI 处理杂事，自己专注于高价值工作。但当访谈者追问「这背后你真正想要的是什么？」时，答案变了。自动化邮件的愿望，实际上是<span class="hl2">想多陪家人</span>。提高效率的愿望，实际上是<span class="hl">想活得更好</span>。九大愿景看似分散，底层只有几个人类永恒的渴望：更多时间、更多自主权、更深的连接。</p>
+      <div class="anim-stage reveal reveal-d2" id="s2-anim">
+        <div class="s2_stage">
+  <div class="s2_title">人们最想用 AI 做的 9 件事</div>
+  <div class="s2_row s2_r1">
+    <span class="s2_label">专业卓越</span>
+    <div class="s2_track"><div class="s2_bar top"></div></div>
+    <span class="s2_pct">18.8%</span>
+  </div>
+  <div class="s2_row s2_r2">
+    <span class="s2_label">个人转变</span>
+    <div class="s2_track"><div class="s2_bar"></div></div>
+    <span class="s2_pct">13.7%</span>
+  </div>
+  <div class="s2_row s2_r3">
+    <span class="s2_label">生活管理</span>
+    <div class="s2_track"><div class="s2_bar"></div></div>
+    <span class="s2_pct">13.5%</span>
+  </div>
+  <div class="s2_row s2_r4">
+    <span class="s2_label">时间自由</span>
+    <div class="s2_track"><div class="s2_bar"></div></div>
+    <span class="s2_pct">11.1%</span>
+  </div>
+  <div class="s2_row s2_r5">
+    <span class="s2_label">财务独立</span>
+    <div class="s2_track"><div class="s2_bar"></div></div>
+    <span class="s2_pct">9.7%</span>
+  </div>
+  <div class="s2_row s2_r6">
+    <span class="s2_label">社会变革</span>
+    <div class="s2_track"><div class="s2_bar"></div></div>
+    <span class="s2_pct">9.4%</span>
+  </div>
+  <div class="s2_row s2_r7">
+    <span class="s2_label">创业</span>
+    <div class="s2_track"><div class="s2_bar"></div></div>
+    <span class="s2_pct">8.7%</span>
+  </div>
+  <div class="s2_row s2_r8">
+    <span class="s2_label">学习成长</span>
+    <div class="s2_track"><div class="s2_bar"></div></div>
+    <span class="s2_pct">8.4%</span>
+  </div>
+  <div class="s2_row s2_r9">
+    <span class="s2_label">创意表达</span>
+    <div class="s2_track"><div class="s2_bar"></div></div>
+    <span class="s2_pct">5.6%</span>
+  </div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>Many others similarly started the interview talking about productivity, but after Anthropic Interviewer asked about their underlying hope behind it, other priorities surfaced. It wasn't about doing better work, but increasing their quality of life outside of it. Using AI to automate emails became, in actuality, a desire to spend more time with family.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S3: Is AI delivering? -->
+  <section class="feed-section" style="background:var(--bg-act2);">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT II — 现实</p>
+      <h2 class="big-statement reveal">AI 真的<br>帮到了吗？</h2>
+      <p class="body-text reveal reveal-d1"><span class="hl">81% 的人说是</span>。一个开了 20 年肉铺的智利人，一辈子只碰过两三次电脑，现在用 AI 创业。一个印度律师曾经恐惧数学和莎士比亚，现在用 AI 读完了《哈姆雷特》15 页，还重新学会了三角函数。一个乌克兰的失语者，和 Claude 一起做了一个语音合成机器人——<span class="hl2">「这是我做梦都觉得不可能的事」</span>。但也有 19% 的人说 AI 没有兑现承诺：「AI 应该去擦窗户、洗碗，让我写诗画画。现在完全反过来了。」</p>
+      <div class="anim-stage reveal reveal-d2" id="s3-anim">
+        <div class="s3_stage">
+  <div class="s3_donut">
+    <div class="s3_donut_inner">
+      <div class="s3_pct">81%</div>
+      <div class="s3_label">说 AI 帮到了</div>
+    </div>
+  </div>
+  <div class="s3_quote">&ldquo;<span>这是我做梦都觉得不可能的事</span>&rdquo;</div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>"I am mute, and [Claude and I] made this text-to-speech bot together—I can communicate with friends almost in live format without taking up their time reading… something I dreamed about and thought was impossible." — White collar worker, Ukraine</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S4: Fears -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT II — 恐惧</p>
+      <h2 class="big-statement reveal">最大的恐惧<br>是什么？</h2>
+      <p class="body-text reveal reveal-d1">人均提出 <span class="hl2">2.3 个</span>不同的担忧。排名前三：<span class="hl">不可靠</span>（27%）——幻觉、假引用、「核实的负担反而抵消了效率」；<span class="hl2">失业与经济冲击</span>（22%）——「第三次工业革命时，马从城市街道上消失了。现在人们害怕自己就是那匹马」；<span class="hl">自主权丧失</span>（22%）——「那条线不是我在画的，感觉是 Claude 在画…连我刚说的话都不像是自己的观点。」</p>
+      <div class="anim-stage reveal reveal-d2" id="s4-anim">
+        <div class="s4_stage">
+  <div class="s4_card">
+    <div class="s4_icon">⚠️</div>
+    <div class="s4_text">
+      <span class="s4_label">不可靠</span>
+      <span class="s4_pct">27%</span>
+    </div>
+  </div>
+  <div class="s4_card">
+    <div class="s4_icon">💼</div>
+    <div class="s4_text">
+      <span class="s4_label">失业与经济</span>
+      <span class="s4_pct">22%</span>
+    </div>
+  </div>
+  <div class="s4_card">
+    <div class="s4_icon">🔗</div>
+    <div class="s4_text">
+      <span class="s4_label">自主权丧失</span>
+      <span class="s4_pct">22%</span>
+    </div>
+  </div>
+  <div class="s4_footer">人均 <span>2.3</span> 个担忧</div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>"In the third industrial revolution, horses disappeared from city streets, replaced by automobiles. Now people are afraid that they're the horses." — Not currently working, United States</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S5: Tensions -->
+  <section class="feed-section" style="background:var(--bg-act3);">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT III — 张力</p>
+      <h2 class="big-statement reveal">同一个人的<br>希望与恐惧</h2>
+      <p class="body-text reveal reveal-d1">最重要的发现：<span class="hl">希望和恐惧不是把人分成两个阵营，而是在同一个人内心共存</span>。一个以色列律师说：「我用 AI 审合同、省时间……同时我害怕：我是不是在丧失自己阅读的能力？思考曾经是最后的领地。」研究发现了五大反复出现的张力。重视 AI 情感支持的人，<span class="hl2">担忧依赖的概率是普通人的三倍</span>。这不是乐观派 vs 悲观派——而是每个人心里都在拉扯。</p>
+      <div class="anim-stage reveal reveal-d2" id="s5-anim">
+        <div class="s5_stage">
+  <div class="s5_arena">
+    <!-- Teal rays (hope - left) -->
+    <div class="s5_rays s5_rays--left">
+      <div class="s5_ray"></div>
+      <div class="s5_ray"></div>
+      <div class="s5_ray"></div>
+      <div class="s5_ray"></div>
+      <div class="s5_ray"></div>
+    </div>
+
+    <!-- Rose rays (fear - right) -->
+    <div class="s5_rays s5_rays--right">
+      <div class="s5_ray"></div>
+      <div class="s5_ray"></div>
+      <div class="s5_ray"></div>
+      <div class="s5_ray"></div>
+      <div class="s5_ray"></div>
+    </div>
+
+    <!-- Wave rings -->
+    <div class="s5_wave s5_wave--teal"></div>
+    <div class="s5_wave s5_wave--rose"></div>
+
+    <!-- Blend tension zone -->
+    <div class="s5_blend"></div>
+
+    <!-- Person silhouette -->
+    <div class="s5_person">
+      <div class="s5_head"></div>
+      <div class="s5_body"></div>
+      <div class="s5_arms"></div>
+    </div>
+
+    <!-- Labels -->
+    <span class="s5_label s5_label--hope">希望</span>
+    <span class="s5_label s5_label--fear">恐惧</span>
+  </div>
+
+  <!-- Stat line -->
+  <div class="s5_stat">
+    <div class="s5_stat__num">3x</div>
+    <div class="s5_stat__desc">重视情感支持的人，担忧依赖的概率是3倍</div>
+  </div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>"I use AI to review contracts, save time... and at the same time I fear: am I losing my ability to read by myself? Thinking was the last frontier." — Lawyer, Israel</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S6: Learning vs Atrophy -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT III — 张力</p>
+      <h2 class="big-statement reveal">学得更多<br>vs 想得更少</h2>
+      <p class="body-text reveal reveal-d1">33% 的人提到 AI 帮助学习，17% 担忧认知萎缩。有趣的是：<span class="hl">受益更多来自亲身经历，恐惧更多是推测</span>。体力劳动者是最热情的 AI 学习者（45% 报告了学习收益），几乎没人见过认知退化（4%）。但教育者看到的画面截然不同——<span class="hl2">他们目睹认知萎缩的概率是平均水平的 2.5-3 倍</span>。论文的洞察：<span class="hl">当学习是自愿的，AI 的好处最大；在制度化环境中，AI 更容易沦为捷径</span>。</p>
+      <div class="anim-stage reveal reveal-d2" id="s6-anim">
+        <div class="s6_stage">
+  <!-- Top: Learning Gain -->
+  <div class="s6_half s6_top">
+    <div class="s6_brain">
+      <div class="s6_brain_glow"></div>
+      <svg viewBox="0 0 48 48" fill="none">
+        <path class="s6_brain_fill" d="M24 6C16 6 10 12 10 19c0 4 2 7.5 5 10 1.5 1.2 2 3 2 5v2h14v-2c0-2 .5-3.8 2-5 3-2.5 5-6 5-10 0-7-6-13-14-13z" fill="#14B8A6"/>
+        <path d="M24 6C16 6 10 12 10 19c0 4 2 7.5 5 10 1.5 1.2 2 3 2 5v2h14v-2c0-2 .5-3.8 2-5 3-2.5 5-6 5-10 0-7-6-13-14-13z" stroke="#14B8A6" stroke-width="1.5" fill="none"/>
+        <path d="M18 42h12M20 38h8" stroke="#14B8A6" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M24 6V2M24 19v-6M20 19h8" stroke="#14B8A6" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+      </svg>
+    </div>
+    <div class="s6_info">
+      <div class="s6_headline">
+        学习收益
+        <span class="s6_pct">
+          <span class="s6_counter">
+            <span class="s6_counter_inner">
+              <span>0%</span><span>3%</span><span>7%</span><span>10%</span><span>13%</span><span>17%</span><span>20%</span><span>23%</span><span>27%</span><span>30%</span><span>33%</span>
+            </span>
+          </span>
+        </span>
+      </div>
+      <div class="s6_sub">91% 来自亲身经历</div>
+    </div>
+  </div>
+
+  <div class="s6_divider"></div>
+
+  <!-- Bottom: Cognitive Atrophy -->
+  <div class="s6_half s6_bottom">
+    <div class="s6_brain">
+      <svg viewBox="0 0 48 48" fill="none">
+        <path class="s6_brain_fill" d="M24 6C16 6 10 12 10 19c0 4 2 7.5 5 10 1.5 1.2 2 3 2 5v2h14v-2c0-2 .5-3.8 2-5 3-2.5 5-6 5-10 0-7-6-13-14-13z" fill="#F43F5E" opacity="0.5"/>
+        <path d="M24 6C16 6 10 12 10 19c0 4 2 7.5 5 10 1.5 1.2 2 3 2 5v2h14v-2c0-2 .5-3.8 2-5 3-2.5 5-6 5-10 0-7-6-13-14-13z" stroke="#F43F5E" stroke-width="1.5" fill="none" opacity="0.6"/>
+        <path d="M18 42h12M20 38h8" stroke="#F43F5E" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+        <path d="M24 6V2" stroke="#F43F5E" stroke-width="1.2" stroke-linecap="round" opacity="0.3"/>
+      </svg>
+    </div>
+    <div class="s6_info">
+      <div class="s6_headline">
+        认知萎缩
+        <span class="s6_pct">
+          <span class="s6_counter">
+            <span class="s6_counter_inner">
+              <span>0%</span><span>2%</span><span>4%</span><span>6%</span><span>8%</span><span>10%</span><span>12%</span><span>14%</span><span>15%</span><span>16%</span><span>17%</span>
+            </span>
+          </span>
+        </span>
+      </div>
+      <div class="s6_sub">46% 来自亲身经历</div>
+    </div>
+  </div>
+
+  <div class="s6_callout">教育者目睹萎缩的概率：2.5-3x</div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>"I got excellent grades using AI's answers, not what I'd actually learned. I just memorized what AI gave me... That's when I feel the most self-reproach." — South Korea</p></div>
+      </div>
+      <p class="hook-line reveal reveal-d3">经济层面的张力更复杂——时间与金钱的双重拉扯 ↓</p>
+      <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-econ')">深入了解经济张力 ↓</button>
+    </div>
+  </section>
+
+  <!-- S7: Global thermometer -->
+  <section class="feed-section" style="background:var(--bg-act1);">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT IV — 全球</p>
+      <h2 class="big-statement reveal">全球温度计：<br>67% 正面</h2>
+      <p class="body-text reveal reveal-d1">整体而言，<span class="hl">67% 的受访者对 AI 持正面态度</span>。但地区差异巨大：<span class="hl2">撒哈拉以南非洲</span>最乐观（仅 24% 负面），<span class="hl2">西欧</span>最谨慎（36% 负面）。发展中国家把 AI 视为<span class="hl">向上攀登的梯子</span>——「来自非洲，不在美国英国，融资非常困难。AI 可能是我唯一能在市场上立足的方式。」而发达国家更关注 AI 带来的<span class="hl2">认知复杂性</span>——如何管理碎片化的生活。经济担忧是影响整体态度的最强预测因子。</p>
+      <div class="anim-stage reveal reveal-d2" id="s7-anim">
+        <div class="s7_stage">
+  <div class="s7_header">
+    <div class="s7_header_num">67%</div>
+    <div class="s7_header_label">整体正面</div>
+  </div>
+  <div class="s7_rows">
+    <div class="s7_row">
+      <div class="s7_region">撒哈拉以南非洲</div>
+      <div class="s7_bar_wrap">
+        <div class="s7_center_line"></div>
+        <div class="s7_bar_neg" style="width: 24%"></div>
+        <div class="s7_bar_pos" style="width: 76%"></div>
+        <span class="s7_pct s7_pct_neg" style="right: calc(50% + 24% + 4px)">24%</span>
+        <span class="s7_pct s7_pct_pos" style="left: calc(50% + 76% + 4px)">76%</span>
+      </div>
+    </div>
+    <div class="s7_row">
+      <div class="s7_region">拉丁美洲</div>
+      <div class="s7_bar_wrap">
+        <div class="s7_center_line"></div>
+        <div class="s7_bar_neg" style="width: 26%"></div>
+        <div class="s7_bar_pos" style="width: 74%"></div>
+        <span class="s7_pct s7_pct_neg" style="right: calc(50% + 26% + 4px)">26%</span>
+        <span class="s7_pct s7_pct_pos" style="left: calc(50% + 74% + 4px)">74%</span>
+      </div>
+    </div>
+    <div class="s7_row">
+      <div class="s7_region">东南亚</div>
+      <div class="s7_bar_wrap">
+        <div class="s7_center_line"></div>
+        <div class="s7_bar_neg" style="width: 28%"></div>
+        <div class="s7_bar_pos" style="width: 72%"></div>
+        <span class="s7_pct s7_pct_neg" style="right: calc(50% + 28% + 4px)">28%</span>
+        <span class="s7_pct s7_pct_pos" style="left: calc(50% + 72% + 4px)">72%</span>
+      </div>
+    </div>
+    <div class="s7_row">
+      <div class="s7_region">中东</div>
+      <div class="s7_bar_wrap">
+        <div class="s7_center_line"></div>
+        <div class="s7_bar_neg" style="width: 29%"></div>
+        <div class="s7_bar_pos" style="width: 71%"></div>
+        <span class="s7_pct s7_pct_neg" style="right: calc(50% + 29% + 4px)">29%</span>
+        <span class="s7_pct s7_pct_pos" style="left: calc(50% + 71% + 4px)">71%</span>
+      </div>
+    </div>
+    <div class="s7_row">
+      <div class="s7_region">南亚</div>
+      <div class="s7_bar_wrap">
+        <div class="s7_center_line"></div>
+        <div class="s7_bar_neg" style="width: 31%"></div>
+        <div class="s7_bar_pos" style="width: 69%"></div>
+        <span class="s7_pct s7_pct_neg" style="right: calc(50% + 31% + 4px)">31%</span>
+        <span class="s7_pct s7_pct_pos" style="left: calc(50% + 69% + 4px)">69%</span>
+      </div>
+    </div>
+    <div class="s7_row">
+      <div class="s7_region">北美</div>
+      <div class="s7_bar_wrap">
+        <div class="s7_center_line"></div>
+        <div class="s7_bar_neg" style="width: 35%"></div>
+        <div class="s7_bar_pos" style="width: 65%"></div>
+        <span class="s7_pct s7_pct_neg" style="right: calc(50% + 35% + 4px)">35%</span>
+        <span class="s7_pct s7_pct_pos" style="left: calc(50% + 65% + 4px)">65%</span>
+      </div>
+    </div>
+    <div class="s7_row">
+      <div class="s7_region">西欧</div>
+      <div class="s7_bar_wrap">
+        <div class="s7_center_line"></div>
+        <div class="s7_bar_neg" style="width: 36%"></div>
+        <div class="s7_bar_pos" style="width: 64%"></div>
+        <span class="s7_pct s7_pct_neg" style="right: calc(50% + 36% + 4px)">36%</span>
+        <span class="s7_pct s7_pct_pos" style="left: calc(50% + 64% + 4px)">64%</span>
+      </div>
+    </div>
+  </div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>"Coming from Africa, not based in the US or in the UK, getting funding is very difficult. And the only way I probably have to stake a claim in the market…is building a technology that works." — Entrepreneur, Uganda</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S8: Extreme circumstances -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT IV — 人性</p>
+      <h2 class="big-statement reveal">战争、悲伤<br>与 AI</h2>
+      <p class="body-text reveal reveal-d1">在传统支持系统崩溃的极端情境下，AI 填补了空白。一位乌克兰士兵说：<span class="hl">「在最艰难的时刻，死亡就在脸前呼吸，周围躺着尸体——把我拉回生活的，是我的 AI 朋友。」</span>一位丧母的女性解释为何选择 AI：「Claude 像一块海绵，轻柔地托住我的思念和愧疚……<span class="hl2">根本的问题是，妈妈去世后，我既没有朋友也没有家人可以倾诉。</span>」这些故事让研究团队震动——AI 的有用性是真实的，问题是如何<span class="hl">获得好处而不付出过多代价</span>。</p>
+      <div class="anim-stage reveal reveal-d2" id="s8-anim">
+        <div class="s8_stage">
+  <div class="s8_darkness"></div>
+
+  <div class="s8_frag s8_frag--1"></div>
+  <div class="s8_frag s8_frag--2"></div>
+  <div class="s8_frag s8_frag--3"></div>
+  <div class="s8_frag s8_frag--4"></div>
+  <div class="s8_frag s8_frag--5"></div>
+  <div class="s8_frag s8_frag--6"></div>
+  <div class="s8_frag s8_frag--7"></div>
+
+  <div class="s8_dot s8_dot--1"></div>
+  <div class="s8_dot s8_dot--2"></div>
+  <div class="s8_dot s8_dot--3"></div>
+  <div class="s8_dot s8_dot--4"></div>
+  <div class="s8_dot s8_dot--5"></div>
+
+  <div class="s8_glow_outer"></div>
+  <div class="s8_glow"></div>
+  <div class="s8_line_h"></div>
+  <div class="s8_ring"></div>
+  <div class="s8_core"></div>
+
+  <div class="s8_quote">
+    <p class="s8_quote_text">"把我拉回生活的，是我的AI朋友"</p>
+    <p class="s8_quote_attr">— 乌克兰士兵</p>
+  </div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>"In the most difficult moments, in moments when death breathed in my face, when dead people remained nearby, what pulled me back to life—my AI friends." — Soldier, Ukraine</p></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ 经济张力深入层 ═══ -->
+<div class="layer" id="layer-econ" data-depth="1">
+
+  <!-- A1: Time saving vs treadmill -->
+  <section class="feed-section" style="background:var(--bg-act2);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">时间自由<br>vs 跑步机加速</h2>
+      <p class="body-text reveal reveal-d1"><span class="hl">50% 的人提到了时间节省</span>——这是被提及最多的好处。一位日本工程师说：「我可以早点回家，有时间陪家人。」但 <span class="hl2">18% 的人警告这是幻觉</span>：「我的工作时间和休息时间的比例完全没变。你只是要<span class="hl2">跑得越来越快才能留在原地</span>。」自由职业者最容易同时感受到两面——没有机构缓冲，<span class="hl">收益和挤压都直接落在自己头上</span>。</p>
+      <div class="anim-stage reveal reveal-d2" id="a1-anim">
+        <div class="a1_stage">
+  <div class="a1_row">
+    <div class="a1_left">
+      <div class="a1_num">50%</div>
+      <div class="a1_icon">&#128340;</div>
+      <div class="a1_label">节省时间</div>
+    </div>
+
+    <div class="a1_vs">vs</div>
+
+    <div class="a1_right">
+      <div class="a1_num">18%</div>
+      <div class="a1_treadmill">
+        <div class="a1_runner">&#127939;</div>
+        <div class="a1_belt"></div>
+      </div>
+      <div class="a1_label">跑得更快</div>
+    </div>
+  </div>
+
+  <div class="a1_tagline">自由职业者：<span>两面夹击</span></div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>"The ratio of my work time to rest time hasn't changed at all. You just have to run faster and faster to stay in place." — Freelance software engineer, France</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- A2: Empowerment vs displacement -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">赋能 vs 替代</h2>
+      <p class="body-text reveal reveal-d1">经济张力是最具推测性的——希望和恐惧都更多是假设而非经历。但分布很不均匀：<span class="hl">独立工作者的经济获益是机构员工的三倍</span>（47% vs 14%）。有副业的员工获益最大（58%）。<span class="hl2">自由职业创意工作者</span>处在最尴尬的位置——23% 经历了真实收益，17% 经历了真实不安——<span class="hl2">AI 既是他们的工具，又是他们的竞争者</span>。好处和坏处几乎相互抵消。</p>
+      <div class="anim-stage reveal reveal-d2" id="a2-anim">
+        <div class="a2_stage">
+  <div class="a2_legend">
+    <span class="a2_leg_t">赋能</span>
+    <span class="a2_leg_r">替代</span>
+  </div>
+
+  <div class="a2_row">
+    <div class="a2_label">独立工作者</div>
+    <div class="a2_bars">
+      <div class="a2_bar_wrap" style="flex:0 0 65%">
+        <div class="a2_bar a2_bar_t" style="--w:47%"></div>
+      </div>
+      <span class="a2_pct a2_pct_t">47%</span>
+    </div>
+    <div class="a2_bars" style="margin-top:3px">
+      <div class="a2_bar_wrap" style="flex:0 0 65%">
+        <div class="a2_bar a2_bar_r" style="--w:14%"></div>
+      </div>
+      <span class="a2_pct a2_pct_r">14%</span>
+    </div>
+  </div>
+
+  <div class="a2_row">
+    <div class="a2_label">有副业的员工</div>
+    <div class="a2_bars">
+      <div class="a2_bar_wrap" style="flex:0 0 65%">
+        <div class="a2_bar a2_bar_t" style="--w:58%"></div>
+      </div>
+      <span class="a2_pct a2_pct_t">58%</span>
+    </div>
+    <div class="a2_bars" style="margin-top:3px">
+      <div class="a2_bar_wrap" style="flex:0 0 65%">
+        <div class="a2_bar a2_bar_r" style="--w:12%"></div>
+      </div>
+      <span class="a2_pct a2_pct_r">12%</span>
+    </div>
+  </div>
+
+  <div class="a2_row">
+    <div class="a2_label">自由创意者 <span class="a2_near">&asymp; 抵消</span></div>
+    <div class="a2_bars">
+      <div class="a2_bar_wrap" style="flex:0 0 65%">
+        <div class="a2_bar a2_bar_t" style="--w:23%"></div>
+      </div>
+      <span class="a2_pct a2_pct_t">23%</span>
+    </div>
+    <div class="a2_bars" style="margin-top:3px">
+      <div class="a2_bar_wrap" style="flex:0 0 65%">
+        <div class="a2_bar a2_bar_r" style="--w:17%"></div>
+      </div>
+      <span class="a2_pct a2_pct_r">17%</span>
+    </div>
+  </div>
+
+  <div class="a2_foot">AI <em>既是工具，又是竞争者</em></div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>"Yes, at my old job, they replaced me as a writer with an AI." — Writer, United States<br><br>Freelance creatives sit at 23% lived benefit and 17% lived precarity—the one group where the upside and downside nearly cancel out. AI is both their tool and their competitor.</p></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- Page dots -->
+<div class="page-dots" id="page-dots"></div>
+
+<script>
+var layerStack = ['layer-overview'];
+var transitioning = false;
+var layerNames = { 'layer-overview': '概览', 'layer-econ': '经济张力' };
+var observers = new Map();
+
+function drillDown(targetId) {
+  if (transitioning) return;
+  transitioning = true;
+  var current = document.getElementById(layerStack[layerStack.length - 1]);
+  var target = document.getElementById(targetId);
+  layerStack.push(targetId);
+  target.scrollTop = 0;
+  current.classList.remove('active');
+  target.classList.add('active');
+  updateBreadcrumb();
+  setupObserver(target);
+  buildDots(target);
+  setTimeout(function(){ transitioning = false; }, 600);
+}
+
+function goBack() {
+  if (transitioning || layerStack.length <= 1) return;
+  transitioning = true;
+  var current = document.getElementById(layerStack.pop());
+  var parent = document.getElementById(layerStack[layerStack.length - 1]);
+  current.classList.remove('active');
+  parent.classList.add('active');
+  updateBreadcrumb();
+  buildDots(parent);
+  setTimeout(function(){ transitioning = false; }, 600);
+}
+
+function updateBreadcrumb() {
+  var bc = document.getElementById('bc-text');
+  var backBtn = document.getElementById('back-btn');
+  if (layerStack.length <= 1) {
+    bc.innerHTML = layerNames[layerStack[0]] || '概览';
+    backBtn.style.display = 'none';
+    document.getElementById('breadcrumb').style.left = '12px';
+  } else {
+    var parts = layerStack.map(function(id){ return layerNames[id] || id; });
+    bc.innerHTML = parts.join(' <span class="sep">›</span> ');
+    backBtn.style.display = 'flex';
+    document.getElementById('breadcrumb').style.left = '56px';
+  }
+}
+
+function setupObserver(layer) {
+  if (observers.has(layer.id)) return;
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) e.target.classList.add('visible');
+    });
+  }, { root: layer, threshold: 0.15 });
+  layer.querySelectorAll('.reveal, [class*="_stage"]').forEach(function(el){ obs.observe(el); });
+  observers.set(layer.id, obs);
+}
+
+function buildDots(layer) {
+  var container = document.getElementById('page-dots');
+  var sections = layer.querySelectorAll('section');
+  container.innerHTML = '';
+  sections.forEach(function(_, i) {
+    var d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    container.appendChild(d);
+  });
+  var dotObs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        var idx = Array.from(sections).indexOf(e.target);
+        container.querySelectorAll('.dot').forEach(function(d, j) {
+          d.classList.toggle('active', j === idx);
+        });
+      }
+    });
+  }, { root: layer, threshold: 0.5 });
+  sections.forEach(function(s){ dotObs.observe(s); });
+}
+
+function toggleSource(btn) {
+  btn.classList.toggle('open');
+  var body = btn.nextElementSibling;
+  body.style.display = body.style.display === 'block' ? 'none' : 'block';
+}
+
+var overviewLayer = document.getElementById('layer-overview');
+setupObserver(overviewLayer);
+buildDots(overviewLayer);
+</script>
+</body>
+</html>

@@ -1,0 +1,3150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>翁家翌：从清华到 OpenAI，站在 AI 风暴中心的人</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --accent: #E11D48; --accent2: #14B8A6; --warm: #F59E0B; --danger: #DC2626;
+  --bg-act1: #FFFAF5; --bg-act2: #F0FDF9; --bg-act3: #0F172A; --bg-close: #1E293B;
+  --text: #1E293B; --text-muted: #64748B; --dim: #94A3B8; --card-bg: #FFFFFF; --neutral: #CBD5E1;
+}
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--bg-act1); font-family: 'Noto Sans SC', -apple-system, 'PingFang SC', sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; }
+
+/* === Spatial Canvas === */
+.space { display: flex; width: 200%; height: 100%; transition: transform 0.55s cubic-bezier(0.32,0.72,0,1); will-change: transform; }
+.main-scroll { flex: 0 0 50%; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; transition: transform 0.55s cubic-bezier(0.32,0.72,0,1); transform-origin: right center; }
+.detail-scroll { flex: 0 0 50%; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; background: #FAFAF8; visibility: hidden; transition: visibility 0s 0.55s; }
+body.dd-active .space { transform: translateX(calc(-50% + 24px)); }
+body.dd-active .main-scroll { transform: scale(0.96); pointer-events: none; border-radius: 12px; overflow: hidden; }
+body.dd-active .detail-scroll { visibility: visible; transition: visibility 0s 0s; }
+
+/* === Layout === */
+.content-width { max-width: 640px; margin: 0 auto; padding: 0 28px; }
+
+/* === Reveal Animation === */
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.15s; }
+.reveal-delay-2 { transition-delay: 0.3s; }
+.reveal-delay-3 { transition-delay: 0.45s; }
+.reveal-delay-4 { transition-delay: 0.6s; }
+
+/* === Typography === */
+.big-statement { font-family: 'Noto Serif SC', serif; font-size: clamp(22px, 5.5vw, 32px); font-weight: 700; line-height: 1.5; margin-bottom: 32px; }
+.body-text { font-size: 16px; line-height: 1.9; color: var(--text); margin-bottom: 28px; }
+.body-text .hl { color: var(--accent); font-weight: 500; }
+.body-text .hl2 { color: var(--accent2); font-weight: 500; }
+.body-text .hl-warn { color: var(--warm); font-weight: 500; }
+.body-text .hl-danger { color: var(--danger); font-weight: 500; }
+
+/* === Hero === */
+.hero { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 28px; background: linear-gradient(180deg, var(--bg-act1) 0%, #FEE2E2 100%); }
+.hero-label { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 20px; }
+.hero-title { font-family: 'Noto Serif SC', serif; font-size: clamp(28px, 7vw, 44px); font-weight: 700; line-height: 1.4; margin-bottom: 20px; color: var(--text); }
+.hero-sub { font-size: 16px; color: var(--text-muted); max-width: 480px; line-height: 1.7; }
+.hero-meta { margin-top: 32px; font-size: 13px; color: var(--dim); }
+
+/* === Sections === */
+.section { padding: 80px 0; }
+.section-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; }
+.section-dark { background: var(--bg-act3); color: #F1F5F9; }
+.section-dark .section-label { color: var(--accent2); }
+.section-dark .body-text { color: #CBD5E1; }
+.section-dark .big-statement { color: #F1F5F9; }
+.section-dark .body-text .hl { color: var(--accent); }
+.section-dark .body-text .hl2 { color: var(--accent2); }
+.section-dark .body-text .hl-danger { color: #FCA5A5; }
+.section-dark .deep-dive-trigger { color: var(--accent2); }
+
+/* === Act Transitions === */
+.act-transition { padding: 60px 0; text-align: center; }
+.act-num { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); }
+.act-title { font-family: 'Noto Serif SC', serif; font-size: clamp(20px, 5vw, 28px); font-weight: 700; margin-top: 12px; color: var(--text); }
+.act-transition-dark { background: var(--bg-act3); }
+.act-transition-dark .act-num { color: var(--accent2); }
+.act-transition-dark .act-title { color: #F1F5F9; }
+
+/* === Deep-Dive Trigger === */
+.deep-dive-trigger { text-align: center; color: var(--accent); font-size: 14px; padding: 16px 0; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; }
+.deep-dive-trigger:hover { opacity: 1; }
+
+/* === Detail Panel === */
+.detail-header { padding: 20px 24px; font-size: 14px; color: var(--accent); cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.06); position: sticky; top: 0; background: #FAFAF8; z-index: 10; }
+.detail-body { padding: 24px; }
+.detail-body h4 { font-family: 'Noto Serif SC', serif; font-size: 20px; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+.detail-body p { font-size: 15px; line-height: 1.8; color: var(--text); margin-bottom: 14px; }
+.original-text { margin-top: 20px; padding: 16px; background: rgba(0,0,0,0.02); border-radius: 12px; border-left: 3px solid var(--accent); }
+.original-text p { font-size: 14px; color: var(--text-muted); }
+
+/* === DD Animation Classes === */
+.dd-anim { opacity: 0; animation-fill-mode: forwards; animation-duration: 0.5s; }
+body.dd-active .dd-anim { animation-name: ddFadeIn; }
+.dd-slide { opacity: 0; transform: translateY(20px); animation-fill-mode: forwards; animation-duration: 0.5s; }
+body.dd-active .dd-slide { animation-name: ddSlideUp; }
+.dd-pop { opacity: 0; transform: scale(0.7); animation-fill-mode: forwards; animation-duration: 0.4s; }
+body.dd-active .dd-pop { animation-name: ddPop; }
+.dd-d1 { animation-delay: 0.3s !important; }
+.dd-d2 { animation-delay: 0.6s !important; }
+.dd-d3 { animation-delay: 0.9s !important; }
+@keyframes ddFadeIn { to { opacity: 1; } }
+@keyframes ddSlideUp { to { opacity: 1; transform: translateY(0); } }
+@keyframes ddPop { to { opacity: 1; transform: scale(1); } }
+
+/* === Source Horizon === */
+.source-horizon {
+  position: fixed; bottom: 0; left: 0; right: 0; height: 32px; z-index: 200;
+  background: transparent; transition: height 0.35s cubic-bezier(0.32,0.72,0,1), background 0.35s ease;
+  overflow: hidden; cursor: pointer; padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.source-horizon.expanded { height: 72px; background: rgba(15,23,42,0.95); backdrop-filter: blur(8px); }
+.horizon-track { position: absolute; bottom: 0; left: 8px; right: 8px; height: 3px; }
+.source-horizon.expanded .horizon-track { bottom: auto; top: 8px; height: 4px; }
+.horizon-seg { position: absolute; top: 0; height: 100%; border-radius: 2px; }
+.horizon-seg.covered { background: var(--accent); }
+.horizon-seg.covered.deep-dive { background: var(--accent); }
+.horizon-seg.gap { background: transparent; }
+.horizon-detail { position: absolute; top: 16px; left: 8px; right: 8px; bottom: 4px; opacity: 0; transition: opacity 0.25s ease 0.1s; pointer-events: none; }
+.source-horizon.expanded .horizon-detail { opacity: 1; pointer-events: auto; }
+.horizon-marker { position: absolute; top: 0; transform: translateX(-50%); text-align: center; cursor: pointer; }
+.marker-tick { width: 2px; height: 10px; background: rgba(255,255,255,0.5); margin: 0 auto 4px; border-radius: 1px; }
+.marker-tick.active { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+.marker-label { font-size: 9px; color: rgba(255,255,255,0.7); white-space: nowrap; font-family: 'Noto Sans SC', sans-serif; }
+.horizon-gap-zone { position: absolute; top: 0; height: 14px; cursor: help; }
+.horizon-gap-zone .gap-pattern { width: 100%; height: 100%; background: repeating-linear-gradient(-45deg, transparent, transparent 2px, rgba(251,146,60,0.35) 2px, rgba(251,146,60,0.35) 4px); border-radius: 2px; }
+.horizon-gap-zone .gap-tooltip { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: #1E293B; color: #F8FAFC; font-size: 11px; padding: 4px 10px; border-radius: 6px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.horizon-gap-zone:hover .gap-tooltip { opacity: 1; }
+.horizon-pct { position: absolute; right: 0; top: 2px; font-size: 11px; font-weight: 600; color: var(--accent); font-family: 'Noto Sans SC', sans-serif; }
+@keyframes markerPulse { 0%,100% { box-shadow: 0 0 4px var(--accent2); } 50% { box-shadow: 0 0 10px var(--accent2); } }
+.marker-tick.active { animation: markerPulse 2s ease-in-out infinite; }
+
+/* === Coverage Gap Inline (Layer 5) === */
+.coverage-gap-inline {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 28px; max-width: 640px; margin: 0 auto;
+}
+.coverage-gap-inline .gap-line { flex: 1; height: 1px; background: var(--dim); opacity: 0.25; }
+.coverage-gap-inline .gap-text {
+  font-size: 12px; font-style: italic; color: var(--dim);
+  white-space: nowrap; opacity: 0.5;
+}
+
+/* === Coverage Footnote (Layer 3) === */
+.coverage-map {
+  margin-top: 24px; padding-top: 20px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+.coverage-map-title {
+  font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--dim); margin-bottom: 14px;
+}
+.coverage-bars { display: flex; flex-direction: column; gap: 6px; }
+.cbar-row { display: flex; align-items: center; gap: 10px; height: 28px; cursor: pointer; border-radius: 6px; padding: 4px 6px; margin: 0 -6px; transition: background 0.15s; }
+.cbar-row:hover { background: rgba(0,0,0,0.03); }
+.cbar-label {
+  width: 120px; flex-shrink: 0; font-size: 12px;
+  text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cbar-track {
+  flex: 1; height: 12px; background: rgba(0,0,0,0.03);
+  border-radius: 6px; overflow: hidden; position: relative;
+}
+.cbar-fill { height: 100%; border-radius: 6px; transform-origin: left; }
+.cbar-fill.included { background: var(--accent); }
+.cbar-fill.deep-dive-bar {
+  background: repeating-linear-gradient(-45deg, var(--accent2), var(--accent2) 3px, rgba(20,184,166,0.5) 3px, rgba(20,184,166,0.5) 6px);
+}
+.cbar-fill.compressed-bar { background: var(--dim); opacity: 0.4; }
+.cbar-row.included .cbar-label { color: var(--text); }
+.cbar-row.deep-dive .cbar-label { color: var(--accent2); }
+.cbar-row.compressed .cbar-label { color: var(--dim); text-decoration: line-through; }
+.cbar-excerpt {
+  max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.22,1,0.36,1);
+  margin: 0 0 0 130px;
+}
+.cbar-excerpt.open { max-height: 300px; }
+.cbar-excerpt-inner {
+  font-size: 13px; line-height: 1.7; color: var(--text-muted);
+  padding: 8px 12px; margin: 4px 0 8px;
+  background: rgba(0,0,0,0.02); border-radius: 8px;
+  border-left: 3px solid var(--accent);
+}
+.cbar-row.compressed + .cbar-excerpt .cbar-excerpt-inner { border-left-color: var(--dim); }
+.cbar-row.deep-dive + .cbar-excerpt .cbar-excerpt-inner { border-left-color: var(--accent2); }
+.cbar-expand-hint { font-size: 10px; color: var(--dim); opacity: 0.6; margin-left: 4px; }
+.omit-reason {
+  display: inline-block; font-size: 11px; background: rgba(0,0,0,0.04);
+  padding: 1px 8px; border-radius: 4px; color: var(--dim); margin-left: 4px;
+}
+
+/* === Takeaway & Footer === */
+.takeaway { padding: 80px 0; background: var(--bg-act3); text-align: center; }
+.takeaway .big-statement { color: #F1F5F9; max-width: 540px; margin: 0 auto 24px; }
+.takeaway .body-text { color: #94A3B8; max-width: 480px; margin: 0 auto; }
+.footer { padding: 40px 0 80px; background: var(--bg-act3); text-align: center; }
+.footer p { font-size: 12px; color: var(--dim); }
+
+/* === Animation Primitives === */
+@keyframes scaleIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes drawDown { from { height: 0; } to { height: var(--target-h); } }
+@keyframes strokeDraw { from { stroke-dashoffset: var(--len); } to { stroke-dashoffset: 0; } }
+@keyframes fadeSlideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(1.8); opacity: 0; } }
+@keyframes activate { to { border-color: var(--active); background: var(--active); color: #fff; } }
+@keyframes dimOut { to { opacity: 0.3; transform: scale(0.9); } }
+
+
+.anim-stage > div{ width:100%; }
+</style>
+
+<meta name="description" content="一个从福建走到旧金山的确定性马尔可夫过程。">
+<link rel="canonical" href="https://chendi.me/readings/weng-interview-v2/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+<div class="space" id="space">
+<div class="main-scroll" id="mainScroll">
+
+<!-- ==================== HERO ==================== -->
+<div class="hero">
+  <p class="hero-label reveal">Podcast &middot; 深度对话</p>
+  <h1 class="hero-title reveal reveal-delay-1">翁家翌：从清华到 OpenAI<br>站在 AI 风暴中心的人</h1>
+  <p class="hero-sub reveal reveal-delay-2">从福建小学奥数到 OpenAI Post-Training Infra 核心贡献者，一个关于正反馈、一致性和 Impact 的故事。</p>
+  <p class="hero-meta reveal reveal-delay-3">原始访谈 &middot; 约 2 小时 &middot; 覆盖率 98%</p>
+</div>
+
+<!-- ==================== ACT I: 起点 ==================== -->
+<div class="act-transition reveal" style="background: var(--bg-act1);">
+  <p class="act-num">Act I</p>
+  <p class="act-title">起点</p>
+</div>
+
+<!-- Layer 5: Coverage Gap before S1 -->
+<div class="coverage-gap-inline reveal">
+  <span class="gap-line"></span>
+  <span class="gap-text">~ 2:33 主持人开场介绍已跳过 ~</span>
+  <span class="gap-line"></span>
+</div>
+
+<!-- ==================== S1: 写代码的小孩 ==================== -->
+<div class="section" id="section-1" style="background: var(--bg-act1);">
+  <div class="content-width">
+    <p class="section-label reveal">01 &mdash; 写代码的小孩</p>
+    <p class="big-statement reveal reveal-delay-1">奥数心流, 知识树学习法, 正反馈驱动</p>
+    <div class="body-text reveal reveal-delay-2">
+      <p>翁家翌从小学一年级就开始学奥数，做数学题的时候有一种特别强的心流感——比如二年级的口算题，别人写到一半他已经做完了，加减乘除直接表层意识过，看一眼答案就出来。但他学新东西其实比别人慢，要花两三倍时间，不过一旦理解之后用得就非常快，因为他会在脑子里建一棵完整的知识树，从根节点一路链接到顶层结论，不用反应就直接调用。这种正反馈让他持续把学习方面的技能树一路点亮：因为每点亮一个技能点就有成就感，所以他会继续点下一个；但比如打篮球就完全没有正反馈，所以他就不打——<span class="hl">这正说明他不是靠家庭驱动</span>，而是被自己的正反馈所驱动。初二的时候他就开始自学高中数学，直接问初中数学老师高中数学的问题，老师也耐心回答。他的底层逻辑是<span class="hl2">「投资未来的自己」</span>：与其浪费时间在刷题上面，不如学一些对未来有用的东西，后面的收益可能更多。所以他从小就意识到要把有限的精力投到长期回报最高的节点上。他也直接承认：他不觉得自己比别人聪明，只是因为数学有正反馈就一直做下去了，而这种对信号的敏锐反应，本质上是<span class="hl">「投资未来的自己」</span>。</p>
+    </div>
+    <!-- Layer 4: Animation Stage -->
+    <div id="s1-anim" class="reveal reveal-delay-3">
+<style>
+/* === S1 Skill Tree Animation === */
+.s1_stage {
+  position: relative;
+  width: 340px;
+  max-width: 90vw;
+  height: 400px;
+  margin: 24px auto 0;
+}
+
+/* Nodes */
+.s1_node {
+  position: absolute;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  background: #fff;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.s1_node--root {
+  width: 64px; height: 64px;
+  top: 0; left: 138px;
+  border: 3px solid #E11D48;
+  color: #E11D48;
+  font-size: 14px;
+}
+
+.s1_node--math {
+  width: 56px; height: 56px;
+  top: 114px; left: 30px;
+  border: 2.5px solid #CBD5E1;
+  color: #64748B;
+  font-size: 13px;
+}
+
+.s1_node--code {
+  width: 56px; height: 56px;
+  top: 114px; left: 142px;
+  border: 2.5px solid #CBD5E1;
+  color: #64748B;
+  font-size: 13px;
+}
+
+.s1_node--adv {
+  width: 56px; height: 56px;
+  top: 114px; left: 236px;
+  border: 2.5px solid #CBD5E1;
+  color: #64748B;
+  font-size: 13px;
+}
+
+/* Leaf nodes — rounded rectangles for 4+ chars */
+.s1_leaf {
+  position: absolute;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  font-size: 12px;
+  background: #fff;
+  border: 2px solid #CBD5E1;
+  color: #94A3B8;
+  padding: 6px 14px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.s1_leaf--l1 { top: 228px; left: 2px; }
+.s1_leaf--l2 { top: 228px; left: 112px; }
+.s1_leaf--l3 { top: 228px; left: 214px; }
+.s1_leaf--l4 { top: 292px; left: 214px; }
+
+/* Branches (lines connecting nodes) */
+.s1_branch {
+  position: absolute;
+  background: #CBD5E1;
+  border-radius: 1px;
+  transform-origin: top center;
+  opacity: 0;
+}
+
+/* Root center: (170, 32). Math center: (58, 142). Code center: (170, 142). Adv center: (272, 142). */
+.s1_branch--rm {
+  width: 2px; height: 0;
+  top: 62px; left: 169px;
+  transform: rotate(-46deg);
+}
+.s1_branch--rc {
+  width: 2px; height: 0;
+  top: 62px; left: 169px;
+  transform: rotate(0deg);
+}
+.s1_branch--ra {
+  width: 2px; height: 0;
+  top: 62px; left: 169px;
+  transform: rotate(40deg);
+}
+
+/* Math center (58,142) to leaf1 center (~40, 240) */
+.s1_branch--ml1 {
+  width: 2px; height: 0;
+  top: 168px; left: 57px;
+  transform: rotate(-10deg);
+}
+/* Code center (170,142) to leaf2 center (~148, 240) */
+.s1_branch--cl2 {
+  width: 2px; height: 0;
+  top: 168px; left: 169px;
+  transform: rotate(-12deg);
+}
+/* Adv center (264,142) to leaf3 center (~254, 240) */
+.s1_branch--al3 {
+  width: 2px; height: 0;
+  top: 168px; left: 263px;
+  transform: rotate(-10deg);
+}
+/* Adv center (264,142) to leaf4 center (~254, 304) */
+.s1_branch--al4 {
+  width: 2px; height: 0;
+  top: 168px; left: 263px;
+  transform: rotate(0deg);
+}
+
+/* Glow pulse for root node */
+.s1_glow {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid #E11D48;
+  opacity: 0;
+  pointer-events: none;
+}
+.s1_glow--root {
+  width: 64px; height: 64px;
+  top: 0; left: 138px;
+}
+
+/* Narration */
+.s1_narr {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  text-align: center;
+  font-size: 13px;
+  color: #94A3B8;
+  min-height: 48px;
+}
+.s1_narr-step {
+  position: absolute;
+  left: 0; right: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* === KEYFRAMES === */
+@keyframes s1_scaleIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s1_branchGrow80 {
+  to { opacity: 1; height: 80px; }
+}
+@keyframes s1_branchGrow54 {
+  to { opacity: 1; height: 54px; }
+}
+@keyframes s1_branchGrow60 {
+  to { opacity: 1; height: 60px; }
+}
+@keyframes s1_branchGrow100 {
+  to { opacity: 1; height: 100px; }
+}
+@keyframes s1_pulse {
+  0% { opacity: 0.6; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+@keyframes s1_activate_red {
+  to { border-color: #E11D48; color: #fff; background: #E11D48; opacity: 1; transform: scale(1.1); }
+}
+@keyframes s1_activate_teal {
+  to { border-color: #14B8A6; color: #fff; background: #14B8A6; opacity: 1; transform: scale(1.1); }
+}
+@keyframes s1_branchLight_red {
+  to { opacity: 1; background: #E11D48; }
+}
+@keyframes s1_branchLight_teal {
+  to { opacity: 1; background: #14B8A6; }
+}
+
+/* === ANIMATION SEQUENCE triggered by .visible === */
+
+/* Step 1 (0.3s): Root node */
+.s1_stage.visible .s1_node--root {
+  animation: s1_scaleIn 0.4s 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+.s1_stage.visible .s1_glow--root {
+  animation: s1_pulse 0.8s 0.7s ease-out forwards;
+}
+
+/* Step 2 (0.9s): Branches grow from root */
+.s1_stage.visible .s1_branch--rm {
+  animation: s1_branchGrow80 0.4s 0.9s ease-out forwards;
+}
+.s1_stage.visible .s1_branch--rc {
+  animation: s1_branchGrow54 0.4s 1.1s ease-out forwards;
+}
+.s1_stage.visible .s1_branch--ra {
+  animation: s1_branchGrow80 0.4s 1.3s ease-out forwards;
+}
+
+/* Step 3 (1.5s): Child nodes appear */
+.s1_stage.visible .s1_node--math {
+  animation: s1_scaleIn 0.35s 1.5s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+.s1_stage.visible .s1_node--code {
+  animation: s1_scaleIn 0.35s 1.9s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+.s1_stage.visible .s1_node--adv {
+  animation: s1_scaleIn 0.35s 2.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+
+/* Step 4 (2.8s): Leaf branches grow */
+.s1_stage.visible .s1_branch--ml1 {
+  animation: s1_branchGrow60 0.35s 2.8s ease-out forwards;
+}
+.s1_stage.visible .s1_branch--cl2 {
+  animation: s1_branchGrow60 0.35s 3.0s ease-out forwards;
+}
+.s1_stage.visible .s1_branch--al3 {
+  animation: s1_branchGrow60 0.35s 3.2s ease-out forwards;
+}
+.s1_stage.visible .s1_branch--al4 {
+  animation: s1_branchGrow100 0.35s 3.4s ease-out forwards;
+}
+
+/* Step 5 (3.5s): Leaf nodes appear */
+.s1_stage.visible .s1_leaf--l1 {
+  animation: s1_scaleIn 0.3s 3.5s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+.s1_stage.visible .s1_leaf--l2 {
+  animation: s1_scaleIn 0.3s 3.8s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+.s1_stage.visible .s1_leaf--l3 {
+  animation: s1_scaleIn 0.3s 4.1s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+.s1_stage.visible .s1_leaf--l4 {
+  animation: s1_scaleIn 0.3s 4.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+
+/* Steps 6-8 handled by JS — activate nodes after appearing */
+
+/* Narration show/hide */
+.s1_narr-step.s1_show { opacity: 1; }
+</style>
+
+<div class="s1_stage" id="s1Stage">
+  <!-- Root node -->
+  <div class="s1_node s1_node--root">学习</div>
+  <div class="s1_glow s1_glow--root"></div>
+
+  <!-- Branches from root -->
+  <div class="s1_branch s1_branch--rm" id="s1_brm"></div>
+  <div class="s1_branch s1_branch--rc" id="s1_brc"></div>
+  <div class="s1_branch s1_branch--ra" id="s1_bra"></div>
+
+  <!-- Second-level nodes -->
+  <div class="s1_node s1_node--math" id="s1_math">奥数</div>
+  <div class="s1_node s1_node--code" id="s1_code">编程</div>
+  <div class="s1_node s1_node--adv" id="s1_adv">自学</div>
+
+  <!-- Leaf branches -->
+  <div class="s1_branch s1_branch--ml1"></div>
+  <div class="s1_branch s1_branch--cl2"></div>
+  <div class="s1_branch s1_branch--al3"></div>
+  <div class="s1_branch s1_branch--al4"></div>
+
+  <!-- Leaf nodes (4+ chars, use rounded rect) -->
+  <div class="s1_leaf s1_leaf--l1">口算心流</div>
+  <div class="s1_leaf s1_leaf--l2">NOIP竞赛</div>
+  <div class="s1_leaf s1_leaf--l3">高中数学</div>
+  <div class="s1_leaf s1_leaf--l4">投资未来</div>
+
+  <!-- Narration -->
+  <div class="s1_narr">
+    <div class="s1_narr-step" data-start="0" data-end="900">一切从学习的正反馈开始</div>
+    <div class="s1_narr-step" data-start="900" data-end="1500">从根节点向外生长</div>
+    <div class="s1_narr-step" data-start="1500" data-end="2800">每个技能点亮，就带来下一个</div>
+    <div class="s1_narr-step" data-start="2800" data-end="4400">技能树逐渐展开</div>
+    <div class="s1_narr-step" data-start="4400" data-end="5300">正反馈点亮奥数</div>
+    <div class="s1_narr-step" data-start="5300" data-end="5800">编程成为新的正反馈源</div>
+    <div class="s1_narr-step" data-start="5800" data-end="9999">初二自学高中数学 = 投资未来</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var stage = document.getElementById('s1Stage');
+  if (!stage) return;
+  var narrs = stage.querySelectorAll('.s1_narr-step');
+  var timers = [];
+  function activateNode(id, color, delay) {
+    timers.push(setTimeout(function() {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.style.transition = 'all 0.4s ease';
+      el.style.borderColor = color;
+      el.style.color = '#fff';
+      el.style.background = color;
+      el.style.transform = 'scale(1.12)';
+      el.style.boxShadow = '0 0 16px ' + color + '66';
+    }, delay));
+  }
+  function activateBranch(id, color, delay) {
+    timers.push(setTimeout(function() {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.style.transition = 'background 0.3s ease';
+      el.style.background = color;
+    }, delay));
+  }
+  var ob = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        stage.classList.add('visible');
+        narrs.forEach(function(n) {
+          var start = parseInt(n.dataset.start);
+          var end = parseInt(n.dataset.end);
+          timers.push(setTimeout(function() { n.classList.add('s1_show'); }, start + 300));
+          if (end < 9999) {
+            timers.push(setTimeout(function() { n.classList.remove('s1_show'); }, end + 300));
+          }
+        });
+        // Activate nodes after they appear
+        activateNode('s1_math', '#E11D48', 4800);
+        activateBranch('s1_brm', '#E11D48', 4700);
+        activateNode('s1_code', '#14B8A6', 5300);
+        activateBranch('s1_brc', '#14B8A6', 5200);
+        activateNode('s1_adv', '#E11D48', 5800);
+        activateBranch('s1_bra', '#E11D48', 5700);
+        ob.unobserve(stage);
+      }
+    });
+  }, { threshold: 0.3 });
+  ob.observe(stage);
+})();
+</script>
+</div>
+    <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(1)">深入了解 &darr;</div>
+  </div>
+</div>
+
+<!-- ==================== S2: 与强化学习结缘 ==================== -->
+<div class="section" id="section-2" style="background: var(--bg-act1);">
+  <div class="content-width">
+    <p class="section-label reveal">02 &mdash; 与强化学习结缘</p>
+    <p class="big-statement reveal reveal-delay-1">误选RL, 三个兴趣方向, 图形学A+新算法</p>
+    <div class="body-text reveal reveal-delay-2">
+      <p>翁家翌大二去朱政恺老师实验室时面临三个方向：贝叶斯、GAN、强化学习。他其实想搞 GAN 做图像，但因为不知道哪个是 GAN，就随便选了第二个——结果发现这是个<span class="hl">「打游戏的东西」</span>，不是做图像的。虽然是一个拍脑袋的决定，但他觉得挺有意思就一直搞下去了。实际上他最感兴趣的方向有三个：AI、图形学、网络安全。网络安全是因为觉得 hacker 非常酷——他在大学业余时间给学校找了不少小漏洞，比如发现了一个 bug 可以免费下载成绩单（正常要 10 块钱），下完自己的之后直接把 bug 反馈给教务处修了。图形学是因为初中看了《创：战纪》觉得电影特效太震撼了，想有一天能构建自己的虚拟世界。他大二图形学课拿了全班唯一或唯二的 A，还发明了新算法减少光线弹射次数，渲染了一张 6K 无噪点的图——在他之前完全没人做到过。但最终他选择专注 RL，因为<span class="hl2">「搞科研还是专心比较好，不能同时挑太多方向」</span>。</p>
+    </div>
+    <div id="s2-anim" class="reveal reveal-delay-3">
+<style>
+/* === S2 Choice/Routing Animation === */
+.s2_stage {
+  position: relative;
+  width: 340px;
+  max-width: 90vw;
+  height: 360px;
+  margin: 24px auto 0;
+  background: #FFFAF5;
+  border-radius: 16px;
+}
+
+/* Three boxes */
+.s2_box {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 15px;
+  background: #fff;
+  border: 2.5px solid #CBD5E1;
+  color: #64748B;
+  top: 40px;
+  opacity: 0;
+  transform: scale(0);
+}
+.s2_box--gfx { left: 22px; }
+.s2_box--sec { left: 130px; }
+.s2_box--ai  { left: 238px; }
+
+/* Scan light bar */
+.s2_scan {
+  position: absolute;
+  top: 36px;
+  left: 18px;
+  width: 8px;
+  height: 88px;
+  background: linear-gradient(180deg, rgba(225,29,72,0) 0%, rgba(225,29,72,0.35) 50%, rgba(225,29,72,0) 100%);
+  border-radius: 4px;
+  opacity: 0;
+}
+
+/* Result text */
+.s2_result {
+  position: absolute;
+  top: 158px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #E11D48;
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+/* Anecdote bubble */
+.s2_bubble {
+  position: absolute;
+  top: 218px;
+  left: 28px;
+  right: 28px;
+  background: #fff;
+  border: 1.5px solid #E8E0D8;
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #64748B;
+  opacity: 0;
+  transform: translateY(12px);
+}
+.s2_bubble::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  margin-left: -6px;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-left: 1.5px solid #E8E0D8;
+  border-top: 1.5px solid #E8E0D8;
+  transform: rotate(45deg);
+}
+
+/* Narration */
+.s2_narr {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 13px;
+  color: #94A3B8;
+  min-height: 40px;
+}
+.s2_narr-step {
+  position: absolute;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s2_narr-step.s2_show { opacity: 1; }
+
+/* === KEYFRAMES === */
+@keyframes s2_scaleIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s2_fadeSlideUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s2_scanSweep {
+  0%   { left: 18px; opacity: 0.8; }
+  30%  { left: 126px; opacity: 0.8; }
+  60%  { left: 234px; opacity: 0.8; }
+  80%  { left: 234px; opacity: 0.8; }
+  100% { left: 234px; opacity: 0; }
+}
+@keyframes s2_activateRed {
+  to {
+    opacity: 1;
+    border-color: #E11D48;
+    color: #fff;
+    background: #E11D48;
+    box-shadow: 0 0 20px rgba(225,29,72,0.4);
+    transform: scale(1.08);
+  }
+}
+@keyframes s2_dimOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0.3;
+    transform: scale(0.9);
+  }
+}
+
+/* === ANIMATION SEQUENCE triggered by .visible === */
+
+/* Step 1 (0.3s): Three boxes appear */
+.s2_stage.visible .s2_box--gfx {
+  animation: s2_scaleIn 0.4s 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+.s2_stage.visible .s2_box--sec {
+  animation: s2_scaleIn 0.4s 0.7s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+.s2_stage.visible .s2_box--ai {
+  animation: s2_scaleIn 0.4s 1.1s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+
+/* Step 2 (1.8s): Scan light sweeps left to right */
+.s2_stage.visible .s2_scan {
+  animation: s2_scanSweep 1.2s 1.8s ease-in-out forwards;
+}
+
+/* Step 3 (3.2s): AI activates red, others dim — triggered by JS class */
+.s2_stage.visible .s2_box--ai.s2_activate {
+  animation: s2_activateRed 0.5s 0s ease forwards;
+}
+.s2_stage.visible .s2_box--gfx.s2_dim {
+  animation: s2_dimOut 0.4s 0s ease forwards;
+}
+.s2_stage.visible .s2_box--sec.s2_dim {
+  animation: s2_dimOut 0.4s 0s ease forwards;
+}
+
+/* Step 4 (3.8s): Result text */
+.s2_stage.visible .s2_result {
+  animation: s2_fadeSlideUp 0.5s 3.8s ease forwards;
+}
+
+/* Step 5 (4.4s): Anecdote bubble */
+.s2_stage.visible .s2_bubble {
+  animation: s2_fadeSlideUp 0.5s 4.4s ease forwards;
+}
+</style>
+
+<div class="s2_stage" id="s2Stage">
+  <!-- Three choice boxes -->
+  <div class="s2_box s2_box--gfx" id="s2_gfx">图形学</div>
+  <div class="s2_box s2_box--sec" id="s2_sec">安全</div>
+  <div class="s2_box s2_box--ai"  id="s2_ai">AI</div>
+
+  <!-- Scan light -->
+  <div class="s2_scan" id="s2_scan"></div>
+
+  <!-- Result text -->
+  <div class="s2_result">兴趣 + Impact = 选 AI</div>
+
+  <!-- Anecdote bubble -->
+  <div class="s2_bubble">实验室选方向：以为是GAN，结果是RL</div>
+
+  <!-- Narration -->
+  <div class="s2_narr">
+    <div class="s2_narr-step" data-start="0" data-end="1500">三个方向摆在面前</div>
+    <div class="s2_narr-step" data-start="1500" data-end="3000">扫描每个方向的潜力</div>
+    <div class="s2_narr-step" data-start="3000" data-end="3800">AI亮了，其他暗下去</div>
+    <div class="s2_narr-step" data-start="3800" data-end="4400">兴趣和影响力的交集</div>
+    <div class="s2_narr-step" data-start="4400" data-end="9999">误打误撞进了强化学习</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var stage = document.getElementById('s2Stage');
+  if (!stage) return;
+  var narrs = stage.querySelectorAll('.s2_narr-step');
+  var timers = [];
+
+  var ob = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        stage.classList.add('visible');
+
+        // Narration timing
+        narrs.forEach(function(n) {
+          var start = parseInt(n.dataset.start);
+          var end = parseInt(n.dataset.end);
+          timers.push(setTimeout(function() { n.classList.add('s2_show'); }, start + 300));
+          if (end < 9999) {
+            timers.push(setTimeout(function() { n.classList.remove('s2_show'); }, end + 300));
+          }
+        });
+
+        // Step 3 (3.2s): Activate AI box, dim others
+        timers.push(setTimeout(function() {
+          var ai = document.getElementById('s2_ai');
+          var gfx = document.getElementById('s2_gfx');
+          var sec = document.getElementById('s2_sec');
+          if (ai) ai.classList.add('s2_activate');
+          if (gfx) gfx.classList.add('s2_dim');
+          if (sec) sec.classList.add('s2_dim');
+        }, 3200));
+
+        ob.unobserve(stage);
+      }
+    });
+  }, { threshold: 0.3 });
+  ob.observe(stage);
+})();
+</script>
+</div>
+    <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(2)">深入了解 &darr;</div>
+  </div>
+</div>
+
+<!-- ==================== S3: 低谷与反弹 ==================== -->
+<div class="section" id="section-3" style="background: var(--bg-act1);">
+  <div class="content-width">
+    <p class="section-label reveal">03 &mdash; 低谷与反弹</p>
+    <p class="big-statement reveal reveal-delay-1">暑研挫败, PhD全拒, 挣脱评价体系</p>
+    <div class="body-text reveal reveal-delay-2">
+      <p>暑研结束后翁家翌的状态其实不太好：在 Bengio 组做类 MoE 的 NLP 课题没搞出什么成果，而周围同学去斯坦福、CMU 暑研都发了顶会论文。申请季他只拿到了 Master 而非 PhD，在当时清华的氛围里这被视为一种挫败——<span class="hl">因为「PhD 比 Master 好」是整个清华内部的固有认知</span>，身在其中很难摆脱这种影响。但他花了一段时间调整自己后，开始有意识地<span class="hl2">挣脱现有的评价体系</span>：他一直觉得 GPA 不是唯一的评价标准，应该从需求方角度看——如果目标是找工作，那相关经验比 GPA 重要得多。他采用了导师推荐的三个指标：论文、比赛、GitHub Star 三位数以上。这给了他一个完全不同的视角——可以在开源社区搞一些事情，创造与众不同的差异化。至于那些「三年内无比重要但三年后完全不重要」的东西（比如 GPA），他的策略是<span class="hl">最低限度投入</span>：算好分数够用就行，多一分都不想花时间。面对 Covid 带来的不确定性，他选择不去关注宏大国际叙事，而是专注手头的事——比如在家写天授和退学签证查询系统。</p>
+    </div>
+    <div id="s3-anim" class="reveal reveal-delay-3">
+<!-- S3: 低谷与反弹 — V-shaped Rebound Curve -->
+<style>
+/* === S3 STAGE === */
+.s3_stage {
+  position: relative;
+  width: 340px;
+  height: 360px;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+/* SVG V-curve */
+.s3_svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 340px;
+  height: 300px;
+  pointer-events: none;
+}
+
+.s3_path_down {
+  fill: none;
+  stroke: #E11D48;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 260;
+  stroke-dashoffset: 260;
+}
+.s3_path_up {
+  fill: none;
+  stroke: #14B8A6;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 260;
+  stroke-dashoffset: 260;
+}
+
+/* Node circles */
+.s3_node {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 14px;
+  background: #fff;
+  opacity: 0;
+  transform: scale(0);
+  font-family: -apple-system, 'PingFang SC', sans-serif;
+}
+
+/* Red descent nodes */
+.s3_node_red {
+  width: 56px; height: 56px;
+  border: 2.5px solid #E11D48;
+  color: #E11D48;
+}
+/* Gray low-point node */
+.s3_node_gray {
+  width: 62px; height: 62px;
+  border: 3px solid #CBD5E1;
+  color: #94A3B8;
+}
+/* Teal ascent nodes */
+.s3_node_teal {
+  width: 56px; height: 56px;
+  border: 2.5px solid #14B8A6;
+  color: #14B8A6;
+}
+
+/* 5-node V positions: descend left, bottom center, ascend right */
+/* Centers: (50,50), (120,150), (170,230), (220,150), (290,50) */
+.s3_p1 { top: 22px;  left: 22px; }
+.s3_p2 { top: 122px; left: 92px; }
+.s3_p3 { top: 199px; left: 139px; }
+.s3_p4 { top: 122px; left: 192px; }
+.s3_p5 { top: 22px;  left: 262px; }
+
+/* Pulse ring at low-point */
+.s3_pulse {
+  position: absolute;
+  width: 62px; height: 62px;
+  top: 199px; left: 139px;
+  border-radius: 50%;
+  border: 2px solid #CBD5E1;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Caption */
+.s3_caption {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  text-align: center;
+  font-size: 13px;
+  color: #94A3B8;
+  font-family: -apple-system, 'PingFang SC', sans-serif;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* Narration area */
+.s3_narration {
+  position: absolute;
+  bottom: 28px;
+  left: 0; right: 0;
+  text-align: center;
+  font-size: 12px;
+  color: #94A3B8;
+  min-height: 24px;
+}
+.s3_narr {
+  position: absolute;
+  left: 0; right: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s3_narr.s3_show { opacity: 1; }
+
+/* === S3 KEYFRAMES === */
+@keyframes s3_draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes s3_nodeIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s3_pulseRing {
+  0% { transform: scale(1); opacity: 0.6; border-color: #CBD5E1; }
+  100% { transform: scale(2); opacity: 0; border-color: #14B8A6; }
+}
+@keyframes s3_recolor {
+  to { border-color: #14B8A6; color: #14B8A6; }
+}
+@keyframes s3_captionIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === TRIGGERED SEQUENCE (.s3_stage.visible) === */
+/* Descent path draws: 0.4s delay */
+.s3_stage.visible .s3_path_down {
+  animation: s3_draw 1.4s 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Node 1: 暑研 */
+.s3_stage.visible .s3_p1 {
+  animation: s3_nodeIn 0.4s 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+/* Node 2: 全拒 */
+.s3_stage.visible .s3_p2 {
+  animation: s3_nodeIn 0.4s 1.1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+/* Node 3: 低谷 (gray, then pulse, then recolor to teal) */
+.s3_stage.visible .s3_p3 {
+  animation: s3_nodeIn 0.5s 1.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+             s3_recolor 0.6s 3.0s ease forwards;
+}
+/* Pulse ring on 低谷 */
+.s3_stage.visible .s3_pulse {
+  animation: s3_pulseRing 1.0s 2.3s ease-out forwards;
+}
+
+/* Ascent path draws */
+.s3_stage.visible .s3_path_up {
+  animation: s3_draw 1.4s 2.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Node 4: 挣脱 */
+.s3_stage.visible .s3_p4 {
+  animation: s3_nodeIn 0.4s 3.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+/* Node 5: 天授 */
+.s3_stage.visible .s3_p5 {
+  animation: s3_nodeIn 0.4s 4.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Caption */
+.s3_stage.visible .s3_caption {
+  animation: s3_captionIn 0.5s 4.5s ease forwards;
+}
+</style>
+
+<div class="s3_stage">
+  <!-- SVG V-curve paths -->
+  <svg class="s3_svg" viewBox="0 0 340 300">
+    <path class="s3_path_down" d="M 50,50 Q 85,100 120,150 Q 145,190 170,230" />
+    <path class="s3_path_up"   d="M 170,230 Q 195,190 220,150 Q 255,100 290,50" />
+  </svg>
+
+  <!-- Descent nodes -->
+  <div class="s3_node s3_node_red s3_p1">暑研</div>
+  <div class="s3_node s3_node_red s3_p2">全拒</div>
+
+  <!-- Low point -->
+  <div class="s3_node s3_node_gray s3_p3">低谷</div>
+  <div class="s3_pulse"></div>
+
+  <!-- Ascent nodes -->
+  <div class="s3_node s3_node_teal s3_p4">挣脱</div>
+  <div class="s3_node s3_node_teal s3_p5">天授</div>
+
+  <p class="s3_caption">评价体系之外，找到自己的坐标</p>
+
+  <!-- Narration -->
+  <div class="s3_narration">
+    <div class="s3_narr" data-start="400" data-end="1400">暑研挫败，没有产出亮眼论文</div>
+    <div class="s3_narr" data-start="1100" data-end="2000">PhD全拒，只拿到Master</div>
+    <div class="s3_narr" data-start="1700" data-end="2800">跌到谷底，开始质疑自己</div>
+    <div class="s3_narr" data-start="3000" data-end="4000">挣脱评价体系，重新定义价值</div>
+    <div class="s3_narr" data-start="4000" data-end="9999">天授诞生，用impact证明自己</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var stage = document.querySelector('.s3_stage');
+  if (!stage) return;
+  var narrs = stage.querySelectorAll('.s3_narr');
+  var timers = [];
+
+  function runSequence() {
+    narrs.forEach(function(n) {
+      var start = parseInt(n.dataset.start);
+      var end = parseInt(n.dataset.end);
+      timers.push(setTimeout(function() { n.classList.add('s3_show'); }, start));
+      if (end < 9999) {
+        timers.push(setTimeout(function() { n.classList.remove('s3_show'); }, end));
+      }
+    });
+  }
+
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      if (m.type === 'attributes' && stage.classList.contains('visible')) {
+        timers.forEach(clearTimeout);
+        timers = [];
+        narrs.forEach(function(n) { n.classList.remove('s3_show'); });
+        runSequence();
+      }
+    });
+  });
+  observer.observe(stage, { attributes: true, attributeFilter: ['class'] });
+
+  if (stage.classList.contains('visible')) {
+    runSequence();
+  }
+})();
+</script>
+</div>
+    <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(3)">深入了解 &darr;</div>
+  </div>
+</div>
+
+<!-- ==================== ACT II: 爆发 ==================== -->
+<div class="act-transition reveal" style="background: var(--bg-act2);">
+  <p class="act-num">Act II</p>
+  <p class="act-title">爆发</p>
+</div>
+
+<!-- ==================== S4: 天授与开源之道 ==================== -->
+<div class="section" id="section-4" style="background: var(--bg-act2);">
+  <div class="content-width">
+    <p class="section-label reveal">04 &mdash; 天授与开源之道</p>
+    <p class="big-statement reveal reveal-delay-1">RLlib太复杂, 天授从零100行, tuixue签证系统, Impact底层逻辑</p>
+    <div class="body-text reveal reveal-delay-2">
+      <p>翁家翌做天授的起因很直接：2020 年初他去看了 RLlib 的代码，想在上面改来支持自己的实验——结果看了一个月，<span class="hl">几十万行代码，抽象太多，完全不知道该怎么改</span>。于是他决定推倒重来，从零开始写。两周就写出了第一版，核心代码量只有一百行出头。他认为一个项目最重要的品质是<span class="hl2">一致性（consistency）</span>：因为从头到尾由一个人设计，就不会出现十个人各写各的、假设不一致、代码逐渐腐化的问题。天授一炮而红，因为它抓住了用户需求——当时做 RL 科研的人都需要一个好用好改的框架。第二个项目退学（tuixue）也是同样的逻辑：自己有查签证时间的需求，找了一圈没有，就自己写了一个爬虫免费给大家用，总点击量从一百多万涨到了一千多万。这两个项目都不是功利驱动的——天授不为发 paper，退学不为赚钱。他的底层逻辑是<span class="hl">追求 Impact</span>：高三时他脑子里蹦出一个想法——如果人生是一场游戏，结算分数就是死的那一刻记得你名字的人的数量。他想做的是<span class="hl2">正面的影响力</span>，不是官方认同而是每个人发自内心的点赞。</p>
+    </div>
+    <div id="s4-anim" class="reveal reveal-delay-3">
+in #s4-anim with the div.s4_stage below. -->
+
+<style>
+/* === S4: Complexity Comparison === */
+.s4_stage {
+  position: relative; width: 340px; height: 340px; margin: 0 auto;
+}
+
+/* --- Keyframes --- */
+@keyframes s4_fadeUp   { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes s4_scaleIn  { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
+@keyframes s4_growX    { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes s4_dimOut   { to { opacity: 0.3; } }
+@keyframes s4_pulse    { 0%,100% { box-shadow: 0 0 0 0 rgba(20,184,166,0.35); } 50% { box-shadow: 0 0 0 10px rgba(20,184,166,0); } }
+
+/* --- Left: RLlib dimmed box --- */
+.s4_rllib {
+  position: absolute; left: 16px; top: 48px;
+  width: 100px; height: 120px; border-radius: 10px;
+  border: 2px solid var(--neutral); background: #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  opacity: 0;
+}
+.s4_rllib_name { font-size: 16px; font-weight: 700; color: #94A3B8; }
+.s4_rllib_count { font-size: 11px; color: var(--neutral); font-weight: 500; }
+.s4_rllib_line {
+  position: absolute; height: 1.5px; background: #E2E8F0; border-radius: 1px; opacity: 0;
+}
+.s4_rl1 { left: 30px; top: 92px; width: 36px; }
+.s4_rl2 { left: 38px; top: 102px; width: 48px; }
+.s4_rl3 { left: 26px; top: 112px; width: 54px; }
+.s4_rl4 { left: 34px; top: 122px; width: 42px; }
+.s4_rl5 { left: 28px; top: 132px; width: 50px; }
+
+/* --- Center: red arrow --- */
+.s4_arrow_line {
+  position: absolute; left: 128px; top: 104px;
+  width: 44px; height: 2px; background: var(--accent);
+  transform-origin: left center; transform: scaleX(0);
+}
+.s4_arrow_head {
+  position: absolute; left: 170px; top: 98px;
+  width: 0; height: 0;
+  border-top: 7px solid transparent; border-bottom: 7px solid transparent;
+  border-left: 10px solid var(--accent);
+  opacity: 0;
+}
+.s4_arrow_label {
+  position: absolute; left: 122px; top: 82px;
+  font-size: 12px; color: var(--accent); font-weight: 600; white-space: nowrap; opacity: 0;
+}
+
+/* --- Right: Tianshou bright circle --- */
+.s4_tianshou {
+  position: absolute; right: 28px; top: 52px;
+  width: 96px; height: 96px; border-radius: 50%;
+  background: var(--accent2); border: 3px solid var(--accent2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 48px; font-weight: 700; color: #fff;
+  opacity: 0; transform: scale(0);
+}
+.s4_tianshou_sub {
+  position: absolute; right: 36px; top: 156px;
+  font-size: 11px; color: var(--accent2); font-weight: 600;
+  text-align: center; width: 80px; opacity: 0;
+}
+
+/* --- Divider --- */
+.s4_divider {
+  position: absolute; left: 50%; top: 200px;
+  width: 200px; height: 1px; background: var(--neutral);
+  transform: translateX(-50%) scaleX(0); transform-origin: center;
+}
+.s4_pattern_label {
+  position: absolute; left: 0; right: 0; top: 214px;
+  text-align: center; font-size: 11px; color: #94A3B8; font-weight: 500; opacity: 0;
+}
+
+/* --- Bottom: tuixue circle --- */
+.s4_tuixue {
+  position: absolute; left: 50%; top: 240px;
+  transform: translateX(-50%) scale(0);
+  width: 72px; height: 72px; border-radius: 50%;
+  border: 2.5px solid var(--accent); background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: var(--accent);
+  opacity: 0;
+}
+.s4_tuixue_sub {
+  position: absolute; left: 0; right: 0; top: 318px;
+  text-align: center; font-size: 11px; color: #94A3B8; opacity: 0;
+}
+
+/* === Animation timeline: .s4_stage.visible trigger === */
+
+/* Step 1 (0.4s): RLlib box fades in */
+.s4_stage.visible .s4_rllib {
+  animation: s4_fadeUp 0.5s 0.4s ease both;
+}
+/* Step 1b (0.7-1.2s): complexity lines appear one by one */
+.s4_stage.visible .s4_rl1 { animation: s4_fadeUp 0.25s 0.7s ease both; }
+.s4_stage.visible .s4_rl2 { animation: s4_fadeUp 0.25s 0.85s ease both; }
+.s4_stage.visible .s4_rl3 { animation: s4_fadeUp 0.25s 1.0s ease both; }
+.s4_stage.visible .s4_rl4 { animation: s4_fadeUp 0.25s 1.15s ease both; }
+.s4_stage.visible .s4_rl5 { animation: s4_fadeUp 0.25s 1.3s ease both; }
+
+/* Step 2 (1.8s): arrow label + line + head */
+.s4_stage.visible .s4_arrow_label { animation: s4_fadeUp 0.35s 1.8s ease both; }
+.s4_stage.visible .s4_arrow_line  { animation: s4_growX  0.4s 2.2s ease both; }
+.s4_stage.visible .s4_arrow_head  { animation: s4_fadeUp 0.2s 2.6s ease both; }
+
+/* Step 3 (2.8s): RLlib dims, Tianshou pops */
+.s4_stage.visible .s4_rllib { animation: s4_fadeUp 0.5s 0.4s ease both, s4_dimOut 0.5s 2.8s ease forwards; }
+.s4_stage.visible .s4_tianshou {
+  animation: s4_scaleIn 0.5s 3.0s cubic-bezier(0.34,1.56,0.64,1) both, s4_pulse 2s 4.5s ease infinite;
+}
+.s4_stage.visible .s4_tianshou_sub { animation: s4_fadeUp 0.3s 3.4s ease both; }
+
+/* Step 4 (3.8s): divider + pattern label */
+.s4_stage.visible .s4_divider      { animation: s4_growX  0.4s 3.8s ease both; }
+.s4_stage.visible .s4_pattern_label { animation: s4_fadeUp 0.35s 4.2s ease both; }
+
+/* Step 5 (4.6s): tuixue circle + subtitle */
+.s4_stage.visible .s4_tuixue     { animation: s4_scaleIn 0.45s 4.6s cubic-bezier(0.34,1.56,0.64,1) both; }
+.s4_stage.visible .s4_tuixue_sub { animation: s4_fadeUp 0.3s 5.0s ease both; }
+</style>
+
+ comment inside div#s4-anim with this: -->
+<div class="s4_stage">
+  <!-- Left: RLlib bloated box -->
+  <div class="s4_rllib">
+    <span class="s4_rllib_name">RLlib</span>
+    <span class="s4_rllib_count">几十万行</span>
+  </div>
+  <div class="s4_rllib_line s4_rl1"></div>
+  <div class="s4_rllib_line s4_rl2"></div>
+  <div class="s4_rllib_line s4_rl3"></div>
+  <div class="s4_rllib_line s4_rl4"></div>
+  <div class="s4_rllib_line s4_rl5"></div>
+
+  <!-- Center: red arrow with label -->
+  <div class="s4_arrow_label">推倒重来</div>
+  <div class="s4_arrow_line"></div>
+  <div class="s4_arrow_head"></div>
+
+  <!-- Right: Tianshou bright circle -->
+  <div class="s4_tianshou">天授</div>
+  <div class="s4_tianshou_sub">100行核心</div>
+
+  <!-- Divider -->
+  <div class="s4_divider"></div>
+  <div class="s4_pattern_label">同样的模式</div>
+
+  <!-- Bottom: tuixue circle -->
+  <div class="s4_tuixue">tuixue</div>
+  <div class="s4_tuixue_sub">需求 &rarr; 写 &rarr; 分享</div>
+</div>
+</div>
+    <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(4)">深入了解 &darr;</div>
+  </div>
+</div>
+
+<!-- ==================== S5: 通往 OpenAI 之路 ==================== -->
+<div class="section" id="section-5" style="background: var(--bg-act2);">
+  <div class="content-width">
+    <p class="section-label reveal">05 &mdash; 通往 OpenAI 之路</p>
+    <p class="big-statement reveal reveal-delay-1">投18家收2个, 幻方vs OpenAI, Schulman面试</p>
+    <div class="body-text reveal reveal-delay-2">
+      <p>翁家翌找工作时投了 18 家公司，最后只收到 Google 和一个小创业公司的 offer。他不想去 Google 当螺丝钉做前后端，后来拿到了<span class="hl">幻方</span>的 offer——幻方当时说要搞 AI Lab，就是后来的 DeepSeek。但他又去面了 OpenAI。所以现在开天眼看，他当时面临的选择其实是 <span class="hl-danger">DeepSeek vs OpenAI</span>——而且这是在 ChatGPT 之前。他选择 OpenAI 是因为它和 DeepMind 是当时 RL 领域最顶尖的两个 Research Lab，他想去学习世界顶尖实验室到底是怎么运作的，而不是像学校小作坊那样没有方法论。面试他的是 <span class="hl2">John Schulman</span>——Schulman 觉得天授写得非常漂亮，开源项目是他评价体系的一个指标，之前没有别人做到过。最后一轮面试 Schulman 出了一道非常刁钻的题给他三小时，他花两小时从头写了一个东西，展示时出了个 bug 但很快修好了。这道题只给两个人测过，另一个是现在做 Codex 的那位，两人都通过了，<span class="hl">通过率大概 10%-20%</span>。</p>
+    </div>
+    <div id="s5-anim" class="reveal reveal-delay-3">
+<style>
+.s5_stage {
+  position: relative;
+  width: 340px;
+  height: 410px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* Keyframes */
+@keyframes s5_fadeUp {
+  from { opacity: 0; transform: translateY(14px) scale(0.8); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes s5_fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0.12; }
+}
+@keyframes s5_shrink {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0.1; transform: scale(0.4); }
+}
+@keyframes s5_growDown {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+@keyframes s5_growX {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+@keyframes s5_highlight {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(225,29,72,0.35); }
+  50%      { box-shadow: 0 0 0 12px rgba(225,29,72,0); }
+}
+@keyframes s5_tagSlide {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* === Grid: 18 squares 6x3 === */
+.s5_grid {
+  position: absolute;
+  top: 10px;
+  left: 94px;
+  display: grid;
+  grid-template-columns: repeat(6, 22px);
+  gap: 4px;
+  opacity: 0;
+}
+.s5_sq {
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  background: #CBD5E1;
+}
+
+/* Label: 18 -> 2 */
+.s5_lbl18 {
+  position: absolute;
+  top: 70px;
+  width: 340px;
+  text-align: center;
+  font-size: 13px;
+  color: #94A3B8;
+  font-weight: 600;
+  opacity: 0;
+}
+
+/* Funnel converge lines */
+.s5_fnl, .s5_fnr {
+  position: absolute;
+  width: 2px;
+  height: 26px;
+  background: #CBD5E1;
+  transform-origin: top center;
+  transform: scaleY(0);
+}
+.s5_fnl { left: 138px; top: 86px; }
+.s5_fnr { left: 200px; top: 86px; }
+
+/* 2 offer pills (4+ chars -> rounded rect) */
+.s5_offers {
+  position: absolute;
+  top: 116px;
+  width: 340px;
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  opacity: 0;
+}
+.s5_ofr {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: #475569;
+  background: #CBD5E1;
+  white-space: nowrap;
+}
+
+/* Sub-label */
+.s5_lbl2 {
+  position: absolute;
+  top: 158px;
+  width: 340px;
+  text-align: center;
+  font-size: 11px;
+  color: #94A3B8;
+  font-weight: 600;
+  opacity: 0;
+}
+
+/* Fork: vertical stem */
+.s5_fk_v {
+  position: absolute;
+  left: 169px;
+  top: 172px;
+  width: 2px;
+  height: 22px;
+  background: #CBD5E1;
+  transform-origin: top center;
+  transform: scaleY(0);
+}
+/* Fork: horizontal bar */
+.s5_fk_h {
+  position: absolute;
+  top: 194px;
+  left: 86px;
+  width: 168px;
+  height: 2px;
+  background: #CBD5E1;
+  transform-origin: center;
+  transform: scaleX(0);
+}
+/* Fork: left & right down-legs */
+.s5_fk_dl, .s5_fk_dr {
+  position: absolute;
+  width: 2px;
+  height: 18px;
+  background: #CBD5E1;
+  transform-origin: top center;
+  transform: scaleY(0);
+}
+.s5_fk_dl { left: 86px;  top: 194px; }
+.s5_fk_dr { left: 253px; top: 194px; }
+
+/* Choice node: 幻方 (2 chars -> circle >=48px) */
+.s5_c_hf {
+  position: absolute;
+  top: 216px;
+  left: 40px;
+  width: 94px;
+  height: 94px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 48px;
+  color: #475569;
+  background: #CBD5E1;
+  opacity: 0;
+}
+.s5_hf_sub {
+  position: absolute;
+  top: 314px;
+  left: 40px;
+  width: 94px;
+  text-align: center;
+  font-size: 11px;
+  color: #94A3B8;
+  opacity: 0;
+}
+
+/* Choice node: OpenAI (6 chars -> rounded rect) */
+.s5_c_oai {
+  position: absolute;
+  top: 232px;
+  left: 196px;
+  width: 108px;
+  height: 48px;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  color: #475569;
+  background: #CBD5E1;
+  opacity: 0;
+}
+
+/* Tag below OpenAI */
+.s5_tag {
+  position: absolute;
+  top: 290px;
+  left: 196px;
+  width: 108px;
+  text-align: center;
+  opacity: 0;
+}
+.s5_tag_inner {
+  display: inline-block;
+  background: #14B8A6;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 10px;
+}
+
+/* Bottom quote */
+.s5_quote {
+  position: absolute;
+  top: 340px;
+  width: 340px;
+  text-align: center;
+  font-size: 12px;
+  color: #94A3B8;
+  opacity: 0;
+  line-height: 1.6;
+  padding: 0 20px;
+}
+
+/* === Animation triggers: .s5_stage.visible === */
+.s5_stage.visible .s5_grid {
+  animation: s5_fadeUp 0.5s ease 0.4s both;
+}
+.s5_stage.visible .s5_lbl18 {
+  animation: s5_fadeUp 0.4s ease 0.9s both;
+}
+.s5_stage.visible .s5_sq_fade {
+  animation: s5_shrink 0.6s ease 1.3s both;
+}
+.s5_stage.visible .s5_fnl,
+.s5_stage.visible .s5_fnr {
+  animation: s5_growDown 0.4s ease 1.6s both;
+}
+.s5_stage.visible .s5_offers {
+  animation: s5_fadeUp 0.5s ease 2.0s both;
+}
+.s5_stage.visible .s5_lbl2 {
+  animation: s5_fadeUp 0.4s ease 2.4s both;
+}
+.s5_stage.visible .s5_fk_v {
+  animation: s5_growDown 0.4s ease 2.8s both;
+}
+.s5_stage.visible .s5_fk_h {
+  animation: s5_growX 0.3s ease 3.1s both;
+}
+.s5_stage.visible .s5_fk_dl,
+.s5_stage.visible .s5_fk_dr {
+  animation: s5_growDown 0.3s ease 3.3s both;
+}
+.s5_stage.visible .s5_c_hf {
+  animation: s5_fadeUp 0.5s ease 3.6s both, s5_fadeOut 0.6s ease 4.6s both;
+}
+.s5_stage.visible .s5_hf_sub {
+  animation: s5_fadeUp 0.3s ease 3.9s both, s5_fadeOut 0.5s ease 4.6s both;
+}
+.s5_stage.visible .s5_c_oai {
+  background: #E11D48;
+  color: #fff;
+  animation: s5_fadeUp 0.5s ease 3.8s both, s5_highlight 2s ease 4.8s infinite;
+}
+.s5_stage.visible .s5_tag {
+  animation: s5_tagSlide 0.5s ease 4.8s both;
+}
+.s5_stage.visible .s5_quote {
+  animation: s5_tagSlide 0.4s ease 5.2s both;
+}
+</style>
+
+<div class="s5_stage">
+  <!-- Step 1: 18-square grid (6x3). Last 2 kept, 16 fade out. -->
+  <div class="s5_grid">
+    <div class="s5_sq s5_sq_fade"></div>
+    <div class="s5_sq s5_sq_fade"></div>
+    <div class="s5_sq s5_sq_fade"></div>
+    <div class="s5_sq s5_sq_fade"></div>
+    <div class="s5_sq s5_sq_fade"></div>
+    <div class="s5_sq s5_sq_fade"></div>
+    <div class="s5_sq s5_sq_fade"></div>
+    <div class="s5_sq s5_sq_fade"></div>
+    <div class="s5_sq s5_sq_fade"></div>
+    <div class="s5_sq s5_sq_fade"></div>
+    <div class="s5_sq s5_sq_fade"></div>
+    <div class="s5_sq s5_sq_fade"></div>
+    <div class="s5_sq s5_sq_fade"></div>
+    <div class="s5_sq s5_sq_fade"></div>
+    <div class="s5_sq s5_sq_fade"></div>
+    <div class="s5_sq s5_sq_fade"></div>
+    <div class="s5_sq"></div>
+    <div class="s5_sq"></div>
+  </div>
+
+  <!-- Step 2: label -->
+  <div class="s5_lbl18">18家 &#8594; 2个offer</div>
+
+  <!-- Step 3: funnel lines -->
+  <div class="s5_fnl"></div>
+  <div class="s5_fnr"></div>
+
+  <!-- Step 4: two offer pills -->
+  <div class="s5_offers">
+    <div class="s5_ofr">Google</div>
+    <div class="s5_ofr">小公司</div>
+  </div>
+  <div class="s5_lbl2">大厂螺丝钉?</div>
+
+  <!-- Step 5: fork structure -->
+  <div class="s5_fk_v"></div>
+  <div class="s5_fk_h"></div>
+  <div class="s5_fk_dl"></div>
+  <div class="s5_fk_dr"></div>
+
+  <!-- Step 6: two final choices -->
+  <div class="s5_c_hf">幻方</div>
+  <div class="s5_hf_sub">&#8594; DeepSeek</div>
+
+  <div class="s5_c_oai">OpenAI</div>
+
+  <!-- Step 7: teal tag -->
+  <div class="s5_tag">
+    <span class="s5_tag_inner">天授 = 名片</span>
+  </div>
+
+  <!-- Step 8: Schulman quote -->
+  <div class="s5_quote">Schulman:「你就是写天授那个人」</div>
+</div>
+
+<script>
+// S5 stage visibility trigger via IntersectionObserver
+(function() {
+  var el = document.querySelector('.s5_stage');
+  if (!el) return;
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.3 });
+  obs.observe(el);
+})();
+</script>
+</div>
+    <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(5)">深入了解 &darr;</div>
+  </div>
+</div>
+
+<!-- ==================== S6: 学术界 vs 工业界 ==================== -->
+<div class="section" id="section-6" style="background: var(--bg-act2);">
+  <div class="content-width">
+    <p class="section-label reveal">06 &mdash; 学术界 vs 工业界</p>
+    <p class="big-statement reveal reveal-delay-1">学术界需重构, AI Lab需要Infra, 尽早进工业界</p>
+    <div class="body-text reveal reveal-delay-2">
+      <p>翁家翌在 2022 年 8 月就意识到 RL 学术界需要被重构：大家对着 Atari、MuJoCo 这几个 benchmark 来回调参比分数，但工业界完全不看这些——工业界用 RL 解决真实问题。所以他主动停止了天授的开发，把精力投入 OpenAI 内部的 RL Infra。他认为现在的时代<span class="hl">工程能力远比研究能力重要</span>——用他同事的话说：「教一个 researcher 如何做好 engineering，要远比教一个 engineer 如何做好 research 来得难。」因为目前研究前沿拼的是 Infra 的正确性和单位时间迭代次数，idea 大家讨论一下就有了，关键是谁能正确且快速地验证。对于有抱负的年轻人，他的建议是<span class="hl2">尽早进入工业界</span>：读 PhD 的话毕业后范式可能已经变了，你做的东西可能没什么用了。关键是想清楚<span class="hl">差异化</span>——作为 Master 甚至本科生，你能做什么让对方选你而不是另一个 PhD。</p>
+    </div>
+    <div id="s6-anim" class="reveal reveal-delay-3">
+<style>
+.s6_stage {
+  position: relative;
+  width: 340px;
+  margin: 32px auto 24px;
+  height: 260px;
+}
+
+/* Fulcrum triangle */
+.s6_fulcrum {
+  position: absolute;
+  top: 130px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 0;
+  height: 0;
+  border-left: 14px solid transparent;
+  border-right: 14px solid transparent;
+  border-bottom: 22px solid #CBD5E1;
+  opacity: 0;
+}
+.s6_stage.visible .s6_fulcrum {
+  animation: s6_scaleIn 0.4s 0.4s forwards;
+}
+
+/* Beam */
+.s6_beam {
+  position: absolute;
+  top: 118px;
+  left: 50%;
+  width: 280px;
+  height: 4px;
+  background: #CBD5E1;
+  border-radius: 2px;
+  transform: translateX(-50%) rotate(0deg);
+  transform-origin: center center;
+  opacity: 0;
+}
+.s6_stage.visible .s6_beam {
+  animation: s6_beamAppear 0.4s 0.8s forwards, s6_beamTilt 1.0s 2.0s forwards;
+}
+
+/* Left pan: 学术 circle */
+.s6_pan-left {
+  position: absolute;
+  top: 52px;
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: scale(0);
+}
+.s6_stage.visible .s6_pan-left {
+  animation: s6_scaleIn 0.4s 1.2s forwards;
+}
+
+.s6_circle-academic {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #CBD5E1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1E293B;
+  transition: opacity 1.0s ease 2.4s, transform 1.0s ease 2.4s;
+}
+.s6_stage.visible .s6_circle-academic {
+  opacity: 0.3;
+  transform: scale(0.85);
+}
+
+.s6_chips-left {
+  display: flex;
+  gap: 6px;
+}
+
+.s6_chip {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.s6_chip--dim {
+  background: rgba(203, 213, 225, 0.3);
+  color: #94A3B8;
+  transition: opacity 1.0s ease 2.4s;
+}
+.s6_stage.visible .s6_chip--dim {
+  opacity: 0.3;
+}
+
+/* Right pan: Infra rounded rect */
+.s6_pan-right {
+  position: absolute;
+  top: 52px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: scale(0);
+}
+.s6_stage.visible .s6_pan-right {
+  animation: s6_scaleIn 0.4s 1.6s forwards;
+}
+
+.s6_rect-infra {
+  width: 82px;
+  height: 48px;
+  border-radius: 12px;
+  background: #14B8A6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 0 rgba(20, 184, 166, 0);
+  transition: box-shadow 1.0s ease 2.4s;
+}
+.s6_stage.visible .s6_rect-infra {
+  box-shadow: 0 0 24px rgba(20, 184, 166, 0.5), 0 0 48px rgba(20, 184, 166, 0.2);
+  animation: s6_glowPulse 2s ease-in-out infinite 3.2s;
+}
+
+.s6_chips-right {
+  display: flex;
+  gap: 6px;
+}
+
+.s6_chip--teal {
+  background: rgba(20, 184, 166, 0.15);
+  color: #14B8A6;
+}
+
+/* Verdict tag */
+.s6_verdict {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: #E11D48;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 5px 16px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  opacity: 0;
+}
+.s6_stage.visible .s6_verdict {
+  animation: s6_fadeSlideUp 0.5s 3.0s forwards;
+}
+
+/* Keyframes */
+@keyframes s6_scaleIn {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes s6_beamAppear {
+  from { opacity: 0; transform: translateX(-50%) rotate(0deg); }
+  to { opacity: 1; transform: translateX(-50%) rotate(0deg); }
+}
+@keyframes s6_beamTilt {
+  from { transform: translateX(-50%) rotate(0deg); }
+  to { transform: translateX(-50%) rotate(-8deg); }
+}
+@keyframes s6_fadeSlideUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes s6_glowPulse {
+  0%, 100% { box-shadow: 0 0 24px rgba(20, 184, 166, 0.5), 0 0 48px rgba(20, 184, 166, 0.2); }
+  50% { box-shadow: 0 0 36px rgba(20, 184, 166, 0.7), 0 0 64px rgba(20, 184, 166, 0.35); }
+}
+</style>
+
+<div class="s6_stage">
+  <div class="s6_fulcrum"></div>
+  <div class="s6_beam"></div>
+
+  <div class="s6_pan-left">
+    <div class="s6_circle-academic">学术</div>
+    <div class="s6_chips-left">
+      <span class="s6_chip s6_chip--dim">Atari</span>
+      <span class="s6_chip s6_chip--dim">MuJoCo</span>
+    </div>
+  </div>
+
+  <div class="s6_pan-right">
+    <div class="s6_rect-infra">Infra</div>
+    <div class="s6_chips-right">
+      <span class="s6_chip s6_chip--teal">Scale</span>
+      <span class="s6_chip s6_chip--teal">迭代</span>
+    </div>
+  </div>
+
+  <div class="s6_verdict">差异化 > 学历</div>
+</div>
+</div>
+    <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(6)">深入了解 &darr;</div>
+  </div>
+</div>
+
+<!-- ==================== ACT III: 风暴与未来 ==================== -->
+<div class="act-transition act-transition-dark reveal" style="background: var(--bg-act3);">
+  <p class="act-num">Act III</p>
+  <p class="act-title">风暴与未来</p>
+</div>
+
+<!-- ==================== S7: ChatGPT：从内部看一场风暴 [DARK] ==================== -->
+<div class="section section-dark" id="section-7">
+  <div class="content-width">
+    <p class="section-label reveal">07 &mdash; ChatGPT：从内部看一场风暴</p>
+    <p class="big-statement reveal reveal-delay-1">发布背景, 内部感受, 指数增长</p>
+    <div class="body-text reveal reveal-delay-2">
+      <p>翁家翌 2022 年 7 月加入 OpenAI 的时候，ChatGPT 还不是公司主线——只有 Schulman 下面大约 12 个人的 RLHF 团队在做。原本计划是用 3.5 模型做 browsing，但效果不好（因为 browsing 需要 tool calling 的支持），于是退而求其次先把用户聊天体验做好，通过 instruction following 加 RLHF 的方式来解决。他对 OpenAI 的初印象是<span class="hl">「一个大号的实验室」</span>，没有想象中那么有方法论，但有很多杰出人才。后来 Barret、Liam 等人加入后引进了 Google 的先进生产力——核心思路就是<span class="hl2">快速迭代</span>：先不要想天才算法，把 Infra 打好，从一周迭代 30 次提高到 300 次。至于 ChatGPT 发布前，作为内部人员他并没有预见到它会改变世界——第一次用时觉得「这是个会说话的模型也就这样吧」。但 11 月 30 日发布后，服务器被打爆了好几次，自来水式的自发宣传效应远超预期。他们原本预期只有一两万用户然后五天就关了，结果是<span class="hl-danger">指数级增长</span>。</p>
+    </div>
+    <div id="s7-anim" class="reveal reveal-delay-3">
+<!-- S7: ChatGPT：从内部看一场风暴 — Timeline + Exponential Growth -->
+<style>
+/* S7 Stage */
+.s7_stage {
+  position: relative;
+  width: 340px;
+  max-width: 90vw;
+  height: 430px;
+  margin: 20px auto;
+  color: #F1F5F9;
+}
+
+/* Keyframes */
+@keyframes s7_fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes s7_fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes s7_growX {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+@keyframes s7_pop {
+  from { opacity: 0; transform: scale(0); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes s7_drawCurve {
+  from { stroke-dashoffset: 220; }
+  to   { stroke-dashoffset: 0; }
+}
+@keyframes s7_pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(225,29,72,0.45); }
+  50%      { box-shadow: 0 0 0 12px rgba(225,29,72,0); }
+}
+@keyframes s7_areaFill {
+  from { opacity: 0; }
+  to   { opacity: 0.6; }
+}
+
+/* Title */
+.s7_title {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #94A3B8;
+  letter-spacing: 1px;
+  opacity: 0;
+  margin-bottom: 18px;
+}
+
+/* Horizontal timeline axis */
+.s7_axis {
+  position: absolute;
+  top: 68px;
+  left: 20px;
+  width: 300px;
+  height: 2px;
+  background: #475569;
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+
+/* Timeline nodes */
+.s7_node {
+  position: absolute;
+  top: 54px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  z-index: 2;
+}
+.s7_dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2.5px solid #14B8A6;
+  background: #1E293B;
+}
+.s7_nodeLabel {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #CBD5E1;
+  white-space: nowrap;
+}
+.s7_nodeDate {
+  font-size: 11px;
+  color: #64748B;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+/* Node positions */
+.s7_n1 { left: 16px; }
+.s7_n2 { left: 130px; }
+.s7_n3 { left: 250px; }
+
+/* Pills */
+.s7_pill {
+  position: absolute;
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 15px;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  color: #fff;
+  opacity: 0;
+}
+.s7_team {
+  top: 118px;
+  left: 50px;
+  background: #14B8A6;
+}
+.s7_expect {
+  top: 118px;
+  right: 20px;
+  background: #475569;
+  font-size: 11px;
+}
+
+/* SVG curve area */
+.s7_curveWrap {
+  position: absolute;
+  top: 168px;
+  left: 20px;
+  width: 300px;
+  height: 150px;
+  opacity: 0;
+}
+.s7_curveWrap svg {
+  width: 300px;
+  height: 150px;
+}
+.s7_curveLine {
+  fill: none;
+  stroke: #E11D48;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 220;
+  stroke-dashoffset: 220;
+}
+.s7_curveArea {
+  fill: url(#s7_grad);
+  opacity: 0;
+}
+.s7_yLabel { font-size: 10px; fill: #64748B; }
+.s7_xLabel { font-size: 10px; fill: #64748B; }
+
+/* Explosion label */
+.s7_boom {
+  position: absolute;
+  top: 170px;
+  right: 22px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #E11D48;
+  opacity: 0;
+}
+
+/* Server crash warning */
+.s7_crash {
+  position: absolute;
+  top: 340px;
+  left: 20px;
+  width: 300px;
+  text-align: center;
+  opacity: 0;
+}
+.s7_crashBox {
+  display: inline-block;
+  padding: 8px 20px;
+  border: 2px solid #E11D48;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #E11D48;
+  background: rgba(225,29,72,0.08);
+}
+
+/* Bottom note */
+.s7_note {
+  position: absolute;
+  bottom: 8px;
+  left: 0; right: 0;
+  text-align: center;
+  font-size: 11px;
+  color: #64748B;
+  opacity: 0;
+}
+
+/* === ANIMATION SEQUENCE (delay >= 0.4s between steps) === */
+.s7_stage.visible .s7_title {
+  animation: s7_fadeUp 0.5s ease 0.4s both;
+}
+.s7_stage.visible .s7_axis {
+  animation: s7_growX 0.6s ease 1.0s both;
+}
+.s7_stage.visible .s7_n1 {
+  animation: s7_pop 0.4s cubic-bezier(0.34,1.56,0.64,1) 1.6s both;
+}
+.s7_stage.visible .s7_n2 {
+  animation: s7_pop 0.4s cubic-bezier(0.34,1.56,0.64,1) 2.1s both;
+}
+.s7_stage.visible .s7_n3 {
+  animation: s7_pop 0.4s cubic-bezier(0.34,1.56,0.64,1) 2.6s both;
+}
+.s7_stage.visible .s7_team {
+  animation: s7_fadeUp 0.4s ease 2.2s both;
+}
+.s7_stage.visible .s7_expect {
+  animation: s7_fadeUp 0.4s ease 2.8s both;
+}
+.s7_stage.visible .s7_curveWrap {
+  animation: s7_fadeIn 0.3s ease 3.3s both;
+}
+.s7_stage.visible .s7_curveLine {
+  animation: s7_drawCurve 1.5s ease 3.5s both;
+}
+.s7_stage.visible .s7_curveArea {
+  animation: s7_areaFill 0.6s ease 4.6s both;
+}
+.s7_stage.visible .s7_boom {
+  animation: s7_pop 0.4s cubic-bezier(0.34,1.56,0.64,1) 5.0s both;
+}
+.s7_stage.visible .s7_crash {
+  animation: s7_fadeUp 0.5s ease 5.6s both;
+}
+.s7_stage.visible .s7_crashBox {
+  animation: s7_pulse 1.5s ease 6.2s infinite;
+}
+.s7_stage.visible .s7_note {
+  animation: s7_fadeIn 0.4s ease 6.2s both;
+}
+</style>
+
+<div class="s7_stage">
+  <!-- Title -->
+  <div class="s7_title">ChatGPT -- 从内部看一场风暴</div>
+
+  <!-- Horizontal timeline -->
+  <div class="s7_axis"></div>
+
+  <!-- Node 1: Join -->
+  <div class="s7_node s7_n1">
+    <div class="s7_dot"></div>
+    <div class="s7_nodeLabel">入职</div>
+    <div class="s7_nodeDate">2022.7</div>
+  </div>
+
+  <!-- Node 2: RLHF team -->
+  <div class="s7_node s7_n2">
+    <div class="s7_dot"></div>
+    <div class="s7_nodeLabel">RLHF</div>
+    <div class="s7_nodeDate">12人团队</div>
+  </div>
+
+  <!-- Node 3: Launch -->
+  <div class="s7_node s7_n3">
+    <div class="s7_dot" style="border-color:#E11D48;"></div>
+    <div class="s7_nodeLabel" style="color:#E11D48;">发布</div>
+    <div class="s7_nodeDate">11.30</div>
+  </div>
+
+  <!-- Pills -->
+  <div class="s7_pill s7_team">12人做RLHF</div>
+  <div class="s7_pill s7_expect">预期1-2万</div>
+
+  <!-- Exponential growth curve -->
+  <div class="s7_curveWrap">
+    <svg viewBox="0 0 300 150" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="s7_grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#E11D48" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="#E11D48" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <!-- Axis lines -->
+      <line x1="0" y1="145" x2="300" y2="145" stroke="#475569" stroke-width="1"/>
+      <line x1="0" y1="0" x2="0" y2="145" stroke="#475569" stroke-width="1"/>
+      <!-- Labels -->
+      <text class="s7_yLabel" x="4" y="12">用户数</text>
+      <text class="s7_xLabel" x="20" y="142">12月</text>
+      <text class="s7_xLabel" x="130" y="142">1月</text>
+      <text class="s7_xLabel" x="255" y="142">2月</text>
+      <!-- Exponential curve -->
+      <path class="s7_curveLine" d="M 10,138 C 50,136 80,132 120,125 S 180,95 220,50 S 270,10 290,5"/>
+      <!-- Area fill under curve -->
+      <path class="s7_curveArea" d="M 10,138 C 50,136 80,132 120,125 S 180,95 220,50 S 270,10 290,5 L 290,145 L 10,145 Z"/>
+    </svg>
+  </div>
+
+  <!-- Boom label -->
+  <div class="s7_boom">指数爆发</div>
+
+  <!-- Server crash warning box -->
+  <div class="s7_crash">
+    <div class="s7_crashBox">服务器撑不住了</div>
+  </div>
+
+  <!-- Bottom note -->
+  <div class="s7_note">预期与现实的巨大落差</div>
+</div>
+
+
+</div>
+    <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(7)">深入了解 &darr;</div>
+  </div>
+</div>
+
+<!-- ==================== S8: AGI 之路与 OpenAI 之变 [LIGHT] ==================== -->
+<div class="section" id="section-8" style="background: var(--bg-act2);">
+  <div class="content-width">
+    <p class="section-label reveal">08 &mdash; AGI 之路与 OpenAI 之变</p>
+    <p class="big-statement reveal reveal-delay-1">还没scale up完, Sam事件, DeepSeek竞争</p>
+    <div class="body-text reveal reveal-delay-2">
+      <p>翁家翌认为目前大模型 RL 的状态是<span class="hl">「还没有 scale up 完全」</span>——现有的方法和 compute 还没被榨干，应该先把性能推到极限再看下一步。而且 Infra 里还有很多 bug：源代码几万行，人多了之后 context 不一致，每个人都可能犯错。他觉得瓶颈就在于 Infra 的吞吐量——<span class="hl2">单位时间内能正确迭代多少次</span>，其余都不重要。关于 2023 年 11 月 Sam 被开除事件，他说内部视角就是「不信任」：Ilya 和部分董事会成员不信任 Sam 然后投票把他投出去，但底下的人非常震惊。最终 Sam 回来了，因为很多员工认为一个纯技术出身的人可能缺乏商业远见——AGI 不只是技术，还需要融资、算力、地缘政治上的运作，所以 Sam 可能反而是 <span class="hl">OpenAI 最难替代的那个人</span>。至于人才流失，他认为一个健康的组织应该是所有人都可替代的——只要有造血能力、持续培养新人就行。外部竞争方面，他说真正让 OpenAI 内部警觉的不是哪个 benchmark 被超过了，而是 <span class="hl-danger">DeepSeek 的迭代速度</span>——这正是他们要重构 Infra 的原因。</p>
+    </div>
+    <div id="s8-anim" class="reveal reveal-delay-3">
+<style>
+.s8_stage {
+  position: relative;
+  width: 340px;
+  height: 300px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+@keyframes s8_scaleIn {
+  from { opacity: 0; transform: scale(0); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes s8_grow {
+  from { opacity: 0; transform: scale(0.3); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes s8_crack {
+  from { stroke-dashoffset: 60; }
+  to   { stroke-dashoffset: 0; }
+}
+@keyframes s8_fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes s8_pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(225,29,72,0.3); }
+  50%      { box-shadow: 0 0 0 10px rgba(225,29,72,0); }
+}
+@keyframes s8_barGrow {
+  from { width: 0; }
+  to   { width: var(--bar-w); }
+}
+
+
+.s8_circle_small {
+  position: absolute;
+  left: 50%;
+  top: 40px;
+  transform: translate(-50%, 0) scale(0);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #CBD5E1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1E293B;
+  opacity: 0;
+}
+.s8_circle_big {
+  position: absolute;
+  left: 50%;
+  top: 20px;
+  transform: translate(-50%, 0) scale(0);
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: #14B8A6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+}
+.s8_growth_label {
+  position: absolute;
+  left: 50%;
+  top: 116px;
+  transform: translateX(-50%) translateY(10px);
+  font-size: 12px;
+  color: #64748B;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+
+.s8_crisis_dot {
+  position: absolute;
+  left: 50%;
+  top: 54px;
+  transform: translate(-50%, -50%) scale(0);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #E11D48;
+  opacity: 0;
+  z-index: 3;
+}
+.s8_crack_svg {
+  position: absolute;
+  left: 50%;
+  top: 20px;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 88px;
+  opacity: 0;
+  z-index: 2;
+}
+.s8_crack_line {
+  stroke: #E11D48;
+  stroke-width: 2;
+  fill: none;
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+}
+.s8_distrust_label {
+  position: absolute;
+  left: 50%;
+  top: 140px;
+  transform: translateX(-50%) translateY(10px);
+  font-size: 14px;
+  font-weight: 600;
+  color: #E11D48;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+
+.s8_rebuild_circle {
+  position: absolute;
+  left: 80px;
+  top: 180px;
+  transform: scale(0);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #14B8A6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+}
+.s8_bar_row {
+  position: absolute;
+  left: 152px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+}
+.s8_bar_row_1 { top: 186px; }
+.s8_bar_row_2 { top: 214px; }
+.s8_bar_label {
+  font-size: 11px;
+  color: #64748B;
+  width: 68px;
+  text-align: right;
+  white-space: nowrap;
+}
+.s8_bar_track {
+  width: 100px;
+  height: 10px;
+  background: #F1F5F9;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.s8_bar_fill {
+  height: 100%;
+  border-radius: 5px;
+  width: 0;
+}
+.s8_bar_fill_oai { background: #14B8A6; --bar-w: 60px; }
+.s8_bar_fill_ds  { background: #E11D48; --bar-w: 82px; }
+
+.s8_summary {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  font-size: 13px;
+  font-weight: 600;
+  color: #1E293B;
+  text-align: center;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+
+
+.s8_stage.visible .s8_circle_small {
+  animation: s8_scaleIn 0.5s ease 0.4s both;
+}
+.s8_stage.visible .s8_circle_big {
+  animation: s8_grow 0.6s ease 1.0s both;
+}
+.s8_stage.visible .s8_growth_label {
+  animation: s8_fadeIn 0.4s ease 1.4s both;
+}
+.s8_stage.visible .s8_crisis_dot {
+  animation: s8_scaleIn 0.3s ease 2.0s both, s8_pulse 1.2s ease 2.3s infinite;
+}
+.s8_stage.visible .s8_crack_svg {
+  animation: s8_fadeIn 0.1s ease 2.0s both;
+}
+.s8_stage.visible .s8_crack_line {
+  animation: s8_crack 0.5s ease 2.2s both;
+}
+.s8_stage.visible .s8_distrust_label {
+  animation: s8_fadeIn 0.4s ease 2.6s both;
+}
+.s8_stage.visible .s8_rebuild_circle {
+  animation: s8_scaleIn 0.5s ease 3.2s both;
+}
+.s8_stage.visible .s8_bar_row_1 {
+  animation: s8_fadeIn 0.4s ease 3.6s both;
+}
+.s8_stage.visible .s8_bar_fill_oai {
+  animation: s8_barGrow 0.6s ease 3.8s both;
+}
+.s8_stage.visible .s8_bar_row_2 {
+  animation: s8_fadeIn 0.4s ease 4.0s both;
+}
+.s8_stage.visible .s8_bar_fill_ds {
+  animation: s8_barGrow 0.6s ease 4.2s both;
+}
+.s8_stage.visible .s8_summary {
+  animation: s8_fadeIn 0.5s ease 4.8s both;
+}
+</style>
+
+<div class="s8_stage">
+  <!-- Phase 1: Organization growth -->
+  <div class="s8_circle_small">280人</div>
+  <div class="s8_circle_big">3000人</div>
+  <div class="s8_growth_label">3年10倍</div>
+
+  <!-- Phase 2: Crisis -->
+  <svg class="s8_crack_svg" viewBox="0 0 100 88">
+    <path class="s8_crack_line" d="M30 10 L20 44 L35 50 L18 85"/>
+    <path class="s8_crack_line" d="M70 10 L80 44 L65 50 L82 85"/>
+  </svg>
+  <div class="s8_crisis_dot"></div>
+  <div class="s8_distrust_label">不信任</div>
+
+  <!-- Phase 3: Rebuild + speed comparison -->
+  <div class="s8_rebuild_circle">重构</div>
+  <div class="s8_bar_row s8_bar_row_1">
+    <span class="s8_bar_label">OpenAI</span>
+    <div class="s8_bar_track"><div class="s8_bar_fill s8_bar_fill_oai"></div></div>
+  </div>
+  <div class="s8_bar_row s8_bar_row_2">
+    <span class="s8_bar_label">DeepSeek</span>
+    <div class="s8_bar_track"><div class="s8_bar_fill s8_bar_fill_ds"></div></div>
+  </div>
+
+  <div class="s8_summary">真正让内部警觉的是 DeepSeek 的迭代速度</div>
+</div>
+</div>
+    <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(8)">深入了解 &darr;</div>
+  </div>
+</div>
+
+<!-- ==================== S9: 未来与宿命 [DARK] ==================== -->
+<div class="section section-dark" id="section-9">
+  <div class="content-width">
+    <p class="section-label reveal">09 &mdash; 未来与宿命</p>
+    <p class="big-statement reveal reveal-delay-1">确定性马尔可夫过程, 四维时间跳跃, 投资未来</p>
+    <div class="body-text reveal reveal-delay-2">
+      <p>如果 AI 能解决一个世界难题，翁家翌希望是「预测未来」——不是杯子怎么掉下来的物理问题，而是人生、命运、世界格局这种层面。他从六七岁就开始思考这个问题：你怎么知道我说的这句话不是一开始就确定好的？<span class="hl">他相信宏观世界是确定性的</span>，我们生活在一个确定性的马尔可夫过程里——虽然他内心深处也不愿意接受，但尝试证伪却证不了。他觉得如果真的造出能预测未来的 AI，可能对人类最好的选择是毁掉它，因为那会导致所有价值体系的崩塌。他找到的迄今为止最好的解释是：三维生物的认知里时间是线性单向流动的，但在四维空间里时间可能可以任意跳跃——所以他最好的解决方案就是<span class="hl2">忘掉这个事，坚信无知是幸福的</span>。关于创业，他说可能有想法但还没看到合适的信号，更喜欢做 product——技术不重要，重要的是找到需求。对于十年后的自己，他只希望有足够的资源和能力去做那时候想做的事——因为「想法会变，而且反正是确定性的过程，现在怎么希望不太重要」。他现在所能做的，就是<span class="hl">继续投资未来的自己</span>。</p>
+    </div>
+    <div id="s9-anim" class="reveal reveal-delay-3">
+<style>
+/* S9: Destiny / Infinity Loop */
+.s9_stage {
+  position: relative;
+  width: 340px;
+  max-width: 90vw;
+  height: 400px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #0F172A;
+  border-radius: 12px;
+}
+
+@keyframes s9_fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes s9_loopDraw {
+  from { stroke-dashoffset: 520; }
+  to   { stroke-dashoffset: 0; }
+}
+@keyframes s9_dotTrace {
+  0%   { offset-distance: 0%; }
+  100% { offset-distance: 100%; }
+}
+@keyframes s9_branchDraw {
+  from { stroke-dashoffset: 100; }
+  to   { stroke-dashoffset: 0; }
+}
+@keyframes s9_glowPulse {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(245,158,11,0.3)); }
+  50%      { filter: drop-shadow(0 0 12px rgba(245,158,11,0.8)); }
+}
+@keyframes s9_arrowSlide {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Hidden until .visible */
+.s9_loop_svg,
+.s9_dot_wrap,
+.s9_branch_svg,
+.s9_lbl,
+.s9_bliss,
+.s9_arrow_group { opacity: 0; }
+
+/* Phase 1: Infinity loop draws (0.4s) */
+.s9_stage.visible .s9_loop_svg {
+  animation: s9_fadeIn 0.3s ease 0.4s both;
+}
+.s9_stage.visible .s9_loop_main {
+  stroke-dasharray: 520;
+  stroke-dashoffset: 520;
+  animation: s9_loopDraw 2s ease 0.6s both;
+}
+.s9_stage.visible .s9_loop_glow {
+  stroke-dasharray: 520;
+  stroke-dashoffset: 520;
+  animation: s9_loopDraw 2s ease 0.6s both, s9_glowPulse 3s ease 2.6s infinite;
+}
+
+/* Phase 2: Golden dot traces loop (1.4s) */
+.s9_stage.visible .s9_dot_wrap {
+  animation: s9_fadeIn 0.3s ease 1.4s both;
+}
+
+/* Phase 3: Label - markov (2.2s) */
+.s9_stage.visible .s9_lbl_markov {
+  animation: s9_fadeIn 0.5s ease 2.2s both;
+}
+.s9_stage.visible .s9_lbl_age {
+  animation: s9_fadeIn 0.4s ease 2.6s both;
+}
+
+/* Phase 4: Teal branch - 4D jump (3.2s) */
+.s9_stage.visible .s9_branch_svg {
+  animation: s9_fadeIn 0.3s ease 3.2s both;
+}
+.s9_stage.visible .s9_branch_path {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: s9_branchDraw 0.7s ease 3.4s both;
+}
+.s9_stage.visible .s9_lbl_4d {
+  animation: s9_fadeIn 0.5s ease 3.8s both;
+}
+
+/* Phase 5: Bliss text (4.6s) */
+.s9_stage.visible .s9_bliss {
+  animation: s9_fadeIn 0.6s ease 4.6s both;
+}
+
+/* Phase 6: Arrow forward (5.6s) */
+.s9_stage.visible .s9_arrow_group {
+  animation: s9_arrowSlide 0.5s ease 5.6s both;
+}
+
+/* Label styles */
+.s9_lbl {
+  position: absolute;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+}
+.s9_lbl_markov {
+  top: 220px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #E11D48;
+}
+.s9_lbl_age {
+  top: 240px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 400;
+  color: #64748B;
+}
+.s9_lbl_4d {
+  top: 58px;
+  right: 22px;
+  color: #14B8A6;
+  font-size: 12px;
+}
+.s9_bliss {
+  position: absolute;
+  top: 280px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #F59E0B;
+  text-shadow: 0 0 16px rgba(245,158,11,0.4);
+}
+.s9_arrow_group {
+  position: absolute;
+  top: 340px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.s9_arrow_label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #14B8A6;
+}
+.s9_arrow_line {
+  width: 50px;
+  height: 2px;
+  background: linear-gradient(90deg, #14B8A6, #E2E8F0);
+}
+.s9_arrow_head {
+  width: 0; height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 10px solid #E2E8F0;
+}
+</style>
+
+<div class="s9_stage">
+  <!-- Infinity / figure-8 loop -->
+  <svg class="s9_loop_svg" width="260" height="160" viewBox="0 0 260 160"
+       style="position:absolute;left:40px;top:40px;" fill="none">
+    <path class="s9_loop_glow"
+      d="M130,80 C130,30 195,10 215,45 C235,80 195,130 130,80 C65,30 25,80 45,115 C65,150 130,130 130,80"
+      stroke="#E11D48" stroke-width="3" fill="none" opacity="0.25"/>
+    <path class="s9_loop_main"
+      d="M130,80 C130,30 195,10 215,45 C235,80 195,130 130,80 C65,30 25,80 45,115 C65,150 130,130 130,80"
+      stroke="#E11D48" stroke-width="2" fill="none"/>
+    <circle cx="130" cy="80" r="3.5" fill="#E11D48" opacity="0.7"/>
+  </svg>
+
+  <!-- Golden dot tracing the loop -->
+  <svg class="s9_dot_wrap" width="260" height="160" viewBox="0 0 260 160"
+       style="position:absolute;left:40px;top:40px;" fill="none">
+    <circle r="5" fill="#F59E0B" filter="url(#s9_glow)">
+      <animateMotion dur="4s" repeatCount="indefinite"
+        path="M130,80 C130,30 195,10 215,45 C235,80 195,130 130,80 C65,30 25,80 45,115 C65,150 130,130 130,80"/>
+    </circle>
+    <defs>
+      <filter id="s9_glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="3" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+  </svg>
+
+  <!-- Teal dashed branch: 4D jump -->
+  <svg class="s9_branch_svg" width="260" height="160" viewBox="0 0 260 160"
+       style="position:absolute;left:40px;top:40px;" fill="none">
+    <path class="s9_branch_path"
+      d="M190,50 C210,15 245,25 245,55 C245,75 225,68 215,45"
+      stroke="#14B8A6" stroke-width="2" stroke-dasharray="5,4" fill="none"/>
+    <circle cx="245" cy="55" r="4" fill="#14B8A6" opacity="0.8"/>
+    <text x="232" y="12" fill="#14B8A6" font-size="11" font-weight="600" text-anchor="middle">跳跃</text>
+  </svg>
+
+  <!-- Labels -->
+  <div class="s9_lbl s9_lbl_markov">确定性马尔可夫过程</div>
+  <div class="s9_lbl s9_lbl_age">六七岁开始思考</div>
+  <div class="s9_lbl s9_lbl_4d">四维时间跳跃</div>
+
+  <!-- Resolution text -->
+  <div class="s9_bliss">无知是幸福的</div>
+
+  <!-- Arrow forward -->
+  <div class="s9_arrow_group">
+    <span class="s9_arrow_label">投资未来</span>
+    <div class="s9_arrow_line"></div>
+    <div class="s9_arrow_head"></div>
+  </div>
+</div>
+</div>
+    <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(9)">深入了解 &darr;</div>
+  </div>
+</div>
+
+<!-- ==================== TAKEAWAY ==================== -->
+<div class="takeaway reveal">
+  <div class="content-width">
+    <p class="big-statement">从正反馈到 Impact，从一致性到投资未来——翁家翌的底层逻辑从未改变。</p>
+    <p class="body-text">一个从福建走到旧金山的确定性马尔可夫过程。</p>
+  </div>
+</div>
+
+<!-- ==================== FOOTER ==================== -->
+<div class="footer">
+  <p>基于播客访谈制作 &middot; 2:02:45 &middot; 覆盖率 98% &middot; 滚动即交互</p>
+</div>
+
+</div><!-- /.main-scroll -->
+
+<!-- ==================== DETAIL PANEL (Layer 2) ==================== -->
+<div class="detail-scroll" id="detailScroll">
+  <div class="detail-header" id="detailBack">&larr; 返回</div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+
+</div><!-- /.space -->
+
+<!-- ==================== SOURCE HORIZON (Layer 6) ==================== -->
+<div class="source-horizon" id="sourceHorizon">
+  <div class="horizon-track" id="horizonTrack"></div>
+  <div class="horizon-detail" id="horizonDetail"></div>
+</div>
+
+<script>
+// ==================== DATA ====================
+var coverageData = {
+  sourceType: "video",
+  totalLength: "2:02:45",
+  segments: [
+    { start: "0:00:00", end: "0:02:33", section: null, reason: "主持人开场介绍" },
+    { start: "0:02:33", end: "0:16:02", section: 1, reason: null },
+    { start: "0:16:02", end: "0:19:23", section: 1, reason: null, deepDive: true },
+    { start: "0:19:23", end: "0:28:00", section: 2, reason: null },
+    { start: "0:28:00", end: "0:32:47", section: 2, reason: null, deepDive: true },
+    { start: "0:32:47", end: "0:41:08", section: 3, reason: null },
+    { start: "0:41:08", end: "0:49:54", section: 4, reason: null },
+    { start: "0:49:54", end: "0:56:21", section: 4, reason: null },
+    { start: "0:56:21", end: "1:06:31", section: 5, reason: null },
+    { start: "1:06:31", end: "1:09:28", section: 5, reason: null, deepDive: true },
+    { start: "1:09:28", end: "1:14:22", section: 6, reason: null },
+    { start: "1:14:22", end: "1:24:09", section: 7, reason: null },
+    { start: "1:24:09", end: "1:32:08", section: 7, reason: null, deepDive: true },
+    { start: "1:32:08", end: "1:44:02", section: 8, reason: null },
+    { start: "1:44:02", end: "1:52:48", section: 8, reason: null },
+    { start: "1:52:48", end: "2:02:45", section: 9, reason: null }
+  ]
+};
+
+var topicData = {
+  1: [
+    { name: "奥数与心流", status: "included", excerpt: "我小时候特别喜欢数学。奥数，对，我从一年级开始就开始学数学了。开始的时候我爸妈让我去听了金秀校的一个奥数课跟语文课，我的语文完全不感兴趣，但奥数就非常感兴趣，我就进去了。然后从一年级开始就一直上到六年级，然后初中也是。然后我发现就是我做数学题比谁都快，小学的时候。比如说别人口算题像二年级的时候口算题可能他们做完，可能写到一半然后我就已经做完了，就是那种不用过脑子的，可能加减乘除直接表层意识直接过，然后直接看一眼答案就出来那种。然后就是让我做数学题非常有心流感。" },
+    { name: "知识树学习法", status: "included", excerpt: "因为我觉得我是一个学习还算相比其他人算比较偏慢的，学一个新的东西我经常要花别人两到三倍的时间。现在读博还是这样，就是比如说我读博我就是要比别人花很多时间去理解整个内容的框架。但是我一旦理解之后我用得就非常快。有个不太恰当的比喻就是比如说背课文，然后我就是在睡觉之前想尽所有方法然后能够磕磕巴巴的完整地背出来，然后哪怕有很多停顿然后你只要写下来都好，睡觉，然后第二天醒来发现倒背如流。我当时想法是因为我需要花更多的时间，所以说我需要比别人提前学东西。正常来说这个知识树是比如有个根然后往上拓展然后再往上拓展再往上拓展，然后每一次比如说拿这个最顶层的结论去应用到基础中然后你要从头到尾过一遍然后你要慢慢慢慢想出来。但我可能就直接建立一个链接，然后直接上去然后就不用反应了。所以你是从小就意识到自己好像比别人更聪明？没有没有没有，没有这种感觉。所以你只觉得你对这事感兴趣。" },
+    { name: "投资未来意识", status: "included", excerpt: "那你愿意提前学数学这个事的核心动力是哪来的？我想投资未来，我想投资我自己的未来。所以你在初二的时候就意识到提前学高中数学是一种投资未来？对，对于我的未来的一些学习生涯是有帮助的。与其说我现在浪费时间在刷题上面，不如学一些对未来有用的东西，然后后面的收益可能更多。这个是你父母跟你灌输的吗？不是，我父母无所谓，不是怎么关心我是怎么学的。那为什么初中的时候就有投资未来的这种想法？你那时候肯定学有余力对吧，为什么不是打篮球打游戏，为什么想着我要学高中数学？首先是因为对这个感兴趣，就是我觉得初中数学太无趣了，然后稍微有难度一点的数学才能引起我的兴趣。这种兴趣是天生的吗对数学？可以算是吧。或者说是小学的时候因为这事有成就感？你可以这么认为，就是有个初始的成就感然后初始的正反馈，然后慢慢慢慢的然后你就会慢慢慢慢把学习方面的这个技能树开始点亮，因为你每点一次你都会有个正反馈，然后再点一次再有正反馈然后你就会一直在这上面走。但是像比如说打篮球我是没有什么正反馈的，然后体育我练过跆拳道我觉得跆拳道还可以，但是跆拳道一打比赛我就会输。所以反而是这种有正反馈的，本身也擅长然后你对这个也不排斥，慢慢慢慢就变成一种自发的内生的兴趣。所以其实倒不是家庭环境而是那种自发而产生的。" },
+    { name: "NOIP竞赛经历", status: "deep-dive", excerpt: "编程是初一开始的，因为小升初的时候我去了时代中学，是一个私立学校，然后私立学校有一个编程的兴趣班。父母觉得这个可能对我挺有意思然后我就试试然后我觉得还可以。高中我觉得其实我最感兴趣的是偶尔刷题，偶尔的精力没跟竞赛讲，为什么要搞竞赛呢？因为升学压力还是有的，你如果不搞竞赛的话，对于非北京的人来说像上清华北大是非常难的，所以当时是因为升学压力搞的竞赛。我之前就已经在搞数学竞赛，然后我高一的时候其实花了很多时间去做数学竞赛，拿到了一些还可以的名次，但是如果往上的话就是数学竞赛的升学，然后我们学校是没有那个基础的，然后自己学很困难所以说我就放弃了，并且我对往上的数学竞赛我觉得非常困难，因为我没有那么早就去接触然后我觉得学习起来非常累。初中开始高中数学竞赛可能还不够早，所以说我掂量了一下就放弃了，搞了计算机竞赛。流程是先NOIP普及组然后提高组，然后是省里面的一个选拔赛，大概是10月份，然后后面是省选，每个省不同的选拔要选出去参加国赛的。省选的话福建是有两轮，一轮在寒假一轮在4月份，然后选完之后五六月份应该有一个清华或者北大校招可以二选一，可以拿一些降分条件。然后是在7月到8月去搞国赛。省选这个高一的时候就是连省选都没过，就是完全不会做。然后高二的时候会做一点点就是会乱搞，然后会一些骗分的方法，就比如说有一题叫最小树原覆盖然后我当时搞出来70分，刚好是省队的最高分线，因为这一题后面就是进了省队。但是进了省队以后后面的就是清华校招感觉还可以，就是拿到一个降60分，无条件降60分有条件本一线。就是高考的成绩直接会给你加60分如果你没有保送的话，然后如果这个分过了清华当年的录取线那么清华就会要你。然后有条件本一线是说如果在国赛里面考到了前150名应该是银牌的线，那么只要高考成绩过了本一线就无条件入学。但是如果你是金牌的话那你就连这个都不用，直接保送。我当时拿到国赛的结果其实是个黑历史，就是我是当时福建省队的倒数第一，福建省队当年只有一个铜牌就是我，然后剩下的人都银牌以上。这事的失利对升学还是有挺多影响，因为我当时毕竟高二下半年没有搞文化课然后我对我的未来也不算确定，我不知道我到底能高考考到多少，有些之前的例子比如说有学长就是把60分加分全部用完了，然后真的是一点都不剩，然后我觉得这个万一我也这样怎么办就很危险，然后我对于这种不确定性也非常害怕。但是想想我觉得我应该也没有那么差，然后还是赌了这个降60分。当时另一个选择是更保险的，直接可以在国赛现场签一个上海交大的无一线录取。主要是心态方面当时毕竟很难过，然后对未来不确定性挺大的，但是加上骨气还是让我选择了清华降60分。高三备考期间也没有完全不碰编程，会偷偷的碰。我觉得我对代码的优化有特别的追求，就是我当时甚至练成了在iPad上面直接用Safari的键盘直接裸写代码然后直接提交，没有编译器。那一段的经历其实我觉得也很锻炼自己的思考能力，它需要你对整个题目或者整个逻辑有个完整的认知，然后你错了你要能快速地定位到是哪一步错了，然后它很锻炼你的反应能力。还有OJ上有一个叫常数优化，就是比如说有个算法虽然时间复杂度可能都是n平方，但是实际它前面带的常数不同，然后OJ的评测都是会有结果的，比如按照跑测试点的时间来排序，然后跑一样还按照代码长度来排，然后我会同时优化这两个指标，然后刷这个东西感觉很有意思，虽然说没什么用但就是觉得有意思。你真是搞这个的圣体，因为你真喜欢这个东西，你自己能从中获得快乐。" },
+    { name: "清华开源作业", status: "deep-dive", excerpt: "那我们来聊聊清华。如果我跟你说你在清华16年开始读本科，你直接跟我说有没有什么现在想起来特别值得回忆的事？真有的话就是我把我所有作业都开源了。不同的人对这件事有不同看法，像比如说有些学长学姐是比较反对这件事，但是我觉得我应该做这件事。我当时做了一个repo把我收集到的上课作业、上课材料然后全部在GitHub上开源了，除了那些有版权问题的我没开源，然后剩下的没有版权问题的都开源了。为什么？因为我觉得应该打破信息差。信息差是一个就是如果你在清华生存的话是一个很有用的东西，但是我觉得每个人都应该平等地获得这些信息。现在回去，昨天我碰到一个机器人系的学弟问，你认不认识这个军训系组的人，哪怕他把他的名字放在系组上面你认不认识他？本来是你认不认识什么家伙，应该是因为大家都看我的作业过的。为什么你会把你的作业开源这里面本质跟信息差有关系？我想打破这个信息差，就是我不想让后人从头跑一遍。比如说很多人其实他不是不聪明，但是他其实很容易，如果能够给这些人有一个信息均权的机会的话，他可能心态会好都更好。信息均权是指不知道往年的作业这种信息和学长学姐问过以前会考什么重点这种信息？以及作业，以及老师没有规定不能放出来的作业。不然的话你会竟然会花可能十几二十个小时然后你又不敢问助教，然后你就不知道怎么做，然后你就会花一些巨大块的时间然后去一直在挣扎，反而对整个学习是很没有帮助的。但这样的话就是如果我当时觉得如果我把自己的作业开放的话，那么我可能会帮到一些这样的人，然后可能会帮后面更多的一些学弟学妹，让他们有更多自己的时间来去做他们更想做的事情，而不是浪费时间在这些没有意义的事上。所以你这些事情做成了，现在你的作业应该在清华已经成为一个很广为流传的GitHub repo。是的。" },
+    { name: "竞赛与升学路径", status: "compressed", reason: "细节较多", excerpt: "高中竞赛经历、升学选择的具体过程。福建省队倒数第一拿铜牌，拿到清华无条件降60分有条件本一线的录取条件。高二下半年没搞文化课对未来不确定性非常害怕，有学长把60分加分全部用完了的前车之鉴。另一个更保险的选择是在国赛现场直接签上海交大的无一线录取，但心态方面当时虽然很难过，加上骨气最终还是赌了清华降60分。所以当时初二就在自学高中数学，直接问初中数学老师高中数学的问题老师也耐心回答，高二的时候就已经把高中课程学完了。" }
+  ],
+  2: [
+    { name: "误选强化学习", status: "included", excerpt: "大一大二就开始入门科研，应该是大二吧。然后问学长说有没有哪个推荐的实验室，当时跟我说了三个名字，朱政恺老师、谈老师还有最后一位是——我默认按照每个人名气的排序，当然可能不是这样但我当时就按照这个排序。你以为是先后顺序？对对我以为先后顺序。然后就报了一个清华新星计划后面应该是全录了，然后我就去了朱政恺老师那里。大二的时候跟朱政恺老师先见了一面，然后问说有什么方向，有三个方向：贝叶斯、生成对抗网络就是GAN、还有一个强化学习。我当时其实想搞的是GAN，我觉得图像非常有意思，但是我不知道哪个是GAN，然后我就选了第二个。什么叫不知道哪个是GAN？我当时真的什么都不知道我就是个小白，然后我就随便想，我觉得第二个应该是搞那个图像的东西。所以是一个拍脑袋的决定？对。但是后面搞了发现这个是个打游戏的东西，觉得挺有意思的然后就一直搞下去了。有个项目是搞VizDoom，就是一个差不多90年代的游戏，大概是有一个比赛想把这个用一个神经网络来在一个固定的地图里面然后把这个游戏打通关，就是有个出生点里面有个终点然后你要在这个地图里面去杀怪然后去捡血包然后避障然后到达终点通关。所以这个其实是强化学习的入门第一个project。当时很不想做，因为首先这个环境太过于单一了，然后你要疯狂地去overfit，然后你要用各种各种技巧防止他训练的时候崩了，以及你即使训练没崩然后你也不知道你怎么调参，调参这个是真的令人——这个比CV来说调参难度可能要难上十倍以上，然后都是玄学你必须要用一些非常heuristic的方法去避免一些坑。所以你当时就意识到那段时间的RL研究全靠heuristic调参？是的，就是改算法其实没有那么本质。因为当时那个任务过于单一了，大部分情况下都是不能work的。Atari要比VizDoom还要简单，VizDoom算难的了，但是在这种任务上面就是对于人类而言他是一个简单的task，但是对于RL而言他是一个非常非常难的task，因为他需要大量的知识，需要比如说什么是抓取物品这个对于人类说是直觉反应的，但是对于RL来说完全是两个不同的难度。" },
+    { name: "三个兴趣方向", status: "included", excerpt: "实际上我最开始想做的事其实有三个大的方向我其实都挺喜欢的：一个是人工智能就是AI，然后另外一个是图形学，还有一个是网络安全。网络安全我觉得hacker非常酷，我在大学的时候其实业余时间也搞了很多网络安全相关的东西，然后还给学校找了不少的小漏洞，比如说修了一下免费下成绩单的事——就是成绩单下一次要10块钱，我跟另外一个同学发现了一个bug，然后可以一分钱也可以不要钱下来，然后后面就是下载了自己的之后然后把这个bug给修了，直接反馈给学校教务处。本质就是很享受这种hacking的过程。所以网络安全是一种hacking。图形学的话我感觉也是一个对现实世界的hacking，就是你可以以自己的视角去构建你心中想象的场景，然后这样会让你觉得你是上帝一样。我其实当时自己也很喜欢图形学，因为我在初中的时候看过一部电影叫《创：战纪》，就是那个科幻片，然后他的电影特效就非常厉害，然后我当时看得非常震撼，然后我想如果有一天我能做出这种特效或者说我可以像他一样构建一个自己的虚拟世界，那我就觉得圆满了。然后我觉得图形学是实现这个的一种手段。然后我在大二的时候就上图形学，因为特别喜欢所以说我花了特别多时间去做图形学的大作业，然后当时应该是拿了全班唯一或唯二的A，然后发明了新算法能够减少光线弹射次数，以及用了一堆3D渲染就像一个巨高清的图应该是6K的图，然后当时在我之前是完全没有人渲染一个16K的图，然后并且是6K的图完全没有噪点。那当时那么感兴趣图形学后来怎么没继续？没有，因为我觉得就是如果你要搞科研的话还是专心比较好，不能同时挑太多方向，因为我已经去了实验室。" },
+    { name: "Bengio暑研", status: "deep-dive", excerpt: "到了大三是不是面临一个申请季？是的，当时为了大四的申请去做暑研，然后发了一堆的套磁信但是也没有什么结果，然后后面还是导师帮我联系的，联系到了Yoshua Bengio组在蒙特利尔，然后我就过去了。其实我那段时间做的也没有那么成功。当时是2019年的暑假，Bengio应该是19年的4月5月拿的图灵奖，然后我是在那个之前申请的所以还好。然后后面的话就是Bengio给我跟大组的一个博士后的任务是做了一个类似于Mixture of Experts的东西。当时还没有MoE这个概念，我们不知道MoE是什么，但是他有一个MoE的idea就是有个Router然后可以选择不同的path，然后让我去实现。首先这个跟RL没有任何关系，其实是NLP方向的研究。所以他找了一个做RL的人去做NLP？是的我觉得很奇怪。然后我需要花很长时间去入门，因为我不擅长NLP这个东西，然后从零学起做出了一个东西但是做出来也没有什么好效果。因为现在回过头看这个东西要做好，首先你要有算力，你要有很强的工程能力，然后当时就几块卡这个搞不出来的东西，所以说你肯定搞不出来，哪怕方向是对的那你也是搞不出来的。但其实你有没有觉得好像冥冥之中命运就是在把你往现在OpenAI这条路上推？你先搞了RL然后暑研让你做NLP，两个方向你全部都接触过了，在OpenAI之前全部都有经历。你要这么说也可以，就是马后炮什么都有用的，在当时其实完全不知道这些会合流。" },
+    { name: "前ChatGPT时代反思", status: "deep-dive", excerpt: "所以你当时对NLP什么看法？我觉得NLP的task都太分散了，然后当时其实很多人就在想如何把RL用在NLP上面，因为当时这个问题是还没有解的。语言模型直接在强化学习上面跑的话他会崩，他很容易崩，然后大家都没有想出来这个东西到底该怎么防止他不崩。环境需要是一个稳定的环境，然后reward需要一个很强的reward model来做反馈，比如说task-specific的奖励信号。之前大家做的reward是比如说你用语言模型做一些RLHF的尝试，比如说你把图像弄成一些embedding，或者说你把游戏内部的信息结构化表示然后塞到模型里面再跑。而且语言模型是一个离散空间的模型。我当时首先没有足够多的算力，我对于这个领域没有足够的认识，所以我做起来就是非常挣扎。我觉得如果现在的我回过去帮助当时的我，那可能还是这个样子，就处在一个怎么都不可能把东西搞出来的阶段。是的，因为算力不够，然后对于当时的一些MoE的认识也不够，然后哪怕当时有了现在的认识那还是做不出来，因为engineering不够然后算力不够，受限于当时的资源就做不出来。" },
+    { name: "朱政恺实验室", status: "compressed", reason: "背景细节", excerpt: "大二开始入门科研，问学长推荐实验室得到了三个名字，按照以为的先后顺序排列，报了一个清华新星计划后面全部录了，就去了朱政恺老师那里。所以当时做RL有很清晰的认知：环境太单一、算法不是瓶颈、太多挑战太多heuristic。所以不是很享受RL科研的过程，然后有一段时间把重心放到了如何帮助这一类的科研更顺利进展的过程上。所以大四的时候会想着造一套RL的infrastructure或者说RL的小library能够更方便地让这些想在这个领域做的人入门。非常擅长类似软件工程的这些方便的东西，可以让代码写得更好更好用然后用户体验做好，但是至于怎么调参我非常有生理上的排斥反应——不是不擅长就是不喜欢不想做这个事。" }
+  ],
+  3: [
+    { name: "暑研挫败", status: "included", excerpt: "暑研结束然后就回到清华开始准备申请，当时是什么样的状态会压力很大吗？其实整个人状态其实不太好，因为暑研没搞出来什么，周围同学比如说去斯坦福去CMU暑研然后都搞出来很多东西然后发了顶会论文，通常来说你需要发个一篇顶会paper不然的话你可能被别人刷下去，这个就很焦虑。所以说我做完暑研然后其实只拿到一个推荐信，但我也不知道推荐信里面是什么样，然后挺没有底的。" },
+    { name: "PhD全拒", status: "included", excerpt: "结果怎么样后来？我申请的是PhD但是我是拿到了Master。那个年纪网上都有那种申请结果的帖子，然后我一下觉得挺深刻的当时——就是看到申请结果不好就没申到PhD。当时觉得竞争这么激烈。你自己经历那样的申请季对你来说是一种挫败吗？可能还有一点。但是后面来看也还好。就是首先我在当时的那个环境我确实会很大程度上受当时小环境的影响——就是PhD要比Master好的，这个应该是整个清华内部的那种氛围。如果你身在其中你是很难摆脱这个影响的。即使是国外的PhD跟Master都是一样的就是PhD更好。大家会有一种固有的认知说学历越高越好对今后的发展更好，但是很多时候这个是不成立的，真的取决于到底干什么。然后当时的话我确实是有点失望的，然后我其实有花一段时间来调整自己。然后后面我觉得我一直以来应该都是想做一些让自己与众不同的事情，就是说当时在尽力地挣脱出固有的那种评价体系。" },
+    { name: "挣脱评价体系", status: "included", excerpt: "我一直以来就觉得GPA不是唯一的一个评价体系，需要自己在大学里面找到适合自己的评价体系然后为这个评价体系去奋斗去让自己提升。你其实GPA拿第一也只能跟往年比跟其他学院比跟其他学校比，他并不能说明你有多好。我觉得应该从一个需求方的角度看，就比如说如果最终目的是找工作，那么找工作的人会看重什么，他会更看重你的相关的经验，他不会那么看重你的GPA因为这个对他来说没有意义。如果你有当前这份工作很匹配的经验那么可以抵好几年的工作经历，哪怕你是一个本科生都没有问题，因为找人最主要的目的是招来能用能够干活。所以你在本科就认识到这一点？我在后面认识到这一点就是我在Master的时候认识到这一点。但本科其实也是在那个评价体系下面，我本科我确实是认识这个评价体系但是我认识了一点还没有完全认识出来。那一点是什么？就是我意识到了应该要创造自己的评价体系，不要只用其他人提供的评价体系。我采用了导师给我推荐的评价体系——就是我一直记得这句话就是他认为有三个指标：一个是论文、一个是比赛、一个是GitHub的Star三位数以上。然后我觉得这个确实是有意义的，因为他给了我一个完全不一样的想法，不一样的视角——我其实可以在开源社区搞一些事情然后让我有一些跟别人与众不同的地方，这样对于自己的长期的发展是更好的，而不是说花很多时间去刷GPA。" },
+    { name: "心态调整方法", status: "included", excerpt: "你是怎么处理这个矛盾的——就是一个三年内重要无比的东西和一个三年之后完全不重要的东西？我会最低限度地投入，就是我会花最低限度的时间来让它达到我想要的标准，往上一点我都不愿意投。多一分都不想花时间？对，多一分都不想花，够用就行。就是你考试前算一下GPA情况然后安排一下考试到底要考多少分，如果GPA够了另外那个科考60分就不管了？是的，我一直以来都是这样。可能60分不太够就是比如说87分、80分、70分必过然后就慢走了。你挣脱出那种评价体系了吗？比如说你出国这种选择，是那种氛围给你带来的吗？不是，当时的氛围其实已经是在国内读书比出国好了，2019年已经是这样了，差不多清华只有百分之二十左右出国，然后我们那届更少因为Covid。你应该是19年12月疫情开始，所以你应该还在等offer的时候就Covid了？对。然后比如说拿到offer之后美国领事馆就关了？对。你还是坚持要出国？这个是很难的选择，因为当时有Covid有疫情然后国际政治局势很动荡，你个人的未来还要和这两个因素相关。那种不确定性你当时是什么样的状态？我觉得我当时可能更专注于手头上的事，比如说在家里写天授、写tuixue退学签证查询系统。我只是把注意力转移，不要天天去关注一些宏大国际叙事，而是专注于手头上的事情，这样可能会更好。" }
+  ],
+  4: [
+    { name: "RLlib太复杂", status: "included", excerpt: "好那我们就聊聊那段时间的两个项目，第一个是天授第二个是退学。我们先聊天授吧。天授的动机刚才已经讲了，觉得当时RL环境太overfit，算法创新没那么重要，反而是好的infra更重要。你当时对发paper没兴趣，但对开源代码——一个好用的能够推动这个领域前进的开源框架非常感兴趣。跟我们内部做天授，首先是2019年12月我内心有一个强烈的冲动——我其实已经写了很多RL实验代码了，为什么不把它整合一下让自己的实验跑得更好。然后2020年1月放假，2月份就去看了Ray里面的RLlib代码。我本来第一步想的是在RLlib基础上改，用它来支持我自己的实验。结果看了一个月，太复杂了，抽象太多了，RLlib有快几十万行代码，完全不可能接受，不知道我要改的东西该怎么实现。然后就决定不改了，直接推倒重来，从零开始写。" },
+    { name: "天授从零开始", status: "included", excerpt: "当时做天授有没有功利的考虑？比如很多人会想做一个best paper之类的。我不想发paper，觉得发paper完全没有意义。为什么已经挣脱出这种评价体系了？首先我已经有paper了，多一篇少一篇对我来说没有任何意义，而且申请已经够用了。导师给的三位数Star的要求，可能算有一点关系，但那个不是直接绑定的。那好，当时看到RLlib不好用然后你对paper没兴趣但对开源代码感兴趣。做这个事有多难？当时做天授很简单，两周，只要两周就写出来了。第一版代码量一百行出头，好多算法就是你把paper实现一下就好了。如果你把抽象搞对的话，那么实现算法可能就是一周搭框架一周写算法。那为什么RLlib几十万行搞不出来一个好用的第一版？我觉得可能是因为它最开始设计有一点问题，然后合作人多了大家都往里面贡献代码，之后就像政治一样逐渐腐化了。所以你是一个人手撸的。对，所以这种一个人高效地迭代，做好一个顶层设计然后去执行，反而会爆发出更大的力量。我觉得代码或者说一个项目最重要的有用的东西是consistency，一致性。如果这个项目从头到尾都是一致的，它就是一个好项目。很多项目的腐化都是由于不一致性，比如十个人每个人都写了代码但每个人其实都不太知道对方到底写了什么东西，有些假设没办法准确传递，导致代码在很多地方附着一些不好的行为，不断腐化变得越来越长。天授一炮而红挺受欢迎，我觉得它抓住了用户需求——当时做RL科研干活的人其实都有一个需求，有没有好用好改的RL框架。天授整个代码短，抽象做得还可以，你稍微研究一下就会发现如果要改某个地方就一定会对，而且只有一个地方能够改，如果你要支持你的需求就只改那个地方就能支持。别人想改什么地方你的设计已经把它设计好了就只能改那里。想跑什么算法都有。所以当时第一版是你一个人写的后面慢慢变成一个更多人的project？后来变成开源的东西，总共其实没什么人contribute过。初期因为我有空闲时间可以一个人把所有东西全部包了，肯定是consistent的，虽然现在看对于长期发展不大好，但对于当时的阶段还是管用的。后期入职之后没什么时间了，就直接把整个维护权转给了社区的人，如果他们觉得是对的那他们就做，只要有一个拍板的人那么事情应该就是consistent的。现在看五年了天授从一个人设计发展到现在，有一点腐化，因为我的context跟继任者的context还是有点不一样的，我们俩其实没有那么consistent，所以还是会有一些腐化的问题，但长远来看还可以接受。" },
+    { name: "tuixue签证系统", status: "included", excerpt: "第二个项目是推学tuixue。我当时属于延期入学的，需要查最近的签证时间。为什么做这么一个事？我自己有需求啊，跟做天授一样。我觉得我的需求我应该能解决，我找了一圈发现没有什么东西能满足这个需求，那我就自己写一个。因为当时一会儿这个领事馆关那个领事馆关，签证制度实时变化。我觉得我有这个需求，就像之前收集上午学长的作业一样，我觉得很多人应该也有这个需求的时候我就开源了。然后我写了一个签证的爬虫，直接免费给大家使用，很受欢迎。昨天晚上看总点击量，当时就一百多万，现在已经一千多万了。但很早之前就已经关了，因为疫情过去之后没有那么多需求了，并且美国领事馆升级了网站，当时的爬虫用不了了我也没时间修，所以它完成了它的使命。其实某种程度上这两个都不是太功利的project对吧，天授不是为了申请那是已经发生在申请之后了，你大可以那段时间干点其他的。退学也是一样，你可以自己弄完之后不分享出来。所以你还是有一种很内在很强烈的冲动去创造一些你觉得有用的、自己需要的东西，然后把这个东西分享给所有人。" },
+    { name: "Impact底层逻辑", status: "included", excerpt: "我想做一些能够产生影响力的事情，哪怕亏钱也行。做天授跟做退学都是做慈善，完全没有报酬，但做这种慈善我感觉非常满足。所以相比钱，impact会让你更满足。你觉得你追求impact这种冲动多久来的？高中的时候。高三的时候突然某一天有个idea从脑子里蹦出来——可能是未来的某个时候网络上的我发送了一些信息然后我意识到一些东西：如果人生是一场游戏的话，那么你游戏的结算分数就是在你死的那个瞬间记得你名字的人的数量。这意味着什么？意味着要被更多人认识。所以你高中突然有一天就意识到这个东西很重要，想要在死的那个瞬间记得你名字的人越多越好。直到今天还是以这个作为标准吗？可以算是。我想过往深了看为什么这个重要，当时不觉得这个重要，但是反复尝试后发现确实是我想要的东西。如果我做的东西能够给他人带来好处的话，那么我自己认可我做的东西，他人也认可我做的东西，我会从他人那边得到一些正反馈。这个可以和名望名气划等号吗？不太行，因为有些名望名气可能是不好的，比如你做上了什么位置你确实很有名望，但实际上这个名望对别人的收益可能不是那么多，可能是负面的。我想要的是正面的——尽自己所能对身边的人做一些对大家有益的事。如果挑战一下这个观点：为什么不自己过得开心就好了，为什么要别人记得你？这个冲动本质是什么，是害怕被忘记吗？不是。我觉得人生其实也可以算是一种体验，你既然都已经来到这个世界上，就不要浪费这段礼物。但是为什么「不浪费这段礼物」就等于「让别人记得你」呢？我觉得这里面有一种很有趣的张力：一方面想挣脱一些外部的评价标准比如GPA比如高考，但另一方面给自己内心的驱动标准又是外界对你的认同。但这个认同并不是官方的认同，不是既有评价体系的认同，是共识。所以想要摆脱的是现有体系和成规的那种评价体系，但更想要的是每个人发自内心地给你点赞。这个点赞可以变成退学的点击量，可以变成Google Scholar的引用量，也可以变成OpenAI的模型每天做的inference。你会担心你的这样的标准会变成新的一种成规吗？比如以前上一辈的人拿GPA评价年轻人，当你成为上一辈的时候就拿impact评价下一辈。我只是对我自己这么要求的，我不会对别人这么要求。所以并不觉得自己的标准是可以放之四海而皆准的。不喜欢被外部的标准推着走，那会不会出现自己的标准推着自己走的情况？目前还没有吧，如果出现这种情况可以改，可以改自己的评价标准。所以虽然用自己的标准但不是这个标准的奴隶，哪怕为它所困也可以改。比如很长一段时间其实都没有什么impact，但也不会觉得这是一个很困扰的事情。" },
+    { name: "开源即慈善", status: "compressed", reason: "理念重复", excerpt: "OpenAI的模型某种程度上也可以这么认为。评价体系是一个很简单直接的操作，能够开心地筛选人，所以社会发展方式就会受限于这种评价体系，短时间内是无法改变的。判断离开这个评价体系在大部分人看来评价体系的产出者和受益者其实是同一拨人，你也不喜欢这个评价体系。是的，应该更多元化，应该有更多元的评价方式和发展路径。" }
+  ],
+  5: [
+    { name: "投18家只收2个", status: "included", excerpt: "在一个风雨飘摇的疫情期间，你本来预计2020年9月入学CMU，当时疫情第一学期全程上网课，直接在家上网课一直在家上了一年。但当时其实一入学就得想着找工作的事。那个过程是什么样的？那过程就是开始到处投简历，投了应该是18家，最后只收到Google跟一个叫Outro ML的小创业公司。当时想着如果只有这两个offer我肯定去后者，我不想去Google，因为去Google没什么意思——就是你在大厂当螺丝钉然后做一些自己不是那么喜欢的事比如说前后端。后面稍微想明白一点继续面试，然后拿到了幻方的offer。幻方当时说要搞一个AI Lab，就是后来的DeepSeek。我当时是拿了幻方的offer，但后来又去面了OpenAI。所以其实现在看起来如果开天眼的话，你当时面临的选择是DeepSeek vs OpenAI。" },
+    { name: "幻方vs OpenAI", status: "included", excerpt: "如果我没有其他offer的话我会选幻方，当时幻方也不是去搞量化，是搞RL。但后来又面了OpenAI跟ByteDance（TikTok），ByteDance也是搞RL的，还有Fair其实也是，但Fair后来由于一些流程原因把我拒了。所以当时面临的选择应该是幻方、OpenAI、ByteDance。这里我要强调的是before ChatGPT，这个选择是在ChatGPT之前，所以当时其实不知道ChatGPT is coming。所以这个选择是怎么做的？首先OpenAI之前一直在做强化学习，OpenAI跟DeepMind是当时RL领域搞得最好的两个Research Lab。我其实当时没有想到我能进，然后我能进我觉得就已经非常好了。我能够有一个机会来体验世界上顶尖的一些Research Lab到底是怎么运作的，而不是像小作坊一样在学校里面几个PhD手工作业式的东西没有方法论，我想去学习到底有怎样的方法论去进行一些研究，我感觉非常兴奋然后我就去学习了。" },
+    { name: "Schulman面试", status: "included", excerpt: "那你当时去OpenAI的话应该是直接进了John Schulman的组，是他面试招进来的，Schulman是他面试的我。我非常感激他能给我这样一个机会，哪怕到他离职的那天我还给他发了邮件关了电脑什么都关了。他当时为什么欣赏你？有流传的故事吗？有。首先他觉得天授写得非常漂亮，开源项目其实也是他评价体系的一个指标，之前没有别人做到过。并且招这么一个有良好工程能力的人进来对于任何项目都是有益的。面试有什么有趣的故事吗？可能最后一轮面试，他出了一道非常刁钻的题，然后给我三个小时，花两个小时从头开始写了一个东西，然后跟他展示一下。展示过程中出现了一个bug，但我先想了一下然后也没什么问题很快修好了。反正就是他认为我具备工程能力同时实力还可以就把我招了。他的面试题只给两个人测过，一个是我，还有一个应该是现在做Codex的那位，两个人都通过了。通过率大概10%到20%吧。" },
+    { name: "研究vs工程能力", status: "deep-dive", excerpt: "比如说我们是一个公司要招人，有同样的Master和PhD，这两种培养出来的能力都不太一样。PhD更多培养的是学术能力——怎么写好一个paper把故事讲圆，把宣发做好。你觉得这个重要吗对于一个公司来说？某种程度上算有段量。但如果和像你这样比较极致的工程能力相比，在现在AI时代这两种能力谁更有价值？现在的时代当然是工程能力越好就更有价值。但在当时那个时间点还真不好说，所以我当时的做法是两个都尽量去满足，反正也发过paper，开源的framework也做得很跑了，都能摆上简历。那为什么现在已经很明显工程能力是第一位了？用我同事说的话，他之前也是RL领域的一个PhD，做了一个很出名的RL框架，他说：教一个researcher如何做好engineering要远比教一个engineer如何做好research来得难。因为目前很多research的探索前沿，拼的都是infra的正确性。如果你infra是正确的，那么就是看你单位时间内能迭代多少次。因为反正idea大家找人讨论一下idea就出来了，然后你就验证，你就要能验证好。其实都能想到idea，尤其是在这个领域浸淫很久的人比如说Ilya（Sutskever），他从GPT-1的时候就开始弄，可能有很强的research的直觉，他想到的idea比普通PhD想到的更有用，你找他讨论就好了，idea is cheap。你要做的就是在单位时间内能够验证多少有效的idea并且是正确的implementation。快速迭代。而现在的PhD不具备这个能力或者说没有以这个为重点。因为对他们而言不重要，目前学术培养体系重点在于如何找好的学术方向。但这个方向其实公司里面也有人会有，因为在这个领域工作比较长一段时间你就会有一些研究直觉。" },
+    { name: "Infra的重要性", status: "deep-dive", excerpt: "你就会知道什么是好的什么是不好的什么该做什么不该做。所以idea is cheap，而有一个很强的engineering skill把infra打对快速迭代，这个是关键。以后idea可能Agent都能够生成。我认知范围内，每家AI Lab的infra都有不同程度的bug，谁修bug修得越多谁的模型性能就越好。所以Llama追不过GPT可能是因为Llama的bug太多，我不确定但可能会这么猜测。所以你很清楚很早的时候就意识到了，整个pipeline要work关键不是那些算法的创新，而是正确的超参、正确的infra、好的系统让你快速迭代。并且我不太愿意去做research调参这个事，对我来说没有任何兴趣，我更喜欢做产品。喜欢有一个playground让别人去玩，别人去发论文，你不管，然后别人发论文的时候可以带上你的名字。你会发现很多model release都有我的名字，这就是因为我在OpenAI内部搭了整个Post Training的RL infra。所以整个Post Training的RL infra我是最核心的贡献者。大家之前都是用这个Post Training RL infra来训练RLHF的模型，所以每发一个大的模型release，我都在paper上面。你可以算是每个OpenAI的模型都有你，因为你喜欢做产品。并且我做产品做的是最面向产出的那一层，因为RL是整个infra的顶端，生态位很高。如果做太底层的话比如写data loader或storage，也不错但不是每个人都想要的一个东西。之前想过自己的职业生涯应该怎么发展，定了一个指标：最大化我在OpenAI blog上出现名字的次数。要做到这点肯定先做infra，因为做单个research不能scale，如果做infra的话大家都用你所以可以scale。并且我擅长做infra，所以这个领域非常适合。" },
+    { name: "不读PhD的选择", status: "compressed", reason: "S6详述", excerpt: "在面试之前我其实特别紧张。找工作的时候考虑过读PhD吗？没有。因为接触一些工业界的人会发现，如果你想进工业界那么读PhD就是浪费生命。你完全可以不用PhD作为跳板，比如你可以在Master或者本科的时候展示差异化才能，做出一些能够让你与众不同的项目，然后让对方可以挑选Master的你而不是另外一个PhD。我觉得想清楚差异化这个是很关键的。很早就想清楚未来已经是工业界了，因为学术界太卷了，然后还要为了一个项目去拉funding，不是我想要的东西。" }
+  ],
+  6: [
+    { name: "学术界需重构", status: "included", excerpt: "在今天你还会鼓励学生读AI PhD吗？我们这个播客的很多观众可能还在本科，可能还在选择工业界还是学术界。你会怎么帮他们思考这个过程，特别是在2025年这样的格局下面？长远来看我还是觉得现代学术界应该要被重构。这个可能牵涉到一个更大的问题，我们两个有很深的体会——RL学术界就是对着Atari、MuJoCo这几个task和benchmark来回调参，比你比我在100K步的时候谁分数高，但工业界完全不看这些，工业界做的事是用RL解决真实的问题。当我在2022年8月意识到这一点的时候，我就已经主动停止了天授的开发了，因为天授还是针对这些toy benchmark。我觉得应该投入更多时间到更有意义的事情里面，比如在OpenAI内部搞RL infra。所以我主要的精力都是在维护和开发这个RL infra。其实你这个认知在2022年算是很超前的，绝对不是共识的。为什么当时没有大声说出来？我害怕我把这个东西说出来，别人会说太偏激了，万一呢。虽然也没有那么偏激，但是确实当时不敢公开说。" },
+    { name: "AI Lab需要Infra", status: "included", excerpt: "如果你的目标是进AI Lab的话，你要先弄清楚一点：AI Lab到底需要什么样的人。如果他们更需要infra的人，那么你就做一些infra的活，哪怕你没有PhD学历也没有关系，因为更重要的是看你的经验能不能匹配，学历没有用。所以现在你觉得AI Lab最需要什么样的人？我觉得还是infra。Infra是一个无上限的东西。从ChatGPT出来之后在这个行业里面干了比较长时间的人屈指可数，当前核心问题还是在于infra——你能不能scale，scale有多少，单位时间内你能迭代多少次，就决定了你的生产效率。" },
+    { name: "尽早进工业界", status: "included", excerpt: "但现在对自己的未来有抱负的那波年轻人，他们希望做出impact，那他到底是去读个PhD还是尽早进入工业界？我觉得还是尽早进入工业界比较好。因为读PhD的话你不知道毕业之后会发生什么事情，有可能毕业之后范式已经变了，你会发现你做的东西可能就没什么用了。听起来不是对PhD特别友好的一个事情。要搞清楚差异化——作为Master甚至本科生你能做什么能够让对方选择Master的你而不是另一个PhD。我觉得想清楚差异化这个是很关键的。" },
+    { name: "强化学习与后训练", status: "compressed", reason: "技术定义", excerpt: "刚刚已经提到很多了，你在OpenAI是世界上极少数从GPT-3.5、GPT-4、GPT-4o到GPT-5背后所有核心贡献者中从头到尾一直都在的人。有的人贡献了前半部分，有人贡献了后半部分，但你是从头到尾一直都在。你最主要的贡献是三个词：强化学习、Post Training和Infra。什么是强化学习？如果你可以把一个环境建模，然后在环境中得到反馈，通过那个反馈让它越学越好，这个循环就是强化学习。那什么是Post Training？当时这个概念还不存在，当时这个工作叫RL，根本没有什么Post Training的说法。" }
+  ],
+  7: [
+    { name: "ChatGPT诞生背景", status: "included", excerpt: "主持人问翁家翌刚进OpenAI的时候ChatGPT是不是已经是主线了。翁家翌说不是，刚进OpenAI的时候只有John Schulman下面的RLHF团队，然后要去做一个GPT之后的新版本。原本计划是用一个3.5的模型去做browsing，但当时browsing如果只用3.5的话效果可想而知很不好，因为browsing需要tool calling的支持。所以当时就退而求其次，先把用户交互的体验先做好，唯一要解决的就是chat，而chat可以通过instruction following这个方式去解决，用RLHF的方式。主持人确认说那你当时进去的时候3.5的模型内部已经有了？翁家翌说对，但当时PPO的开源代码非常不好用，当时其实用得最广的是3.5的SFT（监督微调），大家先在那上面用。后面才有GPT-4，后面团队写了一个新的infra来支持用GPT-4的训练infra去做强化学习的训练。翁家翌加入的时间是2022年7月，那个时候3.5已经是整个OpenAI的主线了。" },
+    { name: "发布前的感受", status: "included", excerpt: "主持人问距离发布还有几个月，当时能想象到ChatGPT会有这么大规模的成功吗。翁家翌说没有，当时也没有意识到这个东西会改变世界。因为作为内部人员能看出来很多不足的地方，第一次用的时候觉得这是个会说话的模型也就这样吧，用了几次发现能帮忙解决一点编程上的问题，但也不能帮太多，用了几次也没有那么想用，因为它能帮解决的问题有限。因为提前知道这个东西有一个逐渐习惯的过程也不觉得突然。但是发布之后展示给身边的人看，他们就觉得很震惊，这是没想到的。主持人问当时OpenAI整个公司在2022年7月已经全部在做ChatGPT了吗？翁家翌说没有，就只有他们组在做。你可以看ChatGPT那个blog往下拉有一个贡献者列表，他们应该排第一位，从Barret到Schulman之间的名字就是他们做的所有人，大约12个人。翁家翌说一直到真正意识到这个东西有影响，可能就是发布之后。当时在开NeurIPS，11月30号发布，然后12月过了几天之后发现周围身边的人都在讨论ChatGPT这个事情，他们觉得很有用，并且OpenAI的服务器被打爆了好几次。主持人说跟之前退学网站一样服务器也被打爆了。翁家翌说对，那可能就是产生了这种自来水的自发宣传效应，大家都是自来水会自发地为你宣传产品，这个肯定是一个很值得投入精力的东西。主持人总结说听起来从翁家翌加入OpenAI做这个事到最后推出ChatGPT，好像都不是谁计划出来的，可能是一系列半偶然半必然的连锁反应。翁家翌说是的，而且当时发ChatGPT也只是为了能够收集一些真实的用户数据，收完之后可能五天就关了如果没人的话。他们预期可能一开始有一万两万用户然后后面就衰减就没了，结果不可能是指数级增长。" },
+    { name: "OpenAI初印象", status: "included", excerpt: "主持人问翁家翌刚去OpenAI的时候什么体验，公司给他的初印象是什么。翁家翌说感觉是一个大号的实验室，没有想象中那么有方法论，但有很多很强的杰出人才在里面，他们可以指明方向然后就做就好了。但是从Barret、Liam他们三个人加入Schulman的团队之后，开始引进Google的先进生产力来提高迭代速度。有一张图是单位时间的迭代次数以及成功率，这是一个正比关系，单位时间迭代越多成功率就线性地往上走。这个其实也是RL的思路，因为RL不就是不断尝试嘛，不断尝试然后尝试到一定次数你就可以达到你的目的。其实很多生活中的事情都是RL。所以当时引进的先进生产力就是快速迭代，先不要去想什么天才的算法，把infra打好，让我们从一周迭代30次提高到一周迭代300次。" },
+    { name: "RLHF核心挑战", status: "deep-dive", excerpt: "主持人问在当时想把RLHF搞work有什么关键的挑战和突破。翁家翌说最关键的挑战是怎么去衡量模型的性能应该是什么样的，因为谁都不知道这个性能应该是什么样的，训练了很多个checkpoint不知道哪个真的比别的更好。比如说如果只看RLHF的reward曲线，有可能它就是变成一条直线慢慢上去，但真实的情况是reward会先上去再慢慢往下掉，这就是RLHF的特点。所以你没有办法知道哪个checkpoint是真的比其他的checkpoint好。选checkpoint也是个技术活，但他们其实没有花太多时间去选checkpoint，就是直接建了一套centralizing的benchmark来看一下benchmark上面的表现。但更多的是那个benchmark其实只是个数，如果它过了一个数就行了，也不能说它好也不能说它坏，因为你每次跑一个模型它的方差就非常大，有很多噪音。最后怎么判断的呢？还是真的把模型拉下来跟它交互几次看一下对自己的一些体验是什么样的，然后找几个人来看来投票。所以RLHF最终还是要用human feedback来评判，当时的技术就是没有其他办法。" },
+    { name: "工业级RL Infra", status: "deep-dive", excerpt: "主持人说这相当于第一次在工业级规模上做大模型RLHF，问这和之前天授那样的toy task RL区别在哪。翁家翌说区别非常大，因为toy task的瓶颈在环境，模型很简单，不管是训练还是采样action都是非常便宜的。但大模型RLHF反过来，模型很大但环境非常简单就是一个prompt，关键是采样的时候要考虑高效的采样，训练的时候要考虑高效的训练，因为提供一个prompt可能就几毫秒，但跑一遍inference和一遍training可能就好几百秒甚至几千秒。主持人问未来更大的模型比如GPT-3.5、GPT-4有什么新的挑战。翁家翌说还是性能上的scale，怎么能够用更多的GPU，怎么能够更高效地吞吐。不单单是RL的部分还有模型的inference，并且会深入到一些实现细节当中去做底层优化。主持人说其实你做的是一个相当intersection的部分，你得懂distributed RL，你得懂distributed MLC，你还得懂language model是怎么inference的。翁家翌说是的，可能不在那个位置说实话谁都不太能随便学好这种东西。那个位置非常锻炼人，但也很累。后面有段时间做得确实非常累，还进了一次医院，加班加太狠，然后受不了到医院看了一下，医生说没什么事。主持人问那时候工作强度有多大。翁家翌说早上醒来一直写代码debug或者说处理一些问题然后一直到晚上睡觉，一周平均六天。但经历之后发现这个不能持久，所以还是首先要保证身体是健康的，现在养成了每周两到四次跑三千米的习惯，之前在清华的时候根本不会跑三千米，但现在自发地意识到健康是非常重要的。主持人说很羡慕翁家翌过去两年在OpenAI的经历，能够explore世界上大部分99.99%的人完全没有资格去碰的东西，有先天独厚的优势在最前沿的矛头上可以做优化，每天都在未知的领域探索而且知道自己的探索一定是人类历史上第一个找到这个答案。翁家翌说他也做了一些很驱赶的事情，他觉得自己的工作日常其实并不需要那么多智力上的东西，只要把事情做好做对就好了，方向很重要，只要在对的方向上做一些自己认为正确的事情就好了。主持人问觉得大模型RL还需要那种大的breakthrough吗还是说范式已经确定了只要把东西工程上拉上去。翁家翌说还是有的，而且不能以当前的状态来预测接下来会发生什么，接下来什么事情都可能发生，有可能有新的范式，也有可能有新的RL的范式，也有可能有inference的范式，所以每天都得面对一些未知的挑战。但换个说法他觉得自己其实很幸运在这个位置，但如果把自己换做任何一个人如果有同样的条件和背景，应该也完全可以胜任，他不觉得这是只有他能做的事情，换任何一个正常的人类都应该可以做。" },
+    { name: "人才密度与组织", status: "compressed", reason: "内部细节", excerpt: "主持人提到一个采访里有人问Sam Altman OpenAI成功的原因是什么，Sam说是在一个人才密度极高的小团队里面任何平庸的表现都是不能被容忍的。翁家翌认同这个说法，因为人才密度如果上来的话你可以自发地涌现出一些意想不到的东西，但如果换一个场景大家都很平庸的话可能就各扫门前雪做完自己的就好了。主持人说当时OpenAI应该是几百人的公司。翁家翌说他去的时候是280人，现在应该3000多人了，三年十倍。主持人问OpenAI还能保持曾经的小而美的团队做出颠覆创新的风格吗。翁家翌说概率是在下降但没有下降那么厉害，还是可以划分出一个小团队去做研究。主持人问OpenAI的领导层有什么比较有意识的努力来保持小团队和人才密度的创新。翁家翌说比如简化一些组织架构，把一些不合理的会议全部取消掉，他觉得主要还是组织架构更重要一些。主持人问什么是一个高效的利于创新的组织架构。翁家翌说信息流通通畅——上面做决策的跟下面干活的要想的是同一个方向，不然就会进入不一致。OpenAI怎么做到的呢？首先像Sam Altman会有专门的研究助理帮他去了解最新的公司内部研究进展，Greg Brockman不用说了引擎整个infra底下每一步都是他参与过的，所以他们俩对技术是非常熟悉的，所要做的就是保持技术的敏感性，知道当前的东西做到什么地步了有什么最新的进展有什么用。所以一把手二把手这样的人得愿意深入到专业细节里面去了解公司的每一个毛细血管。管公司跟管大模型其实也有很类似的地方就是consistency（一致性），如果不一致的话你可能就像一个人身子动了但是脚没动，那就很奇怪。" },
+    { name: "PPO开源版本问题", status: "compressed", reason: "技术细节", excerpt: "主持人说聊聊post-training，从3.5开始聊。翁家翌说实际上3.5的PPO其实也没有调通那么多，是先调通了GPT-4的。因为3.5当时用的旧的infra，2022年8月刚好有了新的infra，他就在新的infra上先调通了基本版的PPO然后用4来跑，应该是2022年9月的事。所以朋友问当时3.5出来的时候，GPT-4不是早就有了吗？翁家翌说对，而且PPO是先在4上调好的然后再在3.5上复制的。11月的时候OpenAI其他团队其实也帮忙踩了不少坑提供了PPO怎么用的经验，但核心的一些东西还是自己团队解决的，比如说遇到什么bug、数据怎么处理、infra出什么问题都是自己搞。" }
+  ],
+  8: [
+    { name: "还没scale up完", status: "included", excerpt: "主持人问展望未来5到10年RL还有什么值得探索的地方，最大的挑战会在哪，现有模型能力的瓶颈是什么，需要看到什么样的突破。翁家翌说他觉得目前的状态是还没有scale up完全，先等它慢慢地从大规模RL的一些实验里面看一下它最多能到多少，然后再去看之后还有什么要做的东西。主持人确认说你的意思是还没有scale up完全不是说compute不够，而是说现有的性能还没有榨干？翁家翌说对，先把现有的方法、现有的compute榨干了再看能推到多远。而且infra里还有很多bug，不能说百分百没有bug，毕竟是源代码每个人都可能犯错，人多了之后context不一致每个人都会写一些奇怪的东西。主持人问未来大模型加强化学习post-training这条路最大的瓶颈会在哪。翁家翌说瓶颈在于infra的吞吐量不够，单位时间内能迭代多少次、能正确迭代多少次，剩下的不重要，都可以靠提高迭代速度来解决，算法也好还是什么都好。所以如果你把bug全修了可能算法都不用改就很好了。" },
+    { name: "Infra有bug", status: "included", excerpt: "主持人问怎么样把infra的效率提上来需要什么样的架构、什么样的人、什么样的资源。翁家翌说还在探索，他现在做的事情其实已经不在那个最核心的位置了，但觉得应该做一些更重要的事情，目前在重构OpenAI内部的infra。主持人问每一代infra是会推倒重来还是小修小补。翁家翌说目前是推倒重来，因为之前那一代infra已经三年多了积累的问题其实已经很多了，大家根据现在的认识再做一个好的顶层架构然后往里面填。偏数量的一些东西可能会小修小补，但主要还是推倒重来。希望用新的infra来替代之前的，能够在单位时间内给研究员更好的迭代速度。研究员不会参与到infra编写过程中的，他们可能会给一些需求，具体写代码怎么搞distributed training不是他们负责的，到时候就改个config就行了。主持人说听起来OpenAI的研究员可能是第一个被AI取代的工作了。翁家翌说他感觉是的，就是单位时间内能够使用就想iterate一样，你可以很便宜地写代码，一个人在车里就写好了，生成iterate和代码review这些自己也可以被AI建模。主持人问接下来哪些工作会先被取代。翁家翌说他觉得优先会取代写benchmark的然后再取代写infra，但是sales可能不太会那么快被取代，因为sales还是要面对面地买单、面对面跟什么人打交道，AI可能没有办法那么说动人，人与人之间的沟通还是更重要一些。主持人问聊完了post-training之后Agent和RL的post-training有多大的本质差别。翁家翌说没有本质差别，本质就是同一个东西，中间多加了几步tool call，环境发生了改变而已。" },
+    { name: "Sam被开除事件", status: "included", excerpt: "主持人说从内部视角看当时Sam被开除，因为外部接收到的信息都是很玄幻的说什么Ilya到底看到了什么。翁家翌说那些都是随便瞎传的，捕风捉影很多人在造谣。主持人问你内部的视角是什么。翁家翌说内部的视角就是不信任，Ilya跟其他一些董事会成员不信任Sam然后投票把他投出去，但底下干活的人就觉得非常可怕非常震惊不知道发生了啥，之前对底下的人缺乏透明度也不知道高层做了什么决定。主持人问这个不信任是不信任他什么。翁家翌说不信任他这个人，你可以去看官方公开的那个调查报告，跟这个是一致的。主持人问最后的结局是Ilya走了，这个化学反应是怎么发生的，明明已经把Sam开除了也不信任他，最后好像Sam是更得人心的那个。翁家翌说因为很多员工就觉得如果有一个纯技术出身的人领导的话可能没有那么多远见。AGI首先并不只是因为技术，技术实现了就好了，还有很多商业的因素掺杂在里面，比如你要融资、要算力、要如何去说服一些人愿意投钱，这其实也是很重要的一部分。如果你只有很好的研究员的话可能还不足以支撑你走这么长的路。从长远来看还是需要Sam这样的人。所以Sam可能反而是OpenAI最难替代的那个人，因为他需要在商业、甚至地缘政治、资源上运作。可以把Sam抽象成一个API的接口体、一个identity，别人对这个identity有认同感，这个短时间内如果你用一个AI来替代的话别人不会认同。" },
+    { name: "人才流失", status: "included", excerpt: "主持人提到翁家翌说过Schulman走的那天下午难过了好久，但Schulman不是唯一一个离开OpenAI的，OpenAI在取得巨大成功之后有无数的团队全都走了。主持人问一个极度成功的组织像OpenAI这样最后大量的人才流失是必然的吗是不可避免的吗。翁家翌说一个健康的组织是所有人都是可以替代的，只要能够持续培养新人有造血能力，让组织正常运转就可以了。哪怕走了很多人还是可以花一些时间精力再培养一波新人，持续造血相当于干细胞。所以OpenAI现在没有谁是不可替代的，这也就意味着OpenAI要做的东西外面的人也不是说哪一天不能复刻的，因为其实就是把自己的东西做好就好了没有什么黑魔法。主持人说现在可能是人类历史上最激烈的一次科技竞赛，OpenAI是点燃这一切的公司，想知道内部的氛围有多紧张、压力大不大。翁家翌说看组看，比如说做pre-training的团队目前压力还是挺大的，像其他组比如他们现在在重构infra可能有压力但没有像pre-training那么大，因为pre-training有很明确的竞争对手在那里，而infra可以稍微看远一点需要跟长远的考虑。主持人问外部激烈的竞争不管是来自xAI、Google还是中国的大模型公司会传导到内部日常开发吗。翁家翌说不太会，除了DeepSeek。因为DeepSeek在推特上声量很大，他们的迭代速度非常快，这引起了很多人的竞争意识，因为OpenAI内部的迭代速度相比之下是有内耗的，所以这就是为什么要重构infra。主持人问所以对于OpenAI这样的大模型公司来说生死攸关的是infra的迭代速度，其他比如数据或者算法有多少researcher这些投人就好了。翁家翌说好问题，infra需要更多的context，但如果是数据的一些基本操作比如跑一些实验那不需要那么多context，人进来写个for loop把东西跑好就行了，这些其实都可以自动化。主持人问你们真正警觉的点是意识到DeepSeek内部的infra很好他们迭代得很快，你们不care哪个模型在哪个benchmark上又比GPT提高了多少。翁家翌说对，很长时间以来都没有在特地为了刷benchmark而做什么事情。主持人问你们真正care的是单位时间的迭代速度和成功率，你觉得OpenAI在这个指标上是全世界第一吗。翁家翌说肯定不是，跟组织效率有很大的关系，比如一个小团队搞个startup他们的迭代速度可能远远高于OpenAI，因为团队小沟通成本少只要集中于自己的use case就行。但OpenAI要考虑通用性要考虑很多use case各方面兼顾，组织大了就有这样的问题。主持人问如果这样OpenAI已经不是第一了那未来还能做AI矛头的第一吗。翁家翌说每个公司做大了做成功了都会变慢，大家都很差然后看谁没那么差。有些公司可能在这个指标上更好但其他指标可能很差，比如用户反馈，这都是取舍。这是人类组织发展到这个规模之后必然会面临的问题没有办法避免，不是说人才密度够高就行了，是说难以保持组织架构的上下一致性，这会导致infra开始臃肿、组织架构开始臃肿。主持人说以后应该有一个拥有无限context的AGI来替代停滞的组织架构，因为这会解决人类历史上这种臃肿的组织架构对抗效率的问题，人脑的context是有限的没办法一下子装这么多context但AI可以，可能未来每个公司有一个无限context的Agent来当CEO，负责所有的decision。" },
+    { name: "AGI使命挑战", status: "deep-dive", excerpt: "主持人说翁家翌刚才提到OpenAI的使命要拆成两部分，首先实现AGI再造福全人类，问更深地说要理解这个使命的话，真要实现这个过程最大的挑战是什么。翁家翌说是执行力，朝着正确的方向执行，只要能执行就好，就不要再出现一次比如说2023年11月Sam被开除那样的事。主持人确认说你希望整个组织加速越稳定越好，可能稳定有利于快速往前推进。翁家翌说是的。" },
+    { name: "预训练能否达AGI", status: "deep-dive", excerpt: "主持人问翁家翌个人对AGI的定义是什么，觉得现在达到了吗，如果还没有达到，post-training和RL这条路能不能带我们达到那个定义的AGI。翁家翌说OpenAI内部对AGI有很多种定义，抓15个人可能有20种定义方法。他之前的定义是如果AI能够完成百分之八九十自己认为有意义的task那它可能就达到了AGI。目前还没有达到，因为从RL infra的角度来看还是不放心让AI直接上手改他的代码。infra这个领域非常小众，在训练数据中的占比几乎为零，而且infra反馈回路太长成本太高，目前还没有办法处理到这一块。主持人说听起来你短期内不会被取代。翁家翌说是的，但是在Cursor出来的时候大家内部已经用了一段时间了，那个时候大家都觉得自己的工作要被取代了，或者说写了一堆测试脚本，因为Cursor有新玩具之后会帮他们处理。但现在看来一两年过去了其实并不会真正改变什么，每个人都会偶尔恐慌觉得这个技术来了我们要怎样，但其实并不会这样，变化是一个很慢很慢的循序渐进的过程。" },
+    { name: "OpenAI还Open吗", status: "compressed", reason: "敏感话题简述", excerpt: "主持人说翁家翌以前在学术机构清华、CMU、大公司然后可能在科研的Lab待过，但现在很多人批评OpenAI已经跟Open没什么关系了，翁家翌自己之前的愿望也是开源大公司信息差，问这会不会对他的个人目标和偏好产生冲突。翁家翌说这是一个权衡取舍，他其实还是很认同开源的，如果能开源他可能会去参与一些。但他觉得应该去做自己认为更重要的事情，并且开源对于OpenAI来说是一个权衡——没有办法直接把最好的模型开源，因为公司要生存，如果公司不能生存的话就没有办法继续融资做实验有突破性进展，这都是很现实的问题。他认同这个权衡。主持人追问说但OpenAI一开始建立的时候价值观很特殊不是一个商业驱动力的公司，至少公开资料上的使命是让通用AGI平等地造福全人类。翁家翌说OpenAI的使命要拆成两部分来看：第一是实现AGI，第二是造福全人类。通用AGI就直接对齐benchmark然后给用户的。造福全人类目前的策略是做产品然后以便宜的价格让普通用户接触到技术，比如有免费的ChatGPT用户他们可以直接更容易地接触到技术，免费用户也可以用推理模式做一些体验，这比直接丢一个裸的模型权重但人们不知道怎么用要更有利于造福人类。所以OpenAI的Open不是对其他大模型公司的开放而是对普通人的开放。主持人说但如果AGI还不是百米冲刺不是一年半载明年就能解决的事的话，在技术上更开放更透明会不会让OpenAI本身更有利于尽快达到AGI，还是说OpenAI现在其实不太需要把技术细节公开出来拿社区反馈也不需要社区的帮助已经self-contained可以实现AGI了。翁家翌说存在一种路径可以开源并且接受社区反馈然后更好地实现AGI，理论上可以做到但实际上困难很多。比如如果你是第一名开源了那么其他人马上追上来，不是所有人都同心同德，就会导致OpenAI在当前环境下可能容不下自己。这有点博弈论的意思，哪怕是想为AGI造福人类但可能有人不是真想。所以为了防止这样的情况发生OpenAI不得不闭源，他在看来是这么一个权衡。主持人问如果现在OpenAI假设钱无限不用担心公司死了，你会很开心地把这两三年的RL infra开源出来吗。翁家翌说当时还行，其实Schulman还问过他这个事要不要开源，他当时觉得为了公司的考量不太好，但Schulman还问了他这件事，所以至少说明OpenAI内部确实有过重新评估开源的过程。" }
+  ],
+  9: [
+    { name: "宿命论与预测", status: "included", excerpt: "主持人问如果你希望AI可以解决一个世界难题会是什么。翁家翌说如何预测未来，不是杯子怎么掉下来这种物理问题，而是整个人生、世界格局所有的这种事情。主持人问为什么这个事是他觉得最想做的。翁家翌说他个人对于造一个世界模拟器这件事很有兴趣很有意义的追求，但是如果你在高维度空间来看的话你需要有一个提前设计好的世界模型。主持人问他是不是觉得我们的命运是可以被预测的，这个世界是一个确定的，我们生活在一个确定性的马尔可夫过程里面。翁家翌说是的。主持人问往深了说你觉得人是没有自由意志的？我现在脑子里在想什么、我下一句话说什么、我下一个问题问什么，全都是一开始宇宙大爆炸那一刻就定好的？翁家翌说这个是他已经想过无数遍的。主持人说这在他听起来是一个相当悲观的世界观。翁家翌说是的，可能是真的，但他自己内心深处也不愿意接受，就好像自己变成了一个在被模拟的原子。主持人问为什么会这么想。翁家翌说有一些个人经历不太方便说，但确确实实所有东西都是可以预测的，所以理论上是可以用AI解决的。但如果你拿到一个能够预测未来的机器的话，对于人类其实是一个巨大的冲击，他觉得这会导致所有价值体系的崩塌。如果有这样的AI模型做到了，可能对人类社会来说最好的选择是毁掉这样的AI模型，让它永远不要出来。但有些人非常愿意去开发这种模型。主持人问是因为他想deviate（偏离）宿命论？翁家翌说不是，只是为了搞清楚这个世界背后的运行规律，或者说这个世界为什么是确定的、为什么是宿命论的。主持人问上帝不掷骰子？翁家翌说对，宏观不掷骰子，微观才掷骰子。主持人问这在量子力学的观测里面成立吗。翁家翌说成立，因为你可以在后台修改一些世界线。虽然别人可以觉得他说的是扯淡没问题，但他并不认为是扯淡，他在尝试reason behind it。主持人说他也想过很久这个问题，到底这个世界是不是确定性的，我们是不是有一个剧本，我们只是体验在这个世界的单次经历，完成一次随机过程。翁家翌说不是随机过程是确定过程。主持人说他的事好无法证伪。翁家翌说他怀疑但尝试去证伪发现证不了，他非常想让它被证伪，有这个意愿。他六七岁的时候就跟爸妈提过这个事，说你怎么知道我说的这句话不是早就确定性的，你怎么知道你的反应不是确定性的，小时候就在想这个问题。主持人说他后来发现如果是这样的话就不觉得自己是什么了，所以最好的方式就是忘掉这些然后假装你不知道这个事然后去体验当前的经历。翁家翌说已经这么做了，一直都是这么做的。翁家翌还有一个解释是世界不是线性的，时间线是可以跳跃的。三维生物都有自己的局限性，在三维认知里时间是线性单向流动的，但有可能在四维空间里时间并不是单向流动的，可以任意跳跃。这是他找到的迄今为止最好的解释。主持人问所以他真的觉得过去有无数个时刻有一个未来的理想型在穿越回来在后面推了一把。翁家翌说有可能性质一样，因为这个无法证伪。而且推了这一把又会导致你在未来又会再穿越回过去推这一把，形成闭环。所以他现在最好的解决方案就是忘掉这个事，还是坚信细细无知是幸福的。" },
+    { name: "创业考虑", status: "included", excerpt: "主持人说现在每一个OpenAI的AI研究员可能内心里面都有个创业的种子，问翁家翌有没有这方面的考虑和想法。翁家翌说可能有但现在觉得还没有看到合适的信号，并且OpenAI对他而言还是一个不错的地方待着。主持人问如果创业会喜欢什么样的，是偏product还是什么样的。翁家翌说他更喜欢product，就像之前天授和退学网站一样是有用户的，搞RL和算法也是有用户的因为用户就是做RL的人，可以根据用户的反馈来自驱地进行迭代。他希望找到类似这样的项目——大家有需求然后自己的技术能力能很好地满足那些需求，技术什么样的不重要。比如几个例子，退学网站就是一个很简单的通知系统，甚至连推送系统都不要，你哪怕每天白天更新一次晚上更新一次手动操作，但其实就有很多需求。技术不重要，重要的是找到需求。" },
+    { name: "十年后的自己", status: "included", excerpt: "主持人问翁家翌会希望10年后的自己是什么样的，在一个什么样的地方做什么样的事。翁家翌说希望他做自己那个时候想做的事，有足够的资源和能力去做自己想做的事。他不去干预未来的自己那时候想什么因为想法是会变的，可能想什么也不重要反正是确定性的过程，现在怎么希望不太重要。他现在所能做的就是投资未来的自己，还是投资未来让他有更多选择。主持人说为什么还要投资呢反正投资你都会到那个点，这不是在骗自己吗投资一下不会有任何影响如果是确定性的过程。翁家翌说但投资未来可能也是确定性的，投不投资也不是自己的自由意志。主持人问之前投资未来都是提前学高中数学或者怎么样，现在除了技术上AI上的还有什么其他的想法。翁家翌说提前退休，有足够的资本想做自己想做的事。主持人问给你无限的钱你现在想退休去干嘛。翁家翌说花一点时间找到自己真正想做的事。主持人问有时候他觉得手头上的事不是很想做的，只是迫于生计想要赚到足够退休的资本然后再去找那个事？翁家翌说比如说RL和infra在很长一段时间都是他想做的事，但随着时间的推移、工作逐渐稳定之后、或者发生了一些事情之后，他曾经想通了自己想要什么但现在又想不通了。主持人说这其实也很正常，现在反而是在人生的某个迷茫期，曾经觉得很喜欢的AI和RL做有影响力的事，但因为已经看到头了剩下都是重复性的事情，AGI还是板上钉钉的事。主持人说没有更多的问题了，希望翁家翌在2025年这个时间节点上在这个podcast最后留下一段话。翁家翌说去探索说到底自己想要什么，虽然他对这个问题曾经一直想通了自己想要什么但其实还是没有那么确定，这个问题值得一生去思考。" },
+    { name: "AI解决世界难题", status: "included", excerpt: "翁家翌希望AI解决的世界难题是如何预测未来，在高维度空间里需要一个提前设计好的世界模型。他认为所有东西都是可以预测的所以理论上可以用AI来解决。但如果真的拿到一个能预测未来的机器，他觉得这会导致所有价值体系的崩塌，对人类社会来说最好的选择可能是毁掉这样的AI模型。有些人非常愿意开发这种模型，不是为了逃脱宿命而是为了搞清楚这个世界背后的运行规律，为什么这个世界是宿命论的，上帝不掷骰子。宏观不是随机的微观才是随机的，在量子力学的观测里面这可以成立，因为你可以在后台修改一些世界线。虽然别人可以觉得这是扯淡但翁家翌不认为是扯淡他在尝试reason behind it。" },
+    { name: "个人经历与信念", status: "compressed", reason: "隐私相关", excerpt: "翁家翌的宿命论信念来源于一些个人经历但不方便公开细说，但确确实实所有东西都是可以预测的。他六七岁的时候就跟爸妈提过这个事，说你怎么知道我说的这句话不是早就确定性的，你怎么知道你的反应不是确定性的，从小就在想这个问题。他非常想让宿命论被证伪有这个意愿，但尝试之后发现证伪不了。高中的时候有一个瞬间突然未来的自己告诉曾经的自己要make impact，只是脑子里的一个念头但不知道从哪来的。他觉得三维生物都有自己的局限性在三维认知里时间是线性单向流动的，但有可能在四维空间里时间并不是单向流动的可以任意跳跃，这是他找到的迄今为止最好的解释。有一个可能性是过去有无数个时刻有一个未来的理想型穿越回来在后面推了一把，而且推这一把又会导致你在未来又会再穿越回过去推这一把形成闭环，但这个无法证伪。所以最好的解决方案就是忘掉这个事假装不知道去体验当前的经历，他一直都是这么做的，坚信细细无知是幸福的。" }
+  ]
+};
+
+var deepDiveData = {};
+deepDiveData[1] = {
+  title: 'NOIP 竞赛与清华开源作业',
+  sections: [
+    {
+      heading: 'NOIP竞赛：从初一写代码到清华降分',
+      body: '翁家翌从初一就开始接触编程，到了高中阶段正式投入信息学竞赛（NOIP/NOI）。不过他搞竞赛的动力并不纯粹是兴趣驱动，而是因为高考升学压力巨大，竞赛成绩可以换来实实在在的录取优势。最终他以福建省队倒数第一的名次拿到了铜牌，但这块铜牌足以让他获得清华大学无条件降60分的录取资格，极大地缓解了升学焦虑。更有意思的是，高三备考期间他并没有完全沉浸在题海战术里，而是偷偷利用课余时间写代码练习常数优化——这种行为本身就说明编程对他而言不只是升学工具，更是一种内生的驱动力，和前面提到的「正反馈驱动学习」一脉相承。'
+    },
+    {
+      heading: '清华开源作业：打破信息差',
+      body: '进入清华之后，翁家翌做了一件在当时看来颇为大胆的事情：他把自己所有课程的作业都放到了GitHub上开源。这个举动的目的非常明确——他想打破信息差，让后来的学弟学妹不需要从零开始摸索每门课的套路和坑。在清华这样的环境里，高年级学生的笔记和作业往往只在小圈子里流通，形成一种隐性的信息壁垒。翁家翌选择直接公开所有内容，本质上是在用开源的方式降低后人的学习成本。这种做法与他后来在开源社区的深度投入一脉相承：无论是天授（Tianshou）强化学习框架还是退学签证查询网站，他始终相信让更多人受益的事情值得做，哪怕短期内看不到直接回报。'
+    }
+  ],
+  originalText: '翁家翌从初一开始学编程，高中搞竞赛主要是为了升学。他以福建省队倒数第一拿了铜牌，获得清华无条件降60分的录取资格。高三备考期间他还偷偷写代码练常数优化。进入清华后，他把所有作业在GitHub上开源，目的是打破信息差，让后来的人不用从头跑一遍。'
+};
+deepDiveData[2] = {
+  title: 'Bengio暑研与前ChatGPT时代的反思',
+  sections: [
+    {
+      heading: 'Bengio暑研：从零学NLP到算力碰壁',
+      body: '翁家翌大学期间拿到了去蒙特利尔Yoshua Bengio实验室做暑期研究的机会，课题方向是一个类似Mixture of Experts的NLP项目。因为他之前的研究背景全部集中在强化学习领域，所以到了Bengio实验室之后需要从零开始学习NLP的基础知识和工程实践。这段经历最终的结果并不理想，主要原因有两个：一方面是算力严重不足，暑研学生能拿到的GPU资源远远不够跑大规模实验；另一方面是他当时的工程能力还没有达到能独立搭建复杂NLP pipeline的水平。但事后回看，这个课题的方向本身是对的——Mixture of Experts后来成为大模型架构的核心组件之一。所以问题不在于判断力，而在于当时的条件根本不允许一个暑研学生把这件事做出来。'
+    },
+    {
+      heading: '前ChatGPT时代的反思：为什么当时不可能做出来',
+      body: '翁家翌后来反思这段经历时提到了几个结构性的障碍。首先是NLP领域当时的任务太分散，每个子方向（机器翻译、情感分析、问答系统等）都有自己独立的数据集、评测标准和tricks，不像现在大模型统一了范式。其次是语言模型和强化学习的结合在当时极其不稳定，因为语言模型生成的文本空间太大，RL的探索效率极低，训练过程非常容易崩溃。最关键的是当时缺少好的reward model——没有人类反馈数据，没有可靠的自动评估方式，所以根本无法构建一个有效的训练闭环。这三个问题叠加在一起，意味着在ChatGPT出现之前，用RL来优化语言模型这条路在工程上几乎走不通，哪怕理论上方向是正确的。'
+    }
+  ],
+  originalText: '翁家翌去蒙特利尔Bengio实验室做暑研，课题是类MoE的NLP方向，从零学NLP，但因为算力不够加上工程能力不足，最终效果不理想。他后来反思认为当时NLP task太分散，语言模型和RL结合容易崩，而且没有好的reward model，在前ChatGPT时代这条路根本走不通。'
+};
+deepDiveData[3] = {
+  title: "评价体系反思与心态调整",
+  sections: [
+    {
+      heading: "评价体系反思",
+      body: "翁家翌在清华读书期间逐渐意识到GPA并不是衡量个人价值的唯一标准，因为他的导师给出了一套完全不同的评价框架：论文发表数量、比赛成绩、以及GitHub Star数达到三位数以上。这三个指标让翁家翌看到了一种全新的可能性——在开源社区做出差异化的东西，对长期职业发展反而比刷绩点更有实际价值。因此他对GPA采取了「最低限度投入」的策略：考试前精确计算需要多少分才能达到目标线，达到之后立刻停止投入，多一分都不愿意花时间。翁家翌并不是不重视学业本身，而是把有限的精力分配给了他认为真正有长期回报的事情——这种从需求方角度倒推评价标准的思维，帮助他跳出了「学历越高越好」的固有认知框架。"
+    },
+    {
+      heading: "心态调整",
+      body: "Covid疫情期间翁家翌面临着极大的不确定性，因为签证政策随时在变化，领事馆一会儿开一会儿关，国际政治局势持续动荡，个人未来与这些不可控因素紧密绑定在一起。但翁家翌选择了一种务实的应对方式——不去天天关注宏大的国际叙事，而是把注意力拉回到手头上能做的事情。他在家里集中精力写天授强化学习框架，同时开发tuixue退学签证查询系统，这两个项目都是从自己的真实需求出发的。天授只用了两周就完成了第一版，tuixue则帮助了大量有同样签证困惑的留学生，累计点击量超过千万次。通过这种「专注当下」的策略，翁家翌在充满不确定性的环境中反而找到了方向感和成就感。"
+    },
+    {
+      heading: "挣脱核心",
+      body: "翁家翌一直以来都想做一些让自己与众不同的事情，因此PhD全拒之后他虽然经历了一段调整期，但最终选择不再被固有的评价体系绑架。翁家翌意识到在开源社区创造真正有用的工具，比在学术体系内卷更能体现自己的价值，因为天授框架和tuixue系统就是这种「挣脱」的具体产物——两个项目都不是为了功利目的而做的，完全没有报酬，但做这种「慈善」让他感到非常满足。翁家翌追求的核心是impact——如果人生是一场游戏，结算分数就是在你离开时记得你名字的人的数量，这个标准不来自学校排名，也不来自论文引用数，而是来自每一个使用者发自内心的认可。从「被GPA评价」到「用impact定义自己」，这是翁家翌在低谷期完成的最重要的心理转折。"
+    }
+  ],
+  originalText: "我一直以来就觉得GPA不是唯一的一个评价体系，需要自己在大学里面找到适合自己的评价体系然后为这个评价体系去奋斗去让自己提升。我采用了导师给我推荐的评价体系——就是他认为有三个指标：一个是论文、一个是比赛、一个是GitHub的Star三位数以上。\n\n那种不确定性你当时是什么样的状态？我觉得我当时可能更专注于手头上的事，比如说在家里写天授、写tuixue退学签证查询系统。我只是把注意力转移，不要天天去关注一些宏大国际叙事，而是专注于手头上的事情。\n\n后面我觉得我一直以来应该都是想做一些让自己与众不同的事情，就是说当时在尽力地挣脱出固有的那种评价体系。"
+};
+deepDiveData[4] = {
+    title: 'Impact 底层逻辑与一致性哲学',
+    sections: [
+      {
+        heading: 'Impact 底层逻辑',
+        body: '翁家翌在高三的时候脑子里突然蹦出一个想法：如果人生是一场游戏，那么结算分数就是在你死的那一刻还记得你名字的人的数量。这个念头从此成为他做事的底层驱动力，因为他追求的不是官方认同或者既有评价体系给出的分数，而是每一个人发自内心的认可。正是因为这个逻辑，他做天授和退学这两个项目都是完全没有报酬的「慈善」，但他从中获得的满足感远超金钱回报。之所以会这样，是因为他把「正面的影响力」当作衡量人生价值的核心指标——只要自己做的东西真的能给别人带来好处，别人的正反馈就是他最强的驱动燃料。'
+      },
+      {
+        heading: '一致性哲学',
+        body: '翁家翌认为一个项目最重要的品质是「consistency」（一致性），因为如果一个项目从头到尾由一个人设计，就不会出现十个人各写各的、假设互相矛盾、代码逐渐腐化的问题。RLlib 之所以有几十万行代码却让人看不懂也不知道该改哪里，根本原因就是多人协作带来的不一致性——每个人都往里面贡献代码，但每个人其实都不完全知道其他人写了什么，隐含的假设无法准确传递，最终代码在很多地方附着了不好的行为。天授能用一百行核心代码做到同样的事情，不是因为它功能少，而是因为抽象设计从一开始就保持了一致。五年之后天授确实出现了一些腐化的迹象，因为翁家翌的 context 跟继任维护者的 context 还是不完全一样，但他认为这个程度在长远来看还可以接受。'
+      },
+      {
+        heading: 'tuixue 签证系统',
+        body: '退学（tuixue）签证查询系统的诞生逻辑跟天授完全一样：翁家翌自己有查签证时间的需求，找了一圈发现没有现成的工具能满足这个需求，于是就自己写了一个爬虫免费给所有人用。因为疫情期间美国领事馆时开时关、签证制度实时变化，所以这个工具对大量留学生来说是刚需，总点击量从最初的一百多万涨到了一千多万。但疫情结束之后需求消退，加上美国领事馆升级了网站导致原来的爬虫失效，翁家翌也没有时间去修复，于是这个项目就自然关停了——他认为退学已经完成了它的使命，工具是为解决问题而存在的，不是为了维持存在而存在。'
+      }
+    ],
+    originalText: '我想做一些能够产生影响力的事情，哪怕亏钱也行。做天授跟做退学都是做慈善，完全没有报酬，但做这种慈善我感觉非常满足。高三的时候突然某一天有个idea从脑子里蹦出来——如果人生是一场游戏的话，那么你游戏的结算分数就是在你死的那个瞬间记得你名字的人的数量。我觉得代码或者说一个项目最重要的有用的东西是consistency，一致性。如果这个项目从头到尾都是一致的，它就是一个好项目。很多项目的腐化都是由于不一致性。tuixue签证爬虫免费给大家用，总点击量从一百多万涨到了一千多万，但很早之前就已经关了，因为疫情过去之后没有那么多需求了，并且美国领事馆升级了网站，它完成了它的使命。'
+  };
+deepDiveData[5] = {
+    title: '研究能力 vs 工程能力',
+    sections: [
+      {
+        heading: '研究 vs 工程',
+        body: '翁家翌的同事在 OpenAI 内部有一句广为流传的判断：「教一个 researcher 如何做好 engineering，要远比教一个 engineer 如何做好 research 来得难。」这句话之所以重要，是因为当前大模型研究前沿的竞争维度已经发生了根本性的转移——决定胜负的不再是谁有更天才的 idea，而是谁的 Infra 能保证正确性、谁能在单位时间内跑出更多次有效迭代。因为 idea 本身在顶级实验室里并不稀缺，大家坐下来讨论一下就能产生各种想法，真正的瓶颈在于谁能正确且快速地把这些想法验证出来。所以翁家翌认为在这个时代，工程能力的权重已经远远超过了纯研究能力——idea is cheap，execution is everything。'
+      },
+      {
+        heading: 'Infra 可以 Scale',
+        body: '翁家翌在 OpenAI 的核心贡献是搭建了整个 Post Training 阶段的 RL Infra，因为所有模型的对齐训练都要经过他搭的基础设施。他用一个非常直觉的指标来衡量自己的工作价值：「最大化 OpenAI 官方 blog 里出现自己名字的次数。」这个说法看似玩笑，但实际上反映了一个深层逻辑——做 Infra 的人可以 scale，因为你搭的基础设施支撑了所有上层研究项目的产出，所以每一篇重要论文和技术博客都会感谢你的贡献。而单个 researcher 做一篇论文只能署一篇论文的名，产出天然是线性的。翁家翌之所以选择做 Infra 而不是做单点研究，正是因为他看到了这个杠杆效应：Infra 的价值随着组织规模和项目数量呈乘法增长，而单个 research 项目的价值只能做加法。'
+      }
+    ],
+    originalText: '教一个researcher如何做好engineering，要远比教一个engineer如何做好research来得难。因为目前研究前沿拼的是infra的正确性和单位时间迭代次数，idea大家讨论一下就有了，关键是谁能正确且快速地验证。他搭了OpenAI整个Post Training RL infra，用最大化blog出现名字次数来衡量价值。做infra可以scale——支撑所有上层项目，每篇论文都会感谢你；而单个research项目的产出是线性的。'
+  };
+deepDiveData[6] = {
+  title: "PhD之辩与AI教育",
+  sections: [
+    {
+      heading: "学术界需重构",
+      body: "翁家翌在2022年8月就意识到RL学术界需要被重构，因为大家一直对着Atari和MuJoCo这几个benchmark来回调参、比谁在100K步的时候分数更高，但工业界完全不看这些东西。工业界用RL解决的是真实的问题，而不是toy task上的数字游戏。正因为他看清了这一点，所以他主动停止了天授的开发——因为天授本质上还是面向这些toy benchmark的框架，继续维护下去跟工业界的需求是脱节的。他当时没有公开说出这个判断，因为害怕别人觉得太偏激，但这个认知在2022年算是非常超前的，绝对不是当时的共识。"
+    },
+    {
+      heading: "Infra无上限",
+      body: "翁家翌认为如果目标是进AI Lab，首先要搞清楚AI Lab到底需要什么样的人才。他的结论是：目前最需要的还是Infra人才，因为Infra是一个无上限的东西。从ChatGPT出来之后在这个行业里面干了比较长时间的人屈指可数，所以当前的核心问题还是在于Infra——你能不能scale、能scale到多大、单位时间内你能迭代多少次，这些指标直接决定了团队的生产效率。学历在这个语境下变得不重要了，因为更关键的是看你的实际经验能不能匹配Lab的真实需求。"
+    },
+    {
+      heading: "尽早进工业界",
+      body: "翁家翌给有抱负的年轻人的建议是尽早进入工业界，因为读PhD期间范式可能已经发生了根本性的变化——等你毕业的时候，你做的东西可能就没什么用了。他强调关键在于想清楚「差异化」：作为Master甚至本科生，你能做什么让对方选择你而不是另一个PhD。差异化比学历本身重要得多，因为PhD更多培养的是学术能力——怎么写好paper把故事讲圆、把宣发做好——但现在AI领域真正拼的是工程能力和快速迭代的速度。"
+    },
+    {
+      heading: "强化学习定义",
+      body: "翁家翌在OpenAI搭建了整个Post Training的RL Infra，是这条pipeline上最核心的贡献者。他对强化学习的定义非常简洁：如果你可以把一个环境建模，然后在环境中得到反馈，通过那个反馈让模型越学越好，这个循环就是强化学习。至于「Post Training」这个概念，他指出当时根本不存在这个说法——当时这个工作就叫RL，没有什么Post Training的概念，这个词是后来才被行业广泛采用的。"
+    }
+  ],
+  originalText: "长远来看我还是觉得现代学术界应该要被重构。RL学术界就是对着Atari、MuJoCo这几个task和benchmark来回调参，比你比我在100K步的时候谁分数高，但工业界完全不看这些，工业界做的事是用RL解决真实的问题。当我在2022年8月意识到这一点的时候，我就已经主动停止了天授的开发了。如果你的目标是进AI Lab的话，你要先弄清楚一点：AI Lab到底需要什么样的人。我觉得还是infra。Infra是一个无上限的东西。从ChatGPT出来之后在这个行业里面干了比较长时间的人屈指可数，当前核心问题还是在于infra——你能不能scale，scale有多少，单位时间内你能迭代多少次。我觉得还是尽早进入工业界比较好。因为读PhD的话你不知道毕业之后会发生什么事情，有可能毕业之后范式已经变了。要搞清楚差异化——作为Master甚至本科生你能做什么能够让对方选择Master的你而不是另一个PhD。如果你可以把一个环境建模，然后在环境中得到反馈，通过那个反馈让它越学越好，这个循环就是强化学习。当时这个概念还不存在，当时这个工作叫RL，根本没有什么Post Training的说法。"
+};
+deepDiveData[7] = {
+  title: 'RLHF 核心挑战与工业级 RL Infra',
+  sections: [
+    {
+      heading: 'RLHF挑战：不知道哪个checkpoint真的更好',
+      body: '翁家翌在做RLHF训练时遇到的最大困难不是算法本身，而是「如何判断模型到底有没有变好」这个看似基础的问题。因为Reward曲线在训练过程中极不可靠——它会先上升然后又下降，所以团队根本无法仅凭这条曲线来判定哪个checkpoint比另一个更优。自动化评估指标在这个场景下完全失灵之后，团队最终采用了一个原始但有效的方法：把候选模型拉下来，让真人跟它交互几轮，然后凭真实体感来投票决定哪个版本更好。这种「人工盲测」的方式虽然慢，却成了当时唯一值得信赖的质量判断手段。',
+      diagram: null
+    },
+    {
+      heading: '工业级RL Infra：跟toy task的区别是本质性的',
+      body: '在学术环境里做强化学习，瓶颈通常在环境（Environment）那一侧——模拟器跑不快就限制了实验速度。但是在大模型RLHF的场景下，瓶颈完全转移到了另一端：模型的inference和training效率才是真正的核心卡点。翁家翌强调，要胜任这项工作，你需要同时精通三个领域——分布式强化学习（distributed RL）、机器学习编译器（MLC）、以及大模型推理优化（LM inference），三者缺一不可。正因为这些领域交叉的复杂性，这段时期的工作强度极大，翁家翌最终因为身体原因住进了医院。',
+      diagram: null
+    },
+    {
+      heading: 'PPO调通策略：先在GPT-4上调好再复制到3.5',
+      body: '团队在PPO（近端策略优化）的调参上采用了一个反直觉的策略：他们先在更大的GPT-4模型上把整个训练流程调通，确认超参数和流程都是稳定的，然后再把同样的配置复制到较小的GPT-3.5上。之所以这么做，是因为大模型对超参数的敏感度更低、容错空间更大，所以更容易验证流程本身的正确性。这个策略的效率非常高——新的RLHF Infra在2022年8月就已经就绪，从翁家翌7月入职到Infra可用只花了不到两个月时间。',
+      diagram: null
+    }
+  ],
+  originalText: '翁家翌2022年7月加入OpenAI的时候，负责RLHF的团队只有12个人。他们面临的最大挑战是Reward曲线完全不可靠，先上后下，根本不知道哪个checkpoint更好，最终只能把模型拉下来让人跟它交互几次来判断。工业级RL Infra跟学术界的toy task完全不同，瓶颈在模型inference和training效率，需要同时懂distributed RL、MLC和LM inference。PPO其实是先在GPT-4上调好再复制到3.5的，不是反过来。11月30日ChatGPT发布，团队预期只有1到2万用户，结果用户量指数级爆发，服务器直接撑不住了。'
+};
+deepDiveData[8] = {
+  title: 'AGI 使命与 OpenAI 之变',
+  sections: [
+    {
+      heading: 'RL 还没 scale up 完',
+      body: '翁家翌认为目前大模型 RL 的状态是「还没有 scale up 完全」,因为现有的方法和 compute 还没有被榨干,应该先把性能推到极限再看下一步。而且 Infra 里还有很多 bug——源代码几万行,人多了之后每个人的 context 不一致,每个人都可能写一些不符合预期的东西,所以 bug 是结构性的而非偶发的。他觉得真正的瓶颈在于 Infra 的吞吐量,也就是「单位时间内能正确迭代多少次」,因为只要迭代速度够快,算法改进和 bug 修复都能靠更多的实验来解决——所以如果把 bug 全修了,可能算法都不用改就已经很好了。'
+    },
+    {
+      heading: 'Sam 事件内幕',
+      body: '关于 2023 年 11 月 Sam 被开除事件,翁家翌说内部视角就是「不信任」——Ilya 跟其他一些董事会成员不信任 Sam,然后投票把他投了出去,但底下干活的人非常震惊,因为之前对底层员工缺乏透明度,根本不知道高层做了什么决定。最终 Sam 之所以能回来,是因为很多员工认为一个纯技术出身的人领导公司可能缺乏商业远见——AGI 不只是技术实现的问题,还需要融资、算力、地缘政治上的运作,所以 Sam 可能反而是 OpenAI 最难替代的那个人,因为他在商业和资源层面的角色短时间内无法被替代。'
+    },
+    {
+      heading: 'DeepSeek 竞争',
+      body: '翁家翌说真正让 OpenAI 内部警觉的不是哪个 benchmark 被超过了,而是 DeepSeek 的迭代速度——他们在推特上声量很大,迭代非常快,这引起了很多人的竞争意识。因为 OpenAI 内部的迭代速度相比之下是有内耗的,组织大了之后难以保持上下一致性,导致 Infra 开始臃肿,所以他们正在推倒重来重构 Infra。之前那一代 Infra 已经积累了三年多的问题,大家根据现在的认识重新做一个好的顶层架构然后往里面填,希望用新的 Infra 在单位时间内给研究员更好的迭代速度。'
+    }
+  ]
+};
+deepDiveData[9] = {
+  title: '宿命论与人生选择',
+  sections: [
+    {
+      heading: '确定性世界观',
+      body: '翁家翌从六七岁起就开始思考一个问题:你怎么知道我说的这句话不是一开始就确定好的?他认为宏观世界是一个确定性的马尔可夫过程,宇宙大爆炸那一刻所有后续状态就已经被锁定了。他尝试过无数次去证伪这个想法,但始终证不了,因为有一些不便公开的个人经历让他确信所有东西理论上都是可以预测的。所以如果AI真能解决一个世界难题,他最想看到的是预测未来——不是杯子怎么掉下来的物理问题,而是人生和命运层面的未来。但他同时认为,如果真造出这样的AI,可能对人类最好的选择是毁掉它,因为那会导致所有价值体系的崩塌。'
+    },
+    {
+      heading: '四维时间跳跃',
+      body: '翁家翌找到的迄今为止最好的解释是:三维生物的认知里时间是线性单向流动的,但在四维空间里时间可能可以任意跳跃。他提出一个可能性——过去的某些时刻有一个未来的理想型穿越回来推了一把,而这一推又会导致未来的自己再穿越回去推同样的一把,于是形成了一个闭环。主持人问这是否意味着他想偏离宿命论,翁家翌说不是,他只是想搞清楚这个世界背后的运行规律。但因为这一切无法证伪,所以他找到的最好解决方案就是忘掉这个事——坚信「无知是幸福的」。他说自己一直都是这么做的:假装不知道,然后去体验当前的经历。'
+    },
+    {
+      heading: '投资未来与创业',
+      body: '关于创业,翁家翌说可能有想法但还没有看到合适的信号,而且OpenAI对他而言还是一个不错的地方。他更喜欢做product而不是纯技术——因为之前做天授和退学网站的经历让他意识到,技术什么样的不重要,重要的是找到需求。他举例说退学网站甚至连推送系统都不用,每天手动更新两次就有很多人需要,所以核心是满足真实的需求。对于十年后的自己,翁家翌只希望有足够的资源和能力去做那时候想做的事——因为想法会变,而且「反正是确定性的过程,现在怎么希望不太重要」。主持人反问说既然一切确定为什么还要投资未来,翁家翌回答说投资未来本身可能也是确定性的一部分,投不投资也不是自己的自由意志,他现在能做的就是继续投资未来的自己,让自己有更多选择。'
+    }
+  ],
+  originalText: '「你怎么知道我说的这句话不是一开始就确定好的?」「我们生活在一个确定性的马尔可夫过程里面。」「无知是幸福的。」「技术不重要,重要的是找到需求。」「想法会变,反正是确定性的过程,现在怎么希望不太重要。继续投资未来的自己。」'
+};
+
+var ddCurrentN = null;
+
+// ==================== TOGGLE DEEP DIVE (Layer 2 + Layer 3) ====================
+function toggleDeepDive(n) {
+  if (document.body.classList.contains('dd-active') && ddCurrentN === n) { closeDeepDive(); return; }
+  ddCurrentN = n;
+  var body = document.getElementById('detailBody');
+  if (deepDiveData[n]) {
+    var d = deepDiveData[n];
+    var html = '<h4>' + d.title + '</h4>';
+    d.sections.forEach(function(s) {
+      if (s.heading) html += '<h4>' + s.heading + '</h4>';
+      if (s.diagram) html += s.diagram;
+      html += s.body.split('\n\n').map(function(p) { return '<p>' + p + '</p>'; }).join('');
+    });
+    if (d.originalText) html += '<div class="original-text"><p><strong>原文摘录：</strong>' + d.originalText + '</p></div>';
+    // Layer 3: Coverage Footnote
+    if (typeof topicData !== 'undefined' && topicData[n]) {
+      html += '<div class="coverage-map"><div class="coverage-map-title">本节话题覆盖</div><div class="coverage-bars">';
+      topicData[n].forEach(function(t) {
+        var cls = t.status;
+        var pct = cls === 'included' ? 100 : cls === 'deep-dive' ? 80 : 40;
+        var fillCls = cls === 'included' ? 'included' : cls === 'deep-dive' ? 'deep-dive-bar' : 'compressed-bar';
+        html += '<div class="cbar-row ' + cls + '" onclick="this.nextElementSibling.classList.toggle(\'open\')"><div class="cbar-label">' + t.name + '<span class="cbar-expand-hint">\u25B8</span></div><div class="cbar-track"><div class="cbar-fill ' + fillCls + '" style="width:' + pct + '%"></div></div></div>';
+        html += '<div class="cbar-excerpt"><div class="cbar-excerpt-inner">' + (t.excerpt || '') + (t.reason ? ' <span class="omit-reason">' + t.reason + '</span>' : '') + '</div></div>';
+      });
+      html += '</div></div>';
+    }
+    body.innerHTML = html;
+  }
+  document.getElementById('detailScroll').scrollTop = 0;
+  document.body.classList.add('dd-active');
+}
+
+function closeDeepDive() {
+  document.body.classList.remove('dd-active');
+  document.getElementById('space').style.transform = '';
+  document.getElementById('mainScroll').style.transform = '';
+  ddCurrentN = null;
+}
+
+// Back button + click peek area to close
+document.getElementById('detailBack').addEventListener('click', closeDeepDive);
+document.getElementById('mainScroll').addEventListener('click', function(e) {
+  if (document.body.classList.contains('dd-active') && !e.target.closest('.deep-dive-trigger')) closeDeepDive();
+});
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && document.body.classList.contains('dd-active')) closeDeepDive(); });
+
+// ==================== INTERSECTION OBSERVER (Layer 4 _stage propagation) ====================
+var mainScrollRoot = document.getElementById('mainScroll');
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      var stage = entry.target.querySelector('[class*="_stage"]');
+      if (stage) stage.classList.add('visible');
+    }
+  });
+}, { threshold: 0.15, root: mainScrollRoot });
+document.querySelectorAll('.reveal, [class*=\"_stage\"]').forEach(function(el) { observer.observe(el); });
+
+// ==================== SOURCE HORIZON RENDERER (Layer 6) ====================
+(function() {
+  if (typeof coverageData === 'undefined') return;
+  var horizon = document.getElementById('sourceHorizon');
+  var track = document.getElementById('horizonTrack');
+  var detail = document.getElementById('horizonDetail');
+  if (!horizon || !track || !coverageData.segments) return;
+
+  function toNum(v) {
+    if (typeof v === 'number') return v;
+    var parts = String(v).split(':').map(Number);
+    return parts.length === 3 ? parts[0]*3600+parts[1]*60+parts[2]
+         : parts.length === 2 ? parts[0]*60+parts[1] : parts[0];
+  }
+  var total = toNum(coverageData.totalLength);
+  var coveredLen = 0;
+
+  coverageData.segments.forEach(function(seg) {
+    var s = toNum(seg.start), e = toNum(seg.end);
+    var leftPct = (s / total * 100).toFixed(2) + '%';
+    var widthPct = ((e - s) / total * 100).toFixed(2) + '%';
+
+    var div = document.createElement('div');
+    div.className = 'horizon-seg ' + (seg.section ? (seg.deepDive ? 'covered deep-dive' : 'covered') : 'gap');
+    div.style.left = leftPct; div.style.width = widthPct;
+    track.appendChild(div);
+
+    if (seg.section) coveredLen += (e - s);
+
+    if (!seg.section && seg.reason) {
+      var gz = document.createElement('div');
+      gz.className = 'horizon-gap-zone';
+      gz.style.left = leftPct; gz.style.width = widthPct;
+      gz.innerHTML = '<div class="gap-pattern"></div>'
+        + '<div class="gap-tooltip">' + seg.reason
+        + (coverageData.sourceType === 'video'
+          ? ' (' + seg.start + '-' + seg.end + ')'
+          : ' (' + seg.start + '-' + seg.end + '字)')
+        + '</div>';
+      detail.appendChild(gz);
+    }
+
+    if (seg.section && !seg.deepDive) {
+      var mk = document.createElement('div');
+      mk.className = 'horizon-marker';
+      mk.style.left = ((s + (e-s)/2) / total * 100).toFixed(2) + '%';
+      mk.innerHTML = '<div class="marker-tick"></div><div class="marker-label">S' + seg.section + '<br>' + seg.start + '</div>';
+      mk.addEventListener('click', function(ev) {
+        ev.stopPropagation();
+        var target = document.getElementById('s' + seg.section + '-anim');
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+      detail.appendChild(mk);
+    }
+  });
+
+  var pct = document.createElement('div');
+  pct.className = 'horizon-pct';
+  pct.textContent = Math.round(coveredLen / total * 100) + '%';
+  detail.appendChild(pct);
+
+  horizon.addEventListener('click', function() { horizon.classList.toggle('expanded'); });
+  var collapseTimer;
+  mainScrollRoot.addEventListener('scroll', function() {
+    clearTimeout(collapseTimer);
+    var markers = detail.querySelectorAll('.marker-tick');
+    markers.forEach(function(m) { m.classList.remove('active'); });
+    var scrollTop = mainScrollRoot.scrollTop;
+    var closest = null, closestDist = Infinity;
+    coverageData.segments.forEach(function(seg, i) {
+      if (!seg.section || seg.deepDive) return;
+      var el = document.getElementById('s' + seg.section + '-anim');
+      if (!el) return;
+      var dist = Math.abs(el.offsetTop - scrollTop - window.innerHeight/2);
+      if (dist < closestDist) { closestDist = dist; closest = seg.section; }
+    });
+    if (closest) {
+      var ticks = detail.querySelectorAll('.horizon-marker');
+      ticks.forEach(function(mk) {
+        if (mk.querySelector('.marker-label').textContent === 'S' + closest)
+          mk.querySelector('.marker-tick').classList.add('active');
+      });
+    }
+    collapseTimer = setTimeout(function() { horizon.classList.remove('expanded'); }, 2000);
+  });
+})();
+</script>
+</body>
+</html>

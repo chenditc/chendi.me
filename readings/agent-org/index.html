@@ -1,0 +1,2189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>做 Agent 最大的坑：照搬公司组织架构</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-trap: #EEEAF4;
+  --bg-truth: #E4EDE8;
+  --bg-method: #F0EBE0;
+  --bg-close: #2A2530;
+  --text: #2A2530;
+  --text-muted: #6E6878;
+  --accent: #7B4ACA;
+  --accent2: #2A9D8F;
+  --danger: #C44A3A;
+  --human: #D4944A;
+  --dim: #A8A0B0;
+  --card-bg: #FFFFFF;
+}
+
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-trap);
+  color: var(--text);
+  font-family: 'Noto Sans SC', -apple-system, sans-serif;
+  line-height: 1.9;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* === UTILITY === */
+.serif { font-family: 'Noto Serif SC', Georgia, serif; }
+.content-width { max-width: 640px; margin: 0 auto; padding: 0 28px; }
+
+/* === SCROLL REVEAL === */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: 0.15s; }
+.reveal-delay-2 { transition-delay: 0.3s; }
+.reveal-delay-3 { transition-delay: 0.45s; }
+.reveal-delay-4 { transition-delay: 0.6s; }
+
+/* === HERO === */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: var(--bg-trap);
+  padding: 40px 28px;
+  text-align: center;
+  position: relative;
+}
+.hero-title {
+  font-family: 'Noto Serif SC', serif;
+  font-size: clamp(28px, 7vw, 42px);
+  font-weight: 700;
+  line-height: 1.4;
+  max-width: 600px;
+  margin-bottom: 24px;
+}
+.hero-subtitle {
+  font-size: 15px;
+  color: var(--text-muted);
+  max-width: 480px;
+  line-height: 1.8;
+  margin-bottom: 48px;
+}
+.hero-source {
+  font-size: 13px;
+  color: var(--dim);
+  letter-spacing: 0.5px;
+}
+.hero-scroll-hint {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  color: var(--dim);
+  animation: gentleBounce 2s ease-in-out infinite;
+}
+@keyframes gentleBounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(8px); }
+}
+
+/* === HERO ORG CHART ANIMATION === */
+#hero-org-anim {
+  width: 320px;
+  height: 200px;
+  margin: 0 auto 36px;
+  position: relative;
+}
+
+/* === ACT TRANSITIONS === */
+.act-transition {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 40px 28px;
+  position: relative;
+}
+.act-number {
+  font-size: 13px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 20px;
+}
+.act-title {
+  font-family: 'Noto Serif SC', serif;
+  font-size: clamp(26px, 6vw, 38px);
+  font-weight: 700;
+  line-height: 1.4;
+  max-width: 500px;
+}
+
+/* === SECTION LAYOUT === */
+.section {
+  min-height: 100vh;
+  padding: 80px 0;
+  position: relative;
+}
+.section-label {
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+/* === TYPOGRAPHY === */
+.big-statement {
+  font-family: 'Noto Serif SC', serif;
+  font-size: clamp(22px, 5.5vw, 32px);
+  font-weight: 700;
+  line-height: 1.5;
+  margin-bottom: 32px;
+}
+.body-text {
+  font-size: 16px;
+  line-height: 1.9;
+  color: var(--text);
+  margin-bottom: 28px;
+}
+.body-text .hl {
+  color: var(--accent);
+  font-weight: 500;
+}
+.body-text .hl-danger {
+  color: var(--danger);
+  font-weight: 500;
+}
+.body-text .hl-teal {
+  color: var(--accent2);
+  font-weight: 500;
+}
+
+/* === BLOCKQUOTE === */
+.original-quote {
+  border-left: 3px solid var(--accent);
+  padding: 16px 0 16px 20px;
+  margin: 40px 0;
+  position: relative;
+}
+.original-quote p {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 14.5px;
+  font-style: italic;
+  line-height: 1.8;
+  color: var(--text-muted);
+}
+.original-quote .quote-source {
+  font-size: 12px;
+  color: var(--dim);
+  margin-top: 12px;
+  font-style: normal;
+}
+
+/* === STICKY QUOTE === */
+.sticky-quote-wrapper {
+  height: 300vh;
+  position: relative;
+}
+.sticky-quote {
+  position: sticky;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0 28px;
+  max-width: 640px;
+  margin: 0 auto;
+  transition: opacity 0.3s ease;
+}
+
+/* === CHAT SIMULATION === */
+.chat-sim {
+  max-width: 500px;
+  margin: 0 auto 40px;
+  padding: 0 28px;
+}
+.chat-bubble {
+  background: var(--card-bg);
+  border-radius: 16px 16px 16px 4px;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  font-size: 15px;
+  line-height: 1.7;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.chat-bubble.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.chat-bubble.ai {
+  background: #E8E0F0;
+  border-radius: 16px 16px 4px 16px;
+}
+.chat-label {
+  font-size: 12px;
+  color: var(--dim);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+/* === VS COMPARISON === */
+.vs-container {
+  display: flex;
+  gap: 20px;
+  max-width: 580px;
+  margin: 32px auto;
+  padding: 0 28px;
+}
+.vs-panel {
+  flex: 1;
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 24px 20px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+}
+.vs-panel-title {
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #eee;
+}
+.vs-panel-title.human { color: var(--human); border-color: var(--human); }
+.vs-panel-title.agent { color: var(--accent); border-color: var(--accent); }
+
+.cap-bar {
+  margin-bottom: 12px;
+}
+.cap-bar-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.cap-bar-track {
+  height: 8px;
+  background: #eee;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.cap-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.cap-bar-fill.human-fill { background: var(--human); }
+.cap-bar-fill.agent-fill { background: var(--accent); }
+.vs-container.visible .cap-bar-fill {
+  transform: scaleX(1);
+}
+
+/* === TAKEAWAY CARDS === */
+.takeaway-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  max-width: 580px;
+  margin: 40px auto;
+  padding: 0 28px;
+}
+.takeaway-card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 24px 16px;
+  text-align: center;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+}
+.takeaway-card .num {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.takeaway-card p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+/* === DRAMATIC BREAK === */
+.dramatic-break {
+  min-height: 60vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--bg-close);
+  padding: 40px 28px;
+  text-align: center;
+}
+.dramatic-break .big-statement {
+  color: #F0EBE0;
+  max-width: 500px;
+}
+
+/* === FOOTER === */
+.page-footer {
+  padding: 60px 28px;
+  text-align: center;
+  background: var(--bg-method);
+}
+.page-footer p {
+  font-size: 13px;
+  color: var(--dim);
+  line-height: 1.8;
+}
+
+/* ================================ */
+/* SECTION-SPECIFIC ANIMATIONS      */
+/* (will be populated by subagents) */
+/* ================================ */
+
+/* S1: Copy org chart animation — handled by inline <style> in #s1-copy-anim */
+
+/* S4: Human capacity bars — handled by inline <style> in #s4-human-bars */
+
+/* S7: Context window fill + split */
+/* PLACEHOLDER_CSS_S7 */
+
+/* S8: Ping-pong evaluator */
+/* PLACEHOLDER_CSS_S8 */
+
+/* S9: Compression visualization */
+/* PLACEHOLDER_CSS_S9 */
+
+/* S10: Platform merge */
+/* PLACEHOLDER_CSS_S10 */
+
+/* === DEEP DIVE === */
+.deep-dive-trigger {
+  text-align: center;
+  color: var(--accent);
+  font-size: 14px;
+  padding: 16px 0;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+.deep-dive-trigger:hover { opacity: 1; }
+.deep-dive-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.6s cubic-bezier(0.22,1,0.36,1);
+  background: rgba(255,255,255,0.5);
+  border-radius: 12px;
+  margin: 8px 0 24px;
+}
+.deep-dive-content.open {
+  max-height: 8000px;
+  padding: 24px;
+}
+.deep-dive-content h4 {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 16px;
+  font-weight: 700;
+  margin: 20px 0 10px;
+  color: var(--text);
+}
+.deep-dive-content h4:first-child { margin-top: 0; }
+.deep-dive-content p {
+  font-size: 15px;
+  line-height: 1.9;
+  color: #4A4050;
+  margin-bottom: 14px;
+}
+.deep-dive-content .original-text {
+  margin-top: 20px;
+  padding: 16px;
+  border-left: 3px solid var(--accent2);
+  background: rgba(42,157,143,0.05);
+  border-radius: 0 8px 8px 0;
+}
+.deep-dive-content .original-text p {
+  font-size: 14px;
+  font-style: italic;
+  color: #5A5060;
+  line-height: 1.8;
+}
+
+/* Deep-dive animation framework */
+.dd-anim { opacity: 0; animation-fill-mode: forwards; animation-duration: 0.5s; }
+.deep-dive-content.open .dd-anim { animation-name: ddFadeIn; }
+.dd-slide { opacity: 0; transform: translateY(20px); animation-fill-mode: forwards; animation-duration: 0.5s; }
+.deep-dive-content.open .dd-slide { animation-name: ddSlideUp; }
+.dd-pop { opacity: 0; transform: scale(0.7); animation-fill-mode: forwards; animation-duration: 0.4s; }
+.deep-dive-content.open .dd-pop { animation-name: ddPop; }
+.dd-d1 { animation-delay: 0.3s !important; }
+.dd-d2 { animation-delay: 0.6s !important; }
+.dd-d3 { animation-delay: 0.9s !important; }
+.dd-d4 { animation-delay: 1.2s !important; }
+
+@keyframes ddFadeIn { to { opacity: 1; } }
+@keyframes ddSlideUp { to { opacity: 1; transform: translateY(0); } }
+@keyframes ddPop { to { opacity: 1; transform: scale(1); } }
+
+/* === RESPONSIVE === */
+@media (max-width: 420px) {
+  .vs-container { flex-direction: column; gap: 16px; }
+  .takeaway-grid { grid-template-columns: 1fr; }
+  .hero-title { font-size: 26px; }
+  .big-statement { font-size: 22px; }
+}
+
+</style>
+
+<meta name="description" content="很多人在做 Agent 智能体系统时，特别是为公司构建时，喜欢直接 照搬公司的组织架构 。网上有不少案例，比如基于 OpenCode 开发的 Superpower，通过编排多个 Agent 分别负责 planning、execution、review 和 test，效果看起来确实很好。">
+<link rel="canonical" href="https://chendi.me/readings/agent-org/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<!-- ========== HERO ========== -->
+<section class="hero">
+  <div id="hero-org-anim"><!-- animated org chart here --></div>
+  <h1 class="hero-title">做 Agent 最大的坑：<br>照搬公司组织架构</h1>
+  <p class="hero-subtitle">多 Agent 系统不是把公司部门改成 Agent 名字。<br>一个关于 Multi-Agent 架构的反直觉思考。</p>
+  <p class="hero-source">三鹿叨逼叨</p>
+  <div class="hero-scroll-hint">向下滑动 ↓</div>
+</section>
+
+<!-- ========== ACT I: 陷阱 ========== -->
+<section class="act-transition" style="background: var(--bg-trap);">
+  <div class="reveal">
+    <p class="act-number">第一幕</p>
+    <h2 class="act-title">认知陷阱</h2>
+  </div>
+</section>
+
+<!-- S1: 照搬组织架构 -->
+<section class="section" style="background: var(--bg-trap);">
+  <div class="content-width">
+    <p class="section-label reveal">01 / 常见误区</p>
+    <h2 class="big-statement reveal">看到别人用多 Agent 效果好，<br>就觉得自己也该这么做</h2>
+    <p class="body-text reveal">很多人在做 Agent 智能体系统时，特别是为公司构建时，喜欢直接<span class="hl-danger">照搬公司的组织架构</span>。网上有不少案例，比如基于 OpenCode 开发的 Superpower，通过编排多个 Agent 分别负责 planning、execution、review 和 test，效果看起来确实很好。</p>
+    <div id="s1-copy-anim" class="reveal">
+      <style>
+        .s1-wrap {
+          display: flex; align-items: flex-start; justify-content: center; gap: 20px;
+          padding: 40px 0; position: relative; overflow: hidden;
+        }
+        .s1-side { flex: 0 0 200px; position: relative; }
+        .s1-side-label {
+          text-align: center; font-size: 12px; font-weight: 700;
+          letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px;
+          color: var(--text-muted);
+        }
+        .s1-tree { display: flex; flex-direction: column; align-items: center; }
+        .s1-node {
+          background: #fff; border: 2px solid #B0A8BA; border-radius: 10px;
+          padding: 7px 12px; font-size: 12px; font-weight: 500; text-align: center;
+          position: relative; z-index: 2; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+          opacity: 0;
+        }
+        .s1-node.root { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+        .s1-node.agent-root { border-color: var(--accent2); color: var(--accent2); font-weight: 700; }
+        .s1-children { display: flex; gap: 6px; margin-top: 8px; }
+        .s1-child-col { display: flex; flex-direction: column; align-items: center; }
+        .s1-child-col::before { content: ''; width: 2px; height: 8px; background: #B0A8BA; }
+        .s1-node.child { font-size: 11px; padding: 5px 8px; }
+
+        .s1-arrow {
+          position: absolute; top: 48%; left: 50%; transform: translate(-50%, -50%);
+          z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 4px;
+          opacity: 0;
+        }
+        .s1-arrow-line {
+          width: 54px; height: 3px; background: var(--danger); border-radius: 2px;
+          position: relative; transform: scaleX(0); transform-origin: left center;
+        }
+        .s1-arrow-line::after {
+          content: ''; position: absolute; right: -7px; top: -4px;
+          border: 5px solid transparent; border-left: 7px solid var(--danger);
+        }
+        .s1-arrow-label { font-size: 11px; font-weight: 700; color: var(--danger); white-space: nowrap; }
+
+        .s1-x-overlay {
+          position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+          display: flex; justify-content: center; align-items: center;
+          z-index: 20; pointer-events: none;
+        }
+        .s1-x-mark {
+          font-size: 110px; font-weight: 900; color: var(--danger);
+          text-shadow: 0 4px 24px rgba(196,74,58,0.35);
+          opacity: 0; transform: scale(3) rotate(-15deg);
+        }
+
+        @keyframes s1_fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes s1_arrowSweep {
+          to { transform: scaleX(1); }
+        }
+        @keyframes s1_stampX {
+          0% { opacity: 0; transform: scale(3) rotate(-15deg); }
+          50% { opacity: 1; transform: scale(1.1) rotate(5deg); }
+          70% { transform: scale(0.95) rotate(-2deg); }
+          100% { opacity: 1; transform: scale(1) rotate(0deg); }
+        }
+        @keyframes s1_shake {
+          0%,100% { transform: translateX(0); }
+          20% { transform: translateX(-4px); }
+          40% { transform: translateX(4px); }
+          60% { transform: translateX(-3px); }
+          80% { transform: translateX(2px); }
+        }
+
+        #s1-copy-anim.visible .s1-left .s1-tree > .s1-node { animation: s1_fadeIn 0.5s ease forwards 0.1s; }
+        #s1-copy-anim.visible .s1-left .s1-child-col:nth-child(1) .s1-node { animation: s1_fadeIn 0.4s ease forwards 0.25s; }
+        #s1-copy-anim.visible .s1-left .s1-child-col:nth-child(2) .s1-node { animation: s1_fadeIn 0.4s ease forwards 0.4s; }
+        #s1-copy-anim.visible .s1-left .s1-child-col:nth-child(3) .s1-node { animation: s1_fadeIn 0.4s ease forwards 0.55s; }
+
+        #s1-copy-anim.visible .s1-arrow { opacity: 1; transition: opacity 0.3s ease 0.9s; }
+        #s1-copy-anim.visible .s1-arrow-line { animation: s1_arrowSweep 0.5s ease forwards 1.0s; }
+
+        #s1-copy-anim.visible .s1-right .s1-tree > .s1-node { animation: s1_fadeIn 0.4s ease forwards 1.5s; }
+        #s1-copy-anim.visible .s1-right .s1-child-col:nth-child(1) .s1-node { animation: s1_fadeIn 0.4s ease forwards 1.65s; }
+        #s1-copy-anim.visible .s1-right .s1-child-col:nth-child(2) .s1-node { animation: s1_fadeIn 0.4s ease forwards 1.8s; }
+        #s1-copy-anim.visible .s1-right .s1-child-col:nth-child(3) .s1-node { animation: s1_fadeIn 0.4s ease forwards 1.95s; }
+
+        #s1-copy-anim.visible .s1-x-mark { animation: s1_stampX 0.5s cubic-bezier(0.22,1,0.36,1) forwards 2.5s; }
+        #s1-copy-anim.visible .s1-right { animation: s1_shake 0.4s ease 2.8s; }
+      </style>
+
+      <div class="s1-wrap">
+        <div class="s1-side s1-left">
+          <div class="s1-side-label">公司组织架构</div>
+          <div class="s1-tree">
+            <div class="s1-node root">CEO</div>
+            <div class="s1-children">
+              <div class="s1-child-col"><div class="s1-node child">市场部</div></div>
+              <div class="s1-child-col"><div class="s1-node child">技术部</div></div>
+              <div class="s1-child-col"><div class="s1-node child">销售部</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="s1-arrow">
+          <div class="s1-arrow-label">直接复制</div>
+          <div class="s1-arrow-line"></div>
+        </div>
+
+        <div class="s1-side s1-right" style="position: relative;">
+          <div class="s1-side-label">Agent 架构</div>
+          <div class="s1-tree">
+            <div class="s1-node agent-root">Main Agent</div>
+            <div class="s1-children">
+              <div class="s1-child-col"><div class="s1-node child">Market Agent</div></div>
+              <div class="s1-child-col"><div class="s1-node child">Tech Agent</div></div>
+              <div class="s1-child-col"><div class="s1-node child">Sales Agent</div></div>
+            </div>
+          </div>
+          <div class="s1-x-overlay">
+            <div class="s1-x-mark">✕</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="body-text reveal">于是大家理所当然地认为：做 Agent 系统就应该采用多 Agent 架构。公司有五个部门？那就做五个 Agent。</p>
+    <div class="deep-dive-trigger reveal" onclick="toggleDeepDive(1)">深入了解 ↓</div>
+    <div class="deep-dive-content" id="deepDive-1"></div>
+  </div>
+</section>
+
+<!-- S2: 关键问题 -->
+<section class="section" style="background: var(--bg-trap);">
+  <div class="content-width">
+    <p class="section-label reveal">02 / 关键问题</p>
+    <h2 class="big-statement reveal">但很少有人问一个最基本的问题</h2>
+  </div>
+  <div class="chat-sim">
+    <div class="chat-bubble" data-chat="1">
+      <div class="chat-label">某开发者</div>
+      "我要做一个多 Agent 系统，Marketing Agent、Sales Agent、Product Agent..."
+    </div>
+    <div class="chat-bubble ai" data-chat="2">
+      <div class="chat-label">思考</div>
+      等一下。先回答一个问题——
+    </div>
+  </div>
+  <div class="sticky-quote-wrapper">
+    <div class="sticky-quote" id="key-question">
+      <h2 class="big-statement serif" style="text-align: center; color: var(--accent);">
+        为什么是多 Agent？<br>为什么单 Agent 不行？
+      </h2>
+    </div>
+  </div>
+</section>
+
+<!-- S3: 从单 Agent 开始 -->
+<section class="section" style="background: var(--bg-trap);">
+  <div class="content-width">
+    <p class="section-label reveal">03 / 起点</p>
+    <h2 class="big-statement reveal">从零开始，最应该先做<span class="hl">单 Agent</span></h2>
+    <p class="body-text reveal">只有当单 Agent 无法完成任务时，才去考虑多 Agent 架构。这不是偷懒，而是一个经过深思熟虑的策略。</p>
+    <div id="s3-funnel-anim" class="reveal">
+      <style>
+        .s3-stage {
+          position: relative; min-height: 340px; margin: 32px auto;
+          max-width: 480px; display: flex; flex-direction: column; align-items: center;
+        }
+        /* Main circle */
+        .s3-main-circle {
+          width: 130px; height: 130px; border-radius: 50%;
+          background: linear-gradient(135deg, var(--accent), #9B6AEA);
+          color: #fff; display: flex; align-items: center; justify-content: center;
+          font-size: 18px; font-weight: 700; z-index: 10; position: relative;
+          box-shadow: 0 0 0 0 rgba(123,74,202,0);
+          opacity: 0; transform: scale(0.5);
+          transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.34,1.56,0.64,1), box-shadow 1.5s ease;
+        }
+        #s3-funnel-anim.visible .s3-main-circle {
+          opacity: 1; transform: scale(1);
+          box-shadow: 0 0 40px 8px rgba(123,74,202,0.25);
+        }
+
+        @keyframes s3_glow {
+          0%, 100% { box-shadow: 0 0 40px 8px rgba(123,74,202,0.25); }
+          50% { box-shadow: 0 0 60px 16px rgba(123,74,202,0.4), 0 0 20px 4px rgba(155,106,234,0.2); }
+        }
+        #s3-funnel-anim.visible .s3-main-circle {
+          animation: s3_glow 2.5s ease-in-out 1s infinite;
+        }
+
+        /* Divider line */
+        .s3-divider {
+          display: flex; align-items: center; gap: 12px;
+          margin: 24px 0; width: 100%; max-width: 360px;
+          opacity: 0; transform: translateY(8px);
+          transition: opacity 0.5s ease 0.4s, transform 0.5s ease 0.4s;
+        }
+        #s3-funnel-anim.visible .s3-divider { opacity: 1; transform: translateY(0); }
+        .s3-divider-line {
+          flex: 1; height: 2px;
+          background: repeating-linear-gradient(90deg, var(--text-muted) 0, var(--text-muted) 6px, transparent 6px, transparent 12px);
+        }
+        .s3-divider-label { font-size: 12px; color: var(--text-muted); font-weight: 500; white-space: nowrap; }
+
+        /* Small circles area */
+        .s3-smalls { position: relative; height: 100px; width: 100%; max-width: 380px; }
+        .s3-small {
+          position: absolute; width: 52px; height: 52px; border-radius: 50%;
+          background: #fff; border: 2px solid var(--dim);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 9px; font-weight: 500; color: var(--text-muted);
+          text-align: center; line-height: 1.2; padding: 4px;
+          opacity: 0; transform: translateY(20px);
+        }
+
+        /* Position small circles */
+        .s3-small:nth-child(1) { left: 5%; top: 10%; }
+        .s3-small:nth-child(2) { left: 22%; top: 30%; }
+        .s3-small:nth-child(3) { left: 40%; top: 5%; }
+        .s3-small:nth-child(4) { left: 58%; top: 25%; }
+        .s3-small:nth-child(5) { left: 75%; top: 10%; }
+        .s3-small:nth-child(6) { left: 88%; top: 30%; }
+
+        @keyframes s3_appear {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes s3_pullBack {
+          0% { opacity: 1; transform: translateY(0) scale(1); }
+          60% { opacity: 0.6; transform: translateY(-30px) scale(0.7); }
+          100% { opacity: 0; transform: translateY(-60px) scale(0.2); }
+        }
+        @keyframes s3_stay {
+          0% { border-color: var(--dim); }
+          100% { border-color: var(--accent2); border-width: 3px; box-shadow: 0 2px 12px rgba(42,157,143,0.25); }
+        }
+
+        #s3-funnel-anim.visible .s3-small:nth-child(1) { animation: s3_appear 0.4s ease forwards 0.8s, s3_pullBack 0.6s ease forwards 2.0s; }
+        #s3-funnel-anim.visible .s3-small:nth-child(2) { animation: s3_appear 0.4s ease forwards 0.95s, s3_stay 0.5s ease forwards 2.2s; }
+        #s3-funnel-anim.visible .s3-small:nth-child(3) { animation: s3_appear 0.4s ease forwards 1.1s, s3_pullBack 0.6s ease forwards 2.1s; }
+        #s3-funnel-anim.visible .s3-small:nth-child(4) { animation: s3_appear 0.4s ease forwards 1.25s, s3_pullBack 0.6s ease forwards 2.3s; }
+        #s3-funnel-anim.visible .s3-small:nth-child(5) { animation: s3_appear 0.4s ease forwards 1.4s, s3_stay 0.5s ease forwards 2.4s; }
+        #s3-funnel-anim.visible .s3-small:nth-child(6) { animation: s3_appear 0.4s ease forwards 1.55s, s3_pullBack 0.6s ease forwards 2.5s; }
+
+        /* Reason labels for survivors */
+        .s3-reason {
+          position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%);
+          font-size: 9px; color: var(--accent2); font-weight: 600;
+          white-space: nowrap; opacity: 0;
+          transition: opacity 0.4s ease;
+        }
+        #s3-funnel-anim.visible .s3-small:nth-child(2) .s3-reason,
+        #s3-funnel-anim.visible .s3-small:nth-child(5) .s3-reason {
+          opacity: 1; transition-delay: 2.8s;
+        }
+      </style>
+
+      <div class="s3-stage">
+        <div class="s3-main-circle">单 Agent</div>
+        <div class="s3-divider">
+          <div class="s3-divider-line"></div>
+          <div class="s3-divider-label">必要时才拆分</div>
+          <div class="s3-divider-line"></div>
+        </div>
+        <div class="s3-smalls">
+          <div class="s3-small">搜索 Agent</div>
+          <div class="s3-small">审核 Agent<span class="s3-reason">客观性需要</span></div>
+          <div class="s3-small">市场 Agent</div>
+          <div class="s3-small">销售 Agent</div>
+          <div class="s3-small">测试 Agent<span class="s3-reason">上下文溢出</span></div>
+          <div class="s3-small">产品 Agent</div>
+        </div>
+      </div>
+    </div>
+    <p class="body-text reveal">原因是：我们需要先理解，<span class="hl-teal">公司组织架构的本质是什么</span>。</p>
+  </div>
+</section>
+
+<!-- ========== ACT II: 真相 ========== -->
+<section class="act-transition" style="background: var(--bg-truth);">
+  <div class="reveal">
+    <p class="act-number">第二幕</p>
+    <h2 class="act-title">人 ≠ Agent</h2>
+  </div>
+</section>
+
+<!-- S4: 人类为什么需要组织架构 -->
+<section class="section" style="background: var(--bg-truth);">
+  <div class="content-width">
+    <p class="section-label reveal">04 / 人的局限</p>
+    <h2 class="big-statement reveal">人类社会有组织架构，是因为<br>每个人都有<span class="hl-danger">上限</span></h2>
+    <p class="body-text reveal">精力有限、知识有限、注意力有限、能力有限。分工协作，是人类补偿个体局限性的方式。</p>
+    <div id="s4-human-bars" class="reveal">
+      <style>
+        .s4-bars-container {
+          max-width: 420px; margin: 32px auto; padding: 24px;
+          background: var(--card-bg); border-radius: 16px;
+          box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+        }
+        .s4-bar-row {
+          margin-bottom: 20px;
+        }
+        .s4-bar-row:last-child { margin-bottom: 0; }
+        .s4-bar-header {
+          display: flex; justify-content: space-between; align-items: baseline;
+          margin-bottom: 6px;
+        }
+        .s4-bar-label { font-size: 14px; font-weight: 600; color: var(--text); }
+        .s4-bar-pct {
+          font-size: 13px; font-weight: 700; color: var(--danger);
+          opacity: 0;
+          transition: opacity 0.4s ease;
+        }
+        #s4-human-bars.visible .s4-bar-pct { opacity: 1; transition-delay: 2.2s; }
+
+        .s4-track {
+          height: 12px; background: #EEEAF4; border-radius: 6px;
+          overflow: hidden; position: relative;
+        }
+        .s4-fill {
+          height: 100%; border-radius: 6px; position: relative;
+          transform-origin: left center;
+          /* Start at 100%, will animate to final value */
+          width: 100%;
+          transition: none;
+        }
+
+        /* Color stages */
+        @keyframes s4_deplete1 {
+          0% { width: 100%; background: var(--accent2); }
+          30% { width: 70%; background: var(--human); }
+          100% { width: 25%; background: var(--danger); }
+        }
+        @keyframes s4_deplete2 {
+          0% { width: 100%; background: var(--accent2); }
+          30% { width: 75%; background: var(--human); }
+          100% { width: 35%; background: var(--human); }
+        }
+        @keyframes s4_deplete3 {
+          0% { width: 100%; background: var(--accent2); }
+          30% { width: 65%; background: var(--human); }
+          100% { width: 20%; background: var(--danger); }
+        }
+        @keyframes s4_deplete4 {
+          0% { width: 100%; background: var(--accent2); }
+          30% { width: 72%; background: var(--human); }
+          100% { width: 40%; background: var(--human); }
+        }
+
+        @keyframes s4_pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.6; }
+        }
+
+        /* nth-child offsets: .s4-title is child(1), bar rows are child(2)-child(5) */
+        #s4-human-bars.visible .s4-bar-row:nth-child(2) .s4-fill {
+          animation: s4_deplete1 1.8s cubic-bezier(0.4,0,0.2,1) forwards 0.3s,
+                     s4_pulse 1.2s ease-in-out 2.5s infinite;
+        }
+        #s4-human-bars.visible .s4-bar-row:nth-child(3) .s4-fill {
+          animation: s4_deplete2 1.8s cubic-bezier(0.4,0,0.2,1) forwards 0.5s;
+        }
+        #s4-human-bars.visible .s4-bar-row:nth-child(4) .s4-fill {
+          animation: s4_deplete3 1.8s cubic-bezier(0.4,0,0.2,1) forwards 0.7s,
+                     s4_pulse 1.2s ease-in-out 2.8s infinite;
+        }
+        #s4-human-bars.visible .s4-bar-row:nth-child(5) .s4-fill {
+          animation: s4_deplete4 1.8s cubic-bezier(0.4,0,0.2,1) forwards 0.9s;
+        }
+
+        /* Title */
+        .s4-title {
+          font-size: 13px; font-weight: 700; color: var(--text-muted);
+          text-align: center; margin-bottom: 20px; letter-spacing: 1px;
+          text-transform: uppercase;
+        }
+      </style>
+
+      <div class="s4-bars-container">
+        <div class="s4-title">人类能力上限</div>
+        <div class="s4-bar-row">
+          <div class="s4-bar-header">
+            <span class="s4-bar-label">精力</span>
+            <span class="s4-bar-pct">25%</span>
+          </div>
+          <div class="s4-track"><div class="s4-fill"></div></div>
+        </div>
+        <div class="s4-bar-row">
+          <div class="s4-bar-header">
+            <span class="s4-bar-label">知识</span>
+            <span class="s4-bar-pct">35%</span>
+          </div>
+          <div class="s4-track"><div class="s4-fill"></div></div>
+        </div>
+        <div class="s4-bar-row">
+          <div class="s4-bar-header">
+            <span class="s4-bar-label">注意力</span>
+            <span class="s4-bar-pct">20%</span>
+          </div>
+          <div class="s4-track"><div class="s4-fill"></div></div>
+        </div>
+        <div class="s4-bar-row">
+          <div class="s4-bar-header">
+            <span class="s4-bar-label">能力</span>
+            <span class="s4-bar-pct">40%</span>
+          </div>
+          <div class="s4-track"><div class="s4-fill"></div></div>
+        </div>
+      </div>
+    </div>
+    <p class="body-text reveal">所以一个人做不完的事，拆给一个团队。一个团队做不完的事，拆给一个组织。</p>
+  </div>
+</section>
+
+<!-- S5: Agent 不一样 -->
+<section class="section" style="background: var(--bg-truth);">
+  <div class="content-width">
+    <p class="section-label reveal">05 / Agent 的能力</p>
+    <h2 class="big-statement reveal">但 Agent 的精力、知识和处理能力<br><span class="hl">远超人类</span></h2>
+    <p class="body-text reveal">用人类的组织架构思维去限制 Agent，大概率无法发挥它的全部潜力。</p>
+    <div id="s5-vs-compare" class="reveal">
+      <div class="vs-container">
+        <div class="vs-panel">
+          <div class="vs-panel-title human">人类</div>
+          <div class="cap-bar">
+            <div class="cap-bar-label">精力</div>
+            <div class="cap-bar-track"><div class="cap-bar-fill human-fill" style="width: 25%"></div></div>
+          </div>
+          <div class="cap-bar">
+            <div class="cap-bar-label">知识广度</div>
+            <div class="cap-bar-track"><div class="cap-bar-fill human-fill" style="width: 35%"></div></div>
+          </div>
+          <div class="cap-bar">
+            <div class="cap-bar-label">注意力</div>
+            <div class="cap-bar-track"><div class="cap-bar-fill human-fill" style="width: 20%"></div></div>
+          </div>
+          <div class="cap-bar">
+            <div class="cap-bar-label">能力切换</div>
+            <div class="cap-bar-track"><div class="cap-bar-fill human-fill" style="width: 30%"></div></div>
+          </div>
+        </div>
+        <div class="vs-panel">
+          <div class="vs-panel-title agent">Agent</div>
+          <div class="cap-bar">
+            <div class="cap-bar-label">精力</div>
+            <div class="cap-bar-track"><div class="cap-bar-fill agent-fill" style="width: 95%"></div></div>
+          </div>
+          <div class="cap-bar">
+            <div class="cap-bar-label">知识广度</div>
+            <div class="cap-bar-track"><div class="cap-bar-fill agent-fill" style="width: 90%"></div></div>
+          </div>
+          <div class="cap-bar">
+            <div class="cap-bar-label">注意力</div>
+            <div class="cap-bar-track"><div class="cap-bar-fill agent-fill" style="width: 98%"></div></div>
+          </div>
+          <div class="cap-bar">
+            <div class="cap-bar-label">能力切换</div>
+            <div class="cap-bar-track"><div class="cap-bar-fill agent-fill" style="width: 95%"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="body-text reveal">这也是为什么 Context Engineering（上下文工程）非常火——给 Agent 提供的 context 越多，它表现越好。<span class="hl-teal">信息越充沛，任务完成度越高。</span></p>
+    <div class="deep-dive-trigger reveal" onclick="toggleDeepDive(2)">深入了解 ↓</div>
+    <div class="deep-dive-content" id="deepDive-2"></div>
+  </div>
+</section>
+
+<!-- S6: 错误类比 -->
+<section class="section" style="background: var(--bg-truth);">
+  <div class="content-width">
+    <p class="section-label reveal">06 / 错误类比</p>
+    <h2 class="big-statement reveal">给 Agent 划部门，<br>就像给<span class="hl-danger">鱼发自行车</span></h2>
+    <div id="s6-wall-demolish" class="reveal">
+      <style>
+        #s6-wall-demolish .s6-stage {
+          display: flex;
+          align-items: stretch;
+          justify-content: center;
+          gap: 0;
+          min-height: 140px;
+          margin: 32px auto;
+          max-width: 520px;
+          position: relative;
+        }
+        #s6-wall-demolish .s6-dept {
+          flex: 1;
+          background: var(--card-bg);
+          border-radius: 12px;
+          padding: 20px 8px;
+          text-align: center;
+          font-size: 15px;
+          font-weight: 600;
+          color: var(--text);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+          transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+          transition-delay: 1.6s;
+          z-index: 1;
+        }
+        #s6-wall-demolish .s6-wall {
+          width: 4px;
+          background: var(--danger);
+          border-radius: 2px;
+          flex-shrink: 0;
+          transform-origin: bottom center;
+          transition: opacity 0.6s ease, transform 0.6s ease;
+          z-index: 2;
+          position: relative;
+        }
+        #s6-wall-demolish .s6-wall::before {
+          content: '';
+          position: absolute;
+          bottom: -4px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 12px;
+          height: 4px;
+          background: var(--danger);
+          border-radius: 2px;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+        #s6-wall-demolish .s6-wall:nth-child(2) { transition-delay: 0.3s; }
+        #s6-wall-demolish .s6-wall:nth-child(4) { transition-delay: 0.6s; }
+        #s6-wall-demolish .s6-wall:nth-child(6) { transition-delay: 0.9s; }
+
+        /* Crumble particles */
+        #s6-wall-demolish .s6-wall .s6-particle {
+          position: absolute;
+          width: 3px;
+          height: 3px;
+          background: var(--danger);
+          border-radius: 1px;
+          opacity: 0;
+        }
+
+        /* Before visible: walls standing */
+        #s6-wall-demolish.visible .s6-wall {
+          opacity: 0;
+          transform: scaleY(0);
+        }
+        #s6-wall-demolish.visible .s6-wall::before {
+          opacity: 1;
+          transition-delay: inherit;
+        }
+
+        /* Merged result label */
+        #s6-wall-demolish .s6-merged-label {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          font-family: 'Noto Serif SC', serif;
+          font-size: 22px;
+          font-weight: 700;
+          color: var(--accent);
+          opacity: 0;
+          transition: opacity 0.6s ease;
+          transition-delay: 2.4s;
+          z-index: 10;
+          white-space: nowrap;
+          pointer-events: none;
+        }
+        #s6-wall-demolish.visible .s6-merged-label {
+          opacity: 1;
+        }
+
+        /* Merge departments into one box */
+        #s6-wall-demolish.visible .s6-dept {
+          opacity: 0;
+          flex: 0;
+          padding: 0;
+          min-width: 0;
+          overflow: hidden;
+        }
+        #s6-wall-demolish.visible .s6-stage {
+          position: relative;
+        }
+        #s6-wall-demolish .s6-merged-box {
+          position: absolute;
+          top: 0; left: 10%; right: 10%; bottom: 0;
+          background: var(--card-bg);
+          border: 3px solid var(--accent);
+          border-radius: 16px;
+          opacity: 0;
+          transform: scale(0.8);
+          transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+          transition-delay: 2.0s;
+          box-shadow: 0 4px 24px rgba(123, 74, 202, 0.15);
+        }
+        #s6-wall-demolish.visible .s6-merged-box {
+          opacity: 1;
+          transform: scale(1);
+        }
+      </style>
+      <div class="s6-stage">
+        <div class="s6-dept">市场</div>
+        <div class="s6-wall"></div>
+        <div class="s6-dept">技术</div>
+        <div class="s6-wall"></div>
+        <div class="s6-dept">销售</div>
+        <div class="s6-wall"></div>
+        <div class="s6-dept">产品</div>
+        <div class="s6-merged-box"></div>
+        <div class="s6-merged-label">一个 Agent</div>
+      </div>
+    </div>
+    <p class="body-text reveal">人类需要组织架构来弥补个体不足。但这些约束条件在 Agent 身上并不存在。照搬人类的限制，反而在给 Agent <span class="hl-danger">制造限制</span>。</p>
+    <div class="original-quote reveal">
+      <p>"如果我们用人类的组织架构思维去限制 Agent，大概率无法发挥它的全部潜力。"</p>
+      <p class="quote-source">— 原文</p>
+    </div>
+  </div>
+</section>
+
+<!-- ========== ACT III: 方法 ========== -->
+<section class="act-transition" style="background: var(--bg-method);">
+  <div class="reveal">
+    <p class="act-number">第三幕</p>
+    <h2 class="act-title">三个合理的理由</h2>
+  </div>
+</section>
+
+<!-- S7: 原因一：上下文限制 -->
+<section class="section" style="background: var(--bg-method);">
+  <div class="content-width">
+    <p class="section-label reveal">07 / 原因一</p>
+    <h2 class="big-statement reveal">上下文窗口装不下了</h2>
+    <p class="body-text reveal">目前模型的上下文窗口仍然有限。当面对一个巨大的任务时，单个 Agent 的上下文可能会被撑满。为了不影响交付质量，我们将其拆分成多个 Agent，每个 Agent 负责一部分。</p>
+    <div id="s7-context-fill" class="reveal">
+      <style>
+        #s7-context-fill .s7-stage{margin:32px auto;max-width:480px;position:relative;min-height:240px}
+        #s7-context-fill .s7-editor{background:#1E1E2E;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.18)}
+        #s7-context-fill .s7-editor-header{display:flex;align-items:center;gap:6px;padding:10px 14px;background:#16161E}
+        #s7-context-fill .s7-dot{width:10px;height:10px;border-radius:50%}
+        #s7-context-fill .dot-r{background:#FF5F57}
+        #s7-context-fill .dot-y{background:#FFBD2E}
+        #s7-context-fill .dot-g{background:#28C840}
+        #s7-context-fill .s7-editor-body{padding:14px 16px;min-height:70px}
+        #s7-context-fill .s7-code-line{height:8px;border-radius:4px;margin-bottom:6px;opacity:.5}
+        #s7-context-fill .s7-code-line:nth-child(1){width:70%;background:#7B4ACA}
+        #s7-context-fill .s7-code-line:nth-child(2){width:50%;background:#2A9D8F}
+        #s7-context-fill .s7-code-line:nth-child(3){width:85%;background:#6E6878}
+        #s7-context-fill .s7-code-line:nth-child(4){width:40%;background:#D4944A}
+        #s7-context-fill .s7-code-line:nth-child(5){width:65%;background:#7B4ACA}
+        #s7-context-fill .s7-bar-wrap{margin-top:8px;padding:0 4px 14px}
+        #s7-context-fill .s7-bar-label{font-size:11px;color:#6E6878;margin-bottom:5px;display:flex;justify-content:space-between}
+        #s7-context-fill .s7-bar-track{height:10px;background:#2A2530;border-radius:5px;overflow:hidden}
+        #s7-context-fill .s7-bar-fill{height:100%;border-radius:5px;width:0%;background:#28C840}
+        #s7-context-fill .s7-single{transition:opacity .5s ease,transform .5s ease}
+        #s7-context-fill .s7-single.s7-hidden{opacity:0;transform:scale(.92)}
+        #s7-context-fill .s7-split{display:flex;gap:14px;opacity:0;transform:scale(.92);position:absolute;top:0;left:0;right:0;transition:opacity .6s ease,transform .6s cubic-bezier(.4,0,.2,1);pointer-events:none}
+        #s7-context-fill .s7-split .s7-editor{flex:1}
+        #s7-context-fill .s7-split .s7-bar-fill{width:0%;background:#28C840}
+        #s7-context-fill .s7-split.s7-shown{opacity:1;transform:scale(1);pointer-events:auto}
+        @keyframes s7_pulseRed{0%,100%{box-shadow:0 0 0 0 rgba(196,74,58,.5)}50%{box-shadow:0 0 0 8px rgba(196,74,58,0)}}
+      </style>
+      <div class="s7-stage">
+        <div class="s7-single">
+          <div class="s7-editor">
+            <div class="s7-editor-header"><span class="s7-dot dot-r"></span><span class="s7-dot dot-y"></span><span class="s7-dot dot-g"></span></div>
+            <div class="s7-editor-body"><div class="s7-code-line"></div><div class="s7-code-line"></div><div class="s7-code-line"></div><div class="s7-code-line"></div><div class="s7-code-line"></div></div>
+            <div class="s7-bar-wrap">
+              <div class="s7-bar-label"><span>上下文使用量</span><span class="s7-percent">0%</span></div>
+              <div class="s7-bar-track"><div class="s7-bar-fill" id="s7-main-fill"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="s7-split">
+          <div class="s7-editor">
+            <div class="s7-editor-header"><span class="s7-dot dot-r"></span><span class="s7-dot dot-y"></span><span class="s7-dot dot-g"></span></div>
+            <div class="s7-editor-body"><div class="s7-code-line"></div><div class="s7-code-line"></div><div class="s7-code-line"></div></div>
+            <div class="s7-bar-wrap">
+              <div class="s7-bar-label"><span>上下文使用量</span><span>48%</span></div>
+              <div class="s7-bar-track"><div class="s7-bar-fill" data-target="48"></div></div>
+            </div>
+          </div>
+          <div class="s7-editor">
+            <div class="s7-editor-header"><span class="s7-dot dot-r"></span><span class="s7-dot dot-y"></span><span class="s7-dot dot-g"></span></div>
+            <div class="s7-editor-body"><div class="s7-code-line"></div><div class="s7-code-line"></div></div>
+            <div class="s7-bar-wrap">
+              <div class="s7-bar-label"><span>上下文使用量</span><span>52%</span></div>
+              <div class="s7-bar-track"><div class="s7-bar-fill" data-target="52"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="body-text reveal">这是一个<span class="hl-teal">物理层面的限制</span>，而不是设计偏好。当上下文装不下时，拆分是合理的。</p>
+    <div class="deep-dive-trigger reveal" onclick="toggleDeepDive(3)">深入了解 ↓</div>
+    <div class="deep-dive-content" id="deepDive-3"></div>
+  </div>
+</section>
+
+<!-- S8: 原因二：客观性 -->
+<section class="section" style="background: var(--bg-method);">
+  <div class="content-width">
+    <p class="section-label reveal">08 / 原因二</p>
+    <h2 class="big-statement reveal">自己审自己，<span class="hl-danger">永远有偏见</span></h2>
+    <p class="body-text reveal">Agent 在评估自己工作时往往存在偏见。我们经常将「代码审核者」和「测试者」分开，就是为了避免<span class="hl-danger">既当运动员又当裁判员</span>的情况。</p>
+    <div id="s8-pingpong" class="reveal">
+      <style>
+        #s8-pingpong .s8-stage{display:flex;align-items:center;justify-content:center;gap:24px;margin:32px auto;max-width:520px;position:relative;min-height:180px;padding:20px 0}
+        #s8-pingpong .s8-box{flex:0 0 130px;background:var(--card-bg);border-radius:14px;padding:24px 16px;text-align:center;font-size:15px;font-weight:700;box-shadow:0 2px 16px rgba(0,0,0,.06);position:relative;z-index:2}
+        #s8-pingpong .s8-box.s8-builder{border-top:4px solid var(--accent);color:var(--accent)}
+        #s8-pingpong .s8-box.s8-evaluator{border-top:4px solid var(--accent2);color:var(--accent2)}
+        #s8-pingpong .s8-box .s8-icon{font-size:28px;margin-bottom:6px;display:block}
+        #s8-pingpong .s8-track{flex:1;position:relative;height:60px;display:flex;align-items:center;justify-content:center}
+        #s8-pingpong .s8-doc{position:absolute;left:0;font-size:26px;opacity:0;z-index:3;filter:drop-shadow(0 2px 8px rgba(0,0,0,.15))}
+        #s8-pingpong .s8-versions{position:absolute;bottom:-32px;left:0;right:0;display:flex;justify-content:space-around}
+        #s8-pingpong .s8-ver{font-size:13px;font-weight:600;opacity:0;transform:translateY(8px);transition:opacity .4s ease,transform .4s ease}
+        #s8-pingpong .s8-ver.s8-v-show{opacity:1;transform:translateY(0)}
+        #s8-pingpong .s8-arrow-track{position:absolute;top:50%;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));opacity:.2;transform:translateY(-50%)}
+        @keyframes s8_bounce{0%{left:0;opacity:1}5%{opacity:1}45%{left:calc(100% - 26px)}50%{left:calc(100% - 26px);opacity:1}55%{opacity:1}95%{left:0}100%{left:0;opacity:1}}
+      </style>
+      <div class="s8-stage">
+        <div class="s8-box s8-builder"><span class="s8-icon">&#x1F528;</span>构建者</div>
+        <div class="s8-track">
+          <div class="s8-arrow-track"></div>
+          <div class="s8-doc" id="s8-doc">&#x1F4C4;</div>
+          <div class="s8-versions">
+            <span class="s8-ver" id="s8-v1">v1 &#x274C;</span>
+            <span class="s8-ver" id="s8-v2">v2 &#x26A0;&#xFE0F;</span>
+            <span class="s8-ver" id="s8-v3">v3 &#x2705;</span>
+          </div>
+        </div>
+        <div class="s8-box s8-evaluator"><span class="s8-icon">&#x1F50D;</span>评审者</div>
+      </div>
+    </div>
+    <p class="body-text reveal">分离构建者和评审者，让独立的视角来保证质量。这种拆分是为了<span class="hl-teal">客观性</span>，不是为了分工。</p>
+    <div class="deep-dive-trigger reveal" onclick="toggleDeepDive(4)">深入了解 ↓</div>
+    <div class="deep-dive-content" id="deepDive-4"></div>
+  </div>
+</section>
+
+<!-- S9: 原因三：信息压缩 -->
+<section class="section" style="background: var(--bg-method);">
+  <div class="content-width">
+    <p class="section-label reveal">09 / 原因三</p>
+    <h2 class="big-statement reveal">一个角色名，<span class="hl">压缩了一整套指令</span></h2>
+    <p class="body-text reveal">当你告诉 Agent「你是一个测试者」时，它立刻就能领会对待代码应有的态度和立场，而不需要你花篇幅去解释。角色设定本身就是一种高效的<span class="hl">信息压缩</span>。</p>
+    <div id="s9-compress" class="reveal">
+      <style>
+        #s9-compress .s9-stage {
+          position: relative;
+          max-width: 400px;
+          margin: 32px auto;
+          min-height: 360px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        }
+        #s9-compress .s9-line {
+          background: var(--card-bg);
+          border-radius: 8px;
+          padding: 10px 20px;
+          margin: 3px 0;
+          font-size: 14px;
+          color: var(--text);
+          box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+          width: 100%;
+          text-align: center;
+          transition: all 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+          transform-origin: center center;
+        }
+        #s9-compress .s9-line:nth-child(1) { transition-delay: 0.0s; }
+        #s9-compress .s9-line:nth-child(2) { transition-delay: 0.05s; }
+        #s9-compress .s9-line:nth-child(3) { transition-delay: 0.1s; }
+        #s9-compress .s9-line:nth-child(4) { transition-delay: 0.15s; }
+        #s9-compress .s9-line:nth-child(5) { transition-delay: 0.2s; }
+        #s9-compress .s9-line:nth-child(6) { transition-delay: 0.25s; }
+        #s9-compress .s9-line:nth-child(7) { transition-delay: 0.3s; }
+        #s9-compress .s9-line:nth-child(8) { transition-delay: 0.35s; }
+
+        #s9-compress.visible .s9-line {
+          opacity: 0;
+          transform: translateY(calc(-50% + 140px)) scaleY(0.1);
+          margin: 0;
+          padding: 0 20px;
+          height: 0;
+        }
+
+        #s9-compress .s9-badge {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%) scale(0);
+          background: linear-gradient(135deg, var(--accent), #9B6AEA);
+          color: #fff;
+          font-size: 22px;
+          font-weight: 700;
+          padding: 18px 36px;
+          border-radius: 40px;
+          box-shadow: 0 4px 30px rgba(123, 74, 202, 0.35);
+          white-space: nowrap;
+          transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease;
+          transition-delay: 1.4s;
+          opacity: 0;
+          z-index: 10;
+        }
+        #s9-compress.visible .s9-badge {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
+        }
+
+        @keyframes s9_glow {
+          0%, 100% { box-shadow: 0 4px 30px rgba(123, 74, 202, 0.35); }
+          50% { box-shadow: 0 4px 50px rgba(123, 74, 202, 0.6), 0 0 20px rgba(155, 106, 234, 0.3); }
+        }
+        #s9-compress.visible .s9-badge {
+          animation: s9_glow 2s ease-in-out 2.2s infinite;
+        }
+      </style>
+      <div class="s9-stage">
+        <div class="s9-line">检查语法错误</div>
+        <div class="s9-line">验证边界条件</div>
+        <div class="s9-line">确保覆盖率</div>
+        <div class="s9-line">测试异常路径</div>
+        <div class="s9-line">检查性能瓶颈</div>
+        <div class="s9-line">验证安全漏洞</div>
+        <div class="s9-line">回归测试</div>
+        <div class="s9-line">写测试报告</div>
+        <div class="s9-badge">&#x1F3F7;&#xFE0F; 测试者</div>
+      </div>
+    </div>
+    <p class="body-text reveal">这不是为了分工，而是为了让 prompt 更简洁、更高效。</p>
+    <div class="deep-dive-trigger reveal" onclick="toggleDeepDive(5)">深入了解 ↓</div>
+    <div class="deep-dive-content" id="deepDive-5"></div>
+  </div>
+</section>
+
+<!-- S10: 除此之外，别拆 -->
+<section class="section" style="background: var(--bg-method);">
+  <div class="content-width">
+    <p class="section-label reveal">10 / 结论</p>
+    <h2 class="big-statement reveal">除了这三个理由，<br><span class="hl-danger">别拆</span></h2>
+    <p class="body-text reveal">比如一家媒体公司，小红书、抖音、公众号的运营，需要不同的 Agent 吗？在很多小团队里，这三件事是同一个人做的。那为什么到了 Agent 系统里，就一定要拆成三个？</p>
+    <div id="s10-merge" class="reveal">
+      <style>
+        #s10-merge .s10-stage {
+          position: relative;
+          max-width: 420px;
+          margin: 32px auto;
+          min-height: 320px;
+        }
+        #s10-merge .s10-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 14px;
+          padding: 20px;
+        }
+        #s10-merge .s10-box {
+          background: var(--card-bg);
+          border-radius: 14px;
+          padding: 22px 12px;
+          text-align: center;
+          font-size: 14px;
+          font-weight: 600;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+          transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+          z-index: 1;
+          position: relative;
+        }
+        #s10-merge .s10-box .s10-platform {
+          font-size: 13px;
+          font-weight: 400;
+          color: var(--text-muted);
+          margin-top: 4px;
+        }
+        #s10-merge .s10-box.s10-xhs { border-top: 3px solid #FF2442; color: #FF2442; }
+        #s10-merge .s10-box.s10-douyin { border-top: 3px solid #2A2530; color: #2A2530; }
+        #s10-merge .s10-box.s10-gzh { border-top: 3px solid #2A9D8F; color: #2A9D8F; }
+        #s10-merge .s10-box.s10-bili { border-top: 3px solid #00A1D6; color: #00A1D6; }
+
+        /* Move boxes toward center when visible */
+        #s10-merge.visible .s10-box.s10-xhs { transform: translate(60px, 40px) scale(0.6); opacity: 0.25; }
+        #s10-merge.visible .s10-box.s10-douyin { transform: translate(-60px, 40px) scale(0.6); opacity: 0.25; }
+        #s10-merge.visible .s10-box.s10-gzh { transform: translate(60px, -40px) scale(0.6); opacity: 0.25; }
+        #s10-merge.visible .s10-box.s10-bili { transform: translate(-60px, -40px) scale(0.6); opacity: 0.25; }
+
+        /* Central circle */
+        #s10-merge .s10-center {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%) scale(0);
+          width: 150px;
+          height: 150px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, var(--accent), #9B6AEA);
+          color: #fff;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          font-weight: 700;
+          font-size: 16px;
+          line-height: 1.5;
+          box-shadow: 0 6px 40px rgba(123, 74, 202, 0.4);
+          transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s ease;
+          transition-delay: 1.0s;
+          opacity: 0;
+          z-index: 10;
+          text-align: center;
+        }
+        #s10-merge.visible .s10-center {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
+        }
+
+        /* Flow line below */
+        #s10-merge .s10-flow {
+          text-align: center;
+          font-size: 15px;
+          color: var(--accent);
+          font-weight: 500;
+          letter-spacing: 1px;
+          margin-top: 16px;
+          opacity: 0;
+          transform: translateY(12px);
+          transition: opacity 0.6s ease, transform 0.6s ease;
+          transition-delay: 1.8s;
+        }
+        #s10-merge.visible .s10-flow {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        @keyframes s10_pulse {
+          0%, 100% { box-shadow: 0 6px 40px rgba(123, 74, 202, 0.4); }
+          50% { box-shadow: 0 6px 60px rgba(123, 74, 202, 0.65), 0 0 24px rgba(155, 106, 234, 0.3); }
+        }
+        #s10-merge.visible .s10-center {
+          animation: s10_pulse 2.5s ease-in-out 2s infinite;
+        }
+      </style>
+      <div class="s10-stage">
+        <div class="s10-grid">
+          <div class="s10-box s10-xhs">小红书<div class="s10-platform">Agent</div></div>
+          <div class="s10-box s10-douyin">抖音<div class="s10-platform">Agent</div></div>
+          <div class="s10-box s10-gzh">公众号<div class="s10-platform">Agent</div></div>
+          <div class="s10-box s10-bili">B站<div class="s10-platform">Agent</div></div>
+        </div>
+        <div class="s10-center">一个<br>内容 Agent</div>
+        <div class="s10-flow">理解内容 → 适配平台 → 发布</div>
+      </div>
+    </div>
+    <p class="body-text reveal">一个 Agent 的多面手，反而能取长补短，打通各平台内容，制造联动。</p>
+    <div class="original-quote reveal">
+      <p>"不要因为公司有五个部门，就做五个 Agent。要从任务出发，不要从工位出发。"</p>
+      <p class="quote-source">— 原文</p>
+    </div>
+    <div class="deep-dive-trigger reveal" onclick="toggleDeepDive(6)">深入了解 ↓</div>
+    <div class="deep-dive-content" id="deepDive-6"></div>
+  </div>
+</section>
+
+<!-- ========== DRAMATIC BREAK ========== -->
+<section class="dramatic-break">
+  <div class="reveal">
+    <h2 class="big-statement serif">Agent 没有部门墙。<br>别给它们建一堵。</h2>
+  </div>
+</section>
+
+<!-- ========== FINAL ========== -->
+<section class="section" style="background: var(--bg-method); min-height: auto; padding: 80px 0;">
+  <div class="content-width">
+    <p class="section-label reveal" style="text-align: center;">核心要点</p>
+  </div>
+  <div class="takeaway-grid reveal">
+    <div class="takeaway-card reveal reveal-delay-1">
+      <div class="num">1</div>
+      <p>从单 Agent 开始<br><small style="color: var(--text-muted);">先证明它不够用</small></p>
+    </div>
+    <div class="takeaway-card reveal reveal-delay-2">
+      <div class="num">3</div>
+      <p>只为这三个理由拆分<br><small style="color: var(--text-muted);">上下文 / 客观性 / 压缩</small></p>
+    </div>
+    <div class="takeaway-card reveal reveal-delay-3">
+      <div class="num">0</div>
+      <p>零部门墙<br><small style="color: var(--text-muted);">从任务出发，不从工位出发</small></p>
+    </div>
+  </div>
+</section>
+
+<!-- ========== FOOTER ========== -->
+<footer class="page-footer">
+  <p>原文：三鹿叨逼叨「做 Agent 最大的坑：照搬公司组织架构」</p>
+  <p style="margin-top: 8px;">可视化叙事 · 滑动即交互</p>
+</footer>
+
+<!-- ========================================= -->
+<!-- JAVASCRIPT                                -->
+<!-- ========================================= -->
+<script>
+// === GENERIC SCROLL REVEAL ===
+(function() {
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.reveal').forEach(function(el) {
+    observer.observe(el);
+  });
+})();
+
+// === CHAT BUBBLE SEQUENTIAL REVEAL ===
+(function() {
+  var bubbles = document.querySelectorAll('.chat-bubble[data-chat]');
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        var idx = parseInt(entry.target.dataset.chat);
+        setTimeout(function() {
+          entry.target.classList.add('visible');
+        }, (idx - 1) * 600);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  bubbles.forEach(function(b) { observer.observe(b); });
+})();
+
+// === VS COMPARISON BARS ===
+(function() {
+  var wrapper = document.getElementById('s5-vs-compare');
+  if (!wrapper) return;
+  var vsContainer = wrapper.querySelector('.vs-container');
+  if (!vsContainer) return;
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        vsContainer.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  observer.observe(wrapper);
+})();
+
+// PLACEHOLDER: Animation IIFEs will be added by subagents
+// === S1: COPY ORG CHART ANIMATION ===
+// No additional JS needed — all animation is CSS-driven via .visible class
+
+// === S3: SINGLE AGENT FUNNEL ===
+// No additional JS needed — all animation is CSS-driven via .visible class
+
+// === S4: HUMAN CAPACITY BARS ===
+// No additional JS needed — all animation is CSS-driven via .visible class
+// === S6: WALL DEMOLISH (no extra JS needed — pure CSS on .visible) ===
+// === S7: CONTEXT FILL + SPLIT ===
+(function() {
+  var el = document.getElementById('s7-context-fill');
+  if (!el) return;
+  var ran = false;
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting && !ran) {
+        ran = true;
+        observer.unobserve(entry.target);
+        var fill = document.getElementById('s7-main-fill');
+        var pct = el.querySelector('.s7-percent');
+        var singleEl = el.querySelector('.s7-single');
+        var splitEl = el.querySelector('.s7-split');
+        var duration = 2500;
+        var start = null;
+        function animate(ts) {
+          if (!start) start = ts;
+          var progress = Math.min((ts - start) / duration, 1);
+          var w = Math.round(progress * 100);
+          fill.style.width = w + '%';
+          pct.textContent = w + '%';
+          if (w < 50) fill.style.background = '#28C840';
+          else if (w < 75) fill.style.background = '#FFBD2E';
+          else if (w < 90) fill.style.background = '#FF8C42';
+          else fill.style.background = '#C44A3A';
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          } else {
+            fill.style.animation = 's7_pulseRed 1s ease-in-out 2';
+            setTimeout(function() {
+              singleEl.classList.add('s7-hidden');
+              setTimeout(function() {
+                splitEl.classList.add('s7-shown');
+                var splitFills = splitEl.querySelectorAll('.s7-bar-fill[data-target]');
+                setTimeout(function() {
+                  splitFills.forEach(function(f) {
+                    f.style.transition = 'width 0.8s cubic-bezier(.4,0,.2,1)';
+                    f.style.width = f.dataset.target + '%';
+                    f.style.background = '#28C840';
+                  });
+                }, 100);
+              }, 500);
+            }, 1200);
+          }
+        }
+        setTimeout(function() { requestAnimationFrame(animate); }, 400);
+      }
+    });
+  }, { threshold: 0.3 });
+  observer.observe(el);
+})();
+// === S8: PING-PONG ===
+(function() {
+  var el = document.getElementById('s8-pingpong');
+  if (!el) return;
+  var ran = false;
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting && !ran) {
+        ran = true;
+        observer.unobserve(entry.target);
+        var doc = document.getElementById('s8-doc');
+        var v1 = document.getElementById('s8-v1');
+        var v2 = document.getElementById('s8-v2');
+        var v3 = document.getElementById('s8-v3');
+        var cycleDuration = 4000;
+        function runCycle() {
+          doc.style.opacity = '0';
+          v1.classList.remove('s8-v-show');
+          v2.classList.remove('s8-v-show');
+          v3.classList.remove('s8-v-show');
+          // Bounce 1: left -> right
+          setTimeout(function() {
+            doc.style.opacity = '1';
+            doc.style.transition = 'left 0.8s cubic-bezier(.4,0,.2,1)';
+            doc.style.left = '0';
+            setTimeout(function() {
+              doc.style.left = 'calc(100% - 26px)';
+              setTimeout(function() { v1.classList.add('s8-v-show'); }, 600);
+            }, 200);
+          }, 200);
+          // Bounce 2: right -> left -> right
+          setTimeout(function() {
+            doc.style.left = '0';
+            setTimeout(function() {
+              doc.style.left = 'calc(100% - 26px)';
+              setTimeout(function() { v2.classList.add('s8-v-show'); }, 600);
+            }, 900);
+          }, 1600);
+          // Bounce 3: right -> left -> right
+          setTimeout(function() {
+            doc.style.left = '0';
+            setTimeout(function() {
+              doc.style.left = 'calc(100% - 26px)';
+              setTimeout(function() { v3.classList.add('s8-v-show'); }, 600);
+            }, 900);
+          }, 3200);
+          // Restart
+          setTimeout(runCycle, cycleDuration + 2000);
+        }
+        setTimeout(runCycle, 500);
+      }
+    });
+  }, { threshold: 0.3 });
+  observer.observe(el);
+})();
+// === S9: COMPRESSION ANIMATION ===
+(function() {
+  var el = document.getElementById('s9-compress');
+  if (!el) return;
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  observer.observe(el);
+})();
+
+// === S10: PLATFORM MERGE ANIMATION ===
+(function() {
+  var el = document.getElementById('s10-merge');
+  if (!el) return;
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  observer.observe(el);
+})();
+
+// === DEEP DIVE TOGGLE ===
+function toggleDeepDive(n) {
+  var content = document.getElementById('deepDive-' + n);
+  if (!content) return;
+  var trigger = content.previousElementSibling;
+
+  if (content.classList.contains('open')) {
+    content.classList.remove('open');
+    trigger.textContent = '深入了解 ↓';
+    return;
+  }
+
+  // Render if first time
+  if (!content.dataset.rendered && typeof deepDiveData !== 'undefined' && deepDiveData[n]) {
+    var d = deepDiveData[n];
+    var html = '<h4>' + d.title + '</h4>';
+    d.sections.forEach(function(s) {
+      if (s.heading) html += '<h4>' + s.heading + '</h4>';
+      if (s.diagram) html += s.diagram;
+      html += s.body.split('\n\n').map(function(p) { return '<p>' + p + '</p>'; }).join('');
+    });
+    if (d.originalText) {
+      html += '<div class="original-text"><p style="font-size:12px;letter-spacing:1px;color:var(--accent2);margin-bottom:8px;font-style:normal;">原文段落</p>';
+      html += d.originalText.split('\n\n').map(function(p) { return '<p>' + p + '</p>'; }).join('');
+      html += '</div>';
+    }
+    content.innerHTML = html;
+    content.dataset.rendered = 'true';
+  }
+
+  content.classList.add('open');
+  trigger.textContent = '收起 ↑';
+}
+
+// === DEEP DIVE CONTENT DATA ===
+var deepDiveData = {
+  1: {
+    title: '认知职能拆分 vs 组织架构拆分',
+    sections: [
+      {
+        heading: 'Superpower 的拆分为什么有效？',
+        diagram: `<style>
+@keyframes dd1_cardIn { 0%{opacity:0;transform:translateY(30px) scale(0.9)} 100%{opacity:1;transform:translateY(0) scale(1)} }
+@keyframes dd1_check { 0%{opacity:0;transform:scale(0)} 60%{transform:scale(1.3)} 100%{opacity:1;transform:scale(1)} }
+@keyframes dd1_cross { 0%{opacity:0;transform:rotate(-90deg) scale(0)} 100%{opacity:1;transform:rotate(0) scale(1)} }
+@keyframes dd1_arrow { 0%{width:0;opacity:0} 100%{width:100%;opacity:1} }
+@keyframes dd1_pulse { 0%,100%{box-shadow:0 0 0 0 rgba(123,74,202,0.2)} 50%{box-shadow:0 0 0 8px rgba(123,74,202,0)} }
+@keyframes dd1_pulseRed { 0%,100%{box-shadow:0 0 0 0 rgba(196,74,58,0.2)} 50%{box-shadow:0 0 0 8px rgba(196,74,58,0)} }
+</style>
+<div style="display:flex;flex-direction:column;gap:24px;margin:20px 0 28px;">
+  <!-- Correct: cognitive split -->
+  <div class="dd-slide dd-d1" style="background:rgba(42,157,143,0.08);border:2px solid var(--accent2);border-radius:16px;padding:20px;position:relative;">
+    <div class="dd-pop dd-d2" style="position:absolute;top:-14px;right:16px;background:var(--accent2);color:#fff;font-size:22px;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;animation:dd1_check 0.5s ease forwards;animation-delay:0.8s;opacity:0;">✓</div>
+    <div style="font-size:13px;font-weight:700;color:var(--accent2);letter-spacing:1px;margin-bottom:12px;">认知职能拆分</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+      <div class="dd-pop dd-d1" style="background:var(--card-bg);border-radius:10px;padding:10px 16px;text-align:center;flex:1;min-width:100px;animation:dd1_pulse 2s ease infinite 1.5s;">
+        <div style="font-size:20px;margin-bottom:4px;">🧠</div>
+        <div style="font-size:13px;font-weight:600;color:var(--accent);">Planning</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">规划思考</div>
+      </div>
+      <div class="dd-pop dd-d2" style="background:var(--card-bg);border-radius:10px;padding:10px 16px;text-align:center;flex:1;min-width:100px;">
+        <div style="font-size:20px;margin-bottom:4px;">⚡</div>
+        <div style="font-size:13px;font-weight:600;color:var(--accent);">Execution</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">执行操作</div>
+      </div>
+      <div class="dd-pop dd-d3" style="background:var(--card-bg);border-radius:10px;padding:10px 16px;text-align:center;flex:1;min-width:100px;">
+        <div style="font-size:20px;margin-bottom:4px;">🔍</div>
+        <div style="font-size:13px;font-weight:600;color:var(--accent);">Review</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">审查纠偏</div>
+      </div>
+      <div class="dd-pop dd-d4" style="background:var(--card-bg);border-radius:10px;padding:10px 16px;text-align:center;flex:1;min-width:100px;">
+        <div style="font-size:20px;margin-bottom:4px;">🧪</div>
+        <div style="font-size:13px;font-weight:600;color:var(--accent);">Test</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">验证质量</div>
+      </div>
+    </div>
+    <div class="dd-anim dd-d3" style="text-align:center;margin-top:12px;font-size:12px;color:var(--accent2);font-weight:500;">自己审自己会有偏见 → 所以拆开不同的认知阶段</div>
+  </div>
+
+  <!-- Wrong: org chart split -->
+  <div class="dd-slide dd-d2" style="background:rgba(196,74,58,0.06);border:2px solid var(--danger);border-radius:16px;padding:20px;position:relative;">
+    <div class="dd-pop dd-d3" style="position:absolute;top:-14px;right:16px;background:var(--danger);color:#fff;font-size:18px;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;animation:dd1_cross 0.5s ease forwards;animation-delay:1.2s;opacity:0;">✗</div>
+    <div style="font-size:13px;font-weight:700;color:var(--danger);letter-spacing:1px;margin-bottom:12px;">组织架构拆分</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+      <div class="dd-pop dd-d2" style="background:var(--card-bg);border-radius:10px;padding:10px 16px;text-align:center;flex:1;min-width:100px;animation:dd1_pulseRed 2s ease infinite 1.8s;">
+        <div style="font-size:20px;margin-bottom:4px;">📋</div>
+        <div style="font-size:13px;font-weight:600;color:var(--danger);">产品 Agent</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">产品部</div>
+      </div>
+      <div class="dd-pop dd-d3" style="background:var(--card-bg);border-radius:10px;padding:10px 16px;text-align:center;flex:1;min-width:100px;">
+        <div style="font-size:20px;margin-bottom:4px;">💻</div>
+        <div style="font-size:13px;font-weight:600;color:var(--danger);">开发 Agent</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">研发部</div>
+      </div>
+      <div class="dd-pop dd-d4" style="background:var(--card-bg);border-radius:10px;padding:10px 16px;text-align:center;flex:1;min-width:100px;">
+        <div style="font-size:20px;margin-bottom:4px;">🎨</div>
+        <div style="font-size:13px;font-weight:600;color:var(--danger);">设计 Agent</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">设计部</div>
+      </div>
+    </div>
+    <div class="dd-anim dd-d4" style="text-align:center;margin-top:12px;font-size:12px;color:var(--danger);font-weight:500;">人类协作的限制 ≠ AI 的限制 → 硬搬只会增加通信开销</div>
+  </div>
+</div>`,
+        body: 'Superpower 之所以有效，关键在于它的拆分逻辑是"认知职能"——Planning、Execution、Review、Test 分别对应不同的思维模式。就像你写完文章不应该自己校对一样，做计划的 Agent 和做审查的 Agent 如果是同一个，它倾向于"自己觉得自己做得对"。\n\n但大多数公司照搬的是什么？是组织架构——产品部一个 Agent、研发部一个 Agent、设计部一个 Agent。这种拆分的本质是"人类因为沟通带宽不够而不得不分工"，而不是"这个任务在认知上需要独立视角"。\n\nAgent 不存在"沟通带宽"的瓶颈。把人类的组织限制移植到 AI 上，等于人为制造了一个不存在的问题，然后花大量精力去"解决"它。'
+      }
+    ],
+    originalText: '很多人会参考网上的案例，比如基于 OpenCode 开发的 Superpower（一个开源的 AI 编程框架，通过编排多个 Agent 分别负责 planning、execution、review 和 test），效果看起来确实很好。'
+  },
+
+  2: {
+    title: 'Context Engineering 为什么有效',
+    sections: [
+      {
+        heading: '人类 vs Agent：信息处理的根本差异',
+        diagram: `<style>
+@keyframes dd2_blockFall { 0%{opacity:0;transform:translateY(-40px)} 100%{opacity:1;transform:translateY(0)} }
+@keyframes dd2_blockDiscard { 0%{opacity:1;transform:translateX(0)} 60%{opacity:1;transform:translateX(0)} 100%{opacity:0;transform:translateX(-60px) rotate(-15deg)} }
+@keyframes dd2_blockAbsorb { 0%{opacity:0;transform:scale(0.5)} 100%{opacity:1;transform:scale(1)} }
+@keyframes dd2_funnelPulse { 0%,100%{opacity:0.6} 50%{opacity:1} }
+@keyframes dd2_brainOverflow { 0%,70%{transform:scale(1)} 80%{transform:scale(1.08)} 90%{transform:scale(0.95)} 100%{transform:scale(1)} }
+@keyframes dd2_glow { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.15)} }
+</style>
+<div style="margin:20px 0 28px;">
+  <!-- Info blocks rain -->
+  <div class="dd-anim dd-d1" style="text-align:center;margin-bottom:16px;font-size:12px;color:var(--text-muted);letter-spacing:1px;font-weight:500;">信息输入流</div>
+  <div class="dd-slide dd-d1" style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:20px;">
+    <span style="display:inline-block;background:var(--accent);color:#fff;font-size:11px;padding:4px 10px;border-radius:6px;animation:dd2_blockFall 0.4s ease forwards;animation-delay:0.3s;opacity:0;">需求文档</span>
+    <span style="display:inline-block;background:var(--accent);color:#fff;font-size:11px;padding:4px 10px;border-radius:6px;animation:dd2_blockFall 0.4s ease forwards;animation-delay:0.45s;opacity:0;">代码库</span>
+    <span style="display:inline-block;background:var(--accent);color:#fff;font-size:11px;padding:4px 10px;border-radius:6px;animation:dd2_blockFall 0.4s ease forwards;animation-delay:0.6s;opacity:0;">历史对话</span>
+    <span style="display:inline-block;background:var(--accent);color:#fff;font-size:11px;padding:4px 10px;border-radius:6px;animation:dd2_blockFall 0.4s ease forwards;animation-delay:0.75s;opacity:0;">错误日志</span>
+    <span style="display:inline-block;background:var(--accent);color:#fff;font-size:11px;padding:4px 10px;border-radius:6px;animation:dd2_blockFall 0.4s ease forwards;animation-delay:0.9s;opacity:0;">测试用例</span>
+    <span style="display:inline-block;background:var(--accent);color:#fff;font-size:11px;padding:4px 10px;border-radius:6px;animation:dd2_blockFall 0.4s ease forwards;animation-delay:1.05s;opacity:0;">API 文档</span>
+    <span style="display:inline-block;background:var(--accent);color:#fff;font-size:11px;padding:4px 10px;border-radius:6px;animation:dd2_blockFall 0.4s ease forwards;animation-delay:1.2s;opacity:0;">设计稿</span>
+    <span style="display:inline-block;background:var(--accent);color:#fff;font-size:11px;padding:4px 10px;border-radius:6px;animation:dd2_blockFall 0.4s ease forwards;animation-delay:1.35s;opacity:0;">用户反馈</span>
+    <span style="display:inline-block;background:var(--accent);color:#fff;font-size:11px;padding:4px 10px;border-radius:6px;animation:dd2_blockFall 0.4s ease forwards;animation-delay:1.5s;opacity:0;">部署配置</span>
+  </div>
+
+  <!-- Two paths -->
+  <div style="display:flex;gap:16px;flex-wrap:wrap;">
+    <!-- Human path -->
+    <div class="dd-slide dd-d2" style="flex:1;min-width:200px;background:rgba(212,148,74,0.08);border:2px solid var(--human);border-radius:14px;padding:16px;text-align:center;">
+      <div style="font-size:28px;margin-bottom:6px;animation:dd2_brainOverflow 2s ease infinite 2s;">🧠</div>
+      <div style="font-weight:700;color:var(--human);font-size:14px;margin-bottom:10px;">Human</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">认知负荷上限：7 ± 2 块</div>
+      <div style="display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin-bottom:8px;">
+        <span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:var(--human);animation:dd2_blockAbsorb 0.3s ease forwards;animation-delay:1.6s;opacity:0;"></span>
+        <span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:var(--human);animation:dd2_blockAbsorb 0.3s ease forwards;animation-delay:1.7s;opacity:0;"></span>
+        <span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:var(--human);animation:dd2_blockAbsorb 0.3s ease forwards;animation-delay:1.8s;opacity:0;"></span>
+      </div>
+      <div style="display:flex;justify-content:center;gap:4px;flex-wrap:wrap;">
+        <span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:var(--danger);opacity:0.3;animation:dd2_blockDiscard 1.2s ease forwards;animation-delay:2s;"></span>
+        <span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:var(--danger);opacity:0.3;animation:dd2_blockDiscard 1.2s ease forwards;animation-delay:2.15s;"></span>
+        <span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:var(--danger);opacity:0.3;animation:dd2_blockDiscard 1.2s ease forwards;animation-delay:2.3s;"></span>
+        <span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:var(--danger);opacity:0.3;animation:dd2_blockDiscard 1.2s ease forwards;animation-delay:2.45s;"></span>
+        <span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:var(--danger);opacity:0.3;animation:dd2_blockDiscard 1.2s ease forwards;animation-delay:2.6s;"></span>
+        <span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:var(--danger);opacity:0.3;animation:dd2_blockDiscard 1.2s ease forwards;animation-delay:2.75s;"></span>
+      </div>
+      <div style="font-size:11px;color:var(--danger);margin-top:8px;font-weight:500;">6 块信息被迫丢弃</div>
+    </div>
+
+    <!-- Agent path -->
+    <div class="dd-slide dd-d3" style="flex:1;min-width:200px;background:rgba(42,157,143,0.08);border:2px solid var(--accent2);border-radius:14px;padding:16px;text-align:center;">
+      <div style="font-size:28px;margin-bottom:6px;animation:dd2_glow 2s ease infinite 2s;">🤖</div>
+      <div style="font-weight:700;color:var(--accent2);font-size:14px;margin-bottom:10px;">Agent</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">无认知负荷限制</div>
+      <div style="display:flex;justify-content:center;gap:4px;flex-wrap:wrap;">
+        <span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:var(--accent2);animation:dd2_blockAbsorb 0.3s ease forwards;animation-delay:1.6s;opacity:0;"></span>
+        <span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:var(--accent2);animation:dd2_blockAbsorb 0.3s ease forwards;animation-delay:1.7s;opacity:0;"></span>
+        <span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:var(--accent2);animation:dd2_blockAbsorb 0.3s ease forwards;animation-delay:1.8s;opacity:0;"></span>
+        <span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:var(--accent2);animation:dd2_blockAbsorb 0.3s ease forwards;animation-delay:1.9s;opacity:0;"></span>
+        <span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:var(--accent2);animation:dd2_blockAbsorb 0.3s ease forwards;animation-delay:2.0s;opacity:0;"></span>
+        <span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:var(--accent2);animation:dd2_blockAbsorb 0.3s ease forwards;animation-delay:2.1s;opacity:0;"></span>
+        <span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:var(--accent2);animation:dd2_blockAbsorb 0.3s ease forwards;animation-delay:2.2s;opacity:0;"></span>
+        <span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:var(--accent2);animation:dd2_blockAbsorb 0.3s ease forwards;animation-delay:2.3s;opacity:0;"></span>
+        <span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:var(--accent2);animation:dd2_blockAbsorb 0.3s ease forwards;animation-delay:2.4s;opacity:0;"></span>
+      </div>
+      <div style="font-size:11px;color:var(--accent2);margin-top:8px;font-weight:500;">全部 9 块信息吸收</div>
+    </div>
+  </div>
+</div>`,
+        body: '人类大脑有一个著名的瓶颈：工作记忆容量大约是 7 ± 2 个信息块（Miller\'s Law）。这就是为什么我们需要把信息"压缩"——做摘要、画架构图、分模块——本质上都是在对抗认知负荷的上限。\n\nAgent 没有这个限制。它的"工作记忆"就是上下文窗口，而且在窗口范围内，它对每一个 token 的注意力是均匀的（至少理论上如此）。给它越多相关的上下文，它做决策的信息就越充分。\n\n所以 Context Engineering 的核心思路不是"减少信息"，而是"组织好信息"。你不需要替 Agent 做信息筛选——你需要做的是确保信息以正确的结构和格式出现在上下文中。这和管理人类团队的思路完全相反。'
+      }
+    ],
+    originalText: '我们发现给 Agent 提供的 context 越多，它往往表现得越好。这和人是一样的，信息越充沛，任务完成度越高。'
+  },
+
+  3: {
+    title: '上下文窗口的现实约束',
+    sections: [
+      {
+        heading: '"Lost in the Middle" 与合理拆分',
+        diagram: `<style>
+@keyframes dd3_barGrow { 0%{width:0} 100%{width:100%} }
+@keyframes dd3_fadeMiddle { 0%{opacity:1} 100%{opacity:1} }
+@keyframes dd3_splitReveal { 0%{opacity:0;transform:scaleX(0)} 100%{opacity:1;transform:scaleX(1)} }
+@keyframes dd3_labelIn { 0%{opacity:0;transform:translateY(10px)} 100%{opacity:1;transform:translateY(0)} }
+@keyframes dd3_scissors { 0%{opacity:0;transform:translateY(-10px) scale(0.5)} 50%{opacity:1;transform:translateY(0) scale(1.2)} 100%{opacity:1;transform:translateY(0) scale(1)} }
+@keyframes dd3_glowGreen { 0%,100%{box-shadow:0 0 0 0 rgba(42,157,143,0.3)} 50%{box-shadow:0 0 12px 2px rgba(42,157,143,0.15)} }
+</style>
+<div style="margin:20px 0 28px;">
+  <!-- Model context sizes -->
+  <div class="dd-anim dd-d1" style="margin-bottom:20px;">
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;font-weight:500;letter-spacing:1px;">主流模型上下文窗口</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:12px;color:var(--text);min-width:72px;font-weight:600;">GPT-4</span>
+        <div style="flex:1;height:18px;background:rgba(0,0,0,0.05);border-radius:9px;overflow:hidden;">
+          <div style="height:100%;width:12.8%;background:var(--accent);border-radius:9px;animation:dd3_barGrow 0.8s ease forwards;animation-delay:0.5s;transform-origin:left;" class="dd-anim dd-d1"></div>
+        </div>
+        <span style="font-size:11px;color:var(--text-muted);min-width:48px;">128K</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:12px;color:var(--text);min-width:72px;font-weight:600;">Claude</span>
+        <div style="flex:1;height:18px;background:rgba(0,0,0,0.05);border-radius:9px;overflow:hidden;">
+          <div style="height:100%;width:20%;background:var(--accent2);border-radius:9px;animation:dd3_barGrow 0.8s ease forwards;animation-delay:0.7s;transform-origin:left;" class="dd-anim dd-d1"></div>
+        </div>
+        <span style="font-size:11px;color:var(--text-muted);min-width:48px;">200K</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:12px;color:var(--text);min-width:72px;font-weight:600;">Gemini</span>
+        <div style="flex:1;height:18px;background:rgba(0,0,0,0.05);border-radius:9px;overflow:hidden;">
+          <div style="height:100%;width:100%;background:var(--human);border-radius:9px;animation:dd3_barGrow 1s ease forwards;animation-delay:0.9s;transform-origin:left;" class="dd-anim dd-d1"></div>
+        </div>
+        <span style="font-size:11px;color:var(--text-muted);min-width:48px;">1M+</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lost in the Middle visualization -->
+  <div class="dd-slide dd-d2" style="margin-bottom:24px;">
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:500;letter-spacing:1px;">注意力分布 — "Lost in the Middle"</div>
+    <div style="background:var(--card-bg);border-radius:12px;padding:16px;border:1px solid rgba(0,0,0,0.06);">
+      <div style="display:flex;height:48px;border-radius:8px;overflow:hidden;gap:1px;">
+        <div style="flex:1;background:var(--accent);opacity:0.95;"></div>
+        <div style="flex:1;background:var(--accent);opacity:0.85;"></div>
+        <div style="flex:1;background:var(--accent);opacity:0.7;"></div>
+        <div style="flex:1;background:var(--accent);opacity:0.45;"></div>
+        <div style="flex:1;background:var(--accent);opacity:0.25;"></div>
+        <div style="flex:1;background:var(--accent);opacity:0.15;"></div>
+        <div style="flex:1;background:var(--accent);opacity:0.12;"></div>
+        <div style="flex:1;background:var(--accent);opacity:0.15;"></div>
+        <div style="flex:1;background:var(--accent);opacity:0.25;"></div>
+        <div style="flex:1;background:var(--accent);opacity:0.45;"></div>
+        <div style="flex:1;background:var(--accent);opacity:0.7;"></div>
+        <div style="flex:1;background:var(--accent);opacity:0.9;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:var(--text-muted);">
+        <span>开头 (高注意力)</span>
+        <span style="color:var(--danger);font-weight:600;">中间 (注意力稀释)</span>
+        <span>结尾 (高注意力)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Split solution -->
+  <div class="dd-slide dd-d3" style="position:relative;">
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:500;letter-spacing:1px;">拆分后 → 注意力集中</div>
+    <div class="dd-pop dd-d3" style="position:absolute;top:-2px;left:50%;transform:translateX(-50%);font-size:20px;z-index:2;animation:dd3_scissors 0.6s ease forwards;animation-delay:1.5s;opacity:0;">✂️</div>
+    <div style="display:flex;gap:12px;">
+      <div style="flex:1;background:var(--card-bg);border-radius:12px;padding:12px;border:2px solid var(--accent2);animation:dd3_glowGreen 2s ease infinite 2.2s;">
+        <div style="display:flex;height:36px;border-radius:6px;overflow:hidden;gap:1px;">
+          <div style="flex:1;background:var(--accent2);opacity:0.95;"></div>
+          <div style="flex:1;background:var(--accent2);opacity:0.85;"></div>
+          <div style="flex:1;background:var(--accent2);opacity:0.7;"></div>
+          <div style="flex:1;background:var(--accent2);opacity:0.65;"></div>
+          <div style="flex:1;background:var(--accent2);opacity:0.75;"></div>
+          <div style="flex:1;background:var(--accent2);opacity:0.9;"></div>
+        </div>
+        <div style="text-align:center;font-size:11px;color:var(--accent2);margin-top:6px;font-weight:600;">Agent A</div>
+      </div>
+      <div style="flex:1;background:var(--card-bg);border-radius:12px;padding:12px;border:2px solid var(--accent2);animation:dd3_glowGreen 2s ease infinite 2.5s;">
+        <div style="display:flex;height:36px;border-radius:6px;overflow:hidden;gap:1px;">
+          <div style="flex:1;background:var(--accent2);opacity:0.95;"></div>
+          <div style="flex:1;background:var(--accent2);opacity:0.85;"></div>
+          <div style="flex:1;background:var(--accent2);opacity:0.7;"></div>
+          <div style="flex:1;background:var(--accent2);opacity:0.65;"></div>
+          <div style="flex:1;background:var(--accent2);opacity:0.75;"></div>
+          <div style="flex:1;background:var(--accent2);opacity:0.9;"></div>
+        </div>
+        <div style="text-align:center;font-size:11px;color:var(--accent2);margin-top:6px;font-weight:600;">Agent B</div>
+      </div>
+    </div>
+  </div>
+</div>`,
+        body: '即使上下文窗口越来越大，"能装下"不等于"用得好"。2023 年的经典论文 "Lost in the Middle" 发现：当上下文变长时，模型对中间位置信息的注意力会显著下降——头部和尾部的信息被优先处理，中间的内容仿佛"隐形"了。\n\n这意味着，即使你有 200K 的窗口，把 180K 的内容一股脑塞进去，模型对关键信息的检索能力会大幅退化。它不是"忘了"，而是"注意力被稀释了"。\n\n所以合理拆分 Agent 的标准不是"这个任务能不能拆"，而是"单个 Agent 的上下文是否已经大到影响注意力质量"。当你发现一个 Agent 需要同时处理上万行代码 + 几十页文档 + 大量历史对话时，这才是拆分的合理理由——因为物理上下文装不下，不是因为人类团队是这么分工的。'
+      }
+    ],
+    originalText: '目前模型的上下文窗口仍然有限。当面对一个巨大的任务时，单个 Agent 的上下文可能会被撑满。为了不影响交付质量，我们将其拆分成多个 Agent，每个 Agent 负责一部分，以此减轻上下文压力。'
+  }
+};
+
+// === DEEP DIVE DIAGRAMS ===
+var deepDiveDiagrams = {};
+
+// === DD4: 客观性需求 — 自我评估偏见 ===
+deepDiveData[4] = {
+  title: '为什么 Agent 自我评估会有偏见',
+  sections: [
+    {
+      heading: '讨好倾向与自我盲区',
+      diagram: `<div style="padding:24px 0;">
+<style>
+@keyframes dd4_tick { 0%{width:0%} 100%{width:100%} }
+@keyframes dd4_roseGlow { 0%,100%{box-shadow:0 0 8px rgba(196,74,58,0.1)} 50%{box-shadow:0 0 28px rgba(196,74,58,0.35)} }
+@keyframes dd4_greenGlow { 0%,100%{box-shadow:0 0 8px rgba(42,157,143,0.1)} 50%{box-shadow:0 0 28px rgba(42,157,143,0.35)} }
+@keyframes dd4_glasses { 0%{opacity:0;transform:scale(0) rotate(-15deg)} 60%{opacity:1;transform:scale(1.2) rotate(5deg)} 100%{opacity:1;transform:scale(1) rotate(0)} }
+@keyframes dd4_stamp { 0%{opacity:0;transform:scale(2.5) rotate(-10deg)} 70%{opacity:0.9;transform:scale(0.95) rotate(2deg)} 100%{opacity:1;transform:scale(1) rotate(0)} }
+</style>
+<div style="display:flex;gap:28px;justify-content:center;flex-wrap:wrap;align-items:stretch;">
+  <!-- Self-review card -->
+  <div class="dd-anim dd-d1" style="flex:1;min-width:200px;max-width:280px;background:rgba(196,74,58,0.08);border:2px solid var(--danger);border-radius:16px;padding:20px;text-align:center;position:relative;overflow:hidden;animation:dd4_roseGlow 3s ease-in-out infinite;animation-delay:1.5s;">
+    <div class="dd-pop dd-d2" style="position:absolute;top:8px;right:8px;font-size:28px;animation:dd4_glasses 0.6s ease forwards;animation-delay:0.8s;opacity:0;">🕶️</div>
+    <div style="font-size:13px;color:var(--danger);font-weight:700;letter-spacing:1px;margin-bottom:12px;">Builder 自评</div>
+    <div style="position:relative;width:100%;height:12px;background:rgba(196,74,58,0.12);border-radius:6px;overflow:hidden;margin-bottom:14px;">
+      <div class="dd-anim dd-d2" style="position:absolute;left:0;top:0;height:100%;background:var(--danger);border-radius:6px;animation-name:dd4_tick;animation-duration:1.5s;animation-fill-mode:forwards;width:0%;"></div>
+    </div>
+    <div style="font-size:52px;font-weight:900;color:var(--danger);line-height:1;" class="dd-pop dd-d3">100<span style="font-size:20px;font-weight:400;">分</span></div>
+    <div class="dd-anim dd-d4" style="margin-top:10px;font-size:12px;color:rgba(196,74,58,0.7);font-style:italic;">"我的代码很完美！"</div>
+    <div class="dd-pop dd-d4" style="position:absolute;bottom:12px;right:12px;font-size:11px;background:var(--danger);color:#fff;padding:3px 10px;border-radius:20px;animation:dd4_stamp 0.4s ease forwards;animation-delay:1.4s;opacity:0;">偏见 +28%</div>
+  </div>
+  <!-- VS divider -->
+  <div style="display:flex;align-items:center;flex-shrink:0;" class="dd-pop dd-d2">
+    <div style="font-size:20px;font-weight:900;color:var(--muted);letter-spacing:2px;">VS</div>
+  </div>
+  <!-- Independent review card -->
+  <div class="dd-anim dd-d2" style="flex:1;min-width:200px;max-width:280px;background:rgba(42,157,143,0.08);border:2px solid var(--accent2);border-radius:16px;padding:20px;text-align:center;position:relative;overflow:hidden;animation:dd4_greenGlow 3s ease-in-out infinite;animation-delay:2s;">
+    <div class="dd-pop dd-d3" style="position:absolute;top:8px;right:8px;font-size:28px;">🔍</div>
+    <div style="font-size:13px;color:var(--accent2);font-weight:700;letter-spacing:1px;margin-bottom:12px;">独立评审</div>
+    <div style="position:relative;width:100%;height:12px;background:rgba(42,157,143,0.12);border-radius:6px;overflow:hidden;margin-bottom:14px;">
+      <div class="dd-anim dd-d3" style="position:absolute;left:0;top:0;height:100%;background:var(--accent2);border-radius:6px;animation-name:dd4_tick;animation-duration:1.5s;animation-fill-mode:forwards;width:0%;max-width:72%;"></div>
+    </div>
+    <div style="font-size:52px;font-weight:900;color:var(--accent2);line-height:1;" class="dd-pop dd-d4">72<span style="font-size:20px;font-weight:400;">分</span></div>
+    <div class="dd-anim dd-d4" style="margin-top:10px;font-size:12px;color:rgba(42,157,143,0.7);font-style:italic;">"有3个边界case没处理"</div>
+    <div class="dd-pop dd-d4" style="position:absolute;bottom:12px;right:12px;font-size:11px;background:var(--accent2);color:#fff;padding:3px 10px;border-radius:20px;">客观评估</div>
+  </div>
+</div>
+<!-- Bias explanation bar -->
+<div class="dd-slide dd-d4" style="margin-top:20px;text-align:center;padding:14px;background:rgba(123,74,202,0.06);border-radius:12px;border-left:3px solid var(--accent);">
+  <span style="font-size:13px;color:var(--text-primary);">研究表明：同一模型 review 自己的代码，发现 bug 的概率比独立 reviewer <strong style="color:var(--danger);">低 30-40%</strong></span>
+</div>
+</div>`,
+      body: 'LLM 存在天然的 sycophancy（讨好）倾向——对自己生成的内容评价更宽容。这不是故意的，而是训练过程中的统计偏差：模型倾向于认同自己的输出模式。\n\n这就是为什么"分离"不是为了"分工效率"，而是为了"制衡"。就像司法系统中审判独立于起诉，Agent 系统中的评估也应该独立于生成。\n\n当 Builder 和 Reviewer 是同一个 Agent 时，它本质上是在"批改自己的作业"——而我们从小就知道，自己批改作业永远比老师批改分数高。'
+    }
+  ],
+  originalText: 'Agent 在评估自己工作时往往存在偏见（bias）。我们经常将"代码审核者"和"测试者"的角色分开，就是为了避免"既当运动员又当裁判员"的情况，从而确保代码审核和测试的质量。'
+};
+
+// === DD5: 信息压缩 — 角色名的压缩效应 ===
+deepDiveData[5] = {
+  title: '角色名为什么能有效压缩指令',
+  sections: [
+    {
+      heading: '6 个字 = 500+ tokens',
+      diagram: `<div style="padding:24px 0;">
+<style>
+@keyframes dd5_stackScroll { 0%{transform:translateY(0)} 100%{transform:translateY(-280px)} }
+@keyframes dd5_arrowFlow { 0%{background-position:0% 50%} 100%{background-position:200% 50%} }
+@keyframes dd5_compressGlow { 0%,100%{box-shadow:0 0 8px rgba(42,157,143,0.2)} 50%{box-shadow:0 0 25px rgba(42,157,143,0.5)} }
+@keyframes dd5_badgePop { 0%{transform:scale(0);opacity:0} 60%{transform:scale(1.15);opacity:1} 100%{transform:scale(1);opacity:1} }
+</style>
+<div style="display:flex;align-items:center;gap:0;justify-content:center;flex-wrap:wrap;">
+  <!-- Left: tall stack of instructions -->
+  <div class="dd-anim dd-d1" style="flex:0 0 160px;height:180px;overflow:hidden;border-radius:12px;background:rgba(196,74,58,0.06);border:1.5px solid rgba(196,74,58,0.25);position:relative;padding:0;">
+    <div style="position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden;">
+      <div class="dd-anim dd-d2" style="padding:10px 12px;font-size:11px;line-height:1.8;color:var(--text-secondary);white-space:nowrap;animation-name:dd5_stackScroll;animation-duration:6s;animation-iteration-count:infinite;animation-timing-function:linear;animation-delay:1s;">
+        <div style="color:var(--danger);">✗ 检查所有边界条件</div>
+        <div>✗ 验证输入参数合法性</div>
+        <div>✗ 检查内存泄漏风险</div>
+        <div>✗ 安全漏洞审计</div>
+        <div>✗ 性能瓶颈分析</div>
+        <div>✗ 错误处理完整性</div>
+        <div>✗ 并发安全检查</div>
+        <div>✗ 日志规范审核</div>
+        <div>✗ API 兼容性验证</div>
+        <div>✗ 回归测试覆盖</div>
+        <div>✗ 代码风格一致性</div>
+        <div>✗ 文档同步更新</div>
+        <div>✗ 依赖版本检查</div>
+        <div>✗ 异常路径覆盖</div>
+        <div>✗ SQL注入防护检查</div>
+        <div>✗ XSS防护验证</div>
+        <div style="color:var(--danger);">✗ 检查所有边界条件</div>
+        <div>✗ 验证输入参数合法性</div>
+        <div>✗ 检查内存泄漏风险</div>
+        <div>✗ 安全漏洞审计</div>
+      </div>
+    </div>
+    <div style="position:absolute;bottom:0;left:0;right:0;height:40px;background:linear-gradient(transparent,rgba(196,74,58,0.1));"></div>
+    <div style="position:absolute;top:6px;right:8px;font-size:10px;color:var(--danger);font-weight:700;">500+ tokens</div>
+  </div>
+  <!-- Middle: compression arrow -->
+  <div class="dd-slide dd-d2" style="flex:0 0 100px;display:flex;flex-direction:column;align-items:center;gap:6px;padding:0 8px;">
+    <div style="height:4px;width:80px;border-radius:2px;background:linear-gradient(90deg,var(--danger),var(--accent),var(--accent2));background-size:200% 100%;animation:dd5_arrowFlow 2s linear infinite;"></div>
+    <div class="dd-pop dd-d3" style="font-size:18px;font-weight:900;color:var(--accent);letter-spacing:-0.5px;white-space:nowrap;">压缩比<br><span style="font-size:28px;">1:80</span></div>
+    <div style="width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:12px solid var(--accent2);transform:rotate(-90deg);"></div>
+  </div>
+  <!-- Right: compact badge -->
+  <div class="dd-pop dd-d3" style="flex:0 0 160px;height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;background:rgba(42,157,143,0.08);border:2px solid var(--accent2);position:relative;animation:dd5_compressGlow 3s ease-in-out infinite;animation-delay:1.5s;">
+    <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),var(--accent));display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:10px;">🔧</div>
+    <div style="font-size:15px;font-weight:800;color:var(--accent2);text-align:center;line-height:1.3;">资深QA<br>工程师</div>
+    <div style="position:absolute;top:6px;right:8px;font-size:10px;color:var(--accent2);font-weight:700;">6 个字</div>
+  </div>
+</div>
+<!-- Warning note -->
+<div class="dd-slide dd-d4" style="margin-top:18px;padding:12px 16px;background:rgba(212,148,74,0.08);border-radius:10px;border-left:3px solid var(--human);font-size:12px;color:var(--text-secondary);">
+  <strong style="color:var(--human);">注意边界：</strong>当角色名的隐含预期和实际需求不匹配时，压缩反而会误导。比如让"前端工程师"做数据库优化，角色名激活的知识簇会与任务冲突。
+</div>
+</div>`,
+      body: '一个角色名（如"资深QA工程师"）能激活模型训练数据中的整个知识簇。这 6 个字等效于 20+ 条具体指令：检查边界条件、安全审计、性能测试、回归验证……\n\n这就是角色设定的真正威力：它不是在"扮演"，而是在做高效的 prompt 压缩。你用一个人设激活了一整套行为模式，比逐条写指令高效得多。\n\n但这种压缩也有边界——当角色名暗示的能力范围与实际任务不匹配时，模型会被角色的"刻板印象"误导，反而做出不合适的决策。所以角色名要精准匹配任务需求。'
+    }
+  ],
+  originalText: '角色设定本身压缩了大量指令信息。当你告诉 Agent"你是一个测试者"时，它立刻就能领会对待代码应有的态度和立场，而不需要你花篇幅去解释如何面对一份提交的代码。'
+};
+
+// === DD6: 全能 Agent — 一个 Agent 多平台的优势 ===
+deepDiveData[6] = {
+  title: '一个 Agent 做多平台的实际优势',
+  sections: [
+    {
+      heading: '联通 vs 孤岛',
+      diagram: `<div style="padding:24px 0;">
+<style>
+@keyframes dd6_flowDash { 0%{stroke-dashoffset:20} 100%{stroke-dashoffset:0} }
+@keyframes dd6_nodeGlow { 0%,100%{filter:drop-shadow(0 0 4px rgba(123,74,202,0.3))} 50%{filter:drop-shadow(0 0 12px rgba(123,74,202,0.6))} }
+@keyframes dd6_dataBlip { 0%,100%{r:2;opacity:0.6} 50%{r:4;opacity:1} }
+</style>
+<div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;align-items:flex-start;">
+  <!-- Connected model -->
+  <div class="dd-anim dd-d1" style="flex:1;min-width:220px;max-width:300px;text-align:center;">
+    <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;letter-spacing:1px;">全能 Agent 模式</div>
+    <svg viewBox="0 0 240 200" style="width:100%;max-width:240px;animation:dd6_nodeGlow 3s ease-in-out infinite;">
+      <!-- Center agent -->
+      <circle cx="120" cy="100" r="28" fill="var(--accent)" opacity="0.15" class="dd-anim dd-d1"/>
+      <circle cx="120" cy="100" r="22" fill="var(--accent)" opacity="0.9" class="dd-pop dd-d1"/>
+      <text x="120" y="104" text-anchor="middle" fill="#fff" font-size="11" font-weight="800">Agent</text>
+      <!-- Platform nodes -->
+      <circle cx="50" cy="36" r="18" fill="var(--danger)" opacity="0.85" class="dd-pop dd-d2"/>
+      <text x="50" y="40" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">小红书</text>
+      <circle cx="190" cy="36" r="18" fill="var(--accent2)" opacity="0.85" class="dd-pop dd-d2"/>
+      <text x="190" y="40" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">抖音</text>
+      <circle cx="50" cy="164" r="18" fill="var(--human)" opacity="0.85" class="dd-pop dd-d3"/>
+      <text x="50" y="168" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">公众号</text>
+      <circle cx="190" cy="164" r="18" fill="#5B8DEF" opacity="0.85" class="dd-pop dd-d3"/>
+      <text x="190" y="168" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">B站</text>
+      <!-- Connections to center -->
+      <line x1="98" y1="85" x2="65" y2="50" stroke="var(--danger)" stroke-width="2" stroke-dasharray="6,4" opacity="0.7" style="animation:dd6_flowDash 1s linear infinite;"/>
+      <line x1="142" y1="85" x2="175" y2="50" stroke="var(--accent2)" stroke-width="2" stroke-dasharray="6,4" opacity="0.7" style="animation:dd6_flowDash 1s linear infinite;animation-delay:0.25s;"/>
+      <line x1="98" y1="115" x2="65" y2="150" stroke="var(--human)" stroke-width="2" stroke-dasharray="6,4" opacity="0.7" style="animation:dd6_flowDash 1s linear infinite;animation-delay:0.5s;"/>
+      <line x1="142" y1="115" x2="175" y2="150" stroke="#5B8DEF" stroke-width="2" stroke-dasharray="6,4" opacity="0.7" style="animation:dd6_flowDash 1s linear infinite;animation-delay:0.75s;"/>
+      <!-- Cross-platform connections -->
+      <line x1="65" y1="44" x2="175" y2="44" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.35" style="animation:dd6_flowDash 2s linear infinite;"/>
+      <line x1="65" y1="156" x2="175" y2="156" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.35" style="animation:dd6_flowDash 2s linear infinite;animation-delay:0.5s;"/>
+      <line x1="50" y1="54" x2="50" y2="146" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.35" style="animation:dd6_flowDash 2s linear infinite;animation-delay:1s;"/>
+      <line x1="190" y1="54" x2="190" y2="146" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.35" style="animation:dd6_flowDash 2s linear infinite;animation-delay:1.5s;"/>
+      <!-- Data blips -->
+      <circle cx="82" cy="68" r="3" fill="var(--danger)" style="animation:dd6_dataBlip 1.5s ease-in-out infinite;"/>
+      <circle cx="158" cy="68" r="3" fill="var(--accent2)" style="animation:dd6_dataBlip 1.5s ease-in-out infinite;animation-delay:0.4s;"/>
+      <circle cx="82" cy="132" r="3" fill="var(--human)" style="animation:dd6_dataBlip 1.5s ease-in-out infinite;animation-delay:0.8s;"/>
+      <circle cx="158" cy="132" r="3" fill="#5B8DEF" style="animation:dd6_dataBlip 1.5s ease-in-out infinite;animation-delay:1.2s;"/>
+    </svg>
+    <div class="dd-slide dd-d3" style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px;">
+      <span style="font-size:10px;background:rgba(42,157,143,0.12);color:var(--accent2);padding:3px 8px;border-radius:10px;">数据联动</span>
+      <span style="font-size:10px;background:rgba(123,74,202,0.12);color:var(--accent);padding:3px 8px;border-radius:10px;">调性统一</span>
+      <span style="font-size:10px;background:rgba(212,148,74,0.12);color:var(--human);padding:3px 8px;border-radius:10px;">内容去重</span>
+    </div>
+  </div>
+  <!-- Isolated model -->
+  <div class="dd-anim dd-d2" style="flex:1;min-width:220px;max-width:300px;text-align:center;">
+    <div style="font-size:12px;font-weight:700;color:var(--danger);margin-bottom:10px;letter-spacing:1px;">各管一摊模式</div>
+    <svg viewBox="0 0 240 200" style="width:100%;max-width:240px;">
+      <!-- 4 isolated boxes -->
+      <rect x="10" y="10" width="100" height="80" rx="10" fill="none" stroke="var(--danger)" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5" class="dd-anim dd-d2"/>
+      <circle cx="60" cy="38" r="14" fill="var(--danger)" opacity="0.7" class="dd-pop dd-d3"/>
+      <text x="60" y="42" text-anchor="middle" fill="#fff" font-size="7" font-weight="700">Agent A</text>
+      <text x="60" y="70" text-anchor="middle" fill="var(--danger)" font-size="8" opacity="0.7">小红书</text>
+      <rect x="130" y="10" width="100" height="80" rx="10" fill="none" stroke="var(--accent2)" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5" class="dd-anim dd-d2"/>
+      <circle cx="180" cy="38" r="14" fill="var(--accent2)" opacity="0.7" class="dd-pop dd-d3"/>
+      <text x="180" y="42" text-anchor="middle" fill="#fff" font-size="7" font-weight="700">Agent B</text>
+      <text x="180" y="70" text-anchor="middle" fill="var(--accent2)" font-size="8" opacity="0.7">抖音</text>
+      <rect x="10" y="110" width="100" height="80" rx="10" fill="none" stroke="var(--human)" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5" class="dd-anim dd-d3"/>
+      <circle cx="60" cy="138" r="14" fill="var(--human)" opacity="0.7" class="dd-pop dd-d4"/>
+      <text x="60" y="142" text-anchor="middle" fill="#fff" font-size="7" font-weight="700">Agent C</text>
+      <text x="60" y="170" text-anchor="middle" fill="var(--human)" font-size="8" opacity="0.7">公众号</text>
+      <rect x="130" y="110" width="100" height="80" rx="10" fill="none" stroke="#5B8DEF" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5" class="dd-anim dd-d3"/>
+      <circle cx="180" cy="138" r="14" fill="#5B8DEF" opacity="0.7" class="dd-pop dd-d4"/>
+      <text x="180" y="142" text-anchor="middle" fill="#fff" font-size="7" font-weight="700">Agent D</text>
+      <text x="180" y="170" text-anchor="middle" fill="#5B8DEF" font-size="8" opacity="0.7">B站</text>
+      <!-- Walls -->
+      <line x1="120" y1="15" x2="120" y2="85" stroke="var(--muted)" stroke-width="3" opacity="0.3" class="dd-anim dd-d4"/>
+      <line x1="120" y1="115" x2="120" y2="185" stroke="var(--muted)" stroke-width="3" opacity="0.3" class="dd-anim dd-d4"/>
+      <line x1="15" y1="100" x2="225" y2="100" stroke="var(--muted)" stroke-width="3" opacity="0.3" class="dd-anim dd-d4"/>
+    </svg>
+    <div class="dd-slide dd-d4" style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px;">
+      <span style="font-size:10px;background:rgba(196,74,58,0.12);color:var(--danger);padding:3px 8px;border-radius:10px;">数据孤岛</span>
+      <span style="font-size:10px;background:rgba(100,100,100,0.12);color:var(--muted);padding:3px 8px;border-radius:10px;">调性割裂</span>
+      <span style="font-size:10px;background:rgba(100,100,100,0.12);color:var(--muted);padding:3px 8px;border-radius:10px;">重复劳动</span>
+    </div>
+  </div>
+</div>
+</div>`,
+      body: '跨平台联动是全能 Agent 最大的优势：它同时掌握所有平台的数据和趋势，可以制定真正的整合策略。比如发现某个话题在抖音爆了，立刻在小红书做图文深度解析，在公众号做长文沉淀——这种反应速度和协调能力，4个独立 Agent 做不到。\n\n一致性同样关键。同一个 Agent 天然保证品牌调性统一，不会出现各平台"各说各话"的尴尬。同一内容在不同平台的适配也不需要从头开始——复用核心观点，只调整表达形式。\n\n现实中很多大公司正在努力打破"部门墙"。而 Agent 天然没有这个限制——它不会跟你说"这事不归我管"。有时候，不拆才是最优解。'
+    }
+  ],
+  originalText: '可能一个 Agent 的多面手，反而能够取长补短，在发挥不同平台优势的同时，也能打通各个平台的内容，制造联动。这也是为什么很多大公司内部其实正在努力打破"部门墙"——而 Agent 天然就没有部门墙，它不会跟你说"这事不归我管"。'
+};
+
+</script>
+</body>
+</html>

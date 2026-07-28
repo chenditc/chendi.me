@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>EAGLE 是怎么工作的</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg-act1: #F0FDFA;
+  --bg-act2: #FFF7ED;
+  --bg-act3: #F8FAFC;
+  --bg-close: #111827;
+  --bg-dark: #111827;
+  --text: #16213A;
+  --text-muted: #64748B;
+  --dim: #94A3B8;
+  --accent: #0D9488;
+  --accent2: #F97316;
+  --warm: #D97706;
+  --danger: #DC2626;
+  --neutral: #CBD5E1;
+  --card-bg: #FFFFFF;
+}
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+  color: var(--text);
+  background: var(--bg-act1);
+  -webkit-font-smoothing: antialiased;
+}
+.content-width { max-width: 640px; margin: 0 auto; padding: 0 28px; }
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1, .reveal-d1 { transition-delay: 0.15s; }
+.reveal-delay-2, .reveal-d2 { transition-delay: 0.3s; }
+.reveal-delay-3, .reveal-d3 { transition-delay: 0.45s; }
+.reveal-delay-4, .reveal-d4 { transition-delay: 0.6s; }
+.big-statement {
+  font-family: 'Noto Serif SC', serif;
+  font-size: clamp(22px, 5.5vw, 32px);
+  font-weight: 700;
+  line-height: 1.5;
+  margin-bottom: 28px;
+  letter-spacing: 0;
+}
+.hero-title {
+  font-family: 'Noto Serif SC', serif;
+  font-size: clamp(34px, 9vw, 64px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: 0;
+  margin-bottom: 20px;
+}
+.body-text {
+  font-size: 16px;
+  line-height: 1.9;
+  color: var(--text);
+  margin-bottom: 24px;
+}
+.body-text .hl { color: var(--accent); font-weight: 700; }
+.body-text .hl-warm { color: var(--warm); font-weight: 700; }
+.body-text .hl-danger { color: var(--danger); font-weight: 700; }
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+.eyebrow::before {
+  content: "";
+  width: 28px;
+  height: 2px;
+  background: currentColor;
+}
+.layer {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  visibility: hidden;
+  opacity: 0;
+  will-change: transform, opacity;
+  scroll-snap-type: y proximity;
+}
+.layer.active { visibility: visible; opacity: 1; }
+.layer.transitioning {
+  transition-property: transform, opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+.feed-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 84px 24px;
+  background: var(--bg-act1);
+  scroll-snap-align: start;
+}
+.feed-section.alt { background: var(--bg-act2); }
+.feed-section.paper { background: var(--bg-act3); }
+.feed-section.dark { background: var(--bg-dark); color: #F8FAFC; }
+.feed-section.dark .body-text { color: #CBD5E1; }
+.feed-section.dark .big-statement,
+.feed-section.dark .hero-title { color: #F8FAFC; }
+.feed-section.dark .eyebrow { color: #5EEAD4; }
+.section-inner { max-width: 600px; width: 100%; }
+.breadcrumb {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(12px);
+  padding: 8px 14px;
+  border-radius: 10px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+  font-size: 13px;
+  font-weight: 600;
+}
+.breadcrumb span { color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
+.breadcrumb span:hover { color: var(--accent); }
+.breadcrumb span.current { color: var(--text); cursor: default; }
+.breadcrumb .sep { color: #CBD5E1; margin: 0 2px; cursor: default; }
+.back-btn {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 1001;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  font-size: 18px;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  transition: all 0.2s;
+}
+.back-btn:hover { background: var(--accent); color: #fff; }
+.depth-dots {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  gap: 8px;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(8px);
+  padding: 8px 14px;
+  border-radius: 20px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #CBD5E1; transition: all 0.3s; }
+.dot.active { background: var(--accent); box-shadow: 0 0 8px rgba(13,148,136,0.45); transform: scale(1.2); }
+.drill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border: 1.5px solid rgba(13,148,136,0.35);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.drill-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(13,148,136,0.28); }
+.dark .drill-btn { color: #5EEAD4; border-color: rgba(94,234,212,0.4); }
+.dark .drill-btn:hover { color: #052E2B; background: #5EEAD4; }
+.source-panel {
+  margin-top: 24px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(13,148,136,0.18);
+  background: rgba(13,148,136,0.04);
+}
+.dark .source-panel { border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); }
+.source-toggle {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.dark .source-toggle { color: #5EEAD4; }
+.source-toggle:hover { background: rgba(13,148,136,0.07); }
+.source-toggle .arrow { transition: transform 0.3s; font-size: 11px; }
+.source-toggle.open .arrow { transform: rotate(90deg); }
+.source-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+  padding: 0 16px;
+}
+.source-body.open { max-height: 2000px; padding: 0 16px 16px; overflow-y: auto; }
+.source-body p, .source-body li {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+.dark .source-body p, .dark .source-body li { color: #CBD5E1; }
+.source-body a { color: var(--accent); font-weight: 700; text-decoration: none; }
+.dark .source-body a { color: #5EEAD4; }
+.source-body .source-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  margin-bottom: 8px;
+  display: block;
+}
+.anim-stage {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin: 28px 0;
+  min-height: 190px;
+}
+.anim-stage > div { width: 100%; }
+.stage-card {
+  position: relative;
+  width: 100%;
+  max-width: 390px;
+  min-height: 210px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.68);
+  border: 1px solid rgba(15,23,42,0.08);
+  box-shadow: 0 18px 45px rgba(15,23,42,0.08);
+  padding: 22px;
+  overflow: hidden;
+}
+.dark .stage-card { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12); box-shadow: none; }
+.pill, .node, .box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+.pill {
+  min-height: 42px;
+  border-radius: 999px;
+  padding: 9px 16px;
+  background: #fff;
+  border: 2px solid var(--neutral);
+  color: var(--text);
+}
+.dark .pill { background: rgba(255,255,255,0.08); color: #F8FAFC; }
+.node {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--neutral);
+  color: var(--text);
+}
+.dark .node { background: rgba(255,255,255,0.08); color: #F8FAFC; }
+.box {
+  border-radius: 8px;
+  padding: 12px 14px;
+  background: #fff;
+  border: 2px solid var(--neutral);
+  color: var(--text);
+}
+.dark .box { background: rgba(255,255,255,0.08); color: #F8FAFC; }
+.arrow-line {
+  height: 2px;
+  background: var(--neutral);
+  position: relative;
+  transform-origin: left center;
+}
+.arrow-line::after {
+  content: "";
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-top: 2px solid currentColor;
+  transform: translateY(-50%) rotate(45deg);
+  color: inherit;
+}
+.mini-note {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+  font-weight: 600;
+}
+.dark .mini-note { color: #CBD5E1; }
+@keyframes fadeScale { from { opacity: 0; transform: scale(0.88); } to { opacity: 1; transform: scale(1); } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes drawWide { from { opacity: 0; transform: scaleX(0); } to { opacity: 1; transform: scaleX(1); } }
+@keyframes glowPulse { 0%,100% { box-shadow: 0 0 0 rgba(13,148,136,0); } 50% { box-shadow: 0 0 0 8px rgba(13,148,136,0.14); } }
+@keyframes rejectShake { 0%,100% { transform: translateX(0); } 30% { transform: translateX(-4px); } 60% { transform: translateX(4px); } }
+
+/* S1 */
+.s1_stage .stage-card { min-height: 240px; }
+.s1_row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; }
+.s1_token { width: 52px; height: 52px; border-radius: 8px; border: 2px solid var(--accent); color: var(--accent); background: #fff; opacity: 0; transform: scale(0.9); }
+.s1_gate { flex: 1; height: 2px; background: var(--accent); opacity: 0; transform: scaleX(0); transform-origin: left center; }
+.s1_gpu { margin: 0 auto 22px; max-width: 220px; border-color: var(--accent); color: var(--accent); opacity: 0; transform: translateY(12px); }
+.s1_stage.visible .s1_gpu { animation: fadeUp 0.45s 0.2s forwards; }
+.s1_stage.visible .s1_t1 { animation: fadeScale 0.35s 0.8s forwards; }
+.s1_stage.visible .s1_g1 { animation: drawWide 0.35s 1.2s forwards; }
+.s1_stage.visible .s1_t2 { animation: fadeScale 0.35s 1.6s forwards; }
+.s1_stage.visible .s1_g2 { animation: drawWide 0.35s 2.0s forwards; }
+.s1_stage.visible .s1_t3 { animation: fadeScale 0.35s 2.4s forwards; }
+
+/* S2 */
+.s2_flow { display: grid; grid-template-columns: 1fr 40px 1fr; gap: 10px; align-items: center; margin: 14px 0; }
+.s2_draft, .s2_verify { opacity: 0; transform: scale(0.9); }
+.s2_arrow { opacity: 0; color: var(--accent); background: var(--accent); }
+.s2_batch { display: flex; gap: 8px; justify-content: center; margin-top: 22px; }
+.s2_chip { width: 42px; height: 42px; border-radius: 8px; background: #CCFBF1; color: #0F766E; display: flex; align-items: center; justify-content: center; font-weight: 700; opacity: 0; transform: translateY(12px); }
+.s2_stage.visible .s2_draft { animation: fadeScale 0.4s 0.2s forwards; }
+.s2_stage.visible .s2_arrow { animation: drawWide 0.35s 0.75s forwards; }
+.s2_stage.visible .s2_verify { animation: fadeScale 0.4s 1.15s forwards; }
+.s2_stage.visible .s2_c1 { animation: fadeUp 0.3s 1.65s forwards; }
+.s2_stage.visible .s2_c2 { animation: fadeUp 0.3s 1.95s forwards; }
+.s2_stage.visible .s2_c3 { animation: fadeUp 0.3s 2.25s forwards; }
+.s2_stage.visible .s2_c4 { animation: fadeUp 0.3s 2.55s forwards; }
+
+/* S3 */
+.s3_lanes { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 8px; }
+.s3_lane { display: grid; grid-template-columns: 82px 1fr 90px; gap: 10px; align-items: center; }
+.s3_label { font-size: 13px; font-weight: 700; color: var(--text-muted); opacity: 0; }
+.s3_track { height: 14px; border-radius: 999px; background: #E2E8F0; overflow: hidden; }
+.s3_bar { height: 100%; width: 0; border-radius: inherit; }
+.s3_score { font-size: 13px; font-weight: 700; opacity: 0; }
+.s3_bar.token { background: var(--warm); }
+.s3_bar.feature { background: var(--accent); }
+.s3_bar.shift { background: var(--accent2); }
+.s3_stage.visible .s3_label, .s3_stage.visible .s3_score { animation: fadeUp 0.35s 0.25s forwards; }
+.s3_stage.visible .s3_bar.token { animation: s3_fill1 0.8s 0.7s forwards; }
+.s3_stage.visible .s3_bar.feature { animation: s3_fill2 0.8s 1.15s forwards; }
+.s3_stage.visible .s3_bar.shift { animation: s3_fill3 0.8s 1.6s forwards; }
+@keyframes s3_fill1 { to { width: 54%; } }
+@keyframes s3_fill2 { to { width: 72%; } }
+@keyframes s3_fill3 { to { width: 92%; } }
+
+/* S4 */
+.s4_tree { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.s4_level { display: flex; justify-content: center; gap: 16px; width: 100%; }
+.s4_node { width: 54px; height: 46px; border-radius: 8px; border: 2px solid var(--neutral); background: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; opacity: 0; transform: scale(0.9); }
+.s4_node.root { border-color: var(--accent); color: var(--accent); }
+.s4_node.good { border-color: var(--accent); background: #CCFBF1; color: #0F766E; }
+.s4_node.bad { border-color: #FCA5A5; color: var(--danger); }
+.s4_conn { width: 2px; height: 18px; background: var(--neutral); opacity: 0; transform: scaleY(0); transform-origin: top center; }
+.s4_stage.visible .s4_root { animation: fadeScale 0.35s 0.2s forwards; }
+.s4_stage.visible .s4_c1 { animation: drawDown 0.25s 0.65s forwards; }
+.s4_stage.visible .s4_l2 .s4_node { animation: fadeScale 0.35s 1.0s forwards; }
+.s4_stage.visible .s4_c2 { animation: drawDown 0.25s 1.45s forwards; }
+.s4_stage.visible .s4_l3 .s4_node { animation: fadeScale 0.35s 1.8s forwards; }
+.s4_stage.visible .s4_node.bad { animation: fadeScale 0.35s 1.8s forwards, rejectShake 0.35s 2.45s; }
+@keyframes drawDown { to { opacity: 1; transform: scaleY(1); } }
+
+/* S5 */
+.s5_grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+.s5_col { border-radius: 8px; padding: 14px; background: rgba(255,255,255,0.72); border: 1px solid rgba(15,23,42,0.08); }
+.s5_title { font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 12px; opacity: 0; }
+.s5_tree { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.s5_cell { min-height: 34px; border-radius: 6px; border: 2px solid var(--neutral); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; opacity: 0; transform: scale(0.9); }
+.s5_cell.hot { border-color: var(--accent); color: var(--accent); background: #CCFBF1; }
+.s5_cell.cold { opacity: 0; }
+.s5_stage.visible .s5_title { animation: fadeUp 0.35s 0.2s forwards; }
+.s5_stage.visible .s5_cell { animation: fadeScale 0.35s 0.65s forwards; }
+.s5_stage.visible .s5_cell.hot { animation: fadeScale 0.35s 0.65s forwards, glowPulse 1.1s 1.25s 2; }
+
+/* S6 */
+.s6_stack { display: grid; grid-template-columns: 1fr; gap: 12px; max-width: 300px; margin: 0 auto; }
+.s6_layer { min-height: 42px; border-radius: 8px; border: 2px solid var(--neutral); background: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font-size: 13px; font-weight: 700; opacity: 0; transform: translateY(14px); }
+.s6_layer span:last-child { color: var(--text-muted); font-size: 12px; }
+.s6_layer.use { border-color: var(--accent); color: var(--accent); background: #CCFBF1; }
+.s6_token { margin: 18px auto 0; width: 120px; border-color: var(--accent2); color: var(--accent2); opacity: 0; transform: scale(0.9); }
+.s6_stage.visible .s6_l1 { animation: fadeUp 0.35s 0.2s forwards; }
+.s6_stage.visible .s6_l2 { animation: fadeUp 0.35s 0.55s forwards; }
+.s6_stage.visible .s6_l3 { animation: fadeUp 0.35s 0.9s forwards; }
+.s6_stage.visible .s6_token { animation: fadeScale 0.4s 1.4s forwards; }
+
+/* S7 */
+.s7_matrix { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.s7_item { min-height: 72px; border-radius: 8px; border: 2px solid rgba(15,23,42,0.08); background: #fff; padding: 12px; opacity: 0; transform: translateY(14px); }
+.s7_item strong { display: block; color: var(--danger); font-size: 14px; margin-bottom: 6px; }
+.s7_item span { display: block; color: var(--text-muted); font-size: 12px; line-height: 1.45; }
+.s7_stage.visible .s7_i1 { animation: fadeUp 0.35s 0.2s forwards; }
+.s7_stage.visible .s7_i2 { animation: fadeUp 0.35s 0.55s forwards; }
+.s7_stage.visible .s7_i3 { animation: fadeUp 0.35s 0.9s forwards; }
+.s7_stage.visible .s7_i4 { animation: fadeUp 0.35s 1.25s forwards; }
+
+/* Mechanism layer */
+.m_stage .stage-card { min-height: 250px; }
+.m_pipeline { display: grid; grid-template-columns: 1fr 34px 1fr; gap: 8px; align-items: center; margin-bottom: 18px; }
+.m_box { min-height: 58px; font-size: 14px; opacity: 0; transform: scale(0.9); }
+.m_arrow { opacity: 0; color: var(--accent); background: var(--accent); }
+.m_caption { opacity: 0; transform: translateY(10px); }
+.m_stage.visible .m_b1 { animation: fadeScale 0.35s 0.2s forwards; }
+.m_stage.visible .m_a1 { animation: drawWide 0.3s 0.65s forwards; }
+.m_stage.visible .m_b2 { animation: fadeScale 0.35s 1.0s forwards; }
+.m_stage.visible .m_caption { animation: fadeUp 0.35s 1.45s forwards; }
+.u_stage .stage-card { min-height: 250px; }
+.u_choices { display: flex; justify-content: center; gap: 14px; margin-top: 16px; }
+.u_choice { width: 92px; min-height: 58px; border-radius: 8px; border: 2px solid var(--neutral); background: #fff; display: flex; align-items: center; justify-content: center; text-align: center; font-weight: 700; opacity: 0; transform: scale(0.9); }
+.u_choice.good { border-color: var(--accent); color: var(--accent); }
+.u_choice.alt { border-color: var(--warm); color: var(--warm); }
+.u_need { margin: 0 auto; max-width: 260px; opacity: 0; transform: translateY(10px); }
+.u_stage.visible .u_need { animation: fadeUp 0.35s 0.2s forwards; }
+.u_stage.visible .u_choice.good { animation: fadeScale 0.35s 0.75s forwards; }
+.u_stage.visible .u_choice.alt { animation: fadeScale 0.35s 1.15s forwards; }
+.v_stage .stage-card { min-height: 250px; }
+.v_row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 16px; }
+.v_tok { min-height: 44px; border-radius: 8px; border: 2px solid var(--neutral); display: flex; align-items: center; justify-content: center; font-weight: 700; opacity: 0; transform: scale(0.9); }
+.v_tok.ok { border-color: var(--accent); background: #CCFBF1; color: #0F766E; }
+.v_tok.no { border-color: #FCA5A5; background: #FEF2F2; color: var(--danger); }
+.v_stage.visible .v_t1 { animation: fadeScale 0.35s 0.25s forwards; }
+.v_stage.visible .v_t2 { animation: fadeScale 0.35s 0.65s forwards; }
+.v_stage.visible .v_t3 { animation: fadeScale 0.35s 1.05s forwards; }
+.v_stage.visible .v_t4 { animation: fadeScale 0.35s 1.45s forwards, rejectShake 0.35s 2.0s; }
+
+/* Side layer */
+.p_stage .stage-card { min-height: 250px; }
+.p_bars { display: grid; gap: 14px; margin-top: 14px; }
+.p_barline { display: grid; grid-template-columns: 86px 1fr 52px; gap: 10px; align-items: center; }
+.p_name, .p_val { font-size: 12px; font-weight: 700; color: var(--text-muted); opacity: 0; }
+.p_track { height: 12px; border-radius: 999px; background: rgba(203,213,225,0.72); overflow: hidden; }
+.p_fill { height: 100%; width: 0; border-radius: inherit; background: var(--accent); }
+.p_fill.cost { background: var(--danger); }
+.p_stage.visible .p_name, .p_stage.visible .p_val { animation: fadeUp 0.35s 0.25s forwards; }
+.p_stage.visible .p_f1 { animation: p_fill1 0.75s 0.75s forwards; }
+.p_stage.visible .p_f2 { animation: p_fill2 0.75s 1.15s forwards; }
+.p_stage.visible .p_f3 { animation: p_fill3 0.75s 1.55s forwards; }
+@keyframes p_fill1 { to { width: 80%; } }
+@keyframes p_fill2 { to { width: 42%; } }
+@keyframes p_fill3 { to { width: 68%; } }
+.q_cards { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.q_card { min-height: 50px; border-radius: 8px; border: 2px solid var(--neutral); background: #fff; padding: 10px 12px; opacity: 0; transform: translateY(12px); }
+.q_card strong { color: var(--text); font-size: 13px; display: block; }
+.q_card span { color: var(--text-muted); font-size: 12px; line-height: 1.45; display: block; margin-top: 4px; }
+.q_stage.visible .q1 { animation: fadeUp 0.35s 0.2s forwards; }
+.q_stage.visible .q2 { animation: fadeUp 0.35s 0.6s forwards; }
+.q_stage.visible .q3 { animation: fadeUp 0.35s 1.0s forwards; }
+.q_stage.visible .q4 { animation: fadeUp 0.35s 1.4s forwards; }
+.ref-list { list-style-position: inside; margin-top: 8px; }
+@media (max-width: 430px) {
+  .feed-section { padding: 78px 18px; }
+  .stage-card { padding: 18px 14px; min-height: 205px; }
+  .s5_grid, .s7_matrix { grid-template-columns: 1fr; }
+  .s3_lane { grid-template-columns: 72px 1fr 72px; gap: 8px; }
+  .s2_flow, .m_pipeline { grid-template-columns: 1fr; }
+  .s2_arrow, .m_arrow { width: 2px; height: 24px; margin: 0 auto; transform-origin: top center; }
+  .s2_arrow::after, .m_arrow::after { right: -3px; top: auto; bottom: -1px; transform: rotate(135deg); }
+  .u_choices { gap: 8px; }
+  .u_choice { width: 82px; font-size: 13px; }
+}
+</style>
+
+<meta name="description" content="你已经理解 transformer 的基础推理过程，所以可以把瓶颈看得很直接：LLM 每生成一个 token，都要用目标模型做一次前向计算。EAGLE 的目标不是改变目标模型，也不是降低精度，而是先用一个很轻的 draft model 猜出后面一小串候选，再让目标模型用一次并行验证吃掉多个 token。">
+<link rel="canonical" href="https://chendi.me/readings/eagle-speculative-decoding/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">←</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div><div class="dot"></div></div>
+
+<div class="layer active" id="layer-overview" data-depth="0">
+  <section class="feed-section">
+    <div class="section-inner">
+      <div class="eyebrow reveal">Speculative Decoding</div>
+      <h1 class="hero-title reveal reveal-d1">EAGLE 不是让大模型少想，而是让它一次验收更多答案。</h1>
+      <p class="body-text reveal reveal-d2">你已经理解 transformer 的基础推理过程，所以可以把瓶颈看得很直接：LLM 每生成一个 token，都要用目标模型做一次前向计算。EAGLE 的目标不是改变目标模型，也不是降低精度，而是先用一个很轻的 draft model 猜出后面一小串候选，再让目标模型用一次并行验证吃掉多个 token。</p>
+      <div class="anim-stage reveal reveal-d3" id="s1-anim">
+        <div class="s1_stage stage-card">
+          <div class="box s1_gpu">目标 LLM 每次只能吐 1 个 token</div>
+          <div class="s1_row">
+            <div class="pill s1_token s1_t1">t1</div>
+            <div class="s1_gate s1_g1"></div>
+            <div class="pill s1_token s1_t2">t2</div>
+            <div class="s1_gate s1_g2"></div>
+            <div class="pill s1_token s1_t3">t3</div>
+          </div>
+          <p class="mini-note" style="margin-top:24px;">慢，不是因为矩阵乘法弱，而是因为 token 被顺序锁住。</p>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 资料依据</button>
+        <div class="source-body">
+          <span class="source-label">paraphrased source</span>
+          <p>EAGLE 原论文把问题起点描述为 autoregressive decoding 导致 LLM 生成慢且成本高；每个 token 顺序生成，所以延迟很难靠单次前向内部优化完全消除。资料：<a href="https://arxiv.org/abs/2401.15077" target="_blank">EAGLE paper</a>。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section alt">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">Speculative decoding 的基本交换是：便宜地猜，昂贵地验。</h2>
+      <p class="body-text reveal reveal-d1">普通 speculative decoding 先让小模型快速生成几个 draft tokens，然后目标 LLM 在一次 forward pass 中并行算出这些位置的概率。因为验证阶段按严格的接受/拒绝规则处理候选，所以只要实现符合算法，最终输出分布可以与直接用目标 LLM 采样保持一致。</p>
+      <div class="anim-stage reveal reveal-d2" id="s2-anim">
+        <div class="s2_stage stage-card">
+          <div class="s2_flow">
+            <div class="box s2_draft">小草稿模型<br>先猜一串</div>
+            <div class="arrow-line s2_arrow"></div>
+            <div class="box s2_verify">目标 LLM<br>一次验证</div>
+          </div>
+          <div class="s2_batch">
+            <div class="s2_chip s2_c1">A</div>
+            <div class="s2_chip s2_c2">B</div>
+            <div class="s2_chip s2_c3">C</div>
+            <div class="s2_chip s2_c4">D</div>
+          </div>
+          <p class="mini-note" style="margin-top:18px;">被接受的 token 越长，大模型 forward 次数越少。</p>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 资料依据</button>
+        <div class="source-body">
+          <span class="source-label">paraphrased source</span>
+          <p>EAGLE 论文的 preliminaries 说明 speculative sampling 分成 draft 与 verification 两阶段；验证阶段按概率接受候选，拒绝后重采样，因此等价于直接从目标模型采样。资料：<a href="https://ar5iv.labs.arxiv.org/html/2401.15077v3" target="_blank">EAGLE HTML</a>。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section paper">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">EAGLE 的关键不是另找一个小 LLM，而是在 feature 空间里续写。</h2>
+      <p class="body-text reveal reveal-d1">EAGLE 认为，token 序列是离散自然语言，直接预测下一个 token 容易受表面词形影响；而目标模型倒数第二层的 hidden feature 更接近连续语义状态，所以更容易被一个轻量 autoregression head 预测。EAGLE 再把“已经采样出来的下一步 token”也输入 draft model，用 shifted-token 消掉采样随机性带来的歧义。</p>
+      <div class="anim-stage reveal reveal-d2" id="s3-anim">
+        <div class="s3_stage stage-card">
+          <div class="s3_lanes">
+            <div class="s3_lane"><div class="s3_label">token 猜 token</div><div class="s3_track"><div class="s3_bar token"></div></div><div class="s3_score">容易分叉</div></div>
+            <div class="s3_lane"><div class="s3_label">feature 猜 feature</div><div class="s3_track"><div class="s3_bar feature"></div></div><div class="s3_score">更规则</div></div>
+            <div class="s3_lane"><div class="s3_label">feature + shifted token</div><div class="s3_track"><div class="s3_bar shift"></div></div><div class="s3_score">歧义最少</div></div>
+          </div>
+        </div>
+      </div>
+      <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-mechanism', this)">深入看机制 ↓</button>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 资料依据</button>
+        <div class="source-body">
+          <span class="source-label">paraphrased source</span>
+          <p>EAGLE 原论文给出两点观察：feature-level autoregression 比 token-level 更直接；但 feature 预测会被采样随机性限制。EAGLE 通过输入提前一步的 token sequence 来缓解这种 uncertainty。资料：<a href="https://arxiv.org/abs/2401.15077" target="_blank">arXiv:2401.15077</a>。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">Draft tree 让 EAGLE 一次下注多条路；验证规则保证它不会偷偷改答案。</h2>
+      <p class="body-text reveal reveal-d1">EAGLE 不只生成一条候选链，而是用 tree attention 生成一棵 draft tree。目标模型随后在树上并行验证每个节点：如果前面的节点被拒绝，后面的分支会被丢弃；如果一段路径连续通过，系统就能一次接受多个 token。这里的“lossless”不是 draft model 永远猜对，而是猜错时目标模型会把它纠正回来。</p>
+      <div class="anim-stage reveal reveal-d2" id="s4-anim">
+        <div class="s4_stage stage-card">
+          <div class="s4_tree">
+            <div class="s4_level"><div class="s4_node root s4_root">上下文</div></div>
+            <div class="s4_conn s4_c1"></div>
+            <div class="s4_level s4_l2"><div class="s4_node good">接收</div><div class="s4_node bad">拒绝</div></div>
+            <div class="s4_conn s4_c2"></div>
+            <div class="s4_level s4_l3"><div class="s4_node good">继续</div><div class="s4_node good">继续</div><div class="s4_node bad">丢弃</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 资料依据</button>
+        <div class="source-body">
+          <span class="source-label">paraphrased source</span>
+          <p>EAGLE 论文说明它使用 tree attention 构造树状 draft，并由目标模型在 verification 阶段计算树中 token 的概率；论文也强调输出分布保持不变。资料：<a href="https://ar5iv.labs.arxiv.org/html/2401.15077v3" target="_blank">EAGLE Section 3</a>。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">EAGLE-2 的改动很务实：别固定树形，把预算投给更可能被接受的分支。</h2>
+      <p class="body-text reveal reveal-d1">原始 EAGLE 使用 static draft tree，默认某个位置的接受率主要由位置决定。EAGLE-2 发现接受率还强烈依赖上下文，而且 EAGLE 的 draft confidence 与实际接受率相关，所以它用 confidence 动态扩展树，把更多候选给高概率路径，把验证容量从“平均分配”变成“按机会分配”。</p>
+      <div class="anim-stage reveal reveal-d2" id="s5-anim">
+        <div class="s5_stage stage-card">
+          <div class="s5_grid">
+            <div class="s5_col">
+              <div class="s5_title">EAGLE：固定树</div>
+              <div class="s5_tree">
+                <div class="s5_cell">1</div><div class="s5_cell">1</div><div class="s5_cell">1</div>
+                <div class="s5_cell">1</div><div class="s5_cell">1</div><div class="s5_cell">1</div>
+              </div>
+            </div>
+            <div class="s5_col">
+              <div class="s5_title">EAGLE-2：动态树</div>
+              <div class="s5_tree">
+                <div class="s5_cell hot">0.9</div><div class="s5_cell">0.4</div><div class="s5_cell">0.2</div>
+                <div class="s5_cell hot">扩</div><div class="s5_cell hot">扩</div><div class="s5_cell">停</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 资料依据</button>
+        <div class="source-body">
+          <span class="source-label">paraphrased source</span>
+          <p>EAGLE-2 论文指出 static draft tree 隐含接受率只由位置决定的假设，但实验发现接受率也依赖上下文；它利用 draft model confidence 近似 acceptance rate，并报告 3.05x-4.26x speedup。资料：<a href="https://arxiv.org/abs/2406.16858" target="_blank">EAGLE-2 paper</a>。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section alt">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">EAGLE-3 又转向直接 token 预测，并用多层 feature 融合补信息。</h2>
+      <p class="body-text reveal reveal-d1">EAGLE-3 的论文说，单纯扩大 EAGLE 的训练数据收益有限，因为 feature prediction 本身形成了约束。于是 EAGLE-3 放弃原来的 feature prediction 路线，改成 direct token prediction，同时通过 training-time test 融合目标模型多层 feature，让 draft model 能从更多训练数据中受益。</p>
+      <div class="anim-stage reveal reveal-d2" id="s6-anim">
+        <div class="s6_stage stage-card">
+          <div class="s6_stack">
+            <div class="s6_layer s6_l1"><strong>浅层 feature</strong><span>局部形式</span></div>
+            <div class="s6_layer s6_l2 use"><strong>中层 feature</strong><span>语义线索</span></div>
+            <div class="s6_layer s6_l3 use"><strong>高层 feature</strong><span>决策线索</span></div>
+          </div>
+          <div class="box s6_token">直接预测 token</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 资料依据</button>
+        <div class="source-body">
+          <span class="source-label">paraphrased source</span>
+          <p>EAGLE-3 摘要说明它放弃 feature prediction，改用 direct token prediction，并用 multi-layer feature fusion 与 training-time test；论文报告最高 6.5x speedup，并在 SGLang 中观察到 batch size 64 下吞吐提升。资料：<a href="https://arxiv.org/abs/2503.01840" target="_blank">EAGLE-3 paper</a>。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">副作用不是“模型变笨”，而是系统复杂度、内存、调参和收益波动变高。</h2>
+      <p class="body-text reveal reveal-d1">在严格 speculative sampling 验证下，EAGLE 的目标是保持输出分布不变，所以主要副作用不应理解为质量下降。真正的代价在工程侧：你需要加载 draft model 或额外 head，需要为 draft tree 和并行验证留显存，需要调 `num_steps`、`topk`、draft token 数；当任务难、采样温度高、batch 很大或 MoE 验证成本异常时，加速比也可能缩水。</p>
+      <div class="anim-stage reveal reveal-d2" id="s7-anim">
+        <div class="s7_stage stage-card">
+          <div class="s7_matrix">
+            <div class="s7_item s7_i1"><strong>额外显存</strong><span>draft model、树、verification capacity 都吃资源</span></div>
+            <div class="s7_item s7_i2"><strong>收益波动</strong><span>接受长度随任务、位置、采样设置变化</span></div>
+            <div class="s7_item s7_i3"><strong>调参成本</strong><span>steps、topk、draft tokens 需要 benchmark</span></div>
+            <div class="s7_item s7_i4"><strong>实现约束</strong><span>框架、模型、精度和并行策略会限制可用性</span></div>
+          </div>
+        </div>
+      </div>
+      <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-side-effects', this)">深入看副作用 ↓</button>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 资料依据</button>
+        <div class="source-body">
+          <span class="source-label">paraphrased source</span>
+          <p>SGLang 文档说明 speculative 参数会影响范围、拒绝级联、内存和计算消耗，并专门给出 OOM 排查步骤；vLLM 文档也提醒实际收益取决于模型、流量、硬件和采样设置。资料：<a href="https://docs.sglang.io/docs/advanced_features/speculative_decoding" target="_blank">SGLang docs</a>，<a href="https://docs.vllm.com.cn/en/latest/features/speculative_decoding/" target="_blank">vLLM docs</a>。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="layer" id="layer-mechanism" data-depth="1">
+  <section class="feed-section paper">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">第一步：目标模型仍然先跑，EAGLE 复用它留下的 feature。</h2>
+      <p class="body-text reveal reveal-d1">EAGLE 不是凭空预测未来。目标 LLM 生成当前 token 时，已经算出了倒数第二层 hidden feature；EAGLE 的 draft model 复用这些 feature，再拼上提前一步的 token embedding。这样 draft model 看到的不是裸 token 历史，而是目标模型刚刚形成的内部语义状态。</p>
+      <div class="anim-stage reveal reveal-d2">
+        <div class="m_stage stage-card">
+          <div class="m_pipeline">
+            <div class="box m_box m_b1">目标 LLM<br>产生 feature</div>
+            <div class="arrow-line m_arrow m_a1"></div>
+            <div class="box m_box m_b2">EAGLE head<br>读取 feature</div>
+          </div>
+          <p class="mini-note m_caption">它像接住目标模型的中间状态，而不是另起炉灶。</p>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 资料依据</button>
+        <div class="source-body"><span class="source-label">paraphrased source</span><p>EAGLE 论文定义 feature 为目标 LLM LM head 前的 hidden state，并说明 draft model 输入 feature sequence 与 shifted token sequence。资料：<a href="https://ar5iv.labs.arxiv.org/html/2401.15077v3" target="_blank">EAGLE Section 3.1</a>。</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="feed-section">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">第二步：shifted token 解决“我到底采样到了哪条路”的不确定性。</h2>
+      <p class="body-text reveal reveal-d1">如果只给 feature，draft model 会遇到一个问题：同一个历史状态可能采样出不同 token，而不同 token 会把后续 feature 带到不同方向。EAGLE 把已经采样出来的 token 提前一格输入，所以 draft model 知道真实走的是哪条分支，而不是在多个可能世界之间平均。</p>
+      <div class="anim-stage reveal reveal-d2">
+        <div class="u_stage stage-card">
+          <div class="box u_need">同一个 feature 后面可能接不同 token</div>
+          <div class="u_choices">
+            <div class="u_choice good">采样到<br>am</div>
+            <div class="u_choice alt">也可能<br>always</div>
+            <div class="u_choice good">告诉<br>EAGLE</div>
+          </div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 资料依据</button>
+        <div class="source-body"><span class="source-label">paraphrased source</span><p>EAGLE 论文用 feature uncertainty 解释采样结果会导致后续 feature 分叉，并指出 shifted-token 输入能处理这种随机性。资料：<a href="https://arxiv.org/abs/2401.15077" target="_blank">EAGLE paper</a>。</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="feed-section alt">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">第三步：接受不是全有全无，而是从前往后逐个核验。</h2>
+      <p class="body-text reveal reveal-d1">目标模型验证 draft tree 时，会按 speculative sampling 的规则逐个接受候选 token。前两个 token 可能直接通过，第三个也可能通过，但一旦某个位置被拒绝，它之后依赖这条路径的 token 就不能继续用了。这个机制解释了为什么 acceptance length 是核心指标：它决定每次昂贵验证能换来多少真实 token。</p>
+      <div class="anim-stage reveal reveal-d2">
+        <div class="v_stage stage-card">
+          <p class="mini-note">一次目标 LLM 验证后：</p>
+          <div class="v_row">
+            <div class="v_tok ok v_t1">t1 ✓</div>
+            <div class="v_tok ok v_t2">t2 ✓</div>
+            <div class="v_tok ok v_t3">t3 ✓</div>
+            <div class="v_tok no v_t4">t4 ×</div>
+          </div>
+          <p class="mini-note" style="margin-top:18px;">接受长度 = 3，下一轮从 t4 的纠正结果继续。</p>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 资料依据</button>
+        <div class="source-body"><span class="source-label">paraphrased source</span><p>EAGLE 论文实验部分把 average acceptance length 定义为目标 LLM 每次 forward 接受的平均 token 数，并用它衡量加速效果。资料：<a href="https://ar5iv.labs.arxiv.org/html/2401.15077v3" target="_blank">EAGLE experiments</a>。</p></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="layer" id="layer-side-effects" data-depth="1">
+  <section class="feed-section paper">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">副作用一：低延迟不等于所有场景吞吐都暴涨。</h2>
+      <p class="body-text reveal reveal-d1">Speculative decoding 最容易在 batch 小、中低 QPS、decode 受内存带宽限制的场景里体现 token 间延迟收益。可是当服务已经处在高并发、大 batch 或验证阶段成为主导时，draft 开销、树验证开销和调度开销会侵蚀收益，所以工程上必须用自己的请求分布 benchmark，而不能直接搬论文里的倍数。</p>
+      <div class="anim-stage reveal reveal-d2">
+        <div class="p_stage stage-card">
+          <div class="p_bars">
+            <div class="p_barline"><div class="p_name">低 QPS 延迟</div><div class="p_track"><div class="p_fill p_f1"></div></div><div class="p_val">高收益</div></div>
+            <div class="p_barline"><div class="p_name">高 batch 吞吐</div><div class="p_track"><div class="p_fill p_f2"></div></div><div class="p_val">看场景</div></div>
+            <div class="p_barline"><div class="p_name">额外资源</div><div class="p_track"><div class="p_fill cost p_f3"></div></div><div class="p_val">会上升</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 资料依据</button>
+        <div class="source-body"><span class="source-label">paraphrased source</span><p>vLLM 文档把 speculative decoding 描述为降低中低 QPS 与内存受限工作负载的 token 间延迟，并提醒实际收益取决于模型、流量、硬件和采样设置。资料：<a href="https://docs.vllm.com.cn/en/latest/features/speculative_decoding/" target="_blank">vLLM speculative decoding</a>。</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="feed-section">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">副作用二：draft tree 越贪心，越容易把显存和计算推上去。</h2>
+      <p class="body-text reveal reveal-d1">`num_steps` 增大时，EAGLE 猜得更远，但错误后丢弃的后续 token 也更多；`topk` 增大时，树的分支更多，候选覆盖更好，但 draft 和 verification 都要处理更多节点；`num_draft_tokens` 增大时，目标模型一次能验证更多候选，但显存压力也随之增加。</p>
+      <div class="anim-stage reveal reveal-d2">
+        <div class="q_stage stage-card">
+          <div class="q_cards">
+            <div class="q_card q1"><strong>num_steps ↑</strong><span>看得更远，也更可能出现拒绝级联。</span></div>
+            <div class="q_card q2"><strong>topk ↑</strong><span>分支更多，接受机会和计算开销一起上升。</span></div>
+            <div class="q_card q3"><strong>draft tokens ↑</strong><span>验证容量更大，但 GPU memory 占用更高。</span></div>
+            <div class="q_card q4"><strong>阈值/量化/编译</strong><span>不同框架和硬件下需要实际测量。</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 资料依据</button>
+        <div class="source-body"><span class="source-label">paraphrased source</span><p>SGLang 文档解释 `speculative-num-steps`、`speculative-eagle-topk`、`speculative-num-draft-tokens` 分别影响推测范围、分支因子和并行验证容量，并明确提到内存/计算消耗。资料：<a href="https://docs.sglang.io/docs/advanced_features/speculative_decoding" target="_blank">SGLang speculative decoding</a>。</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">副作用三：lossless 依赖“验证算法正确”，不是依赖“draft model 很聪明”。</h2>
+      <p class="body-text reveal reveal-d1">如果你使用的是标准 speculative sampling 验证，EAGLE 可以把质量风险转移成性能风险：draft 猜错会少接受 token，而不是直接污染输出。但如果实现为了速度放松接受规则、改了采样分布、或者用了不匹配的非官方 checkpoint，那么“输出分布不变”这个结论就不能自动套用。</p>
+      <div class="source-panel reveal reveal-d2">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 资料依据</button>
+        <div class="source-body">
+          <span class="source-label">references</span>
+          <ul class="ref-list">
+            <li><a href="https://arxiv.org/abs/2401.15077" target="_blank">EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty</a></li>
+            <li><a href="https://arxiv.org/abs/2406.16858" target="_blank">EAGLE-2: Faster Inference of Language Models with Dynamic Draft Trees</a></li>
+            <li><a href="https://arxiv.org/abs/2503.01840" target="_blank">EAGLE-3: Scaling up Inference Acceleration of Large Language Models via Training-Time Test</a></li>
+            <li><a href="https://github.com/SafeAILab/EAGLE" target="_blank">SafeAILab/EAGLE official implementation</a></li>
+            <li><a href="https://docs.sglang.io/docs/advanced_features/speculative_decoding" target="_blank">SGLang speculative decoding docs</a></li>
+            <li><a href="https://docs.vllm.com.cn/en/latest/features/speculative_decoding/" target="_blank">vLLM speculative decoding docs</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+var currentMode = 'zoom';
+var layerStack = ['layer-overview'];
+var transitioning = false;
+var layerNames = {
+  'layer-overview': '概览',
+  'layer-mechanism': 'EAGLE 机制',
+  'layer-side-effects': '副作用'
+};
+var observers = new Map();
+function setupObserver(layerId) {
+  if (observers.has(layerId)) return;
+  var layer = document.getElementById(layerId);
+  var reveals = layer.querySelectorAll('.reveal, [class*="_stage"], .m_stage, .u_stage, .v_stage, .p_stage, .q_stage');
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) e.target.classList.add('visible');
+    });
+  }, { threshold: 0.15, root: layer });
+  reveals.forEach(function(el) { obs.observe(el); });
+  observers.set(layerId, obs);
+}
+function resetReveals(layerId) {
+  var layer = document.getElementById(layerId);
+  layer.querySelectorAll('.reveal').forEach(function(el) { el.classList.remove('visible'); });
+  layer.querySelectorAll('[class*="_stage"], .m_stage, .u_stage, .v_stage, .p_stage, .q_stage').forEach(function(el) { el.classList.remove('visible'); });
+}
+function activateReveals(layerId) {
+  resetReveals(layerId);
+  if (observers.has(layerId)) { observers.get(layerId).disconnect(); observers.delete(layerId); }
+  requestAnimationFrame(function() { setupObserver(layerId); });
+}
+function updateBreadcrumb() {
+  var bc = document.getElementById('breadcrumb');
+  bc.innerHTML = '';
+  layerStack.forEach(function(id, i) {
+    if (i > 0) {
+      var sep = document.createElement('span');
+      sep.className = 'sep';
+      sep.textContent = '>';
+      bc.appendChild(sep);
+    }
+    var span = document.createElement('span');
+    span.textContent = layerNames[id] || id;
+    if (i === layerStack.length - 1) span.className = 'current';
+    else span.addEventListener('click', function() { goBackTo(i); });
+    bc.appendChild(span);
+  });
+  var backBtn = document.getElementById('backBtn');
+  backBtn.style.display = layerStack.length > 1 ? 'flex' : 'none';
+  bc.style.left = layerStack.length > 1 ? '60px' : '16px';
+  var dots = document.getElementById('depthDots');
+  var depth = layerStack.length - 1;
+  dots.querySelectorAll('.dot').forEach(function(d, i) { d.classList.toggle('active', i === depth); });
+}
+function drillDown(targetId) {
+  if (transitioning) return;
+  transitioning = true;
+  var currentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var targetLayer = document.getElementById(targetId);
+  targetLayer.scrollTop = 0;
+  resetReveals(targetId);
+  targetLayer.style.visibility = 'visible';
+  var duration = 600;
+  currentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  currentLayer.style.transformOrigin = 'center center';
+  currentLayer.style.transform = 'scale(1.3)';
+  currentLayer.style.opacity = '0';
+  targetLayer.classList.add('active');
+  targetLayer.style.opacity = '0';
+  targetLayer.style.transform = 'scale(0.85)';
+  targetLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      targetLayer.style.opacity = '1';
+      targetLayer.style.transform = 'scale(1)';
+    });
+  });
+  setTimeout(function() {
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition = '';
+    currentLayer.style.transform = '';
+    currentLayer.style.opacity = '';
+    targetLayer.style.transition = '';
+    targetLayer.style.transform = '';
+    activateReveals(targetId);
+    transitioning = false;
+  }, duration + 50);
+  layerStack.push(targetId);
+  updateBreadcrumb();
+}
+function goBack() {
+  if (layerStack.length <= 1 || transitioning) return;
+  transitioning = true;
+  var currentId = layerStack.pop();
+  var parentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var parentLayer = document.getElementById(parentId);
+  var duration = 600;
+  currentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  currentLayer.style.transform = 'scale(0.85)';
+  currentLayer.style.opacity = '0';
+  parentLayer.classList.add('active');
+  parentLayer.style.transform = 'scale(1.3)';
+  parentLayer.style.opacity = '0';
+  parentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      parentLayer.style.transform = 'scale(1)';
+      parentLayer.style.opacity = '1';
+    });
+  });
+  setTimeout(function() {
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition = '';
+    currentLayer.style.transform = '';
+    currentLayer.style.opacity = '';
+    currentLayer.style.visibility = '';
+    parentLayer.style.transition = '';
+    parentLayer.style.transform = '';
+    transitioning = false;
+  }, duration + 50);
+  updateBreadcrumb();
+}
+function goBackTo(targetIndex) {
+  if (transitioning) return;
+  while (layerStack.length - 1 > targetIndex) {
+    if (layerStack.length <= 1) break;
+    goBack();
+    return;
+  }
+}
+function toggleSource(btn) {
+  btn.classList.toggle('open');
+  btn.nextElementSibling.classList.toggle('open');
+}
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+</body>
+</html>

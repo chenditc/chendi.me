@@ -1,0 +1,3382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Software Brain：当世界被压扁成数据库</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #F5F3FF; --bg-act2: #FFFBEB; --bg-act3: #FFF1F2;
+  --bg-dark: #0F0B1E; --bg-close: #1A1035;
+  --text: #1E293B; --text-muted: #64748B; --dim: #94A3B8;
+  --accent: #7C3AED; --accent2: #F59E0B;
+  --warm: #FB923C; --danger: #EF4444;
+  --neutral: #94A3B8;
+  --card-bg: #FFFFFF;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Noto Sans SC', -apple-system, sans-serif; color: var(--text); }
+
+.layer { position: fixed; inset: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; visibility: hidden; opacity: 0; will-change: transform, opacity; scroll-snap-type: y proximity; }
+.layer.active { visibility: visible; opacity: 1; }
+
+.feed-section { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 80px 24px; scroll-snap-align: start; }
+.feed-section.dark { background: var(--bg-dark); color: #F1F5F9; }
+.feed-section.dark .body-text { color: #94A3B8; }
+.feed-section.dark .big-statement { color: #F1F5F9; }
+.section-inner { max-width: 600px; width: 100%; }
+
+.big-statement { font-family: 'Noto Serif SC', serif; font-size: clamp(22px, 5.5vw, 32px); font-weight: 700; line-height: 1.5; margin-bottom: 32px; }
+.body-text { font-size: 16px; line-height: 1.9; color: var(--text); margin-bottom: 28px; }
+.body-text .hl { color: var(--accent); font-weight: 500; }
+.body-text .hl2 { color: var(--accent2); font-weight: 500; }
+.body-text .hl-danger { color: var(--danger); font-weight: 500; }
+
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-d1 { transition-delay: 0.15s; }
+.reveal-d2 { transition-delay: 0.3s; }
+.reveal-d3 { transition-delay: 0.45s; }
+.reveal-d4 { transition-delay: 0.6s; }
+
+.breadcrumb { position: fixed; top: 16px; left: 16px; z-index: 1000; display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.92); backdrop-filter: blur(12px); padding: 8px 14px; border-radius: 10px; box-shadow: 0 2px 16px rgba(0,0,0,0.1); font-size: 13px; font-weight: 500; }
+.breadcrumb span { color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
+.breadcrumb span:hover { color: var(--accent); }
+.breadcrumb span.current { color: var(--text); cursor: default; }
+.breadcrumb .sep { color: #CBD5E1; margin: 0 2px; cursor: default; }
+
+.back-btn { position: fixed; top: 16px; left: 16px; z-index: 1001; width: 38px; height: 38px; border-radius: 10px; border: none; background: rgba(255,255,255,0.92); backdrop-filter: blur(12px); box-shadow: 0 2px 12px rgba(0,0,0,0.1); font-size: 18px; cursor: pointer; display: none; align-items: center; justify-content: center; color: var(--text); transition: all 0.2s; }
+.back-btn:hover { background: var(--accent); color: #fff; }
+
+.depth-dots { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1000; display: flex; gap: 8px; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px); padding: 8px 14px; border-radius: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #CBD5E1; transition: all 0.3s; }
+.dot.active { background: var(--accent); box-shadow: 0 0 8px rgba(124,58,237,0.5); transform: scale(1.2); }
+
+.drill-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border: 1.5px solid rgba(124,58,237,0.3); border-radius: 10px; background: transparent; color: var(--accent); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.25s; position: relative; z-index: 10; }
+.drill-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(124,58,237,0.3); }
+.dark .drill-btn { border-color: rgba(167,139,250,0.4); color: #A78BFA; }
+.dark .drill-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.source-panel { margin-top: 24px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(124,58,237,0.15); background: rgba(124,58,237,0.03); }
+.dark .source-panel { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
+.source-toggle { width: 100%; padding: 12px 16px; border: none; background: none; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--accent); }
+.dark .source-toggle { color: #A78BFA; }
+.source-toggle:hover { background: rgba(124,58,237,0.06); }
+.source-toggle .arrow { transition: transform 0.3s; font-size: 11px; }
+.source-toggle.open .arrow { transform: rotate(90deg); }
+.source-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; padding: 0 16px; }
+.source-body.open { max-height: 2000px; padding: 0 16px 16px; overflow-y: auto; }
+.source-body p { font-size: 13px; line-height: 1.8; color: var(--text-muted); margin: 0 0 12px; white-space: pre-wrap; }
+.dark .source-body p { color: #94A3B8; }
+.source-body .source-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 8px; display: block; }
+
+.anim-stage { pointer-events: none; margin: 24px 0; min-height: 80px; }
+.anim-stage > div{ width:100%; }
+.hook-line { font-size: 15px; color: var(--accent); font-weight: 500; margin: 16px 0 8px; line-height: 1.6; }
+.dark .hook-line { color: #A78BFA; }
+.section-tag { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+.dark .section-tag { color: #A78BFA; }
+
+
+/* === S1 Animation === */
+
+/* S1: Software Brain — CSS-only owl animation */
+
+.s1_stage {
+  position: relative;
+  max-width: 340px;
+  margin: 0 auto;
+  height: 420px;
+  background: #0F0B1E;
+  font-family: -apple-system, sans-serif;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+/* ── Keyframes ─────────────────────────────────────────── */
+
+@keyframes s1_fadeScaleIn {
+  from { opacity: 0; transform: scale(0.5); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s1_fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes s1_satelliteIn {
+  from { opacity: 0; transform: scale(0) translate(0, 0); }
+  to   { opacity: 1; transform: scale(1) translate(var(--sx), var(--sy)); }
+}
+
+@keyframes s1_sweepDown {
+  from { transform: scaleX(0); opacity: 0; }
+  to   { transform: scaleX(1); opacity: 1; }
+}
+
+@keyframes s1_rowIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes s1_labelChange {
+  0%   { opacity: 1; }
+  40%  { opacity: 0; }
+  60%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes s1_labelNew {
+  0%   { opacity: 0; }
+  60%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes s1_pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(124, 58, 237, 0); }
+}
+
+/* ── Elements — all start hidden ───────────────────────── */
+
+/* Step 1: World circle */
+.s1_world {
+  position: absolute;
+  top: 36px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  opacity: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid #7C3AED;
+  background: rgba(124, 58, 237, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #F1F5F9;
+  letter-spacing: 0.05em;
+}
+
+/* Step 2: Satellite icons — positioned via CSS custom props */
+.s1_sat {
+  position: absolute;
+  top: 72px;       /* center matches world center */
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid #F59E0B;
+  background: rgba(245, 158, 11, 0.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #F59E0B;
+  margin-left: -22px;  /* center origin */
+  margin-top: -22px;
+  transform: scale(0);
+  opacity: 0;
+}
+
+.s1_sat1 { --sx: -90px; --sy: -30px; }
+.s1_sat2 { --sx:  10px; --sy: -78px; }
+.s1_sat3 { --sx:  80px; --sy: -10px; }
+.s1_sat4 { --sx: -30px; --sy:  70px; }
+
+/* Step 3: Sweep line */
+.s1_sweep {
+  position: absolute;
+  top: 178px;
+  left: 10px;
+  right: 10px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #EF4444, transparent);
+  transform-origin: left center;
+  transform: scaleX(0);
+  opacity: 0;
+}
+
+.s1_sweep_label {
+  position: absolute;
+  top: 158px;
+  right: 16px;
+  font-size: 9px;
+  color: #EF4444;
+  opacity: 0;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Step 4: DB grid */
+.s1_db_wrap {
+  position: absolute;
+  top: 196px;
+  left: 20px;
+  right: 20px;
+  opacity: 0;
+}
+
+.s1_db_header {
+  font-size: 9px;
+  color: #94A3B8;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  opacity: 0;
+}
+
+.s1_row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 5px;
+  opacity: 0;
+}
+
+.s1_cell {
+  flex: 1;
+  height: 18px;
+  border-radius: 3px;
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.s1_cell.accent { background: rgba(124, 58, 237, 0.18); border-color: rgba(124, 58, 237, 0.35); }
+
+/* Step 5: Label swap */
+.s1_label_wrap {
+  position: absolute;
+  top: 36px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  opacity: 0;
+  width: 130px;
+}
+
+.s1_label_old {
+  font-size: 11px;
+  color: #94A3B8;
+  opacity: 0;
+  position: absolute;
+  top: 82px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.s1_label_new {
+  font-size: 11px;
+  color: #7C3AED;
+  opacity: 0;
+  position: absolute;
+  top: 82px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* ── Triggered animations (.s1_stage.visible) ──────────── */
+
+/* Step 1 — world circle: delay 0.2s */
+.s1_stage.visible .s1_world {
+  animation: s1_fadeScaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s forwards,
+             s1_pulse 2s ease-in-out 0.8s infinite;
+}
+
+/* Step 2 — satellites: staggered from 0.9s */
+.s1_stage.visible .s1_sat1 {
+  animation: s1_satelliteIn 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) 0.9s forwards;
+}
+.s1_stage.visible .s1_sat2 {
+  animation: s1_satelliteIn 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) 1.35s forwards;
+}
+.s1_stage.visible .s1_sat3 {
+  animation: s1_satelliteIn 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) 1.8s forwards;
+}
+.s1_stage.visible .s1_sat4 {
+  animation: s1_satelliteIn 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) 2.25s forwards;
+}
+
+/* Step 3 — sweep line: delay 2.9s */
+.s1_stage.visible .s1_sweep_label {
+  animation: s1_fadeIn 0.3s ease 2.9s forwards;
+}
+.s1_stage.visible .s1_sweep {
+  animation: s1_sweepDown 0.6s ease-out 3.1s forwards;
+}
+
+/* Step 4 — DB rows: staggered from 3.9s */
+.s1_stage.visible .s1_db_wrap {
+  animation: s1_fadeIn 0.01s 3.85s forwards;  /* reveal wrapper instantly */
+}
+.s1_stage.visible .s1_db_header {
+  animation: s1_fadeIn 0.4s ease 3.9s forwards;
+}
+.s1_stage.visible .s1_row:nth-child(2) {
+  animation: s1_rowIn 0.4s ease 4.3s forwards;
+}
+.s1_stage.visible .s1_row:nth-child(3) {
+  animation: s1_rowIn 0.4s ease 4.7s forwards;
+}
+.s1_stage.visible .s1_row:nth-child(4) {
+  animation: s1_rowIn 0.4s ease 5.1s forwards;
+}
+.s1_stage.visible .s1_row:nth-child(5) {
+  animation: s1_rowIn 0.4s ease 5.5s forwards;
+}
+
+/* Step 5 — label swap: old label fades out at 5.8s, new fades in */
+.s1_stage.visible .s1_label_old {
+  animation: s1_fadeIn 0.3s ease 0.6s forwards,
+             s1_labelChange 0.8s ease 5.8s forwards;
+}
+.s1_stage.visible .s1_label_new {
+  animation: s1_labelNew 0.8s ease 5.8s forwards;
+}
+
+
+/* === S2 Animation === */
+/* S2 CSS */
+.s2_stage {
+  max-width: 340px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #F5F3FF;
+  color: #1E293B;
+  padding: 24px 20px 28px;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* All elements hidden by default */
+.s2_stage .s2-label-usage,
+.s2_stage .s2-bar-wrap,
+.s2_stage .s2-label-favor,
+.s2_stage .s2-bar-favor-wrap,
+.s2_stage .s2-genz-hope,
+.s2_stage .s2-genz-anger {
+  opacity: 0;
+}
+
+/* ── Step 1: "ChatGPT 周活" label appears ── */
+.s2_stage.visible .s2-label-usage {
+  animation: s2FadeIn 0.4s ease forwards;
+  animation-delay: 0.2s;
+}
+
+/* ── Step 2: Usage bar grows up ── */
+.s2_stage.visible .s2-bar-wrap {
+  animation: s2FadeIn 0.3s ease forwards;
+  animation-delay: 0.8s;
+}
+.s2_stage.visible .s2-bar-usage {
+  animation: s2GrowBar 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: 0.9s;
+}
+
+/* ── Step 3: "好感度" label appears ── */
+.s2_stage.visible .s2-label-favor {
+  animation: s2FadeIn 0.4s ease forwards;
+  animation-delay: 1.8s;
+}
+
+/* ── Step 4: Favorability short bar grows ── */
+.s2_stage.visible .s2-bar-favor-wrap {
+  animation: s2FadeIn 0.3s ease forwards;
+  animation-delay: 2.3s;
+}
+.s2_stage.visible .s2-bar-favor {
+  animation: s2GrowBar 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: 2.4s;
+}
+
+/* ── Step 5: Gen Z 希望 drops 27→18 ── */
+.s2_stage.visible .s2-genz-hope {
+  animation: s2FadeIn 0.4s ease forwards;
+  animation-delay: 3.1s;
+}
+.s2_stage.visible .s2-hope-num {
+  animation: s2CountDown 0.8s ease forwards;
+  animation-delay: 3.3s;
+}
+
+/* ── Step 6: Gen Z 愤怒 rises 22→31 ── */
+.s2_stage.visible .s2-genz-anger {
+  animation: s2FadeIn 0.4s ease forwards;
+  animation-delay: 4.0s;
+}
+.s2_stage.visible .s2-anger-bar {
+  animation: s2GrowAnger 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: 4.2s;
+}
+
+/* ── Keyframes ── */
+@keyframes s2FadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s2GrowBar {
+  from { height: 0; }
+  to   { height: 100%; }
+}
+
+@keyframes s2GrowAnger {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+
+/* Animate number 27 → 18 using steps trick with counter */
+@keyframes s2CountDown {
+  0%   { content: "27%"; }
+  100% { content: "18%"; }
+}
+
+/* ── Layout ── */
+.s2-chart-area {
+  display: flex;
+  align-items: flex-end;
+  gap: 32px;
+  margin-bottom: 24px;
+  height: 160px;
+}
+
+.s2-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.s2-label-usage,
+.s2-label-favor {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94A3B8;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* Bar containers — fixed height, bars grow from bottom */
+.s2-bar-wrap,
+.s2-bar-favor-wrap {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.s2-bar-wrap {
+  width: 64px;
+  height: 120px;
+  background: #E9E4FF;
+  border-radius: 6px 6px 0 0;
+  overflow: hidden;
+}
+
+.s2-bar-favor-wrap {
+  width: 64px;
+  height: 120px;
+  background: #FFE4E4;
+  border-radius: 6px 6px 0 0;
+  overflow: hidden;
+}
+
+.s2-bar-usage {
+  width: 100%;
+  height: 0;           /* animates to 100% */
+  background: #7C3AED;
+  border-radius: 6px 6px 0 0;
+  position: relative;
+}
+
+.s2-bar-usage::after {
+  content: "900M";
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 700;
+  color: #7C3AED;
+  white-space: nowrap;
+}
+
+.s2-bar-favor {
+  width: 100%;
+  height: 0;           /* animates to 100% (of a short container) */
+  background: #EF4444;
+  border-radius: 6px 6px 0 0;
+  position: relative;
+}
+
+/* The favorability container is only 35% height of usage */
+.s2-bar-favor-wrap {
+  height: 42px;        /* ~35% of 120px */
+}
+
+.s2-bar-favor::after {
+  content: "35%";
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 700;
+  color: #EF4444;
+  white-space: nowrap;
+}
+
+/* Spacer to align bars to same baseline */
+.s2-col-usage {
+  justify-content: flex-end;
+  height: 160px;
+}
+
+.s2-col-favor {
+  justify-content: flex-end;
+  height: 160px;
+}
+
+/* ── Gen Z section ── */
+.s2-genz-section {
+  border-top: 1px solid #E2D9F3;
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.s2-genz-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.s2-genz-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94A3B8;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Hope row */
+.s2-genz-hope {
+  /* fade in handled above */
+}
+
+.s2-hope-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.s2-hope-num-wrap {
+  position: relative;
+  width: 44px;
+  height: 28px;
+}
+
+/* We fake the counter animation using two overlapping numbers */
+.s2-hope-num-start {
+  position: absolute;
+  top: 0; left: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #7C3AED;
+  line-height: 1;
+  opacity: 1;
+  transition: none;
+}
+
+.s2-hope-num-end {
+  position: absolute;
+  top: 0; left: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #94A3B8;
+  line-height: 1;
+  opacity: 0;
+}
+
+.s2_stage.visible .s2-hope-num-start {
+  animation: s2FadeOutNum 0.4s ease forwards;
+  animation-delay: 3.3s;
+}
+
+.s2_stage.visible .s2-hope-num-end {
+  animation: s2FadeInNum 0.4s ease forwards;
+  animation-delay: 3.5s;
+}
+
+@keyframes s2FadeOutNum {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-8px); }
+}
+@keyframes s2FadeInNum {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.s2-hope-arrow {
+  font-size: 14px;
+  color: #94A3B8;
+}
+
+.s2-hope-label {
+  font-size: 12px;
+  color: #1E293B;
+  opacity: 0.7;
+}
+
+/* Anger row */
+.s2-genz-anger {
+  /* fade in handled above */
+}
+
+.s2-anger-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.s2-anger-track {
+  flex: 1;
+  height: 8px;
+  background: #FFE4E4;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.s2-anger-bar {
+  height: 100%;
+  width: 0;            /* animates to 100% of track */
+  background: #EF4444;
+  border-radius: 4px;
+}
+
+.s2-anger-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #EF4444;
+  white-space: nowrap;
+}
+
+
+/* === S3 Animation === */
+
+/* S3: Not a Marketing Problem */
+.s3_stage {
+  max-width: 340px;
+  margin: 0 auto;
+  background: #1A1035;
+  color: #F1F5F9;
+  font-family: -apple-system, sans-serif;
+  padding: 32px 24px;
+  border-radius: 12px;
+  position: relative;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  overflow: hidden;
+}
+
+/* ── Keyframes ── */
+
+/* Step 1: marketing circle fades in */
+@keyframes s3_circle_in {
+  0%   { opacity: 0; transform: scale(0.6); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Step 2: arrows travel rightward then fade */
+@keyframes s3_arrow_fly {
+  0%   { opacity: 0; transform: translateX(0); }
+  15%  { opacity: 1; transform: translateX(0); }
+  70%  { opacity: 1; transform: translateX(64px); }
+  100% { opacity: 0; transform: translateX(64px); }
+}
+
+/* Step 3: wall slides in from right */
+@keyframes s3_wall_in {
+  0%   { opacity: 0; transform: translateX(30px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+/* Step 4: arrows bounce back */
+@keyframes s3_arrow_bounce {
+  0%   { opacity: 0; transform: translateX(64px); }
+  20%  { opacity: 1; transform: translateX(64px); }
+  80%  { opacity: 0.6; transform: translateX(-10px); }
+  100% { opacity: 0; transform: translateX(-10px); }
+}
+
+/* Step 5: 900M text fades in */
+@keyframes s3_users_in {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Step 6: X cross appears over marketing circle */
+@keyframes s3_cross_in {
+  0%   { opacity: 0; transform: scale(0) rotate(-45deg); }
+  60%  { opacity: 1; transform: scale(1.2) rotate(0deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+/* pulse glow on marketing circle */
+@keyframes s3_pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(124,58,237,0.5); }
+  50%       { box-shadow: 0 0 0 8px rgba(124,58,237,0); }
+}
+
+/* wall shimmer */
+@keyframes s3_wall_shimmer {
+  0%, 100% { border-color: #F59E0B; }
+  50%       { border-color: #EF4444; }
+}
+
+/* ── Layout row ── */
+.s3_row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 12px;
+  margin-top: 24px;
+  position: relative;
+}
+
+/* ── Marketing circle (Step 1) ── */
+.s3_mkt {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+}
+
+.s3_stage.visible .s3_mkt {
+  animation: s3_circle_in 0.5s ease-out 0.2s forwards;
+}
+
+.s3_mkt_circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #7C3AED;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(245,158,11,0.4);
+  position: relative;
+}
+
+.s3_stage.visible .s3_mkt_circle {
+  animation: s3_pulse 2s ease-in-out 0.7s infinite;
+}
+
+.s3_mkt_label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #F1F5F9;
+  line-height: 1;
+}
+
+.s3_mkt_amount {
+  font-size: 10px;
+  color: #F59E0B;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.s3_mkt_tag {
+  font-size: 11px;
+  color: rgba(241,245,249,0.55);
+  text-align: center;
+}
+
+/* ── Arrows column (Steps 2 & 4) ── */
+.s3_arrows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* forward arrows (Step 2) */
+.s3_arr_fwd {
+  opacity: 0;
+}
+
+.s3_stage.visible .s3_arr_fwd:nth-child(1) {
+  animation: s3_arrow_fly 0.9s ease-in-out 0.9s forwards;
+}
+.s3_stage.visible .s3_arr_fwd:nth-child(2) {
+  animation: s3_arrow_fly 0.9s ease-in-out 1.05s forwards;
+}
+.s3_stage.visible .s3_arr_fwd:nth-child(3) {
+  animation: s3_arrow_fly 0.9s ease-in-out 1.2s forwards;
+}
+
+/* bounce arrows (Step 4, reversed direction via scaleX) */
+.s3_arr_bk {
+  opacity: 0;
+  transform: scaleX(-1);
+}
+
+.s3_stage.visible .s3_arr_bk:nth-child(4) {
+  animation: s3_arrow_bounce 0.8s ease-out 2.6s forwards;
+}
+.s3_stage.visible .s3_arr_bk:nth-child(5) {
+  animation: s3_arrow_bounce 0.8s ease-out 2.75s forwards;
+}
+.s3_stage.visible .s3_arr_bk:nth-child(6) {
+  animation: s3_arrow_bounce 0.8s ease-out 2.9s forwards;
+}
+
+.s3_arr_svg {
+  display: block;
+}
+
+/* ── Wall (Step 3) ── */
+.s3_wall {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+}
+
+.s3_stage.visible .s3_wall {
+  animation: s3_wall_in 0.5s ease-out 2.0s forwards;
+}
+
+.s3_wall_block {
+  width: 56px;
+  height: 72px;
+  border: 3px solid #F59E0B;
+  border-radius: 6px;
+  background: rgba(245,158,11,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-size: 11px;
+  font-weight: 700;
+  color: #F59E0B;
+  letter-spacing: 0.05em;
+  position: relative;
+}
+
+.s3_stage.visible .s3_wall_block {
+  animation: s3_wall_shimmer 2s ease-in-out 2.5s infinite;
+}
+
+/* brick lines inside wall */
+.s3_wall_block::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  top: 50%;
+  height: 2px;
+  background: rgba(245,158,11,0.3);
+}
+
+.s3_wall_block::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: rgba(245,158,11,0.3);
+}
+
+.s3_wall_tag {
+  font-size: 10px;
+  color: rgba(241,245,249,0.5);
+  text-align: center;
+  line-height: 1.3;
+}
+
+/* ── 900M users text (Step 5) ── */
+.s3_users {
+  margin-top: 20px;
+  opacity: 0;
+  text-align: center;
+}
+
+.s3_stage.visible .s3_users {
+  animation: s3_users_in 0.6s ease-out 3.5s forwards;
+}
+
+.s3_users_num {
+  font-size: 22px;
+  font-weight: 800;
+  color: #EF4444;
+  letter-spacing: -0.02em;
+}
+
+.s3_users_label {
+  font-size: 12px;
+  color: rgba(241,245,249,0.6);
+  margin-top: 2px;
+}
+
+/* ── Cross overlay (Step 6) ── */
+.s3_cross {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* positioned relative to .s3_mkt via JS-free trick: use wrapper */
+  width: 28px;
+  height: 28px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Cross drawn with two pseudo elements */
+.s3_cross::before,
+.s3_cross::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 22px;
+  height: 3px;
+  background: #EF4444;
+  border-radius: 2px;
+}
+
+.s3_cross::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.s3_cross::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+/* cross wrapper sits over marketing circle */
+.s3_mkt_wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.s3_mkt_wrap .s3_cross {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+}
+
+.s3_stage.visible .s3_mkt_wrap .s3_cross {
+  animation: s3_cross_in 0.5s cubic-bezier(0.34,1.56,0.64,1) 4.2s forwards;
+}
+
+/* ── Title ── */
+.s3_title {
+  font-size: 13px;
+  color: rgba(241,245,249,0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-align: center;
+  margin-bottom: 0;
+}
+
+
+/* === S4 Animation === */
+
+/* S4: Everything is a Database */
+
+.s4_stage {
+  max-width: 340px;
+  margin: 0 auto;
+  font-family: -apple-system, sans-serif;
+  background: #FFFBEB;
+  color: #1E293B;
+  padding: 24px 20px 28px;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+  min-height: 320px;
+}
+
+/* ── Company DB cards ── */
+.s4_db_card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 2px solid #7C3AED;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #7C3AED;
+  width: 120px;
+  box-sizing: border-box;
+  position: absolute;
+  opacity: 0;
+  transform: translateX(-40px);
+}
+
+.s4_db_card .s4_icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Step 1 — cards appear one by one */
+.s4_stage.visible .s4_card1 {
+  animation: s4_slideIn 0.45s ease forwards;
+  animation-delay: 0.3s;
+}
+.s4_stage.visible .s4_card2 {
+  animation: s4_slideIn 0.45s ease forwards;
+  animation-delay: 0.85s;
+}
+.s4_stage.visible .s4_card3 {
+  animation: s4_slideIn 0.45s ease forwards;
+  animation-delay: 1.4s;
+}
+
+/* Initial positions (column) */
+.s4_card1 { top: 20px;  left: 20px; }
+.s4_card2 { top: 68px;  left: 20px; }
+.s4_card3 { top: 116px; left: 20px; }
+
+/* Step 2 — grid alignment at 2.1s */
+.s4_stage.visible .s4_card1 {
+  animation:
+    s4_slideIn 0.45s ease 0.3s forwards,
+    s4_toGrid1 0.5s ease 2.1s both;
+}
+.s4_stage.visible .s4_card2 {
+  animation:
+    s4_slideIn 0.45s ease 0.85s forwards,
+    s4_toGrid2 0.5s ease 2.1s both;
+}
+.s4_stage.visible .s4_card3 {
+  animation:
+    s4_slideIn 0.45s ease 1.4s forwards,
+    s4_toGrid3 0.5s ease 2.1s both;
+}
+
+/* Grid positions: two-column layout */
+@keyframes s4_toGrid1 {
+  from { top: 20px; left: 20px; opacity: 1; transform: translateX(0); }
+  to   { top: 20px; left: 20px; opacity: 1; transform: translateX(0); }
+}
+@keyframes s4_toGrid2 {
+  from { top: 68px; left: 20px; opacity: 1; transform: translateX(0); }
+  to   { top: 20px; left: 160px; opacity: 1; transform: translateX(0); }
+}
+@keyframes s4_toGrid3 {
+  from { top: 116px; left: 20px; opacity: 1; transform: translateX(0); }
+  to   { top: 68px; left: 20px; opacity: 1; transform: translateX(0); }
+}
+
+/* Keep grid positions after animation */
+.s4_stage.visible .s4_card1 { top: 20px; left: 20px; }
+
+/* ── DOGE circle ── */
+.s4_doge {
+  position: absolute;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #F59E0B;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  letter-spacing: 0.5px;
+}
+
+.s4_stage.visible .s4_doge {
+  animation: s4_dogeAppear 0.5s ease 2.9s forwards;
+}
+
+/* ── Connector line ── */
+.s4_connector {
+  position: absolute;
+  top: 140px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 0;
+  background: #F59E0B;
+  opacity: 0;
+  transform-origin: top center;
+}
+
+.s4_stage.visible .s4_connector {
+  animation: s4_connGrow 0.4s ease 3.6s forwards;
+}
+
+/* ── Government box ── */
+.s4_gov {
+  position: absolute;
+  bottom: 68px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.6);
+  background: #fff;
+  border: 2px solid #EF4444;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #EF4444;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+.s4_stage.visible .s4_gov {
+  animation: s4_govAppear 0.45s ease 4.1s forwards,
+             s4_govShake  0.5s ease  4.8s both;
+}
+
+/* ── Red ≠ symbol ── */
+.s4_neq {
+  position: absolute;
+  bottom: 66px;
+  right: 24px;
+  font-size: 28px;
+  font-weight: 900;
+  color: #EF4444;
+  opacity: 0;
+  transform: scale(0) rotate(-20deg);
+}
+
+.s4_stage.visible .s4_neq {
+  animation: s4_neqPop 0.4s cubic-bezier(0.34,1.56,0.64,1) 5.5s forwards;
+}
+
+/* ── Caption text ── */
+.s4_caption {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1E293B;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.s4_stage.visible .s4_caption {
+  animation: s4_fadeUp 0.5s ease 6.1s forwards;
+}
+
+/* ── Keyframes ── */
+@keyframes s4_slideIn {
+  from { opacity: 0; transform: translateX(-40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes s4_dogeAppear {
+  from { opacity: 0; transform: translateX(-50%) scale(0); }
+  to   { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+@keyframes s4_connGrow {
+  from { opacity: 1; height: 0; }
+  to   { opacity: 1; height: 40px; }
+}
+
+@keyframes s4_govAppear {
+  from { opacity: 0; transform: translateX(-50%) scale(0.6); }
+  to   { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+@keyframes s4_govShake {
+  0%   { transform: translateX(-50%) rotate(0deg); }
+  15%  { transform: translateX(calc(-50% + 5px)) rotate(2deg); }
+  30%  { transform: translateX(calc(-50% - 5px)) rotate(-2deg); }
+  45%  { transform: translateX(calc(-50% + 4px)) rotate(1deg); }
+  60%  { transform: translateX(calc(-50% - 4px)) rotate(-1deg); }
+  75%  { transform: translateX(calc(-50% + 2px)) rotate(0.5deg); }
+  100% { transform: translateX(-50%) rotate(0deg); }
+}
+
+@keyframes s4_neqPop {
+  from { opacity: 0; transform: scale(0) rotate(-20deg); }
+  to   { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+@keyframes s4_fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+
+/* === S5 Animation === */
+
+/* S5: Software Brain meets Lawyer Brain */
+
+.s5_stage {
+  max-width: 340px;
+  margin: 0 auto;
+  padding: 32px 16px 40px;
+  font-family: -apple-system, sans-serif;
+  color: #F1F5F9;
+  position: relative;
+  min-height: 320px;
+}
+
+/* ── shared: all animated children start invisible ── */
+.s5_stage .s5_circle,
+.s5_stage .s5_label,
+.s5_stage .s5_line,
+.s5_stage .s5_shared,
+.s5_stage .s5_question {
+  opacity: 0;
+}
+
+/* ── Step 1: Left circle "Code" (violet) ── */
+.s5_stage.visible .s5_circle--code {
+  animation: s5_fade_in 0.5s ease forwards;
+  animation-delay: 0.2s;
+}
+
+/* ── Step 2: Label under Code ── */
+.s5_stage.visible .s5_label--code {
+  animation: s5_fade_in 0.5s ease forwards;
+  animation-delay: 0.9s;
+}
+
+/* ── Step 3: Right circle "Law" (amber) ── */
+.s5_stage.visible .s5_circle--law {
+  animation: s5_fade_in 0.5s ease forwards;
+  animation-delay: 1.6s;
+}
+
+/* ── Step 4: Label under Law ── */
+.s5_stage.visible .s5_label--law {
+  animation: s5_fade_in 0.5s ease forwards;
+  animation-delay: 2.3s;
+}
+
+/* ── Step 5: Convergence lines ── */
+.s5_stage.visible .s5_line--left {
+  animation: s5_line_grow 0.5s ease forwards;
+  animation-delay: 3.0s;
+}
+.s5_stage.visible .s5_line--right {
+  animation: s5_line_grow 0.5s ease forwards;
+  animation-delay: 3.0s;
+}
+
+/* ── Step 6: Shared label "控制复杂系统" ── */
+.s5_stage.visible .s5_shared {
+  animation: s5_fade_in 0.5s ease forwards;
+  animation-delay: 3.7s;
+}
+
+/* ── Step 7: Pulsing "?" ── */
+.s5_stage.visible .s5_question {
+  animation: s5_fade_in 0.4s ease forwards, s5_pulse 1.4s ease-in-out 4.6s infinite;
+  animation-delay: 4.3s, 4.8s;
+}
+
+/* ── Keyframes ── */
+@keyframes s5_fade_in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s5_line_grow {
+  from { opacity: 0; stroke-dashoffset: 60; }
+  to   { opacity: 1; stroke-dashoffset: 0; }
+}
+
+@keyframes s5_pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(1.25); }
+}
+
+/* ── Layout ── */
+.s5_row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 48px;
+}
+
+.s5_col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Circles */
+.s5_circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  background: rgba(15, 11, 30, 0.6);
+}
+
+.s5_circle--code {
+  border-color: #7C3AED;
+  color: #7C3AED;
+  box-shadow: 0 0 16px rgba(124, 58, 237, 0.35);
+}
+
+.s5_circle--law {
+  border-color: #F59E0B;
+  color: #F59E0B;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.35);
+}
+
+/* Sub-labels */
+.s5_label {
+  font-size: 11px;
+  color: #94A3B8;
+  letter-spacing: 0.04em;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* SVG convergence lines */
+.s5_svg {
+  display: block;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.s5_line {
+  fill: none;
+  stroke: #94A3B8;
+  stroke-width: 1.5;
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+}
+
+/* Shared bottom label */
+.s5_shared {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #F1F5F9;
+  margin-top: 4px;
+  letter-spacing: 0.02em;
+}
+
+/* Question mark */
+.s5_question_wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.s5_question {
+  font-size: 28px;
+  font-weight: 800;
+  color: #94A3B8;
+  line-height: 1;
+  display: inline-block;
+  transform-origin: center center;
+}
+
+
+/* === S6 Animation === */
+
+/* S6: Business Loops Work */
+.s6_stage {
+  max-width: 340px;
+  margin: 0 auto;
+  background: #F5F3FF;
+  color: #1E293B;
+  font-family: -apple-system, sans-serif;
+  padding: 32px 20px 28px;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Loop diagram ── */
+.s6_loop {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  margin: 0 auto 28px;
+}
+
+/* Three boxes */
+.s6_box {
+  position: absolute;
+  width: 64px;
+  height: 36px;
+  border-radius: 8px;
+  background: #7C3AED;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+/* Positions: top-center, bottom-right, bottom-left */
+.s6_box--collect  { top: 8px;  left: 50%; transform: translateX(-50%) scale(0.6); }
+.s6_box--analyze  { bottom: 8px; right: 8px; transform: scale(0.6); }
+.s6_box--act      { bottom: 8px; left: 8px;  transform: scale(0.6); }
+
+/* Arrows (SVG lines via CSS clip-path tricks — we use pseudo-elements) */
+.s6_arrow {
+  position: absolute;
+  opacity: 0;
+  font-size: 18px;
+  color: #F59E0B;
+  font-weight: 900;
+  line-height: 1;
+}
+/* Arrow top→right */
+.s6_arrow--tr {
+  top: 60px; right: 22px;
+  transform: rotate(45deg);
+}
+/* Arrow right→left (bottom) */
+.s6_arrow--rl {
+  bottom: 20px; left: 50%;
+  transform: translateX(-50%) rotate(180deg);
+}
+/* Arrow left→top */
+.s6_arrow--lt {
+  top: 60px; left: 22px;
+  transform: rotate(-45deg);
+}
+
+/* Center loop icon */
+.s6_center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  font-size: 36px;
+  color: #7C3AED;
+  opacity: 0;
+  line-height: 1;
+}
+
+/* ── Animation timings (owl: one element at a time, ≥0.4s gap) ── */
+/* Step 1a: collect box — 0.3s in */
+.s6_stage.visible .s6_box--collect {
+  animation: s6_popIn 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.3s both;
+}
+/* Step 1b: analyze box — 0.9s in */
+.s6_stage.visible .s6_box--analyze {
+  animation: s6_popIn 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.9s both;
+}
+/* Step 1c: act box — 1.5s in */
+.s6_stage.visible .s6_box--act {
+  animation: s6_popIn 0.35s cubic-bezier(0.34,1.56,0.64,1) 1.5s both;
+}
+
+/* Step 2: arrows appear after all boxes — 2.1s, 2.5s, 2.9s */
+.s6_stage.visible .s6_arrow--tr {
+  animation: s6_fadeIn 0.3s ease 2.1s both;
+}
+.s6_stage.visible .s6_arrow--rl {
+  animation: s6_fadeIn 0.3s ease 2.5s both;
+}
+.s6_stage.visible .s6_arrow--lt {
+  animation: s6_fadeIn 0.3s ease 2.9s both;
+}
+
+/* Step 3: center loop icon — 3.4s */
+.s6_stage.visible .s6_center {
+  animation: s6_popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) 3.4s both;
+}
+
+/* Step 4: loop pulses — starts at 3.8s */
+.s6_stage.visible .s6_loop {
+  animation: s6_pulse 1.4s ease-in-out 3.8s infinite;
+}
+
+/* Step 5a: slide deck icon — 5.0s */
+.s6_stage.visible .s6_deck {
+  animation: s6_slideUp 0.4s ease 5.0s both;
+}
+/* Step 5b: label "AI 生成 PPT" — 5.5s */
+.s6_stage.visible .s6_label-ppt {
+  animation: s6_fadeIn 0.35s ease 5.5s both;
+}
+/* Step 5c: label "裁员" — 6.1s */
+.s6_stage.visible .s6_label-layoff {
+  animation: s6_fadeIn 0.35s ease 6.1s both;
+}
+
+/* ── Keyframes ── */
+@keyframes s6_popIn {
+  from { opacity: 0; transform: translateX(-50%) scale(0.6); }
+  to   { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+/* collect has translateX centering; analyze/act don't — override per element */
+.s6_box--analyze,
+.s6_box--act {
+  /* reset the translateX that collect needs */
+}
+@keyframes s6_popIn_noshift {
+  from { opacity: 0; transform: scale(0.6); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.s6_stage.visible .s6_box--analyze {
+  animation: s6_popIn_noshift 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.9s both;
+}
+.s6_stage.visible .s6_box--act {
+  animation: s6_popIn_noshift 0.35s cubic-bezier(0.34,1.56,0.64,1) 1.5s both;
+}
+.s6_stage.visible .s6_center {
+  animation: s6_centerPop 0.4s cubic-bezier(0.34,1.56,0.64,1) 3.4s both;
+}
+@keyframes s6_centerPop {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes s6_fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes s6_pulse {
+  0%, 100% { filter: drop-shadow(0 0 0px #7C3AED); transform: scale(1); }
+  50%       { filter: drop-shadow(0 0 12px #7C3AED88); transform: scale(1.04); }
+}
+
+@keyframes s6_slideUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Bottom section: consulting PPT ── */
+.s6_bottom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+  padding-top: 4px;
+  border-top: 1px dashed #94A3B840;
+}
+
+.s6_deck {
+  font-size: 32px;
+  opacity: 0;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.s6_labels {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.s6_label-ppt {
+  font-size: 13px;
+  font-weight: 600;
+  color: #94A3B8;
+  opacity: 0;
+}
+
+.s6_label-layoff {
+  font-size: 15px;
+  font-weight: 800;
+  color: #F59E0B;
+  opacity: 0;
+  letter-spacing: 0.02em;
+}
+
+/* ── Diagram label (title above loop) ── */
+.s6_title {
+  text-align: center;
+  font-size: 12px;
+  color: #94A3B8;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  opacity: 0;
+}
+.s6_stage.visible .s6_title {
+  animation: s6_fadeIn 0.4s ease 0.1s both;
+}
+
+/* ── Data note badge ── */
+.s6_badge {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  /* pushed down by center icon; we'll do it via margin-top on wrapper */
+}
+
+
+/* === S7 Animation === */
+
+/* S7: The Limit — Data Silos Animation */
+
+.s7_stage {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto;
+  height: 320px;
+  background: #0F0B1E;
+  border-radius: 16px;
+  overflow: hidden;
+  font-family: -apple-system, sans-serif;
+}
+
+/* ── Silo Circles ── */
+.s7_node {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 2px solid #94A3B8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #94A3B8;
+  opacity: 0;
+  transform: scale(0.4);
+}
+
+/* positions: corners of an inner diamond */
+.s7_node--mail    { top: 30px;  left: 50%;  margin-left: -80px; }
+.s7_node--msg     { top: 30px;  left: 50%;  margin-left: 20px;  }
+.s7_node--cal     { top: 140px; left: 50%;  margin-left: -110px;}
+.s7_node--fit     { top: 140px; left: 50%;  margin-left: 50px;  }
+
+/* Step 1–4: nodes pop in one by one */
+.s7_stage.visible .s7_node--mail {
+  animation: s7_pop 0.4s ease-out 0.2s forwards;
+}
+.s7_stage.visible .s7_node--msg {
+  animation: s7_pop 0.4s ease-out 0.7s forwards;
+}
+.s7_stage.visible .s7_node--cal {
+  animation: s7_pop 0.4s ease-out 1.2s forwards;
+}
+.s7_stage.visible .s7_node--fit {
+  animation: s7_pop 0.4s ease-out 1.7s forwards;
+}
+
+@keyframes s7_pop {
+  0%   { opacity: 0; transform: scale(0.4); }
+  70%  { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* ── Dashed connector lines ── */
+/* We use SVG-style via pseudo-elements:
+   each line is a thin absolute div with border-top dashed,
+   animated via clip-path to "draw" outward then turn red */
+
+.s7_line {
+  position: absolute;
+  height: 2px;
+  opacity: 0;
+  transform-origin: left center;
+}
+
+/* Line 1: mail → msg  (horizontal top) */
+.s7_line--1 {
+  top: 59px;
+  left: 50%;
+  margin-left: -17px;
+  width: 77px;
+  transform: rotate(0deg);
+}
+
+/* Line 2: mail → cal  (diagonal) */
+.s7_line--2 {
+  top: 89px;
+  left: 50%;
+  margin-left: -75px;
+  width: 68px;
+  transform: rotate(57deg);
+}
+
+/* Line 3: msg → fit   (diagonal) */
+.s7_line--3 {
+  top: 89px;
+  left: 50%;
+  margin-left: 48px;
+  width: 68px;
+  transform: rotate(120deg);
+}
+
+/* Line 4: cal → fit  (horizontal mid) */
+.s7_line--4 {
+  top: 169px;
+  left: 50%;
+  margin-left: -47px;
+  width: 95px;
+  transform: rotate(0deg);
+}
+
+/* Draw phase: clip-path sweeps left→right, color stays #94A3B8 */
+/* Break phase: line flashes red, then stays red dimmed */
+
+.s7_stage.visible .s7_line--1 {
+  animation: s7_draw 0.5s ease-out 2.3s forwards,
+             s7_break 0.4s ease-in 2.9s forwards;
+}
+.s7_stage.visible .s7_line--2 {
+  animation: s7_draw 0.5s ease-out 2.5s forwards,
+             s7_break 0.4s ease-in 3.1s forwards;
+}
+.s7_stage.visible .s7_line--3 {
+  animation: s7_draw 0.5s ease-out 2.7s forwards,
+             s7_break 0.4s ease-in 3.3s forwards;
+}
+.s7_stage.visible .s7_line--4 {
+  animation: s7_draw 0.5s ease-out 2.9s forwards,
+             s7_break 0.4s ease-in 3.5s forwards;
+}
+
+@keyframes s7_draw {
+  0%   { opacity: 1; clip-path: inset(0 100% 0 0); background: repeating-linear-gradient(90deg,#94A3B8 0,#94A3B8 6px,transparent 6px,transparent 12px); }
+  100% { opacity: 1; clip-path: inset(0 0% 0 0);   background: repeating-linear-gradient(90deg,#94A3B8 0,#94A3B8 6px,transparent 6px,transparent 12px); }
+}
+
+@keyframes s7_break {
+  0%   { opacity: 1; background: repeating-linear-gradient(90deg,#EF4444 0,#EF4444 6px,transparent 6px,transparent 12px); }
+  40%  { opacity: 1; background: repeating-linear-gradient(90deg,#EF4444 0,#EF4444 6px,transparent 6px,transparent 12px); transform: scaleX(1); }
+  60%  { opacity: 0.9; transform: scaleX(0.85); }
+  80%  { opacity: 0.5; }
+  100% { opacity: 0.3; background: repeating-linear-gradient(90deg,#EF4444 0,#EF4444 6px,transparent 6px,transparent 12px); }
+}
+
+/* ── Central AI Circle ── */
+.s7_ai {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 56px;
+  height: 56px;
+  margin-top: -28px;
+  margin-left: -28px;
+  border-radius: 50%;
+  border: 2px solid #7C3AED;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #7C3AED;
+  opacity: 0;
+}
+
+/* Step 5: AI appears then fades to low opacity */
+.s7_stage.visible .s7_ai {
+  animation: s7_ai_appear 0.5s ease-out 3.8s forwards,
+             s7_ai_fade   0.8s ease-in  4.5s forwards;
+}
+
+@keyframes s7_ai_appear {
+  0%   { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s7_ai_fade {
+  0%   { opacity: 1; }
+  100% { opacity: 0.18; }
+}
+
+/* ── Bottom text: 10+ 年 ── */
+.s7_label {
+  position: absolute;
+  bottom: 28px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  opacity: 0;
+}
+
+.s7_label__years {
+  display: block;
+  font-size: 22px;
+  font-weight: 700;
+  color: #EF4444;
+  letter-spacing: 1px;
+}
+
+.s7_label__sub {
+  display: block;
+  font-size: 11px;
+  color: #94A3B8;
+  margin-top: 4px;
+}
+
+/* Step 6: label appears */
+.s7_stage.visible .s7_label {
+  animation: s7_label_in 0.6s ease-out 5.4s forwards;
+}
+
+@keyframes s7_label_in {
+  0%   { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Node label text ── */
+.s7_node span {
+  pointer-events: none;
+}
+
+
+/* === S8 Animation === */
+
+/* S8: The Doomed Ask — human vs. database legibility */
+
+.s8_stage {
+  max-width: 340px;
+  margin: 0 auto;
+  background: #FFF1F2;
+  color: #1E293B;
+  font-family: -apple-system, sans-serif;
+  padding: 32px 24px 28px;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+  min-height: 260px;
+}
+
+/* ── Step 1: Human figure (circle head + body line) ── */
+.s8_human {
+  position: absolute;
+  left: 36px;
+  top: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  opacity: 0;
+  transform: scaleY(1) translateY(0);
+  transform-origin: bottom center;
+}
+
+.s8_human__head {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid #7C3AED;
+  background: #FFF1F2;
+}
+
+.s8_human__body {
+  width: 3px;
+  height: 40px;
+  background: #7C3AED;
+  border-radius: 2px;
+}
+
+.s8_human__arms {
+  position: absolute;
+  top: 36px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 3px;
+  background: #7C3AED;
+  border-radius: 2px;
+}
+
+.s8_human__legs {
+  display: flex;
+  gap: 10px;
+  margin-top: 0;
+}
+
+.s8_human__leg {
+  width: 3px;
+  height: 22px;
+  background: #7C3AED;
+  border-radius: 2px;
+}
+
+/* ── Step 2: Arrow + "legible" label pushing right ── */
+.s8_arrow {
+  position: absolute;
+  left: 96px;
+  top: 84px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+}
+
+.s8_arrow__label {
+  font-size: 11px;
+  color: #94A3B8;
+  margin-bottom: 3px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.s8_arrow__shaft {
+  width: 64px;
+  height: 3px;
+  background: #94A3B8;
+  border-radius: 2px;
+  position: relative;
+}
+
+.s8_arrow__shaft::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left: 10px solid #94A3B8;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+}
+
+/* reversed arrow for step 5 */
+.s8_arrow_rev {
+  position: absolute;
+  left: 96px;
+  top: 84px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+}
+
+.s8_arrow_rev__label {
+  font-size: 11px;
+  color: #7C3AED;
+  margin-bottom: 3px;
+  letter-spacing: 0.02em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.s8_arrow_rev__shaft {
+  width: 64px;
+  height: 3px;
+  background: #7C3AED;
+  border-radius: 2px;
+  position: relative;
+}
+
+.s8_arrow_rev__shaft::after {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-right: 10px solid #7C3AED;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+}
+
+/* ── Database grid on the right ── */
+.s8_db {
+  position: absolute;
+  right: 28px;
+  top: 34px;
+  width: 72px;
+  opacity: 0;
+}
+
+.s8_db__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+}
+
+.s8_db__cell {
+  height: 14px;
+  background: #94A3B8;
+  border-radius: 2px;
+  opacity: 0.5;
+}
+
+.s8_db__cell:nth-child(odd) {
+  opacity: 0.35;
+}
+
+.s8_db__label {
+  font-size: 9px;
+  color: #94A3B8;
+  text-align: center;
+  margin-top: 5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ── Step 3: Human gets flattened (compressed vertically) ── */
+@keyframes s8-flatten {
+  0%   { transform: scaleY(1) translateY(0); }
+  100% { transform: scaleY(0.32) translateY(28px); }
+}
+
+/* ── Step 4: Red X / stop sign ── */
+.s8_stop {
+  position: absolute;
+  left: 50%;
+  top: 26px;
+  transform: translateX(-50%);
+  opacity: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.s8_stop__circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid #EF4444;
+  background: #FFF1F2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.s8_stop__circle::before,
+.s8_stop__circle::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 3px;
+  background: #EF4444;
+  border-radius: 2px;
+}
+
+.s8_stop__circle::before {
+  transform: rotate(45deg);
+}
+
+.s8_stop__circle::after {
+  transform: rotate(-45deg);
+}
+
+@keyframes s8-stop-pulse {
+  0%   { transform: translateX(-50%) scale(1); }
+  40%  { transform: translateX(-50%) scale(1.18); }
+  70%  { transform: translateX(-50%) scale(0.94); }
+  100% { transform: translateX(-50%) scale(1); }
+}
+
+/* ── Step 6: Caption text ── */
+.s8_caption {
+  position: absolute;
+  bottom: 22px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  opacity: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #7C3AED;
+  letter-spacing: 0.01em;
+  padding: 0 16px;
+}
+
+/* ══════════════════════════════════════════
+   OWL-STYLE SEQUENCED ANIMATION TRIGGERS
+   Triggered when .s8_stage.visible is set
+   ══════════════════════════════════════════ */
+
+/* Step 1 — human appears: 0s → 0.6s */
+.s8_stage.visible .s8_human {
+  animation: s8-fadein 0.5s ease forwards;
+  animation-delay: 0.1s;
+}
+
+/* Step 2 — arrow + label appear: 0.7s → 1.2s */
+.s8_stage.visible .s8_arrow {
+  animation: s8-fadein 0.45s ease forwards;
+  animation-delay: 0.7s;
+}
+
+/* Step 2b — database grid appears: 0.9s */
+.s8_stage.visible .s8_db {
+  animation: s8-fadein 0.45s ease forwards;
+  animation-delay: 0.9s;
+}
+
+/* Step 3 — human gets flattened: 1.4s */
+.s8_stage.visible .s8_human {
+  animation:
+    s8-fadein  0.5s  ease         forwards 0.1s,
+    s8-flatten 0.55s ease-in-out  forwards 1.45s;
+}
+
+/* Step 4 — red X appears: 2.1s, pulses once */
+.s8_stage.visible .s8_stop {
+  animation:
+    s8-fadein     0.35s ease         forwards 2.1s,
+    s8-stop-pulse 0.55s ease-in-out  forwards 2.45s;
+}
+
+/* Step 5 — original arrow fades out and reversed arrow fades in: 2.8s */
+.s8_stage.visible .s8_arrow {
+  animation:
+    s8-fadein  0.45s ease forwards  0.7s,
+    s8-fadeout 0.35s ease forwards  2.8s;
+}
+
+.s8_stage.visible .s8_arrow_rev {
+  animation: s8-fadein 0.5s ease forwards 3.0s;
+}
+
+/* Step 6 — caption appears: 3.6s */
+.s8_stage.visible .s8_caption {
+  animation: s8-fadein 0.55s ease forwards 3.6s;
+}
+
+/* shared keyframes */
+@keyframes s8-fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes s8-fadeout {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+
+/* === S9 Animation === */
+
+/* S9 CSS - Software Brain: Code/Law Parallel */
+
+.s9_stage {
+  max-width: 340px;
+  margin: 0 auto;
+  background: #F5F3FF;
+  color: #1E293B;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  padding: 28px 20px 32px;
+  box-sizing: border-box;
+  position: relative;
+  border-radius: 12px;
+  min-height: 320px;
+}
+
+/* ── shared fade+rise keyframe ── */
+@keyframes s9_fadeRise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── block stack keyframe ── */
+@keyframes s9_blockIn {
+  from { opacity: 0; transform: scaleY(0.4) translateY(6px); }
+  to   { opacity: 1; transform: scaleY(1) translateY(0); }
+}
+
+/* ── bracket reveal ── */
+@keyframes s9_bracketIn {
+  from { opacity: 0; transform: scaleX(0.3); }
+  to   { opacity: 1; transform: scaleX(1); }
+}
+
+/* ── equals sign pop ── */
+@keyframes s9_pop {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+  70%  { transform: translate(-50%, -50%) scale(1.15); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* ── two-column layout ── */
+.s9_columns {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.s9_col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── column labels ── */
+.s9_label {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 3px 10px;
+  border-radius: 4px;
+  opacity: 0;
+}
+
+.s9_label--law {
+  color: #7C3AED;
+  border: 1.5px solid #7C3AED;
+  background: rgba(124, 58, 237, 0.07);
+}
+
+.s9_label--code {
+  color: #F59E0B;
+  border: 1.5px solid #F59E0B;
+  background: rgba(245, 158, 11, 0.07);
+}
+
+/* ── blocks ── */
+.s9_block {
+  width: 88px;
+  padding: 5px 0;
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 5px;
+  opacity: 0;
+  transform-origin: center bottom;
+}
+
+.s9_block--law {
+  background: rgba(124, 58, 237, 0.12);
+  color: #7C3AED;
+  border: 1px solid rgba(124, 58, 237, 0.3);
+}
+
+.s9_block--code {
+  background: rgba(245, 158, 11, 0.10);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+/* ── bracket row ── */
+.s9_bracket-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+  margin-top: 2px;
+  opacity: 0;
+}
+
+.s9_brace {
+  width: 44%;
+  height: 18px;
+  border: 2px solid #94A3B8;
+  border-top: none;
+  box-sizing: border-box;
+}
+
+.s9_brace--left {
+  border-right: none;
+  border-bottom-left-radius: 5px;
+}
+
+.s9_brace--right {
+  border-left: none;
+  border-bottom-right-radius: 5px;
+}
+
+.s9_label-bottom {
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94A3B8;
+  letter-spacing: 0.01em;
+  margin-top: 2px;
+  opacity: 0;
+}
+
+/* ── equals sign ── */
+.s9_eq {
+  position: absolute;
+  left: 50%;
+  top: 118px;
+  transform: translate(-50%, -50%) scale(1);
+  font-size: 22px;
+  font-weight: 700;
+  color: #94A3B8;
+  opacity: 0;
+  pointer-events: none;
+  line-height: 1;
+}
+
+/* ════════════════════════════
+   ANIMATION TRIGGERS on .visible
+   Step timing (owl-style, ≥0.4s gaps):
+   step 1 — law label      : 0.2s
+   step 2a — 判例 A        : 0.8s
+   step 2b — 判例 B        : 1.3s
+   step 2c — 判例 C        : 1.8s
+   step 3 — code label     : 2.4s
+   step 4a — lib-auth      : 3.0s
+   step 4b — lib-pay       : 3.5s
+   step 4c — lib-data      : 4.0s
+   step 5 — bracket        : 4.7s
+   step 5b— bottom label   : 5.0s
+   step 6 — ≈ sign         : 5.6s
+════════════════════════════ */
+
+.s9_stage.visible .s9_label--law {
+  animation: s9_fadeRise 0.45s ease forwards;
+  animation-delay: 0.2s;
+}
+
+.s9_stage.visible .s9_block--law-a {
+  animation: s9_blockIn 0.38s ease forwards;
+  animation-delay: 0.8s;
+}
+
+.s9_stage.visible .s9_block--law-b {
+  animation: s9_blockIn 0.38s ease forwards;
+  animation-delay: 1.3s;
+}
+
+.s9_stage.visible .s9_block--law-c {
+  animation: s9_blockIn 0.38s ease forwards;
+  animation-delay: 1.8s;
+}
+
+.s9_stage.visible .s9_label--code {
+  animation: s9_fadeRise 0.45s ease forwards;
+  animation-delay: 2.4s;
+}
+
+.s9_stage.visible .s9_block--code-a {
+  animation: s9_blockIn 0.38s ease forwards;
+  animation-delay: 3.0s;
+}
+
+.s9_stage.visible .s9_block--code-b {
+  animation: s9_blockIn 0.38s ease forwards;
+  animation-delay: 3.5s;
+}
+
+.s9_stage.visible .s9_block--code-c {
+  animation: s9_blockIn 0.38s ease forwards;
+  animation-delay: 4.0s;
+}
+
+.s9_stage.visible .s9_bracket-row {
+  animation: s9_bracketIn 0.42s ease forwards;
+  animation-delay: 4.7s;
+  transform-origin: center;
+}
+
+.s9_stage.visible .s9_label-bottom {
+  animation: s9_fadeRise 0.38s ease forwards;
+  animation-delay: 5.0s;
+}
+
+.s9_stage.visible .s9_eq {
+  animation: s9_pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: 5.6s;
+}
+
+
+/* === S10 Animation === */
+
+/* S10: Ambiguity is the Heart — Law is not deterministic */
+
+.s10_stage {
+  background: #0F0B1E;
+  color: #F1F5F9;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  max-width: 340px;
+  margin: 0 auto;
+  padding: 32px 20px 28px;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+  min-height: 420px;
+}
+
+/* ── shared helpers ── */
+.s10_stage * {
+  box-sizing: border-box;
+}
+
+/* all animated children start invisible */
+.s10_stage .s10_row,
+.s10_stage .s10_arrow,
+.s10_stage .s10_fn,
+.s10_stage .s10_out,
+.s10_stage .s10_crack,
+.s10_stage .s10_ambig,
+.s10_stage .s10_ai {
+  opacity: 0;
+}
+
+/* ── Step 1: input boxes — "事实" and "法条" ── */
+.s10_stage.visible .s10_row {
+  animation: s10_fadeUp 0.5s ease-out 0.2s forwards;
+}
+
+.s10_row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 0;
+}
+
+.s10_input_box {
+  flex: 1;
+  max-width: 120px;
+  border: 2px solid #7C3AED;
+  border-radius: 10px;
+  padding: 10px 8px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #F1F5F9;
+  background: rgba(124, 58, 237, 0.10);
+  letter-spacing: 0.04em;
+}
+
+.s10_input_box .s10_label_sub {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  color: #a78bfa;
+  margin-top: 4px;
+  letter-spacing: 0.06em;
+}
+
+/* ── Step 2: arrow + function box ── */
+.s10_stage.visible .s10_arrow {
+  animation: s10_fadeIn 0.4s ease-out 0.85s forwards;
+}
+
+.s10_stage.visible .s10_fn {
+  animation: s10_fadeUp 0.45s ease-out 1.1s forwards;
+}
+
+.s10_arrow {
+  text-align: center;
+  font-size: 22px;
+  color: #7C3AED;
+  margin: 10px 0 4px;
+  line-height: 1;
+}
+
+.s10_fn {
+  text-align: center;
+  margin: 0 auto 0;
+  display: inline-block;
+  width: 100%;
+}
+
+.s10_fn_box {
+  display: inline-block;
+  border: 2px solid #F59E0B;
+  border-radius: 8px;
+  padding: 7px 22px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #F59E0B;
+  background: rgba(245, 158, 11, 0.08);
+  letter-spacing: 0.06em;
+}
+
+.s10_fn_box .s10_fn_label {
+  font-size: 10px;
+  display: block;
+  color: #fcd34d;
+  margin-top: 2px;
+}
+
+/* ── Step 3: expected output ── */
+.s10_stage.visible .s10_out {
+  animation: s10_fadeUp 0.45s ease-out 1.7s forwards;
+}
+
+.s10_out {
+  text-align: center;
+  margin: 10px 0 0;
+}
+
+.s10_out_box {
+  display: inline-block;
+  border: 2px solid #7C3AED;
+  border-radius: 10px;
+  padding: 9px 26px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #c4b5fd;
+  background: rgba(124, 58, 237, 0.12);
+  letter-spacing: 0.05em;
+  position: relative;
+}
+
+/* ── Step 4: crack/shatter effect ── */
+.s10_stage.visible .s10_crack {
+  animation: s10_crack 0.55s ease-in 2.5s forwards;
+}
+
+/* The crack overlays the out box */
+.s10_crack {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+}
+
+/* We use the ::before/::after of out wrapper to fake crack lines */
+.s10_out_wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.s10_out_wrap::before,
+.s10_out_wrap::after {
+  content: '';
+  position: absolute;
+  background: #EF4444;
+  opacity: 0;
+  transform-origin: center;
+  border-radius: 2px;
+  z-index: 2;
+}
+
+/* diagonal crack line 1 */
+.s10_out_wrap::before {
+  width: 3px;
+  height: 60%;
+  top: 10%;
+  left: 38%;
+  transform: rotate(22deg);
+}
+
+/* diagonal crack line 2 */
+.s10_out_wrap::after {
+  width: 2px;
+  height: 45%;
+  top: 20%;
+  left: 55%;
+  transform: rotate(-18deg);
+}
+
+.s10_stage.visible .s10_out_wrap::before {
+  animation: s10_crackLine 0.4s ease-in 2.5s forwards;
+}
+
+.s10_stage.visible .s10_out_wrap::after {
+  animation: s10_crackLine 0.4s ease-in 2.65s forwards;
+}
+
+/* out box shake + border turns red */
+.s10_stage.visible .s10_out_box {
+  animation: s10_shatter 0.6s ease-in 2.5s forwards;
+}
+
+/* ── Step 4b: ambiguity replaces output ── */
+.s10_stage.visible .s10_crack_q {
+  animation: s10_fadeUp 0.5s ease-out 3.15s forwards;
+}
+
+.s10_crack_q {
+  opacity: 0;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.s10_q_mark {
+  font-size: 38px;
+  font-weight: 900;
+  color: #EF4444;
+  line-height: 1;
+  display: inline-block;
+}
+
+/* ── Step 5: "模糊" glows red ── */
+.s10_stage.visible .s10_ambig {
+  animation: s10_fadeUp 0.45s ease-out 3.7s forwards;
+}
+
+.s10_ambig {
+  text-align: center;
+  margin-top: 4px;
+}
+
+.s10_ambig_text {
+  font-size: 20px;
+  font-weight: 800;
+  color: #EF4444;
+  letter-spacing: 0.12em;
+  display: inline-block;
+}
+
+.s10_stage.visible .s10_ambig_text {
+  animation: s10_redGlow 1.6s ease-in-out 4.2s infinite alternate;
+}
+
+.s10_ambig_sub {
+  display: block;
+  font-size: 11px;
+  color: #fca5a5;
+  margin-top: 3px;
+  letter-spacing: 0.08em;
+}
+
+/* ── Step 6: AI arbitration fades in dimly ── */
+.s10_stage.visible .s10_ai {
+  animation: s10_fadeDim 0.7s ease-out 4.8s forwards;
+}
+
+.s10_ai {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 9px 16px;
+  border: 1px dashed rgba(124, 58, 237, 0.4);
+  border-radius: 10px;
+  background: rgba(124, 58, 237, 0.05);
+}
+
+.s10_ai_icon {
+  font-size: 20px;
+  opacity: 0.7;
+  line-height: 1;
+}
+
+.s10_ai_label {
+  font-size: 12px;
+  color: #a78bfa;
+  opacity: 0.8;
+  letter-spacing: 0.06em;
+}
+
+.s10_ai_label strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #c4b5fd;
+}
+
+/* ── Keyframes ── */
+
+@keyframes s10_fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s10_fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes s10_fadeDim {
+  from { opacity: 0; }
+  to   { opacity: 0.75; }
+}
+
+@keyframes s10_crackLine {
+  from { opacity: 0; transform: scaleY(0) rotate(22deg); }
+  to   { opacity: 1; transform: scaleY(1) rotate(22deg); }
+}
+
+@keyframes s10_shatter {
+  0%   { border-color: #7C3AED; transform: translateX(0); background: rgba(124,58,237,0.12); }
+  20%  { transform: translateX(-3px) rotate(-1deg); }
+  40%  { transform: translateX(4px) rotate(1deg); border-color: #EF4444; background: rgba(239,68,68,0.10); }
+  60%  { transform: translateX(-2px); }
+  80%  { transform: translateX(2px); }
+  100% { border-color: #EF4444; background: rgba(239,68,68,0.07); transform: translateX(0); color: #fca5a5; }
+}
+
+@keyframes s10_redGlow {
+  from { text-shadow: 0 0 6px rgba(239,68,68,0.5); }
+  to   { text-shadow: 0 0 18px rgba(239,68,68,0.95), 0 0 32px rgba(239,68,68,0.4); }
+}
+
+</style>
+
+<meta name="description" content="Nilay Patel 把这种思维叫做 software brain 。Marc Andreessen 2011 年写下「软件正在吞噬世界」的时候，他就是 software brain 的化身。而 AI 把这种思维方式涡轮增压了——因为它让更多人能写出更多软件，让每一种生意都能用软件自动化自己的一大块。">
+<link rel="canonical" href="https://chendi.me/readings/software-brain/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<!-- Back button -->
+<button class="back-btn" id="backBtn" onclick="goBack()">←</button>
+<!-- Depth dots -->
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ Overview Layer ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+<!-- S1: Hero — Software Brain -->
+<section class="feed-section dark" style="background: var(--bg-dark);">
+<div class="section-inner">
+  <p class="section-tag reveal">BEWARE SOFTWARE BRAIN</p>
+  <h2 class="big-statement reveal reveal-d1">有一种思维方式，把整个世界看成<span style="color:#A78BFA">一系列数据库</span>——然后试图用代码去控制它们</h2>
+  <p class="body-text reveal reveal-d2">Nilay Patel 把这种思维叫做 <span class="hl">software brain</span>。Marc Andreessen 2011 年写下「软件正在吞噬世界」的时候，他就是 software brain 的化身。而 AI 把这种思维方式涡轮增压了——因为它让更多人能写出更多软件，让每一种生意都能用软件自动化自己的一大块。</p>
+  <p class="body-text reveal reveal-d3">问题在于：<span class="hl-danger">不是所有东西都是生意，不是所有东西都是循环</span>。整个人类经验无法被塞进数据库。这就是 software brain 的极限——也是为什么人们讨厌 AI。</p>
+  <div class="anim-stage reveal reveal-d3"><div class="s1_stage">
+
+  <!-- Step 1: World circle -->
+  <div class="s1_world">世界</div>
+
+  <!-- Step 2: Diverse satellite icons -->
+  <div class="s1_sat s1_sat1">人</div>
+  <div class="s1_sat s1_sat2">房</div>
+  <div class="s1_sat s1_sat3">歌</div>
+  <div class="s1_sat s1_sat4">法</div>
+
+  <!-- Step 3: Filter sweep line -->
+  <div class="s1_sweep_label">filter</div>
+  <div class="s1_sweep"></div>
+
+  <!-- Step 4: Database grid -->
+  <div class="s1_db_wrap">
+    <div class="s1_db_header">DB ▸ table: world</div>
+    <div class="s1_row">
+      <div class="s1_cell accent"></div>
+      <div class="s1_cell"></div>
+      <div class="s1_cell"></div>
+    </div>
+    <div class="s1_row">
+      <div class="s1_cell accent"></div>
+      <div class="s1_cell"></div>
+      <div class="s1_cell"></div>
+    </div>
+    <div class="s1_row">
+      <div class="s1_cell accent"></div>
+      <div class="s1_cell"></div>
+      <div class="s1_cell"></div>
+    </div>
+    <div class="s1_row">
+      <div class="s1_cell accent"></div>
+      <div class="s1_cell"></div>
+      <div class="s1_cell"></div>
+    </div>
+  </div>
+
+  <!-- Step 5: Label transition (世界 → Software Brain) -->
+  <div class="s1_label_old">世界</div>
+  <div class="s1_label_new">Software Brain</div>
+
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span><p>Today on Decoder, I want to lay out an idea that's been banging around my head for weeks now as we've been reporting on AI and having conversations here on this show. I've been calling it software brain, and it's a particular way of seeing the world that fits everything into algorithms, databases and loops — software.
+
+Software brain is powerful stuff. It's a way of thinking that basically created our modern world. Marc Andreessen, the literal embodiment of software brain, called it in 2011 when he wrote the piece "Why software is eating the world" as an op-ed in The Wall Street Journal. But software thinking has been turbocharged by AI in a way that I think helps explain the enormous gap between how excited the tech industry is about the technology and how regular people are growing to dislike it more and more over time.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S2: AI 不受欢迎 -->
+<section class="feed-section" style="background: var(--bg-act1);">
+<div class="section-inner">
+  <p class="section-tag reveal">THE NUMBERS</p>
+  <h2 class="big-statement reveal reveal-d1">ChatGPT 有 <span style="color:var(--accent)">9 亿</span>周活用户——但超过一半的美国人认为 AI 弊大于利</h2>
+  <p class="body-text reveal reveal-d2">NBC 的民调显示，AI 的好感度比 ICE（移民执法局）还低，仅略高于伊朗战争和民主党。Quinnipiac 发现超过 <span class="hl-danger">80%</span> 的人对 AI 感到「非常担忧」或「有些担忧」，只有 <span class="hl">35%</span> 的人对它感到兴奋。</p>
+  <p class="body-text reveal reveal-d3">最讽刺的是 <span class="hl2">Z 世代</span>：他们用 AI 用得最多，但对 AI 的感受也最负面。Gallup 发现只有 18% 的 Z 世代对 AI 抱有希望（去年还是 27%），而感到愤怒的比例从 22% 升到了 31%。</p>
+  <div class="anim-stage reveal reveal-d3"><div class="s2_stage">
+  <!-- Bar chart area -->
+  <div class="s2-chart-area">
+    <!-- Usage column -->
+    <div class="s2-col s2-col-usage">
+      <div class="s2-label-usage">ChatGPT 周活</div>
+      <div class="s2-bar-wrap">
+        <div class="s2-bar-usage"></div>
+      </div>
+    </div>
+
+    <!-- Favorability column -->
+    <div class="s2-col s2-col-favor">
+      <div class="s2-label-favor">好感度</div>
+      <div class="s2-bar-favor-wrap">
+        <div class="s2-bar-favor"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gen Z section -->
+  <div class="s2-genz-section">
+    <!-- Step 5: Gen Z 希望 drops -->
+    <div class="s2-genz-hope s2-genz-row">
+      <div class="s2-genz-title">Gen Z 希望 AI 存在</div>
+      <div class="s2-hope-display">
+        <div class="s2-hope-num-wrap">
+          <span class="s2-hope-num-start">27%</span>
+          <span class="s2-hope-num-end">18%</span>
+        </div>
+        <span class="s2-hope-arrow">↓</span>
+        <span class="s2-hope-label">跌至 18%</span>
+      </div>
+    </div>
+
+    <!-- Step 6: Gen Z 愤怒 rises -->
+    <div class="s2-genz-anger s2-genz-row">
+      <div class="s2-genz-title">Gen Z 对 AI 感到愤怒</div>
+      <div class="s2-anger-display">
+        <div class="s2-anger-track">
+          <div class="s2-anger-bar"></div>
+        </div>
+        <span class="s2-anger-label">22% → 31%</span>
+      </div>
+    </div>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span><p>In fact, the polling on this is so strong, I think it's fair to say that a lot of people hate AI, and that Gen Z in particular seems to hate AI more and more as they encounter it. There's that NBC News poll showing AI with worse favorability than ICE and only a little bit above the war in Iran and the Democrats generally. That's with nearly two thirds of respondents saying they used ChatGPT or Copilot in the last month. Quinnipiac just found that over half of Americans think AI will do more harm than good, while more than 80 percent of people were either very concerned or somewhat concerned about the technology. Only 35 percent of people were excited about it.
+
+Poll after poll shows that Gen Z uses AI the most and has the most negative feelings about it. A recent Gallup poll found that only 18 percent of Gen Z was hopeful about AI, down from an already-bad 27 percent last year. At the same time, anger is growing: 31 percent of those Gen Z respondents said they feel angry about AI, up from 22 percent last year.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S3: 不是营销问题 -->
+<section class="feed-section dark" style="background: var(--bg-close);">
+<div class="section-inner">
+  <p class="section-tag reveal">NOT A MARKETING PROBLEM</p>
+  <h2 class="big-statement reveal reveal-d1">Sam Altman 说 AI 需要「更好的营销」——但 <span style="color:#F87171">9 亿人每天都在用</span>，这不是营销问题</h2>
+  <p class="body-text reveal reveal-d2">OpenAI 花了 <span class="hl2">2 亿美元</span>赞助 TBPN 播客，因为他们觉得这能让人们更喜欢 AI。Altman 亲口说：「如果 AI 是一个政治候选人，它会是历史上最不受欢迎的候选人。」因此他认为 AI 需要更好的营销。</p>
+  <p class="body-text reveal reveal-d3">Patel 的回应很直接：<span class="hl-danger">你没法通过广告让人们忽略自己的亲身体验</span>。每个人都已经在 Google 搜索里看到了 AI 概述，在社交媒体上看到了大量 AI 生成的垃圾内容。这不是信息不对称，这是 software brain 和普通人生活之间的根本断裂。</p>
+  <div class="anim-stage reveal reveal-d3"><div class="s3_stage">
+  <div class="s3_title">S3 · 这不是营销问题</div>
+
+  <div class="s3_row">
+    <!-- Step 1: Marketing circle -->
+    <div class="s3_mkt">
+      <div class="s3_mkt_wrap">
+        <div class="s3_mkt_circle">
+          <span class="s3_mkt_label">营销</span>
+          <span class="s3_mkt_amount">$200M</span>
+        </div>
+        <!-- Step 6: cross over circle -->
+        <div class="s3_cross"></div>
+      </div>
+      <span class="s3_mkt_tag">投入</span>
+    </div>
+
+    <!-- Steps 2 & 4: arrows -->
+    <div class="s3_arrows">
+      <!-- forward arrows -->
+      <svg class="s3_arr_svg s3_arr_fwd" width="36" height="10" viewBox="0 0 36 10">
+        <polyline points="0,5 28,5" stroke="#7C3AED" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <polyline points="22,1 28,5 22,9" stroke="#7C3AED" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <svg class="s3_arr_svg s3_arr_fwd" width="36" height="10" viewBox="0 0 36 10">
+        <polyline points="0,5 28,5" stroke="#7C3AED" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <polyline points="22,1 28,5 22,9" stroke="#7C3AED" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <svg class="s3_arr_svg s3_arr_fwd" width="36" height="10" viewBox="0 0 36 10">
+        <polyline points="0,5 28,5" stroke="#7C3AED" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <polyline points="22,1 28,5 22,9" stroke="#7C3AED" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <!-- bounce arrows (mirrored) -->
+      <svg class="s3_arr_svg s3_arr_bk" width="36" height="10" viewBox="0 0 36 10">
+        <polyline points="0,5 28,5" stroke="#EF4444" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <polyline points="22,1 28,5 22,9" stroke="#EF4444" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <svg class="s3_arr_svg s3_arr_bk" width="36" height="10" viewBox="0 0 36 10">
+        <polyline points="0,5 28,5" stroke="#EF4444" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <polyline points="22,1 28,5 22,9" stroke="#EF4444" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <svg class="s3_arr_svg s3_arr_bk" width="36" height="10" viewBox="0 0 36 10">
+        <polyline points="0,5 28,5" stroke="#EF4444" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <polyline points="22,1 28,5 22,9" stroke="#EF4444" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+    <!-- Step 3: Wall -->
+    <div class="s3_wall">
+      <div class="s3_wall_block">亲身体验</div>
+      <span class="s3_wall_tag">现实之墙</span>
+    </div>
+  </div>
+
+  <!-- Step 5: 900M users -->
+  <div class="s3_users">
+    <div class="s3_users_num">900M 用户</div>
+    <div class="s3_users_label">每日真实体验，无法被营销覆写</div>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span><p>It feels like someone just needs to say this clearly, so I'm just going to do it. AI doesn't have a marketing problem. People experience these tools every single day! ChatGPT has 900 million weekly users, trending to a billion, and everyone has seen AI Overviews in Google Search and massive amounts of slop on their feeds.
+
+You can't advertise people out of reacting to their own experiences. This is a fundamental disconnect between how tech people with software brains see the world and how regular people are living their lives.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S4: 一切皆数据库 -->
+<section class="feed-section" style="background: var(--bg-act2);">
+<div class="section-inner">
+  <p class="section-tag reveal">EVERYTHING IS A DATABASE</p>
+  <h2 class="big-statement reveal reveal-d1"><span style="color:var(--accent)">Zillow</span> 是房子的数据库，<span style="color:var(--accent)">Uber</span> 是车和乘客的数据库——一旦你这样看世界，你就觉得控制数据就能控制一切</h2>
+  <p class="body-text reveal reveal-d2">这种思维方式确实很强大。我们生活的大部分确实运行在数据库上，一堆重要的公司就是围绕维护和提供数据库访问而建立的。YouTube 是视频的数据库，The Verge 的网站是故事的数据库。</p>
+  <p class="body-text reveal reveal-d3">但 <span class="hl-danger">数据库不是现实</span>。Elon Musk 和 DOGE 进入政府后，第一件事就是接管一堆数据库——然后他们撞上了一个不可否认的事实：政府不是软件，人不是计算机。任何真正运行过数据库的人都知道，数据库总会在某个时刻跟现实脱节。到那时候，我们通常会去修改数据库，而不是修改世界。</p>
+  <div class="anim-stage reveal reveal-d3"><div class="s4_stage">
+  <!-- Step 1 & 2: Company DB cards -->
+  <div class="s4_db_card s4_card1">
+    <span class="s4_icon">🏠</span> Zillow: 房
+  </div>
+  <div class="s4_db_card s4_card2">
+    <span class="s4_icon">🚗</span> Uber: 车
+  </div>
+  <div class="s4_db_card s4_card3">
+    <span class="s4_icon">🎬</span> YouTube: 视频
+  </div>
+
+  <!-- Step 3: DOGE circle -->
+  <div class="s4_doge">DOGE</div>
+
+  <!-- Connector line -->
+  <div class="s4_connector"></div>
+
+  <!-- Step 3–4: Government box -->
+  <div class="s4_gov">政府</div>
+
+  <!-- Step 4: ≠ symbol -->
+  <div class="s4_neq">≠</div>
+
+  <!-- Step 5: Caption -->
+  <div class="s4_caption">数据库 ≠ 现实</div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span><p>So what is software brain? The simplest definition I've come up with is that it's when you see the whole world as a series of databases that can be controlled with the structured language of software code. Like I said, this is a powerful way of seeing things. So much of our lives run through databases, and a bunch of important companies have been built around maintaining those databases and providing access to them.
+
+Zillow is a database of houses. Uber is a database of cars and riders. YouTube is a database of videos. The Verge's website is a database of stories. You can go on and on and on. Once you start seeing the world as a bunch of databases, it's a small jump to feeling like you can control everything if you can just control the data.
+
+But that doesn't always work. Here's an example: Elon Musk and DOGE showed up in the government, and the first thing they did was take control of a bunch of databases. And they ran into the undeniable fact that the databases aren't reality, and DOGE ended in hilarious failure. It turns out software brain has a limit — the government isn't software. People aren't computers, and they don't live in automatable loops that can be neatly captured in databases.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S5: Lawyer Brain — drill down -->
+<section class="feed-section dark" style="background: var(--bg-dark);">
+<div class="section-inner">
+  <p class="section-tag reveal">SOFTWARE BRAIN MEETS LAWYER BRAIN</p>
+  <h2 class="big-statement reveal reveal-d1">代码用结构化语言控制机器，法律用结构化语言控制社会——这种<span style="color:#A78BFA">令人陶醉的相似性</span>让所有人都上了当</h2>
+  <p class="body-text reveal reveal-d2">Patel 曾经当过律师，他妻子现在还是律师。他发现 software brain 和 lawyer brain 之间的重叠<span class="hl">深得令人着迷</span>。两者的核心都是：相信用结构化的形式语言思考，就能让现实世界发生改变。代码有库和先例，法律有判例法；工程师复用代码库，律师引用判例——两者都试图用形式化语言去引导复杂系统的行为。</p>
+  <p class="hook-line reveal reveal-d3">但法律真的像计算机一样可预测吗？</p>
+  <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-lawyer', this)">深入了解 ↓</button>
+  <div class="anim-stage reveal reveal-d3"><div class="s5_stage">
+  <!-- Row: two circles + labels -->
+  <div class="s5_row">
+
+    <!-- Code column -->
+    <div class="s5_col">
+      <div class="s5_circle s5_circle--code">Code</div>
+      <div class="s5_label s5_label--code">结构化语言</div>
+    </div>
+
+    <!-- Law column -->
+    <div class="s5_col">
+      <div class="s5_circle s5_circle--law">Law</div>
+      <div class="s5_label s5_label--law">结构化语言</div>
+    </div>
+
+  </div>
+
+  <!-- Convergence lines (SVG) -->
+  <svg class="s5_svg" width="220" height="50" viewBox="0 0 220 50" aria-hidden="true">
+    <!-- Left line: from ~55px (center of left circle col) to 110px center -->
+    <path class="s5_line s5_line--left"  d="M 55 0 L 110 48" />
+    <!-- Right line: from ~165px to 110px center -->
+    <path class="s5_line s5_line--right" d="M 165 0 L 110 48" />
+  </svg>
+
+  <!-- Shared output label -->
+  <div class="s5_shared">控制复杂系统</div>
+
+  <!-- Pulsing question -->
+  <div class="s5_question_wrap">
+    <span class="s5_question">?</span>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span><p>I also spend all of my time at work talking to tech people. And so over time, I've learned that the overlap between software brain and lawyer brain is very, very deep. Alluringly deep. If the heart of software brain is the idea that thinking in the structured language of code can make things happen in the real world, well, the heart of lawyer brain is that thinking in the structured legal language of statutes and citations can also make things happen. Hell, it can give you power over society.
+
+There are other commonalities. Both software development and the law depend heavily on precedent. We have a body of case law in this country, and we use it over and over again to help us resolve disputes, just like software engineers have libraries of code that they turn to repeatedly to build the foundations of their products. The similarities run deep: at the end of the day, both lawyers and engineers do their best to use formal, structured language to guide the behavior of complicated systems in predictable and potentially profitable ways.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S6: 商业循环有效 -->
+<section class="feed-section" style="background: var(--bg-act1);">
+<div class="section-inner">
+  <p class="section-tag reveal">BUSINESS LOOPS</p>
+  <h2 class="big-statement reveal reveal-d1">在商业世界里，software brain <span style="color:var(--accent)">确实有效</span>——因为商业本身就已经是软件了</h2>
+  <p class="body-text reveal reveal-d2">任何看起来像「代码对数据库说话」的重复性业务流程，都在被 AI 接管。这就是为什么 Anthropic 一直在死磕企业客户，OpenAI 也在转向 B 端。因为现代商业本身就是软件：<span class="hl">收集数据、分析数据、基于数据采取行动</span>，然后循环。企业还能控制自己的数据，能要求所有数据库互通。</p>
+  <p class="body-text reveal reveal-d3">咨询公司不会真正研究你的业务来提高效率——他们做的是制作 PPT 来向董事会和股东证明裁员的合理性。大型咨询公司擅长这个，现在他们只需要用 <span class="hl2">AI 来生成那些 PPT</span>。他们已经在这么做了，裁员也已经开始了。</p>
+  <div class="anim-stage reveal reveal-d3"><div class="s6_stage">
+  <p class="s6_title">业务闭环</p>
+
+  <div class="s6_loop">
+    <!-- Three boxes -->
+    <div class="s6_box s6_box--collect">收集</div>
+    <div class="s6_box s6_box--analyze">分析</div>
+    <div class="s6_box s6_box--act">行动</div>
+
+    <!-- Arrows between boxes -->
+    <span class="s6_arrow s6_arrow--tr">➔</span>
+    <span class="s6_arrow s6_arrow--rl">➔</span>
+    <span class="s6_arrow s6_arrow--lt">➔</span>
+
+    <!-- Center loop complete icon -->
+    <span class="s6_center">🔄</span>
+  </div>
+
+  <!-- Bottom: consulting PPT scene -->
+  <div class="s6_bottom">
+    <div class="s6_deck">📊</div>
+    <div class="s6_labels">
+      <span class="s6_label-ppt">AI 生成 PPT</span>
+      <span class="s6_label-layoff">→ 裁员建议</span>
+    </div>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span><p>Any business process that looks like code talking to a database in a repetitive way is up for grabs. That's why Anthropic has been so relentlessly focused on enterprise customers, and it's why OpenAI is now pivoting to business use. There's real value in introducing AI to business, because so much of modern business is already software: collecting data, analyzing it, and taking action on it over and over again in a loop. Businesses also control their data, and they can demand that all their databases work together.
+
+You don't hire a big consulting firm to actually come in and study your business and make it more efficient. You hire them to make slide decks that justify layoffs to your board and shareholders. Big consulting firms are great at this, and now they're just going to generate those decks with AI. They are already doing this and the layoffs have already begun.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S7: 极限 — 人不渴望自动化 -->
+<section class="feed-section dark" style="background: var(--bg-dark);">
+<div class="section-inner">
+  <p class="section-tag reveal">THE LIMIT</p>
+  <h2 class="big-statement reveal reveal-d1">不是所有东西都是循环。<span style="color:#F87171">人们不渴望自动化。</span></h2>
+  <p class="body-text reveal reveal-d2">Patel 自称是「重度智能家居患者」——他家的灯光、窗帘和温控都以几十种方式自动化了。但 Apple、Google 和 Amazon 花了<span class="hl-danger">十多年</span>试图让普通人关心智能家居自动化，结果是：他们就是不关心。</p>
+  <p class="body-text reveal reveal-d3">AI 不会改变这一点。大多数人并没有在收集关于自己一切的数据。就算收集了一点，这些数据也散布在各种系统里——Gmail 里的邮件、iMessage 里的短信、Outlook 里的日程、Peloton 里的健身记录。<span class="hl">这些系统互相不通</span>，也许永远不会通，因为没有理由让它们通。而让人们去连接这一切只会让他们感到恐惧。</p>
+  <div class="anim-stage reveal reveal-d3"><div class="s7_stage">
+  <!-- Silo nodes -->
+  <div class="s7_node s7_node--mail"><span>邮件</span></div>
+  <div class="s7_node s7_node--msg"><span>消息</span></div>
+  <div class="s7_node s7_node--cal"><span>日程</span></div>
+  <div class="s7_node s7_node--fit"><span>健身</span></div>
+
+  <!-- Dashed connector lines -->
+  <div class="s7_line s7_line--1"></div>
+  <div class="s7_line s7_line--2"></div>
+  <div class="s7_line s7_line--3"></div>
+  <div class="s7_line s7_line--4"></div>
+
+  <!-- Central AI node -->
+  <div class="s7_ai">AI</div>
+
+  <!-- Bottom caption -->
+  <div class="s7_label">
+    <span class="s7_label__years">10+ 年</span>
+    <span class="s7_label__sub">智能家居的承诺，依然是孤岛</span>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span><p>Regular people don't see the opportunity to write code as an opportunity at all. The people do not yearn for automation. I'm a full-on smart home sicko; the lights and shades and climate controls of my house are automated in dozens of ways. But huge companies like Apple, Google and Amazon have struggled for over a decade now to make regular people care about smart home automation at all. And they just don't.
+
+AI isn't going to fix that. Most people are not collecting data about every single thing that they do. And if they're collecting any at all, it's stored across lots of different systems — your email in Gmail, your messages in iMessage, your work schedule in Outlook, your workouts in Peloton. Those systems don't talk to each other and maybe they never will, because there's no reason for them to. Asking people to connect them all freaks them out.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S8: 被要求变成数据库 — Closing -->
+<section class="feed-section" style="background: var(--bg-act3);">
+<div class="section-inner">
+  <p class="section-tag reveal">THE DOOMED ASK</p>
+  <h2 class="big-statement reveal reveal-d1">让人适应电脑是注定失败的——<span style="color:var(--danger)">电脑应该适应人</span></h2>
+  <p class="body-text reveal reveal-d2">Ezra Klein 去了硅谷，发现那些 AI 从业者们正在<span class="hl-danger">拼命让自己变得对 AI 可读</span>：开放邮件、日历、消息，让 AI 在后台持续运行，建立关于你的偏好和模式的持久记忆。这听起来很赛博朋克，但 Patel 说得很清楚：让人把自己变成数据库，这是一个注定失败的想法。</p>
+  <p class="body-text reveal reveal-d3">这个要求大到无法想象有什么回报能让它值得——更何况科技行业还在不停地说 AI 会消灭所有工作、需要全面重新思考社会契约、最新的模型可能导致灾难性的网络安全问题。<span class="hl">这只有在你患上了 software brain 的时候才说得通。</span>对其他所有人来说，AI 不过是一个<span class="hl-danger">贪婪的垃圾怪兽</span>。</p>
+  <div class="anim-stage reveal reveal-d3"><div class="s8_stage">
+
+  <!-- Step 1: Human figure -->
+  <div class="s8_human">
+    <div class="s8_human__head"></div>
+    <div style="position:relative; display:flex; flex-direction:column; align-items:center;">
+      <div class="s8_human__arms"></div>
+      <div class="s8_human__body"></div>
+    </div>
+    <div class="s8_human__legs">
+      <div class="s8_human__leg"></div>
+      <div class="s8_human__leg"></div>
+    </div>
+  </div>
+
+  <!-- Step 2: Forward arrow "legible" -->
+  <div class="s8_arrow">
+    <div class="s8_arrow__label">legible →</div>
+    <div class="s8_arrow__shaft"></div>
+  </div>
+
+  <!-- Step 2b: Database grid -->
+  <div class="s8_db">
+    <div class="s8_db__grid">
+      <div class="s8_db__cell"></div>
+      <div class="s8_db__cell"></div>
+      <div class="s8_db__cell"></div>
+      <div class="s8_db__cell"></div>
+      <div class="s8_db__cell"></div>
+      <div class="s8_db__cell"></div>
+    </div>
+    <div class="s8_db__label">DB rows</div>
+  </div>
+
+  <!-- Step 4: Red X stop sign -->
+  <div class="s8_stop">
+    <div class="s8_stop__circle"></div>
+  </div>
+
+  <!-- Step 5: Reversed arrow "适应" -->
+  <div class="s8_arrow_rev">
+    <div class="s8_arrow_rev__label">← 适应</div>
+    <div class="s8_arrow_rev__shaft"></div>
+  </div>
+
+  <!-- Step 6: Caption -->
+  <div class="s8_caption">电脑应该适应人</div>
+
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span><p>I've reviewed a lot of tech products over the past decade and a half, and all I can tell you is that it is a failure when you ask people to adapt to computers. Computers should adapt to people. Asking people to make themselves more legible to software — to turn themselves into a database — is a doomed idea.
+
+It's an ask so big that I can't imagine a reward that would make it worth it for anyone, even if the tech industry wasn't constantly talking about how AI will eliminate all the jobs, require a wholesale rethinking of the social contract and — oops — also the latest models might cause catastrophic cybersecurity problems that might lead to the end of the world.
+
+Does this sound like a good deal to you? Can you market your way out of this? This only makes sense if you have software brain — if your operative framework is to flatten everything into databases that you can control with structured language.
+
+For everyone else, AI is just a demanding slop monster. It's a threat.
+
+And so the tech industry is rushing forward to put AI everywhere at enormous cost — energy, emissions, manufacturing capacity, the ability to buy RAM — and locked into the narrow framework of software brain without realizing they are also asking people to be fundamentally less human. They then sit around wondering why everyone hates them.
+
+I don't think a couple haircuts are going to fix it.</p></div>
+  </div>
+</div>
+</section>
+
+</div><!-- /layer-overview -->
+
+<!-- ═══ Drill Layer: Lawyer Brain ═══ -->
+<div class="layer" id="layer-lawyer" data-depth="1">
+
+<!-- S9: 代码与法律的平行 -->
+<section class="feed-section" style="background: var(--bg-act1);">
+<div class="section-inner">
+  <p class="section-tag reveal">PRECEDENT = LIBRARIES</p>
+  <h2 class="big-statement reveal reveal-d1">判例法之于律师，就像代码库之于工程师——<span style="color:var(--accent)">两者都在复用前人的结构化语言</span></h2>
+  <p class="body-text reveal reveal-d2">这种相似性深入骨髓：法律和代码都严重依赖<span class="hl">先例</span>。一个国家有一整套判例法体系，律师反复引用它来解决争端，就像软件工程师反复依赖代码库来构建产品的基础。两者最终都在做同一件事——用形式化的结构语言，去引导复杂系统的行为朝可预测（且可能盈利）的方向走。</p>
+  <p class="body-text reveal reveal-d3">这种令人陶醉的相似性总是让人犯错。人们不断试图像给计算机发指令一样给整个社会发号施令。Patel 最喜欢的例子是那些 Facebook 转发帖，坚称 Mark Zuckerberg 无权发布人们的照片——<span class="hl2">仿佛在终端里输入一行命令就能改变现实</span>。</p>
+  <div class="anim-stage reveal reveal-d3"><div class="s9_stage">
+  <!-- equals sign between columns -->
+  <div class="s9_eq">≈</div>
+
+  <!-- two columns -->
+  <div class="s9_columns">
+    <!-- LEFT: 法律 / 判例 -->
+    <div class="s9_col">
+      <div class="s9_label s9_label--law">法律</div>
+      <div class="s9_block s9_block--law s9_block--law-a">判例 A</div>
+      <div class="s9_block s9_block--law s9_block--law-b">判例 B</div>
+      <div class="s9_block s9_block--law s9_block--law-c">判例 C</div>
+    </div>
+
+    <!-- RIGHT: 代码 / 库 -->
+    <div class="s9_col">
+      <div class="s9_label s9_label--code">代码</div>
+      <div class="s9_block s9_block--code s9_block--code-a">lib-auth</div>
+      <div class="s9_block s9_block--code s9_block--code-b">lib-pay</div>
+      <div class="s9_block s9_block--code s9_block--code-c">lib-data</div>
+    </div>
+  </div>
+
+  <!-- bracket + label -->
+  <div class="s9_bracket-row">
+    <div class="s9_brace s9_brace--left"></div>
+    <div class="s9_brace s9_brace--right"></div>
+  </div>
+  <div class="s9_label-bottom">复用前人的结构化语言</div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span><p>There are other commonalities. Both software development and the law depend heavily on precedent. We have a body of case law in this country, and we use it over and over again to help us resolve disputes, just like software engineers have libraries of code that they turn to repeatedly to build the foundations of their products. The similarities run deep: at the end of the day, both lawyers and engineers do their best to use formal, structured language to guide the behavior of complicated systems in predictable and potentially profitable ways.
+
+This intoxicating similarity between law and code trips people up all the time. People are constantly trying to issue commands to society at large like it's a computer that will obey instructions. There are examples of this big and small — my favorite are those Facebook forwards insisting Mark Zuckerberg does not have the right to publish people's photos. Honestly, I look at these, and I think it would be great if the law was actually code. Maybe things would be more predictable. Maybe we'd feel more in control.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S10: 模糊性 + McCormack -->
+<section class="feed-section dark" style="background: var(--bg-dark);">
+<div class="section-inner">
+  <p class="section-tag reveal">AMBIGUITY IS THE HEART</p>
+  <h2 class="big-statement reveal reveal-d1">法律的核心不是确定性——<span style="color:#F87171">而是模糊性</span></h2>
+  <p class="body-text reveal reveal-d2">你不能拿一个案件的事实加上法条，就确定地预测结果。正是<span class="hl-danger">模糊性</span>让律师成为律师，也让人们讨厌律师——因为总能找到灰色地带，总能论证另一方。这就是为什么检察官最后去当辩护律师，监管者最后去为大企业打工。</p>
+  <p class="body-text reveal reveal-d3">密歇根州前最高法院首席法官 Bridget McCormack 在 Decoder 上推销过一个完全自动化的 AI 仲裁系统。她的论点是：人们觉得传统司法系统太不公平，所以他们会接受一个自动化系统给出的<span class="hl2">更差的结果</span>，只要他们觉得自己被倾听了。Patel 说：这就是<span class="hl">纯粹的 software brain</span>——相信我们能强迫现实世界像计算机一样运作，然后让 AI 给它下指令。</p>
+  <div class="anim-stage reveal reveal-d3"><div class="s10_stage">
+
+  <!-- Step 1: Input boxes -->
+  <div class="s10_row">
+    <div class="s10_input_box">
+      事实
+      <span class="s10_label_sub">input A</span>
+    </div>
+    <div class="s10_input_box">
+      法条
+      <span class="s10_label_sub">input B</span>
+    </div>
+  </div>
+
+  <!-- Step 2: Arrow + function -->
+  <div class="s10_arrow">↓</div>
+  <div class="s10_fn">
+    <div class="s10_fn_box">
+      apply(facts, law)
+      <span class="s10_fn_label">像函数一样…</span>
+    </div>
+  </div>
+
+  <!-- Step 3: Expected output -->
+  <div class="s10_out">
+    <div class="s10_out_wrap">
+      <div class="s10_out_box">确定结果</div>
+      <!-- Step 4: crack overlay (CSS pseudo-elements on wrapper) -->
+    </div>
+  </div>
+
+  <!-- Step 4b: Question mark appears -->
+  <div class="s10_crack_q">
+    <span class="s10_q_mark">？</span>
+  </div>
+
+  <!-- Step 5: 模糊 glows -->
+  <div class="s10_ambig">
+    <span class="s10_ambig_text">模糊</span>
+    <span class="s10_ambig_sub">法律的本质不是确定性</span>
+  </div>
+
+  <!-- Step 6: AI arbitration -->
+  <div class="s10_ai">
+    <span class="s10_ai_icon">🤖</span>
+    <div class="s10_ai_label">
+      <strong>AI 仲裁</strong>
+      McCormack 的提案
+    </div>
+  </div>
+
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span><p>But law isn't actually code, and society and courts aren't computers. I have to remind our fairly technical audience on Decoder and at The Verge all the time that the law is not deterministic. You simply cannot take the facts of a case, the law as written, and predict the outcome of that case with any real certainty, even though the formality of the legal system makes people think it works like a computer — that it's predictable.
+
+But at the end of the day, it's actually ambiguity that's at the very heart of our legal system. It's ambiguity that makes lawyers lawyers. Honestly, it's ambiguity that makes people hate lawyers because it's always possible to argue the other side, and it's always possible to find the gray area in the law. That's why prosecutors end up working as defense attorneys and why our regulators tend to end up working for big corporations.
+
+Bridget McCormack, who used to be the chief justice of the Michigan Supreme Court, was on Decoder a few months ago pitching a fully automated AI arbitration system. Her argument to me was that people perceive the traditional legal system to be so unfair that they will accept a worse outcome from an automated system as more fair as long as they feel heard. And if there's one thing AI can do, it's sit there and listen all day and night.
+
+I don't know if any of that is correct or even workable, but I do know software brain, and that is pure software brain: the idea that we can force the real world to act like a computer and then have AI issue that computer instructions.</p></div>
+  </div>
+</div>
+</section>
+
+</div><!-- /layer-lawyer -->
+
+<script>
+var layerStack = ['layer-overview'];
+var transitioning = false;
+var observers = new Map();
+var layerNames = { 'layer-overview': '概览', 'layer-lawyer': 'Lawyer Brain' };
+
+function setupObserver(layerId) {
+  if (observers.has(layerId)) return;
+  var layer = document.getElementById(layerId);
+  var reveals = layer.querySelectorAll('.reveal, [class*=\"_stage\"]');
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) { e.target.classList.add('visible'); var stage = e.target.querySelector('[class*="_stage"]'); if (stage) stage.classList.add('visible'); }
+    });
+  }, { threshold: 0.15, root: layer });
+  reveals.forEach(function(el) { obs.observe(el); });
+  observers.set(layerId, obs);
+}
+function resetReveals(layerId) { var layer = document.getElementById(layerId); layer.querySelectorAll('.reveal').forEach(function(el) { el.classList.remove('visible'); }); layer.querySelectorAll('[class*="_stage"]').forEach(function(el) { el.classList.remove('visible'); }); }
+function activateReveals(layerId) { resetReveals(layerId); if (observers.has(layerId)) { observers.get(layerId).disconnect(); observers.delete(layerId); } requestAnimationFrame(function() { setupObserver(layerId); }); }
+function updateBreadcrumb() {
+  var bc = document.getElementById('breadcrumb'); bc.innerHTML = '';
+  layerStack.forEach(function(id, i) {
+    if (i > 0) { var sep = document.createElement('span'); sep.className = 'sep'; sep.textContent = '>'; bc.appendChild(sep); }
+    var span = document.createElement('span'); span.textContent = layerNames[id] || id;
+    if (i === layerStack.length - 1) { span.className = 'current'; } else { span.addEventListener('click', function() { goBackTo(i); }); }
+    bc.appendChild(span);
+  });
+  document.getElementById('backBtn').style.display = layerStack.length > 1 ? 'flex' : 'none';
+  bc.style.left = layerStack.length > 1 ? '60px' : '16px';
+  document.getElementById('depthDots').querySelectorAll('.dot').forEach(function(d, i) { d.classList.toggle('active', i === layerStack.length - 1); });
+}
+function drillDown(targetId, btnEl) {
+  if (transitioning) return; transitioning = true;
+  var currentId = layerStack[layerStack.length - 1]; var currentLayer = document.getElementById(currentId); var targetLayer = document.getElementById(targetId);
+  targetLayer.scrollTop = 0; resetReveals(targetId); targetLayer.style.visibility = 'visible'; var d = 600;
+  currentLayer.style.transition = 'transform '+d+'ms ease-out, opacity '+d+'ms ease-out'; currentLayer.style.transformOrigin = 'center center'; currentLayer.style.transform = 'scale(1.3)'; currentLayer.style.opacity = '0';
+  targetLayer.classList.add('active'); targetLayer.style.opacity = '0'; targetLayer.style.transform = 'scale(0.85)'; targetLayer.style.transition = 'transform '+d+'ms ease-out, opacity '+d+'ms ease-out';
+  requestAnimationFrame(function() { requestAnimationFrame(function() { targetLayer.style.opacity = '1'; targetLayer.style.transform = 'scale(1)'; }); });
+  setTimeout(function() { currentLayer.classList.remove('active'); currentLayer.style.transition=''; currentLayer.style.transform=''; currentLayer.style.opacity=''; targetLayer.style.transition=''; targetLayer.style.transform=''; activateReveals(targetId); transitioning = false; }, d + 50);
+  layerStack.push(targetId); updateBreadcrumb();
+}
+function goBack() {
+  if (layerStack.length <= 1 || transitioning) return; transitioning = true;
+  var currentId = layerStack.pop(); var parentId = layerStack[layerStack.length - 1]; var currentLayer = document.getElementById(currentId); var parentLayer = document.getElementById(parentId); var d = 600;
+  currentLayer.style.transition = 'transform '+d+'ms ease-out, opacity '+d+'ms ease-out'; currentLayer.style.transform = 'scale(0.85)'; currentLayer.style.opacity = '0';
+  parentLayer.classList.add('active'); parentLayer.style.transform = 'scale(1.3)'; parentLayer.style.opacity = '0'; parentLayer.style.transition = 'transform '+d+'ms ease-out, opacity '+d+'ms ease-out';
+  requestAnimationFrame(function() { requestAnimationFrame(function() { parentLayer.style.transform = 'scale(1)'; parentLayer.style.opacity = '1'; }); });
+  setTimeout(function() { currentLayer.classList.remove('active'); currentLayer.style.transition=''; currentLayer.style.transform=''; currentLayer.style.opacity=''; currentLayer.style.visibility=''; parentLayer.style.transition=''; parentLayer.style.transform=''; transitioning = false; }, d + 50);
+  updateBreadcrumb();
+}
+function goBackTo(idx) { if (transitioning) return; while (layerStack.length - 1 > idx) { if (layerStack.length <= 1) break; goBack(); return; } }
+function toggleSource(btn) { btn.classList.toggle('open'); btn.nextElementSibling.classList.toggle('open'); }
+function scaleStages() { document.querySelectorAll('.anim-stage').forEach(function(c) { var s = c.querySelector('[class*="_stage"]'); if (!s) return; var cw = c.clientWidth - 48; var w = getComputedStyle(s).width; if (w && parseInt(w) <= cw) return; var sw = s.scrollWidth||s.offsetWidth; var sh = s.scrollHeight||s.offsetHeight; if (sw > cw && sw > 100) { var sc = cw/sw; s.style.transform='scale('+sc+')'; s.style.transformOrigin='top left'; s.style.width=sw+'px'; c.style.height=(sh*sc+64)+'px'; } }); }
+setupObserver('layer-overview'); updateBreadcrumb();
+window.addEventListener('load', function() { setTimeout(scaleStages, 500); });
+</script>
+</body>
+</html>

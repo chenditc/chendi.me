@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>AI 反向教育：同事终于学会说人话了</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --accent: #06B6D4;
+  --accent2: #E11D48;
+  --warm: #F97316;
+  --danger: #EF4444;
+  --bg-act1: #F0FDFA;
+  --bg-act2: #FFF1F2;
+  --bg-close: #0F172A;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --dim: #94A3B8;
+  --card-bg: #FFFFFF;
+  --neutral: #CBD5E1;
+}
+
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--bg-act1); font-family: 'Noto Sans SC', -apple-system, 'PingFang SC', sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; }
+
+.space { display: flex; width: 200%; height: 100%; transition: transform 0.55s cubic-bezier(0.32,0.72,0,1); will-change: transform; }
+.main-scroll { flex: 0 0 50%; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; transition: transform 0.55s cubic-bezier(0.32,0.72,0,1); transform-origin: right center; }
+.detail-scroll { flex: 0 0 50%; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; background: #FAFAF8; visibility: hidden; transition: visibility 0s 0.55s; }
+body.dd-active .space { transform: translateX(calc(-50% + 24px)); }
+body.dd-active .main-scroll { transform: scale(0.96); pointer-events: none; border-radius: 12px; overflow: hidden; }
+body.dd-active .detail-scroll { visibility: visible; transition: visibility 0s 0s; }
+
+.content-width { max-width: 640px; margin: 0 auto; padding: 0 28px; }
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.15s; }
+.reveal-delay-2 { transition-delay: 0.3s; }
+.reveal-delay-3 { transition-delay: 0.45s; }
+.reveal-delay-4 { transition-delay: 0.6s; }
+
+.big-statement { font-family: 'Noto Serif SC', serif; font-size: clamp(22px, 5.5vw, 32px); font-weight: 700; line-height: 1.5; margin-bottom: 32px; }
+.body-text { font-size: 16px; line-height: 1.9; color: var(--text); margin-bottom: 28px; }
+.body-text .hl { color: var(--accent); font-weight: 500; }
+.body-text .hl2 { color: var(--accent2); font-weight: 500; }
+.body-text .hl-danger { color: var(--danger); font-weight: 500; }
+
+.hero { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 28px; background: linear-gradient(180deg, var(--bg-act1) 0%, #CFFAFE 100%); }
+.hero-title { font-family: 'Noto Serif SC', serif; font-size: clamp(28px, 7vw, 42px); font-weight: 700; line-height: 1.4; margin-bottom: 16px; color: var(--text); }
+.hero-sub { font-size: 16px; color: var(--text-muted); line-height: 1.7; max-width: 320px; }
+
+.section-label { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--dim); margin-bottom: 12px; }
+.section-dark { background: var(--bg-close); color: #F1F5F9; }
+.section-dark .body-text { color: #CBD5E1; }
+.section-dark .section-label { color: #64748B; }
+.section-dark .big-statement { color: #F1F5F9; }
+
+.act-break { padding: 48px 28px; text-align: center; }
+.act-label { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+.act-title { font-family: 'Noto Serif SC', serif; font-size: clamp(20px, 5vw, 28px); font-weight: 700; color: var(--text); }
+
+.deep-dive-trigger { text-align: center; color: var(--accent); font-size: 14px; padding: 16px 0; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; }
+.deep-dive-trigger:hover { opacity: 1; }
+.detail-header { padding: 16px 20px; font-size: 15px; color: var(--accent); cursor: pointer; font-weight: 500; border-bottom: 1px solid rgba(0,0,0,0.06); position: sticky; top: 0; background: #FAFAF8; z-index: 10; }
+.detail-body { padding: 24px 20px; }
+.detail-body h4 { font-size: 18px; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+.detail-body p { font-size: 15px; line-height: 1.8; color: var(--text-muted); margin-bottom: 14px; }
+.original-text { margin-top: 20px; padding: 16px; background: rgba(0,0,0,0.03); border-radius: 12px; border-left: 3px solid var(--accent); }
+.original-text p { font-size: 14px; color: var(--text-muted); }
+
+.dd-anim { opacity: 0; animation-fill-mode: forwards; animation-duration: 0.5s; }
+body.dd-active .dd-anim { animation-name: ddFadeIn; }
+.dd-slide { opacity: 0; transform: translateY(20px); animation-fill-mode: forwards; animation-duration: 0.5s; }
+body.dd-active .dd-slide { animation-name: ddSlideUp; }
+.dd-pop { opacity: 0; transform: scale(0.7); animation-fill-mode: forwards; animation-duration: 0.4s; }
+body.dd-active .dd-pop { animation-name: ddPop; }
+.dd-d1 { animation-delay: 0.3s !important; }
+.dd-d2 { animation-delay: 0.6s !important; }
+.dd-d3 { animation-delay: 0.9s !important; }
+@keyframes ddFadeIn { to { opacity: 1; } }
+@keyframes ddSlideUp { to { opacity: 1; transform: translateY(0); } }
+@keyframes ddPop { to { opacity: 1; transform: scale(1); } }
+
+.takeaway { padding: 64px 28px; text-align: center; background: var(--bg-close); }
+.takeaway-text { font-family: 'Noto Serif SC', serif; font-size: clamp(20px, 5vw, 28px); font-weight: 700; color: #F59E0B; line-height: 1.6; max-width: 480px; margin: 0 auto; }
+
+.source-horizon { position: fixed; bottom: 0; left: 0; right: 0; height: 32px; z-index: 200; background: transparent; transition: height 0.35s cubic-bezier(0.32,0.72,0,1), background 0.35s ease; overflow: hidden; cursor: pointer; padding-bottom: env(safe-area-inset-bottom, 0); }
+.source-horizon.expanded { height: 72px; background: rgba(15,23,42,0.95); backdrop-filter: blur(8px); }
+.horizon-track { position: absolute; bottom: 0; left: 8px; right: 8px; height: 3px; }
+.source-horizon.expanded .horizon-track { bottom: auto; top: 8px; height: 4px; }
+.horizon-seg { position: absolute; top: 0; height: 100%; border-radius: 2px; }
+.horizon-seg.covered { background: var(--accent); }
+.horizon-seg.covered.deep-dive { background: var(--accent); }
+.horizon-seg.gap { background: transparent; }
+.horizon-detail { position: absolute; top: 16px; left: 8px; right: 8px; bottom: 4px; opacity: 0; transition: opacity 0.25s ease 0.1s; pointer-events: none; }
+.source-horizon.expanded .horizon-detail { opacity: 1; pointer-events: auto; }
+.horizon-marker { position: absolute; top: 0; transform: translateX(-50%); text-align: center; }
+.marker-tick { width: 2px; height: 10px; background: rgba(255,255,255,0.5); margin: 0 auto 4px; border-radius: 1px; }
+.marker-tick.active { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+.marker-label { font-size: 9px; color: rgba(255,255,255,0.7); white-space: nowrap; font-family: 'Noto Sans SC', sans-serif; }
+.horizon-gap-zone { position: absolute; top: 0; height: 14px; cursor: help; }
+.horizon-gap-zone .gap-pattern { width: 100%; height: 100%; background: repeating-linear-gradient(-45deg, transparent, transparent 2px, rgba(251,146,60,0.35) 2px, rgba(251,146,60,0.35) 4px); border-radius: 2px; }
+.horizon-gap-zone .gap-tooltip { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: #1E293B; color: #F8FAFC; font-size: 11px; padding: 4px 10px; border-radius: 6px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.horizon-gap-zone:hover .gap-tooltip { opacity: 1; }
+.horizon-pct { position: absolute; right: 0; top: 2px; font-size: 11px; font-weight: 600; color: var(--accent); font-family: 'Noto Sans SC', sans-serif; }
+@keyframes markerPulse { 0%,100% { box-shadow: 0 0 4px var(--accent2); } 50% { box-shadow: 0 0 10px var(--accent2); } }
+.marker-tick.active { animation: markerPulse 2s ease-in-out infinite; }
+
+.coverage-gap-inline { display: flex; align-items: center; gap: 12px; padding: 8px 28px; max-width: 640px; margin: 0 auto; }
+.coverage-gap-inline .gap-line { flex: 1; height: 1px; background: var(--dim); opacity: 0.25; }
+.coverage-gap-inline .gap-text { font-size: 12px; font-style: italic; color: var(--dim); white-space: nowrap; opacity: 0.5; }
+
+.coverage-map { margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.06); }
+.coverage-map-title { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--dim); margin-bottom: 14px; }
+.coverage-bars { display: flex; flex-direction: column; gap: 6px; }
+.cbar-row { display: flex; align-items: center; gap: 10px; height: 28px; cursor: pointer; border-radius: 6px; padding: 4px 6px; margin: 0 -6px; transition: background 0.15s; }
+.cbar-row:hover { background: rgba(0,0,0,0.03); }
+.cbar-label { width: 120px; flex-shrink: 0; font-size: 12px; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cbar-track { flex: 1; height: 12px; background: rgba(0,0,0,0.03); border-radius: 6px; overflow: hidden; position: relative; }
+.cbar-fill { height: 100%; border-radius: 6px; transform-origin: left; }
+.cbar-fill.included { background: var(--accent); }
+.cbar-fill.deep-dive-bar { background: repeating-linear-gradient(-45deg, var(--accent2), var(--accent2) 3px, rgba(124,58,237,0.5) 3px, rgba(124,58,237,0.5) 6px); }
+.cbar-fill.compressed-bar { background: var(--dim); opacity: 0.4; }
+.cbar-row.included .cbar-label { color: var(--text); }
+.cbar-row.deep-dive .cbar-label { color: var(--accent2); }
+.cbar-row.compressed .cbar-label { color: var(--dim); text-decoration: line-through; }
+.cbar-excerpt { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.22,1,0.36,1); margin: 0 0 0 130px; }
+.cbar-excerpt.open { max-height: 300px; }
+.cbar-excerpt-inner { font-size: 13px; line-height: 1.7; color: var(--text-muted); padding: 8px 12px; margin: 4px 0 8px; background: rgba(0,0,0,0.02); border-radius: 8px; border-left: 3px solid var(--accent); }
+.cbar-row.compressed + .cbar-excerpt .cbar-excerpt-inner { border-left-color: var(--dim); }
+.cbar-row.deep-dive + .cbar-excerpt .cbar-excerpt-inner { border-left-color: var(--accent2); }
+.cbar-expand-hint { font-size: 10px; color: var(--dim); opacity: 0.6; margin-left: 4px; }
+.anim-stage > div{ width:100%; }
+</style>
+
+<meta name="description" content="AI 反向教育：同事终于学会说人话了">
+<link rel="canonical" href="https://chendi.me/readings/ai-teaches-communication/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+<div class="space" id="space">
+<div class="main-scroll" id="mainScroll">
+
+  <div class="hero reveal">
+    <div class="hero-title">AI 反向教育：<br>同事终于学会说人话了</div>
+    <div class="hero-sub">当 AI 拒绝帮你猜的时候<br>你就只能把话说清楚了</div>
+  </div>
+
+  <div class="act-break reveal">
+    <div class="act-label">ACT I</div>
+    <div class="act-title">说不清楚的痛</div>
+  </div>
+
+  <!-- Section 1 -->
+  <section style="padding: 48px 0; background: var(--bg-act1);">
+    <div class="content-width">
+      <div class="section-label reveal">01 - 同事学会说话了</div>
+      <div class="big-statement reveal reveal-delay-1">AI 普及之后的一大变化：<br>同事们<span style="color:var(--accent)">开始学会好好说话了</span></div>
+      <div class="body-text reveal reveal-delay-2">之前很多同事提需求时，要么只给一句话，要么描述模糊不清，或者一个需求要分好几次交代。以前经常收到那种需求，就一句「这个页面改一下」，问改哪，他说「就那个不太对的地方」。改完了又说不是这，是那。<span class="hl2">来回三四轮才搞清楚他到底要什么。</span></div>
+    </div>
+    <div class="content-width">
+      <div id="s1-anim" class="reveal reveal-delay-3">
+        <style>
+/* === S1: 同事学会说话了 === */
+.s1_stage {
+  position: relative;
+  width: 340px;
+  max-width: 90vw;
+  height: 440px;
+  margin: 0 auto;
+  font-family: -apple-system, 'Helvetica Neue', 'PingFang SC', sans-serif;
+  --accent: #06B6D4;
+  --accent2: #E11D48;
+  --neutral: #CBD5E1;
+  --text: #1E293B;
+  --dim: #94A3B8;
+}
+
+/* Section labels */
+.s1_era {
+  position: absolute;
+  left: 0; right: 0;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0;
+}
+
+/* Person circles */
+.s1_p {
+  position: absolute;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+}
+.s1_req { background: var(--accent); }
+.s1_exec { background: var(--neutral); color: var(--text); }
+
+/* Chat bubbles */
+.s1_msg {
+  position: absolute;
+  max-width: 140px;
+  padding: 7px 13px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text);
+  opacity: 0;
+  transform: translateY(8px);
+}
+.s1_left {
+  left: 76px;
+  background: #E0F2FE;
+  border-bottom-left-radius: 4px;
+}
+.s1_right {
+  right: 76px;
+  background: #F1F5F9;
+  border-bottom-right-radius: 4px;
+  text-align: right;
+}
+
+/* Round count badge */
+.s1_badge {
+  position: absolute;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: 2.5px solid var(--accent2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent2);
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* Divider */
+.s1_line {
+  position: absolute;
+  left: 30px; right: 30px;
+  height: 1px;
+  background: var(--neutral);
+  opacity: 0;
+}
+
+/* AI era complete bubble */
+.s1_full {
+  position: absolute;
+  left: 76px;
+  width: 170px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #ECFDF5;
+  border: 1.5px solid var(--accent);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text);
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* Checkmark */
+.s1_ok {
+  position: absolute;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* === Keyframes === */
+@keyframes s1_fi { to { opacity: 1; } }
+@keyframes s1_su { to { opacity: 1; transform: translateY(0); } }
+@keyframes s1_si { to { opacity: 1; transform: scale(1); } }
+
+/* === Sequence === */
+.s1_stage.visible .s1_t0 { animation: s1_fi 0.4s 0.2s ease forwards; }
+.s1_stage.visible .s1_t1 { animation: s1_fi 0.4s 0.6s ease forwards; }
+.s1_stage.visible .s1_t2 { animation: s1_su 0.4s 1.0s ease forwards; }
+.s1_stage.visible .s1_t3 { animation: s1_su 0.4s 1.5s ease forwards; }
+.s1_stage.visible .s1_t4 { animation: s1_su 0.4s 2.0s ease forwards; }
+.s1_stage.visible .s1_t5 { animation: s1_su 0.4s 2.5s ease forwards; }
+.s1_stage.visible .s1_t6 { animation: s1_si 0.4s 3.0s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.s1_stage.visible .s1_t7 { animation: s1_fi 0.4s 3.5s ease forwards; }
+.s1_stage.visible .s1_t8 { animation: s1_fi 0.4s 3.8s ease forwards; }
+.s1_stage.visible .s1_t9 { animation: s1_fi 0.4s 4.2s ease forwards; }
+.s1_stage.visible .s1_t10 { animation: s1_su 0.4s 4.6s ease forwards; }
+.s1_stage.visible .s1_t11 { animation: s1_si 0.4s 5.2s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+</style>
+
+<div class="s1_stage">
+  <!-- "从前" label -->
+  <div class="s1_era s1_t0" style="top:4px; color:var(--dim);">从前</div>
+
+  <!-- Row 1 persons -->
+  <div class="s1_p s1_req s1_t1" style="top:28px; left:14px;">需求</div>
+  <div class="s1_p s1_exec s1_t1" style="top:28px; right:14px;">执行</div>
+
+  <!-- Ping-pong bubbles -->
+  <div class="s1_msg s1_left s1_t2" style="top:34px;">这个页面改一下</div>
+  <div class="s1_msg s1_right s1_t3" style="top:72px;">改哪里？</div>
+  <div class="s1_msg s1_left s1_t4" style="top:108px;">不太对的地方</div>
+  <div class="s1_msg s1_right s1_t5" style="top:146px;">不是这个意思吧</div>
+
+  <!-- x4 rounds badge -->
+  <div class="s1_badge s1_t6" style="top:190px; left:50%; margin-left:-24px;">x4轮</div>
+
+  <!-- Divider -->
+  <div class="s1_line s1_t7" style="top:252px;"></div>
+
+  <!-- "AI 时代" label -->
+  <div class="s1_era s1_t8" style="top:264px; color:var(--accent);">AI 时代</div>
+
+  <!-- Row 2 persons -->
+  <div class="s1_p s1_req s1_t9" style="top:290px; left:14px;">需求</div>
+  <div class="s1_p s1_exec s1_t9" style="top:290px; right:14px;">执行</div>
+
+  <!-- Complete requirement bubble -->
+  <div class="s1_full s1_t10" style="top:296px;">
+    「背景」用户反馈加载慢<br>
+    「目标」首屏 &lt;2s<br>
+    「限制」不改后端接口
+  </div>
+
+  <!-- Checkmark -->
+  <div class="s1_ok s1_t11" style="top:380px; left:50%; margin-left:-18px;">&#10003;</div>
+</div>
+
+<script>
+if (typeof deepDiveData === 'undefined') var deepDiveData = {};
+deepDiveData[1] = {
+  title: "模糊需求的代价",
+  sections: [
+    {
+      heading: "沟通成本是隐性的最大开支",
+      body: "一个工程师每天被打断 3-4 次来「对齐需求」，每次打断后需要 15-25 分钟才能恢复深度工作状态。一周下来，光是因为需求模糊导致的来回沟通，就能吃掉一个人 20% 的有效工时。这笔账很少有人算，因为它不会出现在任何项目管理工具的统计里。",
+      diagram: ""
+    },
+    {
+      heading: "AI 倒逼了表达能力的进化",
+      body: "当你跟 AI 说「改一下」，AI 会直接问你五个具体问题。被追问几次之后，人们自然学会在第一次就把背景、目标、约束讲清楚。这不是 AI 在教人写 prompt，而是精确沟通本身就是一种被长期低估的职业技能，AI 只是把这个短板暴露了出来。",
+      diagram: ""
+    },
+    {
+      heading: "从 4 轮到 1 轮的本质变化",
+      body: "减少的不只是消息数量，而是认知负担。每一轮来回都意味着双方需要重新加载上下文、重新理解对方的意思。当需求一次说清，执行方可以立即进入心流状态，产出质量和需求还原度都会大幅提升。这就是为什么很多团队引入 AI 后发现：不是 AI 写了多少代码，而是人与人之间的协作效率变高了。",
+      diagram: ""
+    }
+  ]
+};
+</script>
+      </div>
+      <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(1)">↓ 深入了解：模糊需求的代价</div>
+    </div>
+  </section>
+
+  <!-- Section 2 -->
+  <section style="padding: 48px 0; background: var(--bg-act1);">
+    <div class="content-width">
+      <div class="section-label reveal">02 - 「冲击力」=「贴好评」</div>
+      <div class="big-statement reveal reveal-delay-1">需求方说<span style="color:var(--accent2)">「更有冲击力」</span><br>其实是想要<span style="color:var(--accent)">「贴客户好评」</span></div>
+      <div class="body-text reveal reveal-delay-2">一个设计师的典型吐槽：需求方跟他说「海报需要更有冲击力」，他改了三版都被否了，最后才搞明白人家想要的其实是「把客户的好评贴上去」。<span class="hl2">「冲击力」这三个字在需求方脑子里等于「贴好评」</span>，但他就是不说，你根本猜不到。</div>
+    </div>
+    <div class="content-width">
+      <div id="s2-anim" class="reveal reveal-delay-3">
+        <!-- S2: 「冲击力」=「贴好评」 — 需求翻译对照表 -->
+<style>
+/* === S2 STAGE === */
+.s2_stage {
+  position: relative;
+  width: 340px;
+  max-width: 90vw;
+  height: 420px;
+  margin: 20px auto;
+  font-family: -apple-system, 'PingFang SC', sans-serif;
+  --accent: #06B6D4;
+  --accent2: #E11D48;
+  --neutral: #CBD5E1;
+  --text: #1E293B;
+}
+
+/* Column headers */
+.s2_col-header {
+  position: absolute;
+  top: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  opacity: 0;
+}
+.s2_col-left { left: 24px; color: var(--accent2); }
+.s2_col-right { right: 24px; color: var(--accent); }
+
+/* Translation row */
+.s2_row {
+  position: absolute;
+  left: 0; right: 0;
+  top: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+}
+.s2_bubble {
+  padding: 10px 16px;
+  border-radius: 20px;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0);
+}
+.s2_bubble-left {
+  background: var(--accent2);
+  color: #fff;
+}
+.s2_bubble-right {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* Gap symbol */
+.s2_gap {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--neutral);
+  opacity: 0;
+}
+
+/* Versions row */
+.s2_versions {
+  position: absolute;
+  top: 110px;
+  left: 0; right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}
+.s2_ver-wrap {
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+.s2_version {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2.5px solid var(--neutral);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--neutral);
+  opacity: 0;
+  transform: scale(0);
+}
+.s2_cross {
+  position: absolute;
+  top: 0; left: 0;
+  width: 64px;
+  height: 64px;
+  opacity: 0;
+  pointer-events: none;
+}
+.s2_cross::before, .s2_cross::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 36px; height: 3px;
+  background: var(--accent2);
+  border-radius: 2px;
+}
+.s2_cross::before { transform: translate(-50%, -50%) rotate(45deg); }
+.s2_cross::after { transform: translate(-50%, -50%) rotate(-45deg); }
+
+/* Arrow to final */
+.s2_arrow-down {
+  position: absolute;
+  top: 190px;
+  left: 50%;
+  width: 2px;
+  height: 0;
+  background: var(--accent);
+  transform: translateX(-50%);
+}
+.s2_arrow-head {
+  position: absolute;
+  top: 238px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid var(--accent);
+  opacity: 0;
+}
+
+/* Final answer */
+.s2_final {
+  position: absolute;
+  top: 258px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  padding: 14px 28px;
+  border-radius: 24px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0;
+  box-shadow: 0 0 0 rgba(6,182,212,0);
+}
+
+/* Narration */
+.s2_narration {
+  position: absolute;
+  bottom: 20px; left: 0; right: 0;
+  text-align: center;
+  font-size: 13px;
+  color: #94A3B8;
+  min-height: 50px;
+}
+.s2_narr-step {
+  position: absolute;
+  left: 0; right: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  line-height: 1.6;
+}
+.s2_narr-step.show { opacity: 1; }
+
+/* === S2 KEYFRAMES === */
+@keyframes s2_fadeIn {
+  to { opacity: 1; }
+}
+@keyframes s2_scaleIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s2_scaleInCenter {
+  to { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+@keyframes s2_drawDown {
+  to { height: 42px; }
+}
+@keyframes s2_crossIn {
+  0% { opacity: 0; transform: scale(1.6); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes s2_glow {
+  0% { box-shadow: 0 0 0 rgba(6,182,212,0); }
+  50% { box-shadow: 0 0 32px rgba(6,182,212,0.6); }
+  100% { box-shadow: 0 0 20px rgba(6,182,212,0.35); }
+}
+
+/* === S2 ANIMATION SEQUENCE === */
+.s2_stage.visible .s2_col-left {
+  animation: s2_fadeIn 0.4s 0.3s forwards;
+}
+.s2_stage.visible .s2_col-right {
+  animation: s2_fadeIn 0.4s 0.8s forwards;
+}
+.s2_stage.visible .s2_bubble-left {
+  animation: s2_scaleIn 0.4s 1.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+.s2_stage.visible .s2_gap {
+  animation: s2_scaleInCenter 0.3s 1.8s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+.s2_stage.visible .s2_bubble-right {
+  animation: s2_scaleIn 0.4s 2.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+
+/* Versions appear */
+.s2_stage.visible .s2_ver-wrap:nth-child(1) .s2_version { animation: s2_scaleIn 0.35s 3.0s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.s2_stage.visible .s2_ver-wrap:nth-child(2) .s2_version { animation: s2_scaleIn 0.35s 3.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.s2_stage.visible .s2_ver-wrap:nth-child(3) .s2_version { animation: s2_scaleIn 0.35s 4.0s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+
+/* Crosses appear over each version */
+.s2_stage.visible .s2_ver-wrap:nth-child(1) .s2_cross { animation: s2_crossIn 0.3s 3.5s forwards; }
+.s2_stage.visible .s2_ver-wrap:nth-child(2) .s2_cross { animation: s2_crossIn 0.3s 4.0s forwards; }
+.s2_stage.visible .s2_ver-wrap:nth-child(3) .s2_cross { animation: s2_crossIn 0.3s 4.5s forwards; }
+
+/* Arrow and final */
+.s2_stage.visible .s2_arrow-down {
+  animation: s2_drawDown 0.4s 5.1s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+.s2_stage.visible .s2_arrow-head {
+  animation: s2_fadeIn 0.2s 5.4s forwards;
+}
+.s2_stage.visible .s2_final {
+  animation: s2_scaleInCenter 0.5s 5.7s cubic-bezier(0.34,1.56,0.64,1) forwards, s2_glow 0.8s 6.2s ease forwards;
+}
+</style>
+
+<div class="s2_stage" id="s2Stage">
+  <!-- Column headers -->
+  <div class="s2_col-header s2_col-left">需求方说的</div>
+  <div class="s2_col-header s2_col-right">实际想要的</div>
+
+  <!-- Main translation row -->
+  <div class="s2_row">
+    <div class="s2_bubble s2_bubble-left">更有冲击力</div>
+    <div class="s2_bubble s2_bubble-right">贴客户好评</div>
+  </div>
+
+  <!-- Gap symbol -->
+  <div class="s2_gap">&ne;</div>
+
+  <!-- Three rejected versions with crosses overlaid -->
+  <div class="s2_versions">
+    <div class="s2_ver-wrap">
+      <div class="s2_version">V1</div>
+      <div class="s2_cross"></div>
+    </div>
+    <div class="s2_ver-wrap">
+      <div class="s2_version">V2</div>
+      <div class="s2_cross"></div>
+    </div>
+    <div class="s2_ver-wrap">
+      <div class="s2_version">V3</div>
+      <div class="s2_cross"></div>
+    </div>
+  </div>
+
+  <!-- Arrow down to final answer -->
+  <div class="s2_arrow-down"></div>
+  <div class="s2_arrow-head"></div>
+
+  <!-- Final: the real answer -->
+  <div class="s2_final">贴好评</div>
+
+  <!-- Narration -->
+  <div class="s2_narration">
+    <div class="s2_narr-step" data-start="0" data-end="1200">需求方提出了一个模糊的要求</div>
+    <div class="s2_narr-step" data-start="1300" data-end="2200">两边说的根本不是一回事</div>
+    <div class="s2_narr-step" data-start="2300" data-end="3000">字面理解「冲击力」，开始改版</div>
+    <div class="s2_narr-step" data-start="3000" data-end="5000">改了三版，全部被否</div>
+    <div class="s2_narr-step" data-start="5100" data-end="9999">真正的需求：把客户好评贴上去</div>
+  </div>
+</div>
+
+<script>
+// S2 narration timing
+(function() {
+  var stage = document.getElementById('s2Stage');
+  if (!stage) return;
+  var narrs = stage.querySelectorAll('.s2_narr-step');
+  var timers = [];
+
+  function playS2() {
+    narrs.forEach(function(n) {
+      var start = parseInt(n.dataset.start);
+      var end = parseInt(n.dataset.end);
+      timers.push(setTimeout(function() { n.classList.add('show'); }, start + 300));
+      if (end < 9999) {
+        timers.push(setTimeout(function() { n.classList.remove('show'); }, end + 300));
+      }
+    });
+
+    // Dim rejected versions after all crosses appear
+    timers.push(setTimeout(function() {
+      var versions = stage.querySelectorAll('.s2_version');
+      versions.forEach(function(v) {
+        v.style.transition = 'opacity 0.5s ease, border-color 0.5s ease';
+        v.style.opacity = '0.3';
+        v.style.borderColor = '#E2E8F0';
+      });
+    }, 5000));
+  }
+
+  // Auto-play when visible class is added
+  var obs = new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      if (m.attributeName === 'class' && stage.classList.contains('visible')) {
+        playS2();
+      }
+    });
+  });
+  obs.observe(stage, { attributes: true });
+
+  // If already visible, play immediately
+  if (stage.classList.contains('visible')) { playS2(); }
+})();
+</script>
+
+<!-- deepDiveData[2] -->
+<script>
+if (typeof deepDiveData === 'undefined') var deepDiveData = {};
+deepDiveData[2] = {
+  title: "需求翻译鸿沟：为什么你听到的和他想要的永远不一样",
+  sections: [
+    {
+      heading: "「冲击力」背后的认知错位",
+      body: "设计师听到「更有冲击力」，脑子里浮现的是更大的字体、更饱和的颜色、更张扬的排版。但需求方脑子里想的是「让用户更信任我们」。他只是不知道怎么表达这个意思，于是借用了一个听起来很专业的词。\n\n这就是需求翻译鸿沟的本质：双方用同一个词，但指向完全不同的心智模型。设计师在美学维度上反复迭代，需求方在商业维度上反复否定。三个版本的返工不是因为设计不够好，而是因为问题从一开始就被错误地定义了。"
+    },
+    {
+      heading: "鸿沟的三层结构",
+      body: "第一层是语言鸿沟。需求方缺少设计词汇，只能用模糊的形容词（「大气」「高端」「有冲击力」）来描述具体的商业诉求。\n\n第二层是目标鸿沟。设计师的目标函数是视觉品质，需求方的目标函数是业务转化。两个人在优化完全不同的指标，却以为在讨论同一件事。\n\n第三层是反馈鸿沟。需求方说「不对」的时候，设计师以为是方向微调，实际上是根本性的认知偏差。每一轮修改都在错误的轨道上越走越远。"
+    },
+    {
+      heading: "AI 时代的启示",
+      body: "这个案例完美映射到人与 AI 的协作困境。当你对 AI 说「写得更好一点」，AI 会在措辞上精雕细琢，但你可能只是想让它加一个具体的例子。Prompt 就是你给 AI 的「需求」，而 AI 和那个设计师一样，会字面理解你的每一个词。\n\n解决方案不是学习更精确的 prompt 技巧，而是建立一套翻译协议：把模糊的感受转化为可验证的具体行为。不说「更有冲击力」，而说「在首屏放三条客户好评，每条带头像和公司名」。不说「写得更好」，而说「加一个电商场景的例子，字数控制在 200 字以内」。"
+    }
+  ],
+  originalText: "设计师经常遇到这样的场景：需求方说「这个海报需要更有冲击力」。设计师改了三版，每一版都在加大字号、增强对比、尝试不同的视觉风格。三版全部被否。最后才发现，需求方想要的「冲击力」，其实是「把客户好评贴上去」。"
+};
+</script>
+      </div>
+      <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(2)">↓ 深入了解：需求翻译的鸿沟</div>
+    </div>
+  </section>
+
+  <!-- Section 3 -->
+  <section style="padding: 48px 0; background: var(--bg-act1);">
+    <div class="content-width">
+      <div class="section-label reveal">03 - AI 不帮你猜</div>
+      <div class="big-statement reveal reveal-delay-1">你说不清楚，<br><span style="color:var(--accent2)">AI 就给你一坨垃圾</span></div>
+      <div class="body-text reveal reveal-delay-2">AI 不会帮你猜。你跟 AI 说「改一下这个页面」，它真的就会问你改哪个部分、改成什么样、有什么限制条件。就像有人说的——<span class="hl">prompt 写到第三版你会突然醒悟：原来甲方不是不会说话，是因为以前没有一个东西会因为他说不清楚就直接罢工。</span></div>
+    </div>
+    <div class="content-width">
+      <div id="s3-anim" class="reveal reveal-delay-3">
+        <style>
+/* === S3 Animation: AI 不帮你猜 — 人 vs AI 对话对比 === */
+.s3_stage {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  height: 420px;
+  margin: 24px auto;
+  font-family: -apple-system, 'PingFang SC', sans-serif;
+}
+
+/* Section labels */
+.s3_label_top, .s3_label_bot {
+  position: absolute;
+  left: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  opacity: 0;
+  transform: translateY(-6px);
+}
+.s3_label_top { top: 0; color: #CBD5E1; }
+.s3_label_bot { top: 210px; color: #06B6D4; }
+
+/* Divider line */
+.s3_divider {
+  position: absolute;
+  top: 200px; left: 10%; right: 10%;
+  height: 0;
+  border-top: 1.5px dashed #CBD5E1;
+  opacity: 0;
+}
+
+/* Chat bubbles */
+.s3_bubble {
+  position: absolute;
+  border-radius: 16px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+/* Top row: human conversation */
+.s3_bub_user1 {
+  top: 28px; left: 0;
+  background: #CBD5E1;
+  color: #475569;
+}
+.s3_bub_human {
+  top: 28px; right: 0;
+  background: #F1F5F9;
+  color: #94A3B8;
+  font-size: 12px;
+  border: 1.5px dashed #CBD5E1;
+}
+.s3_bub_guess {
+  top: 70px; right: 0;
+  background: #F1F5F9;
+  color: #94A3B8;
+  font-size: 12px;
+}
+
+/* Arrow from user bubble to human guess */
+.s3_arrow_top {
+  position: absolute;
+  top: 50px; left: 50%;
+  transform: translateX(-50%);
+  width: 2px; height: 0;
+  background: #CBD5E1;
+}
+
+/* Top result circle */
+.s3_result_top {
+  position: absolute;
+  top: 120px; left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  border: 2.5px dashed #CBD5E1;
+  background: #F8FAFC;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #94A3B8;
+}
+
+/* Bottom row: AI conversation */
+.s3_bub_user2 {
+  top: 236px; left: 0;
+  background: #CBD5E1;
+  color: #475569;
+}
+
+/* AI question bubbles */
+.s3_q_row {
+  position: absolute;
+  top: 272px; left: 0; right: 0;
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.s3_q_chip {
+  background: #ECFEFF;
+  color: #06B6D4;
+  border: 1.5px solid #06B6D4;
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+/* User precise answer */
+.s3_bub_precise {
+  position: absolute;
+  top: 310px; left: 0;
+  background: #06B6D4;
+  color: #fff;
+  border-radius: 16px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0;
+  transform: scale(0.8);
+  white-space: nowrap;
+}
+
+/* Bottom result circle */
+.s3_result_bot {
+  position: absolute;
+  top: 348px; left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  border: 2.5px solid #06B6D4;
+  background: #ECFEFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #06B6D4;
+}
+
+/* Glow on result */
+.s3_result_bot.s3_glow {
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.4);
+}
+
+/* === Keyframes === */
+@keyframes s3_fadeDown {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s3_popIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s3_popCenter {
+  to { transform: translateX(-50%) scale(1); }
+}
+@keyframes s3_lineGrow {
+  to { height: 16px; }
+}
+@keyframes s3_divShow {
+  to { opacity: 1; }
+}
+
+/* === Triggered by .visible === */
+
+/* Labels */
+.s3_stage.visible .s3_label_top {
+  animation: s3_fadeDown 0.4s 0.2s ease forwards;
+}
+.s3_stage.visible .s3_label_bot {
+  animation: s3_fadeDown 0.4s 2.6s ease forwards;
+}
+.s3_stage.visible .s3_divider {
+  animation: s3_divShow 0.4s 2.4s ease forwards;
+}
+
+/* Top: user says vague thing */
+.s3_stage.visible .s3_bub_user1 {
+  animation: s3_popIn 0.4s 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+/* Human guesses */
+.s3_stage.visible .s3_bub_human {
+  animation: s3_popIn 0.4s 1.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s3_stage.visible .s3_arrow_top {
+  animation: s3_lineGrow 0.3s 1.0s ease forwards;
+}
+.s3_stage.visible .s3_bub_guess {
+  animation: s3_popIn 0.4s 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+/* Top result */
+.s3_stage.visible .s3_result_top {
+  animation: s3_popCenter 0.4s 1.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Bottom: user says same vague thing */
+.s3_stage.visible .s3_bub_user2 {
+  animation: s3_popIn 0.4s 2.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+/* AI asks 3 questions */
+.s3_stage.visible .s3_q_chip:nth-child(1) {
+  animation: s3_popIn 0.35s 3.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s3_stage.visible .s3_q_chip:nth-child(2) {
+  animation: s3_popIn 0.35s 3.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s3_stage.visible .s3_q_chip:nth-child(3) {
+  animation: s3_popIn 0.35s 4.1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+/* User forced to be precise */
+.s3_stage.visible .s3_bub_precise {
+  animation: s3_popIn 0.4s 4.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+/* Bottom result */
+.s3_stage.visible .s3_result_bot {
+  animation: s3_popCenter 0.4s 5.1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+</style>
+
+<div class="s3_stage">
+  <!-- Top: human conversation -->
+  <div class="s3_label_top">对人说</div>
+  <div class="s3_bub_user1 s3_bubble">「改一下」</div>
+  <div class="s3_arrow_top"></div>
+  <div class="s3_bub_human s3_bubble">...大概是这意思?</div>
+  <div class="s3_bub_guess s3_bubble">猜着改了</div>
+  <div class="s3_result_top">凑合</div>
+
+  <!-- Divider -->
+  <div class="s3_divider"></div>
+
+  <!-- Bottom: AI conversation -->
+  <div class="s3_label_bot">对 AI 说</div>
+  <div class="s3_bub_user2 s3_bubble">「改一下」</div>
+  <div class="s3_q_row">
+    <div class="s3_q_chip">改哪?</div>
+    <div class="s3_q_chip">改成什么?</div>
+    <div class="s3_q_chip">什么限制?</div>
+  </div>
+  <div class="s3_bub_precise">标题字号改为 24px，左对齐</div>
+  <div class="s3_result_bot">精准</div>
+</div>
+
+<script>
+// Add glow to bottom result after animation completes
+(function() {
+  var stage = document.querySelector('.s3_stage');
+  if (!stage) return;
+  var observer = new MutationObserver(function() {
+    if (stage.classList.contains('visible')) {
+      setTimeout(function() {
+        var bot = stage.querySelector('.s3_result_bot');
+        if (bot) bot.classList.add('s3_glow');
+      }, 5500);
+    }
+  });
+  observer.observe(stage, { attributes: true, attributeFilter: ['class'] });
+  // Also handle already-visible case
+  if (stage.classList.contains('visible')) {
+    setTimeout(function() {
+      var bot = stage.querySelector('.s3_result_bot');
+      if (bot) bot.classList.add('s3_glow');
+    }, 5500);
+  }
+})();
+</script>
+
+<script>
+
+deepDiveData[3] = {
+  title: "Prompt 教育法：AI 如何倒逼你说人话",
+  sections: [
+    {
+      heading: "核心发现：AI 是史上最严格的甲方测试",
+      body: "人类同事能猜你意思，因为他们有共享上下文、社会默契和「差不多就行」的容错文化。但 AI 不猜。你说「改一下」，它不会「大概理解」然后凑合做——它要么追问到你说清楚，要么按字面意思执行出你完全不想要的东西。\n\n作者写 prompt 写到第三版才醒悟：以前不是甲方会说话，是乙方会猜。当你面对一个不会猜的执行者，你被迫学会了一件事——把脑子里模糊的想法变成精确的指令。"
+    },
+    {
+      heading: "三个版本的 prompt 进化",
+      diagram: '<div style="display:flex;flex-direction:column;gap:10px;margin:16px 0;">' +
+        '<div style="display:flex;align-items:center;gap:10px;">' +
+          '<div style="width:32px;height:32px;border-radius:50%;background:#CBD5E1;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;">v1</div>' +
+          '<div style="flex:1;background:#F1F5F9;border-radius:8px;padding:8px 12px;font-size:12px;color:#64748B;">「帮我做个好看的页面」</div>' +
+          '<div style="font-size:11px;color:#E11D48;font-weight:600;white-space:nowrap;">垃圾</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:10px;">' +
+          '<div style="width:32px;height:32px;border-radius:50%;background:#94A3B8;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;">v2</div>' +
+          '<div style="flex:1;background:#F1F5F9;border-radius:8px;padding:8px 12px;font-size:12px;color:#64748B;">「用蓝色主题，三栏布局」</div>' +
+          '<div style="font-size:11px;color:#F59E0B;font-weight:600;white-space:nowrap;">平庸</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:10px;">' +
+          '<div style="width:32px;height:32px;border-radius:50%;background:#06B6D4;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;">v3</div>' +
+          '<div style="flex:1;background:#ECFEFF;border:1.5px solid #06B6D4;border-radius:8px;padding:8px 12px;font-size:12px;color:#0E7490;">「参考 Linear 风格，深色背景 #1a1a2e，主色 #e94560，卡片圆角 12px，标题 Noto Serif SC 24px」</div>' +
+          '<div style="font-size:11px;color:#06B6D4;font-weight:600;white-space:nowrap;">精准</div>' +
+        '</div>' +
+      '</div>',
+      body: "每一版的进化都不是在学「怎么写 prompt」，而是在学「怎么把脑子里的画面翻译成文字」。v1 是纯感觉，v2 有了方向但还是模糊，v3 才是真正的规格说明。\n\n有趣的是，这个能力一旦练出来，对人类协作也有巨大帮助。你再也不会对设计师说「好看一点」，而是会说「参考这个风格，这几个参数，这个约束」。AI 不是在教你写 prompt，是在教你表达。"
+    },
+    {
+      heading: "本质：AI 暴露了人类沟通中一直存在的 bug",
+      body: "人类协作中，模糊指令之所以能运转，靠的是接收方的「脑补能力」——同事会根据过去的经验、公司文化、你的个人偏好来填补你没说清楚的部分。这个机制如此高效，以至于我们从未意识到自己的表达其实充满了漏洞。\n\nAI 把这个 bug 暴露了。它不脑补、不猜测、不「差不多就行」。你的每一个模糊表述，它都会老老实实地执行成字面意思，或者直接问你。这不是 AI 的缺陷，这是一面镜子——它让你看到自己一直以来有多依赖别人帮你「猜」。\n\n所以文章里那句话特别精准：甲方不是不会说话，是以前没有东西因为他说不清楚就罢工。"
+    }
+  ],
+  originalText: "We found that the instinct to micromanage produced worse results than clearly defining what done looked like. The more we invested in clear acceptance criteria and automated verification, the less we needed to control the process. Writing prompts taught us to express intent precisely — a skill that turned out to be just as valuable for human collaboration."
+};
+</script>
+      </div>
+      <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(3)">↓ 深入了解：prompt 教育法</div>
+    </div>
+  </section>
+
+  <div class="act-break reveal" style="background: var(--bg-act2);">
+    <div class="act-label" style="color: var(--accent2);">ACT II</div>
+    <div class="act-title">容错空间消失了</div>
+  </div>
+
+  <!-- Section 4 -->
+  <section style="padding: 48px 0; background: var(--bg-act2);">
+    <div class="content-width">
+      <div class="section-label reveal">04 - 人有容错，AI 没有</div>
+      <div class="big-statement reveal reveal-delay-1">以前人和人之间沟通<br>是有<span style="color:var(--accent)">容错空间</span>的</div>
+      <div class="body-text reveal reveal-delay-2">你说得不清楚，对方可以猜，可以追问，甚至可以帮你脑补。但 <span class="hl2">AI 没有这个容错空间</span>，你给它什么它就按什么来。所以它反过来逼着每个人把话说清楚。被 AI 教育了几轮之后，就慢慢学会了：得把背景说清楚，得把期望的结果描述出来，得告诉对方有哪些限制。</div>
+    </div>
+    <div class="content-width">
+      <div id="s4-anim" class="reveal reveal-delay-3">
+        <style>
+  .s4_stage { position: relative; width: 340px; max-width: 90vw; margin: 0 auto; padding: 24px 0; }
+
+  .s4_row { display: flex; align-items: center; justify-content: center; gap: 0; position: relative; height: 80px; margin-bottom: 28px; }
+
+  .s4_node {
+    width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 600; border: 2.5px solid #CBD5E1; background: #fff; color: #1E293B;
+    opacity: 0; transform: scale(0); flex-shrink: 0; z-index: 2;
+  }
+  .s4_node--cyan { border-color: #06B6D4; color: #06B6D4; }
+  .s4_node--red { border-color: #E11D48; color: #E11D48; }
+
+  .s4_buffer {
+    width: 120px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 1px; flex-shrink: 0; z-index: 1;
+    background: rgba(6, 182, 212, 0.08); border: 1.5px dashed rgba(6, 182, 212, 0.3);
+    opacity: 0; transform: scale(0);
+  }
+  .s4_buffer-label { font-size: 11px; color: #94A3B8; line-height: 1.3; text-align: center; }
+
+  .s4_signal {
+    position: absolute; width: 10px; height: 10px; border-radius: 50%;
+    opacity: 0; z-index: 3;
+  }
+
+  .s4_row-label {
+    position: absolute; left: 0; top: -18px;
+    font-size: 11px; color: #94A3B8; letter-spacing: 1px; font-weight: 500;
+  }
+
+  .s4_arrow {
+    width: 24px; height: 2px; background: #CBD5E1; flex-shrink: 0; opacity: 0; position: relative;
+  }
+  .s4_arrow::after {
+    content: ''; position: absolute; right: -1px; top: -4px;
+    width: 0; height: 0; border-left: 6px solid #CBD5E1; border-top: 5px solid transparent; border-bottom: 5px solid transparent;
+  }
+
+  .s4_result {
+    position: absolute; right: -8px; top: -8px; font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 10px; opacity: 0; transform: scale(0); z-index: 4;
+  }
+  .s4_result--ok { background: #06B6D4; color: #fff; }
+  .s4_result--err { background: #E11D48; color: #fff; }
+
+  .s4_narration {
+    text-align: center; font-size: 13px; color: #94A3B8; min-height: 36px; position: relative; margin-top: 20px;
+  }
+  .s4_narr-step { position: absolute; left: 0; right: 0; opacity: 0; transition: opacity 0.4s ease; }
+  .s4_narr-step.show { opacity: 1; }
+
+  @keyframes s4_scaleIn { to { opacity: 1; transform: scale(1); } }
+  @keyframes s4_fadeIn { to { opacity: 1; } }
+  @keyframes s4_bufferFadeOut {
+    0% { opacity: 1; transform: scale(1); }
+    70% { opacity: 0.3; transform: scale(0.95); }
+    100% { opacity: 0; transform: scale(0.8); }
+  }
+
+  @keyframes s4_signalR1 {
+    0% { left: 56px; top: 35px; opacity: 1; filter: blur(3px); background: #CBD5E1; }
+    40% { left: 130px; top: 35px; opacity: 1; filter: blur(3px); background: #CBD5E1; }
+    60% { left: 190px; top: 35px; opacity: 1; filter: blur(1px); background: #94A3B8; }
+    100% { left: 260px; top: 35px; opacity: 1; filter: blur(0); background: #06B6D4; box-shadow: 0 0 8px rgba(6,182,212,0.5); }
+  }
+
+  @keyframes s4_signalR2fuzzy {
+    0% { left: 56px; top: 35px; opacity: 1; filter: blur(3px); background: #CBD5E1; }
+    100% { left: 246px; top: 35px; opacity: 1; filter: blur(3px); background: #CBD5E1; }
+  }
+
+  @keyframes s4_signalR2clear {
+    0% { left: 56px; top: 35px; opacity: 1; filter: blur(0); background: #06B6D4; box-shadow: 0 0 8px rgba(6,182,212,0.5); }
+    100% { left: 246px; top: 35px; opacity: 1; filter: blur(0); background: #06B6D4; box-shadow: 0 0 8px rgba(6,182,212,0.5); }
+  }
+
+  /* Row 1 */
+  .s4_stage.visible #s4_r1n1 { animation: s4_scaleIn 0.4s 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+  .s4_stage.visible #s4_r1a1 { animation: s4_fadeIn 0.3s 0.7s ease forwards; }
+  .s4_stage.visible #s4_r1buf { animation: s4_scaleIn 0.4s 1.0s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+  .s4_stage.visible #s4_r1a2 { animation: s4_fadeIn 0.3s 1.4s ease forwards; }
+  .s4_stage.visible #s4_r1n2 { animation: s4_scaleIn 0.4s 1.7s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+  .s4_stage.visible #s4_r1sig { animation: s4_signalR1 1.2s 2.2s ease-in-out forwards; }
+
+  /* Row 2 */
+  .s4_stage.visible #s4_r2n1 { animation: s4_scaleIn 0.4s 3.8s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+  .s4_stage.visible #s4_r2buf { animation: s4_scaleIn 0.3s 4.2s cubic-bezier(0.34,1.56,0.64,1) forwards, s4_bufferFadeOut 0.8s 4.6s ease forwards; }
+  .s4_stage.visible #s4_r2a1 { animation: s4_fadeIn 0.3s 4.2s ease forwards; }
+  .s4_stage.visible #s4_r2a2 { animation: s4_fadeIn 0.3s 4.2s ease forwards; }
+  .s4_stage.visible #s4_r2n2 { animation: s4_scaleIn 0.4s 4.2s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+  .s4_stage.visible #s4_r2sig { animation: s4_signalR2fuzzy 0.8s 5.6s ease-in-out forwards; }
+  .s4_stage.visible #s4_r2err { animation: s4_scaleIn 0.3s 6.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+
+  /* Row 3 */
+  .s4_stage.visible #s4_r3n1 { animation: s4_scaleIn 0.4s 7.2s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+  .s4_stage.visible #s4_r3a1 { animation: s4_fadeIn 0.3s 7.6s ease forwards; }
+  .s4_stage.visible #s4_r3n2 { animation: s4_scaleIn 0.4s 7.6s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+  .s4_stage.visible #s4_r3sig { animation: s4_signalR2clear 0.8s 8.2s ease-in-out forwards; }
+  .s4_stage.visible #s4_r3ok { animation: s4_scaleIn 0.3s 9.1s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+</style>
+
+<div class="s4_stage" id="s4-anim-stage">
+  <!-- Row 1: Human to Human with buffer -->
+  <div class="s4_row">
+    <div class="s4_row-label">人 ↔ 人</div>
+    <div class="s4_node s4_node--cyan" id="s4_r1n1">甲</div>
+    <div class="s4_arrow" id="s4_r1a1"></div>
+    <div class="s4_buffer" id="s4_r1buf">
+      <span class="s4_buffer-label">猜测</span>
+      <span class="s4_buffer-label">追问</span>
+      <span class="s4_buffer-label">脑补</span>
+    </div>
+    <div class="s4_arrow" id="s4_r1a2"></div>
+    <div class="s4_node s4_node--cyan" id="s4_r1n2">乙</div>
+    <div class="s4_signal" id="s4_r1sig"></div>
+  </div>
+
+  <!-- Row 2: Human to AI, buffer vanishes, fuzzy signal = error -->
+  <div class="s4_row">
+    <div class="s4_row-label">人 → AI（模糊）</div>
+    <div class="s4_node s4_node--cyan" id="s4_r2n1">人</div>
+    <div class="s4_arrow" id="s4_r2a1"></div>
+    <div class="s4_buffer" id="s4_r2buf" style="border-color:rgba(225,29,72,0.3); background:rgba(225,29,72,0.06);">
+      <span class="s4_buffer-label" style="color:#E11D48;">容错?</span>
+    </div>
+    <div class="s4_arrow" id="s4_r2a2"></div>
+    <div class="s4_node s4_node--red" id="s4_r2n2" style="position:relative;">AI
+      <div class="s4_result s4_result--err" id="s4_r2err">ERR</div>
+    </div>
+    <div class="s4_signal" id="s4_r2sig"></div>
+  </div>
+
+  <!-- Row 3: Human to AI, clear signal = success -->
+  <div class="s4_row">
+    <div class="s4_row-label">人 → AI（清晰）</div>
+    <div class="s4_node s4_node--cyan" id="s4_r3n1">人</div>
+    <div class="s4_arrow" id="s4_r3a1" style="width:144px;"></div>
+    <div class="s4_node s4_node--cyan" id="s4_r3n2" style="position:relative;">AI
+      <div class="s4_result s4_result--ok" id="s4_r3ok">OK</div>
+    </div>
+    <div class="s4_signal" id="s4_r3sig"></div>
+  </div>
+
+  <!-- Narration -->
+  <div class="s4_narration">
+    <div class="s4_narr-step" data-start="0" data-end="2200">人和人之间，中间有一层「缓冲」</div>
+    <div class="s4_narr-step" data-start="2200" data-end="3800">模糊的信号经过缓冲后，对方仍能理解</div>
+    <div class="s4_narr-step" data-start="3800" data-end="5600">换成 AI，缓冲层消失了</div>
+    <div class="s4_narr-step" data-start="5600" data-end="7200">模糊信号直达 AI，结果是错误</div>
+    <div class="s4_narr-step" data-start="7200" data-end="9200">被教育几轮后，人学会了说清楚</div>
+    <div class="s4_narr-step" data-start="9200" data-end="99999">清晰信号直达 AI，一切顺畅</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var stage = document.getElementById('s4-anim-stage');
+  if (!stage) return;
+  var narrs = stage.querySelectorAll('.s4_narr-step');
+  var timers = [];
+
+  function playS4() {
+    narrs.forEach(function(n) {
+      var start = parseInt(n.dataset.start);
+      var end = parseInt(n.dataset.end);
+      timers.push(setTimeout(function() { n.classList.add('show'); }, start + 300));
+      if (end < 99999) {
+        timers.push(setTimeout(function() { n.classList.remove('show'); }, end + 300));
+      }
+    });
+  }
+
+  var obs = new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      if (m.type === 'attributes' && stage.classList.contains('visible')) {
+        playS4();
+        obs.disconnect();
+      }
+    });
+  });
+  obs.observe(stage, { attributes: true, attributeFilter: ['class'] });
+
+  if (stage.classList.contains('visible')) playS4();
+})();
+</script>
+
+<script>
+deepDiveData[4] = {
+  title: "容错空间消失的本质",
+  sections: [
+    {
+      heading: "人际沟通的隐藏协议",
+      body: "人和人之间的沟通，其实一直运行着一套「容错协议」。你说「那个东西改一下」，对方会自动补全：「那个」是指上次讨论的那个页面，「改一下」大概率是把配色调成之前说好的方案。这个补全过程依赖共享上下文、社会常识、甚至对你个人习惯的了解。\n\n这套协议的带宽极高、延迟极低——以至于我们从来没意识到它的存在。就像鱼不知道水一样。"
+    },
+    {
+      heading: "AI 的「字面主义」",
+      body: "AI 是纯粹的字面主义者。你给它什么输入，它就在这个输入的空间里搜索最优解。它不会猜你「其实想要什么」，不会追问「你是不是指那个」，更不会脑补你省略的前提条件。\n\n这不是 AI 的缺陷，而是它的工作方式。信号经过人际缓冲层时会被自动修正和补全；直接传给 AI 时，信号里的每一个模糊点都会被放大成错误。"
+    },
+    {
+      heading: "被迫进化的表达能力",
+      body: "有趣的是，和 AI 合作几轮之后，人们开始主动做一件以前从来不做的事：把话说清楚。不是因为被要求，而是因为被「教育」了——你模糊一次，AI 就给你一个离谱的结果，来回几次你就学乖了。\n\n这个过程的副产品意外地有价值：当你为了跟 AI 沟通而把背景、期望、限制都写清楚之后，你发现跟人沟通的效率也提高了。被 AI 训练出来的表达习惯，反过来改善了整个团队的协作质量。"
+    }
+  ],
+  originalText: "本质上以前人和人沟通有容错空间——可以猜、追问、脑补。AI 没有这个容错空间，给什么按什么来。被 AI 教育几轮后，人学会了说清楚背景、期望、限制。"
+};
+</script>
+      </div>
+      <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(4)">↓ 深入了解：容错空间的本质</div>
+    </div>
+  </section>
+
+  <!-- Section 5 -->
+  <section class="section-dark" style="padding: 48px 0;">
+    <div class="content-width">
+      <div class="section-label reveal">05 - 魔法打魔法</div>
+      <div class="big-statement reveal reveal-delay-1">有人用 AI 写了大几十页 review<br>另一个人直接拿 <span style="color:#F59E0B;">AI 读</span></div>
+      <div class="body-text reveal reveal-delay-2">更魔幻的是，有人已经进化到 AI 对轰了——同事直接用 AI 写 design review 写了大几十页，然后另一个直接拿 AI 读。<span style="color:#F59E0B;font-weight:500;">魔法打魔法</span>，至少双方都把事情说清楚了，虽然说清楚的不是人。不过也不禁感慨，以前很多刚入职场的人，要在各种模糊不清的需求里面挣扎生存，也是很不容易了。</div>
+    </div>
+    <div class="content-width">
+      <div id="s5-anim" class="reveal reveal-delay-3">
+        <!-- S5: 魔法打魔法 — 双向AI箭头 + 金句 -->
+<style>
+/* === S5 STAGE === */
+.s5_stage {
+  position: relative;
+  width: 340px;
+  max-width: 90vw;
+  height: 340px;
+  margin: 20px auto;
+  font-family: -apple-system, 'PingFang SC', sans-serif;
+  --primary: #06B6D4;
+  --active: #E11D48;
+  --neutral: #CBD5E1;
+  --gold: #F59E0B;
+}
+
+.s5_chain {
+  position: absolute;
+  top: 56px;
+  left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.s5_person {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: 2.5px solid var(--neutral);
+  background: #1E293B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--neutral);
+  opacity: 0;
+  transform: scale(0);
+  flex-shrink: 0;
+}
+
+.s5_ai {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: 2.5px solid var(--primary);
+  background: #0F172A;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+  opacity: 0;
+  transform: scale(0);
+  flex-shrink: 0;
+}
+.s5_ai-sub {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--primary);
+  opacity: 0.7;
+  margin-top: -2px;
+}
+
+.s5_doc {
+  width: 44px; height: 56px;
+  border-radius: 6px;
+  border: 2.5px solid var(--active);
+  background: #1E293B;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--active);
+  opacity: 0;
+  transform: scale(0);
+  flex-shrink: 0;
+}
+.s5_doc-lines {
+  margin-top: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+}
+.s5_doc-line {
+  height: 2px;
+  border-radius: 1px;
+  background: var(--active);
+  opacity: 0.4;
+}
+
+.s5_arrow {
+  width: 16px;
+  height: 2px;
+  background: var(--neutral);
+  position: relative;
+  opacity: 0;
+  flex-shrink: 0;
+}
+.s5_arrow::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0; height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 6px solid var(--neutral);
+}
+.s5_arrow-write { background: var(--primary); }
+.s5_arrow-write::after { border-left-color: var(--primary); }
+.s5_arrow-read { background: var(--primary); }
+.s5_arrow-read::after { border-left-color: var(--primary); }
+
+.s5_label-row {
+  position: absolute;
+  top: 30px;
+  left: 0; right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  align-items: center;
+}
+.s5_label {
+  font-size: 11px;
+  color: #64748B;
+  font-weight: 500;
+  opacity: 0;
+  text-align: center;
+  width: 48px;
+  flex-shrink: 0;
+}
+.s5_label-gap { width: 16px; flex-shrink: 0; }
+.s5_label-doc { width: 44px; }
+
+.s5_bracket {
+  position: absolute;
+  top: 126px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  height: 24px;
+  opacity: 0;
+}
+.s5_bracket svg { width: 100%; height: 100%; }
+
+.s5_summary {
+  position: absolute;
+  top: 154px;
+  left: 0; right: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--neutral);
+  opacity: 0;
+  transform: translateY(6px);
+  font-weight: 500;
+}
+
+.s5_quote {
+  position: absolute;
+  top: 210px;
+  left: 0; right: 0;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gold);
+  opacity: 0;
+  transform: translateY(12px);
+  line-height: 1.6;
+}
+.s5_quote-sub {
+  position: absolute;
+  top: 244px;
+  left: 0; right: 0;
+  text-align: center;
+  font-size: 12px;
+  color: #64748B;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.s5_narration {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  text-align: center;
+  font-size: 13px;
+  color: #94A3B8;
+  min-height: 40px;
+}
+.s5_narr-step {
+  position: absolute;
+  left: 0; right: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  line-height: 1.6;
+}
+.s5_narr-step.show { opacity: 1; }
+
+@keyframes s5_fadeIn { to { opacity: 1; } }
+@keyframes s5_scaleIn { to { opacity: 1; transform: scale(1); } }
+@keyframes s5_fadeSlideUp { to { opacity: 1; transform: translateY(0); } }
+@keyframes s5_pulseGold {
+  0% { text-shadow: 0 0 0 rgba(245, 158, 11, 0); }
+  50% { text-shadow: 0 0 20px rgba(245, 158, 11, 0.4); }
+  100% { text-shadow: 0 0 12px rgba(245, 158, 11, 0.2); }
+}
+
+.s5_stage.visible .s5_person-a { animation: s5_scaleIn 0.4s 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.s5_stage.visible .s5_label-a { animation: s5_fadeIn 0.3s 0.5s forwards; }
+.s5_stage.visible .s5_arrow-1 { animation: s5_fadeIn 0.3s 0.9s forwards; }
+.s5_stage.visible .s5_ai-write { animation: s5_scaleIn 0.4s 1.3s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.s5_stage.visible .s5_label-write { animation: s5_fadeIn 0.3s 1.5s forwards; }
+.s5_stage.visible .s5_arrow-2 { animation: s5_fadeIn 0.3s 1.9s forwards; }
+.s5_stage.visible .s5_doc { animation: s5_scaleIn 0.4s 2.3s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.s5_stage.visible .s5_label-doc { animation: s5_fadeIn 0.3s 2.5s forwards; }
+.s5_stage.visible .s5_arrow-3 { animation: s5_fadeIn 0.3s 2.9s forwards; }
+.s5_stage.visible .s5_ai-read { animation: s5_scaleIn 0.4s 3.3s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.s5_stage.visible .s5_label-read { animation: s5_fadeIn 0.3s 3.5s forwards; }
+.s5_stage.visible .s5_arrow-4 { animation: s5_fadeIn 0.3s 3.9s forwards; }
+.s5_stage.visible .s5_person-b { animation: s5_scaleIn 0.4s 4.3s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.s5_stage.visible .s5_label-b { animation: s5_fadeIn 0.3s 4.5s forwards; }
+.s5_stage.visible .s5_bracket { animation: s5_fadeIn 0.4s 5.0s forwards; }
+.s5_stage.visible .s5_summary { animation: s5_fadeSlideUp 0.5s 5.3s forwards; }
+.s5_stage.visible .s5_quote { animation: s5_fadeSlideUp 0.6s 6.0s forwards, s5_pulseGold 2s 6.6s ease forwards; }
+.s5_stage.visible .s5_quote-sub { animation: s5_fadeSlideUp 0.5s 6.6s forwards; }
+</style>
+
+<div class="s5_stage" id="s5Stage">
+  <div class="s5_label-row">
+    <div class="s5_label s5_label-a">人A</div>
+    <div class="s5_label-gap"></div>
+    <div class="s5_label s5_label-write">AI 写</div>
+    <div class="s5_label-gap"></div>
+    <div class="s5_label s5_label-doc" style="width:44px;">文档</div>
+    <div class="s5_label-gap"></div>
+    <div class="s5_label s5_label-read">AI 读</div>
+    <div class="s5_label-gap"></div>
+    <div class="s5_label s5_label-b">人B</div>
+  </div>
+
+  <div class="s5_chain">
+    <div class="s5_person s5_person-a">人A</div>
+    <div class="s5_arrow s5_arrow-write s5_arrow-1"></div>
+    <div class="s5_ai s5_ai-write">AI<span class="s5_ai-sub">写</span></div>
+    <div class="s5_arrow s5_arrow-write s5_arrow-2"></div>
+    <div class="s5_doc">
+      DR
+      <div class="s5_doc-lines">
+        <div class="s5_doc-line" style="width:24px;"></div>
+        <div class="s5_doc-line" style="width:18px;"></div>
+        <div class="s5_doc-line" style="width:22px;"></div>
+      </div>
+    </div>
+    <div class="s5_arrow s5_arrow-read s5_arrow-3"></div>
+    <div class="s5_ai s5_ai-read">AI<span class="s5_ai-sub">读</span></div>
+    <div class="s5_arrow s5_arrow-read s5_arrow-4"></div>
+    <div class="s5_person s5_person-b">人B</div>
+  </div>
+
+  <div class="s5_bracket">
+    <svg viewBox="0 0 260 24" fill="none">
+      <path d="M10,4 L10,14 Q10,18 14,18 L126,18 Q130,18 130,22 L130,22 Q130,18 134,18 L246,18 Q250,18 250,14 L250,4" stroke="#64748B" stroke-width="1.5" fill="none"/>
+    </svg>
+  </div>
+  <div class="s5_summary">说清楚事情的不是人，是 AI</div>
+
+  <div class="s5_quote">「至少双方都把事情说清楚了」</div>
+  <div class="s5_quote-sub">比十倍效率提升重要多了</div>
+
+  <div class="s5_narration">
+    <div class="s5_narr-step" data-start="0" data-end="1200">有人用 AI 写了几十页 design review</div>
+    <div class="s5_narr-step" data-start="1300" data-end="2200">AI 把模糊的想法变成精确的文档</div>
+    <div class="s5_narr-step" data-start="2300" data-end="3200">几十页的 design review 传到对面</div>
+    <div class="s5_narr-step" data-start="3300" data-end="4200">另一个人直接拿 AI 来读</div>
+    <div class="s5_narr-step" data-start="4300" data-end="5200">魔法打魔法</div>
+    <div class="s5_narr-step" data-start="5300" data-end="5900">说清楚的不是人</div>
+    <div class="s5_narr-step" data-start="6000" data-end="9999">比十倍效率提升重要多了</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var stage = document.getElementById('s5Stage');
+  if (!stage) return;
+  var narrs = stage.querySelectorAll('.s5_narr-step');
+  var timers = [];
+
+  function playS5() {
+    narrs.forEach(function(n) {
+      var start = parseInt(n.dataset.start);
+      var end = parseInt(n.dataset.end);
+      timers.push(setTimeout(function() { n.classList.add('show'); }, start + 300));
+      if (end < 9999) {
+        timers.push(setTimeout(function() { n.classList.remove('show'); }, end + 300));
+      }
+    });
+    timers.push(setTimeout(function() {
+      var aiWrite = stage.querySelector('.s5_ai-write');
+      if (aiWrite) { aiWrite.style.transition = 'box-shadow 0.5s ease'; aiWrite.style.boxShadow = '0 0 16px rgba(6, 182, 212, 0.5)'; }
+    }, 1700));
+    timers.push(setTimeout(function() {
+      var doc = stage.querySelector('.s5_doc');
+      if (doc) { doc.style.transition = 'box-shadow 0.5s ease'; doc.style.boxShadow = '0 0 16px rgba(225, 29, 72, 0.5)'; }
+    }, 2700));
+    timers.push(setTimeout(function() {
+      var aiRead = stage.querySelector('.s5_ai-read');
+      if (aiRead) { aiRead.style.transition = 'box-shadow 0.5s ease'; aiRead.style.boxShadow = '0 0 16px rgba(6, 182, 212, 0.5)'; }
+    }, 3700));
+  }
+
+  var obs = new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      if (m.attributeName === 'class' && stage.classList.contains('visible')) { playS5(); }
+    });
+  });
+  obs.observe(stage, { attributes: true });
+  if (stage.classList.contains('visible')) { playS5(); }
+})();
+</script>
+
+<!-- deepDiveData[5] -->
+<script>
+if (typeof deepDiveData === 'undefined') var deepDiveData = {};
+deepDiveData[5] = {
+  title: "魔法打魔法：AI 时代的沟通进化",
+  sections: [
+    {
+      heading: "一个荒诞又真实的场景",
+      body: "有人用 AI 写了几十页的 design review，另一个人拿到之后，直接用 AI 来读。写的人没有逐字逐句地写，读的人也没有逐字逐句地读。两个人之间流转的是一份几十页的精确文档，但真正处理这份文档的全程都是 AI。\n\n这个场景初看荒诞——两个人之间的沟通完全由 AI 代劳了，人类变成了两端的「发起者」和「接收者」。但仔细想想，这可能恰恰是 AI 带来的最深刻的变化之一：它不只是在帮你写代码或做设计，它在重塑人与人之间传递信息的方式。"
+    },
+    {
+      heading: "至少把事情说清楚了",
+      body: "在没有 AI 的时代，一个工程师想表达自己的设计思路，要么写一份粗糙的半页文档，要么在会议上口头描述。两种方式都存在巨大的信息损耗。写文档太费时间，大部分人不愿意写；口头描述依赖表达能力和听众的注意力，信息衰减严重。\n\n现在有了 AI，同一个工程师可以把脑子里的模糊想法倾倒给 AI，让 AI 帮他整理成结构化的、几十页的完整文档。虽然写文档的不是人，但文档里的想法是人的。至少这一次，双方都真正把事情说清楚了——即使「说清楚」这件事是 AI 代劳的。"
+    },
+    {
+      heading: "以前的职场新人在模糊中挣扎",
+      body: "回想以前的职场新人是怎么工作的：拿到一个模糊的需求，不知道该问谁、该怎么问。文档要么不存在，要么是三年前写的、早就过时了。设计决策散落在十几个 Slack 频道和会议录音里，没有人整理过。新人要花几个月时间，通过不断犯错和被纠正，才能拼凑出项目的全貌。\n\n现在 AI 可以在几分钟内生成一份完整的、结构化的设计文档。新人的起点不再是一片模糊，而是一份虽然可能不完美但至少完整的参考材料。这个变化比「十倍效率提升」重要多了——它改变的不是速度，而是起点。"
+    },
+    {
+      heading: "比十倍效率重要多了",
+      body: "大家谈论 AI 的时候，最常用的框架是「效率提升」——做同样的事，速度快了几倍。但 design review 这个案例揭示了一个更深层的变化：AI 不只是让现有流程变快，它在创造全新的沟通模式。\n\n以前不可能存在的东西（几十页的精确 design review）现在变成了默认产出。以前无法完成的事情（让每个参与者都充分理解设计意图）现在变成了标准流程。这不是同一条路跑得更快，而是出现了一条全新的路。当沟通的成本趋近于零，沟通的质量反而会大幅提升——因为你终于可以把所有该说的话都说清楚了。"
+    }
+  ],
+  originalText: "Someone used AI to write a multi-page design review, and another person used AI to read it. Magic fighting magic. At least both sides clearly articulated their positions, even though it was AI doing the articulating. Think about how junior employees used to struggle with ambiguous requirements and scattered documentation. This shift matters more than any 10x efficiency gain."
+};
+</script>
+      </div>
+      <div class="deep-dive-trigger reveal reveal-delay-4" style="color:#F59E0B;" onclick="toggleDeepDive(5)">↓ 深入了解：AI 时代的沟通进化</div>
+    </div>
+  </section>
+
+  <div class="takeaway reveal">
+    <div class="takeaway-text">也许 AI 逼着提需求的人把事情想清楚再说，<br>这比什么十倍效率提升，实在多了。</div>
+  </div>
+
+  <div style="height: 48px; background: var(--bg-close);"></div>
+
+</div><!-- /main-scroll -->
+<div class="detail-scroll" id="detailScroll">
+  <div class="detail-header" id="detailBack">← 返回</div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+</div><!-- /space -->
+
+<div class="source-horizon" id="sourceHorizon">
+  <div class="horizon-track" id="horizonTrack"></div>
+  <div class="horizon-detail" id="horizonDetail"></div>
+</div>
+
+<script>
+var coverageData = {
+  sourceType: "text",
+  totalLength: 1060,
+  segments: [
+    { start: 0, end: 175, section: 1, reason: null },
+    { start: 175, end: 350, section: 2, reason: null },
+    { start: 350, end: 695, section: 3, reason: null },
+    { start: 695, end: 960, section: 4, reason: null },
+    { start: 960, end: 1060, section: 5, reason: null }
+  ]
+};
+
+var topicData = {
+  1: [
+    { name: "同事学会说话了", status: "included", excerpt: "我发现 AI 模型普及之后，对很多人的一大帮助就是，发现同事们开始学会怎么样好好说话了。" },
+    { name: "需求模糊的痛", status: "included", excerpt: "之前很多同事提需求时，要么只给一句话，要么描述模糊不清，或者一个需求要分好几次交代。现在一次就能把问题、背景、需求都描述清楚了。" },
+    { name: "来回三四轮", status: "included", excerpt: "这个变化其实挺明显的。以前我经常收到那种需求，就一句\"这个页面改一下\"，我问改哪，他说\"就那个不太对的地方\"。然后我改完了，他说不是这，是那。来回三四轮才搞清楚他到底要什么。" }
+  ],
+  2: [
+    { name: "设计师的吐槽", status: "included", excerpt: "我之前看到一个设计师的吐槽，特别典型。需求方跟他说\"海报需要更有冲击力\"，他改了三版都被否了，最后才搞明白人家想要的其实是\"把客户的好评贴上去\"。" },
+    { name: "冲击力=贴好评", status: "included", excerpt: "就是说，\"冲击力\"这三个字在需求方脑子里等于\"贴好评\"，但他就是不说，你根本猜不到。" }
+  ],
+  3: [
+    { name: "AI不帮你猜", status: "included", excerpt: "但是这些人用了一段时间 AI 之后，说话方式就变了。因为 AI 不会帮你猜。你跟 AI 说\"改一下这个页面\"，它真的就会问你改哪个部分、改成什么样、有什么限制条件。你说不清楚，它做出来的东西就完全不是你要的。" },
+    { name: "prompt第三版醒悟", status: "included", excerpt: "就像有人说的——prompt 写到第三版你会突然醒悟：原来甲方不是不会说话，是因为以前没有一个东西会因为他说不清楚就直接罢工。以前你说不清楚，有人帮你兜底。现在 AI 不兜底，你不说清楚它就给你一坨垃圾。" }
+  ],
+  4: [
+    { name: "被AI教育后学会了", status: "included", excerpt: "所以这些人被 AI 教育了几轮之后，就慢慢学会了：哦，原来我得把背景说清楚，得把期望的结果描述出来，得告诉对方有哪些限制。" },
+    { name: "容错空间消失", status: "included", excerpt: "其实本质上就是，以前人和人之间沟通是有容错空间的。你说得不清楚，对方可以猜，可以追问，甚至可以帮你脑补。但 AI 没有这个容错空间，你给它什么它就按什么来。所以它反过来逼着每个人把话说清楚。" }
+  ],
+  5: [
+    { name: "反向教育职场", status: "included", excerpt: "感觉 AI 和 Agent 确实反向教育了一下很多职场牛马的傻X同事。" },
+    { name: "魔法打魔法", status: "included", excerpt: "现在更魔幻的是，有人已经进化到 AI 对轰了——我看有人说他同事直接用 AI 写 design review 写了大几十页，然后他直接拿 AI 读。魔法打魔法，至少双方都把事情说清楚了，虽然说清楚的不是人。" },
+    { name: "职场新人的感慨", status: "included", excerpt: "哎，不过也不禁感慨，以前很多刚入职场的人，要在各种模糊不清的需求里面挣扎生存，也是很不容易了。没有人教你怎么去理解一个说不清楚的需求，你就只能自己去猜，猜错了还是你的问题。" },
+    { name: "比十倍效率重要", status: "included", excerpt: "也许现在有了 AI，至少逼着提需求的人也得把事情想清楚再说。这可能比什么十倍效率提升，实在多了。" }
+  ]
+};
+
+if (typeof deepDiveData === 'undefined') var deepDiveData = {};
+var ddCurrentN = null;
+
+function toggleDeepDive(n) {
+  if (document.body.classList.contains('dd-active') && ddCurrentN === n) { closeDeepDive(); return; }
+  ddCurrentN = n;
+  var body = document.getElementById('detailBody');
+  if (deepDiveData[n]) {
+    var d = deepDiveData[n];
+    var html = '<h4>' + d.title + '</h4>';
+    d.sections.forEach(function(s) {
+      if (s.heading) html += '<h4>' + s.heading + '</h4>';
+      if (s.diagram) html += s.diagram;
+      html += s.body.split('\n\n').map(function(p) { return '<p>' + p + '</p>'; }).join('');
+    });
+    if (d.originalText) html += '<div class="original-text"><p><strong>原文：</strong>' + d.originalText + '</p></div>';
+    if (topicData[n]) {
+      html += '<div class="coverage-map"><div class="coverage-map-title">本节话题覆盖</div><div class="coverage-bars">';
+      topicData[n].forEach(function(t) {
+        var cls = t.status;
+        var pct = cls === 'included' ? 100 : cls === 'deep-dive' ? 80 : 40;
+        var fillCls = cls === 'included' ? 'included' : cls === 'deep-dive' ? 'deep-dive-bar' : 'compressed-bar';
+        html += '<div class="cbar-row ' + cls + '" onclick="this.nextElementSibling.classList.toggle(\'open\')"><div class="cbar-label">' + t.name + '<span class="cbar-expand-hint">\u25B8</span></div><div class="cbar-track"><div class="cbar-fill ' + fillCls + '" style="width:' + pct + '%"></div></div></div>';
+        html += '<div class="cbar-excerpt"><div class="cbar-excerpt-inner">' + (t.excerpt || '') + '</div></div>';
+      });
+      html += '</div></div>';
+    }
+    body.innerHTML = html;
+  }
+  document.getElementById('detailScroll').scrollTop = 0;
+  document.body.classList.add('dd-active');
+}
+function closeDeepDive() {
+  document.body.classList.remove('dd-active');
+  document.getElementById('space').style.transform = '';
+  document.getElementById('mainScroll').style.transform = '';
+  ddCurrentN = null;
+}
+
+document.getElementById('detailBack').addEventListener('click', closeDeepDive);
+document.getElementById('mainScroll').addEventListener('click', function(e) {
+  if (document.body.classList.contains('dd-active') && !e.target.closest('.deep-dive-trigger')) closeDeepDive();
+});
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && document.body.classList.contains('dd-active')) closeDeepDive(); });
+
+var mainScrollRoot = document.getElementById('mainScroll');
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      var stage = entry.target.querySelector('[class*="_stage"]');
+      if (stage) stage.classList.add('visible');
+    }
+  });
+}, { threshold: 0.15, root: mainScrollRoot });
+document.querySelectorAll('.reveal, [class*=\"_stage\"]').forEach(function(el) { observer.observe(el); });
+
+(function() {
+  if (typeof coverageData === 'undefined') return;
+  var horizon = document.getElementById('sourceHorizon');
+  var track = document.getElementById('horizonTrack');
+  var detail = document.getElementById('horizonDetail');
+  if (!horizon || !track || !coverageData.segments) return;
+  function toNum(v) {
+    if (typeof v === 'number') return v;
+    var parts = String(v).split(':').map(Number);
+    return parts.length === 3 ? parts[0]*3600+parts[1]*60+parts[2] : parts.length === 2 ? parts[0]*60+parts[1] : parts[0];
+  }
+  var total = toNum(coverageData.totalLength);
+  var coveredLen = 0;
+  coverageData.segments.forEach(function(seg) {
+    var s = toNum(seg.start), e = toNum(seg.end);
+    var leftPct = (s / total * 100).toFixed(2) + '%';
+    var widthPct = ((e - s) / total * 100).toFixed(2) + '%';
+    var div = document.createElement('div');
+    div.className = 'horizon-seg ' + (seg.section ? (seg.deepDive ? 'covered deep-dive' : 'covered') : 'gap');
+    div.style.left = leftPct; div.style.width = widthPct;
+    track.appendChild(div);
+    if (seg.section) coveredLen += (e - s);
+    if (!seg.section && seg.reason) {
+      var gz = document.createElement('div');
+      gz.className = 'horizon-gap-zone';
+      gz.style.left = leftPct; gz.style.width = widthPct;
+      gz.innerHTML = '<div class="gap-pattern"></div><div class="gap-tooltip">' + seg.reason + ' (' + seg.start + '-' + seg.end + '字)</div>';
+      detail.appendChild(gz);
+    }
+    if (seg.section && !seg.deepDive) {
+      var mk = document.createElement('div');
+      mk.className = 'horizon-marker';
+      mk.style.left = ((s + (e-s)/2) / total * 100).toFixed(2) + '%';
+      mk.innerHTML = '<div class="marker-tick"></div><div class="marker-label">S' + seg.section + '</div>';
+      mk.addEventListener('click', function(ev) {
+        ev.stopPropagation();
+        var target = document.getElementById('s' + seg.section + '-anim');
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+      detail.appendChild(mk);
+    }
+  });
+  var pct = document.createElement('div');
+  pct.className = 'horizon-pct';
+  pct.textContent = Math.round(coveredLen / total * 100) + '%';
+  detail.appendChild(pct);
+  horizon.addEventListener('click', function() { horizon.classList.toggle('expanded'); });
+  var collapseTimer;
+  mainScrollRoot.addEventListener('scroll', function() {
+    clearTimeout(collapseTimer);
+    var markers = detail.querySelectorAll('.marker-tick');
+    markers.forEach(function(m) { m.classList.remove('active'); });
+    var scrollTop = mainScrollRoot.scrollTop;
+    var closest = null, closestDist = Infinity;
+    coverageData.segments.forEach(function(seg) {
+      if (!seg.section || seg.deepDive) return;
+      var el = document.getElementById('s' + seg.section + '-anim');
+      if (!el) return;
+      var dist = Math.abs(el.offsetTop - scrollTop - window.innerHeight/2);
+      if (dist < closestDist) { closestDist = dist; closest = seg.section; }
+    });
+    if (closest) {
+      var ticks = detail.querySelectorAll('.horizon-marker');
+      ticks.forEach(function(mk) {
+        if (mk.querySelector('.marker-label').textContent === 'S' + closest)
+          mk.querySelector('.marker-tick').classList.add('active');
+      });
+    }
+    collapseTimer = setTimeout(function() { horizon.classList.remove('expanded'); }, 2000);
+  });
+})();
+</script>
+</body>
+</html>

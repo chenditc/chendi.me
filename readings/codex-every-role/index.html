@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Codex — 适配每个角色、工具和工作流</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #FDF2F8;
+  --bg-act2: #ECFDF5;
+  --bg-act3: #FFF1F2;
+  --bg-dark: #0F172A;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --accent: #DB2777;
+  --accent2: #047857;
+  --warm: #D97706;
+  --danger: #DC2626;
+  --neutral: #94A3B8;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Noto Sans SC',sans-serif;-webkit-font-smoothing:antialiased;}
+.reveal{opacity:0;transform:translateY(40px);transition:opacity .8s ease,transform .8s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-d1{transition-delay:.15s;}
+.reveal-d2{transition-delay:.3s;}
+.reveal-d3{transition-delay:.45s;}
+.reveal-d4{transition-delay:.6s;}
+.big-statement{font-family:'Noto Serif SC',serif;font-size:clamp(22px,5.5vw,32px);font-weight:700;line-height:1.5;margin-bottom:32px;color:var(--text);}
+.body-text{font-size:16px;line-height:1.9;color:var(--text);margin-bottom:28px;}
+.body-text .hl{color:var(--accent);font-weight:500;}
+.body-text .hl2{color:var(--accent2);font-weight:500;}
+.body-text .hl-warm{color:var(--warm);font-weight:500;}
+.hook-line{font-size:15px;line-height:1.7;color:var(--accent);font-weight:600;margin-bottom:20px;}
+.layer{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;visibility:hidden;opacity:0;will-change:transform,opacity;scroll-snap-type:y proximity;}
+.layer.active{visibility:visible;opacity:1;}
+.feed-section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;scroll-snap-align:start;}
+.feed-section.dark{background:var(--bg-dark);color:#F1F5F9;}
+.feed-section.dark .body-text{color:#94A3B8;}
+.feed-section.dark .big-statement{color:#F1F5F9;}
+.feed-section.dark .hook-line{color:#F9A8D4;}
+.section-inner{max-width:600px;width:100%;}
+.breadcrumb{position:fixed;top:16px;left:16px;z-index:1000;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);padding:8px 14px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,.1);font-size:13px;font-weight:500;}
+.breadcrumb span{color:var(--text-muted);cursor:pointer;transition:color .2s;}
+.breadcrumb span:hover{color:var(--accent);}
+.breadcrumb span.current{color:var(--text);cursor:default;}
+.breadcrumb .sep{color:#CBD5E1;margin:0 2px;cursor:default;}
+.back-btn{position:fixed;top:16px;left:16px;z-index:1001;width:38px;height:38px;border-radius:10px;border:none;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(0,0,0,.1);font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--text);transition:all .2s;}
+.back-btn:hover{background:var(--accent);color:#fff;}
+.depth-dots{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;gap:8px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);padding:8px 14px;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,.1);}
+.dot{width:10px;height:10px;border-radius:50%;background:#CBD5E1;transition:all .3s;}
+.dot.active{background:var(--accent);box-shadow:0 0 8px rgba(219,39,119,.5);transform:scale(1.2);}
+.drill-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:1.5px solid rgba(219,39,119,.3);border-radius:10px;background:transparent;color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;transition:all .25s;}
+.drill-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(219,39,119,.3);}
+.dark .drill-btn{border-color:rgba(249,168,212,.4);color:#F9A8D4;}
+.dark .drill-btn:hover{background:#F9A8D4;color:#0F172A;border-color:#F9A8D4;}
+.source-panel{margin-top:24px;border-radius:12px;overflow:hidden;border:1px solid rgba(219,39,119,.15);background:rgba(219,39,119,.03);}
+.dark .source-panel{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.04);}
+.source-toggle{width:100%;padding:12px 16px;border:none;background:none;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);}
+.dark .source-toggle{color:#F9A8D4;}
+.source-toggle:hover{background:rgba(219,39,119,.06);}
+.source-toggle .arrow{transition:transform .3s;font-size:11px;}
+.source-toggle.open .arrow{transform:rotate(90deg);}
+.source-body{max-height:0;overflow:hidden;transition:max-height .4s ease;padding:0 16px;}
+.source-body.open{max-height:2000px;padding:0 16px 16px;overflow-y:auto;}
+.source-body p{font-size:13px;line-height:1.8;color:var(--text-muted);margin:0 0 12px;white-space:pre-wrap;}
+.dark .source-body p{color:#94A3B8;}
+.source-body .source-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:8px;display:block;}
+.dark .source-body .source-label{color:#F9A8D4;}
+.anim-stage{width:100%;display:flex;justify-content:center;margin:28px 0;min-height:180px;}
+.anim-stage > div{width:100%;}
+
+/* === S1 Animation === */
+
+.s1_stage {
+  max-width: 520px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px 24px;
+  box-sizing: border-box;
+  font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+.s1_stage .s1-header {
+  text-align: center;
+  font-size: clamp(13px, 2.8vw, 15px);
+  color: #94A3B8;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: none;
+}
+.s1_stage.visible .s1-header {
+  animation: s1-fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.s1_stage .s1-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03);
+  opacity: 0;
+  transform: translateY(24px) scale(0.97);
+  transition: none;
+}
+.s1_stage.visible .s1-card:nth-child(2) {
+  animation: s1-cardIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.15s forwards;
+}
+.s1_stage.visible .s1-card:nth-child(3) {
+  animation: s1-cardIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.4s forwards;
+}
+.s1_stage.visible .s1-card:nth-child(4) {
+  animation: s1-cardIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.65s forwards;
+}
+.s1_stage .s1-icon {
+  width: 52px; height: 52px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+.s1_stage .s1-icon--pink {
+  background: linear-gradient(135deg, #DB2777, #F472B6);
+  color: #fff;
+}
+.s1_stage .s1-icon--emerald {
+  background: linear-gradient(135deg, #047857, #34D399);
+  color: #fff;
+}
+.s1_stage .s1-icon--slate {
+  background: linear-gradient(135deg, #1E293B, #64748B);
+  color: #fff;
+}
+.s1_stage .s1-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.s1_stage .s1-number {
+  font-size: clamp(26px, 6vw, 34px);
+  font-weight: 800;
+  line-height: 1.1;
+  color: #1E293B;
+  letter-spacing: -0.5px;
+}
+.s1_stage .s1-number--pink { color: #DB2777; }
+.s1_stage .s1-number--emerald { color: #047857; }
+.s1_stage .s1-label {
+  font-size: clamp(12px, 2.6vw, 14px);
+  color: #94A3B8;
+  font-weight: 500;
+}
+.s1_stage .s1-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: #F1F5F9;
+  margin-top: 6px;
+  overflow: hidden;
+  position: relative;
+}
+.s1_stage .s1-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  width: 0%;
+  transition: none;
+}
+.s1_stage .s1-bar-fill--pink {
+  background: linear-gradient(90deg, #DB2777, #F472B6);
+}
+.s1_stage .s1-bar-fill--emerald {
+  background: linear-gradient(90deg, #047857, #34D399);
+}
+.s1_stage.visible .s1-card:nth-child(2) .s1-bar-fill {
+  animation: s1-barGrow 1s cubic-bezier(0.22, 1, 0.36, 1) 0.6s forwards;
+  --bar-w: 100%;
+}
+.s1_stage.visible .s1-card:nth-child(3) .s1-bar-fill {
+  animation: s1-barGrow 1s cubic-bezier(0.22, 1, 0.36, 1) 0.85s forwards;
+  --bar-w: 20%;
+}
+.s1_stage.visible .s1-card:nth-child(4) .s1-bar-fill {
+  animation: s1-barGrow 1s cubic-bezier(0.22, 1, 0.36, 1) 1.1s forwards;
+  --bar-w: 60%;
+}
+@keyframes s1-fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s1-cardIn {
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes s1-barGrow {
+  to { width: var(--bar-w); }
+}
+
+/* === S2 Animation === */
+
+.s2_stage{max-width:520px;width:100%;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#F1F5F9;padding:clamp(16px,4vw,32px) 0}
+.s2_title{text-align:center;font-size:clamp(20px,4.5vw,28px);font-weight:800;letter-spacing:-.02em;margin-bottom:clamp(20px,4vw,32px);opacity:0;transform:translateY(18px)}
+.s2_stage.visible .s2_title{animation:s2rise .6s cubic-bezier(.22,1,.36,1) forwards}
+.s2_grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(10px,2.5vw,16px);margin-bottom:clamp(20px,4vw,28px)}
+.s2_card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:clamp(14px,3vw,22px) clamp(8px,2vw,14px);text-align:center;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);opacity:0;transform:translateY(24px) scale(.92);transition:transform .25s cubic-bezier(.22,1,.36,1),border-color .25s,box-shadow .25s}
+.s2_card:hover{transform:translateY(-2px) scale(1.03)!important;border-color:rgba(219,39,119,.4);box-shadow:0 8px 24px rgba(219,39,119,.12)}
+.s2_stage.visible .s2_card{animation:s2card .55s cubic-bezier(.22,1,.36,1) forwards}
+.s2_stage.visible .s2_card:nth-child(1){animation-delay:.15s}
+.s2_stage.visible .s2_card:nth-child(2){animation-delay:.25s}
+.s2_stage.visible .s2_card:nth-child(3){animation-delay:.35s}
+.s2_stage.visible .s2_card:nth-child(4){animation-delay:.45s}
+.s2_stage.visible .s2_card:nth-child(5){animation-delay:.55s}
+.s2_stage.visible .s2_card:nth-child(6){animation-delay:.65s}
+.s2_icon{font-size:clamp(28px,6vw,38px);line-height:1.2;margin-bottom:6px}
+.s2_label{font-size:clamp(11px,2.5vw,14px);font-weight:700;letter-spacing:.01em;line-height:1.3}
+.s2_sublabel{font-size:clamp(9px,1.8vw,11px);color:#94A3B8;font-weight:500;margin-top:2px}
+.s2_badge{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 auto;padding:clamp(10px,2.5vw,14px) clamp(18px,4vw,28px);background:linear-gradient(135deg,rgba(219,39,119,.15),rgba(4,120,87,.15));border:1px solid rgba(219,39,119,.25);border-radius:40px;width:fit-content;opacity:0;transform:translateY(16px) scale(.95)}
+.s2_stage.visible .s2_badge{animation:s2rise .55s cubic-bezier(.22,1,.36,1) .85s forwards}
+.s2_badge_num{font-size:clamp(16px,3.5vw,22px);font-weight:800;background:linear-gradient(135deg,#DB2777,#047857);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.s2_badge_sep{color:#94A3B8;font-size:clamp(14px,3vw,18px);font-weight:300}
+.s2_badge_txt{font-size:clamp(12px,2.5vw,14px);color:#94A3B8;font-weight:600}
+@keyframes s2rise{to{opacity:1;transform:translateY(0)}}
+@keyframes s2card{to{opacity:1;transform:translateY(0) scale(1)}}
+
+/* === S3 Animation === */
+
+.s3_stage{max-width:520px;width:100%;margin:0 auto;padding:32px 16px;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.s3_pipeline{display:flex;align-items:center;justify-content:center;gap:clamp(8px,2vw,16px);width:100%}
+.s3_step{display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0;transform:translateY(18px) scale(.92);transition:none}
+.s3_stage.visible .s3_step{transition:opacity .6s cubic-bezier(.22,1,.36,1),transform .6s cubic-bezier(.22,1,.36,1)}
+.s3_stage.visible .s3_s1{opacity:1;transform:translateY(0) scale(1);animation-delay:0s;transition-delay:0s}
+.s3_stage.visible .s3_s2{opacity:1;transform:translateY(0) scale(1);transition-delay:.35s}
+.s3_stage.visible .s3_s3{opacity:1;transform:translateY(0) scale(1);transition-delay:.7s}
+.s3_arrow{opacity:0;transform:scaleX(0);transition:none;color:#94A3B8;font-size:clamp(16px,3vw,22px);flex-shrink:0}
+.s3_stage.visible .s3_arrow{transition:opacity .4s cubic-bezier(.22,1,.36,1),transform .4s cubic-bezier(.22,1,.36,1)}
+.s3_stage.visible .s3_ar1{opacity:1;transform:scaleX(1);transition-delay:.2s}
+.s3_stage.visible .s3_ar2{opacity:1;transform:scaleX(1);transition-delay:.55s}
+.s3_icon_circle{width:clamp(54px,12vw,72px);height:clamp(54px,12vw,72px);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:clamp(24px,5vw,32px)}
+.s3_ic_idea{background:linear-gradient(135deg,#FDF2F8,#FBCFE8);border:2px solid #DB2777;box-shadow:0 4px 16px rgba(219,39,119,.15)}
+.s3_ic_codex{background:linear-gradient(135deg,#ECFDF5,#A7F3D0);border:2px solid #047857;box-shadow:0 4px 16px rgba(4,120,87,.15)}
+.s3_stage.visible .s3_ic_idea{animation:s3_pulse 2.4s cubic-bezier(.4,0,.2,1) infinite 1s}
+@keyframes s3_pulse{0%,100%{box-shadow:0 4px 16px rgba(219,39,119,.15)}50%{box-shadow:0 4px 24px rgba(219,39,119,.32)}}
+.s3_label{font-size:clamp(11px,2.4vw,13px);font-weight:700;color:#1E293B;letter-spacing:.02em;text-align:center}
+.s3_browser{width:clamp(110px,26vw,148px);border-radius:8px;overflow:hidden;border:1.5px solid #94A3B8;background:#fff;box-shadow:0 6px 20px rgba(30,41,59,.1)}
+.s3_browser_bar{height:18px;background:linear-gradient(180deg,#f1f5f9,#e2e8f0);display:flex;align-items:center;padding:0 6px;gap:3px;border-bottom:1px solid #cbd5e1}
+.s3_dot{width:5px;height:5px;border-radius:50%}
+.s3_dot_r{background:#f87171}.s3_dot_y{background:#fbbf24}.s3_dot_g{background:#34d399}
+.s3_browser_body{padding:8px 10px;height:clamp(56px,12vw,74px);display:flex;flex-direction:column;gap:5px}
+.s3_dash_row{display:flex;gap:4px;align-items:flex-end;height:100%}
+.s3_bar{width:18%;border-radius:2px 2px 0 0;background:#047857;transform-origin:bottom}
+.s3_stage.visible .s3_bar{animation:s3_grow .7s cubic-bezier(.22,1,.36,1) forwards;animation-delay:1.1s;transform:scaleY(0)}
+.s3_b1{height:40%;animation-delay:1.1s!important}.s3_b2{height:70%;animation-delay:1.2s!important}
+.s3_b3{height:55%;animation-delay:1.3s!important}.s3_b4{height:90%;animation-delay:1.4s!important;background:#DB2777}
+.s3_b5{height:65%;animation-delay:1.5s!important}
+@keyframes s3_grow{to{transform:scaleY(1)}}
+.s3_dash_line{height:2px;background:linear-gradient(90deg,#047857 60%,#e2e8f0 60%);border-radius:1px;width:100%}
+.s3_dash_title{height:5px;width:60%;background:#1E293B;border-radius:2px;opacity:.25}
+.s3_tag{margin-top:14px;text-align:center;opacity:0;transform:translateY(10px)}
+.s3_stage.visible .s3_tag{opacity:1;transform:translateY(0);transition:opacity .5s cubic-bezier(.22,1,.36,1) .95s,transform .5s cubic-bezier(.22,1,.36,1) .95s}
+.s3_tag span{display:inline-block;font-size:clamp(10px,2.2vw,12px);font-weight:600;color:#047857;background:#ECFDF5;border:1px solid #A7F3D0;border-radius:20px;padding:4px 14px;letter-spacing:.03em}
+
+/* === S4 Animation === */
+
+.s4_stage{max-width:520px;width:100%;margin:0 auto;opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease}
+.s4_stage.visible{opacity:1;transform:translateY(0)}
+.s4_doc{background:rgba(255,255,255,.06);border-radius:12px;border:1px solid rgba(255,255,255,.08);padding:28px 24px;position:relative;overflow:hidden}
+.s4_doc::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:linear-gradient(90deg,#DB2777,#047857);border-radius:12px 12px 0 0}
+.s4_el{padding:12px 16px;border-radius:8px;margin-bottom:14px;position:relative;transition:all .5s cubic-bezier(.4,0,.2,1);border:2px solid transparent}
+.s4_el:last-child{margin-bottom:0}
+.s4_el--title{font-size:clamp(15px,3.5vw,18px);font-weight:700;color:#F1F5F9;letter-spacing:-.02em}
+.s4_el--chart{height:48px;background:repeating-linear-gradient(90deg,rgba(148,163,184,.15) 0,rgba(148,163,184,.15) 18px,transparent 18px,transparent 22px);border-radius:6px;display:flex;align-items:flex-end;gap:4px;padding:0 12px}
+.s4_bar{width:18px;border-radius:3px 3px 0 0;background:#94A3B8;opacity:.3;transition:all .6s cubic-bezier(.4,0,.2,1)}
+.s4_bar:nth-child(1){height:60%}.s4_bar:nth-child(2){height:85%}.s4_bar:nth-child(3){height:45%}.s4_bar:nth-child(4){height:70%}.s4_bar:nth-child(5){height:55%}
+.s4_el--para{font-size:clamp(11px,2.5vw,13px);color:#94A3B8;line-height:1.6}
+.s4_el--para span{display:block;height:8px;background:rgba(148,163,184,.18);border-radius:4px;margin-bottom:6px}
+.s4_el--para span:last-child{width:65%;margin-bottom:0}
+.s4_cursor{position:absolute;width:18px;height:18px;border-radius:50%;background:#DB2777;box-shadow:0 0 0 4px rgba(219,39,119,.25);opacity:0;z-index:10;pointer-events:none;top:0;left:50%;transition:none}
+.s4_bubble{position:absolute;top:-44px;left:50%;transform:translateX(-50%) scale(.7);background:#DB2777;color:#fff;font-size:clamp(11px,2.5vw,13px);font-weight:600;padding:6px 14px;border-radius:20px;white-space:nowrap;opacity:0;z-index:11;box-shadow:0 4px 16px rgba(219,39,119,.35);pointer-events:none}
+.s4_bubble::after{content:'';position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#DB2777}
+.s4_steps{display:flex;justify-content:center;gap:8px;margin-top:18px}
+.s4_step{font-size:clamp(10px,2.2vw,12px);color:#94A3B8;padding:4px 12px;border-radius:16px;background:rgba(148,163,184,.1);border:1px solid rgba(148,163,184,.12);opacity:0;transform:translateY(8px);font-weight:500}
+.s4_stage.visible .s4_step{animation:s4fadeUp .4s cubic-bezier(.4,0,.2,1) forwards}
+.s4_stage.visible .s4_step:nth-child(1){animation-delay:0s}
+.s4_stage.visible .s4_step:nth-child(2){animation-delay:2.2s}
+.s4_stage.visible .s4_step:nth-child(3){animation-delay:4.4s}
+.s4_stage.visible .s4_step.active{background:rgba(219,39,119,.15);color:#DB2777;border-color:rgba(219,39,119,.3)}
+.s4_stage.visible .s4_step:nth-child(1){animation:s4fadeUp .4s .1s cubic-bezier(.4,0,.2,1) forwards,s4stepPink .3s 0s forwards}
+.s4_stage.visible .s4_step:nth-child(2){animation:s4fadeUp .4s 2.2s cubic-bezier(.4,0,.2,1) forwards,s4stepPink .3s 2.2s forwards}
+.s4_stage.visible .s4_step:nth-child(3){animation:s4fadeUp .4s 4.4s cubic-bezier(.4,0,.2,1) forwards,s4stepPink .3s 4.4s forwards}
+.s4_stage.visible .s4_cursor{animation:s4cursor 6.5s .6s cubic-bezier(.4,0,.2,1) forwards}
+.s4_stage.visible .s4_el--title{animation:s4select 6.5s .6s cubic-bezier(.4,0,.2,1) forwards}
+.s4_stage.visible .s4_bubble{animation:s4pop 6.5s .6s cubic-bezier(.4,0,.2,1) forwards}
+.s4_stage.visible .s4_el--title .s4_title-text{animation:s4transform 6.5s .6s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes s4fadeUp{to{opacity:1;transform:translateY(0)}}
+@keyframes s4stepPink{to{background:rgba(219,39,119,.15);color:#DB2777;border-color:rgba(219,39,119,.3)}}
+@keyframes s4cursor{0%,5%{opacity:0;top:20px;left:85%}8%{opacity:1;top:20px;left:85%}12%,28%{opacity:1;top:16px;left:50%;box-shadow:0 0 0 4px rgba(219,39,119,.25)}30%{opacity:1;box-shadow:0 0 0 8px rgba(219,39,119,.35)}35%,60%{opacity:1;box-shadow:0 0 0 4px rgba(219,39,119,.25)}65%{opacity:0}100%{opacity:0}}
+@keyframes s4select{0%,12%{border-color:transparent;background:transparent}14%,55%{border-color:rgba(219,39,119,.5);background:rgba(219,39,119,.06);box-shadow:0 0 20px rgba(219,39,119,.1)}60%{border-color:rgba(4,120,87,.5);background:rgba(4,120,87,.06);box-shadow:0 0 20px rgba(4,120,87,.1)}75%,100%{border-color:transparent;background:transparent;box-shadow:none}}
+@keyframes s4pop{0%,24%{opacity:0;transform:translateX(-50%) scale(.7)}28%{opacity:1;transform:translateX(-50%) scale(1.05)}31%,55%{opacity:1;transform:translateX(-50%) scale(1)}58%{opacity:0;transform:translateX(-50%) scale(.9)}100%{opacity:0}}
+@keyframes s4transform{0%,58%{font-size:clamp(15px,3.5vw,18px);letter-spacing:-.02em;color:#F1F5F9}62%,100%{font-size:clamp(16px,3.8vw,20px);letter-spacing:.01em;color:#047857}}
+
+/* === S5 Animation === */
+
+.s5_stage{max-width:520px;width:100%;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;position:relative;padding:40px 0 32px}
+.s5_stage *{box-sizing:border-box}
+.s5_evo{display:flex;flex-direction:column;align-items:center;gap:0}
+.s5_node{opacity:0;transform:translateY(24px);transition:opacity .6s cubic-bezier(.22,1,.36,1),transform .6s cubic-bezier(.22,1,.36,1)}
+.s5_stage.visible .s5_node{opacity:1;transform:translateY(0)}
+.s5_stage.visible .s5_n1{transition-delay:.1s}
+.s5_stage.visible .s5_n2{transition-delay:.35s}
+.s5_stage.visible .s5_n3{transition-delay:.6s}
+.s5_card{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid #DB2777;border-radius:14px;padding:14px 22px;min-width:260px;box-shadow:0 2px 12px rgba(219,39,119,.08)}
+.s5_card .s5_ico{font-size:clamp(1.4rem,3vw,1.8rem);flex-shrink:0}
+.s5_card .s5_txt{display:flex;flex-direction:column;gap:2px}
+.s5_card .s5_lbl{font-size:clamp(.95rem,2.2vw,1.1rem);font-weight:700;color:#1E293B;letter-spacing:.02em}
+.s5_card .s5_sub{font-size:clamp(.72rem,1.6vw,.82rem);color:#94A3B8;font-weight:500}
+.s5_conn{width:2px;height:36px;background:transparent;position:relative;overflow:visible;display:flex;justify-content:center}
+.s5_conn::after{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:2px;height:0;background:linear-gradient(180deg,#DB2777,#047857);border-radius:1px;transition:height .5s cubic-bezier(.22,1,.36,1)}
+.s5_stage.visible .s5_c1::after{height:100%;transition-delay:.25s}
+.s5_stage.visible .s5_c2::after{height:100%;transition-delay:.5s}
+.s5_conn .s5_arrow{position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid #047857;opacity:0;transition:opacity .3s ease}
+.s5_stage.visible .s5_c1 .s5_arrow{opacity:1;transition-delay:.45s}
+.s5_stage.visible .s5_c2 .s5_arrow{opacity:1;transition-delay:.7s}
+.s5_conv{width:2px;height:40px;position:relative;display:flex;justify-content:center}
+.s5_conv::after{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:2px;height:0;background:linear-gradient(180deg,#047857,#DB2777);border-radius:1px;transition:height .5s cubic-bezier(.22,1,.36,1)}
+.s5_stage.visible .s5_conv::after{height:100%;transition-delay:.8s}
+.s5_conv .s5_arrow{position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:7px solid #DB2777;opacity:0;transition:opacity .3s ease}
+.s5_stage.visible .s5_conv .s5_arrow{opacity:1;transition-delay:1s}
+.s5_result{opacity:0;transform:scale(.85);transition:opacity .6s cubic-bezier(.22,1,.36,1),transform .6s cubic-bezier(.22,1,.36,1)}
+.s5_stage.visible .s5_result{opacity:1;transform:scale(1);transition-delay:1.05s}
+.s5_badge{background:linear-gradient(135deg,#DB2777,#9D174D);color:#fff;border-radius:16px;padding:20px 32px;text-align:center;box-shadow:0 6px 24px rgba(219,39,119,.18);min-width:280px}
+.s5_badge .s5_bt{font-size:clamp(1.1rem,2.6vw,1.35rem);font-weight:800;letter-spacing:.04em;margin-bottom:4px}
+.s5_badge .s5_bs{font-size:clamp(.7rem,1.5vw,.8rem);color:rgba(255,255,255,.75);font-weight:500}
+.s5_tags{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:24px;opacity:0;transform:translateY(12px);transition:opacity .5s cubic-bezier(.22,1,.36,1),transform .5s cubic-bezier(.22,1,.36,1)}
+.s5_stage.visible .s5_tags{opacity:1;transform:translateY(0);transition-delay:1.4s}
+.s5_tag{font-size:clamp(.65rem,1.4vw,.76rem);font-weight:600;color:#047857;background:#ECFDF5;border:1px solid rgba(4,120,87,.15);border-radius:20px;padding:5px 14px;white-space:nowrap}
+.s5_tags_lbl{font-size:clamp(.68rem,1.4vw,.76rem);color:#94A3B8;font-weight:600;text-align:center;margin-top:20px;opacity:0;transition:opacity .4s ease}
+.s5_stage.visible .s5_tags_lbl{opacity:1;transition-delay:1.3s}
+
+/* === S6 Animation === */
+
+.s6_stage{max-width:520px;width:100%;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:clamp(28px,5vw,40px);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.s6_orbit{position:relative;width:clamp(280px,75vw,420px);height:clamp(280px,75vw,420px)}
+.s6_core{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:clamp(72px,18vw,96px);height:clamp(72px,18vw,96px);border-radius:20px;background:linear-gradient(135deg,#DB2777,#9333EA);display:flex;align-items:center;justify-content:center;font-size:clamp(13px,3.2vw,17px);font-weight:800;color:#F1F5F9;letter-spacing:.04em;box-shadow:0 0 0 rgba(219,39,119,0);opacity:0;transition:none}
+.s6_stage.visible .s6_core{opacity:1;box-shadow:0 0 40px rgba(219,39,119,.35);animation:s6_pulse 3s ease-in-out 1s infinite}
+@keyframes s6_pulse{0%,100%{box-shadow:0 0 40px rgba(219,39,119,.3)}50%{box-shadow:0 0 60px rgba(219,39,119,.5)}}
+.s6_node{position:absolute;width:clamp(56px,14vw,72px);height:clamp(56px,14vw,72px);border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:clamp(10px,2.4vw,13px);font-weight:600;color:#F1F5F9;opacity:0;transform:scale(.5);transition:none;backdrop-filter:blur(4px)}
+.s6_stage.visible .s6_node{animation:s6_appear .7s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes s6_appear{0%{opacity:0;transform:scale(.5)}60%{opacity:1;transform:scale(1.06)}100%{opacity:1;transform:scale(1);box-shadow:0 0 20px rgba(219,39,119,.15)}}
+.s6_n1{top:2%;left:50%;margin-left:-36px}.s6_stage.visible .s6_n1{animation-delay:.3s}
+.s6_n2{top:14%;right:4%}.s6_stage.visible .s6_n2{animation-delay:.5s}
+.s6_n3{top:55%;right:0}.s6_stage.visible .s6_n3{animation-delay:.7s}
+.s6_n4{bottom:5%;right:18%}.s6_stage.visible .s6_n4{animation-delay:.9s}
+.s6_n5{bottom:5%;left:18%}.s6_stage.visible .s6_n5{animation-delay:1.1s}
+.s6_n6{top:55%;left:0}.s6_stage.visible .s6_n6{animation-delay:1.3s}
+.s6_n7{top:14%;left:4%}.s6_stage.visible .s6_n7{animation-delay:1.5s}
+.s6_ring{position:absolute;top:50%;left:50%;width:clamp(220px,58vw,330px);height:clamp(220px,58vw,330px);margin-top:calc(clamp(220px,58vw,330px)/-2);margin-left:calc(clamp(220px,58vw,330px)/-2);border-radius:50%;border:1px dashed rgba(255,255,255,.08);opacity:0;transition:none}
+.s6_stage.visible .s6_ring{opacity:1;animation:s6_spin 40s linear .2s infinite}
+@keyframes s6_spin{to{transform:rotate(360deg)}}
+.s6_line{position:absolute;top:50%;left:50%;height:1px;transform-origin:0 0;background:linear-gradient(90deg,rgba(219,39,119,.25),transparent);opacity:0;transition:none}
+.s6_stage.visible .s6_line{animation:s6_fade .6s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes s6_fade{to{opacity:1}}
+.s6_l1{width:110px;transform:rotate(-90deg)}.s6_stage.visible .s6_l1{animation-delay:.3s}
+.s6_l2{width:120px;transform:rotate(-40deg)}.s6_stage.visible .s6_l2{animation-delay:.5s}
+.s6_l3{width:115px;transform:rotate(15deg)}.s6_stage.visible .s6_l3{animation-delay:.7s}
+.s6_l4{width:125px;transform:rotate(60deg)}.s6_stage.visible .s6_l4{animation-delay:.9s}
+.s6_l5{width:125px;transform:rotate(120deg)}.s6_stage.visible .s6_l5{animation-delay:1.1s}
+.s6_l6{width:115px;transform:rotate(195deg)}.s6_stage.visible .s6_l6{animation-delay:1.3s}
+.s6_l7{width:120px;transform:rotate(220deg)}.s6_stage.visible .s6_l7{animation-delay:1.5s}
+.s6_stats{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(6px,2vw,14px);opacity:0;transform:translateY(16px);transition:none}
+.s6_stage.visible .s6_stats{animation:s6_up .8s cubic-bezier(.16,1,.3,1) 2s forwards}
+@keyframes s6_up{to{opacity:1;transform:translateY(0)}}
+.s6_stat{font-size:clamp(13px,3vw,16px);font-weight:700;color:#F1F5F9;letter-spacing:.02em;white-space:nowrap}
+.s6_stat .s6_num{color:#DB2777;font-size:clamp(18px,4.5vw,26px);font-weight:800}
+.s6_stat .s6_dot{color:#94A3B8;margin:0 2px;font-weight:400}
+.s6_label{font-size:clamp(11px,2.5vw,13px);color:#94A3B8;text-align:center;margin-top:-8px;opacity:0;transition:none}
+.s6_stage.visible .s6_label{animation:s6_up .6s cubic-bezier(.16,1,.3,1) 2.4s forwards}
+
+/* === A1 Animation === */
+
+.a1_stage{max-width:520px;width:100%;margin:0 auto;padding:clamp(16px,4vw,32px) 0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.a1_stage .a1-header{text-align:center;margin-bottom:clamp(20px,4vw,32px);opacity:0;transform:translateY(16px)}
+.a1_stage.visible .a1-header{animation:a1FadeUp .6s cubic-bezier(.22,1,.36,1) forwards}
+.a1_stage .a1-header h3{font-size:clamp(18px,4vw,24px);font-weight:800;color:#1E293B;letter-spacing:-.02em;margin:0}
+.a1_stage .a1-header p{font-size:clamp(12px,2.5vw,14px);color:#94A3B8;margin:6px 0 0;font-weight:500}
+.a1_stage .a1-card{display:flex;align-items:flex-start;gap:clamp(10px,2.5vw,16px);background:#fff;border:1.5px solid rgba(219,39,119,.12);border-radius:14px;padding:clamp(14px,3vw,20px);margin-bottom:clamp(10px,2vw,14px);opacity:0;transform:translateY(24px);box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.a1_stage.visible .a1-card{animation:a1CardIn .55s cubic-bezier(.22,1,.36,1) forwards}
+.a1_stage.visible .a1-card:nth-child(2){animation-delay:.12s}
+.a1_stage.visible .a1-card:nth-child(3){animation-delay:.24s}
+.a1_stage.visible .a1-card:nth-child(4){animation-delay:.36s}
+.a1_stage.visible .a1-card:nth-child(5){animation-delay:.48s}
+.a1_stage.visible .a1-card:nth-child(6){animation-delay:.6s}
+.a1_stage.visible .a1-card:nth-child(7){animation-delay:.72s}
+.a1_stage .a1-card:hover{border-color:rgba(219,39,119,.3);box-shadow:0 4px 16px rgba(219,39,119,.08);transform:translateY(-1px);transition:all .25s cubic-bezier(.22,1,.36,1)}
+.a1_stage .a1-icon{font-size:clamp(22px,5vw,30px);line-height:1;flex-shrink:0;width:clamp(36px,8vw,46px);height:clamp(36px,8vw,46px);display:flex;align-items:center;justify-content:center;background:#F0FDF4;border-radius:12px}
+.a1_stage .a1-card:nth-child(2) .a1-icon,
+.a1_stage .a1-card:nth-child(4) .a1-icon,
+.a1_stage .a1-card:nth-child(7) .a1-icon{background:#FDF2F8}
+.a1_stage .a1-body{flex:1;min-width:0}
+.a1_stage .a1-name{font-size:clamp(14px,3vw,16px);font-weight:700;color:#1E293B;margin:0 0 8px;letter-spacing:-.01em}
+.a1_stage .a1-tags{display:flex;flex-wrap:wrap;gap:6px}
+.a1_stage .a1-tag{font-size:clamp(10px,2vw,12px);font-weight:600;padding:3px 10px;border-radius:20px;background:#F0FDF4;color:#047857;white-space:nowrap;letter-spacing:.01em}
+.a1_stage .a1-card:nth-child(2) .a1-tag,
+.a1_stage .a1-card:nth-child(4) .a1-tag{background:#FDF2F8;color:#DB2777}
+.a1_stage .a1-card:nth-child(7) .a1-tag{background:#FDF2F8;color:#DB2777}
+.a1_stage .a1-num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#DB2777;color:#fff;font-size:11px;font-weight:700;flex-shrink:0;margin-right:6px}
+@keyframes a1FadeUp{to{opacity:1;transform:translateY(0)}}
+@keyframes a1CardIn{to{opacity:1;transform:translateY(0)}}
+
+/* === A2 Animation === */
+
+.a2_stage{max-width:520px;width:100%;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#F1F5F9}
+.a2_stage *{box-sizing:border-box;margin:0;padding:0}
+.a2_card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-left:3px solid #DB2777;border-radius:10px;padding:clamp(14px,3vw,20px);margin-bottom:clamp(10px,2vw,14px);opacity:0;transform:translateY(28px);transition:opacity .6s cubic-bezier(.23,1,.32,1),transform .6s cubic-bezier(.23,1,.32,1)}
+.a2_card:nth-child(2){transition-delay:.15s}
+.a2_card:nth-child(3){transition-delay:.3s;border-left-color:#047857}
+.a2_stage.visible .a2_card{opacity:1;transform:translateY(0)}
+.a2_org{font-size:clamp(15px,3.2vw,18px);font-weight:700;letter-spacing:.02em;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.a2_org::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:#DB2777;flex-shrink:0}
+.a2_card:nth-child(3) .a2_org::before{background:#047857}
+.a2_tags{display:flex;flex-wrap:wrap;gap:6px}
+.a2_tag{font-size:clamp(11px,2.4vw,13px);background:rgba(219,39,119,0.12);color:#F1F5F9;padding:4px 10px;border-radius:20px;white-space:nowrap;opacity:0;transform:scale(.85);transition:opacity .45s cubic-bezier(.23,1,.32,1),transform .45s cubic-bezier(.23,1,.32,1)}
+.a2_card:nth-child(3) .a2_tag{background:rgba(4,120,87,0.15)}
+.a2_stage.visible .a2_tag{opacity:1;transform:scale(1)}
+.a2_stage.visible .a2_card:nth-child(1) .a2_tag:nth-child(1){transition-delay:.25s}
+.a2_stage.visible .a2_card:nth-child(1) .a2_tag:nth-child(2){transition-delay:.32s}
+.a2_stage.visible .a2_card:nth-child(1) .a2_tag:nth-child(3){transition-delay:.39s}
+.a2_stage.visible .a2_card:nth-child(1) .a2_tag:nth-child(4){transition-delay:.46s}
+.a2_stage.visible .a2_card:nth-child(2) .a2_tag:nth-child(1){transition-delay:.4s}
+.a2_stage.visible .a2_card:nth-child(2) .a2_tag:nth-child(2){transition-delay:.47s}
+.a2_stage.visible .a2_card:nth-child(2) .a2_tag:nth-child(3){transition-delay:.54s}
+.a2_stage.visible .a2_card:nth-child(2) .a2_tag:nth-child(4){transition-delay:.61s}
+.a2_stage.visible .a2_card:nth-child(3) .a2_tag:nth-child(1){transition-delay:.55s}
+.a2_stage.visible .a2_card:nth-child(3) .a2_tag:nth-child(2){transition-delay:.62s}
+.a2_stage.visible .a2_card:nth-child(3) .a2_tag:nth-child(3){transition-delay:.69s}
+.a2_section{margin-top:clamp(18px,4vw,26px);opacity:0;transform:translateY(20px);transition:opacity .6s cubic-bezier(.23,1,.32,1),transform .6s cubic-bezier(.23,1,.32,1)}
+.a2_section.a2_eco{transition-delay:.75s}
+.a2_section.a2_soon{transition-delay:.95s}
+.a2_stage.visible .a2_section{opacity:1;transform:translateY(0)}
+.a2_section_title{font-size:clamp(12px,2.6vw,14px);font-weight:600;color:#94A3B8;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;padding-left:2px}
+.a2_section_title::before{content:"";display:inline-block;width:16px;height:2px;background:#DB2777;margin-right:8px;vertical-align:middle;border-radius:1px}
+.a2_pills{display:flex;flex-wrap:wrap;gap:8px}
+.a2_pill{font-size:clamp(11px,2.4vw,13px);padding:5px 12px;border-radius:20px;white-space:nowrap;opacity:0;transform:translateX(-10px);transition:opacity .4s cubic-bezier(.23,1,.32,1),transform .4s cubic-bezier(.23,1,.32,1)}
+.a2_eco .a2_pill{background:rgba(219,39,119,0.15);color:#F1F5F9;border:1px solid rgba(219,39,119,0.25)}
+.a2_soon .a2_pill{background:rgba(4,120,87,0.15);color:#F1F5F9;border:1px solid rgba(4,120,87,0.25)}
+.a2_stage.visible .a2_pill{opacity:1;transform:translateX(0)}
+.a2_stage.visible .a2_eco .a2_pill:nth-child(1){transition-delay:.85s}
+.a2_stage.visible .a2_eco .a2_pill:nth-child(2){transition-delay:.9s}
+.a2_stage.visible .a2_eco .a2_pill:nth-child(3){transition-delay:.95s}
+.a2_stage.visible .a2_eco .a2_pill:nth-child(4){transition-delay:1s}
+.a2_stage.visible .a2_eco .a2_pill:nth-child(5){transition-delay:1.05s}
+.a2_stage.visible .a2_eco .a2_pill:nth-child(6){transition-delay:1.1s}
+.a2_stage.visible .a2_eco .a2_pill:nth-child(7){transition-delay:1.15s}
+.a2_stage.visible .a2_soon .a2_pill:nth-child(1){transition-delay:1.05s}
+.a2_stage.visible .a2_soon .a2_pill:nth-child(2){transition-delay:1.1s}
+.a2_stage.visible .a2_soon .a2_pill:nth-child(3){transition-delay:1.15s}
+.a2_stage.visible .a2_soon .a2_pill:nth-child(4){transition-delay:1.2s}
+.a2_stage.visible .a2_soon .a2_pill:nth-child(5){transition-delay:1.25s}
+
+</style>
+
+<meta name="description" content="Codex 每周有超过 500 万人使用。它最初是一个软件开发工具，但现在已经对越来越多类型的工作变得有用。非开发者——包括分析师、营销人员、运营、设计师、研究员、投资者和银行家——占 Codex 总用户的约 20% ，而且他们的增长速度是开发者的 3 倍以上 。在 OpenAI 内部，非技术团队使用 Codex 构建内部应用、准备高管材料、创建仪表板，以及">
+<link rel="canonical" href="https://chendi.me/readings/codex-every-role/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">←</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ Layer: Overview ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+<!-- S1 -->
+<section class="feed-section" style="background:var(--bg-act1)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">500 万人/周：<br>非开发者增速 3 倍</h2>
+  <p class="body-text reveal reveal-d1">Codex 每周有超过 500 万人使用。它最初是一个软件开发工具，但现在已经对越来越多类型的工作变得有用。非开发者——包括分析师、营销人员、运营、设计师、研究员、投资者和银行家——占 Codex 总用户的约 <span class="hl">20%</span>，而且他们的增长速度是开发者的 <span class="hl">3 倍以上</span>。在 OpenAI 内部，非技术团队使用 Codex 构建内部应用、准备高管材料、创建仪表板，以及将创意简报转化为符合品牌和设计约束的工作成果。在 Zapier，团队用 Codex 从 Slack、Google Docs 和 Coda 中提取知识，然后将这些上下文转化为事后分析、事件响应计划和功能工单。在 NVIDIA，研究人员使用 Codex 加速实验工作流——从寻找研究想法到编写机器学习基础设施脚本。今天 OpenAI 宣布了三项重大更新：<span class="hl2">角色特定插件、Sites 和 Annotations</span>。</p>
+  <div class="anim-stage reveal reveal-d2" id="s1-anim"><div class="s1_stage">
+  <div class="s1-header">Codex Growth Snapshot</div>
+  <div class="s1-card">
+    <div class="s1-icon s1-icon--pink">&#9650;</div>
+    <div class="s1-stat">
+      <div class="s1-number s1-number--pink">500万+ / 周</div>
+      <div class="s1-label">每周活跃用户数</div>
+      <div class="s1-bar"><div class="s1-bar-fill s1-bar-fill--pink"></div></div>
+    </div>
+  </div>
+  <div class="s1-card">
+    <div class="s1-icon s1-icon--emerald">&#9679;</div>
+    <div class="s1-stat">
+      <div class="s1-number s1-number--emerald">20%</div>
+      <div class="s1-label">非开发者用户占比</div>
+      <div class="s1-bar"><div class="s1-bar-fill s1-bar-fill--emerald"></div></div>
+    </div>
+  </div>
+  <div class="s1-card">
+    <div class="s1-icon s1-icon--slate">&#215;3</div>
+    <div class="s1-stat">
+      <div class="s1-number">3 倍增速</div>
+      <div class="s1-label">非开发者增长快于开发者</div>
+      <div class="s1-bar"><div class="s1-bar-fill s1-bar-fill--pink"></div></div>
+    </div>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>More than 5 million people now use Codex every week. Codex started as a tool for software development, but it's increasingly useful for more kinds of work. Non-developers—including analysts, marketers, operators, designers, researchers, investors, and bankers—make up about 20% of overall Codex users and are growing more than 3x as fast as developers.</p>
+<p>Today, we're introducing new ways to do more of your work with Codex: plugins that adapt Codex to your role and tools, annotations that help you refine the result in place, and a preview of the ability to create interactive websites and apps you can share with your workspace using a URL.</p>
+<p>Inside OpenAI, non-technical teams use Codex to build internal apps, prepare executive materials, create dashboards, and turn creative briefs into work that reflects brand and design constraints. At Zapier, teams use Codex to pull knowledge from tools like Slack, Google Docs, and Coda, then turn that context into postmortems, incident response plans, and feature tickets. At NVIDIA, researchers are using Codex to speed up experiment workflows, from finding research ideas to writing scripts for machine learning infrastructure.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S2 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">6 大插件：<br>让 Codex 适配你的角色</h2>
+  <p class="body-text reveal reveal-d1">Codex 最有用的时候，是它按照你的团队的方式工作的时候：连接你使用的工具，准备好创建你需要的材料。插件帮助 Codex 与你的团队已有的工具、上下文和工作流对接。OpenAI 今天发布了六个角色特定插件，让 Codex 无需编码就能用于更多类型的知识工作。每个插件打包了相关的应用、技能、指令和工作流——总共包含 <span class="hl" style="color:#F9A8D4">62 个主流应用</span>和 <span class="hl" style="color:#F9A8D4">110 个技能</span>。这六个插件覆盖了数据分析、创意制作、销售、产品设计、公开股权投资和投行——每个都针对特定角色的工作模式做了深度适配。插件开箱即用，团队也可以根据自己的工作流进行定制，或为自己的系统和流程构建和分享自定义插件。</p>
+  <div class="anim-stage reveal reveal-d2" id="s2-anim"><div class="s2_stage">
+  <div class="s2_title">6大插件：让Codex适配你的角色</div>
+  <div class="s2_grid">
+    <div class="s2_card">
+      <div class="s2_icon">📊</div>
+      <div class="s2_label">数据分析</div>
+      <div class="s2_sublabel">Data Analytics</div>
+    </div>
+    <div class="s2_card">
+      <div class="s2_icon">🎨</div>
+      <div class="s2_label">创意制作</div>
+      <div class="s2_sublabel">Creative Production</div>
+    </div>
+    <div class="s2_card">
+      <div class="s2_icon">💼</div>
+      <div class="s2_label">销售</div>
+      <div class="s2_sublabel">Sales</div>
+    </div>
+    <div class="s2_card">
+      <div class="s2_icon">🎯</div>
+      <div class="s2_label">产品设计</div>
+      <div class="s2_sublabel">Product Design</div>
+    </div>
+    <div class="s2_card">
+      <div class="s2_icon">📈</div>
+      <div class="s2_label">股权投资</div>
+      <div class="s2_sublabel">Public Equity</div>
+    </div>
+    <div class="s2_card">
+      <div class="s2_icon">🏦</div>
+      <div class="s2_label">投行</div>
+      <div class="s2_sublabel">Investment Banking</div>
+    </div>
+  </div>
+  <div class="s2_badge">
+    <span class="s2_badge_num">62 应用</span>
+    <span class="s2_badge_sep">&times;</span>
+    <span class="s2_badge_num">110 技能</span>
+  </div>
+</div></div>
+  <p class="hook-line reveal reveal-d3">62 个应用、110 个技能——每个插件具体能做什么？从数据分析到投行，完整细节在这里。</p>
+  <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-details',this)">深入插件详解 →</button>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>Codex is most useful when it works the way your team does: connected to the tools you use and ready to create the materials you need.</p>
+<p>Plugins help Codex work with the tools, context, and workflows your team already uses. Today, we're launching six new role-specific plugins that make Codex useful for more kinds of knowledge work, no coding required:</p>
+<p>Each plugin bundles the relevant apps, skills, instructions, and workflows. Together, they include 62 popular apps and 110 skills.</p>
+<p>Plugins work out of the box. Teams can also adapt them to their workflows or build and share custom plugins for their own systems and processes.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S3 -->
+<section class="feed-section" style="background:var(--bg-act2)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">Sites：把想法变成<br>可分享的交互网站</h2>
+  <p class="body-text reveal reveal-d1">从预览版开始面向 Business 和 Enterprise 客户，Codex 现在可以创建和分享交互式的托管网站和应用。Sites 是你的想法的全新画布——Codex 能把你的想法、分析和计划转化为仪表板、规划器、评审工作区、项目看板、画廊和轻量工具。今天，sites 可以通过 URL 与工作区中的任何人分享，给团队一个共同的空间来探索工作、贡献意见、跟踪进度和一起做决策。比如，你可以让 Codex 为即将到来的客户评审创建一个 site，它会生成一个包含产品更新、开放问题、使用趋势和下一步行动的交互网页。或者让它从财务模型构建一个场景规划器，让领导层可以比较假设而不是翻阅文档中的标签页。<span class="hl2">Sites 不是静态的</span>——它们可以跟踪项目进度、指引客服代表，或充当团队创意简报的仓库。而且你可以随时让 Codex 更新 site 的内容。</p>
+  <div class="anim-stage reveal reveal-d2" id="s3-anim"><div class="s3_stage">
+  <div class="s3_pipeline">
+    <div class="s3_step s3_s1">
+      <div class="s3_icon_circle s3_ic_idea">💡</div>
+      <div class="s3_label">想法</div>
+    </div>
+    <div class="s3_arrow s3_ar1">→</div>
+    <div class="s3_step s3_s2">
+      <div class="s3_icon_circle s3_ic_codex">⚙️</div>
+      <div class="s3_label">Codex 处理</div>
+    </div>
+    <div class="s3_arrow s3_ar2">→</div>
+    <div class="s3_step s3_s3">
+      <div class="s3_browser">
+        <div class="s3_browser_bar">
+          <div class="s3_dot s3_dot_r"></div>
+          <div class="s3_dot s3_dot_y"></div>
+          <div class="s3_dot s3_dot_g"></div>
+        </div>
+        <div class="s3_browser_body">
+          <div class="s3_dash_title"></div>
+          <div class="s3_dash_row">
+            <div class="s3_bar s3_b1"></div>
+            <div class="s3_bar s3_b2"></div>
+            <div class="s3_bar s3_b3"></div>
+            <div class="s3_bar s3_b4"></div>
+            <div class="s3_bar s3_b5"></div>
+          </div>
+          <div class="s3_dash_line"></div>
+        </div>
+      </div>
+      <div class="s3_label">交互网站</div>
+    </div>
+  </div>
+  <div class="s3_tag"><span>通过 URL 分享</span></div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>Starting in preview for business and enterprise customers, Codex can now create and share interactive, hosted websites and apps.</p>
+<p>Sites are a new kind of canvas for your ideas. Codex can take your ideas, analysis, and plans and turn them into dashboards, planners, review workspaces, project boards, galleries, and lightweight tools. Today, sites can be shared with anyone in your workspace via URL, giving teams a shared place to explore work, contribute input, track progress, and make decisions together.</p>
+<p>Ask Codex to create a site for an upcoming customer review, and it'll generate an interactive webpage with the relevant product updates, open questions, usage trends, and next steps for that account. Ask it to build a scenario planner from a financial model, so leaders can compare assumptions instead of reading through tabs in a doc. Ask it to turn launch materials into a living hub where teams can find the latest messaging, milestones, owners, and decisions. Then ask Codex to keep the site up to date as details change.</p>
+<p>Instead of adapting work to the limits of a single tool or file, teams can create sites that fit the work. And sites aren't static. They can also help track progress for a major project, help guide customer service reps, or act as a repository for your team's creative briefs.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S4 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">Annotations：<br>指哪改哪的精炼</h2>
+  <p class="body-text reveal reveal-d1">开发者已经在 Codex 中使用 annotations 来精炼代码、Markdown 文件和 Codex 创建的网站。有了 annotations，你可以指向想要精炼的确切位置，告诉 Codex 需要改什么。这种工作方式现在扩展到了你创建的内容——文档、电子表格和幻灯片。选中一个 site 的导航栏，让 Codex 更新字体。高亮一篇投资论文中的某个论断，让 Codex 说明它的来源。标记幻灯片上的某个图表，要求更清晰的标签。Codex 会把更新聚焦在你选中的部分，这样你就可以<span class="hl" style="color:#F9A8D4">精炼工作而不需要从头开始</span>，也不用重做你已经满意的部分。Annotations 让 Codex 在第一稿之后变得更有用——那时工作需要的是判断力、反馈和迭代。</p>
+  <div class="anim-stage reveal reveal-d2" id="s4-anim"><div class="s4_stage">
+  <div class="s4_doc">
+    <div class="s4_el s4_el--title" style="position:relative">
+      <div class="s4_cursor"></div>
+      <div class="s4_bubble">更新字体</div>
+      <span class="s4_title-text">Q3 产品路线图</span>
+    </div>
+    <div class="s4_el s4_el--chart">
+      <div class="s4_bar"></div><div class="s4_bar"></div><div class="s4_bar"></div><div class="s4_bar"></div><div class="s4_bar"></div>
+    </div>
+    <div class="s4_el s4_el--para">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+  <div class="s4_steps">
+    <div class="s4_step">选中</div>
+    <div class="s4_step">指令</div>
+    <div class="s4_step">精炼完成</div>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>Developers already use annotations in Codex to refine code, Markdown files, and websites Codex creates. With annotations, you point to the exact part you want to refine and tell Codex what needs to change. That way of working now extends to content you create, like documents, spreadsheets, and slides.</p>
+<p>Select the navigation bar in a site and ask Codex to update the font. Highlight a claim in an investment thesis and ask Codex where it came from. Mark a chart on a slide and ask for a clearer label. Codex focuses the update on the part you selected, so you can refine your work without starting over or reworking the parts you already like. Annotations make Codex more useful after the first draft, when the work needs judgment, feedback, and iteration.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S5 -->
+<section class="feed-section" style="background:var(--bg-act3)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">从代码工具到<br>知识工作平台</h2>
+  <p class="body-text reveal reveal-d1">纵观 Codex 的三项更新——插件、Sites 和 Annotations——一个清晰的演进方向浮现出来。Codex 不再只是一个写代码的工具，而是正在成为一个通用的<span class="hl">知识工作平台</span>。插件让它理解不同角色的工作方式和工具生态，Sites 让它的输出不再局限于代码和文件，而是可以变成任何人都能访问的交互界面，而 Annotations 则补上了最关键的一环：<span class="hl2">迭代精炼</span>。第一稿从来不是终点，真正的工作发生在反馈和调整中。更多角色特定插件即将推出，包括企业财务、私募股权投资、营销策略、战略咨询和法务。而且这只是开始——OpenAI 正在构建一个开放生态系统，让合作伙伴能直接在 Codex 和 ChatGPT 中创建和部署自己的插件。</p>
+  <div class="anim-stage reveal reveal-d2" id="s5-anim"><div class="s5_stage">
+  <div class="s5_evo">
+    <div class="s5_node s5_n1">
+      <div class="s5_card">
+        <span class="s5_ico">🔧</span>
+        <div class="s5_txt">
+          <span class="s5_lbl">插件 Plugins</span>
+          <span class="s5_sub">理解角色与工具</span>
+        </div>
+      </div>
+    </div>
+    <div class="s5_conn s5_c1"><span class="s5_arrow"></span></div>
+    <div class="s5_node s5_n2">
+      <div class="s5_card">
+        <span class="s5_ico">🌐</span>
+        <div class="s5_txt">
+          <span class="s5_lbl">Sites</span>
+          <span class="s5_sub">输出变成交互界面</span>
+        </div>
+      </div>
+    </div>
+    <div class="s5_conn s5_c2"><span class="s5_arrow"></span></div>
+    <div class="s5_node s5_n3">
+      <div class="s5_card">
+        <span class="s5_ico">✏️</span>
+        <div class="s5_txt">
+          <span class="s5_lbl">Annotations</span>
+          <span class="s5_sub">迭代精炼</span>
+        </div>
+      </div>
+    </div>
+    <div class="s5_conv"><span class="s5_arrow"></span></div>
+    <div class="s5_result">
+      <div class="s5_badge">
+        <div class="s5_bt">知识工作平台</div>
+        <div class="s5_bs">Knowledge Work Platform</div>
+      </div>
+    </div>
+  </div>
+  <div class="s5_tags_lbl">即将上线的插件 ↓</div>
+  <div class="s5_tags">
+    <span class="s5_tag">企业财务</span>
+    <span class="s5_tag">私募股权</span>
+    <span class="s5_tag">营销策略</span>
+    <span class="s5_tag">战略咨询</span>
+    <span class="s5_tag">法务</span>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>More role-specific plugins are coming soon, including Corporate Finance, Private Equity Investing, Marketing Strategy, Strategy Consulting, and Legal. And this is just the start: we're building toward an open ecosystem where partners can create and deploy their own plugins directly in Codex and ChatGPT.</p>
+<p>We're also working with early partners including Wix, Base44, Replit, Lovable, Figma, Webflow, and Emergent as we build towards a sites partner ecosystem.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S6 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">开放生态的起点：<br>每个团队都能定制 Codex</h2>
+  <p class="body-text reveal reveal-d1">角色特定插件正在 Codex 中逐步推出。你可以从 Codex 插件目录中安装它们，Codex 会帮助你完成设置。Codex 还可以帮你定制插件。对于 Business 和 Enterprise 工作区，管理员可以在工作区设置中控制底层应用权限。Sites 正在以预览形式面向 Business 和 Enterprise 团队推出。这标志着 Codex 从一个人用的编码工具，变成了<span class="hl" style="color:#F9A8D4">团队协作的知识工作平台</span>——连接 62 个应用、110 个技能、可分享的交互网站和精准的局部精炼，覆盖从数据分析到投行的六大角色。Codex 在 Sites 方面也正在与 Wix、Base44、Replit、Lovable、Figma、Webflow 和 Emergent 等早期合作伙伴合作，构建 sites 合作生态系统。</p>
+  <div class="anim-stage reveal reveal-d2" id="s6-anim"><div class="s6_stage">
+  <div class="s6_orbit">
+    <div class="s6_ring"></div>
+    <div class="s6_line s6_l1"></div>
+    <div class="s6_line s6_l2"></div>
+    <div class="s6_line s6_l3"></div>
+    <div class="s6_line s6_l4"></div>
+    <div class="s6_line s6_l5"></div>
+    <div class="s6_line s6_l6"></div>
+    <div class="s6_line s6_l7"></div>
+    <div class="s6_core">CODEX</div>
+    <div class="s6_node s6_n1">Wix</div>
+    <div class="s6_node s6_n2">Base44</div>
+    <div class="s6_node s6_n3">Replit</div>
+    <div class="s6_node s6_n4">Lovable</div>
+    <div class="s6_node s6_n5">Figma</div>
+    <div class="s6_node s6_n6">Webflow</div>
+    <div class="s6_node s6_n7">Emergent</div>
+  </div>
+  <div class="s6_stats">
+    <span class="s6_stat"><span class="s6_num">62</span> 应用</span>
+    <span class="s6_stat"><span class="s6_dot">·</span></span>
+    <span class="s6_stat"><span class="s6_num">110</span> 技能</span>
+    <span class="s6_stat"><span class="s6_dot">·</span></span>
+    <span class="s6_stat"><span class="s6_num">6</span> 角色</span>
+    <span class="s6_stat"><span class="s6_dot">·</span></span>
+    <span class="s6_stat">无限可能</span>
+  </div>
+  <div class="s6_label">开放生态，持续生长</div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>Role-specific plugins are rolling out in Codex in supported regions. You can install them from the Codex plugin directory and Codex will help get you set up. Codex can also help you customize a plugin. For Business and Enterprise workspaces, admins can control underlying app permissions in workspace settings.</p>
+<p>Sites are rolling out in preview for Business and Enterprise teams through the Codex app. Enterprise admins can enable sites in admin settings.</p>
+<p>We're also working with early partners including Wix, Base44, Replit, Lovable, Figma, Webflow, and Emergent as we build towards a sites partner ecosystem.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+</div>
+
+<!-- ═══ Layer: Details ═══ -->
+<div class="layer" id="layer-details" data-depth="1">
+
+<!-- A1 -->
+<section class="feed-section" style="background:var(--bg-act2)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">六个插件详解：<br>62 应用 × 110 技能</h2>
+  <p class="body-text reveal reveal-d1"><span class="hl">数据分析插件</span>帮助分析师和业务团队用数据回答问题——探索产品和业务数据、解释关键指标为何变化、创建报告和仪表板，集成 Snowflake、Databricks Genie、Hex 和 Tableau。<span class="hl">创意制作插件</span>帮助营销和创意团队将简报变成可审查的资产——创建活动看板、制作和精炼展示广告变体、制作产品生活方式照或电商级图片集，集成 Figma、Canva、Shutterstock、Picsart 和 Fal。<span class="hl">销售插件</span>帮助销售团队将客户上下文带入推动交易的工作中——找到高优先级账户和信号、准备客户会议、完成跟进、更新客户记录、制定关闭计划，集成 Salesforce、HubSpot、Slack、Outreach、Clay、Rox 和 Actively。<span class="hl">产品设计插件</span>用于将早期想法变成团队可审查的原型——探索产品方向、审计用户流程、从现有 URL 创建原型，集成 Figma 和 Canva。<span class="hl2">公开股权投资插件</span>帮助投资者理解市场和公司信息——审查财报、比较公司、跟踪信号，集成 Moody's、Daloopa、FactSet、LSEG、S&P、PitchBook 和 Hebbia。<span class="hl2">投行插件</span>帮助银行家将研究和尽调转化为客户就绪的材料——准备 pitch 材料、分析可比公司和交易。</p>
+  <div class="anim-stage reveal reveal-d2" id="a1-anim"><div class="a1_stage">
+  <div class="a1-header">
+    <h3>六个角色插件</h3>
+    <p>62 应用 &times; 110 项技能</p>
+  </div>
+  <div class="a1-card">
+    <div class="a1-icon">📊</div>
+    <div class="a1-body">
+      <div class="a1-name"><span class="a1-num">1</span>数据分析</div>
+      <div class="a1-tags">
+        <span class="a1-tag">Snowflake</span>
+        <span class="a1-tag">Databricks</span>
+        <span class="a1-tag">Hex</span>
+        <span class="a1-tag">Tableau</span>
+      </div>
+    </div>
+  </div>
+  <div class="a1-card">
+    <div class="a1-icon">🎨</div>
+    <div class="a1-body">
+      <div class="a1-name"><span class="a1-num">2</span>创意制作</div>
+      <div class="a1-tags">
+        <span class="a1-tag">Figma</span>
+        <span class="a1-tag">Canva</span>
+        <span class="a1-tag">Shutterstock</span>
+        <span class="a1-tag">Picsart</span>
+        <span class="a1-tag">Fal</span>
+      </div>
+    </div>
+  </div>
+  <div class="a1-card">
+    <div class="a1-icon">💼</div>
+    <div class="a1-body">
+      <div class="a1-name"><span class="a1-num">3</span>销售</div>
+      <div class="a1-tags">
+        <span class="a1-tag">Salesforce</span>
+        <span class="a1-tag">HubSpot</span>
+        <span class="a1-tag">Slack</span>
+        <span class="a1-tag">Outreach</span>
+        <span class="a1-tag">Clay</span>
+      </div>
+    </div>
+  </div>
+  <div class="a1-card">
+    <div class="a1-icon">🎯</div>
+    <div class="a1-body">
+      <div class="a1-name"><span class="a1-num">4</span>产品设计</div>
+      <div class="a1-tags">
+        <span class="a1-tag">Figma</span>
+        <span class="a1-tag">Canva</span>
+      </div>
+    </div>
+  </div>
+  <div class="a1-card">
+    <div class="a1-icon">📈</div>
+    <div class="a1-body">
+      <div class="a1-name"><span class="a1-num">5</span>股权投资</div>
+      <div class="a1-tags">
+        <span class="a1-tag">Moody's</span>
+        <span class="a1-tag">FactSet</span>
+        <span class="a1-tag">LSEG</span>
+        <span class="a1-tag">S&amp;P</span>
+        <span class="a1-tag">PitchBook</span>
+      </div>
+    </div>
+  </div>
+  <div class="a1-card">
+    <div class="a1-icon">🏦</div>
+    <div class="a1-body">
+      <div class="a1-name"><span class="a1-num">6</span>投行</div>
+      <div class="a1-tags">
+        <span class="a1-tag">可比分析</span>
+        <span class="a1-tag">尽调转化</span>
+      </div>
+    </div>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>The data analytics plugin helps analysts and business teams answer questions with data. They can explore product and business data, explain why key metrics changed, and create reports and dashboards using tools like Snowflake, Databricks Genie, Hex, and Tableau, with more coming soon.</p>
+<p>The creative production plugin helps marketing and creative teams turn a brief into assets they can review. Teams can create campaign boards, make and refine display ad variations, and produce product lifestyle shots or ecommerce-ready image sets with tools like Figma, Canva, Shutterstock, Picsart, and Fal.</p>
+<p>The sales plugin helps sales teams bring customer context into the work that moves deals forward. Sales teams can find high-priority accounts and signals, prepare for customer meetings, complete follow-ups, update customer records, build close plans, and review deals at risk using tools like Salesforce, HubSpot, Slack, Outreach, Clay, Rox, and Actively.</p>
+<p>The product design plugin is built for turning early ideas into prototypes teams can review. Teams can explore product directions, audit user flows, prototype from a live URL, and make static screenshots interactive, with work that can be carried forward in tools like Figma and Canva.</p>
+<p>The public equity investing plugin helps investors make sense of market and company information. They can review earnings, compare companies, track signals, and assess whether an investment thesis is strengthening or weakening using information from Moody's, Daloopa, Datasite, FactSet, LSEG, S&P, PitchBook, and Hebbia.</p>
+<p>The investment banking plugin helps bankers turn research and diligence into client-ready materials. They can prepare pitch materials, analyze comparable companies and transactions, and turn diligence into recommendations using trusted data.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- A2 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">实战案例与生态：<br>从 OpenAI 到 NVIDIA</h2>
+  <p class="body-text reveal reveal-d1">Codex 的价值已经在多个组织中得到验证。在 <span class="hl" style="color:#F9A8D4">OpenAI 内部</span>，非技术团队用 Codex 构建内部应用、准备高管材料、创建仪表板，并将创意简报转化为符合品牌和设计约束的工作成果。在 <span class="hl" style="color:#F9A8D4">Zapier</span>，团队用 Codex 从 Slack、Google Docs 和 Coda 中提取知识，然后将这些上下文转化为事后分析报告、事件响应计划和功能工单。在 <span class="hl" style="color:#F9A8D4">NVIDIA</span>，研究人员使用 Codex 加速从寻找研究想法到编写 ML 基础设施脚本的实验工作流。在 Sites 生态方面，OpenAI 正在与 Wix、Base44、Replit、Lovable、Figma、Webflow 和 Emergent 等早期合作伙伴合作。更多角色插件即将推出——企业财务、私募股权、营销策略、战略咨询和法务——OpenAI 的目标是构建一个<span class="hl" style="color:#6EE7B7">开放生态系统</span>，让合作伙伴能直接在 Codex 和 ChatGPT 中创建和部署自己的插件，最终让每个角色、每个工具、每个工作流都能被 Codex 覆盖。</p>
+  <div class="anim-stage reveal reveal-d2" id="a2-anim"><div class="a2_stage">
+  <div class="a2_card">
+    <div class="a2_org">OpenAI</div>
+    <div class="a2_tags">
+      <span class="a2_tag">内部应用</span>
+      <span class="a2_tag">高管材料</span>
+      <span class="a2_tag">仪表板</span>
+      <span class="a2_tag">创意简报</span>
+    </div>
+  </div>
+  <div class="a2_card">
+    <div class="a2_org">Zapier</div>
+    <div class="a2_tags">
+      <span class="a2_tag">知识提取</span>
+      <span class="a2_tag">事后分析</span>
+      <span class="a2_tag">事件响应</span>
+      <span class="a2_tag">功能工单</span>
+    </div>
+  </div>
+  <div class="a2_card">
+    <div class="a2_org">NVIDIA</div>
+    <div class="a2_tags">
+      <span class="a2_tag">研究想法</span>
+      <span class="a2_tag">ML基础设施脚本</span>
+      <span class="a2_tag">实验工作流</span>
+    </div>
+  </div>
+  <div class="a2_section a2_eco">
+    <div class="a2_section_title">生态合作伙伴</div>
+    <div class="a2_pills">
+      <span class="a2_pill">Wix</span>
+      <span class="a2_pill">Base44</span>
+      <span class="a2_pill">Replit</span>
+      <span class="a2_pill">Lovable</span>
+      <span class="a2_pill">Figma</span>
+      <span class="a2_pill">Webflow</span>
+      <span class="a2_pill">Emergent</span>
+    </div>
+  </div>
+  <div class="a2_section a2_soon">
+    <div class="a2_section_title">即将推出</div>
+    <div class="a2_pills">
+      <span class="a2_pill">企业财务</span>
+      <span class="a2_pill">私募股权</span>
+      <span class="a2_pill">营销策略</span>
+      <span class="a2_pill">战略咨询</span>
+      <span class="a2_pill">法务</span>
+    </div>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>Inside OpenAI, non-technical teams use Codex to build internal apps, prepare executive materials, create dashboards, and turn creative briefs into work that reflects brand and design constraints. At Zapier, teams use Codex to pull knowledge from tools like Slack, Google Docs, and Coda, then turn that context into postmortems, incident response plans, and feature tickets. At NVIDIA, researchers are using Codex to speed up experiment workflows, from finding research ideas to writing scripts for machine learning infrastructure.</p>
+<p>More role-specific plugins are coming soon, including Corporate Finance, Private Equity Investing, Marketing Strategy, Strategy Consulting, and Legal. And this is just the start: we're building toward an open ecosystem where partners can create and deploy their own plugins directly in Codex and ChatGPT.</p>
+<p>We're also working with early partners including Wix, Base44, Replit, Lovable, Figma, Webflow, and Emergent as we build towards a sites partner ecosystem.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+</div>
+
+<script>
+var layerStack=['layer-overview'];
+var transitioning=false;
+var layerNames={'layer-overview':'概览','layer-details':'插件详解'};
+var observers=new Map();
+function setupObserver(layerId){if(observers.has(layerId))return;var layer=document.getElementById(layerId);var reveals=layer.querySelectorAll('.reveal,[class*="_stage"]');var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.15,root:layer});reveals.forEach(function(el){obs.observe(el);});observers.set(layerId,obs);}
+function resetReveals(layerId){var layer=document.getElementById(layerId);layer.querySelectorAll('.reveal').forEach(function(el){el.classList.remove('visible');});layer.querySelectorAll('[class*="_stage"]').forEach(function(el){el.classList.remove('visible');});}
+function activateReveals(layerId){resetReveals(layerId);if(observers.has(layerId)){observers.get(layerId).disconnect();observers.delete(layerId);}requestAnimationFrame(function(){setupObserver(layerId);});}
+function updateBreadcrumb(){var bc=document.getElementById('breadcrumb');bc.innerHTML='';layerStack.forEach(function(id,i){if(i>0){var sep=document.createElement('span');sep.className='sep';sep.textContent='>';bc.appendChild(sep);}var span=document.createElement('span');span.textContent=layerNames[id]||id;if(i===layerStack.length-1){span.className='current';}else{span.addEventListener('click',function(){goBackTo(i);});}bc.appendChild(span);});var backBtn=document.getElementById('backBtn');backBtn.style.display=layerStack.length>1?'flex':'none';bc.style.left=layerStack.length>1?'60px':'16px';var dots=document.getElementById('depthDots');var depth=layerStack.length-1;dots.querySelectorAll('.dot').forEach(function(d,i){d.classList.toggle('active',i===depth);});}
+function drillDown(targetId){if(transitioning)return;transitioning=true;var currentId=layerStack[layerStack.length-1];var currentLayer=document.getElementById(currentId);var targetLayer=document.getElementById(targetId);targetLayer.scrollTop=0;resetReveals(targetId);targetLayer.style.visibility='visible';var d=600;currentLayer.style.transition='transform '+d+'ms ease-out,opacity '+d+'ms ease-out';currentLayer.style.transformOrigin='center center';currentLayer.style.transform='scale(1.3)';currentLayer.style.opacity='0';targetLayer.classList.add('active');targetLayer.style.opacity='0';targetLayer.style.transform='scale(0.85)';targetLayer.style.transition='transform '+d+'ms ease-out,opacity '+d+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){targetLayer.style.opacity='1';targetLayer.style.transform='scale(1)';});});setTimeout(function(){currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';targetLayer.style.transition='';targetLayer.style.transform='';activateReveals(targetId);transitioning=false;},d+50);layerStack.push(targetId);updateBreadcrumb();}
+function goBack(){if(layerStack.length<=1||transitioning)return;transitioning=true;var currentId=layerStack.pop();var parentId=layerStack[layerStack.length-1];var cl=document.getElementById(currentId);var pl=document.getElementById(parentId);var d=600;cl.style.transition='transform '+d+'ms ease-out,opacity '+d+'ms ease-out';cl.style.transform='scale(0.85)';cl.style.opacity='0';pl.classList.add('active');pl.style.transform='scale(1.3)';pl.style.opacity='0';pl.style.transition='transform '+d+'ms ease-out,opacity '+d+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){pl.style.transform='scale(1)';pl.style.opacity='1';});});setTimeout(function(){cl.classList.remove('active');cl.style.transition='';cl.style.transform='';cl.style.opacity='';cl.style.visibility='';pl.style.transition='';pl.style.transform='';transitioning=false;},d+50);updateBreadcrumb();}
+function goBackTo(targetIndex){if(transitioning)return;while(layerStack.length-1>targetIndex){if(layerStack.length<=1)break;goBack();return;}}
+function toggleSource(btn){btn.classList.toggle('open');btn.nextElementSibling.classList.toggle('open');}
+setupObserver('layer-overview');updateBreadcrumb();
+</script>
+</body>
+</html>

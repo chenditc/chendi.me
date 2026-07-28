@@ -1,0 +1,2087 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Claude Code at Scale — 百万行代码库里的 AI 同事</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #F0F9FF;
+  --bg-act2: #F5F3FF;
+  --bg-act3: #ECFDF5;
+  --bg-dark: #0F172A;
+  --bg-close: #0F172A;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --dim: #94A3B8;
+  --accent: #0369A1;
+  --accent2: #9333EA;
+  --warm: #D97706;
+  --danger: #DC2626;
+  --card-bg: #FFFFFF;
+  --neutral: #94A3B8;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Noto Sans SC',sans-serif;-webkit-font-smoothing:antialiased;}
+.content-width{max-width:640px;margin:0 auto;padding:0 28px;}
+.reveal{opacity:0;transform:translateY(40px);transition:opacity .8s ease,transform .8s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-d1{transition-delay:.15s;}
+.reveal-d2{transition-delay:.3s;}
+.reveal-d3{transition-delay:.45s;}
+.reveal-d4{transition-delay:.6s;}
+.big-statement{font-family:'Noto Serif SC',serif;font-size:clamp(22px,5.5vw,32px);font-weight:700;line-height:1.5;margin-bottom:32px;color:var(--text);}
+.body-text{font-size:16px;line-height:1.9;color:var(--text);margin-bottom:28px;}
+.body-text .hl{color:var(--accent);font-weight:500;}
+.body-text .hl2{color:var(--accent2);font-weight:500;}
+.body-text .hl-danger{color:var(--danger);font-weight:500;}
+.body-text .hl-warm{color:var(--warm);font-weight:500;}
+.hook-line{font-size:15px;line-height:1.7;color:var(--accent);font-weight:600;margin-bottom:20px;}
+.layer{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;visibility:hidden;opacity:0;will-change:transform,opacity;scroll-snap-type:y proximity;}
+.layer.active{visibility:visible;opacity:1;}
+.layer.transitioning{transition-property:transform,opacity;transition-timing-function:cubic-bezier(.4,0,.2,1);}
+.feed-section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;scroll-snap-align:start;}
+.feed-section.dark{background:var(--bg-dark);color:#F1F5F9;}
+.feed-section.dark .body-text{color:#94A3B8;}
+.feed-section.dark .big-statement{color:#F1F5F9;}
+.feed-section.dark .hook-line{color:#818CF8;}
+.section-inner{max-width:600px;width:100%;}
+.breadcrumb{position:fixed;top:16px;left:16px;z-index:1000;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);padding:8px 14px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,.1);font-size:13px;font-weight:500;}
+.breadcrumb span{color:var(--text-muted);cursor:pointer;transition:color .2s;}
+.breadcrumb span:hover{color:var(--accent);}
+.breadcrumb span.current{color:var(--text);cursor:default;}
+.breadcrumb .sep{color:#CBD5E1;margin:0 2px;cursor:default;}
+.back-btn{position:fixed;top:16px;left:16px;z-index:1001;width:38px;height:38px;border-radius:10px;border:none;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(0,0,0,.1);font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--text);transition:all .2s;}
+.back-btn:hover{background:var(--accent);color:#fff;}
+.depth-dots{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;gap:8px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);padding:8px 14px;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,.1);}
+.dot{width:10px;height:10px;border-radius:50%;background:#CBD5E1;transition:all .3s;}
+.dot.active{background:var(--accent);box-shadow:0 0 8px rgba(3,105,161,.5);transform:scale(1.2);}
+.drill-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:1.5px solid rgba(3,105,161,.3);border-radius:10px;background:transparent;color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;transition:all .25s;}
+.drill-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(3,105,161,.3);}
+.dark .drill-btn{border-color:rgba(129,140,248,.4);color:#818CF8;}
+.dark .drill-btn:hover{background:#818CF8;color:#fff;border-color:#818CF8;}
+.source-panel{margin-top:24px;border-radius:12px;overflow:hidden;border:1px solid rgba(3,105,161,.15);background:rgba(3,105,161,.03);}
+.dark .source-panel{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.04);}
+.source-toggle{width:100%;padding:12px 16px;border:none;background:none;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);}
+.dark .source-toggle{color:#818CF8;}
+.source-toggle:hover{background:rgba(3,105,161,.06);}
+.source-toggle .arrow{transition:transform .3s;font-size:11px;}
+.source-toggle.open .arrow{transform:rotate(90deg);}
+.source-body{max-height:0;overflow:hidden;transition:max-height .4s ease;padding:0 16px;}
+.source-body.open{max-height:2000px;padding:0 16px 16px;overflow-y:auto;}
+.source-body p{font-size:13px;line-height:1.8;color:var(--text-muted);margin:0 0 12px;white-space:pre-wrap;}
+.dark .source-body p{color:#94A3B8;}
+.source-body .source-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:8px;display:block;}
+.dark .source-body .source-label{color:#818CF8;}
+.anim-stage{width:100%;display:flex;justify-content:center;margin:28px 0;min-height:180px;}
+.anim-stage > div{width:100%;}
+
+/* === S1 Animation === */
+
+.s1_stage {
+  position: relative;
+  height: 320px;
+  width: 100%;
+  max-width: 390px;
+  overflow: visible;
+}
+
+/* Left column boxes */
+.s1_box {
+  position: absolute;
+  width: 120px;
+  height: 40px;
+  border-radius: 8px;
+  background: #0369A1;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateX(-30px);
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.s1_box_right {
+  position: absolute;
+  width: 110px;
+  height: 100px;
+  border-radius: 12px;
+  background: #9333EA;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.3;
+  opacity: 0;
+  transform: scale(0.6);
+  letter-spacing: 2px;
+}
+
+/* Positions: left boxes */
+.s1_b1 { left: 20px; top: 20px; }
+.s1_b2 { left: 20px; top: 80px; }
+.s1_b3 { left: 20px; top: 140px; }
+.s1_b4 { left: 20px; top: 200px; }
+
+/* Right box */
+.s1_b5 { left: 200px; top: 80px; }
+
+/* SVG for lines */
+.s1_svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.s1_svg line {
+  stroke: #94A3B8;
+  stroke-width: 2;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+}
+
+/* Keyframes */
+@keyframes s1_slideIn {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes s1_popIn {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s1_drawLine {
+  from { stroke-dashoffset: 200; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Triggered by .visible */
+.s1_stage.visible .s1_b1 {
+  animation: s1_slideIn 0.5s ease-out 0.2s forwards;
+}
+.s1_stage.visible .s1_b2 {
+  animation: s1_slideIn 0.5s ease-out 0.7s forwards;
+}
+.s1_stage.visible .s1_b3 {
+  animation: s1_slideIn 0.5s ease-out 1.2s forwards;
+}
+.s1_stage.visible .s1_b4 {
+  animation: s1_slideIn 0.5s ease-out 1.7s forwards;
+}
+.s1_stage.visible .s1_b5 {
+  animation: s1_popIn 0.5s ease-out 2.2s forwards;
+}
+.s1_stage.visible .s1_ln1 {
+  animation: s1_drawLine 0.4s ease-out 2.8s forwards;
+}
+.s1_stage.visible .s1_ln2 {
+  animation: s1_drawLine 0.4s ease-out 3.0s forwards;
+}
+.s1_stage.visible .s1_ln3 {
+  animation: s1_drawLine 0.4s ease-out 3.2s forwards;
+}
+.s1_stage.visible .s1_ln4 {
+  animation: s1_drawLine 0.4s ease-out 3.4s forwards;
+}
+
+/* === S2 Animation === */
+
+.s2_stage {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  height: 380px;
+  margin: 0 auto;
+}
+
+.s2_stage * {
+  box-sizing: border-box;
+}
+
+/* Shared box style */
+.s2_box {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0;
+  transform: scale(0.7);
+}
+
+/* Label style */
+.s2_label {
+  position: absolute;
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0;
+  transform: scale(0.7);
+  letter-spacing: 1px;
+}
+
+/* Connector lines */
+.s2_line {
+  position: absolute;
+  opacity: 0;
+}
+
+/* SVG fork overlay */
+.s2_fork_svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.s2_fork_svg line {
+  stroke-width: 2;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+}
+
+.s2_fork_svg .s2_svgl { stroke: #94A3B8; }
+.s2_fork_svg .s2_svgr { stroke: #0369A1; }
+
+/* Step 1: top center box */
+.s2_origin {
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.7);
+  width: 120px;
+  height: 44px;
+  background: #0369A1;
+  color: #F1F5F9;
+  font-size: 14px;
+}
+
+/* Path labels */
+.s2_lbl_rag {
+  top: 78px;
+  left: 48px;
+  color: #94A3B8;
+}
+
+.s2_lbl_agent {
+  top: 78px;
+  left: 252px;
+  color: #CBD5E1;
+}
+
+/* Left column boxes */
+.s2_embed {
+  top: 120px;
+  left: 20px;
+  width: 120px;
+  height: 44px;
+  background: rgba(148,163,184,0.12);
+  border: 2px solid #94A3B8;
+  color: #F1F5F9;
+}
+
+.s2_query {
+  top: 196px;
+  left: 20px;
+  width: 120px;
+  height: 44px;
+  background: rgba(148,163,184,0.12);
+  border: 2px solid #94A3B8;
+  color: #F1F5F9;
+}
+
+/* Left connector */
+.s2_conn_left1 {
+  top: 164px;
+  left: 79px;
+  width: 2px;
+  height: 0;
+  background: #94A3B8;
+}
+
+/* Right column boxes */
+.s2_traverse {
+  top: 120px;
+  left: 220px;
+  width: 120px;
+  height: 44px;
+  background: rgba(3,105,161,0.12);
+  border: 2px solid #0369A1;
+  color: #F1F5F9;
+}
+
+.s2_grep {
+  top: 196px;
+  left: 220px;
+  width: 120px;
+  height: 44px;
+  background: rgba(3,105,161,0.12);
+  border: 2px solid #0369A1;
+  color: #F1F5F9;
+}
+
+/* Right connector */
+.s2_conn_right1 {
+  top: 164px;
+  left: 279px;
+  width: 2px;
+  height: 0;
+  background: #0369A1;
+}
+
+/* Status tags */
+.s2_tag {
+  position: absolute;
+  padding: 3px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0;
+  transform: scale(0.7);
+}
+
+.s2_tag_stale {
+  top: 258px;
+  left: 44px;
+  background: rgba(239,68,68,0.15);
+  border: 1.5px solid #EF4444;
+  color: #EF4444;
+}
+
+.s2_tag_live {
+  top: 258px;
+  left: 252px;
+  background: rgba(34,197,94,0.15);
+  border: 1.5px solid #22C55E;
+  color: #22C55E;
+}
+
+/* Left dim overlay */
+.s2_left_dim {
+  position: absolute;
+  top: 112px;
+  left: 12px;
+  width: 136px;
+  height: 168px;
+  border-radius: 10px;
+  background: rgba(15,23,42,0.55);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Right highlight glow */
+.s2_right_glow {
+  position: absolute;
+  top: 112px;
+  left: 212px;
+  width: 136px;
+  height: 168px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(3,105,161,0.4);
+  box-shadow: 0 0 24px rgba(3,105,161,0.25), inset 0 0 12px rgba(3,105,161,0.08);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Keyframes */
+@keyframes s2_fadeScaleIn {
+  from { opacity: 0; transform: scale(0.7); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s2_fadeScaleInCenter {
+  from { opacity: 0; transform: translateX(-50%) scale(0.7); }
+  to   { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+@keyframes s2_growHShort {
+  from { height: 0; opacity: 1; }
+  to   { height: 32px; opacity: 1; }
+}
+
+@keyframes s2_drawLine {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes s2_fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* === Triggered animations === */
+
+/* Step 1: origin box */
+.s2_stage.visible .s2_origin {
+  animation: s2_fadeScaleInCenter 0.5s ease forwards;
+  animation-delay: 0.2s;
+}
+
+/* Step 2: SVG fork lines draw in */
+.s2_stage.visible .s2_svgl {
+  animation: s2_drawLine 0.5s ease forwards;
+  animation-delay: 0.9s;
+}
+.s2_stage.visible .s2_svgr {
+  animation: s2_drawLine 0.5s ease forwards;
+  animation-delay: 0.9s;
+}
+
+/* Step 2: path labels */
+.s2_stage.visible .s2_lbl_rag {
+  animation: s2_fadeScaleIn 0.4s ease forwards;
+  animation-delay: 1.2s;
+}
+.s2_stage.visible .s2_lbl_agent {
+  animation: s2_fadeScaleIn 0.4s ease forwards;
+  animation-delay: 1.2s;
+}
+
+/* Step 3: left embed box */
+.s2_stage.visible .s2_embed {
+  animation: s2_fadeScaleIn 0.5s ease forwards;
+  animation-delay: 1.8s;
+}
+
+/* Step 4: left query + dim + stale */
+.s2_stage.visible .s2_conn_left1 {
+  animation: s2_growHShort 0.3s ease forwards;
+  animation-delay: 2.4s;
+}
+.s2_stage.visible .s2_query {
+  animation: s2_fadeScaleIn 0.5s ease forwards;
+  animation-delay: 2.6s;
+}
+.s2_stage.visible .s2_left_dim {
+  animation: s2_fadeIn 0.6s ease forwards;
+  animation-delay: 3.2s;
+}
+.s2_stage.visible .s2_tag_stale {
+  animation: s2_fadeScaleIn 0.4s ease forwards;
+  animation-delay: 3.4s;
+}
+
+/* Step 5: right traverse box */
+.s2_stage.visible .s2_traverse {
+  animation: s2_fadeScaleIn 0.5s ease forwards;
+  animation-delay: 3.9s;
+}
+
+/* Step 6: right grep + glow + live */
+.s2_stage.visible .s2_conn_right1 {
+  animation: s2_growHShort 0.3s ease forwards;
+  animation-delay: 4.4s;
+}
+.s2_stage.visible .s2_grep {
+  animation: s2_fadeScaleIn 0.5s ease forwards;
+  animation-delay: 4.6s;
+}
+.s2_stage.visible .s2_right_glow {
+  animation: s2_fadeIn 0.6s ease forwards;
+  animation-delay: 5.2s;
+}
+.s2_stage.visible .s2_tag_live {
+  animation: s2_fadeScaleIn 0.4s ease forwards;
+  animation-delay: 5.4s;
+}
+
+/* === S3 Animation === */
+
+.s3_stage {
+  position: relative;
+  width: 100%;
+  height: 360px;
+  overflow: hidden;
+}
+
+/* Stacking block */
+.s3_block {
+  position: absolute;
+  width: 80%;
+  left: 5%;
+  height: 36px;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 1px;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+/* Bottom 3: primary blue */
+.s3_block--primary { background: #0369A1; }
+/* Middle 2: activated purple */
+.s3_block--accent { background: #9333EA; }
+/* Top 2: neutral gray */
+.s3_block--neutral { background: #94A3B8; }
+
+/* Vertical positions: bottom-up, gap = 36 + 8 = 44px */
+.s3_b1 { top: 284px; } /* CLAUDE.md */
+.s3_b2 { top: 240px; } /* Hooks */
+.s3_b3 { top: 196px; } /* Skills */
+.s3_b4 { top: 152px; } /* Plugins */
+.s3_b5 { top: 108px; } /* LSP */
+.s3_b6 { top: 64px; }  /* MCP */
+.s3_b7 { top: 20px; }  /* Subagents */
+
+/* Harness label */
+.s3_label {
+  position: absolute;
+  right: 2%;
+  top: 20px;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+}
+
+.s3_label_text {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0369A1;
+  letter-spacing: 2px;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  margin-right: 4px;
+}
+
+.s3_bracket {
+  width: 10px;
+  height: 100%;
+  border: 2px solid #0369A1;
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+  flex-shrink: 0;
+}
+
+/* Keyframes */
+@keyframes s3_slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s3_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Triggered animations */
+.s3_stage.visible .s3_b1 {
+  animation: s3_slideUp 0.4s ease-out 0.3s forwards;
+}
+.s3_stage.visible .s3_b2 {
+  animation: s3_slideUp 0.4s ease-out 0.7s forwards;
+}
+.s3_stage.visible .s3_b3 {
+  animation: s3_slideUp 0.4s ease-out 1.1s forwards;
+}
+.s3_stage.visible .s3_b4 {
+  animation: s3_slideUp 0.4s ease-out 1.5s forwards;
+}
+.s3_stage.visible .s3_b5 {
+  animation: s3_slideUp 0.4s ease-out 1.9s forwards;
+}
+.s3_stage.visible .s3_b6 {
+  animation: s3_slideUp 0.4s ease-out 2.3s forwards;
+}
+.s3_stage.visible .s3_b7 {
+  animation: s3_slideUp 0.4s ease-out 2.7s forwards;
+}
+.s3_stage.visible .s3_label {
+  animation: s3_fadeIn 0.6s ease-out 3.3s forwards;
+}
+
+/* === S4 Animation === */
+
+.s4_stage {
+  position: relative;
+  height: 300px;
+  width: 100%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.s4_stage.visible {
+  opacity: 1;
+}
+
+/* 地基横条 */
+.s4_foundation {
+  position: absolute;
+  bottom: 24px;
+  left: 5%;
+  width: 90%;
+  height: 4px;
+  background: #94A3B8;
+  transform: scaleX(0);
+  transform-origin: center;
+}
+.s4_stage.visible .s4_foundation {
+  transform: scaleX(1);
+  transition: transform 0.5s ease 0.3s;
+}
+
+/* 地基标签 */
+.s4_foundation_label {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  color: #94A3B8;
+  white-space: nowrap;
+  opacity: 0;
+}
+.s4_stage.visible .s4_foundation_label {
+  opacity: 1;
+  transition: opacity 0.4s ease 0.5s;
+}
+
+/* 柱子通用 */
+.s4_pillar {
+  position: absolute;
+  bottom: 28px;
+  width: 60px;
+  height: 0;
+  border-radius: 4px 4px 0 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+.s4_stage.visible .s4_pillar {
+  height: 180px;
+  transition: height 0.6s ease;
+}
+
+/* 柱子标签通用 - 在柱子内部顶端 */
+.s4_pillar_label {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 4px;
+}
+.s4_stage.visible .s4_pillar_label {
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+
+/* 柱子1 左 - 可导航 */
+.s4_pillar_1 {
+  left: calc(50% - 130px);
+  background: #0369A1;
+}
+.s4_stage.visible .s4_pillar_1 {
+  transition-delay: 0.9s;
+}
+.s4_pillar_1 .s4_pillar_label {
+  color: #E0F2FE;
+}
+.s4_stage.visible .s4_pillar_1 .s4_pillar_label {
+  transition-delay: 1.3s;
+}
+
+/* 柱子2 中 - 可维护 */
+.s4_pillar_2 {
+  left: calc(50% - 30px);
+  background: #9333EA;
+}
+.s4_stage.visible .s4_pillar_2 {
+  transition-delay: 1.5s;
+}
+.s4_pillar_2 .s4_pillar_label {
+  color: #F3E8FF;
+}
+.s4_stage.visible .s4_pillar_2 .s4_pillar_label {
+  transition-delay: 1.9s;
+}
+
+/* 柱子3 右 - 有归属 */
+.s4_pillar_3 {
+  left: calc(50% + 70px);
+  background: #D97706;
+}
+.s4_stage.visible .s4_pillar_3 {
+  transition-delay: 2.1s;
+}
+.s4_pillar_3 .s4_pillar_label {
+  color: #FEF3C7;
+}
+.s4_stage.visible .s4_pillar_3 .s4_pillar_label {
+  transition-delay: 2.5s;
+}
+
+/* 顶部横条 - 从柱1左边到柱3右边 */
+.s4_roof {
+  position: absolute;
+  bottom: 208px;
+  left: calc(50% - 135px);
+  width: 270px;
+  height: 4px;
+  background: #F1F5F9;
+  transform: scaleX(0);
+  transform-origin: center;
+}
+.s4_stage.visible .s4_roof {
+  transform: scaleX(1);
+  transition: transform 0.5s ease 2.8s;
+}
+
+/* 顶部标签 */
+.s4_roof_label {
+  position: absolute;
+  bottom: 220px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  font-weight: 700;
+  color: #F1F5F9;
+  white-space: nowrap;
+  opacity: 0;
+  padding: 4px 16px;
+  border: 2px solid #F1F5F9;
+  border-radius: 6px;
+  z-index: 10;
+  background: #0F172A;
+}
+.s4_stage.visible .s4_roof_label {
+  opacity: 1;
+  transition: opacity 0.4s ease 3.1s;
+}
+
+/* === S5 Animation === */
+
+.s5_stage {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  height: 340px;
+  margin: 0 auto;
+}
+
+.s5_stage * {
+  box-sizing: border-box;
+}
+
+/* Shared box style */
+.s5_box {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0;
+  transform: scale(0.7);
+}
+
+/* Row 1: 工程组织 */
+.s5_org {
+  top: 16px;
+  left: 50%;
+  margin-left: -56px;
+  width: 112px;
+  height: 42px;
+  background: #0369A1;
+  font-size: 14px;
+}
+
+/* Row 2: DevEx and InfoSec */
+.s5_devex {
+  top: 108px;
+  left: 32px;
+  width: 96px;
+  height: 42px;
+  background: #0369A1;
+  font-size: 14px;
+}
+
+.s5_infosec {
+  top: 108px;
+  right: 32px;
+  width: 96px;
+  height: 42px;
+  background: #0369A1;
+  font-size: 14px;
+}
+
+/* Row 3: Agent Manager (accent) */
+.s5_agent_mgr {
+  top: 196px;
+  left: 50%;
+  margin-left: -76px;
+  width: 152px;
+  height: 42px;
+  background: #9333EA;
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+/* Row 4: three small boxes */
+.s5_small {
+  width: 72px;
+  height: 36px;
+  font-size: 13px;
+  background: #9333EA;
+}
+
+.s5_config {
+  top: 288px;
+  left: 22px;
+}
+
+.s5_plugin {
+  top: 288px;
+  left: 50%;
+  margin-left: -36px;
+}
+
+.s5_govern {
+  top: 288px;
+  right: 22px;
+}
+
+/* Connector lines */
+.s5_line {
+  position: absolute;
+  background: #94A3B8;
+  opacity: 0;
+}
+
+/* Org -> row 2: T-shape connector */
+/* Vertical stub from org bottom to horizontal bar */
+.s5_line_org_stub {
+  top: 58px;
+  left: 50%;
+  margin-left: -1px;
+  width: 2px;
+  height: 0;
+}
+
+/* Horizontal bar connecting DevEx and InfoSec: centered, grows both ways */
+.s5_line_org_bar_left {
+  top: 72px;
+  right: 50%;
+  width: 0;
+  height: 2px;
+}
+.s5_line_org_bar_right {
+  top: 72px;
+  left: 50%;
+  width: 0;
+  height: 2px;
+}
+
+/* Vertical drops from bar to DevEx and InfoSec */
+.s5_line_drop_devex {
+  top: 72px;
+  left: 80px;
+  width: 2px;
+  height: 0;
+}
+
+.s5_line_drop_infosec {
+  top: 72px;
+  right: 80px;
+  width: 2px;
+  height: 0;
+}
+
+/* DevEx -> Agent Manager: vertical line from DevEx bottom */
+.s5_line_devex_down {
+  top: 150px;
+  left: 80px;
+  width: 2px;
+  height: 0;
+}
+
+/* InfoSec -> Agent Manager: vertical line from InfoSec bottom */
+.s5_line_infosec_down {
+  top: 150px;
+  right: 80px;
+  width: 2px;
+  height: 0;
+}
+
+/* Horizontal bar connecting the two vertical lines to AM center: centered */
+.s5_line_am_bar_left {
+  top: 172px;
+  right: 50%;
+  width: 0;
+  height: 2px;
+}
+.s5_line_am_bar_right {
+  top: 172px;
+  left: 50%;
+  width: 0;
+  height: 2px;
+}
+
+/* Vertical stub from bar down to Agent Manager */
+.s5_line_am_stub {
+  top: 172px;
+  left: 50%;
+  margin-left: -1px;
+  width: 2px;
+  height: 0;
+}
+
+/* Agent Manager -> row 4: T-shape connector */
+/* Vertical stub from AM bottom */
+.s5_line_am_down_stub {
+  top: 238px;
+  left: 50%;
+  margin-left: -1px;
+  width: 2px;
+  height: 0;
+}
+
+/* Horizontal bar spanning three drop points: centered */
+.s5_line_bottom_bar_left {
+  top: 254px;
+  right: 50%;
+  width: 0;
+  height: 2px;
+}
+.s5_line_bottom_bar_right {
+  top: 254px;
+  left: 50%;
+  width: 0;
+  height: 2px;
+}
+
+/* Vertical drops to three small boxes */
+.s5_line_drop_config {
+  top: 254px;
+  left: 58px;
+  width: 2px;
+  height: 0;
+}
+
+.s5_line_drop_plugin {
+  top: 254px;
+  left: 50%;
+  margin-left: -1px;
+  width: 2px;
+  height: 0;
+}
+
+.s5_line_drop_govern {
+  top: 254px;
+  right: 58px;
+  width: 2px;
+  height: 0;
+}
+
+/* Pulse glow for Agent Manager */
+.s5_glow {
+  position: absolute;
+  top: 192px;
+  left: 50%;
+  margin-left: -80px;
+  width: 160px;
+  height: 50px;
+  border-radius: 12px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Keyframes */
+@keyframes s5_scaleIn {
+  from { opacity: 0; transform: scale(0.7); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s5_growDown14 {
+  from { height: 0; opacity: 1; }
+  to   { height: 14px; opacity: 1; }
+}
+
+@keyframes s5_growWideOrgLeft {
+  from { width: 0; opacity: 1; }
+  to   { width: 100px; opacity: 1; }
+}
+
+@keyframes s5_growWideOrgRight {
+  from { width: 0; opacity: 1; }
+  to   { width: 100px; opacity: 1; }
+}
+
+@keyframes s5_growDown36 {
+  from { height: 0; opacity: 1; }
+  to   { height: 36px; opacity: 1; }
+}
+
+@keyframes s5_growDown22 {
+  from { height: 0; opacity: 1; }
+  to   { height: 22px; opacity: 1; }
+}
+
+@keyframes s5_growWideAMLeft {
+  from { width: 0; opacity: 1; }
+  to   { width: 100px; opacity: 1; }
+}
+
+@keyframes s5_growWideAMRight {
+  from { width: 0; opacity: 1; }
+  to   { width: 100px; opacity: 1; }
+}
+
+@keyframes s5_growDown24 {
+  from { height: 0; opacity: 1; }
+  to   { height: 24px; opacity: 1; }
+}
+
+@keyframes s5_growDown16 {
+  from { height: 0; opacity: 1; }
+  to   { height: 16px; opacity: 1; }
+}
+
+@keyframes s5_growWideBottomLeft {
+  from { width: 0; opacity: 1; }
+  to   { width: 122px; opacity: 1; }
+}
+
+@keyframes s5_growWideBottomRight {
+  from { width: 0; opacity: 1; }
+  to   { width: 122px; opacity: 1; }
+}
+
+@keyframes s5_growDown34 {
+  from { height: 0; opacity: 1; }
+  to   { height: 34px; opacity: 1; }
+}
+
+@keyframes s5_pulse {
+  0%   { opacity: 0; box-shadow: 0 0 0 0 rgba(147,51,234,0); }
+  30%  { opacity: 1; box-shadow: 0 0 24px 8px rgba(147,51,234,0.45); }
+  70%  { opacity: 1; box-shadow: 0 0 32px 12px rgba(147,51,234,0.2); }
+  100% { opacity: 0.5; box-shadow: 0 0 18px 6px rgba(147,51,234,0.12); }
+}
+
+/* Step 1 (0.3s): 工程组织 */
+.s5_stage.visible .s5_org {
+  animation: s5_scaleIn 0.5s ease forwards;
+  animation-delay: 0.3s;
+}
+
+/* Step 2 (0.8s): T-connector + DevEx */
+.s5_stage.visible .s5_line_org_stub {
+  animation: s5_growDown14 0.2s ease forwards;
+  animation-delay: 0.8s;
+}
+.s5_stage.visible .s5_line_org_bar_left {
+  animation: s5_growWideOrgLeft 0.3s ease forwards;
+  animation-delay: 0.8s;
+}
+.s5_stage.visible .s5_line_org_bar_right {
+  animation: s5_growWideOrgRight 0.3s ease forwards;
+  animation-delay: 0.8s;
+}
+.s5_stage.visible .s5_line_drop_devex {
+  animation: s5_growDown36 0.25s ease forwards;
+  animation-delay: 0.8s;
+}
+.s5_stage.visible .s5_devex {
+  animation: s5_scaleIn 0.5s ease forwards;
+  animation-delay: 0.8s;
+}
+
+/* Step 3 (1.2s): InfoSec branch */
+.s5_stage.visible .s5_line_drop_infosec {
+  animation: s5_growDown36 0.25s ease forwards;
+  animation-delay: 1.2s;
+}
+.s5_stage.visible .s5_infosec {
+  animation: s5_scaleIn 0.5s ease forwards;
+  animation-delay: 1.2s;
+}
+
+/* Step 4 (1.8s): converging lines + Agent Manager with pulse */
+.s5_stage.visible .s5_line_devex_down {
+  animation: s5_growDown22 0.25s ease forwards;
+  animation-delay: 1.8s;
+}
+.s5_stage.visible .s5_line_infosec_down {
+  animation: s5_growDown22 0.25s ease forwards;
+  animation-delay: 1.8s;
+}
+.s5_stage.visible .s5_line_am_bar_left {
+  animation: s5_growWideAMLeft 0.3s ease forwards;
+  animation-delay: 1.9s;
+}
+.s5_stage.visible .s5_line_am_bar_right {
+  animation: s5_growWideAMRight 0.3s ease forwards;
+  animation-delay: 1.9s;
+}
+.s5_stage.visible .s5_line_am_stub {
+  animation: s5_growDown24 0.2s ease forwards;
+  animation-delay: 2.0s;
+}
+.s5_stage.visible .s5_agent_mgr {
+  animation: s5_scaleIn 0.5s ease-out forwards;
+  animation-delay: 1.8s;
+}
+.s5_stage.visible .s5_glow {
+  animation: s5_pulse 1.2s ease-out forwards;
+  animation-delay: 2.0s;
+}
+
+/* Step 5 (2.4s): T-connector down to 3 small boxes */
+.s5_stage.visible .s5_line_am_down_stub {
+  animation: s5_growDown16 0.2s ease forwards;
+  animation-delay: 2.4s;
+}
+.s5_stage.visible .s5_line_bottom_bar_left {
+  animation: s5_growWideBottomLeft 0.3s ease forwards;
+  animation-delay: 2.5s;
+}
+.s5_stage.visible .s5_line_bottom_bar_right {
+  animation: s5_growWideBottomRight 0.3s ease forwards;
+  animation-delay: 2.5s;
+}
+.s5_stage.visible .s5_line_drop_config {
+  animation: s5_growDown34 0.25s ease forwards;
+  animation-delay: 2.6s;
+}
+.s5_stage.visible .s5_line_drop_plugin {
+  animation: s5_growDown34 0.25s ease forwards;
+  animation-delay: 2.6s;
+}
+.s5_stage.visible .s5_line_drop_govern {
+  animation: s5_growDown34 0.25s ease forwards;
+  animation-delay: 2.6s;
+}
+.s5_stage.visible .s5_config {
+  animation: s5_scaleIn 0.4s ease forwards;
+  animation-delay: 2.7s;
+}
+.s5_stage.visible .s5_plugin {
+  animation: s5_scaleIn 0.4s ease forwards;
+  animation-delay: 2.8s;
+}
+.s5_stage.visible .s5_govern {
+  animation: s5_scaleIn 0.4s ease forwards;
+  animation-delay: 2.9s;
+}
+
+/* === S6 Animation === */
+
+.s6_stage {
+  position: relative;
+  height: 260px;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Left column boxes */
+.s6_box {
+  position: absolute;
+  width: 130px;
+  height: 36px;
+  border-radius: 6px;
+  background: #0369A1;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateX(-30px);
+  white-space: nowrap;
+}
+
+/* Positions for left column boxes — vertically centered in 260px */
+.s6_b1 { left: 40px; top: 58px; }
+.s6_b2 { left: 40px; top: 112px; }
+.s6_b3 { left: 40px; top: 166px; }
+
+/* Right big box */
+.s6_target {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  background: #9333EA;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  right: 50px;
+  top: 90px;
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+/* SVG overlay for lines */
+.s6_svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.s6_svg line {
+  stroke: #94A3B8;
+  stroke-width: 2;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+}
+
+/* Bottom note */
+.s6_note {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  color: #94A3B8;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+/* Keyframes */
+@keyframes s6_slideIn {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes s6_popIn {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s6_drawLine {
+  from { stroke-dashoffset: 200; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes s6_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Triggered animations */
+.s6_stage.visible .s6_b1 {
+  animation: s6_slideIn 0.5s ease-out 0.3s forwards;
+}
+.s6_stage.visible .s6_b2 {
+  animation: s6_slideIn 0.5s ease-out 0.8s forwards;
+}
+.s6_stage.visible .s6_b3 {
+  animation: s6_slideIn 0.5s ease-out 1.3s forwards;
+}
+.s6_stage.visible .s6_ln1,
+.s6_stage.visible .s6_ln2,
+.s6_stage.visible .s6_ln3 {
+  animation: s6_drawLine 0.4s ease-out 1.9s forwards;
+}
+.s6_stage.visible .s6_target {
+  animation: s6_popIn 0.5s ease-out 1.9s forwards;
+}
+.s6_stage.visible .s6_note {
+  animation: s6_fadeIn 0.6s ease-out 2.5s forwards;
+}
+
+/* === A1 Animation === */
+
+.a1_stage {
+  width: 310px;
+  height: 300px;
+  position: relative;
+  margin: 0 auto;
+}
+
+.a1_inner {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.a1_grid_top {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.a1_grid_bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.a1_card {
+  height: 58px;
+  border-radius: 10px;
+  border: 2px solid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: none;
+  box-sizing: border-box;
+}
+
+.a1_card_name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1E293B;
+  line-height: 1.2;
+}
+
+.a1_card_sub {
+  font-size: 10px;
+  color: #64748B;
+  margin-top: 3px;
+}
+
+.a1_card.a1_blue { border-color: #0369A1; }
+.a1_card.a1_purple { border-color: #9333EA; }
+.a1_card.a1_warm { border-color: #D97706; }
+.a1_card.a1_gray { border-color: #94A3B8; }
+
+.a1_harness_wrap {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  border: 2px dashed #94A3B8;
+  border-radius: 14px;
+  opacity: 0;
+  transition: none;
+  pointer-events: none;
+}
+
+.a1_harness_label {
+  position: absolute;
+  bottom: -12px;
+  right: 14px;
+  background: #F5F3FF;
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748B;
+  letter-spacing: 1px;
+}
+
+/* Animations on visible */
+.a1_stage.visible .a1_card {
+  animation: a1_fadeUp 0.4s ease forwards;
+}
+
+.a1_stage.visible .a1_c1 { animation-delay: 0.3s; }
+.a1_stage.visible .a1_c2 { animation-delay: 0.7s; }
+.a1_stage.visible .a1_c3 { animation-delay: 1.1s; }
+.a1_stage.visible .a1_c4 { animation-delay: 1.5s; }
+.a1_stage.visible .a1_c5 { animation-delay: 1.9s; }
+.a1_stage.visible .a1_c6 { animation-delay: 2.3s; }
+.a1_stage.visible .a1_c7 { animation-delay: 2.7s; }
+
+.a1_stage.visible .a1_harness_wrap {
+  animation: a1_fadeIn 0.5s ease forwards;
+  animation-delay: 3.2s;
+}
+
+@keyframes a1_fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes a1_fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* === A2 Animation === */
+
+/* ===== A2: 配置法则实操指南 ===== */
+
+.a2_stage {
+  --a2-blue: #0369A1;
+  --a2-purple: #9333EA;
+  --a2-warm: #D97706;
+  --a2-text: #F1F5F9;
+  --a2-line: #475569;
+  --a2-dot-idle: #334155;
+
+  position: relative;
+  width: 100%;
+  height: 400px;
+  padding: 20px 20px 16px;
+  box-sizing: border-box;
+  font-family: "Inter", "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+  color: var(--a2-text);
+  overflow: hidden;
+}
+
+/* ---------- vertical timeline ---------- */
+
+.a2_timeline {
+  position: absolute;
+  left: 48px;
+  top: 42px;
+  bottom: 60px;
+  width: 3px;
+  background: var(--a2-dot-idle);
+  border-radius: 2px;
+  transform: scaleY(0);
+  transform-origin: top center;
+}
+
+.a2_stage.visible .a2_timeline {
+  animation: a2_drawLine 0.5s 0.0s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes a2_drawLine {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+
+/* ---------- row: dot + connector + card ---------- */
+
+.a2_row {
+  position: absolute;
+  left: 48px;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+}
+
+.a2_row--1 { top: 24px; }
+.a2_row--2 { top: 80px; }
+.a2_row--3 { top: 136px; }
+.a2_row--4 { top: 192px; }
+.a2_row--5 { top: 248px; }
+.a2_row--6 { top: 304px; }
+
+/* staggered entrance */
+.a2_stage.visible .a2_row--1 { animation: a2_fadeSlide 0.4s 0.5s both; }
+.a2_stage.visible .a2_row--2 { animation: a2_fadeSlide 0.4s 1.0s both; }
+.a2_stage.visible .a2_row--3 { animation: a2_fadeSlide 0.4s 1.5s both; }
+.a2_stage.visible .a2_row--4 { animation: a2_fadeSlide 0.4s 2.0s both; }
+.a2_stage.visible .a2_row--5 { animation: a2_fadeSlide 0.4s 2.5s both; }
+.a2_stage.visible .a2_row--6 { animation: a2_fadeSlide 0.4s 3.0s both; }
+
+@keyframes a2_fadeSlide {
+  from { opacity: 0; transform: translateX(8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* dot on the timeline */
+.a2_dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-left: -7.5px;
+  border: 2px solid;
+}
+
+.a2_row--1 .a2_dot,
+.a2_row--2 .a2_dot,
+.a2_row--3 .a2_dot {
+  border-color: var(--a2-blue);
+  background: var(--a2-blue);
+}
+
+.a2_row--4 .a2_dot,
+.a2_row--5 .a2_dot,
+.a2_row--6 .a2_dot {
+  border-color: var(--a2-purple);
+  background: var(--a2-purple);
+}
+
+/* connector line from dot to card */
+.a2_connector {
+  width: 20px;
+  height: 2px;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.a2_row--1 .a2_connector,
+.a2_row--2 .a2_connector,
+.a2_row--3 .a2_connector {
+  background: var(--a2-blue);
+}
+
+.a2_row--4 .a2_connector,
+.a2_row--5 .a2_connector,
+.a2_row--6 .a2_connector {
+  background: var(--a2-purple);
+}
+
+/* card */
+.a2_card {
+  width: 220px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  margin-left: 4px;
+}
+
+.a2_row--1 .a2_card,
+.a2_row--2 .a2_card,
+.a2_row--3 .a2_card {
+  background: var(--a2-blue);
+}
+
+.a2_row--4 .a2_card,
+.a2_row--5 .a2_card,
+.a2_row--6 .a2_card {
+  background: var(--a2-purple);
+}
+
+/* ---------- bottom annotation ---------- */
+
+.a2_footer {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  opacity: 0;
+}
+
+.a2_stage.visible .a2_footer {
+  animation: a2_fadeIn 0.5s 3.6s both;
+}
+
+.a2_footer-text {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--a2-warm);
+  border: 2px solid var(--a2-warm);
+  border-radius: 6px;
+  padding: 4px 14px;
+  letter-spacing: 0.03em;
+}
+
+/* ---------- keyframes ---------- */
+
+@keyframes a2_fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+</style>
+
+<meta name="description" content="Claude Code 已经在数百万行的 monorepo、几十年历史的遗留系统、跨几十个仓库的分布式架构中投入生产了。这不是实验室里的概念验证——数千开发者每天都在用它工作。因为每个大型代码库的部署都受限于它特有的版本控制、团队结构和历史约定，所以这篇文章总结的是 跨越这些差异反复验证过的共性模式 。无论你的代码库是百万行 monorepo、几十年前的遗留">
+<link rel="canonical" href="https://chendi.me/readings/claude-code-at-scale/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<!-- Back button -->
+<button class="back-btn" id="backBtn" onclick="goBack()">←</button>
+<!-- Depth dots -->
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ Layer: Overview ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+<!-- S1: 百万行代码库里的 AI 同事 -->
+<section class="feed-section" style="background:var(--bg-act1)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">百万行代码库里的 AI 同事：<br>已经在跑了</h2>
+  <p class="body-text reveal reveal-d1">Claude Code 已经在数百万行的 monorepo、几十年历史的遗留系统、跨几十个仓库的分布式架构中投入生产了。这不是实验室里的概念验证——数千开发者每天都在用它工作。因为每个大型代码库的部署都受限于它特有的版本控制、团队结构和历史约定，所以这篇文章总结的是<span class="hl">跨越这些差异反复验证过的共性模式</span>。无论你的代码库是百万行 monorepo、几十年前的遗留系统、还是分散在几十个微服务仓库里的分布式架构，这些模式都适用——甚至包括 C、C++、C#、Java、PHP 这些团队通常不会联想到 AI 编码工具的语言。</p>
+  <div class="anim-stage reveal reveal-d2" id="s1-anim"><div class="s1_stage">
+  <div class="s1_box s1_b1">百万行代码</div>
+  <div class="s1_box s1_b2">几十年历史</div>
+  <div class="s1_box s1_b3">几十个仓库</div>
+  <div class="s1_box s1_b4">数千开发者</div>
+  <div class="s1_box_right s1_b5">Claude<br>Code</div>
+  <svg class="s1_svg">
+    <line class="s1_ln1" x1="140" y1="40" x2="200" y2="108" />
+    <line class="s1_ln2" x1="140" y1="100" x2="200" y2="122" />
+    <line class="s1_ln3" x1="140" y1="160" x2="200" y2="138" />
+    <line class="s1_ln4" x1="140" y1="220" x2="200" y2="152" />
+  </svg>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>Claude Code is running in production across multi-million-line monorepos, decades-old legacy systems, distributed architectures spanning dozens of repositories, and at organizations with thousands of developers. These environments present challenges that smaller, simpler codebases don't, whether that's build commands that differ across every subdirectory or legacy code spread across folders with no shared root.</p>
+<p>This article covers the patterns observed that have led to successful adoption of Claude Code at scale. "Large codebase" refers to a wide range of deployments: monorepos with millions of lines, legacy systems built over decades, dozens of microservices across separate repositories, or any combination of the above. That also includes codebases running on languages that teams don't always associate with AI coding tools, such as C, C++, C#, Java, PHP. Claude Code performs better than most teams expect it to in those cases, particularly as of recent model releases. While every large codebase deployment is shaped by its specific version control, team structure, and accumulated conventions, the patterns here generalize across them and are a good starting point for teams considering adopting Claude Code.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S2: 像工程师一样导航代码 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">不需要索引：<br>像工程师一样遍历文件系统</h2>
+  <p class="body-text reveal reveal-d1">Claude Code 导航代码库的方式和软件工程师完全一样——遍历文件系统、读文件、用 grep 定位需要的东西、追踪跨文件的引用。它在开发者本地机器上运行，<span class="hl" style="color:#7DD3FC">不需要构建、维护或上传任何代码库索引</span>。RAG 驱动的 AI 编码工具通过嵌入整个代码库来工作，但在大规模场景下，嵌入管线根本跟不上活跃的工程团队：等开发者查询时，索引反映的可能是几周甚至几小时前的状态——返回的函数可能已经改名了，引用的模块上个迭代就删了，而且不会提示你任何一个已经过时。Agent式搜索避免了这些失败模式：没有嵌入管线要维护，每个开发者的实例直接操作活跃的代码库。</p>
+  <div class="anim-stage reveal reveal-d2" id="s2-anim"><div class="s2_stage">
+  <!-- SVG fork lines -->
+  <svg class="s2_fork_svg" viewBox="0 0 360 380" fill="none">
+    <!-- Left fork: center bottom of origin (180,54) to top center of embed (80,120) -->
+    <line class="s2_svgl" x1="180" y1="54" x2="80" y2="120"/>
+    <!-- Right fork: center bottom of origin (180,54) to top center of traverse (280,120) -->
+    <line class="s2_svgr" x1="180" y1="54" x2="280" y2="120"/>
+  </svg>
+
+  <!-- Step 1: Origin -->
+  <div class="s2_box s2_origin">开发者提问</div>
+
+  <!-- Step 2: Path labels -->
+  <div class="s2_label s2_lbl_rag">RAG</div>
+  <div class="s2_label s2_lbl_agent">Agent</div>
+
+  <!-- Step 3: Left path - Embed -->
+  <div class="s2_box s2_embed">嵌入索引</div>
+
+  <!-- Step 4: Left path - Query + dim + stale -->
+  <div class="s2_line s2_conn_left1"></div>
+  <div class="s2_box s2_query">查询</div>
+  <div class="s2_left_dim"></div>
+  <div class="s2_tag s2_tag_stale">过时</div>
+
+  <!-- Step 5: Right path - Traverse -->
+  <div class="s2_box s2_traverse">遍历文件</div>
+
+  <!-- Step 6: Right path - Grep + glow + live -->
+  <div class="s2_line s2_conn_right1"></div>
+  <div class="s2_box s2_grep">grep定位</div>
+  <div class="s2_right_glow"></div>
+  <div class="s2_tag s2_tag_live">实时</div>
+</div></div>
+  <p class="body-text reveal reveal-d3" style="font-size:14px;color:#94A3B8;">但这种方式有一个权衡：它在 Claude 有足够的<span class="hl" style="color:#C4B5FD">起始上下文</span>知道该往哪里看时效果最好。这意味着 Claude 导航的质量取决于代码库的准备程度——通过 CLAUDE.md 文件和 Skills 来层叠上下文。投入精力做代码库准备的团队，效果明显更好。</p>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>Claude Code navigates a codebase the way a software engineer would: it traverses the file system, reads files, uses grep to find exactly what it needs, and follows references across the codebase. It operates locally on the developer's machine and doesn't require a codebase index to be built, maintained, or uploaded to a server.</p>
+<p>RAG-powered AI coding tools work by embedding the entire codebase and retrieving relevant chunks at query time. At large scale, those systems can fail because embedding pipelines can't keep up with active engineering teams. By the time a developer queries the index, it reflects the codebase as it previously existed weeks, days, or even hours before. Retrieval then returns a function the team renamed two weeks ago, or references a module that was deleted in the last sprint, with no indication that either is out of date.</p>
+<p>Agentic search avoids those failure modes. There's no embedding pipeline or centralized index to maintain as thousands of engineers commit new code. Each developer's instance works from the live codebase.</p>
+<p>But the approach has a tradeoff: it works best when Claude has enough starting context to know where to look. This means the quality of Claude's navigation is shaped by how well the codebase is set up, layering context with CLAUDE.md files and skills. If you ask it to find all instances of a vague pattern across a billion-line codebase, you'll hit context-window limits before the work begins. Teams that invest in codebase setup see better results.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S3: Harness > Model -->
+<section class="feed-section" style="background:var(--bg-act2)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">Harness &gt; Model：<br>生态骨架决定了真正的上限</h2>
+  <p class="body-text reveal reveal-d1">关于 Claude Code 最常见的误解是：它的能力完全由模型决定。团队关注 benchmark，关注测试任务的表现。但实际中，<span class="hl2">围绕模型建起来的生态——也就是 harness——比模型本身更能决定 Claude Code 的表现</span>。这个 harness 由七个组件构成：CLAUDE.md 文件、Hooks、Skills、Plugins、LSP 集成、MCP 服务器和 Subagents。它们的构建顺序很重要，因为每一层都依赖前一层打下的基础。前三个（CLAUDE.md → Hooks → Skills）是核心地基：CLAUDE.md 提供全局上下文，Hooks 让配置能自我进化，Skills 按需加载专业知识。</p>
+  <div class="anim-stage reveal reveal-d2" id="s3-anim"><div class="s3_stage">
+  <div class="s3_block s3_block--primary s3_b1">CLAUDE.md</div>
+  <div class="s3_block s3_block--primary s3_b2">Hooks</div>
+  <div class="s3_block s3_block--primary s3_b3">Skills</div>
+  <div class="s3_block s3_block--accent s3_b4">Plugins</div>
+  <div class="s3_block s3_block--accent s3_b5">LSP</div>
+  <div class="s3_block s3_block--neutral s3_b6">MCP</div>
+  <div class="s3_block s3_block--neutral s3_b7">Subagents</div>
+  <div class="s3_label">
+    <div class="s3_bracket"></div>
+    <div class="s3_label_text">Harness</div>
+  </div>
+</div></div>
+  <p class="hook-line reveal reveal-d3">七个组件各自解决什么问题？它们之间的依赖关系是什么？</p>
+  <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-details',this)">深入组件详解 →</button>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>One of the most common misconceptions about Claude Code is that its capabilities are solely defined by the model used. Teams focus on a model's benchmarks and how it performs on test tasks. In practice, the ecosystem built around the model—the harness—determines how Claude Code performs more than the model alone.</p>
+<p>The harness is built from five extension points—CLAUDE.md files, hooks, skills, plugins, and MCP servers—each serving a different function. The order in which teams build them matters, as each layer builds on what came before. Two additional capabilities, LSP integrations and subagents, round out the setup.</p>
+<p>These are context files that Claude reads automatically at the start of every session: root file for the big picture, subdirectory files for local conventions. They give Claude the codebase knowledge it needed to do anything well. Because they load in every session regardless of the task, keeping them focused on what applies broadly will prevent them from becoming a drag on performance.</p>
+<p>Most teams think of hooks as scripts that prevent Claude from doing something wrong, but their more valuable use is continuous improvement. A stop hook can reflect on what happened during a session and propose CLAUDE.md updates while the context is fresh.</p>
+<p>In a large codebase with dozens of task types, not all expertise needs to be present in every session. Skills solve this through progressive disclosure, offloading specialized workflows and domain knowledge that would otherwise compete for context space and loading them only when the task calls for it.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S4: 三条配置法则 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">大规模部署的三条法则：<br>导航、维护、归属</h2>
+  <p class="body-text reveal reveal-d1">成功的大规模部署中反复出现三个关键模式。第一，<span class="hl" style="color:#7DD3FC">让代码库可导航</span>——Claude 帮忙的能力完全受限于它找到正确上下文的能力，因为加载太多上下文会降低性能，而太少上下文则让 Claude 盲目导航。第二，<span class="hl" style="color:#C4B5FD">随模型进化主动维护配置</span>——为当前模型写的指令可能在下一个模型上适得其反，比如让 Claude 把每次重构拆成单文件修改的规则，在新模型能优雅处理跨文件编辑时反而成了桎梏。第三，<span class="hl" style="color:#FDE68A">分配明确的所有权</span>——技术配置不会自动驱动采纳，需要有人负责集中管理和传播最佳实践。</p>
+  <div class="anim-stage reveal reveal-d2" id="s4-anim"><div class="s4_stage">
+  <div class="s4_foundation"></div>
+  <div class="s4_foundation_label">大规模部署</div>
+  <div class="s4_pillar s4_pillar_1">
+    <div class="s4_pillar_label">可导航</div>
+  </div>
+  <div class="s4_pillar s4_pillar_2">
+    <div class="s4_pillar_label">可维护</div>
+  </div>
+  <div class="s4_pillar s4_pillar_3">
+    <div class="s4_pillar_label">有归属</div>
+  </div>
+  <div class="s4_roof"></div>
+  <div class="s4_roof_label">成功部署</div>
+</div></div>
+  <p class="hook-line reveal reveal-d3" style="color:#C4B5FD;">具体怎么让代码库「可导航」？6 条实操经验和维护策略在这里。</p>
+  <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-details',this)">深入配置法则 →</button>
+</div>
+</section>
+
+<!-- S5: Agent Manager -->
+<section class="feed-section" style="background:var(--bg-act3)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">不只是技术配置：<br>你需要一个 Agent Manager</h2>
+  <p class="body-text reveal reveal-d1">推广最快的组织在广泛开放访问之前就做了专项基础设施投入。有时只是一两个工程师提前搭好了插件和 MCP 套件，有时是整个团队专职管理 AI 编码工具。在这两种场景下，<span class="hl">开发者第一次接触 Claude Code 时就是高效的而非沮丧的</span>，采纳自然就从这些早期体验中扩散开了。这项工作目前通常归属于 Developer Experience 或 Developer Productivity 团队——也就是负责新工程师上手和开发工具建设的职能。一个正在多个组织中浮现的新角色是<span class="hl2">「Agent Manager」</span>——一个混合了 PM 和工程师职能的岗位，专门负责管理 Claude Code 生态系统的配置、权限策略、插件市场和 CLAUDE.md 规范。</p>
+  <div class="anim-stage reveal reveal-d2" id="s5-anim"><div class="s5_stage">
+  <!-- Row 1: Top org box -->
+  <div class="s5_box s5_org">工程组织</div>
+
+  <!-- T-connector from org to row 2 -->
+  <div class="s5_line s5_line_org_stub"></div>
+  <div class="s5_line s5_line_org_bar_left"></div>
+  <div class="s5_line s5_line_org_bar_right"></div>
+  <div class="s5_line s5_line_drop_devex"></div>
+  <div class="s5_line s5_line_drop_infosec"></div>
+
+  <!-- Row 2: DevEx and InfoSec -->
+  <div class="s5_box s5_devex">DevEx</div>
+  <div class="s5_box s5_infosec">InfoSec</div>
+
+  <!-- Lines converging from row 2 to Agent Manager -->
+  <div class="s5_line s5_line_devex_down"></div>
+  <div class="s5_line s5_line_infosec_down"></div>
+  <div class="s5_line s5_line_am_bar_left"></div>
+  <div class="s5_line s5_line_am_bar_right"></div>
+  <div class="s5_line s5_line_am_stub"></div>
+
+  <!-- Row 3: Agent Manager with glow -->
+  <div class="s5_glow"></div>
+  <div class="s5_box s5_agent_mgr">Agent Manager</div>
+
+  <!-- T-connector from AM to row 4 -->
+  <div class="s5_line s5_line_am_down_stub"></div>
+  <div class="s5_line s5_line_bottom_bar_left"></div>
+  <div class="s5_line s5_line_bottom_bar_right"></div>
+  <div class="s5_line s5_line_drop_config"></div>
+  <div class="s5_line s5_line_drop_plugin"></div>
+  <div class="s5_line s5_line_drop_govern"></div>
+
+  <!-- Row 4: Three small boxes -->
+  <div class="s5_box s5_small s5_config">配置</div>
+  <div class="s5_box s5_small s5_plugin">插件</div>
+  <div class="s5_box s5_small s5_govern">治理</div>
+</div></div>
+  <p class="body-text reveal reveal-d3" style="font-size:14px;">自下而上的采纳会产生热情，但如果没有人来集中管理有效的做法，热情会碎片化。在大型组织中——尤其是受监管行业——治理问题很早就会浮出水面：谁控制哪些 Skills 和 Plugins 可用？如何防止数千工程师各自重复造同一个轮子？如何确保 AI 生成的代码和人类写的代码经历相同的审查流程？</p>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>Technical configuration alone doesn't drive adoption. The organizations that got it right invested in the organizational layer, too.</p>
+<p>The rollouts that spread fastest had a dedicated infrastructure investment before broad access. A small team, sometimes even just one person, wired up the tooling so Claude already fit developer workflows when they first touched it. At one company, a couple of engineers built a suite of plugins and MCPs that were available on day one. At another, an entire team focused on managing AI coding tools had the infrastructure in place before the rollout began. In both cases, developers' first experience was productive rather than frustrating, and adoption spread from there.</p>
+<p>The teams doing this work today tend to sit under developer experience or developer productivity, which is typically the function responsible for onboarding new engineers and building developer tooling. An emerging role in several organizations is an agent manager: a hybrid PM/engineer function dedicated to managing the Claude Code ecosystem. For organizations without a dedicated team, the minimum viable version is a DRI: one person with ownership over the Claude Code configuration, the authority to make calls on settings, permissions policy, the plugin marketplace, and CLAUDE.md conventions, and the responsibility to keep them current.</p>
+<p>Bottoms-up adoption generates enthusiasm but can fragment without someone to centralize what works. You need to have an individual or a team assemble and evangelize the right Claude Code conventions (such as a standardized CLAUDE.md hierarchy or a curated set of skills and plugins). Without that work, knowledge will stay tribal and adoption will plateau.</p>
+<p>In large organizations, especially those in regulated industries, governance questions come up early, such as: who controls which skills and plugins are available, how do you prevent thousands of engineers from independently rebuilding the same thing, how do you make sure AI-generated code goes through the same review process as human-generated code? To address these early on, it's suggested to start with a defined set of approved skills, required code review processes, and limited initial access, and expand as confidence builds.</p>
+<p>The smoothest deployments at organizations that establish cross-functional working groups early by bringing together engineering, information security, and governance representatives to define requirements together and build a rollout roadmap.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S6: 收束 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">这些模式的起点：<br>你的代码库、你的团队</h2>
+  <p class="body-text reveal reveal-d1">Claude Code 是为传统软件工程环境设计的——工程师是主要代码贡献者，仓库用 Git，代码遵循标准目录结构。大多数大型代码库都符合这个模型，所以上述模式直接适用。但非传统场景——比如带大量二进制资产的游戏引擎、使用非常规版本控制的环境、或者非工程师直接贡献代码的场景——需要额外的配置工作。本文的指导假设的是传统场景，边缘情况需要<span class="hl" style="color:#7DD3FC">针对你的代码库、工具链和组织做出具体判断</span>。一些历史性的边缘案例——比如有上百万个文件夹的代码库、或使用非 Git 版本控制的遗留系统——会在这个系列的后续文章中专门讨论。</p>
+  <div class="anim-stage reveal reveal-d2" id="s6-anim"><div class="s6_stage">
+  <div class="s6_box s6_b1">Git 仓库 ✓</div>
+  <div class="s6_box s6_b2">标准目录 ✓</div>
+  <div class="s6_box s6_b3">工程师主导 ✓</div>
+  <div class="s6_target">就绪</div>
+  <svg class="s6_svg" viewBox="0 0 390 260" preserveAspectRatio="xMidYMid meet">
+    <line class="s6_ln1" x1="170" y1="76" x2="260" y2="115" />
+    <line class="s6_ln2" x1="170" y1="130" x2="260" y2="130" />
+    <line class="s6_ln3" x1="170" y1="184" x2="260" y2="145" />
+  </svg>
+  <div class="s6_note">边缘场景需要具体判断</div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>Claude Code is designed around conventional software engineering environments where engineers are the primary codebase contributors, the repo uses Git, and code follows standard directory structures. Most large codebases fit this mold, but non-traditional setups such as game engines with large binary assets, environments with unconventional version control, or non-engineers contributing to the codebase require additional configuration work. The guidance assumes a conventional setup and the patterns described have worked across many customers. Any remaining complexity requires judgment specific to your codebase, tooling, and organization. That's where Anthropic's Applied AI team works directly with engineering teams to translate these patterns into your organization's specific requirements.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+</div><!-- end layer-overview -->
+
+<!-- ═══ Layer: Details ═══ -->
+<div class="layer" id="layer-details" data-depth="1">
+
+<!-- A1: 七大组件完整拆解 -->
+<section class="feed-section" style="background:var(--bg-act2)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">七大组件：<br>从文件到服务器，层层递进</h2>
+  <p class="body-text reveal reveal-d1"><strong style="color:var(--accent)">CLAUDE.md 文件</strong>是 Claude 在每次会话开始时自动读取的上下文文件：根目录文件提供全局视角，子目录文件提供本地约定。因为它们在每次会话中都会加载，所以保持内容聚焦在广泛适用的信息上非常关键——否则它们会拖慢性能。<strong style="color:var(--accent2)">Hooks</strong> 是在关键时刻运行的脚本。大多数团队把 Hooks 想象成「防止 Claude 犯错的护栏」，但它们更有价值的用途是持续改进：一个 stop hook 可以在会话结束时反思发生了什么并提议 CLAUDE.md 更新；一个 start hook 可以动态加载团队特定的上下文。<strong style="color:var(--warm)">Skills</strong> 是打包好的专业知识，通过渐进式披露解决上下文竞争问题——只在任务需要时加载，避免在每次会话中都占用上下文空间。</p>
+  <div class="anim-stage reveal reveal-d2" id="a1-anim"><div class="a1_stage">
+  <div class="a1_inner">
+    <div class="a1_grid_top">
+      <div class="a1_card a1_blue a1_c1">
+        <span class="a1_card_name">CLAUDE.md</span>
+        <span class="a1_card_sub">每次会话</span>
+      </div>
+      <div class="a1_card a1_blue a1_c2">
+        <span class="a1_card_name">Hooks</span>
+        <span class="a1_card_sub">事件触发</span>
+      </div>
+      <div class="a1_card a1_purple a1_c3">
+        <span class="a1_card_name">Skills</span>
+        <span class="a1_card_sub">按需加载</span>
+      </div>
+      <div class="a1_card a1_purple a1_c4">
+        <span class="a1_card_name">Plugins</span>
+        <span class="a1_card_sub">安装即用</span>
+      </div>
+    </div>
+    <div class="a1_grid_bottom">
+      <div class="a1_card a1_warm a1_c5">
+        <span class="a1_card_name">LSP</span>
+        <span class="a1_card_sub">常驻</span>
+      </div>
+      <div class="a1_card a1_warm a1_c6">
+        <span class="a1_card_name">MCP</span>
+        <span class="a1_card_sub">常驻</span>
+      </div>
+      <div class="a1_card a1_gray a1_c7">
+        <span class="a1_card_name">Subagents</span>
+        <span class="a1_card_sub">调用时</span>
+      </div>
+    </div>
+    <div class="a1_harness_wrap">
+      <span class="a1_harness_label">Harness</span>
+    </div>
+  </div>
+</div></div>
+  <p class="body-text reveal reveal-d3"><strong style="color:var(--accent)">Plugins</strong> 把 Skills、Hooks 和 MCP 配置打包成一个可安装的套件，解决了好配置停留在部落知识层面的问题——新工程师第一天安装插件就能获得和老手一样的能力。<strong style="color:var(--accent2)">LSP 集成</strong>给 Claude 提供了和 IDE 中一样的「跳转到定义」和「查找所有引用」能力，让它能通过符号而非字符串搜索——在多语言代码库中，这是投入产出比最高的投资之一。<strong style="color:var(--warm)">MCP 服务器</strong>让 Claude 连接到它无法触达的内部工具、数据源和 API。最成熟的团队建了 MCP 服务器，把结构化搜索暴露为 Claude 可以直接调用的工具。<strong style="color:var(--danger)">Subagents</strong> 是独立的 Claude 实例，拥有自己的上下文窗口，接受任务、完成工作、只把最终结果返回给父进程——把探索和编辑隔离开来。</p>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>These are context files that Claude reads automatically at the start of every session: root file for the big picture, subdirectory files for local conventions. They give Claude the codebase knowledge it needed to do anything well. Because they load in every session regardless of the task, keeping them focused on what applies broadly will prevent them from becoming a drag on performance.</p>
+<p>Most teams think of hooks as scripts that prevent Claude from doing something wrong, but their more valuable use is continuous improvement. A stop hook can reflect on what happened during a session and propose CLAUDE.md updates while the context is fresh. A start hook can load team-specific context dynamically so every developer gets the right setup for their module without manual configuration. For automated checks like linting and formatting, hooks enforce the rules deterministically and produce more consistent results than relying on Claude to remember an instruction.</p>
+<p>In a large codebase with dozens of task types, not all expertise needs to be present in every session. Skills solve this through progressive disclosure, offloading specialized workflows and domain knowledge that would otherwise compete for context space and loading them only when the task calls for it. For example, a security review skill loads when Claude is assessing code for vulnerabilities, while a document processing skill loads when a code change is made and documentation needs to be updated.</p>
+<p>Skills can also be scoped to specific paths so they only activate in the relevant part of the codebase. A team that owns a payments service can bind their deployment skill to that directory, so it never auto-loads when someone is working elsewhere in the monorepo.</p>
+<p>One challenge with large codebases is that good setups can stay tribal. A plugin bundles skills, hooks, and MCP configurations into a single installable package, so when a new engineer installs that plugin on day one, they will immediately have the same context and capabilities as those who have been using Claude already. Plugin updates can be distributed across the organization through managed marketplaces.</p>
+<p>Most large-codebase IDEs already have an LSP running, powering "go to definition" and "find all references." Surfacing this to Claude gives it symbol-level precision: it can follow a function call to its definition, trace references across files, and distinguish between identically named functions in different languages. Without it, Claude pattern-matches on text and can land on the wrong symbol.</p>
+<p>MCP servers are how Claude connects to internal tools, data sources, and APIs that it can't otherwise reach. The most sophisticated teams built MCP servers exposing structured search as a tool Claude can call directly. Others connect Claude to internal documentation, ticketing systems, or analytics platforms.</p>
+<p>A subagent is an isolated Claude instance with its own context window that takes a task, does the work, and returns only the final result to the parent. Once the harness is in place, some teams spin up a read-only subagent to map a subsystem and write findings to a file, then have the main agent edit with the full picture.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- A2: 配置法则实操 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">配置实操：<br>六条导航法则 + 维护策略</h2>
+  <p class="body-text reveal reveal-d1">让代码库可导航的六条具体做法。第一，<span class="hl" style="color:#7DD3FC">保持 CLAUDE.md 精简且分层</span>——根文件只放指针和关键注意事项，其他一切都是噪音。第二，<span class="hl" style="color:#C4B5FD">在子目录中初始化，而非仓库根目录</span>——Claude 在范围限定在任务相关部分时效果最好，而且它会自动沿目录树向上加载每一层的 CLAUDE.md。第三，<span class="hl" style="color:#FDE68A">按子目录限定测试和 lint 命令</span>——全量运行测试套件会超时并浪费上下文。第四，用 <code>.ignore</code> 文件排除生成文件、构建产物和第三方代码。第五，当目录结构本身无法传达信息时，在仓库根目录建一个轻量级 markdown 代码库地图。第六，运行 LSP 服务器，让 Claude 按符号搜索而非字符串搜索。</p>
+  <div class="anim-stage reveal reveal-d2" id="a2-anim"><div class="a2_stage">
+
+  <!-- vertical timeline -->
+  <div class="a2_timeline"></div>
+
+  <!-- row 1 -->
+  <div class="a2_row a2_row--1">
+    <div class="a2_dot"></div>
+    <div class="a2_connector"></div>
+    <div class="a2_card">CLAUDE.md 精简分层</div>
+  </div>
+
+  <!-- row 2 -->
+  <div class="a2_row a2_row--2">
+    <div class="a2_dot"></div>
+    <div class="a2_connector"></div>
+    <div class="a2_card">子目录中初始化</div>
+  </div>
+
+  <!-- row 3 -->
+  <div class="a2_row a2_row--3">
+    <div class="a2_dot"></div>
+    <div class="a2_connector"></div>
+    <div class="a2_card">按目录限定命令</div>
+  </div>
+
+  <!-- row 4 -->
+  <div class="a2_row a2_row--4">
+    <div class="a2_dot"></div>
+    <div class="a2_connector"></div>
+    <div class="a2_card">.ignore 排除噪音</div>
+  </div>
+
+  <!-- row 5 -->
+  <div class="a2_row a2_row--5">
+    <div class="a2_dot"></div>
+    <div class="a2_connector"></div>
+    <div class="a2_card">建代码库地图</div>
+  </div>
+
+  <!-- row 6 -->
+  <div class="a2_row a2_row--6">
+    <div class="a2_dot"></div>
+    <div class="a2_connector"></div>
+    <div class="a2_card">运行 LSP 服务器</div>
+  </div>
+
+  <!-- footer annotation -->
+  <div class="a2_footer">
+    <div class="a2_footer-text">每 3-6 个月审查一次</div>
+  </div>
+
+</div></div>
+  <p class="body-text reveal reveal-d3">关于维护：随着模型进化，为当前模型写的指令可能在下一个模型上适得其反。比如一条「每次重构只改一个文件」的规则可能帮助了早期模型保持轨道，但会阻止更新的模型做它擅长的协调式跨文件编辑。团队应该每三到六个月做一次有意义的配置审查，在重大模型发布后性能感觉停滞时也值得做一次。</p>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>Claude's ability to help in a large codebase is bounded by its ability to find the right context. Too much context loaded into every session degrades performance, while too little context leaves Claude to navigate blind. The most effective deployments invest upfront in making the codebase legible to Claude. A few patterns appear consistently:</p>
+<p>Keeping CLAUDE.md files lean and layered. Claude loads them additively as it moves through the codebase: root file for the big picture, subdirectory files for local conventions. The root file should be pointers and critical gotchas only; everything else drifts into noise.</p>
+<p>Initializing in subdirectories, not at the repo root. Claude works best when it's scoped to the part of the codebase that's actually relevant to the task. In monorepos, this can feel counterintuitive because tooling often assumes root access, but Claude automatically walks up the directory tree and loads every CLAUDE.md file it finds along the way, so root-level context is never lost.</p>
+<p>Scoping test and lint commands per subdirectory. Running the full suite when Claude changed one service causes timeouts and wastes context on irrelevant output. CLAUDE.md files at the subdirectory level should specify the commands that apply to that part of the codebase.</p>
+<p>Using .ignore files to exclude generated files, build artifacts, and third-party code. Committing permissions.deny rules in .claude/settings.json means the exclusions are version-controlled, so every developer on the team gets the same noise reduction without configuring it themselves.</p>
+<p>Building codebase maps when the directory structure doesn't do the work. For organizations where code isn't consolidated in a conventional directory structure, a lightweight markdown file at the repo root listing each top-level folder with a one-line description of what lives there gives Claude a table of contents it can scan before opening files.</p>
+<p>Running LSP servers so Claude searches by symbol, not by string. Grep for a common function name in a large codebase returns thousands of matches and Claude burns context opening files to figure out which matters. LSP returns only the references that point to the same symbol, so the filtering happens before Claude reads anything.</p>
+<p>As models evolve, instructions written for your current model can work against a future one. CLAUDE.md files that guided Claude through patterns it used to struggle with may either become unnecessary or actively constraining when the next model ships. For example, a CLAUDE.md rule that tells Claude to break every refactor into single-file changes may have helped an earlier model stay on track but would prevent a newer one from making coordinated cross-file edits it handles well.</p>
+<p>Teams should expect to do a meaningful configuration review every three to six months, but it's also worth doing one whenever performance feels like it's plateaued after major model releases.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+</div><!-- end layer-details -->
+
+<script>
+var currentMode='zoom';
+var layerStack=['layer-overview'];
+var transitioning=false;
+var layerNames={'layer-overview':'概览','layer-details':'组件与法则'};
+var observers=new Map();
+
+function setupObserver(layerId){
+  if(observers.has(layerId))return;
+  var layer=document.getElementById(layerId);
+  var reveals=layer.querySelectorAll('.reveal,[class*="_stage"]');
+  var obs=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});
+  },{threshold:0.15,root:layer});
+  reveals.forEach(function(el){obs.observe(el);});
+  observers.set(layerId,obs);
+}
+function resetReveals(layerId){
+  var layer=document.getElementById(layerId);
+  layer.querySelectorAll('.reveal').forEach(function(el){el.classList.remove('visible');});
+  layer.querySelectorAll('[class*="_stage"]').forEach(function(el){el.classList.remove('visible');});
+}
+function activateReveals(layerId){
+  resetReveals(layerId);
+  if(observers.has(layerId)){observers.get(layerId).disconnect();observers.delete(layerId);}
+  requestAnimationFrame(function(){setupObserver(layerId);});
+}
+function updateBreadcrumb(){
+  var bc=document.getElementById('breadcrumb');
+  bc.innerHTML='';
+  layerStack.forEach(function(id,i){
+    if(i>0){var sep=document.createElement('span');sep.className='sep';sep.textContent='>';bc.appendChild(sep);}
+    var span=document.createElement('span');
+    span.textContent=layerNames[id]||id;
+    if(i===layerStack.length-1){span.className='current';}
+    else{span.addEventListener('click',function(){goBackTo(i);});}
+    bc.appendChild(span);
+  });
+  var backBtn=document.getElementById('backBtn');
+  backBtn.style.display=layerStack.length>1?'flex':'none';
+  bc.style.left=layerStack.length>1?'60px':'16px';
+  var dots=document.getElementById('depthDots');
+  var depth=layerStack.length-1;
+  dots.querySelectorAll('.dot').forEach(function(d,i){d.classList.toggle('active',i===depth);});
+}
+function drillDown(targetId,btnEl){
+  if(transitioning)return;transitioning=true;
+  var currentId=layerStack[layerStack.length-1];
+  var currentLayer=document.getElementById(currentId);
+  var targetLayer=document.getElementById(targetId);
+  targetLayer.scrollTop=0;resetReveals(targetId);targetLayer.style.visibility='visible';
+  var duration=600;
+  currentLayer.style.transition='transform '+duration+'ms ease-out,opacity '+duration+'ms ease-out';
+  currentLayer.style.transformOrigin='center center';currentLayer.style.transform='scale(1.3)';currentLayer.style.opacity='0';
+  targetLayer.classList.add('active');targetLayer.style.opacity='0';targetLayer.style.transform='scale(0.85)';
+  targetLayer.style.transition='transform '+duration+'ms ease-out,opacity '+duration+'ms ease-out';
+  requestAnimationFrame(function(){requestAnimationFrame(function(){targetLayer.style.opacity='1';targetLayer.style.transform='scale(1)';});});
+  setTimeout(function(){
+    currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';
+    targetLayer.style.transition='';targetLayer.style.transform='';
+    activateReveals(targetId);transitioning=false;
+  },duration+50);
+  layerStack.push(targetId);updateBreadcrumb();
+}
+function goBack(){
+  if(layerStack.length<=1||transitioning)return;transitioning=true;
+  var currentId=layerStack.pop();var parentId=layerStack[layerStack.length-1];
+  var currentLayer=document.getElementById(currentId);var parentLayer=document.getElementById(parentId);
+  var duration=600;
+  currentLayer.style.transition='transform '+duration+'ms ease-out,opacity '+duration+'ms ease-out';
+  currentLayer.style.transform='scale(0.85)';currentLayer.style.opacity='0';
+  parentLayer.classList.add('active');parentLayer.style.transform='scale(1.3)';parentLayer.style.opacity='0';
+  parentLayer.style.transition='transform '+duration+'ms ease-out,opacity '+duration+'ms ease-out';
+  requestAnimationFrame(function(){requestAnimationFrame(function(){parentLayer.style.transform='scale(1)';parentLayer.style.opacity='1';});});
+  setTimeout(function(){
+    currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';
+    currentLayer.style.opacity='';currentLayer.style.visibility='';
+    parentLayer.style.transition='';parentLayer.style.transform='';transitioning=false;
+  },duration+50);
+  updateBreadcrumb();
+}
+function goBackTo(targetIndex){
+  if(transitioning)return;
+  while(layerStack.length-1>targetIndex){if(layerStack.length<=1)break;goBack();return;}
+}
+function toggleSource(btn){btn.classList.toggle('open');btn.nextElementSibling.classList.toggle('open');}
+
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+</body>
+</html>

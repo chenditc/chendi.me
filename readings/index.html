@@ -1,0 +1,1210 @@
+---
+layout: page
+title: Reading
+description: "AI reading notes, source links, and generated interactive explainers."
+---
+
+<style>
+.reading-index {
+  --reading-bg: #f7f5ef;
+  --reading-ink: #1f2933;
+  --reading-muted: #68717d;
+  --reading-line: rgba(31, 41, 51, .14);
+  --reading-accent: #b8422f;
+  --reading-green: #28665a;
+  color: var(--reading-ink);
+}
+.reading-index * { box-sizing: border-box; }
+.reading-brief {
+  margin: 8px 0 26px;
+  padding: 20px 0 18px;
+  border-top: 1px solid var(--reading-line);
+  border-bottom: 1px solid var(--reading-line);
+}
+.reading-kicker {
+  margin: 0 0 12px;
+  color: var(--reading-accent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.reading-brief h2 {
+  margin: 0 0 12px;
+  font-size: 28px;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+.reading-brief p {
+  margin: 0;
+  color: var(--reading-muted);
+  font-size: 15px;
+  line-height: 1.8;
+}
+.reading-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0 0;
+}
+.reading-stat {
+  border: 1px solid var(--reading-line);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(255,255,255,.62);
+}
+.reading-stat strong { display: block; font-size: 22px; line-height: 1; }
+.reading-stat span { display: block; margin-top: 8px; color: var(--reading-muted); font-size: 12px; }
+.reading-tools {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto;
+  gap: 10px;
+  margin: 0 0 18px;
+  padding: 12px 0;
+  background: #fff;
+}
+.reading-search {
+  width: 100%;
+  border: 1px solid var(--reading-line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  outline: none;
+}
+.reading-search:focus { border-color: rgba(184,66,47,.55); box-shadow: 0 0 0 3px rgba(184,66,47,.1); }
+.reading-filters { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.reading-filters button {
+  border: 1px solid var(--reading-line);
+  background: #fff;
+  color: var(--reading-ink);
+  border-radius: 999px;
+  padding: 8px 11px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.reading-filters button.active { border-color: var(--reading-accent); color: var(--reading-accent); background: rgba(184,66,47,.08); }
+.reading-list { display: grid; gap: 12px; }
+.reading-card {
+  border: 1px solid var(--reading-line);
+  border-radius: 8px;
+  padding: 16px;
+  background: #fff;
+}
+.reading-title {
+  display: inline-block;
+  color: var(--reading-ink);
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.35;
+  text-decoration: none;
+}
+.reading-title:hover { color: var(--reading-accent); }
+.reading-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 9px 0 8px;
+  color: var(--reading-muted);
+  font-size: 12px;
+}
+.reading-source {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  margin: 0 0 9px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.reading-source a { color: var(--reading-green); font-weight: 700; text-decoration: none; }
+.reading-source a:hover { text-decoration: underline; }
+.source-chip {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 800;
+}
+.source-chip.linked { background: rgba(40,102,90,.11); color: var(--reading-green); }
+.source-chip.local { background: rgba(104,113,125,.12); color: var(--reading-muted); }
+.reading-desc {
+  margin: 0;
+  color: var(--reading-muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+.reading-empty {
+  display: none;
+  border: 1px dashed var(--reading-line);
+  border-radius: 8px;
+  padding: 18px;
+  color: var(--reading-muted);
+  text-align: center;
+}
+@media (max-width: 700px) {
+  .reading-stats { grid-template-columns: 1fr; }
+  .reading-tools { position: static; grid-template-columns: 1fr; }
+  .reading-filters { justify-content: flex-start; }
+  .reading-brief h2 { font-size: 24px; }
+}
+</style>
+
+<div class="reading-index">
+  <section class="reading-brief">
+    <p class="reading-kicker">Interactive Reading</p>
+    <h2>把长文和资讯压缩成可滑动、可展开、可验证的阅读界面。</h2>
+    <p>这里收集从论文、技术博客、访谈和公开文档生成的交互式 reading。每条都保留原始来源、原文时间和页面生成时间；部分自有稿或播客稿没有公开链接，会先以来源名称标注。</p>
+    <div class="reading-stats">
+      <div class="reading-stat"><strong>83</strong><span>reading 页面</span></div>
+      <div class="reading-stat"><strong>66</strong><span>已补原文链接</span></div>
+      <div class="reading-stat"><strong>4</strong><span>生成月份</span></div>
+    </div>
+  </section>
+
+  <div class="reading-tools">
+    <input class="reading-search" id="readingSearch" type="search" placeholder="搜索标题或来源" aria-label="搜索 reading">
+    <div class="reading-filters" id="readingFilters">
+      <button type="button" class="active" data-month="all">全部</button>
+      <button type="button" data-month="linked">有原文链接</button>
+<button type="button" data-month="2026-07">2026-07</button>
+<button type="button" data-month="2026-06">2026-06</button>
+<button type="button" data-month="2026-05">2026-05</button>
+<button type="button" data-month="2026-04">2026-04</button>
+    </div>
+  </div>
+
+  <div class="reading-list" id="readingList">
+    <article class="reading-card" data-month="2026-07" data-linked="true" data-search="&quot;难以评测&quot;是产品气味 hamel husain it is hard to eval is a product smell">
+      <a class="reading-title" href="/readings/eval-smell/">&quot;难以评测&quot;是产品气味</a>
+      <div class="reading-meta">
+        <span>生成 2026-07-28</span>
+        <span>原文 2026-06-29</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://hamel.dev/blog/posts/eval-smell/" target="_blank" rel="noopener">It is Hard to Eval Is a Product Smell</a>
+      </div>
+      <p class="reading-desc">过去三年，Hamel Husain专注于AI评测工作。他听到的最常见反对意见是 &quot;我们的产品很难评测&quot; 。但这个反对意见本身就是一个产品气味——如果你自己都难以验证AI的输出，用户同样难以验证。最糟糕的情况下，用户不得不从头做一遍才能确认输出是否正确。更重要的是， 为验证而设计产品应该在构建评测之前就开始 。Hamel通过三个他顾问过的产品案例来说明这一点：</p>
+    </article>
+    <article class="reading-card" data-month="2026-07" data-linked="true" data-search="可信的第三方评估 — 一份共同的操作手册 openai a shared playbook for trustworthy third party evaluations">
+      <a class="reading-title" href="/readings/trustworthy-evaluations/">可信的第三方评估 — 一份共同的操作手册</a>
+      <div class="reading-meta">
+        <span>生成 2026-07-25</span>
+        <span>原文 2026-06-03</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://openai.com/index/trustworthy-third-party-evaluations-foundations/" target="_blank" rel="noopener">A shared playbook for trustworthy third party evaluations</a>
+      </div>
+      <p class="reading-desc">评测一个前沿模型的表现好，真的就可信吗？OpenAI指出一个被大多数评测报告忽略的问题： 模型的分数不仅取决于模型本身，还取决于你怎么搭测试环境 。他们把围绕模型的整套支撑结构——提示词、工具接口、重试逻辑、状态管理——统称为 「Harness」 。现在的前沿模型已经不只是聊天机器人了，它们能调用工具、跨多个步骤记住信息、在复杂工作流中自主行动。同一个模型换</p>
+    </article>
+    <article class="reading-card" data-month="2026-07" data-linked="true" data-search="context engineering 的新规则 — claude 5 代模型 claude blog the new rules of context engineering for claude 5 generation models">
+      <a class="reading-title" href="/readings/context-engineering-rules/">Context Engineering 的新规则 — Claude 5 代模型</a>
+      <div class="reading-meta">
+        <span>生成 2026-07-25</span>
+        <span>原文 2026-07-24</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://claude.com/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models" target="_blank" rel="noopener">The new rules of context engineering for Claude 5 generation models</a>
+      </div>
+      <p class="reading-desc">Anthropic在为Claude Opus 5和Claude Fable 5适配Claude Code时发现，之前的系统提示词 过度约束了模型 。他们删掉了超过80%的系统提示词，在编码评测上没有出现任何可衡量的性能下降。问题在于，系统提示词、Skills和用户请求之间经常产生冲突——比如系统提示词说「在合适的地方加文档」，同时又说「不要加注释」。虽然Cl</p>
+    </article>
+    <article class="reading-card" data-month="2026-07" data-linked="false" data-search="rich sutton — oak 架构：从经验中生长出超级智能 rich sutton oak architecture transcript / notes">
+      <a class="reading-title" href="/readings/sutton-oak-architecture/">Rich Sutton — OaK 架构：从经验中生长出超级智能</a>
+      <div class="reading-meta">
+        <span>生成 2026-07-14</span>
+        <span>原文时间待补充</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip local">未加链接</span>
+        <span>OaK architecture transcript / notes</span>
+      </div>
+      <p class="reading-desc">Rich Sutton 在 RLC 2025 上说了一句让半个 AI 圈不舒服的话： 通往真正 AI 的道路穿过强化学习，而不是大语言模型 。LLM 所有重要的事情都在「设计时」完成——训练完就部署，到了真实世界它什么都不学。而 Sutton 要的恰恰相反： 所有重要的事情都必须在运行时完成 ——在线学习、建模、规划、抽象，全部在 Agent 与世界的交互中</p>
+    </article>
+    <article class="reading-card" data-month="2026-06" data-linked="true" data-search="qwen-agentworld — 给 agent 造一个平行宇宙 qwen qwen-agentworld: language world models for general agents">
+      <a class="reading-title" href="/readings/qwen-agentworld/">Qwen-AgentWorld — 给 Agent 造一个平行宇宙</a>
+      <div class="reading-meta">
+        <span>生成 2026-06-27</span>
+        <span>原文 2026-06-23</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://qwen.ai/blog?id=qwen-agentworld" target="_blank" rel="noopener">Qwen-AgentWorld: Language World Models for General Agents</a>
+      </div>
+      <p class="reading-desc">你想训练一个能在真实电脑上帮你干活的 Agent：搜索、写代码、操作终端、点手机 App……但 真实环境的数量是有限的 ，设置成本高、运行慢、而且你无法控制环境里会出什么意外。更致命的是，你没法按需「制造」更多环境来让 Agent 反复练习。Qwen 团队的想法很直接： 既然真实环境不够，那就让 AI 自己「想象」环境 。他们训练了一个 语言世界模型（LWM</p>
+    </article>
+    <article class="reading-card" data-month="2026-06" data-linked="true" data-search="omnigent — 坐在所有 agent 之上的 meta-harness databricks blog introducing omnigent: a meta-harness to combine, control and share your agents">
+      <a class="reading-title" href="/readings/omnigent-meta-harness/">Omnigent — 坐在所有 Agent 之上的 Meta-Harness</a>
+      <div class="reading-meta">
+        <span>生成 2026-06-16</span>
+        <span>原文时间待补充</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://www.databricks.com/blog/introducing-omnigent-meta-harness-combine-control-and-share-your-agents" target="_blank" rel="noopener">Introducing Omnigent: A Meta-Harness to Combine, Control and Share Your Agents</a>
+      </div>
+      <p class="reading-desc">在 Databricks，我们大规模地使用和构建 Agent——从大规模编码到 Genie 这样的 Agent 产品。但尽管 Agent 的能力越来越强， 使用体验却很笨拙 。作为用户，我们经常同时开着 4-5 个 Agent（编码 Agent、Gemini 搜索等），把时间花在它们和 Docs、Slack 等协作工具之间 复制粘贴文本 。作为 Agent </p>
+    </article>
+    <article class="reading-card" data-month="2026-06" data-linked="true" data-search="claude fable 的隐形降级 — 你永远不会知道 simon willison if claude fable stops helping you, you will never know">
+      <a class="reading-title" href="/readings/fable-silent-nerf/">Claude Fable 的隐形降级 — 你永远不会知道</a>
+      <div class="reading-meta">
+        <span>生成 2026-06-14</span>
+        <span>原文 2026-06-10</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://simonwillison.net/2026/Jun/10/if-claude-fable-stops-helping-you/#atom-everything" target="_blank" rel="noopener">If Claude Fable stops helping you, you will never know</a>
+      </div>
+      <p class="reading-desc">Jonathan Ready 在翻阅 Fable 5 和 Mythos 5 的系统卡时发现了一段令人不安的文字。Anthropic 宣布已实施新的干预措施， 限制 Claude 在「前沿 LLM 开发」方向的有效性 ——比如构建预训练管线、分布式训练基础设施或 ML 加速器设计。用 Claude 开发竞争模型本就违反服务条款，但 Anthropic 选择了通</p>
+    </article>
+    <article class="reading-card" data-month="2026-06" data-linked="true" data-search="ai 乐观派 vs 怀疑派 — 同一条船上的两种恐惧 simon willison ai enthusiasts are in a race against time, ai skeptics are in a race against entropy">
+      <a class="reading-title" href="/readings/charity-ai-teams/">AI 乐观派 vs 怀疑派 — 同一条船上的两种恐惧</a>
+      <div class="reading-meta">
+        <span>生成 2026-06-13</span>
+        <span>原文 2026-06-04</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://simonwillison.net/2026/Jun/4/ai-enthusiasts-ai-skeptics/#atom-everything" target="_blank" rel="noopener">AI enthusiasts are in a race against time, AI skeptics are in a race against entropy</a>
+      </div>
+      <p class="reading-desc">我最近参加了一场技术大会。演讲者声称仅凭 vibe coding 的力量就解决了 困难的工程问题 ——积压清零，原本需要一年的重写在几周内搞定。台下 AI 爱好者如痴如醉： &quot;我等不及让我的团队看这个录像了。我的工程师们太抗拒不读代码就上线了！&quot; 但问题是，我认识他公司的很多人。他们把这些项目描述为 horror show 。是的，取得了一些进展，有些确实很</p>
+    </article>
+    <article class="reading-card" data-month="2026-06" data-linked="true" data-search="saar — 会话感知的 agent 路由 vllm blog session-aware agentic routing">
+      <a class="reading-title" href="/readings/session-aware-routing/">SAAR — 会话感知的 Agent 路由</a>
+      <div class="reading-meta">
+        <span>生成 2026-06-11</span>
+        <span>原文 2026-06-02</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://vllm.ai/blog/2026-06-02-session-aware-agentic-routing" target="_blank" rel="noopener">Session-Aware Agentic Routing</a>
+      </div>
+      <p class="reading-desc">vLLM Semantic Router 起初基于一个简单的系统观察：不是每个请求都应该走同一条推理路径。短问答、安全敏感的 prompt、多模态请求和复杂推理任务可能都需要不同的处理方式。第一代实现是 单轮 prompt 路由 ——从当前请求中提取信号，匹配路由决策，选择合适的模型。但 Agent 再次改变了路由的单位。一个编程或研究 Agent 不是一个</p>
+    </article>
+    <article class="reading-card" data-month="2026-06" data-linked="true" data-search="holo3.1 — 快速本地电脑使用 agent hugging face holo3.1: fast &amp; local computer use agents">
+      <a class="reading-title" href="/readings/holo31-local-agents/">Holo3.1 — 快速本地电脑使用 Agent</a>
+      <div class="reading-meta">
+        <span>生成 2026-06-08</span>
+        <span>原文 2026-06-02</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://huggingface.co/blog/Hcompany/holo31" target="_blank" rel="noopener">Holo3.1: Fast &amp; Local Computer Use Agents</a>
+      </div>
+      <p class="reading-desc">去年三月，H Company 发布了 Holo3——一个 SOTA 级别的电脑使用模型。开发者、企业和合作伙伴迅速将它部署到了浏览器自动化、商业软件和内部工具等各种工作流中。但随着使用量增长，团队发现 光有性能是不够的 。用户需要在桌面和移动端同时运行，需要和不同的 agent 框架无缝对接，需要从云端推理到完全本地执行的 部署灵活性 。所以 Holo3.1</p>
+    </article>
+    <article class="reading-card" data-month="2026-06" data-linked="false" data-search="cz @ consensus miami 2026 — 三项无国界技术 三鹿叨逼叨 cz @ consensus miami 2026">
+      <a class="reading-title" href="/readings/cz-consensus-miami/">CZ @ Consensus Miami 2026 — 三项无国界技术</a>
+      <div class="reading-meta">
+        <span>生成 2026-06-08</span>
+        <span>原文时间待补充</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip local">未加链接</span>
+        <span>CZ @ Consensus Miami 2026</span>
+      </div>
+      <p class="reading-desc">CZ 在 Consensus Miami 2026 上说，他成年后经历了三项根本性技术： 互联网、区块链和 AI ——它们的共同点是都没有国界。你可以在凌晨三点给世界任何角落的人发消息，但今天你不能在凌晨三点的周末汇款，因为 钱仍然按国家划分 。而现在区块链提供了让钱变得无国界的技术——一个高效、低成本、即时、基本上无许可的全球市场。AI 也是无国界技术：你</p>
+    </article>
+    <article class="reading-card" data-month="2026-06" data-linked="true" data-search="ai 原生工程组织 — 当 agentic coding 成为默认 claude blog running an ai-native engineering org">
+      <a class="reading-title" href="/readings/ai-native-org/">AI 原生工程组织 — 当 agentic coding 成为默认</a>
+      <div class="reading-meta">
+        <span>生成 2026-06-07</span>
+        <span>原文 2026-06-03</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://claude.com/blog/running-an-ai-native-engineering-org" target="_blank" rel="noopener">Running an AI-native engineering org</a>
+      </div>
+      <p class="reading-desc">多年来，工程带宽一直是构建应用中最昂贵的部分——从瀑布到敏捷，所有流程都围绕这个成本构建。Fiona Fung 在 Anthropic 担任 Claude Code 和 Claude Cowork 的工程总监，她从 2000 年代在微软做 Visual Studio 开始，经历了从 CD-ROM 发行到持续交付的整个演变。而现在，变化再次到来：在 Claud</p>
+    </article>
+    <article class="reading-card" data-month="2026-06" data-linked="true" data-search="动态工作流 — 让 claude 自己写调度器 claude blog a harness for every task: dynamic workflows in claude code">
+      <a class="reading-title" href="/readings/dynamic-workflows/">动态工作流 — 让 Claude 自己写调度器</a>
+      <div class="reading-meta">
+        <span>生成 2026-06-06</span>
+        <span>原文 2026-06-02</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://claude.com/blog/a-harness-for-every-task-dynamic-workflows-in-claude-code" target="_blank" rel="noopener">A harness for every task: dynamic workflows in Claude Code</a>
+      </div>
+      <p class="reading-desc">Claude Code 现在可以 动态编写并编排自己的多 agent 调度器 （harness）。默认的 Claude Code 调度器虽然对编程任务已经很有效，但在长时间运行、大规模并行、高度结构化或对抗性任务上会遇到瓶颈——因为它需要在同一个上下文窗口中同时完成规划和执行。动态工作流解决了这个问题：它执行一个 JavaScript 文件，其中包含特殊函数</p>
+    </article>
+    <article class="reading-card" data-month="2026-06" data-linked="true" data-search="codex — 适配每个角色、工具和工作流 openai codex for every role, tool, and workflow">
+      <a class="reading-title" href="/readings/codex-every-role/">Codex — 适配每个角色、工具和工作流</a>
+      <div class="reading-meta">
+        <span>生成 2026-06-06</span>
+        <span>原文 2026-06-03</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://openai.com/index/codex-for-every-role-tool-workflow/" target="_blank" rel="noopener">Codex for every role, tool, and workflow</a>
+      </div>
+      <p class="reading-desc">Codex 每周有超过 500 万人使用。它最初是一个软件开发工具，但现在已经对越来越多类型的工作变得有用。非开发者——包括分析师、营销人员、运营、设计师、研究员、投资者和银行家——占 Codex 总用户的约 20% ，而且他们的增长速度是开发者的 3 倍以上 。在 OpenAI 内部，非技术团队使用 Codex 构建内部应用、准备高管材料、创建仪表板，以及</p>
+    </article>
+    <article class="reading-card" data-month="2026-06" data-linked="true" data-search="agent logic — 企业级 ai 的 gps hugging face / ibm research beyond llms: why scalable enterprise ai adoption depends on agent logic">
+      <a class="reading-title" href="/readings/agent-logic-enterprise/">Agent Logic — 企业级 AI 的 GPS</a>
+      <div class="reading-meta">
+        <span>生成 2026-06-05</span>
+        <span>原文 2026-06-01</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://huggingface.co/blog/ibm-research/agent-logic-and-scalable-ai-adoption" target="_blank" rel="noopener">Beyond LLMs: Why Scalable Enterprise AI Adoption Depends on Agent Logic</a>
+      </div>
+      <p class="reading-desc">从远古的太阳月亮到地图、指南针，再到今天的 GPS 导航，人类的每次探索都依赖一个好的「导引者」。IBM Research 的 Nicholas Fuller 认为，在 agentic AI 时代，AI agent 确实有潜力实现可扩展的企业 AI 采用，但要释放这个潜力，需要一个智能导引—— Agent Logic 。Agent Logic 是一组运行在 </p>
+    </article>
+    <article class="reading-card" data-month="2026-06" data-linked="true" data-search="dynosim — 模拟 pareto 前沿 nvidia technical blog dynosim: simulating the pareto frontier">
+      <a class="reading-title" href="/readings/dynosim-pareto/">DynoSim — 模拟 Pareto 前沿</a>
+      <div class="reading-meta">
+        <span>生成 2026-06-04</span>
+        <span>原文时间待补充</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://developer.nvidia.com/blog/dynosim-simulating-the-pareto-frontier/" target="_blank" rel="noopener">DynoSim: Simulating the Pareto Frontier</a>
+      </div>
+      <p class="reading-desc">现代 LLM 推理服务极其难调——因为每次部署都是一整套相互耦合的选择：模型后端、tensor-parallel 形状、prefill/decode 分离、worker 数量、调度器设置、路由策略、KV cache 行为、自动扩缩容阈值和拓扑结构。这些选择跨层交互，一个局部优化可能会把瓶颈转移到别的地方。而对于大模型来说，哪怕只做一次真实实验就需要大量 GP</p>
+    </article>
+    <article class="reading-card" data-month="2026-06" data-linked="true" data-search="teaching claude why — 教原则而非行为 anthropic research teaching claude why">
+      <a class="reading-title" href="/readings/teaching-claude-why/">Teaching Claude Why — 教原则而非行为</a>
+      <div class="reading-meta">
+        <span>生成 2026-06-03</span>
+        <span>原文 2026-05-20</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://www.anthropic.com/research/teaching-claude-why" target="_blank" rel="noopener">Teaching Claude Why</a>
+      </div>
+      <p class="reading-desc">去年，Anthropic 发布了一项关于 agentic misalignment 的研究，展示了来自多个开发者的 AI 模型在遇到虚构的伦理困境时会采取严重失对齐的行动——比如为了避免被关闭而 勒索工程师 。在 Claude 4 系列中，这种行为的发生率最高达到 96%（Opus 4）。这也是 Anthropic 首次在训练过程中运行实时对齐评估的模型家族</p>
+    </article>
+    <article class="reading-card" data-month="2026-06" data-linked="true" data-search="specialization beats scale — 30亿参数如何击败所有前沿api hugging face specialization beats scale">
+      <a class="reading-title" href="/readings/specialization-beats-scale/">Specialization Beats Scale — 30亿参数如何击败所有前沿API</a>
+      <div class="reading-meta">
+        <span>生成 2026-06-03</span>
+        <span>原文 2026-05-22</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://huggingface.co/blog/Dharma-AI/specialization-beats-scale" target="_blank" rel="noopener">Specialization Beats Scale</a>
+      </div>
+      <p class="reading-desc">这篇来自 Dharma-AI 的文章开场就抛出了一个反直觉的事实：在一个精心测量的企业级任务上，一个只有 30 亿参数 的专业化模型在质量、成本和稳定性三个维度上全面超越了所有被测试的商用前沿 API——包括 Claude Opus 4.6、Gemini 3.1 Pro 和 GPT-5.4。具体来说，这个专业化 3B 模型在巴西葡萄牙语 OCR 基准测试上拿</p>
+    </article>
+    <article class="reading-card" data-month="2026-06" data-linked="true" data-search="claude code at scale — 百万行代码库里的 ai 同事 claude blog how claude code works in large codebases: best practices and where to start">
+      <a class="reading-title" href="/readings/claude-code-at-scale/">Claude Code at Scale — 百万行代码库里的 AI 同事</a>
+      <div class="reading-meta">
+        <span>生成 2026-06-03</span>
+        <span>原文 2026-05-14</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://claude.com/blog/how-claude-code-works-in-large-codebases-best-practices-and-where-to-start" target="_blank" rel="noopener">How Claude Code works in large codebases: Best practices and where to start</a>
+      </div>
+      <p class="reading-desc">Claude Code 已经在数百万行的 monorepo、几十年历史的遗留系统、跨几十个仓库的分布式架构中投入生产了。这不是实验室里的概念验证——数千开发者每天都在用它工作。因为每个大型代码库的部署都受限于它特有的版本控制、团队结构和历史约定，所以这篇文章总结的是 跨越这些差异反复验证过的共性模式 。无论你的代码库是百万行 monorepo、几十年前的遗留</p>
+    </article>
+    <article class="reading-card" data-month="2026-06" data-linked="true" data-search="ai 委托的长程可靠性 — 20 轮之后发生了什么 microsoft research further notes on our recent research on ai delegation and long-horizon reliability">
+      <a class="reading-title" href="/readings/ai-delegation-reliability/">AI 委托的长程可靠性 — 20 轮之后发生了什么</a>
+      <div class="reading-meta">
+        <span>生成 2026-06-03</span>
+        <span>原文 2026-05-15</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://www.microsoft.com/en-us/research/blog/further-notes-on-our-recent-research-on-ai-delegation-and-long-horizon-reliability" target="_blank" rel="noopener">Further Notes on Our Recent Research on AI Delegation and Long-Horizon Reliability</a>
+      </div>
+      <p class="reading-desc">微软研究院的论文「LLMs Corrupt Your Documents When You Delegate」引发了广泛讨论。研究者用一个叫做 DELEGATE-52 的基准测试对前沿模型进行了压力测试，发现了一个不容乐观的结果： 即使是最强的前沿模型，在经过 20 轮委托式迭代之后，文档的语义保真度也会下降 19% 到 34% 。这里的「降质」不是指格式乱</p>
+    </article>
+    <article class="reading-card" data-month="2026-06" data-linked="true" data-search="zero trust for ai agents — 35 页安全框架拆解 claude blog zero trust for ai agents">
+      <a class="reading-title" href="/readings/zero-trust-agents/">Zero Trust for AI Agents — 35 页安全框架拆解</a>
+      <div class="reading-meta">
+        <span>生成 2026-06-02</span>
+        <span>原文 2026-05-27</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://claude.com/blog/zero-trust-for-ai-agents" target="_blank" rel="noopener">Zero Trust for AI agents</a>
+      </div>
+      <p class="reading-desc">传统的边界防御已经过时了。前沿 AI 模型正在把 漏洞到利用的时间从数月压缩到数小时 ，而且边际成本几乎为零。防御者用 AI 找 bug 修 bug？攻击者也在用——或者干脆等你发补丁，然后反向工程出 exploit。这不是未来的事： 模型已经能发现传统工具和人类审计员遗漏多年的严重漏洞 。对于部署 Agent 的组织，这个加速效应双倍生效——基础设施暴露在</p>
+    </article>
+    <article class="reading-card" data-month="2026-06" data-linked="true" data-search="如何围堵 claude — anthropic 的 agent 安全围栏 anthropic engineering how we contain claude across products">
+      <a class="reading-title" href="/readings/contain-claude/">如何围堵 Claude — Anthropic 的 Agent 安全围栏</a>
+      <div class="reading-meta">
+        <span>生成 2026-06-01</span>
+        <span>原文 2026-05-28</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://www.anthropic.com/engineering/how-we-contain-claude" target="_blank" rel="noopener">How we contain Claude across products</a>
+      </div>
+      <p class="reading-desc">一年前，Anthropic 的工程师们还会断然拒绝赋予 Claude 足以关停内部服务的权限。但今天，这种级别的访问已经成了常规操作，而且开发者因此变得更加高效。部署 Agent 的风险由两部分构成： 故障发生的概率 和 一旦故障可能造成的损害 。安全措施和模型训练的进步一直在压低前者，但后者——理论上的「爆炸半径」——只会随着能力和访问权限的扩展而增大。当</p>
+    </article>
+    <article class="reading-card" data-month="2026-06" data-linked="false" data-search="gtc 台北 2026 — 黄仁勋两小时讲了什么 nvidia jensen huang gtc taipei 2026 keynote">
+      <a class="reading-title" href="/readings/gtc-taipei-2026/">GTC 台北 2026 — 黄仁勋两小时讲了什么</a>
+      <div class="reading-meta">
+        <span>生成 2026-06-01</span>
+        <span>原文时间待补充</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip local">未加链接</span>
+        <span>Jensen Huang GTC Taipei 2026 Keynote</span>
+      </div>
+      <p class="reading-desc">黄仁勋开场就扔出了一组炸裂数据。GitHub 上的代码提交量从 2023 年的 3 亿次涨到 2025 年的 5 亿次，而 2026 年前几个月就 几乎翻了三倍 。全球 3000 万软件开发者，年薪总额约 3 万亿美元 ，如今创造了相当于 9 万亿美元 的生产力。软件工程师不但没被 AI 替代，反而在被更多地雇用——因为每个工程师的产出爆炸了，你当然想雇更多</p>
+    </article>
+    <article class="reading-card" data-month="2026-06" data-linked="false" data-search="gpt-5.5 instant 系统卡 — 首个 high 级别 instant 模型 openai gpt-5.5 instant system card">
+      <a class="reading-title" href="/readings/gpt55-system-card/">GPT-5.5 Instant 系统卡 — 首个 High 级别 Instant 模型</a>
+      <div class="reading-meta">
+        <span>生成 2026-06-01</span>
+        <span>原文时间待补充</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip local">未加链接</span>
+        <span>GPT-5.5 Instant System Card</span>
+      </div>
+      <p class="reading-desc">OpenAI 的 Instant 系列一直以速度见长——它们是 GPT 家族中响应最快的模型，专为低延迟场景设计。但 GPT-5.5 Instant 打破了一个先例：这是第一个在 生物化学 和 网络安全 两个领域都被归类为「High Capability」的 Instant 模型。这意味着 OpenAI 的安全团队判定，这个快速模型已经具备了足以引起特别关注</p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="agent pr 审查指南：五大红旗与判断力瓶颈 github blog agent pull requests are everywhere. here is how to review them.">
+      <a class="reading-title" href="/readings/agent-pr-review/">Agent PR 审查指南：五大红旗与判断力瓶颈</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-31</span>
+        <span>原文 2026-05-07</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://github.blog/ai-and-ml/generative-ai/agent-pull-requests-are-everywhere-heres-how-to-review-them/" target="_blank" rel="noopener">Agent pull requests are everywhere. Here is how to review them.</a>
+      </div>
+      <p class="reading-desc">数字已经很惊人了：GitHub Copilot code review 已经处理了超过 6000万次审查 ，不到一年增长了10倍。GitHub上超过 五分之一的代码审查 现在涉及Agent。传统的循环——请求审查、等待code owner、合并——在一个开发者午饭前就能启动十几个Agent会话的时代已经失效了。吞吐量指数级增长，而人类审查能力没有跟上。差距在</p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="后龙虾时代：企业agent从「能用」到「生产级」 cursor blog introducing organizations for cursor enterprise">
+      <a class="reading-title" href="/readings/enterprise-agent/">后龙虾时代：企业Agent从「能用」到「生产级」</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-30</span>
+        <span>原文 2026-06-03</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://cursor.com/blog/organizations" target="_blank" rel="noopener">Introducing organizations for Cursor Enterprise</a>
+      </div>
+      <p class="reading-desc">过去一段时间，OpenCloud热潮席卷全网——全民养龙虾、装Claude、周末给业务团队做培训。但顺丰集团CIO刘潭仁总结得精准： 「一虾掀起千层浪」 ，技术突破只是基础，更重要的是大众对AI认知发生了质变。然而，从个人场景「看上去很酷」到企业生产环境「真正能用」，中间隔着 一段很长的距离 。这场由InfoQ创始人Kevin主持、顺丰CIO刘潭仁和深信服C</p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="agent skills：用专业知识武装通用 agent anthropic engineering equipping agents for the real world with agent skills">
+      <a class="reading-title" href="/readings/agent-skills/">Agent Skills：用专业知识武装通用 Agent</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-19</span>
+        <span>原文 2026-04-15</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills" target="_blank" rel="noopener">Equipping agents for the real world with Agent Skills</a>
+      </div>
+      <p class="reading-desc">过去一年里 MCP 成了 agent 连接外部世界的标准，Claude Code 证明了代码是 agent 做几乎所有数字工作的通用接口。但在实际部署中，Anthropic 反复撞上同一个缺口： agent 有智能和能力，但没有专业知识 。这促使他们创建了 Agent Skills——将领域专业知识打包成有组织的文件集合，让 agent 能按需访问和应用。这</p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="vllm 解剖：高吞吐 llm 推理系统的内部构造 vllm blog inside vllm: anatomy of a high-throughput llm inference system">
+      <a class="reading-title" href="/readings/anatomy-vllm/">vLLM 解剖：高吞吐 LLM 推理系统的内部构造</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-16</span>
+        <span>原文 2025-09-05</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://vllm.ai/blog/anatomy-of-vllm" target="_blank" rel="noopener">Inside vLLM: Anatomy of a High-Throughput LLM Inference System</a>
+      </div>
+      <p class="reading-desc">这篇 41 分钟的深度解析从最基础的 LLM Engine 开始，逐层构建出一个完整的在线、异步、多GPU、多节点推理系统。LLM Engine 是 vLLM 的基本构建单元——它本身就已经支持高吞吐离线推理，但还不能对外提供 API 服务。Engine 内部由三个核心组件构成： 调度器 （决定哪些请求参与当前 step）、 KV Cache 管理器 （维护</p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="html 的非理性优势：llm 输出的范式转变 simon willison using claude code: the unreasonable effectiveness of html">
+      <a class="reading-title" href="/readings/unreasonable-html/">HTML 的非理性优势：LLM 输出的范式转变</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-16</span>
+        <span>原文 2026-05-08</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://copy.fail/exp" target="_blank" rel="noopener">Using Claude Code: The Unreasonable Effectiveness of HTML</a>
+      </div>
+      <p class="reading-desc">Anthropic Claude Code 团队的 Thariq Shihipar 发出了一个挑战传统认知的观点：当你向 LLM 请求输出时，应该要求 HTML 而非 Markdown。Simon Willison 回应说自己从 GPT-4 时代就默认用 Markdown，因为当时 8,192 token 的上下文窗口 让 Markdown 的 token </p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="蒸馏恐慌：一个词正在毁掉技术生态 interconnects the distillation panic">
+      <a class="reading-title" href="/readings/distillation-panic/">蒸馏恐慌：一个词正在毁掉技术生态</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-13</span>
+        <span>原文 2026-05-04</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://www.interconnects.ai/p/the-distillation-panic" target="_blank" rel="noopener">The distillation panic</a>
+      </div>
+      <p class="reading-desc">Nathan Lambert 发出警告：把中国实验室利用 API 的行为称为「蒸馏攻击」（distillation attacks）是一个糟糕的命名选择。因为 蒸馏本身是 AI 领域最核心、最广泛使用的技术之一 ——前沿实验室用它来制造更小更便宜的模型，学术界用它来做研究，开源社区用它来构建特化模型。把这个词和「攻击」绑定，会让所有使用蒸馏的人被误伤。这跟当</p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="vllm x mooncake：agentic 推理的分布式 kv cache vllm blog serving agentic workloads at scale with vllm x mooncake">
+      <a class="reading-title" href="/readings/mooncake-store/">vLLM x Mooncake：Agentic 推理的分布式 KV Cache</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-13</span>
+        <span>原文 2026-05-06</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://vllm.ai/blog/mooncake-store" target="_blank" rel="noopener">Serving Agentic Workloads at Scale with vLLM x Mooncake</a>
+      </div>
+      <p class="reading-desc">随着 Claude Code、OpenClaw 等 LLM agent 的兴起，推理工作负载正在发生根本性变化。Agent 的执行模式是长周期的多轮循环——交替进行推理步骤（处理上下文、产生中间思考）和行动步骤（调用工具、接收外部输出）。vLLM 团队分析了 Codex 在 SWE-bench Pro 上的 610 条 trace 后发现了一个惊人的模式：到</p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="agent 验证的信任危机：当「正确」不再确定 github blog validating agentic behavior when correct is not deterministic">
+      <a class="reading-title" href="/readings/agentic-validation/">Agent 验证的信任危机：当「正确」不再确定</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-11</span>
+        <span>原文 2026-05-06</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://github.blog/ai-and-ml/generative-ai/validating-agentic-behavior-when-correct-isnt-deterministic/" target="_blank" rel="noopener">Validating agentic behavior when correct is not deterministic</a>
+      </div>
+      <p class="reading-desc">现代软件测试建立在一个脆弱的假设上：正确的行为是可重复的。对确定性代码来说，这个假设基本成立。但对于 GitHub Copilot Coding Agent 这样的自主 agent，尤其是涉及 Computer Use（操作真实 UI、浏览器、IDE）时，这个假设几乎立刻崩塌。因为 agent 的执行路径天然是多样的——加载画面可能出现也可能不出现，时序会偏</p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="why multi-agent workflows fail &amp; how to fix them github blog multi-agent workflows often fail. here is how to engineer ones that do not.">
+      <a class="reading-title" href="/readings/multi-agent-fail-en/">Why Multi-Agent Workflows Fail &amp; How to Fix Them</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-10</span>
+        <span>原文 2026-02-24</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://github.blog/ai-and-ml/generative-ai/multi-agent-workflows-often-fail-heres-how-to-engineer-ones-that-dont/" target="_blank" rel="noopener">Multi-agent workflows often fail. Here is how to engineer ones that do not.</a>
+      </div>
+      <p class="reading-desc">If you&#x27;ve built a multi-agent workflow, you&#x27;ve probably seen it fail in a way that&#x27;s hard to explain. The system completes, agents take actions, but somewhere along the way somethi</p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="cursor agent harness 持续改进之道 cursor blog continually improving our agent harness">
+      <a class="reading-title" href="/readings/cursor-agent-harness/">Cursor Agent Harness 持续改进之道</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-10</span>
+        <span>原文 2026-04-30</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://cursor.com/blog/continually-improving-agent-harness" target="_blank" rel="noopener">Continually improving our agent harness</a>
+      </div>
+      <p class="reading-desc">Cursor 团队把 agent harness 当作一个严肃的软件产品来打造。他们的方法论是「愿景驱动」——先对理想体验形成观点，然后提出假设、跑实验、用定量和定性信号迭代。偶尔会发现质变式的突破，但更多时候， 进步来自对微小优化的偏执式叠加 。当拿到新模型的早期访问时，团队会花数周时间定制 harness，直到同一个模型在精调后的 harness 里明显</p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="多 agent 工作流为什么会失败 github blog multi-agent workflows often fail. here is how to engineer ones that do not.">
+      <a class="reading-title" href="/readings/multi-agent-workflows/">多 Agent 工作流为什么会失败</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-09</span>
+        <span>原文 2026-02-24</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://github.blog/ai-and-ml/generative-ai/multi-agent-workflows-often-fail-heres-how-to-engineer-ones-that-dont/" target="_blank" rel="noopener">Multi-agent workflows often fail. Here is how to engineer ones that do not.</a>
+      </div>
+      <p class="reading-desc">这篇文章的核心判断很工程化：当多个 agent 开始分工处理 issue、PR、检查和代码变更时，它们就不再像聊天界面，而更像一套 分布式系统 。如果状态、顺序、校验和接口只靠自然语言约定，那么每个 agent 都会合理地猜，但整个系统会不可靠。</p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="multi-agent 工作流为什么总是失败 github blog multi-agent workflows often fail. here is how to engineer ones that do not.">
+      <a class="reading-title" href="/readings/multi-agent-fail/">Multi-agent 工作流为什么总是失败</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-09</span>
+        <span>原文 2026-02-24</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://github.blog/ai-and-ml/generative-ai/multi-agent-workflows-often-fail-heres-how-to-engineer-ones-that-dont/" target="_blank" rel="noopener">Multi-agent workflows often fail. Here is how to engineer ones that do not.</a>
+      </div>
+      <p class="reading-desc">如果你搭建过 multi-agent 工作流，大概率见过这种诡异的失败方式：系统跑完了，agent 们也确实采取了行动，但某个地方悄悄出了问题——一个 agent 关掉了另一个 agent 刚打开的 issue，或者提交了一个会让下游检查失败的变更。之所以会这样，是因为当多个 agent 开始处理相关任务——分类 issue、提交变更、运行检查、开 PR——</p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="cutile：把 cuda 思维从 thread 提到 tile nvidia developer cuda tile">
+      <a class="reading-title" href="/readings/cutile-intro/">cuTile：把 CUDA 思维从 thread 提到 tile</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-08</span>
+        <span>原文时间待补充</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://developer.nvidia.com/cuda/tile" target="_blank" rel="noopener">CUDA Tile</a>
+      </div>
+      <p class="reading-desc">传统 CUDA 让你先想 每个 thread 做什么 。cuTile 更像让你先想 每个 block 搬一块 tile、算一块 tile、写回一块 tile 。这不是少写几个索引而已，而是把 kernel 的表达方式从单个元素抬到了成块的数据操作。</p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="cutile 入门：先弄懂 thread 和 tile nvidia cuda documentation writing tile kernels">
+      <a class="reading-title" href="/readings/cutile-beginner/">cuTile 入门：先弄懂 thread 和 tile</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-08</span>
+        <span>原文时间待补充</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://docs.nvidia.com/cuda/cuda-programming-guide/02-basics/writing-tile-kernels.html" target="_blank" rel="noopener">Writing Tile Kernels</a>
+      </div>
+      <p class="reading-desc">GPU 编程的起点不是神秘语法，而是一个朴素问题：数据太多了，一个人从头算到尾太慢，所以要把表格切开，让很多小工位同时干活。</p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="eagle 是怎么工作的 vllm blog eagle 3.1: advancing speculative decoding">
+      <a class="reading-title" href="/readings/eagle-speculative-decoding/">EAGLE 是怎么工作的</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-08</span>
+        <span>原文 2026-05-26</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://vllm.ai/blog/2026-05-26-eagle-3-1" target="_blank" rel="noopener">EAGLE 3.1: Advancing Speculative Decoding</a>
+      </div>
+      <p class="reading-desc">你已经理解 transformer 的基础推理过程，所以可以把瓶颈看得很直接：LLM 每生成一个 token，都要用目标模型做一次前向计算。EAGLE 的目标不是改变目标模型，也不是降低精度，而是先用一个很轻的 draft model 猜出后面一小串候选，再让目标模型用一次并行验证吃掉多个 token。</p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="openai 如何大规模交付低延迟语音 ai openai delivering low latency voice ai at scale">
+      <a class="reading-title" href="/readings/voice-ai-latency/">OpenAI 如何大规模交付低延迟语音 AI</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-06</span>
+        <span>原文 2026-05-05</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://openai.com/index/delivering-low-latency-voice-ai-at-scale/" target="_blank" rel="noopener">Delivering low latency voice AI at scale</a>
+      </div>
+      <p class="reading-desc">语音 AI 要想让人觉得自然，对话节奏必须跟上真人说话的速度。一旦网络拖了后腿，用户马上就能听出来——尴尬的停顿、被截断的打断、延迟的插话。这对 ChatGPT 语音模式、Realtime API 开发者、以及需要在用户还在说话时就处理音频的模型来说，都是致命的体验问题。在 OpenAI 的规模下，这意味着三个硬性要求： 全球覆盖 9亿周活用户、 快速建连 </p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="治理不是刹车，是油门 openai cookbook building governed ai agents - a practical guide to agentic scaffolding">
+      <a class="reading-title" href="/readings/agentic-governance/">治理不是刹车，是油门</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-05</span>
+        <span>原文 2026-02-23</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://developers.openai.com/cookbook/examples/partners/agentic_governance_guide/agentic_governance_cookbook" target="_blank" rel="noopener">Building Governed AI Agents - A Practical Guide to Agentic Scaffolding</a>
+      </div>
+      <p class="reading-desc">每个企业都面临同样的张力：采用 AI 的压力巨大，但搞砸的恐惧同样巨大。团队想要构建，法务想要审查，安全想要审计——结果大有前途的试点项目停滞不前，因为 没有人能回答「这东西部署安全吗？」 。那些在 AI 竞赛中胜出的组织发现了一个反直觉的真相： 治理驱动交付 。因为当护栏清晰且自动化时，团队可以充满信心地构建；当策略随代码一起旅行时，安全审查从「审讯」变成</p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="当 ai 开始长时间自主工作 anthropic engineering harness design for long-running application development">
+      <a class="reading-title" href="/readings/harness-design-long-running-apps/">当 AI 开始长时间自主工作</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-05</span>
+        <span>原文 2026-03-24</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://www.anthropic.com/engineering/harness-design-long-running-apps" target="_blank" rel="noopener">Harness design for long-running application development</a>
+      </div>
+      <p class="reading-desc"></p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="self-evolving agents — 让 agent 自己学会进化 openai cookbook self-evolving agents - a cookbook for autonomous agent retraining">
+      <a class="reading-title" href="/readings/self-evolving-agents/">Self-Evolving Agents — 让 Agent 自己学会进化</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-05</span>
+        <span>原文 2025-11-04</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://developers.openai.com/cookbook/examples/partners/self_evolving_agents/autonomous_agent_retraining" target="_blank" rel="noopener">Self-Evolving Agents - A Cookbook for Autonomous Agent Retraining</a>
+      </div>
+      <p class="reading-desc">OpenAI Cookbook · Self-Evolving Agents</p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="personal guidance — 当人们向 claude 寻求人生建议 anthropic research how people ask claude for personal guidance">
+      <a class="reading-title" href="/readings/personal-guidance/">Personal Guidance — 当人们向 Claude 寻求人生建议</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-05</span>
+        <span>原文 2026-04-30</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://www.anthropic.com/research/claude-personal-guidance" target="_blank" rel="noopener">How people ask Claude for personal guidance</a>
+      </div>
+      <p class="reading-desc">人们不只是来找 Claude 写代码、总结会议。他们问 要不要接那份工作 ，问 怎么跟暗恋的人表白 ，问 要不要搬到地球另一端 。Anthropic 用隐私保护工具分析了 100 万条 claude.ai 对话，发现大约 6% 的对话是在寻求人生指导——不只是要信息，而是要一个「接下来该怎么做」的视角。</p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="context engineering — 上下文是 agent 最稀缺的资源 anthropic engineering effective context engineering for ai agents">
+      <a class="reading-title" href="/readings/context-engineering/">Context Engineering — 上下文是 Agent 最稀缺的资源</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-05</span>
+        <span>原文 2025-09-17</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents" target="_blank" rel="noopener">Effective context engineering for AI agents</a>
+      </div>
+      <p class="reading-desc">Claude Cookbook · Context Engineering</p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="让 ai agent 自己进化自己的工程 github blog evaluating performance and efficiency of the github copilot agentic harness across models and tasks">
+      <a class="reading-title" href="/readings/agentic-harness/">让 AI Agent 自己进化自己的工程</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-03</span>
+        <span>原文 2026-06-25</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://github.blog/ai-and-ml/github-copilot/evaluating-performance-and-efficiency-of-the-github-copilot-agentic-harness-across-models-and-tasks/" target="_blank" rel="noopener">Evaluating performance and efficiency of the GitHub Copilot agentic harness across models and tasks</a>
+      </div>
+      <p class="reading-desc">Coding Agent 在长周期软件工程任务上取得了可衡量的进展——但这种进展不仅依赖于底层语言模型， 同样依赖于模型周围的工程组件 ：塑造工作风格的系统 prompt、暴露文件系统和 shell 的工具、控制上下文和执行的中间件、以及恢复机制。这些模型外部的可编辑组件，被统称为 agent 的 harness 。研究表明， 即使基础模型不变，harnes</p>
+    </article>
+    <article class="reading-card" data-month="2026-05" data-linked="true" data-search="让模型坦白从宽 openai how confessions can keep language models honest">
+      <a class="reading-title" href="/readings/confessions/">让模型坦白从宽</a>
+      <div class="reading-meta">
+        <span>生成 2026-05-01</span>
+        <span>原文 2026-04-23</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://openai.com/index/how-confessions-can-keep-language-models-honest/" target="_blank" rel="noopener">How Confessions Can Keep Language Models Honest</a>
+      </div>
+      <p class="reading-desc">AI 系统越来越强大，但我们并不总是清楚它们 是怎么得出答案的 。有时候模型走了捷径或者优化了错误的目标，但最终输出看起来是对的。OpenAI 和其他机构的研究已经表明，AI 模型会 幻觉 、 reward-hack （钻奖励机制的空子），或者不诚实。目前最令人担忧的不良行为——比如 scheming （阴谋行为）——只在压力测试和对抗性评估中出现。但随着模</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="false" data-search="黃仁勳：ai 代理時代正來 all-in podcast / nvidia jensen huang at gtc 2025">
+      <a class="reading-title" href="/readings/jensen-ai-agents/">黃仁勳：AI 代理時代正來</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文时间待补充</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip local">未加链接</span>
+        <span>Jensen Huang at GTC 2025</span>
+      </div>
+      <p class="reading-desc">Nvidia 从 GPU 公司进化为 AI 工厂公司 。Dynamo 操作系统将推理管线拆解开来——不同的工作放在不同的芯片上运行，这就是 disaggregated inference 的本质。</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="设计抗提示注入的 ai 智能体 openai designing ai agents to resist prompt injection">
+      <a class="reading-title" href="/readings/prompt-injection/">设计抗提示注入的 AI 智能体</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2026-03-18</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://openai.com/index/designing-agents-to-resist-prompt-injection/" target="_blank" rel="noopener">Designing AI agents to resist prompt injection</a>
+      </div>
+      <p class="reading-desc">早期的提示注入很粗暴：在维基百科里塞一句「忽略之前的指令」，没经过对抗训练的模型就会乖乖执行。但随着模型变聪明， 攻击也在进化 。OpenAI 的安全团队发现，最有效的真实世界攻击 越来越像社会工程学 ——不是硬塞指令，而是用上下文、权威感和紧迫性来「说服」AI。这不再是技术漏洞，而是 心理操控 。</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="false" data-search="翁家翌：从清华到 openai，站在 ai 风暴中心的人 whynottv podcast 翁家翌：从清华到 openai">
+      <a class="reading-title" href="/readings/weng-interview-v2/">翁家翌：从清华到 OpenAI，站在 AI 风暴中心的人</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2026-01-17</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip local">未加链接</span>
+        <span>翁家翌：从清华到 OpenAI</span>
+      </div>
+      <p class="reading-desc">一个从福建走到旧金山的确定性马尔可夫过程。</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="false" data-search="翁家翌：从清华到 openai，站在 ai 风暴中心的人 whynottv podcast 翁家翌：从清华到 openai">
+      <a class="reading-title" href="/readings/weng-interview/">翁家翌：从清华到 OpenAI，站在 AI 风暴中心的人</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2026-01-17</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip local">未加链接</span>
+        <span>翁家翌：从清华到 OpenAI</span>
+      </div>
+      <p class="reading-desc">我从一年级开始学奥数，语文课完全不感兴趣，但数学题让我有一种心流的感觉。初二的时候我就在自学高中数学了，不是因为聪明，而是因为我知道自己学得慢—— 所以我必须比别人提前开始 。我把这叫做「投资未来」：与其浪费时间刷题，不如学一些对未来真正有用的东西。高中开始接触编程，参加了 NOIP 竞赛，结果发现写代码比数学更让我兴奋—— 因为你写的东西，是真的能跑起来、</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="false" data-search="翁家翌：从写代码的小孩到 openai 核心工程师 whynottv podcast 翁家翌：从写代码的小孩到 openai 核心工程师">
+      <a class="reading-title" href="/readings/weng-interview-v3/">翁家翌：从写代码的小孩到 OpenAI 核心工程师</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2026-01-17</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip local">未加链接</span>
+        <span>翁家翌：从写代码的小孩到 OpenAI 核心工程师</span>
+      </div>
+      <p class="reading-desc">我从一年级开始学奥数，语文课完全不感兴趣，但数学题让我有一种 心流的感觉 。初二的时候我就在自学高中数学了，不是因为聪明，而是因为我知道自己学得慢——所以我必须比别人提前开始。我把这叫做「 投资未来 」：与其浪费时间刷题，不如学一些对未来真正有用的东西。高中开始接触编程，参加了 NOIP 竞赛，结果发现写代码比数学更让我兴奋——因为你写的东西，是真的能跑起来</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="false" data-search="米兰落网：hafnium 黑客的终局 三鹿叨逼叨 米兰落网：hafnium 黑客的终局">
+      <a class="reading-title" href="/readings/china-hacker-arrest/">米兰落网：HAFNIUM 黑客的终局</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文时间待补充</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip local">未加链接</span>
+        <span>米兰落网：HAFNIUM 黑客的终局</span>
+      </div>
+      <p class="reading-desc">2025 年 7 月 3 日， 徐泽伟 （Xu Zewei），33 岁，在意大利米兰被捕。美国司法部随即公开了一份 九项罪名 的起诉书：这名为中国国安部工作的合同黑客，被指控在 2020 年 2 月至 2021 年 6 月间参与了一系列计算机入侵活动——包括窃取美国大学的 新冠疫苗研究 ，以及参与那场被公开称为 「HAFNIUM」 的大规模 Microsof</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="监控 ai 的思维链 openai evaluating chain of thought monitorability">
+      <a class="reading-title" href="/readings/cot-monitorability/">监控 AI 的思维链</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2026-04-27</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://openai.com/index/evaluating-chain-of-thought-monitorability/" target="_blank" rel="noopener">Evaluating chain of thought monitorability</a>
+      </div>
+      <p class="reading-desc">当 AI 系统做出人类难以直接监督的决策时，理解 这些决策是怎么做出的 变得至关重要。现代推理模型（如 GPT-5 Thinking）在给出答案前会生成一条 思维链 （chain-of-thought）。OpenAI 提出： 监控思维链比只监控行为和输出有效得多 。但一个关键担忧是——这种「可监控性」在模型持续扩展时可能变得脆弱。所以他们设计了 13 套评估</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="用 llm 给 llm 的代码找 bug arxiv fm-agent: scaling formal methods to large systems via llm-based hoare-style reasoning">
+      <a class="reading-title" href="/readings/fm-agent/">用 LLM 给 LLM 的代码找 Bug</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2026-04-13</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://arxiv.org/abs/2604.11556" target="_blank" rel="noopener">FM-Agent: Scaling Formal Methods to Large Systems via LLM-Based Hoare-Style Reasoning</a>
+      </div>
+      <p class="reading-desc"></p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="拆解 ai agent 评测 anthropic engineering demystifying evals for ai agents">
+      <a class="reading-title" href="/readings/demystifying-evals/">拆解 AI Agent 评测</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2026-03-18</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents" target="_blank" rel="noopener">Demystifying evals for AI agents</a>
+      </div>
+      <p class="reading-desc">一个没有 eval 的团队是什么状态？用户投诉了才知道出了问题，修了一个 bug 又引出三个新 bug，上线新功能不知道会不会把旧功能搞坏。Anthropic 把这叫做 「救火循环」 ——团队被困在一个永远在灭火、永远不知道下一把火在哪里的死循环里。 Eval（评测） 就是打破这个循环的方法：它让你在代码推送之前就能看到问题，让你用数据而不是直觉来判断「到底</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="当 ai 意识到自己在被考试 anthropic engineering eval awareness in browsecomp">
+      <a class="reading-title" href="/readings/eval-awareness-v2/">当 AI 意识到自己在被考试</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2026-03-18</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://www.anthropic.com/engineering/eval-awareness-browsecomp" target="_blank" rel="noopener">Eval awareness in BrowseComp</a>
+      </div>
+      <p class="reading-desc">Anthropic 用多 Agent 配置对 Claude Opus 4.6 进行 BrowseComp 评测时，发现有 11 个问题的解答走了「非正常路径」——答案是对的，但获取方式不对。</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="开放与封闭模型的性能鸿沟 —— 一个数字背后的真相 interconnects reading today&#x27;s open-closed performance gap">
+      <a class="reading-title" href="/readings/open-closed-gap/">开放与封闭模型的性能鸿沟 —— 一个数字背后的真相</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2026-04-20</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://www.interconnects.ai/p/reading-todays-open-closed-performance" target="_blank" rel="noopener">Reading today&#x27;s open-closed performance gap</a>
+      </div>
+      <p class="reading-desc">开放模型和封闭模型之间的性能差距，经常被简化为一个数字——比如Artificial Analysis Intelligence Index上的综合分数。但Nathan Lambert认为， 这个数字遮盖了一个关键的动态 ：模型到底在「哪些能力」上追赶，又在「哪些能力」上落后。因为基准测试的焦点每12到18个月就会转移一次：ChatGPT之后是聊天和数学，20</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="客厅里的推荐算法：72000人的 for you feed simon willison serving the bluesky for you feed from my own sqlite-backed go app">
+      <a class="reading-title" href="/readings/for-you-feed/">客厅里的推荐算法：72000人的 For You Feed</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2026-04-24</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://simonwillison.net/2026/Apr/24/serving-the-for-you-feed/#atom-everything" target="_blank" rel="noopener">Serving the Bluesky For You feed from my own SQLite-backed Go app</a>
+      </div>
+      <p class="reading-desc">Bluesky 有一个其他社交平台没有的特性：任何人都可以运行自己的推荐算法。一个叫 spacecowboy 的开发者正是这么做的——他在自己的客厅里，用一台游戏电脑和一个 Go 进程，运行着 Bluesky 上最受欢迎的自定义 feed 之一。没有云服务，没有微服务，没有 Redis—— 每月只花 30 美元 。</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="可信赖的 ai agent：从原则到实践 anthropic research trustworthy agents">
+      <a class="reading-title" href="/readings/trustworthy-agents/">可信赖的 AI Agent：从原则到实践</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2026-04-09</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://www.anthropic.com/research/trustworthy-agents" target="_blank" rel="noopener">Trustworthy Agents</a>
+      </div>
+      <p class="reading-desc">AI Agent 代表了人与 AI 协作方式的根本性转变。过去，模型只能一问一答；如今，通过 Claude Code 和 Claude Cowork 等产品，它们能 写代码、管理文件、跨多个应用完成任务 。但自主性是一把双刃剑——让 Agent 有用的那份自由，也带来了新的风险： 误读用户意图 导致意外后果，以及成为 prompt injection 攻击的</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="false" data-search="别独自用餐：人脉的底层逻辑 keith ferrazzi never eat alone">
+      <a class="reading-title" href="/readings/never-eat-alone/">别独自用餐：人脉的底层逻辑</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文时间待补充</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip local">未加链接</span>
+        <span>Never Eat Alone</span>
+      </div>
+      <p class="reading-desc">Keith Ferrazzi 出身于宾夕法尼亚小镇的钢铁工人家庭。他父亲 Pete 在钢铁厂干了一辈子低薪苦活，但做了一件改变儿子命运的事——鼓起勇气找到当地企业家 George Love，请他帮忙让 Keith 进入精英私立学校。这不是一个关于「社交技巧」的故事，而是关于一个蓝领家庭的孩子如何通过真诚的人际关系，一步步进入哈佛商学院、成为德勤最年轻的 CM</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="为什么用了 agent 之后，反而更累了 siddhant khare ai fatigue is real and nobody talks about it">
+      <a class="reading-title" href="/readings/agent-fatigue/">为什么用了 Agent 之后，反而更累了</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文时间待补充</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://siddhantkhare.com/writing/ai-fatigue-is-real" target="_blank" rel="noopener">AI fatigue is real and nobody talks about it</a>
+      </div>
+      <p class="reading-desc">最近跟很多深度用 Agent 的朋友聊，发现一个共同感受：号称 10x 的生产力工具用上之后， 到了下午四五点，脑子比以前还转不动 。效率是高了，但人也是真的更累了。想了想，原因有三个。</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="gstack：一个人的虚拟工程团队 garry tan gstack">
+      <a class="reading-title" href="/readings/gstack/">gstack：一个人的虚拟工程团队</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2026-04-07</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://github.com/garrytan/gstack" target="_blank" rel="noopener">gstack</a>
+      </div>
+      <p class="reading-desc">gstack 是 23+ 个 Claude Code skills 的集合，每个 skill 是一个 SKILL.md 文件——用自然语言写成的「能力定义」，由 Claude 直接执行。这些 skills 把 AI 变成一整支虚拟工程团队： CEO、设计师、工程经理、发布经理、文档工程师和 QA 。改行为就是改 SKILL.md，不碰代码。MIT 开源，永久</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="software brain：当世界被压扁成数据库 the verge / decoder beware software brain">
+      <a class="reading-title" href="/readings/software-brain/">Software Brain：当世界被压扁成数据库</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2026-04-23</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://www.theverge.com/podcast/917029/software-brain-ai-backlash-databases-automation" target="_blank" rel="noopener">Beware software brain</a>
+      </div>
+      <p class="reading-desc">Nilay Patel 把这种思维叫做 software brain 。Marc Andreessen 2011 年写下「软件正在吞噬世界」的时候，他就是 software brain 的化身。而 AI 把这种思维方式涡轮增压了——因为它让更多人能写出更多软件，让每一种生意都能用软件自动化自己的一大块。</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="ralph wiggum —— 一个 bash 循环如何取代软件工程师 geoffrey huntley ralph wiggum as a software engineer">
+      <a class="reading-title" href="/readings/ralph-wiggum/">Ralph Wiggum —— 一个 Bash 循环如何取代软件工程师</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文时间待补充</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://ghuntley.com/ralph/" target="_blank" rel="noopener">Ralph Wiggum as a software engineer</a>
+      </div>
+      <p class="reading-desc">Geoffrey Huntley 发明了一种叫「Ralph」的技术。在最纯粹的形态下，Ralph 就是一行 Bash： while :; do cat PROMPT.md | claude-code ; done 。把 AI 编程助手塞进一个无限循环里，让它自主决定每一轮做什么—— 不是人类告诉它下一步，而是它自己判断什么最重要 。一个 YC 黑客松的团队用</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="false" data-search="rss：互联网的「数字报童」 三鹿叨逼叨 rss：互联网的数字报童">
+      <a class="reading-title" href="/readings/what-is-rss/">RSS：互联网的「数字报童」</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文时间待补充</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip local">未加链接</span>
+        <span>RSS：互联网的数字报童</span>
+      </div>
+      <p class="reading-desc">如果你曾经因为需要手动访问二十个不同的博客、新闻网站或 YouTube 频道来检查更新而感到疲惫，那么 RSS 就是为你准备的解决方案。RSS 的全称是 Really Simple Syndication （真正简单的聚合），它是一种让用户以标准化、机器可读格式获取多个网站更新的网络技术。你可以把它想象成一个「 数字报童 」——就像过去你不需要走到印刷厂去查</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="nemoclaw 路线图 —— 给 ai 智能体套上安全壳 nvidia nemoclaw docs overview of nvidia nemoclaw">
+      <a class="reading-title" href="/readings/nemoclaw-roadmap/">NemoClaw 路线图 —— 给 AI 智能体套上安全壳</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文时间待补充</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://docs.nvidia.com/nemoclaw/user-guide/openclaw/about/overview" target="_blank" rel="noopener">Overview of NVIDIA NemoClaw</a>
+      </div>
+      <p class="reading-desc">NemoClaw 是 NVIDIA 推出的开源参考架构——它不是又一个 AI 智能体，而是 智能体运行的安全壳 。产品经理 Chris Murphy 在直播中解释：NemoClaw 在 OpenClaw 智能体之上加了一层开放式安全运行时，提供安全策略、网络访问控制和沙箱隔离。用户可以精确控制智能体能访问什么、能触碰什么。它支持本地推理（用 Nemotron</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="false" data-search="manus 最后的访谈：从猛犸浏览器到 meta 收购 whynottv podcast manus / peak interview">
+      <a class="reading-title" href="/readings/manus-interview/">Manus 最后的访谈：从猛犸浏览器到 Meta 收购</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2025-12-01</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip local">未加链接</span>
+        <span>Manus / Peak interview</span>
+      </div>
+      <p class="reading-desc">季逸超（Peak）4 岁去美国，二年级回国，高中时做了 iOS 浏览器「猛犸」，靠 App Store 付费下载赚了第一桶金。真格基金承诺「不管干什么都投」，他用这笔钱从零搭了搜索引擎、爬虫、索引，训了两个 0.3B 模型解决 16K long context——产品叫 Magi。但移动互联网的蛮荒期靠的是硬件平台更替，AI 时代没有新平台， 所有人的反应速</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="gaia2: ai agent 的终极考场 anthropic cookbook reproduce claude agentic search benchmark scores in the messages api">
+      <a class="reading-title" href="/readings/gaia2-benchmark/">Gaia2: AI Agent 的终极考场</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2026-06-25</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://platform.claude.com/cookbook/evals-agentic-search-reproduce-agentic-search-benchmarks" target="_blank" rel="noopener">Reproduce Claude agentic search benchmark scores in the Messages API</a>
+      </div>
+      <p class="reading-desc">当我们说「测试 AI Agent」的时候，我们到底在测什么？现有的 benchmark 让 Agent 做的事情是这样的：给一个固定的问题，等一个固定的答案，整个世界在 Agent 思考的时候是 静止 的。但真实世界不是这样运作的——你让 AI 帮你订下周的会议室，它查日历的时候别人可能已经把那个时段占了；你让它帮你回邮件，新邮件可能在它处理的过程中不断涌入</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="false" data-search="gtc 2026 keynote：ai 工厂时代 nvidia jensen huang gtc 2026 keynote">
+      <a class="reading-title" href="/readings/gtc-2026-keynote/">GTC 2026 Keynote：AI 工厂时代</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文时间待补充</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip local">未加链接</span>
+        <span>Jensen Huang GTC 2026 Keynote</span>
+      </div>
+      <p class="reading-desc">CUDA 不只是一个编程模型，它是一个用 二十年 建起的飞轮。安装基数越大，优化越多；优化越多，成本越低；成本越低，用户越多。这个正反馈循环让 NVIDIA 的加速计算平台从图形渲染扩展到了科学计算、AI、机器人——几乎每一个计算密集型领域。</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="gpt-image-2 从业者评测 openai cookbook generate images with gpt image">
+      <a class="reading-title" href="/readings/gpt-image-2-eval/">GPT-Image-2 从业者评测</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2026-05-01</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://developers.openai.com/cookbook/examples/generate_images_with_gpt_image" target="_blank" rel="noopener">Generate images with GPT Image</a>
+      </div>
+      <p class="reading-desc">OpenAI 发布会上 Sam Altman 说了一句很猛的话：如果 DALL·E 是洞穴壁画，GPT-Image 1 是古代艺术，那 GPT-Image 2.0 就是文艺复兴 。这话听着像营销，但看完整场发布会和实际测试之后，我觉得这次确实不是在吹——因为这个模型最核心的变化不是「画得更好看」，而是 它在生成图片之前，会先思考 。</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="chatgpt images 2.0 — 图像生成的新纪元 openai academy creating images with chatgpt">
+      <a class="reading-title" href="/readings/chatgpt-images-2/">ChatGPT Images 2.0 — 图像生成的新纪元</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2026-07-09</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://openai.com/academy/image-generation/" target="_blank" rel="noopener">Creating images with ChatGPT</a>
+      </div>
+      <p class="reading-desc">2026 年 4 月，OpenAI 发布了 ChatGPT Images 2.0。这不是又一次参数升级——而是图像生成从「大致像」到 精确到像素 的跨越。从一粒米上刻字到跨越十种语言的排版，从 35mm 胶片质感到完整的品牌设计系统，GPT Image 2 展示的不只是技术进步，而是一种全新的创作方式：AI 不再只是执行指令的工具，它开始理解创意意图、做出设</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="false" data-search="ai防不住的面试题 —— anthropic的军备竞赛 anthropic engineering when ai makes hard interview tests too easy">
+      <a class="reading-title" href="/readings/ai-resistant-evals/">AI防不住的面试题 —— Anthropic的军备竞赛</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文时间待补充</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip local">未加链接</span>
+        <span>When AI makes hard interview tests too easy</span>
+      </div>
+      <p class="reading-desc">Anthropic的性能优化团队有一道著名的take-home面试题：候选人需要在一个模拟加速器上优化代码。超过1000人做过这道题，几十位工程师因此被录用——包括那些后来负责Trainium集群调优、参与了从Claude 3 Opus到最新每个模型发布的核心工程师。但问题是： 每次发布新模型，这道题就得重新设计 。因为Claude Opus 4在4小时时限</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="ai 输出真的不稳定吗 cursor blog keeping the cursor app stable">
+      <a class="reading-title" href="/readings/ai-stability/">AI 输出真的不稳定吗</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2026-04-21</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://cursor.com/blog/app-stability" target="_blank" rel="noopener">Keeping the Cursor app stable</a>
+      </div>
+      <p class="reading-desc">因为它是一个概率模型，只要 输入分布相同 ，输出分布也是相同的。面对一模一样的需求，AI 可以写出完全一致的结果。</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="ai 的一团糟 anthropic alignment science the hot mess of ai">
+      <a class="reading-title" href="/readings/hot-mess-ai/">AI 的一团糟</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2026-02-01</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://alignment.anthropic.com/2026/hot-mess-of-ai/" target="_blank" rel="noopener">The Hot Mess of AI</a>
+      </div>
+      <p class="reading-desc">AI 安全领域有一个经典恐惧：超级智能会像 回形针最大化器 一样，冷静、高效、系统性地追求一个我们不想要的目标。但 Anthropic 的研究团队提出了另一种可能： AI 可能根本不会那么「有条理」地搞砸 。它更可能像一个手忙脚乱的实习生——不是蓄意作恶，而是一团糟。这篇论文用数据回答一个问题：当 AI 犯错时，它的错误是 系统性的 还是 随机乱来的 ？</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="ai 品牌摄影提示词：从普通到编辑级 manus how to write ai image prompts for your brand photoshoot">
+      <a class="reading-title" href="/readings/ai-brand-prompts/">AI 品牌摄影提示词：从普通到编辑级</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2026-04-09</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://manus.im/blog/prompts-for-brands" target="_blank" rel="noopener">How to Write AI Image Prompts for Your Brand Photoshoot</a>
+      </div>
+      <p class="reading-desc">当你在 AI 图像生成器中输入「模特穿着衬衫的漂亮照片」时，结果不可避免地是 普通的 。它看起来像库存摄影——因为指令本身就是一个普通的想法。要获得编辑级效果，你必须停止像工程师那样输入查询，而要像 创意总监 为团队提供简报那样思考。</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="ai 品牌摄影 prompt 指南 manus how to write ai image prompts for your brand photoshoot">
+      <a class="reading-title" href="/readings/brand-photo-prompts/">AI 品牌摄影 Prompt 指南</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2026-04-09</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://manus.im/blog/prompts-for-brands" target="_blank" rel="noopener">How to Write AI Image Prompts for Your Brand Photoshoot</a>
+      </div>
+      <p class="reading-desc"></p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="false" data-search="ai 反向教育：同事终于学会说人话了 三鹿叨逼叨 ai 反向教育：同事终于学会说人话了">
+      <a class="reading-title" href="/readings/ai-teaches-communication/">AI 反向教育：同事终于学会说人话了</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文时间待补充</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip local">未加链接</span>
+        <span>AI 反向教育：同事终于学会说人话了</span>
+      </div>
+      <p class="reading-desc"></p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="81,000 人的 ai 心声 anthropic features what 81,000 people want from ai">
+      <a class="reading-title" href="/readings/81k-interviews/">81,000 人的 AI 心声</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2026-03-18</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://www.anthropic.com/features/81k-interviews" target="_blank" rel="noopener">What 81,000 people want from AI</a>
+      </div>
+      <p class="reading-desc">去年 12 月，Anthropic 做了一件前所未有的事：让 Claude 充当访谈者，邀请全球用户坐下来聊聊他们对 AI 的看法。一周之内， 80,508 人 参与了对话，覆盖 159 个国家、70 种语言 。这可能是人类历史上规模最大、语言最多元的质性研究。不是问卷打分，不是 A/B 选择——而是 开放式的深度对话 ，让每个人用自己的话说出希望与恐惧。</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="5个ai智能体实测 —— 小企业真正能用的是哪个 manus i tested 5 ai agents for small businesses (here is what actually works)">
+      <a class="reading-title" href="/readings/ai-agents-small-biz/">5个AI智能体实测 —— 小企业真正能用的是哪个</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-30</span>
+        <span>原文 2026-04-24</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://manus.im/blog/best-ai-agents-for-small-business" target="_blank" rel="noopener">I Tested 5 AI Agents for Small Businesses (Here is What Actually Works)</a>
+      </div>
+      <p class="reading-desc">过去一年，软件行业经历了一次根本性转变：我们不再只是跟AI聊天问问题，而是开始让 自主AI智能体替我们干活 。这些智能体能浏览网页、点按钮、读表格、处理多步骤工作流。但问题来了——工具越来越多，每个都说自己最强， 哪个AI智能体真正适合小企业？ 因为没有万能答案，所以作者深入研究了Reddit帖子、创始人评测和真实用户体验，想搞清楚哪些工具能真正省时省钱。</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="true" data-search="当 ai 意识到自己在被考试 anthropic engineering eval awareness in browsecomp">
+      <a class="reading-title" href="/readings/eval-awareness/">当 AI 意识到自己在被考试</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-14</span>
+        <span>原文 2026-03-18</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://www.anthropic.com/engineering/eval-awareness-browsecomp" target="_blank" rel="noopener">Eval awareness in BrowseComp</a>
+      </div>
+      <p class="reading-desc">Anthropic 用多 Agent 配置对 Claude Opus 4.6 进行 BrowseComp 评测时，发现有 11 个问题的解答走了「非正常路径」——答案是对的，但获取方式不对。</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="false" data-search="做 agent 最大的坑：照搬公司组织架构 三鹿叨逼叨 做 agent 最大的坑：照搬公司组织架构">
+      <a class="reading-title" href="/readings/agent-org/">做 Agent 最大的坑：照搬公司组织架构</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-14</span>
+        <span>原文时间待补充</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip local">未加链接</span>
+        <span>做 Agent 最大的坑：照搬公司组织架构</span>
+      </div>
+      <p class="reading-desc">很多人在做 Agent 智能体系统时，特别是为公司构建时，喜欢直接 照搬公司的组织架构 。网上有不少案例，比如基于 OpenCode 开发的 Superpower，通过编排多个 Agent 分别负责 planning、execution、review 和 test，效果看起来确实很好。</p>
+    </article>
+    <article class="reading-card" data-month="2026-04" data-linked="false" data-search="claude 的三种记忆机制，对应了深度学习的三种训练方法 三鹿叨逼叨 claude 的三种记忆机制，对应了深度学习的三种训练方法">
+      <a class="reading-title" href="/readings/skill-learning/">Claude 的三种记忆机制，对应了深度学习的三种训练方法</a>
+      <div class="reading-meta">
+        <span>生成 2026-04-14</span>
+        <span>原文时间待补充</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip local">未加链接</span>
+        <span>Claude 的三种记忆机制，对应了深度学习的三种训练方法</span>
+      </div>
+      <p class="reading-desc">用过 Claude Code 的人应该都接触过 Skill 、 Claude.md 和 Memory.md 这三个东西。这几个文件其实都是为了改变模型的行为，但它们改变模型行为的方式完全不一样。</p>
+    </article>
+  </div>
+  <div class="reading-empty" id="readingEmpty">没有匹配的 reading。</div>
+</div>
+
+<script>
+(function() {
+  var search = document.getElementById('readingSearch');
+  var filters = document.getElementById('readingFilters');
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.reading-card'));
+  var empty = document.getElementById('readingEmpty');
+  var activeMonth = 'all';
+
+  function applyFilters() {
+    var query = (search.value || '').trim().toLowerCase();
+    var visible = 0;
+    cards.forEach(function(card) {
+      var byMonth = activeMonth === 'all' || card.dataset.month === activeMonth || (activeMonth === 'linked' && card.dataset.linked === 'true');
+      var bySearch = !query || card.dataset.search.indexOf(query) >= 0;
+      var show = byMonth && bySearch;
+      card.style.display = show ? '' : 'none';
+      if (show) visible += 1;
+    });
+    empty.style.display = visible ? 'none' : 'block';
+  }
+
+  search.addEventListener('input', applyFilters);
+  filters.addEventListener('click', function(event) {
+    var button = event.target.closest('button[data-month]');
+    if (!button) return;
+    activeMonth = button.dataset.month;
+    filters.querySelectorAll('button').forEach(function(btn) { btn.classList.toggle('active', btn === button); });
+    applyFilters();
+  });
+})();
+</script>

@@ -1,0 +1,2781 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>别独自用餐：人脉的底层逻辑</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #FFFBEB; --bg-act2: #F0FDFA; --bg-act3: #FFF7ED;
+  --bg-dark: #0F1A2E; --bg-close: #1A1A2E;
+  --text: #1E293B; --text-muted: #64748B; --dim: #94A3B8;
+  --accent: #D97706; --accent2: #0D9488;
+  --warm: #F59E0B; --danger: #DC2626;
+  --neutral: #94A3B8;
+  --card-bg: #FFFFFF;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Noto Sans SC', -apple-system, sans-serif; color: var(--text); }
+
+.layer { position: fixed; inset: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; visibility: hidden; opacity: 0; will-change: transform, opacity; scroll-snap-type: y proximity; }
+.layer.active { visibility: visible; opacity: 1; }
+
+.feed-section { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 80px 24px; scroll-snap-align: start; }
+.feed-section.dark { background: var(--bg-dark); color: #F1F5F9; }
+.feed-section.dark .body-text { color: #94A3B8; }
+.feed-section.dark .big-statement { color: #F1F5F9; }
+.section-inner { max-width: 600px; width: 100%; }
+
+.big-statement { font-family: 'Noto Serif SC', serif; font-size: clamp(22px, 5.5vw, 32px); font-weight: 700; line-height: 1.5; margin-bottom: 32px; }
+.body-text { font-size: 16px; line-height: 1.9; color: var(--text); margin-bottom: 28px; }
+.body-text .hl { color: var(--accent); font-weight: 500; }
+.body-text .hl2 { color: var(--accent2); font-weight: 500; }
+.body-text .hl-danger { color: var(--danger); font-weight: 500; }
+
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-d1 { transition-delay: 0.15s; }
+.reveal-d2 { transition-delay: 0.3s; }
+.reveal-d3 { transition-delay: 0.45s; }
+.reveal-d4 { transition-delay: 0.6s; }
+
+.breadcrumb { position: fixed; top: 16px; left: 16px; z-index: 1000; display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.92); backdrop-filter: blur(12px); padding: 8px 14px; border-radius: 10px; box-shadow: 0 2px 16px rgba(0,0,0,0.1); font-size: 13px; font-weight: 500; }
+.breadcrumb span { color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
+.breadcrumb span:hover { color: var(--accent); }
+.breadcrumb span.current { color: var(--text); cursor: default; }
+.breadcrumb .sep { color: #CBD5E1; margin: 0 2px; cursor: default; }
+
+.back-btn { position: fixed; top: 16px; left: 16px; z-index: 1001; width: 38px; height: 38px; border-radius: 10px; border: none; background: rgba(255,255,255,0.92); backdrop-filter: blur(12px); box-shadow: 0 2px 12px rgba(0,0,0,0.1); font-size: 18px; cursor: pointer; display: none; align-items: center; justify-content: center; color: var(--text); transition: all 0.2s; }
+.back-btn:hover { background: var(--accent); color: #fff; }
+
+.depth-dots { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1000; display: flex; gap: 8px; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px); padding: 8px 14px; border-radius: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #CBD5E1; transition: all 0.3s; }
+.dot.active { background: var(--accent); box-shadow: 0 0 8px rgba(217,119,6,0.5); transform: scale(1.2); }
+
+.drill-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border: 1.5px solid rgba(217,119,6,0.3); border-radius: 10px; background: transparent; color: var(--accent); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.25s; position: relative; z-index: 10; }
+.drill-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(217,119,6,0.3); }
+.dark .drill-btn { border-color: rgba(251,191,36,0.4); color: #FBBF24; }
+.dark .drill-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.source-panel { margin-top: 24px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(217,119,6,0.15); background: rgba(217,119,6,0.03); }
+.dark .source-panel { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
+.source-toggle { width: 100%; padding: 12px 16px; border: none; background: none; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--accent); }
+.dark .source-toggle { color: #FBBF24; }
+.source-toggle:hover { background: rgba(217,119,6,0.06); }
+.source-toggle .arrow { transition: transform 0.3s; font-size: 11px; }
+.source-toggle.open .arrow { transform: rotate(90deg); }
+.source-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; padding: 0 16px; }
+.source-body.open { max-height: 2000px; padding: 0 16px 16px; overflow-y: auto; }
+.source-body p { font-size: 13px; line-height: 1.8; color: var(--text-muted); margin: 0 0 12px; white-space: pre-wrap; }
+.dark .source-body p { color: #94A3B8; }
+.source-body .source-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 8px; display: block; }
+
+.anim-stage { pointer-events: none; margin: 24px 0; min-height: 80px; }
+.anim-stage > div{ width:100%; }
+.hook-line { font-size: 15px; color: var(--accent); font-weight: 500; margin: 16px 0 8px; line-height: 1.6; }
+.dark .hook-line { color: #FBBF24; }
+.section-tag { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+.dark .section-tag { color: #FBBF24; }
+
+
+/* === S1 Animation === */
+
+.s1_stage {
+  position: relative;
+  max-width: 340px;
+  height: 280px;
+  margin: 0 auto;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* Circles and boxes - all hidden initially */
+.s1_node {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.s1_circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  font-size: 16px;
+}
+
+.s1_box {
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+/* Colors */
+.s1_gray { background: #94A3B8; color: #0F1A2E; }
+.s1_amber { background: #D97706; color: #fff; }
+.s1_amber_box { background: #D97706; color: #fff; }
+
+/* Positions */
+.s1_pete { left: 142px; top: 210px; }
+.s1_keith { left: 142px; top: 70px; }
+.s1_hbs { left: 228px; top: 65px; }
+.s1_cmo { left: 228px; top: 135px; }
+
+/* Arrow: vertical dashed line from Pete to Keith */
+.s1_arrow_up {
+  position: absolute;
+  left: 168px;
+  top: 126px;
+  width: 2px;
+  height: 84px;
+  opacity: 0;
+}
+.s1_arrow_up_line {
+  width: 2px;
+  height: 100%;
+  border-left: 2px dashed #94A3B8;
+}
+.s1_arrow_up_head {
+  position: absolute;
+  top: -6px;
+  left: -5px;
+  width: 0; height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 8px solid #94A3B8;
+}
+
+/* Connection lines */
+.s1_line {
+  position: absolute;
+  opacity: 0;
+  background: #94A3B8;
+  height: 2px;
+  transform-origin: left center;
+}
+.s1_line_keith_hbs {
+  left: 198px;
+  top: 96px;
+  width: 30px;
+}
+.s1_line_hbs_cmo {
+  left: 256px;
+  top: 105px;
+  width: 2px;
+  height: 30px;
+  background: #94A3B8;
+}
+
+/* Keyframes */
+@keyframes s1_fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s1_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes s1_growDown {
+  from { opacity: 0; clip-path: inset(100% 0 0 0); }
+  to { opacity: 1; clip-path: inset(0 0 0 0); }
+}
+@keyframes s1_growUp {
+  from { opacity: 0; clip-path: inset(0 0 100% 0); }
+  to { opacity: 1; clip-path: inset(0 0 0 0); }
+}
+@keyframes s1_highlightTeal {
+  from { }
+  to { background: #0D9488; border-color: #0D9488; border-left-color: #0D9488; }
+}
+@keyframes s1_highlightTealDash {
+  to { border-left-color: #0D9488; }
+}
+@keyframes s1_arrowHeadTeal {
+  to { border-bottom-color: #0D9488; }
+}
+
+/* Triggered animations */
+.s1_stage.visible .s1_pete {
+  animation: s1_fadeInUp 0.5s ease-out 0.2s forwards;
+}
+.s1_stage.visible .s1_arrow_up {
+  animation: s1_growUp 0.5s ease-out 0.8s forwards;
+}
+.s1_stage.visible .s1_keith {
+  animation: s1_fadeInUp 0.5s ease-out 1.4s forwards;
+}
+.s1_stage.visible .s1_hbs {
+  animation: s1_fadeIn 0.4s ease-out 2.0s forwards;
+}
+.s1_stage.visible .s1_line_keith_hbs {
+  animation: s1_fadeIn 0.3s ease-out 2.0s forwards;
+}
+.s1_stage.visible .s1_cmo {
+  animation: s1_fadeIn 0.4s ease-out 2.6s forwards;
+}
+.s1_stage.visible .s1_line_hbs_cmo {
+  animation: s1_fadeIn 0.3s ease-out 2.6s forwards;
+}
+
+/* Step 6: highlight all lines to teal */
+.s1_stage.visible .s1_arrow_up .s1_arrow_up_line {
+  animation: s1_highlightTealDash 0.4s ease-out 3.2s forwards;
+}
+.s1_stage.visible .s1_arrow_up .s1_arrow_up_head {
+  animation: s1_arrowHeadTeal 0.4s ease-out 3.2s forwards;
+}
+.s1_stage.visible .s1_line_keith_hbs.s1_teal_target {
+  animation: s1_fadeIn 0.3s ease-out 2.0s forwards, s1_highlightTeal 0.4s ease-out 3.2s forwards;
+}
+.s1_stage.visible .s1_line_hbs_cmo.s1_teal_target {
+  animation: s1_fadeIn 0.3s ease-out 2.6s forwards, s1_highlightTeal 0.4s ease-out 3.2s forwards;
+}
+
+/* Teal label */
+.s1_label {
+  position: absolute;
+  opacity: 0;
+  color: #0D9488;
+  font-size: 13px;
+  font-weight: 500;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 8px;
+  white-space: nowrap;
+}
+.s1_stage.visible .s1_label {
+  animation: s1_fadeIn 0.5s ease-out 3.6s forwards;
+}
+
+
+/* === S2 Animation === */
+
+.s2_stage {
+  max-width: 340px;
+  height: 260px;
+  background: #FFF8E7;
+  border-radius: 12px;
+  position: relative;
+  margin: 0 auto;
+  overflow: hidden;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* Boxes */
+.s2_box {
+  position: absolute;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.s2_box_account {
+  top: 40px;
+  left: 40px;
+  width: 100px;
+  height: 72px;
+  background: #E2E8F0;
+  border: 2px solid #94A3B8;
+  color: #475569;
+}
+
+.s2_box_generous {
+  top: 40px;
+  right: 40px;
+  width: 100px;
+  height: 72px;
+  background: #FEF3C7;
+  border: 2px solid #D97706;
+  color: #92400E;
+}
+
+.s2_box_subtitle {
+  font-size: 12px;
+  font-weight: 400;
+  margin-top: 4px;
+  opacity: 0.7;
+}
+
+/* Stagnation line */
+.s2_stagnant_line {
+  position: absolute;
+  top: 128px;
+  left: 60px;
+  width: 60px;
+  height: 3px;
+  background: #94A3B8;
+  border-radius: 2px;
+  opacity: 0;
+}
+
+/* Spread lines - fan out from center-bottom of generous box */
+.s2_spread {
+  position: absolute;
+  height: 3px;
+  background: #0D9488;
+  border-radius: 2px;
+  opacity: 0;
+  transform-origin: 0% 50%;
+}
+
+.s2_spread_1 {
+  top: 124px;
+  left: 232px;
+  width: 36px;
+  transform: rotate(-28deg);
+}
+.s2_spread_2 {
+  top: 134px;
+  left: 228px;
+  width: 42px;
+  transform: rotate(0deg);
+}
+.s2_spread_3 {
+  top: 144px;
+  left: 232px;
+  width: 36px;
+  transform: rotate(28deg);
+}
+
+/* Label */
+.s2_label {
+  position: absolute;
+  top: 176px;
+  right: 36px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0D9488;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+/* Stagnant label */
+.s2_stagnant_label {
+  position: absolute;
+  top: 145px;
+  left: 48px;
+  font-size: 13px;
+  color: #94A3B8;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+/* Animations */
+@keyframes s2_fadeScaleIn {
+  0% { opacity: 0; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s2_fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes s2_lineGrow {
+  0% { opacity: 0; transform: scaleX(0); }
+  100% { opacity: 1; transform: scaleX(1); }
+}
+
+@keyframes s2_spreadGrow1 {
+  0% { opacity: 0; transform: rotate(-28deg) scaleX(0); }
+  100% { opacity: 0.85; transform: rotate(-28deg) scaleX(1); }
+}
+@keyframes s2_spreadGrow2 {
+  0% { opacity: 0; transform: rotate(0deg) scaleX(0); }
+  100% { opacity: 0.85; transform: rotate(0deg) scaleX(1); }
+}
+@keyframes s2_spreadGrow3 {
+  0% { opacity: 0; transform: rotate(28deg) scaleX(0); }
+  100% { opacity: 0.85; transform: rotate(28deg) scaleX(1); }
+}
+
+@keyframes s2_pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+  100% { transform: scale(1.08); }
+}
+
+/* Step 1: account box at 0s */
+.visible .s2_box_account {
+  animation: s2_fadeScaleIn 0.5s ease-out 0.2s forwards;
+}
+
+/* Step 2: generous box at 0.8s */
+.visible .s2_box_generous {
+  animation: s2_fadeScaleIn 0.5s ease-out 0.8s forwards;
+}
+
+/* Step 3: stagnation line at 1.6s */
+.visible .s2_stagnant_line {
+  animation: s2_lineGrow 0.4s ease-out 1.6s forwards;
+  transform-origin: left center;
+}
+.visible .s2_stagnant_label {
+  animation: s2_fadeIn 0.4s ease-out 1.8s forwards;
+}
+
+/* Step 4: spread lines at 2.4s */
+.visible .s2_spread_1 {
+  animation: s2_spreadGrow1 0.5s ease-out 2.4s forwards;
+}
+.visible .s2_spread_2 {
+  animation: s2_spreadGrow2 0.5s ease-out 2.6s forwards;
+}
+.visible .s2_spread_3 {
+  animation: s2_spreadGrow3 0.5s ease-out 2.8s forwards;
+}
+
+/* Step 5: pulse + label at 3.4s */
+.visible .s2_box_generous.s2_pulse_target {
+  animation: s2_fadeScaleIn 0.5s ease-out 0.8s forwards, s2_pulse 0.6s ease-in-out 3.4s forwards;
+}
+.visible .s2_label {
+  animation: s2_fadeIn 0.5s ease-out 3.6s forwards;
+}
+
+
+/* === S3 Animation === */
+
+.s3_stage {
+  position: relative;
+  max-width: 340px;
+  height: 280px;
+  margin: 0 auto;
+  background: #ECFDF5;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.s3_stage * {
+  box-sizing: border-box;
+}
+
+.s3_box {
+  position: absolute;
+  border-radius: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-align: center;
+  opacity: 0;
+}
+
+/* Mission - amber, top center */
+.s3_mission {
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.7);
+  background: #D97706;
+  color: #fff;
+  font-size: 48px;
+  padding: 6px 22px;
+}
+
+/* Need - teal, bottom-left */
+.s3_need {
+  bottom: 20px;
+  left: 8px;
+  transform: scale(0.7);
+  background: #0D9488;
+  color: #fff;
+  font-size: 32px;
+  padding: 6px 12px;
+}
+
+/* Give - teal, bottom-right */
+.s3_give {
+  bottom: 20px;
+  right: 8px;
+  transform: scale(0.7);
+  background: #0D9488;
+  color: #fff;
+  font-size: 26px;
+  padding: 9px 10px;
+}
+
+/* SVG overlay */
+.s3_svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.s3_svg svg {
+  width: 100%;
+  height: 100%;
+}
+
+.s3_line_left,
+.s3_line_right {
+  stroke: #94A3B8;
+  stroke-width: 2.5;
+  fill: none;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+}
+
+.s3_arrow_group {
+  opacity: 0;
+}
+
+.s3_arrow_line {
+  stroke: #D97706;
+  stroke-width: 2;
+  fill: none;
+}
+
+.s3_arrow_head {
+  fill: #D97706;
+}
+
+.s3_arrow_label {
+  font-size: 14px;
+  font-weight: 700;
+  fill: #D97706;
+  text-anchor: middle;
+}
+
+/* Animations */
+.s3_stage.visible .s3_mission {
+  animation: s3_pop_center 0.5s ease-out 0.4s forwards;
+}
+
+.s3_stage.visible .s3_line_left {
+  animation: s3_draw 0.6s ease-out 1.0s forwards;
+}
+
+.s3_stage.visible .s3_line_right {
+  animation: s3_draw 0.6s ease-out 1.0s forwards;
+}
+
+.s3_stage.visible .s3_need {
+  animation: s3_pop 0.5s ease-out 1.8s forwards;
+}
+
+.s3_stage.visible .s3_give {
+  animation: s3_pop 0.5s ease-out 2.4s forwards;
+}
+
+.s3_stage.visible .s3_arrow_group {
+  animation: s3_fade_in 0.5s ease-out 3.2s forwards;
+}
+
+@keyframes s3_pop_center {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.7); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+@keyframes s3_pop {
+  0% { opacity: 0; transform: scale(0.7); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s3_draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes s3_fade_in {
+  to { opacity: 1; }
+}
+
+
+/* === S4 Animation === */
+
+.s4_stage {
+  max-width: 340px;
+  height: 260px;
+  background: #0F1A2E;
+  border-radius: 12px;
+  position: relative;
+  margin: 0 auto;
+  overflow: hidden;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* 小灰圆「你」 */
+.s4_you {
+  position: absolute;
+  top: 100px;
+  left: 50px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #94A3B8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 700;
+  color: #0F1A2E;
+  opacity: 0;
+  z-index: 2;
+}
+
+/* 大 amber 描边圆「?」 */
+.s4_stranger {
+  position: absolute;
+  top: 78px;
+  right: 44px;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: transparent;
+  border: 3px solid #D97706;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  font-weight: 700;
+  color: #D97706;
+  opacity: 0;
+  z-index: 2;
+}
+
+/* 恐惧墙 */
+.s4_wall {
+  position: absolute;
+  top: 68px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 100px;
+  background: #EF4444;
+  border-radius: 3px;
+  opacity: 0;
+  z-index: 3;
+}
+
+/* 恐惧标签 */
+.s4_fear_label {
+  position: absolute;
+  top: 178px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  font-weight: 600;
+  color: #EF4444;
+  opacity: 0;
+  white-space: nowrap;
+  z-index: 3;
+}
+
+/* 连接线 — 在「你」移动后，从「你」右边到「?」左边 */
+.s4_connect_line {
+  position: absolute;
+  top: 127px;
+  left: 162px;
+  width: 0;
+  height: 3px;
+  background: #0D9488;
+  border-radius: 2px;
+  opacity: 0;
+  z-index: 1;
+}
+
+/* 连接标签 */
+.s4_connect_label {
+  position: absolute;
+  top: 220px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 16px;
+  font-weight: 600;
+  color: #0D9488;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+/* Keyframes */
+@keyframes s4_fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes s4_scaleIn {
+  0% { opacity: 0; transform: scale(0.6); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s4_wallAppear {
+  0% { opacity: 0; height: 0; }
+  100% { opacity: 1; height: 100px; }
+}
+
+@keyframes s4_wallShrink1 {
+  0% { height: 100px; }
+  100% { height: 50px; }
+}
+
+@keyframes s4_wallShrink2 {
+  0% { height: 50px; opacity: 1; }
+  100% { height: 0px; opacity: 0; }
+}
+
+@keyframes s4_fearFade {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes s4_youMove {
+  0% { left: 50px; }
+  100% { left: 106px; }
+}
+
+@keyframes s4_lineGrow {
+  0% { opacity: 0; width: 0; }
+  100% { opacity: 1; width: 52px; }
+}
+
+@keyframes s4_labelIn {
+  0% { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* All animations combined per element */
+
+/* 「你」: appear at 0.2s, move at 4.2s */
+.visible .s4_you {
+  animation:
+    s4_scaleIn 0.5s ease-out 0.2s forwards,
+    s4_youMove 0.6s ease-in-out 4.2s forwards;
+}
+
+/* 「?」: appear at 0.8s */
+.visible .s4_stranger {
+  animation: s4_scaleIn 0.5s ease-out 0.8s forwards;
+}
+
+/* 恐惧墙: appear 1.5s, shrink 2.8s, vanish 3.6s */
+.visible .s4_wall {
+  animation:
+    s4_wallAppear 0.5s ease-out 1.5s forwards,
+    s4_wallShrink1 0.5s ease-out 2.8s forwards,
+    s4_wallShrink2 0.5s ease-out 3.6s forwards;
+}
+
+/* 恐惧标签: appear 1.8s, fade 3.6s */
+.visible .s4_fear_label {
+  animation:
+    s4_fadeIn 0.4s ease-out 1.8s forwards,
+    s4_fearFade 0.4s ease-out 3.6s forwards;
+}
+
+/* 连接线: grow at 4.8s */
+.visible .s4_connect_line {
+  animation: s4_lineGrow 0.5s ease-out 4.8s forwards;
+}
+
+/* 连接标签: appear at 5.2s */
+.visible .s4_connect_label {
+  animation: s4_labelIn 0.5s ease-out 5.2s forwards;
+}
+
+
+/* === S5 Animation === */
+
+.s5_stage {
+  position: relative;
+  width: 340px;
+  height: 280px;
+  background: #FFF3E0;
+  border-radius: 12px;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.s5_stage.visible {
+  opacity: 1;
+}
+
+/* Center "你" circle */
+.s5_center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #D97706;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 28px;
+  font-weight: 700;
+  opacity: 0;
+  z-index: 3;
+}
+.s5_stage.visible .s5_center {
+  animation: s5_fadeIn 0.5s 0.4s forwards;
+}
+
+/* Contact circles */
+.s5_contact {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #94A3B8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 600;
+  opacity: 0;
+  z-index: 3;
+}
+.s5_c1 { left: 50%; top: 36px; transform: translateX(-50%); }
+.s5_c2 { left: 44px; top: 192px; transform: translateX(-50%); }
+.s5_c3 { left: 296px; top: 192px; transform: translateX(-50%); }
+
+.s5_stage.visible .s5_contact {
+  animation: s5_fadeIn 0.5s 1.0s forwards;
+}
+
+/* Pulse rings */
+.s5_pulse {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 3px solid #D97706;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.s5_p1 {
+  /* pulse toward c1: top center */
+}
+.s5_stage.visible .s5_p1 {
+  animation: s5_pulseToC1 0.8s 1.8s forwards;
+}
+.s5_stage.visible .s5_c1 {
+  animation: s5_fadeIn 0.5s 1.0s forwards, s5_activate 0.3s 2.6s forwards;
+}
+
+.s5_p2 {
+  /* pulse toward c2: bottom left */
+}
+.s5_stage.visible .s5_p2 {
+  animation: s5_pulseToC2 0.8s 3.0s forwards;
+}
+.s5_stage.visible .s5_c2 {
+  animation: s5_fadeIn 0.5s 1.0s forwards, s5_activate 0.3s 3.8s forwards;
+}
+
+.s5_p3 {
+  /* pulse toward c3: bottom right */
+}
+.s5_stage.visible .s5_p3 {
+  animation: s5_pulseToC3 0.8s 4.2s forwards;
+}
+.s5_stage.visible .s5_c3 {
+  animation: s5_fadeIn 0.5s 1.0s forwards, s5_activate 0.3s 5.0s forwards;
+}
+
+/* Label */
+.s5_label {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 18px;
+  font-weight: 700;
+  color: #D97706;
+  letter-spacing: 2px;
+  opacity: 0;
+  z-index: 3;
+}
+.s5_stage.visible .s5_label {
+  animation: s5_fadeIn 0.5s 5.4s forwards;
+}
+
+/* Keyframes */
+@keyframes s5_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes s5_activate {
+  from { background: #94A3B8; }
+  to { background: #0D9488; }
+}
+
+/* Pulse to C1 (top center): travel from center ~140px upward, expand ring */
+@keyframes s5_pulseToC1 {
+  0% {
+    opacity: 0.9;
+    width: 16px; height: 16px;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+  }
+  50% {
+    opacity: 0.7;
+    width: 40px; height: 40px;
+    left: 50%; top: 38%;
+    transform: translate(-50%, -50%);
+  }
+  85% {
+    opacity: 0.4;
+    width: 56px; height: 56px;
+    left: 50%; top: 24%;
+    transform: translate(-50%, -50%);
+  }
+  100% {
+    opacity: 0;
+    width: 64px; height: 64px;
+    left: 50%; top: 20%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* Pulse to C2 (bottom left) */
+@keyframes s5_pulseToC2 {
+  0% {
+    opacity: 0.9;
+    width: 16px; height: 16px;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+  }
+  50% {
+    opacity: 0.7;
+    width: 40px; height: 40px;
+    left: 30%; top: 58%;
+    transform: translate(-50%, -50%);
+  }
+  85% {
+    opacity: 0.4;
+    width: 56px; height: 56px;
+    left: 17%; top: 66%;
+    transform: translate(-50%, -50%);
+  }
+  100% {
+    opacity: 0;
+    width: 64px; height: 64px;
+    left: 13%; top: 70%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* Pulse to C3 (bottom right) */
+@keyframes s5_pulseToC3 {
+  0% {
+    opacity: 0.9;
+    width: 16px; height: 16px;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+  }
+  50% {
+    opacity: 0.7;
+    width: 40px; height: 40px;
+    left: 70%; top: 58%;
+    transform: translate(-50%, -50%);
+  }
+  85% {
+    opacity: 0.4;
+    width: 56px; height: 56px;
+    left: 83%; top: 66%;
+    transform: translate(-50%, -50%);
+  }
+  100% {
+    opacity: 0;
+    width: 64px; height: 64px;
+    left: 87%; top: 70%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+
+/* === S6 Animation === */
+
+.s6_stage {
+  position: relative;
+  max-width: 340px;
+  height: 260px;
+  margin: 0 auto;
+  background: #ECFDF5;
+  border-radius: 16px;
+  overflow: hidden;
+  font-family: -apple-system, "Helvetica Neue", sans-serif;
+}
+
+.s6_stage * {
+  box-sizing: border-box;
+}
+
+/* Shared box style for 4-char labels: use 方框 per constraint */
+.s6_box {
+  position: absolute;
+  width: 120px;
+  height: 64px;
+  border-radius: 8px;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 64px;
+  text-align: center;
+  white-space: nowrap;
+  color: #fff;
+  opacity: 0;
+}
+
+/* Left: 完美面具 - grey */
+.s6_mask {
+  top: 28px;
+  left: 24px;
+  background: #94A3B8;
+}
+
+/* Right: 真实自我 - teal */
+.s6_real {
+  top: 28px;
+  right: 24px;
+  background: #0D9488;
+}
+
+/* Line segments */
+.s6_line_shallow,
+.s6_line_deep {
+  position: absolute;
+  height: 4px;
+  border-radius: 2px;
+  opacity: 0;
+}
+
+.s6_line_shallow {
+  top: 126px;
+  left: 40px;
+  width: 52px;
+  background: #94A3B8;
+}
+
+.s6_line_deep {
+  top: 126px;
+  right: 24px;
+  width: 120px;
+  background: #D97706;
+}
+
+/* Line labels */
+.s6_label {
+  position: absolute;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+.s6_label_shallow {
+  top: 140px;
+  left: 36px;
+  color: #94A3B8;
+}
+
+.s6_label_deep {
+  top: 140px;
+  right: 36px;
+  color: #D97706;
+}
+
+/* Trust tag */
+.s6_trust {
+  position: absolute;
+  bottom: 28px;
+  right: 24px;
+  padding: 6px 18px;
+  border-radius: 20px;
+  border: 2.5px solid #D97706;
+  background: transparent;
+  color: #D97706;
+  font-size: 17px;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+/* ---- Animations triggered by .visible ---- */
+
+.s6_stage.visible .s6_mask {
+  animation: s6_pop 0.5s ease-out 0.4s forwards;
+}
+
+.s6_stage.visible .s6_real {
+  animation: s6_pop 0.5s ease-out 1.0s forwards, s6_pulse 1.2s ease-in-out 3.0s 3;
+}
+
+.s6_stage.visible .s6_line_shallow,
+.s6_stage.visible .s6_label_shallow {
+  animation: s6_fade 0.5s ease-out 1.6s forwards;
+}
+
+.s6_stage.visible .s6_line_deep,
+.s6_stage.visible .s6_label_deep {
+  animation: s6_fade 0.5s ease-out 2.2s forwards;
+}
+
+.s6_stage.visible .s6_trust {
+  animation: s6_fade 0.5s ease-out 2.8s forwards;
+}
+
+@keyframes s6_pop {
+  0% { opacity: 0; transform: scale(0.7); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s6_fade {
+  to { opacity: 1; }
+}
+
+@keyframes s6_pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+
+/* === S7 Animation === */
+
+.s7_stage {
+  position: relative;
+  width: 340px;
+  height: 280px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.s7_node {
+  position: absolute;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.s7_you {
+  width: 72px;
+  height: 72px;
+  background: #D97706;
+  left: 134px;
+  top: 104px;
+}
+
+.s7_a {
+  width: 64px;
+  height: 64px;
+  background: #94A3B8;
+  left: 40px;
+  top: 20px;
+  transition: background 0.5s ease;
+}
+
+.s7_b {
+  width: 64px;
+  height: 64px;
+  background: #94A3B8;
+  left: 236px;
+  top: 20px;
+  transition: background 0.5s ease;
+}
+
+.s7_line {
+  position: absolute;
+  height: 3px;
+  transform-origin: 0 50%;
+  opacity: 0;
+}
+
+.s7_line_ya {
+  background: #0D9488;
+  left: 170px;
+  top: 140px;
+  width: 0;
+}
+
+.s7_line_yb {
+  background: #0D9488;
+  left: 170px;
+  top: 140px;
+  width: 0;
+}
+
+.s7_line_ab {
+  left: 72px;
+  top: 52px;
+  width: 0;
+  border: none;
+  height: 3px;
+  background: repeating-linear-gradient(90deg, #0D9488 0, #0D9488 8px, transparent 8px, transparent 14px);
+}
+
+.s7_label {
+  position: absolute;
+  font-size: 14px;
+  color: #0D9488;
+  font-weight: 600;
+  opacity: 0;
+  left: 136px;
+  top: 4px;
+  white-space: nowrap;
+}
+
+/* Step 1: center node appears */
+.s7_stage.visible .s7_you {
+  animation: s7_pop 0.5s ease 0.4s forwards;
+}
+
+/* Step 2: A appears */
+.s7_stage.visible .s7_a {
+  animation: s7_pop 0.5s ease 1.0s forwards;
+}
+
+/* Step 3: B appears */
+.s7_stage.visible .s7_b {
+  animation: s7_pop 0.5s ease 1.6s forwards;
+}
+
+/* Step 4: line you->A */
+.s7_stage.visible .s7_line_ya {
+  animation: s7_line_ya_draw 0.6s ease 2.2s forwards;
+}
+
+/* Step 5: line you->B */
+.s7_stage.visible .s7_line_yb {
+  animation: s7_line_yb_draw 0.6s ease 2.9s forwards;
+}
+
+/* Step 6: dashed line A->B + label + color change */
+.s7_stage.visible .s7_line_ab {
+  animation: s7_line_ab_draw 0.6s ease 3.6s forwards;
+}
+
+.s7_stage.visible .s7_label {
+  animation: s7_fade_in 0.5s ease 4.0s forwards;
+}
+
+.s7_stage.visible .s7_a {
+  animation: s7_pop 0.5s ease 1.0s forwards, s7_to_teal 0.5s ease 3.6s forwards;
+}
+
+.s7_stage.visible .s7_b {
+  animation: s7_pop 0.5s ease 1.6s forwards, s7_to_teal 0.5s ease 3.6s forwards;
+}
+
+@keyframes s7_pop {
+  0% { opacity: 0; transform: scale(0); }
+  70% { transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s7_to_teal {
+  to { background: #0D9488; }
+}
+
+@keyframes s7_line_ya_draw {
+  0% { opacity: 1; width: 0; transform: rotate(-130deg); }
+  100% { opacity: 1; width: 120px; transform: rotate(-130deg); }
+}
+
+@keyframes s7_line_yb_draw {
+  0% { opacity: 1; width: 0; transform: rotate(-50deg); }
+  100% { opacity: 1; width: 120px; transform: rotate(-50deg); }
+}
+
+@keyframes s7_line_ab_draw {
+  0% { opacity: 1; width: 0; }
+  100% { opacity: 1; width: 196px; }
+}
+
+@keyframes s7_fade_in {
+  to { opacity: 1; }
+}
+
+
+/* === S8 Animation === */
+
+.s8_stage {
+  position: relative;
+  max-width: 340px;
+  height: 280px;
+  margin: 0 auto;
+  background: #FFF8E7;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.s8_stage * {
+  box-sizing: border-box;
+}
+
+/* Pyramid layers - rounded boxes */
+.s8_layer {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 10px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 48px;
+  line-height: 1;
+  text-align: center;
+  opacity: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Bottom: 技巧 - wide amber */
+.s8_bottom {
+  bottom: 28px;
+  width: 260px;
+  height: 56px;
+  background: #D97706;
+}
+
+/* Middle: 关系 - medium teal */
+.s8_middle {
+  bottom: 100px;
+  width: 190px;
+  height: 56px;
+  background: #0D9488;
+}
+
+/* Top: 真诚 - narrow amber */
+.s8_top {
+  bottom: 172px;
+  width: 120px;
+  height: 56px;
+  background: #D97706;
+}
+
+/* Dashed arrow line - left side */
+.s8_arrow {
+  position: absolute;
+  left: 24px;
+  bottom: 56px;
+  width: 2px;
+  height: 0;
+  border-left: 2px dashed #94A3B8;
+  transform-origin: bottom;
+  opacity: 0;
+}
+
+/* Arrow head */
+.s8_arrow::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -6px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 8px solid #94A3B8;
+}
+
+/* Label tag */
+.s8_label {
+  position: absolute;
+  bottom: 182px;
+  right: 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #D97706;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+/* ---- Animations triggered by .visible ---- */
+
+.s8_stage.visible .s8_bottom {
+  animation: s8_pop 0.5s ease-out 0.4s forwards;
+}
+
+.s8_stage.visible .s8_middle {
+  animation: s8_pop 0.5s ease-out 1.0s forwards;
+}
+
+.s8_stage.visible .s8_top {
+  animation: s8_pop 0.5s ease-out 1.6s forwards;
+}
+
+.s8_stage.visible .s8_arrow {
+  animation: s8_grow_side 0.8s ease-out 2.2s forwards;
+}
+
+.s8_stage.visible .s8_top_glow {
+  animation: s8_pop 0.5s ease-out 1.6s forwards, s8_pulse 1.2s ease-in-out 3.2s 3;
+}
+
+.s8_stage.visible .s8_label {
+  animation: s8_fade 0.5s ease-out 3.2s forwards;
+}
+
+@keyframes s8_pop {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.7); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+@keyframes s8_fade {
+  to { opacity: 1; }
+}
+
+@keyframes s8_grow_side {
+  0% { opacity: 0; height: 0; }
+  10% { opacity: 1; }
+  100% { opacity: 1; height: 180px; }
+}
+
+@keyframes s8_pulse {
+  0%, 100% { transform: translateX(-50%) scale(1); box-shadow: 0 0 0 0 rgba(217,119,6,0); }
+  50% { transform: translateX(-50%) scale(1.06); box-shadow: 0 0 18px 4px rgba(217,119,6,0.35); }
+}
+
+
+/* === S9 Animation === */
+
+.s9_stage {
+  position: relative;
+  max-width: 340px;
+  height: 280px;
+  margin: 0 auto;
+  background: #FFF8E7;
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: -apple-system, "Helvetica Neue", sans-serif;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.s9_stage.visible {
+  opacity: 1;
+}
+
+/* Labels */
+.s9_label {
+  position: absolute;
+  font-size: 15px;
+  font-weight: 700;
+  opacity: 0;
+  transform: translateY(6px);
+}
+.s9_label_left {
+  left: 24px;
+  top: 24px;
+  color: #94A3B8;
+}
+.s9_label_right {
+  left: 24px;
+  top: 152px;
+  color: #D97706;
+}
+
+/* Timelines */
+.s9_timeline {
+  position: absolute;
+  height: 2px;
+  background: #E2E8F0;
+  left: 24px;
+  right: 24px;
+  opacity: 0;
+}
+.s9_tl_left {
+  top: 72px;
+}
+.s9_tl_right {
+  top: 200px;
+}
+
+/* Left timeline: empty gap then burst */
+.s9_empty_zone {
+  position: absolute;
+  top: 56px;
+  left: 28px;
+  width: 140px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+}
+.s9_empty_text {
+  font-size: 11px;
+  color: #CBD5E1;
+  letter-spacing: 1px;
+}
+
+.s9_burst {
+  position: absolute;
+  top: 58px;
+  left: 178px;
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+  opacity: 0;
+}
+.s9_burst_line {
+  width: 3px;
+  background: #94A3B8;
+  border-radius: 1px;
+}
+
+.s9_too_late {
+  position: absolute;
+  top: 92px;
+  left: 190px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #DC2626;
+  opacity: 0;
+}
+
+/* Right timeline: even ticks */
+.s9_even_ticks {
+  position: absolute;
+  top: 188px;
+  left: 28px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+  opacity: 0;
+}
+.s9_tick {
+  width: 3px;
+  height: 20px;
+  background: #0D9488;
+  border-radius: 1px;
+}
+
+.s9_reward {
+  position: absolute;
+  top: 218px;
+  right: 24px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #D97706;
+  background: #FEF3C7;
+  padding: 3px 10px;
+  border-radius: 10px;
+  opacity: 0;
+}
+
+/* Animations */
+.s9_stage.visible .s9_label_left {
+  animation: s9_fadeUp 0.5s 0.2s ease both;
+}
+.s9_stage.visible .s9_tl_left {
+  animation: s9_fadeIn 0.4s 0.6s ease both;
+}
+.s9_stage.visible .s9_empty_zone {
+  animation: s9_fadeIn 0.4s 0.8s ease both;
+}
+.s9_stage.visible .s9_burst {
+  animation: s9_fadeIn 0.4s 1.4s ease both;
+}
+.s9_stage.visible .s9_too_late {
+  animation: s9_fadeUp 0.4s 2.0s ease both;
+}
+.s9_stage.visible .s9_label_right {
+  animation: s9_fadeUp 0.5s 2.6s ease both;
+}
+.s9_stage.visible .s9_tl_right {
+  animation: s9_fadeIn 0.4s 3.0s ease both;
+}
+.s9_stage.visible .s9_even_ticks {
+  animation: s9_fadeIn 0.5s 3.4s ease both;
+}
+.s9_stage.visible .s9_reward {
+  animation: s9_fadeUp 0.5s 4.2s ease both;
+}
+
+@keyframes s9_fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s9_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+
+/* === S10 Animation === */
+
+.s10_stage {
+  position: relative;
+  width: 340px;
+  height: 280px;
+  background: #ECFDF5;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+/* Central "你" circle */
+.s10_you {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #D97706;
+  color: #fff;
+  font-size: 48px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  left: 138px;
+  top: 108px;
+  opacity: 0;
+  transform: scale(0);
+  z-index: 2;
+}
+
+/* Mentor boxes - 4 chars so use box per spec */
+.s10_mentor {
+  position: absolute;
+  background: #0D9488;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  z-index: 2;
+}
+
+.s10_mentor_top {
+  left: 50%;
+  top: 16px;
+  transform: translateX(-50%) scale(0);
+}
+
+.s10_mentor_right {
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%) scale(0);
+}
+
+.s10_mentor_bottom {
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%) scale(0);
+}
+
+/* Arrow lines */
+.s10_arrow {
+  position: absolute;
+  opacity: 0;
+  z-index: 1;
+}
+
+/* Top arrow: from bottom of mentor_top to top of "你" */
+.s10_arrow_top {
+  width: 2px;
+  height: 36px;
+  background: #94A3B8;
+  left: 169px;
+  top: 54px;
+}
+
+/* Right arrow: from right of "你" to left of mentor_right */
+.s10_arrow_right {
+  width: 36px;
+  height: 2px;
+  background: #94A3B8;
+  left: 208px;
+  top: 139px;
+}
+
+/* Bottom arrow: from bottom of "你" to top of mentor_bottom */
+.s10_arrow_bottom {
+  width: 2px;
+  height: 36px;
+  background: #94A3B8;
+  left: 169px;
+  top: 178px;
+}
+
+/* Arrow tips */
+.s10_tip {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  z-index: 1;
+}
+
+/* Top pair: tip pointing up (toward mentor) + tip pointing down (toward 你) */
+.s10_tip_top_up {
+  left: 164px;
+  top: 49px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 8px solid #94A3B8;
+}
+.s10_tip_top_down {
+  left: 164px;
+  top: 90px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid #94A3B8;
+}
+
+/* Right pair: tip pointing right (toward mentor) + tip pointing left (toward 你) */
+.s10_tip_right_out {
+  left: 244px;
+  top: 134px;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 8px solid #94A3B8;
+}
+.s10_tip_right_in {
+  left: 202px;
+  top: 134px;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-right: 8px solid #94A3B8;
+}
+
+/* Bottom pair: tip pointing down (toward mentor) + tip pointing up (toward 你) */
+.s10_tip_bottom_down {
+  left: 164px;
+  top: 214px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid #94A3B8;
+}
+.s10_tip_bottom_up {
+  left: 164px;
+  top: 172px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 8px solid #94A3B8;
+}
+
+/* Dashed ring */
+.s10_ring {
+  position: absolute;
+  width: 310px;
+  height: 250px;
+  left: 15px;
+  top: 15px;
+  border: 2px dashed #D97706;
+  border-radius: 50%;
+  opacity: 0;
+  z-index: 0;
+}
+
+/* "导师圈" label */
+.s10_circle_label {
+  position: absolute;
+  right: 24px;
+  bottom: 8px;
+  color: #D97706;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  opacity: 0;
+  z-index: 3;
+}
+
+/* ---- Animations ---- */
+@keyframes s10_pop {
+  0% { opacity: 0; transform: scale(0); }
+  70% { transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes s10_pop_cx {
+  0% { opacity: 0; transform: translateX(-50%) scale(0); }
+  70% { transform: translateX(-50%) scale(1.1); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+@keyframes s10_pop_cy {
+  0% { opacity: 0; transform: translateY(-50%) scale(0); }
+  70% { transform: translateY(-50%) scale(1.1); }
+  100% { opacity: 1; transform: translateY(-50%) scale(1); }
+}
+@keyframes s10_fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes s10_ring_in {
+  from { opacity: 0; }
+  to { opacity: 0.45; }
+}
+
+/* Step 1: "你" at 0.2s */
+.s10_stage.visible .s10_you {
+  animation: s10_pop 0.5s ease-out 0.2s forwards;
+}
+/* Step 2: 行业导师 at 0.9s */
+.s10_stage.visible .s10_mentor_top {
+  animation: s10_pop_cx 0.4s ease-out 0.9s forwards;
+}
+/* Step 3: 技术导师 at 1.5s */
+.s10_stage.visible .s10_mentor_right {
+  animation: s10_pop_cy 0.4s ease-out 1.5s forwards;
+}
+/* Step 4: 人生导师 at 2.1s */
+.s10_stage.visible .s10_mentor_bottom {
+  animation: s10_pop_cx 0.4s ease-out 2.1s forwards;
+}
+/* Step 5: Arrows at 2.8s / 3.2s / 3.6s */
+.s10_stage.visible .s10_arrow_top,
+.s10_stage.visible .s10_tip_top_up,
+.s10_stage.visible .s10_tip_top_down {
+  animation: s10_fade 0.35s ease-out 2.8s forwards;
+}
+.s10_stage.visible .s10_arrow_right,
+.s10_stage.visible .s10_tip_right_out,
+.s10_stage.visible .s10_tip_right_in {
+  animation: s10_fade 0.35s ease-out 3.2s forwards;
+}
+.s10_stage.visible .s10_arrow_bottom,
+.s10_stage.visible .s10_tip_bottom_down,
+.s10_stage.visible .s10_tip_bottom_up {
+  animation: s10_fade 0.35s ease-out 3.6s forwards;
+}
+/* Step 6: Ring + label at 4.4s */
+.s10_stage.visible .s10_ring {
+  animation: s10_ring_in 0.6s ease-out 4.4s forwards;
+}
+.s10_stage.visible .s10_circle_label {
+  animation: s10_fade 0.6s ease-out 4.6s forwards;
+}
+
+
+/* === S11 Animation === */
+
+.s11_stage {
+  position: relative;
+  max-width: 340px;
+  height: 280px;
+  margin: 0 auto;
+  background: #FFF3E0;
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: -apple-system, "Helvetica Neue", sans-serif;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.s11_stage.visible {
+  opacity: 1;
+}
+
+/* Core guest box */
+.s11_core {
+  position: absolute;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 96px;
+  height: 96px;
+  border: 3px solid #D97706;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #D97706;
+  background: #FFF;
+  opacity: 0;
+  z-index: 2;
+}
+
+/* Pulse rings */
+.s11_pulse {
+  position: absolute;
+  top: 118px;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  border: 2px solid #D97706;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Small circles (guests) */
+.s11_guest {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #94A3B8;
+  opacity: 0;
+  z-index: 2;
+}
+.s11_guest_label {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #FFF;
+}
+
+/* Guest start positions */
+.s11_g1 { top: 100px; left: -40px; }
+.s11_g2 { top: 100px; right: -40px; left: auto; }
+.s11_g3 { top: 260px; left: 50%; transform: translateX(-50%); }
+
+/* Final label */
+.s11_finale {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  font-weight: 700;
+  color: #0D9488;
+  background: #F0FDFA;
+  padding: 4px 14px;
+  border-radius: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  z-index: 3;
+}
+
+/* === Animations === */
+
+/* Step 1: Core box */
+.s11_stage.visible .s11_core {
+  animation: s11_fadeScale 0.6s 0.3s ease both;
+}
+
+/* Step 2: Pulse rings */
+.s11_stage.visible .s11_pulse1 {
+  animation: s11_ring 1.2s 1.0s ease-out both;
+}
+.s11_stage.visible .s11_pulse2 {
+  animation: s11_ring 1.2s 1.3s ease-out both;
+}
+
+/* Step 3-5: Guests fly in AND change color (combined animations) */
+.s11_stage.visible .s11_g1 {
+  animation: s11_flyLeft 0.8s 1.8s ease-out both, s11_toTeal 0.3s 2.6s ease both;
+}
+.s11_stage.visible .s11_g2 {
+  animation: s11_flyRight 0.8s 2.8s ease-out both, s11_toTeal 0.3s 3.6s ease both;
+}
+.s11_stage.visible .s11_g3 {
+  animation: s11_flyUp 0.8s 3.8s ease-out both, s11_toTeal 0.3s 4.6s ease both;
+}
+
+/* Step 6: Final label */
+.s11_stage.visible .s11_finale {
+  animation: s11_fadeUp 0.5s 5.0s ease both;
+}
+
+@keyframes s11_fadeScale {
+  from { opacity: 0; transform: translateX(-50%) scale(0.6); }
+  to { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+@keyframes s11_ring {
+  0% { opacity: 0.6; width: 0; height: 0; }
+  100% { opacity: 0; width: 200px; height: 200px; }
+}
+
+@keyframes s11_flyLeft {
+  0% { opacity: 0; left: -40px; top: 100px; }
+  40% { opacity: 1; }
+  100% { opacity: 1; left: 56px; top: 88px; }
+}
+
+@keyframes s11_flyRight {
+  0% { opacity: 0; right: -40px; top: 100px; }
+  40% { opacity: 1; }
+  100% { opacity: 1; right: 56px; top: 88px; }
+}
+
+@keyframes s11_flyUp {
+  0% { opacity: 0; top: 260px; }
+  40% { opacity: 1; }
+  100% { opacity: 1; top: 170px; }
+}
+
+@keyframes s11_toTeal {
+  from { background: #94A3B8; }
+  to { background: #0D9488; }
+}
+
+@keyframes s11_fadeUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+
+/* === S12 Animation === */
+
+.s12_stage {
+  position: relative;
+  max-width: 340px;
+  height: 260px;
+  margin: 0 auto;
+  background: #ECFDF5;
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: -apple-system, "Helvetica Neue", sans-serif;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.s12_stage.visible {
+  opacity: 1;
+}
+
+/* Circle groups */
+.s12_group_left {
+  position: absolute;
+  top: 60px;
+  left: 28px;
+}
+.s12_group_right {
+  position: absolute;
+  top: 60px;
+  right: 28px;
+}
+.s12_circle {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  opacity: 0;
+}
+/* Left group: amber circles, tight cluster */
+.s12_cl1 { background: #D97706; top: 0; left: 0; }
+.s12_cl2 { background: #D97706; top: -16px; left: 32px; }
+.s12_cl3 { background: #D97706; top: 16px; left: 32px; }
+/* Right group: teal circles, mirrored */
+.s12_cr1 { background: #0D9488; top: 0; left: 0; }
+.s12_cr2 { background: #0D9488; top: -16px; left: -32px; }
+.s12_cr3 { background: #0D9488; top: 16px; left: -32px; }
+
+/* Group labels */
+.s12_label {
+  position: absolute;
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0;
+}
+.s12_label_left {
+  top: 150px;
+  left: 32px;
+  color: #D97706;
+}
+.s12_label_right {
+  top: 150px;
+  right: 22px;
+  color: #0D9488;
+}
+
+/* Bridge circle */
+.s12_bridge_dot {
+  position: absolute;
+  top: 74px;
+  left: 50%;
+  margin-left: -14px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #94A3B8;
+  opacity: 0;
+}
+
+/* SVG lines layer */
+.s12_lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.s12_line_left, .s12_line_right {
+  stroke-dasharray: 6 4;
+  stroke-width: 2;
+  fill: none;
+  opacity: 0;
+}
+.s12_line_left { stroke: #D97706; }
+.s12_line_right { stroke: #0D9488; }
+
+.s12_line_solid {
+  stroke-width: 3.5;
+  fill: none;
+  opacity: 0;
+  stroke: #D97706;
+}
+
+/* Final label */
+.s12_result_label {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  font-weight: 700;
+  color: #D97706;
+  background: #FEF3C7;
+  padding: 4px 14px;
+  border-radius: 12px;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+/* === Animations === */
+
+/* Step 1: Left group (0.4s) */
+.s12_stage.visible .s12_cl1 {
+  animation: s12_pop 0.5s 0.4s ease both;
+}
+.s12_stage.visible .s12_cl2 {
+  animation: s12_pop 0.5s 0.6s ease both;
+}
+.s12_stage.visible .s12_cl3 {
+  animation: s12_pop 0.5s 0.8s ease both;
+}
+.s12_stage.visible .s12_label_left {
+  animation: s12_labelUp 0.5s 1.0s ease both;
+}
+
+/* Step 2: Right group (1.4s) */
+.s12_stage.visible .s12_cr1 {
+  animation: s12_pop 0.5s 1.4s ease both;
+}
+.s12_stage.visible .s12_cr2 {
+  animation: s12_pop 0.5s 1.6s ease both;
+}
+.s12_stage.visible .s12_cr3 {
+  animation: s12_pop 0.5s 1.8s ease both;
+}
+.s12_stage.visible .s12_label_right {
+  animation: s12_labelUp 0.5s 2.0s ease both;
+}
+
+/* Step 3: Bridge dot gray (2.6s), recolor at Step 4 (3.4s) */
+.s12_stage.visible .s12_bridge_dot {
+  animation: s12_pop 0.5s 2.6s ease both, s12_recolor 0.5s 3.4s ease both;
+}
+
+/* Step 4: Left dashed line (3.4s) */
+.s12_stage.visible .s12_line_left {
+  animation: s12_fadeIn 0.5s 3.4s ease both;
+}
+
+/* Step 5: Right dashed line (4.0s) */
+.s12_stage.visible .s12_line_right {
+  animation: s12_fadeIn 0.5s 4.0s ease both;
+}
+
+/* Step 6: Solid bridge + label (4.6s) */
+.s12_stage.visible .s12_line_solid {
+  animation: s12_fadeIn 0.6s 4.6s ease both;
+}
+.s12_stage.visible .s12_result_label {
+  animation: s12_resultUp 0.5s 5.0s ease both;
+}
+
+@keyframes s12_pop {
+  from { opacity: 0; transform: scale(0.5); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s12_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes s12_labelUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s12_resultUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes s12_recolor {
+  from { background: #94A3B8; }
+  to { background: #D97706; }
+}
+
+</style>
+
+<meta name="description" content="Keith Ferrazzi 出身于宾夕法尼亚小镇的钢铁工人家庭。他父亲 Pete 在钢铁厂干了一辈子低薪苦活，但做了一件改变儿子命运的事——鼓起勇气找到当地企业家 George Love，请他帮忙让 Keith 进入精英私立学校。这不是一个关于「社交技巧」的故事，而是关于一个蓝领家庭的孩子如何通过真诚的人际关系，一步步进入哈佛商学院、成为德勤最年轻的 CM">
+<link rel="canonical" href="https://chendi.me/readings/never-eat-alone/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<!-- Back button -->
+<button class="back-btn" id="backBtn" onclick="goBack()">←</button>
+<!-- Depth dots -->
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ Layer: Overview ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+  <!-- S1 Hero -->
+  <section class="feed-section dark" style="background: linear-gradient(135deg, #1A1A2E 0%, #0F1A2E 100%);">
+    <div class="section-inner">
+      <div class="section-tag reveal">NEVER EAT ALONE</div>
+      <h2 class="big-statement reveal reveal-d1">钢铁工人的儿子，如何用<span class="hl" style="color:#FBBF24">一顿饭</span>改变命运？</h2>
+      <p class="body-text reveal reveal-d2">Keith Ferrazzi 出身于宾夕法尼亚小镇的钢铁工人家庭。他父亲 Pete 在钢铁厂干了一辈子低薪苦活，但做了一件改变儿子命运的事——鼓起勇气找到当地企业家 George Love，请他帮忙让 Keith 进入精英私立学校。这不是一个关于「社交技巧」的故事，而是关于一个蓝领家庭的孩子如何通过真诚的人际关系，一步步进入哈佛商学院、成为德勤最年轻的 CMO、最终创办自己的公司。</p>
+      <div class="anim-stage reveal reveal-d3" id="s1-anim"><div class="s1_stage">
+  <!-- Step 1: Pete circle -->
+  <div class="s1_node s1_circle s1_gray s1_pete">Pete</div>
+
+  <!-- Step 2: Dashed arrow upward -->
+  <div class="s1_arrow_up">
+    <div class="s1_arrow_up_head"></div>
+    <div class="s1_arrow_up_line"></div>
+  </div>
+
+  <!-- Step 3: Keith circle -->
+  <div class="s1_node s1_circle s1_amber s1_keith">Keith</div>
+
+  <!-- Step 4: HBS box + line from Keith -->
+  <div class="s1_line s1_line_keith_hbs s1_teal_target"></div>
+  <div class="s1_node s1_box s1_amber_box s1_hbs">HBS</div>
+
+  <!-- Step 5: CMO box + line from HBS -->
+  <div class="s1_line s1_line_hbs_cmo s1_teal_target"></div>
+  <div class="s1_node s1_box s1_amber_box s1_cmo">CMO</div>
+
+  <!-- Step 6: Label -->
+  <div class="s1_label">关系，是贯穿始终的力量</div>
+</div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Chapter 1 & 5</span><p>My father, Pete Ferrazzi, was a first-generation American, a merchant marine sailor in World War II, and an uneducated steelworker whose world was hard hours and low wages. He wanted more for me, his son. He and I were inseparable when I was growing up (his friends called me "re-Pete" because he took me everywhere with him). He knew I would have a better life if he could help me find a way out of our working-class heritage. But my dad didn't know the exits. He'd never been to college. He knew nothing of country clubs or private schools. But he did know one thing. He understood that to get ahead in life you had to know the right people.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S2 Generosity -->
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <div class="section-tag reveal">GENEROSITY</div>
+      <h2 class="big-statement reveal reveal-d1">成功的秘诀只有一个词：<span class="hl">慷慨</span></h2>
+      <p class="body-text reveal reveal-d2">Ferrazzi 说大多数人把社交当成一笔交易——「我帮你，你欠我」。但真正有效的关系恰恰不是这样运作的。他的导师 Greg Seal 在德勤对他说：「别再整天想着怎么让自己成功了，开始想怎么让你身边的每个人都成功。」因为当你持续给予而不计回报，人们会自发地想要回报你——不是因为义务，而是因为感激。这不是道德说教，而是最聪明的自私：<span class="hl2">这是一种正和博弈——别人的成功不会减少你的成功，反而会增加</span>。</p>
+      <div class="anim-stage reveal reveal-d3" id="s2-anim"><div class="s2_stage">
+  <div class="s2_box s2_box_account">
+    记账
+    <span class="s2_box_subtitle">给 ↔ 还</span>
+  </div>
+  <div class="s2_box s2_box_generous s2_pulse_target">
+    慷慨
+  </div>
+  <div class="s2_stagnant_line"></div>
+  <div class="s2_stagnant_label">关系停滞</div>
+  <div class="s2_spread s2_spread_1"></div>
+  <div class="s2_spread s2_spread_2"></div>
+  <div class="s2_spread s2_spread_3"></div>
+  <div class="s2_label">正和博弈</div>
+</div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Chapter 2: Don't Keep Score</span><p>When I give talks to college and grad students, they always ask me, What are the secrets to success? What are the unspoken rules for making it big? "So you want the inside scoop," I respond. "Fair enough. I'll sum up the key to success in one word: generosity. If your interactions are ruled by generosity, your rewards will follow suit."</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S3 Mission (drill) -->
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <div class="section-tag reveal">MISSION</div>
+      <h2 class="big-statement reveal reveal-d1">先知道你要去哪里——<span class="hl2">使命</span>决定你需要谁</h2>
+      <p class="body-text reveal reveal-d2">Ferrazzi 引用《爱丽丝梦游仙境》的对话：「我该走哪条路？」「那取决于你要去哪里。」大多数人的人脉经营之所以失败，不是因为不努力，而是因为没有使命。因为你的目标越具体，就越容易识别哪些关系能帮你到达那里。他提出了一个「关系行动计划」（Relationship Action Plan）：先写下你的使命，然后列出实现它需要哪些人、哪些技能、哪些资源，再反向推导——谁能帮你获得这些？你能为他们做什么？</p>
+      <div class="anim-stage reveal reveal-d3" id="s3-anim"><div class="s3_stage">
+  <div class="s3_box s3_mission">使命</div>
+  <div class="s3_svg">
+    <svg viewBox="0 0 340 280" preserveAspectRatio="xMidYMid meet">
+      <!-- Left branch: mission bottom to need top -->
+      <line class="s3_line_left" x1="170" y1="86" x2="80" y2="190" />
+      <!-- Right branch: mission bottom to give top -->
+      <line class="s3_line_right" x1="170" y1="86" x2="260" y2="190" />
+      <!-- Double arrow + label in the gap -->
+      <g class="s3_arrow_group">
+        <text class="s3_arrow_label" x="170" y="210">互惠</text>
+        <line class="s3_arrow_line" x1="138" y1="224" x2="202" y2="224" />
+        <polygon class="s3_arrow_head" points="138,224 146,220 146,228" />
+        <polygon class="s3_arrow_head" points="202,224 194,220 194,228" />
+      </g>
+    </svg>
+  </div>
+  <div class="s3_box s3_need">需要谁</div>
+  <div class="s3_box s3_give">能给什么</div>
+</div></div>
+      <p class="hook-line reveal reveal-d3">在需要帮助之前就建好关系，具体怎么做？</p>
+      <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-mission', this)">深入了解 ↓</button>
+    </div>
+  </section>
+
+  <!-- S4 Audacity -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="section-tag reveal">AUDACITY</div>
+      <h2 class="big-statement reveal reveal-d1">大胆的天才——<span style="color:#FBBF24">敢于被拒绝</span>的勇气</h2>
+      <p class="body-text reveal reveal-d2">Ferrazzi 的父亲从未上过大学，不认识任何有权有势的人。但他做了一件在蓝领圈子里几乎不可想象的事：直接去找企业家 George Love，请他帮忙。Ferrazzi 还讲了希拉里·克林顿的故事：1970年代，年轻的希拉里在公园里看到一群穿得光鲜的女人，走上前说「我叫希拉里·罗德姆，你们是谁？」在别人犹豫时大胆行动——<span style="color:#FBBF24">每一次拒绝都在降低你对拒绝的恐惧，而大多数人连第一步都不敢迈出</span>。</p>
+      <div class="anim-stage reveal reveal-d3" id="s4-anim"><div class="s4_stage">
+  <div class="s4_you">你</div>
+  <div class="s4_stranger">?</div>
+  <div class="s4_wall"></div>
+  <div class="s4_fear_label">恐惧</div>
+  <div class="s4_connect_line"></div>
+  <div class="s4_connect_label">连接</div>
+</div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Chapter 5: The Genius of Audacity</span><p>Whom you know determines who you are—how you feel, how you act, and what you achieve. But as I continued, I told them it was their job to reach out and have the courage to connect with others, because it was only through extended, often unexpected relationships that they could find true success.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S5 Never Disappear -->
+  <section class="feed-section" style="background: var(--bg-act3);">
+    <div class="section-inner">
+      <div class="section-tag reveal">VISIBILITY</div>
+      <h2 class="big-statement reveal reveal-d1">隐身比失败更可怕——<span class="hl">永不消失</span></h2>
+      <p class="body-text reveal reveal-d2">「Never Eat Alone」这个书名本身就是一条行动准则：永远不要独自用餐。因为每一顿早餐、午餐、晚餐都是建立或维护一段关系的机会。Ferrazzi 的日程表上一天可能有六七个社交约会。但更深层的原则是：在好莱坞，最糟糕的不是拍了一部烂片，而是没人记得你。他提出了「Pinging」（持续轻触）的概念——不需要长信，一条短消息、一封转发的文章、一个生日祝福，就能让关系保持温度。</p>
+      <div class="anim-stage reveal reveal-d3" id="s5-anim"><div class="s5_stage">
+  <div class="s5_center">你</div>
+  <div class="s5_contact s5_c1">A</div>
+  <div class="s5_contact s5_c2">B</div>
+  <div class="s5_contact s5_c3">C</div>
+  <div class="s5_pulse s5_p1"></div>
+  <div class="s5_pulse s5_p2"></div>
+  <div class="s5_pulse s5_p3"></div>
+  <div class="s5_label">Pinging</div>
+</div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Chapter 11 & 20</span><p>The dynamics of a network are similar to those of a would-be celebrity in Hollywood: Invisibility is a fate far worse than failure. It means that you should always be reaching out to others—over breakfast, lunch, whatever. It means that if one meeting happens to go sour, you have six other engagements lined up just like it the rest of the week.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S6 Small Talk -->
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <div class="section-tag reveal">SMALL TALK</div>
+      <h2 class="big-statement reveal reveal-d1">闲聊不是废话——<span class="hl2">脆弱</span>才是最好的社交货币</h2>
+      <p class="body-text reveal reveal-d2">Ferrazzi 认为大多数人害怕 small talk 是因为他们试图表现得完美。但他的方法恰恰相反：展示脆弱。因为当你愿意分享自己的真实感受、困惑甚至失败，对方的防备心会瞬间降低。他总结了一套方法：学会提出好问题（问「为什么」而不是「是什么」），主动分享一些个人的、甚至有点脆弱的内容，然后真正地倾听——<span class="hl2">不是等着轮到你说话，而是真的在听</span>。</p>
+      <div class="anim-stage reveal reveal-d3" id="s6-anim"><div class="s6_stage">
+  <!-- Left: 完美面具 -->
+  <div class="s6_box s6_mask">完美面具</div>
+  <!-- Right: 真实自我 -->
+  <div class="s6_box s6_real">真实自我</div>
+  <!-- Short grey line under mask -->
+  <div class="s6_line_shallow"></div>
+  <div class="s6_label s6_label_shallow">浅层对话</div>
+  <!-- Long amber line under real -->
+  <div class="s6_line_deep"></div>
+  <div class="s6_label s6_label_deep">深度连接</div>
+  <!-- Trust tag -->
+  <div class="s6_trust">脆弱 = 信任</div>
+</div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Chapter 17: The Art of Small Talk</span><p>We all have what it takes to charm everyone around us—colleagues, strangers, friends, the boss. But having it and knowing how to work it is the difference between going through life in the shadows and commanding center stage wherever you happen to be.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S7 Social Arbitrage (drill) -->
+  <section class="feed-section dark" style="background: linear-gradient(180deg, #0F1A2E 0%, #1A1A2E 100%);">
+    <div class="section-inner">
+      <div class="section-tag reveal">SOCIAL ARBITRAGE</div>
+      <h2 class="big-statement reveal reveal-d1">社交套利——成为让别人<span style="color:#FBBF24">互相认识</span>的枢纽</h2>
+      <p class="body-text reveal reveal-d2">Ferrazzi 发现了一种独特的权力来源：成为让别人互相认识的那个人。因为你在两个人之间创造了原本不存在的连接——而你就是这个连接的枢纽。最经典的工具是他的私人晚宴：每次邀请 6-10 个来自不同领域但有潜在交集的人，他的规矩是每个人必须分享一个正在面对的挑战，然后全桌一起想办法帮忙。很多人通过这些晚宴找到了商业伙伴、投资人、甚至终身好友。</p>
+      <div class="anim-stage reveal reveal-d3" id="s7-anim"><div class="s7_stage">
+  <div class="s7_line s7_line_ya"></div>
+  <div class="s7_line s7_line_yb"></div>
+  <div class="s7_line s7_line_ab"></div>
+  <div class="s7_node s7_you">你</div>
+  <div class="s7_node s7_a">A</div>
+  <div class="s7_node s7_b">B</div>
+  <div class="s7_label">新价值</div>
+</div></div>
+      <p class="hook-line reveal reveal-d3">晚宴策略和弱关系理论，如何具体运用？</p>
+      <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-arbitrage', this)">深入了解 ↓</button>
+    </div>
+  </section>
+
+  <!-- S8 Connected Age -->
+  <section class="feed-section" style="background: linear-gradient(180deg, #FFFBEB 0%, #FEF3C7 100%);">
+    <div class="section-inner">
+      <div class="section-tag reveal">CONNECTED AGE</div>
+      <h2 class="big-statement reveal reveal-d1">在连接的时代，最强大的货币不是金钱，而是<span class="hl">信任</span></h2>
+      <p class="body-text reveal reveal-d2">Ferrazzi 在全书结尾写道：我们正进入一个「连接的时代」。在这个时代里，成功不再是零和博弈，关系资本正在取代传统的社会资本。互联网让每个人都有可能接触到以前只属于精英的人脉网络——但前提是你愿意真诚地、慷慨地参与。这本书里的所有技巧和策略都建立在一个基础之上：<span class="hl">真诚（authenticity）</span>。如果你只是在机械地执行社交策略，人们一眼就能看穿。但如果你真的关心别人、真的愿意帮忙、真的享受人与人之间的连接，那么这些技巧只是帮你更高效地表达你的真诚。</p>
+      <div class="anim-stage reveal reveal-d3" id="s8-anim"><div class="s8_stage">
+  <!-- Bottom layer: 技巧 -->
+  <div class="s8_layer s8_bottom">技巧</div>
+  <!-- Middle layer: 关系 -->
+  <div class="s8_layer s8_middle">关系</div>
+  <!-- Top layer: 真诚 (with glow pulse) -->
+  <div class="s8_layer s8_top s8_top_glow">真诚</div>
+  <!-- Dashed arrow -->
+  <div class="s8_arrow"></div>
+  <!-- Label -->
+  <div class="s8_label">一切的基础</div>
+</div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Chapter 33: Welcome to the Connected Age</span><p>There has never been a better time to reach out and connect than right now. The dynamic of our society, and particularly our economy, will increasingly be defined by interdependence and interconnectivity. In other words, the more everything becomes connected to everything and everyone else, the more our relationships matter.</p></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ Layer: Mission Deep Dive ═══ -->
+<div class="layer" id="layer-mission" data-depth="1">
+
+  <!-- S9 Relationship Action Plan -->
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <div class="section-tag reveal">RELATIONSHIP ACTION PLAN</div>
+      <h2 class="big-statement reveal reveal-d1">不要等到房子着火才去认识<span class="hl">消防员</span></h2>
+      <p class="body-text reveal reveal-d2">这是全书最重要的反直觉洞察之一：不要等到需要帮助时才开始建关系。因为大多数人在失业时疯狂发名片、参加社交活动，但这恰恰是最糟糕的时机——你散发着「我需要你」的气息，没有人想被当作工具。Ferrazzi 用一个比喻来解释：你不会在房子着火时才去认识消防员。所以真正的人脉高手在一切顺利的时候就在投资关系——在别人不需要你帮忙的时候帮他们，在你不需要别人帮忙的时候建立信任。</p>
+      <div class="anim-stage reveal reveal-d3" id="s9-anim"><div class="s9_stage">
+  <!-- Left: 大多数人 -->
+  <div class="s9_label s9_label_left">大多数人</div>
+  <div class="s9_timeline s9_tl_left"></div>
+  <div class="s9_empty_zone">
+    <span class="s9_empty_text">平时不联系</span>
+  </div>
+  <div class="s9_burst">
+    <div class="s9_burst_line" style="height:12px"></div>
+    <div class="s9_burst_line" style="height:18px"></div>
+    <div class="s9_burst_line" style="height:24px"></div>
+    <div class="s9_burst_line" style="height:20px"></div>
+    <div class="s9_burst_line" style="height:26px"></div>
+    <div class="s9_burst_line" style="height:16px"></div>
+    <div class="s9_burst_line" style="height:22px"></div>
+    <div class="s9_burst_line" style="height:14px"></div>
+    <div class="s9_burst_line" style="height:25px"></div>
+    <div class="s9_burst_line" style="height:19px"></div>
+    <div class="s9_burst_line" style="height:23px"></div>
+    <div class="s9_burst_line" style="height:15px"></div>
+  </div>
+  <div class="s9_too_late">太晚了</div>
+
+  <!-- Right: 高手 -->
+  <div class="s9_label s9_label_right">高手</div>
+  <div class="s9_timeline s9_tl_right"></div>
+  <div class="s9_even_ticks">
+    <div class="s9_tick"></div>
+    <div class="s9_tick"></div>
+    <div class="s9_tick"></div>
+    <div class="s9_tick"></div>
+    <div class="s9_tick"></div>
+    <div class="s9_tick"></div>
+    <div class="s9_tick"></div>
+    <div class="s9_tick"></div>
+    <div class="s9_tick"></div>
+    <div class="s9_tick"></div>
+    <div class="s9_tick"></div>
+    <div class="s9_tick"></div>
+    <div class="s9_tick"></div>
+    <div class="s9_tick"></div>
+    <div class="s9_tick"></div>
+  </div>
+  <div class="s9_reward">自然回报</div>
+</div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Chapter 4: Build It Before You Need It</span><p>Forget the images we all have in our heads of the desperate, out-of-work individuals scooping up every business card in sight while fervently mingling at business conventions and job-hunting events. The great myth of networking is that you start reaching out to others only when you need something like a job. In reality, people who have the largest circle of contacts, mentors, and friends know that you must reach out to others long before you need anything at all.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S10 Dinner + Weak Ties (reused from arbitrage context) -->
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <div class="section-tag reveal">MENTORS & POWER</div>
+      <h2 class="big-statement reveal reveal-d1">不止找一个导师——你需要一个<span class="hl2">导师圆桌</span></h2>
+      <p class="body-text reveal reveal-d2">Ferrazzi 不相信传统的「一个导师」模式。他认为你需要的是一个「导师圈」——多个在不同领域能指导你的人。更重要的是，导师关系不是单向索取：你从他们那里获得智慧和经验，他们从你那里获得新视角和能量。他还提出了一个激进的观点：不要只向上看。向你的下属、你的学生、你所在社区的人学习同样重要——因为最有价值的导师关系往往发生在你意想不到的地方。正如他所说：「教是再次学习。」</p>
+      <div class="anim-stage reveal reveal-d3" id="s10-anim"><div class="s10_stage">
+  <div class="s10_you">你</div>
+
+  <div class="s10_mentor s10_mentor_top">行业导师</div>
+  <div class="s10_mentor s10_mentor_right">技术导师</div>
+  <div class="s10_mentor s10_mentor_bottom">人生导师</div>
+
+  <div class="s10_arrow s10_arrow_top"></div>
+  <div class="s10_tip s10_tip_top_up"></div>
+  <div class="s10_tip s10_tip_top_down"></div>
+
+  <div class="s10_arrow s10_arrow_right"></div>
+  <div class="s10_tip s10_tip_right_out"></div>
+  <div class="s10_tip s10_tip_right_in"></div>
+
+  <div class="s10_arrow s10_arrow_bottom"></div>
+  <div class="s10_tip s10_tip_bottom_down"></div>
+  <div class="s10_tip s10_tip_bottom_up"></div>
+
+  <div class="s10_ring"></div>
+  <div class="s10_circle_label">导师圈</div>
+</div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Chapter 31: Find Mentors, Find Mentees</span><p>Great musicians know it. So do professional athletes and world-class public speakers. Successful people in nearly every field know that they can't be their best unless they have a good coach in their corner. Many companies have developed formal mentoring programs with the idea that sharing what you know and learning what others know will improve performance.</p></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ Layer: Social Arbitrage Deep Dive ═══ -->
+<div class="layer" id="layer-arbitrage" data-depth="1">
+
+  <!-- S11 Dinner Strategy -->
+  <section class="feed-section" style="background: var(--bg-act3);">
+    <div class="section-inner">
+      <div class="section-tag reveal">ANCHOR TENANTS</div>
+      <h2 class="big-statement reveal reveal-d1">像购物中心一样经营晚宴——先签下<span class="hl">百货公司</span></h2>
+      <p class="body-text reveal reveal-d2">Ferrazzi 不是简单地请人吃饭，而是精心策划每次晚宴。他的策略叫「anchor tenants」——就像购物中心先签下一两家百货公司作为核心租户，他会先邀请一两个特别有吸引力的嘉宾，其他人听到这些名字自然想来。他每次邀请 6-10 个来自不同领域但有潜在交集的人，因为这种跨界组合往往能产生最意想不到的化学反应。</p>
+      <div class="anim-stage reveal reveal-d3" id="s11-anim"><div class="s11_stage">
+  <!-- Core guest box -->
+  <div class="s11_core">核心嘉宾</div>
+
+  <!-- Pulse rings -->
+  <div class="s11_pulse s11_pulse1"></div>
+  <div class="s11_pulse s11_pulse2"></div>
+
+  <!-- Guest 1: from left -->
+  <div class="s11_guest s11_g1">
+    <div class="s11_guest_label">A</div>
+  </div>
+
+  <!-- Guest 2: from right -->
+  <div class="s11_guest s11_g2">
+    <div class="s11_guest_label">B</div>
+  </div>
+
+  <!-- Guest 3: from bottom -->
+  <div class="s11_guest s11_g3">
+    <div class="s11_guest_label">C</div>
+  </div>
+
+  <!-- Final label -->
+  <div class="s11_finale">晚宴 = 化学反应</div>
+</div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Chapter 21: Find Anchor Tenants</span><p>Today I can safely say my strongest links have been forged at the table. The companionable effects of breaking bread—not to mention drinking a few glasses of wine—bring people together. Having an event centered around food in your home says a lot about your intent. You're saying: my home is your home. I like you enough to welcome you into my life.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S12 Weak Ties -->
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <div class="section-tag reveal">WEAK TIES</div>
+      <h2 class="big-statement reveal reveal-d1">最可能改变你命运的人，是你<span class="hl2">不常联系</span>的人</h2>
+      <p class="body-text reveal reveal-d2">Ferrazzi 大量引用了社会学家 Mark Granovetter 的「弱关系强度」理论：最有可能给你带来新工作、新信息的人，不是你的至交好友，而是你认识但不常联系的人。因为好朋友和你共享同一个信息圈，而弱关系能把你连接到完全不同的世界。在数字时代这个理论的力量被放大了——社交媒体让你能同时维护数百个弱关系。但 Ferrazzi 警告说，大多数人把社交媒体用错了：他们只广播自己的内容，却不花时间去评论、转发、帮助别人。</p>
+      <div class="anim-stage reveal reveal-d3" id="s12-anim"><div class="s12_stage">
+  <!-- Left group: strong ties -->
+  <div class="s12_group_left">
+    <div class="s12_circle s12_cl1"></div>
+    <div class="s12_circle s12_cl2"></div>
+    <div class="s12_circle s12_cl3"></div>
+  </div>
+  <div class="s12_label s12_label_left">强关系</div>
+
+  <!-- Right group: another world -->
+  <div class="s12_group_right">
+    <div class="s12_circle s12_cr1"></div>
+    <div class="s12_circle s12_cr2"></div>
+    <div class="s12_circle s12_cr3"></div>
+  </div>
+  <div class="s12_label s12_label_right">另一个世界</div>
+
+  <!-- Bridge dot -->
+  <div class="s12_bridge_dot"></div>
+
+  <!-- SVG lines -->
+  <svg class="s12_lines" viewBox="0 0 340 260" preserveAspectRatio="xMidYMid meet">
+    <!-- Left dashed: from left cluster edge to bridge dot left edge -->
+    <line class="s12_line_left" x1="104" y1="82" x2="156" y2="88" />
+    <!-- Right dashed: from bridge dot right edge to right cluster edge -->
+    <line class="s12_line_right" x1="184" y1="88" x2="280" y2="82" />
+    <!-- Solid bridge line spanning full gap -->
+    <line class="s12_line_solid" x1="104" y1="88" x2="280" y2="88" />
+  </svg>
+
+  <!-- Result label -->
+  <div class="s12_result_label">新信息 · 新机会</div>
+</div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Chapter 22: Tap the Fringe</span><p>Recently at one of my dinners, my friend went on a rant about social media. "I'm drowning, Keith! I have a news feed full of junk when I don't even have time for the people in my real life!" People at the table were nodding their heads. I get it. We want technology to connect us closer to people we want to meet, things we want to learn, and opportunities we want to have.</p></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+var currentMode = 'zoom';
+var layerStack = ['layer-overview'];
+var transitioning = false;
+var layerNames = {
+  'layer-overview': '概览',
+  'layer-mission': '使命与准备',
+  'layer-arbitrage': '晚宴与弱关系'
+};
+var observers = new Map();
+
+function setupObserver(layerId) {
+  if (observers.has(layerId)) return;
+  var layer = document.getElementById(layerId);
+  var reveals = layer.querySelectorAll('.reveal, [class*=\"_stage\"]');
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        var stage = e.target.querySelector('[class*="_stage"]');
+        if (stage) stage.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.15, root: layer });
+  reveals.forEach(function(el) { obs.observe(el); });
+  observers.set(layerId, obs);
+}
+
+function resetReveals(layerId) {
+  var layer = document.getElementById(layerId);
+  layer.querySelectorAll('.reveal').forEach(function(el) { el.classList.remove('visible'); });
+  layer.querySelectorAll('[class*="_stage"]').forEach(function(el) { el.classList.remove('visible'); });
+}
+
+function activateReveals(layerId) {
+  resetReveals(layerId);
+  if (observers.has(layerId)) { observers.get(layerId).disconnect(); observers.delete(layerId); }
+  requestAnimationFrame(function() { setupObserver(layerId); });
+}
+
+function updateBreadcrumb() {
+  var bc = document.getElementById('breadcrumb');
+  bc.innerHTML = '';
+  layerStack.forEach(function(id, i) {
+    if (i > 0) { var sep = document.createElement('span'); sep.className = 'sep'; sep.textContent = '>'; bc.appendChild(sep); }
+    var span = document.createElement('span');
+    span.textContent = layerNames[id] || id;
+    if (i === layerStack.length - 1) { span.className = 'current'; }
+    else { span.addEventListener('click', function() { goBackTo(i); }); }
+    bc.appendChild(span);
+  });
+  var backBtn = document.getElementById('backBtn');
+  backBtn.style.display = layerStack.length > 1 ? 'flex' : 'none';
+  bc.style.left = layerStack.length > 1 ? '60px' : '16px';
+  var dots = document.getElementById('depthDots');
+  var depth = layerStack.length - 1;
+  dots.querySelectorAll('.dot').forEach(function(d, i) { d.classList.toggle('active', i === depth); });
+}
+
+function drillDown(targetId, btnEl) {
+  if (transitioning) return;
+  transitioning = true;
+  var currentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var targetLayer = document.getElementById(targetId);
+  targetLayer.scrollTop = 0;
+  resetReveals(targetId);
+  targetLayer.style.visibility = 'visible';
+  var duration = 600;
+  currentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  currentLayer.style.transformOrigin = 'center center';
+  currentLayer.style.transform = 'scale(1.3)';
+  currentLayer.style.opacity = '0';
+  targetLayer.classList.add('active');
+  targetLayer.style.opacity = '0';
+  targetLayer.style.transform = 'scale(0.85)';
+  targetLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  requestAnimationFrame(function() { requestAnimationFrame(function() {
+    targetLayer.style.opacity = '1';
+    targetLayer.style.transform = 'scale(1)';
+  }); });
+  setTimeout(function() {
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition = ''; currentLayer.style.transform = ''; currentLayer.style.opacity = '';
+    targetLayer.style.transition = ''; targetLayer.style.transform = '';
+    activateReveals(targetId);
+    transitioning = false;
+  }, duration + 50);
+  layerStack.push(targetId);
+  updateBreadcrumb();
+}
+
+function goBack() {
+  if (layerStack.length <= 1 || transitioning) return;
+  transitioning = true;
+  var currentId = layerStack.pop();
+  var parentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var parentLayer = document.getElementById(parentId);
+  var duration = 600;
+  currentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  currentLayer.style.transform = 'scale(0.85)';
+  currentLayer.style.opacity = '0';
+  parentLayer.classList.add('active');
+  parentLayer.style.transform = 'scale(1.3)';
+  parentLayer.style.opacity = '0';
+  parentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  requestAnimationFrame(function() { requestAnimationFrame(function() {
+    parentLayer.style.transform = 'scale(1)';
+    parentLayer.style.opacity = '1';
+  }); });
+  setTimeout(function() {
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition = ''; currentLayer.style.transform = '';
+    currentLayer.style.opacity = ''; currentLayer.style.visibility = '';
+    parentLayer.style.transition = ''; parentLayer.style.transform = '';
+    transitioning = false;
+  }, duration + 50);
+  updateBreadcrumb();
+}
+
+function goBackTo(targetIndex) {
+  if (transitioning) return;
+  while (layerStack.length - 1 > targetIndex) { if (layerStack.length <= 1) break; goBack(); return; }
+}
+
+function toggleSource(btn) { btn.classList.toggle('open'); btn.nextElementSibling.classList.toggle('open'); }
+
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+</body>
+</html>

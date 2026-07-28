@@ -1,0 +1,2215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>OpenAI 如何大规模交付低延迟语音 AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #F0FDF4; --bg-act2: #FEF2F2; --bg-act3: #FFFBEB;
+  --bg-close: #0F172A;
+  --text: #1E293B; --text-muted: #64748B; --dim: #94A3B8;
+  --accent: #22C55E; --accent2: #EF4444;
+  --warm: #F59E0B; --danger: #EF4444;
+  --card-bg: #FFFFFF;
+  --neutral: #94A3B8;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Noto Sans SC',sans-serif;color:var(--text);-webkit-font-smoothing:antialiased;}
+.layer{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;visibility:hidden;opacity:0;will-change:transform,opacity;scroll-snap-type:y proximity;}
+.layer.active{visibility:visible;opacity:1;}
+.feed-section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;scroll-snap-align:start;}
+.feed-section.dark{background:var(--bg-close);color:#F1F5F9;}
+.feed-section.dark .body-text{color:#94A3B8;}
+.feed-section.dark .big-statement{color:#F1F5F9;}
+.section-inner{max-width:600px;width:100%;}
+.reveal{opacity:0;transform:translateY(40px);transition:opacity 0.8s ease,transform 0.8s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-d1{transition-delay:0.15s;}.reveal-d2{transition-delay:0.3s;}.reveal-d3{transition-delay:0.45s;}.reveal-d4{transition-delay:0.6s;}
+.big-statement{font-family:'Noto Serif SC',serif;font-size:clamp(22px,5.5vw,32px);font-weight:700;line-height:1.5;margin-bottom:32px;}
+.body-text{font-size:16px;line-height:1.9;color:var(--text);margin-bottom:28px;}
+.body-text .hl{color:var(--accent);font-weight:500;}
+.body-text .hl2{color:var(--accent2);font-weight:500;}
+.body-text .hlw{color:var(--warm);font-weight:500;}
+.anim-stage{width:100%;display:flex;justify-content:center;margin:28px 0;min-height:180px;}
+.anim-stage > div{width:100%;}
+.hook-line{font-size:15px;color:var(--accent);font-weight:600;margin-top:20px;padding:14px 0;border-top:1px solid rgba(34,197,94,0.2);}
+.dark .hook-line{color:#86EFAC;border-top-color:rgba(134,239,172,0.2);}
+.act-divider{min-height:30vh;display:flex;align-items:center;justify-content:center;padding:40px 24px;scroll-snap-align:start;}
+.act-divider .act-label{font-family:'Noto Serif SC',serif;font-size:clamp(18px,4vw,24px);font-weight:700;color:var(--dim);letter-spacing:2px;text-transform:uppercase;}
+.breadcrumb{position:fixed;top:16px;left:16px;z-index:1000;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);padding:8px 14px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,0.1);font-size:13px;font-weight:500;}
+.breadcrumb span{color:var(--text-muted);cursor:pointer;transition:color 0.2s;}
+.breadcrumb span:hover{color:var(--accent);}
+.breadcrumb span.current{color:var(--text);cursor:default;}
+.breadcrumb .sep{color:#CBD5E1;margin:0 2px;cursor:default;}
+.back-btn{position:fixed;top:16px;left:16px;z-index:1001;width:38px;height:38px;border-radius:10px;border:none;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(0,0,0,0.1);font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--text);transition:all 0.2s;}
+.back-btn:hover{background:var(--accent);color:#fff;}
+.depth-dots{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;gap:8px;background:rgba(255,255,255,0.9);backdrop-filter:blur(8px);padding:8px 14px;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,0.1);}
+.dot{width:10px;height:10px;border-radius:50%;background:#CBD5E1;transition:all 0.3s;}
+.dot.active{background:var(--accent);box-shadow:0 0 8px rgba(34,197,94,0.5);transform:scale(1.2);}
+.drill-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:1.5px solid rgba(34,197,94,0.3);border-radius:10px;background:transparent;color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.25s;}
+.drill-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(34,197,94,0.3);}
+.dark .drill-btn{border-color:rgba(134,239,172,0.4);color:#86EFAC;}
+.dark .drill-btn:hover{background:#22C55E;color:#fff;border-color:#22C55E;}
+.source-panel{margin-top:24px;border-radius:12px;overflow:hidden;border:1px solid rgba(34,197,94,0.15);background:rgba(34,197,94,0.03);}
+.dark .source-panel{border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);}
+.source-toggle{width:100%;padding:12px 16px;border:none;background:none;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);}
+.dark .source-toggle{color:#86EFAC;}
+.source-toggle:hover{background:rgba(34,197,94,0.06);}
+.source-toggle .arrow{transition:transform 0.3s;font-size:11px;}
+.source-toggle.open .arrow{transform:rotate(90deg);}
+.source-body{max-height:0;overflow:hidden;transition:max-height 0.4s ease;padding:0 16px;}
+.source-body.open{max-height:2000px;padding:0 16px 16px;overflow-y:auto;}
+.source-body p{font-size:13px;line-height:1.8;color:var(--text-muted);margin:0 0 12px 0;white-space:pre-wrap;}
+.dark .source-body p{color:#94A3B8;}
+.source-body .source-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--accent);margin-bottom:8px;display:block;}
+.dark .source-body .source-label{color:#86EFAC;}
+
+/* === S1 Animation === */
+
+.s1_stage {
+  position: relative;
+  width: 310px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.s1_stage.visible {
+  opacity: 1;
+}
+
+/* Title */
+.s1_title {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1E293B;
+  margin-bottom: 20px;
+  opacity: 0;
+}
+.s1_stage.visible .s1_title {
+  animation: s1_fadeIn 0.5s 0.2s forwards;
+}
+
+/* Dot grid */
+.s1_grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+  width: 240px;
+  margin: 0 auto 8px;
+}
+.s1_dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #94A3B8;
+  opacity: 0;
+  transform: scale(0);
+}
+.s1_stage.visible .s1_dot {
+  animation: s1_dotPop 0.3s forwards;
+}
+
+/* Stagger dots: 100 dots, appear in waves */
+.s1_stage.visible .s1_dot:nth-child(-n+10) { animation-delay: 0.4s; }
+.s1_stage.visible .s1_dot:nth-child(n+11):nth-child(-n+20) { animation-delay: 0.6s; }
+.s1_stage.visible .s1_dot:nth-child(n+21):nth-child(-n+30) { animation-delay: 0.8s; }
+.s1_stage.visible .s1_dot:nth-child(n+31):nth-child(-n+40) { animation-delay: 1.0s; }
+.s1_stage.visible .s1_dot:nth-child(n+41):nth-child(-n+50) { animation-delay: 1.2s; }
+.s1_stage.visible .s1_dot:nth-child(n+51):nth-child(-n+60) { animation-delay: 1.4s; }
+.s1_stage.visible .s1_dot:nth-child(n+61):nth-child(-n+70) { animation-delay: 1.6s; }
+.s1_stage.visible .s1_dot:nth-child(n+71):nth-child(-n+80) { animation-delay: 1.8s; }
+.s1_stage.visible .s1_dot:nth-child(n+81):nth-child(-n+90) { animation-delay: 2.0s; }
+.s1_stage.visible .s1_dot:nth-child(n+91) { animation-delay: 2.2s; }
+
+/* After all dots appear, pulse green to show scale */
+.s1_stage.visible .s1_dot {
+  animation: s1_dotPop 0.3s forwards, s1_dotPulse 1.5s 3.0s forwards;
+}
+
+/* Scale label */
+.s1_scale_label {
+  text-align: center;
+  font-size: 14px;
+  color: #64748B;
+  margin-bottom: 20px;
+  opacity: 0;
+}
+.s1_stage.visible .s1_scale_label {
+  animation: s1_fadeIn 0.5s 2.6s forwards;
+}
+.s1_scale_num {
+  font-size: 22px;
+  font-weight: 700;
+  color: #22C55E;
+}
+
+/* Divider line */
+.s1_divider {
+  width: 60px;
+  height: 2px;
+  background: #94A3B8;
+  margin: 0 auto 16px;
+  opacity: 0;
+}
+.s1_stage.visible .s1_divider {
+  animation: s1_fadeIn 0.4s 3.4s forwards;
+}
+
+/* Requirement badges */
+.s1_badges {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.s1_badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #FFFFFF;
+  opacity: 0;
+  transform: translateY(12px);
+}
+.s1_badge--1 { background: #22C55E; }
+.s1_badge--2 { background: #EF4444; }
+.s1_badge--3 { background: #94A3B8; }
+
+.s1_stage.visible .s1_badge--1 {
+  animation: s1_badgeIn 0.4s 3.8s forwards;
+}
+.s1_stage.visible .s1_badge--2 {
+  animation: s1_badgeIn 0.4s 4.2s forwards;
+}
+.s1_stage.visible .s1_badge--3 {
+  animation: s1_badgeIn 0.4s 4.6s forwards;
+}
+
+/* Keyframes */
+@keyframes s1_fadeIn {
+  to { opacity: 1; }
+}
+@keyframes s1_dotPop {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s1_dotPulse {
+  0% { background: #94A3B8; }
+  50% { background: #22C55E; }
+  100% { background: #22C55E; opacity: 0.85; }
+}
+@keyframes s1_badgeIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === S2 Animation === */
+
+.s2_stage {
+  position: relative;
+  width: 360px;
+  height: 340px;
+  margin: 0 auto;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.s2_stage.visible {
+  opacity: 1;
+}
+
+.s2_stack {
+  position: absolute;
+  left: 30px;
+  bottom: 40px;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 5px;
+}
+
+.s2_layer {
+  width: 280px;
+  height: 36px;
+  border-radius: 12px;
+  background: #94A3B8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #fff;
+  font-family: sans-serif;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.s2_stage.visible .s2_layer1 {
+  animation: s2_fadeUp 0.5s 0.4s forwards;
+}
+.s2_stage.visible .s2_layer2 {
+  animation: s2_fadeUp 0.5s 0.8s forwards;
+}
+.s2_stage.visible .s2_layer3 {
+  animation: s2_fadeUp 0.5s 1.2s forwards;
+}
+.s2_stage.visible .s2_layer4 {
+  animation: s2_fadeUp 0.5s 1.6s forwards;
+}
+.s2_stage.visible .s2_layer5 {
+  animation: s2_fadeUp 0.5s 2.0s forwards;
+}
+
+@keyframes s2_fadeUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.s2_border {
+  position: absolute;
+  left: 22px;
+  bottom: 32px;
+  width: 296px;
+  height: 218px;
+  border: 3px solid #22C55E;
+  border-radius: 16px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.s2_stage.visible .s2_border {
+  animation: s2_borderIn 0.5s 2.8s forwards;
+}
+
+@keyframes s2_borderIn {
+  to {
+    opacity: 1;
+  }
+}
+
+.s2_label_side {
+  position: absolute;
+  left: -2px;
+  top: 50%;
+  transform: translateY(-50%) rotate(-90deg);
+  font-size: 14px;
+  font-weight: 700;
+  color: #22C55E;
+  font-family: sans-serif;
+  letter-spacing: 2px;
+  white-space: nowrap;
+}
+
+.s2_arrow_group {
+  position: absolute;
+  right: 16px;
+  top: 40px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+}
+
+.s2_stage.visible .s2_arrow_group {
+  animation: s2_fadeUp 0.5s 3.4s forwards;
+}
+
+.s2_arrow_line {
+  width: 30px;
+  height: 3px;
+  background: #22C55E;
+}
+
+.s2_arrow_head {
+  width: 0;
+  height: 0;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-left: 10px solid #22C55E;
+}
+
+.s2_ai_circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #22C55E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  font-family: sans-serif;
+}
+
+/* === S3 Animation === */
+
+.s3_stage {
+  --accent: #22C55E;
+  --accent2: #EF4444;
+  --neutral: #94A3B8;
+  position: relative;
+  height: 280px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 10px;
+  opacity: 0;
+  font-family: sans-serif;
+  padding: 0 4px;
+  box-sizing: border-box;
+}
+.s3_stage.visible { opacity: 1; }
+
+.s3_label_top {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 6px;
+  height: 18px;
+}
+.s3_circle {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  position: absolute;
+  opacity: 0;
+}
+.s3_rect {
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  position: absolute;
+  opacity: 0;
+}
+
+/* === LEFT: SFU === */
+.s3_sfu_wrap { width: 150px; flex-shrink: 0; }
+.s3_sfu_canvas { position: relative; width: 150px; height: 220px; }
+
+.s3_sfu_rect {
+  width: 50px; height: 28px;
+  background: #e2e8f0; border: 2px solid var(--neutral); color: #475569;
+  font-size: 12px;
+  left: 50px; top: 88px;
+}
+.s3_stage.visible .s3_sfu_rect { animation: s3_fadeIn 0.4s ease 0.4s both; }
+
+/* rect center: 75, 102. circles: 40px diameter */
+.s3_sfu_c1 { background: var(--neutral); width: 40px; height: 40px; left: 55px; top: 12px; }
+.s3_sfu_c2 { background: var(--neutral); width: 40px; height: 40px; left: 106px; top: 68px; }
+.s3_sfu_c3 { background: var(--accent2); width: 40px; height: 40px; left: 55px; top: 150px; }
+.s3_sfu_c4 { background: var(--neutral); width: 40px; height: 40px; left: 4px; top: 68px; }
+
+.s3_stage.visible .s3_sfu_c1 { animation: s3_fadeIn 0.4s ease 0.8s both; }
+.s3_stage.visible .s3_sfu_c2 { animation: s3_fadeIn 0.4s ease 1.2s both; }
+.s3_stage.visible .s3_sfu_c3 { animation: s3_fadeIn 0.4s ease 1.6s both; }
+.s3_stage.visible .s3_sfu_c4 { animation: s3_fadeIn 0.4s ease 2.0s both; }
+
+.s3_sfu_svg { position: absolute; top: 0; left: 0; width: 150px; height: 220px; pointer-events: none; }
+.s3_sfu_svg line { stroke: var(--neutral); stroke-width: 2; stroke-dasharray: 80; stroke-dashoffset: 80; }
+.s3_stage.visible .s3_sl1 { animation: s3_drawLine 0.3s ease 0.8s both; }
+.s3_stage.visible .s3_sl2 { animation: s3_drawLine 0.3s ease 1.2s both; }
+.s3_stage.visible .s3_sl3 { animation: s3_drawLine 0.3s ease 1.6s both; }
+.s3_stage.visible .s3_sl4 { animation: s3_drawLine 0.3s ease 2.0s both; }
+
+.s3_stage.visible .s3_sfu_wrap { animation: s3_dimOut 0.6s ease 5.0s both; }
+
+/* === DIVIDER === */
+.s3_divider {
+  width: 1px; height: 190px; background: #cbd5e1; flex-shrink: 0;
+  margin-top: 24px; opacity: 0;
+}
+.s3_stage.visible .s3_divider { animation: s3_fadeInSimple 0.3s ease 0.2s both; }
+
+/* === RIGHT: Transceiver === */
+.s3_tx_wrap { width: 170px; flex-shrink: 0; }
+.s3_tx_canvas { position: relative; width: 170px; height: 220px; }
+
+/* Layout: user(36px) gap(10) arrow(12) gap(4) rect(72px) gap(4) arrow(12) gap(10) model(36px) = 196... too wide */
+/* Compress: user(36) 6px rect(68) 6px model(36) = 152, centered in 170 => start at 9 */
+.s3_tx_user { background: var(--accent); width: 36px; height: 36px; left: 2px; top: 84px; font-size: 11px; }
+.s3_tx_rect {
+  width: 68px; height: 28px;
+  background: #f0fdf4; border: 2px solid var(--accent); color: #166534;
+  font-size: 10px;
+  left: 47px; top: 88px;
+}
+.s3_tx_model { background: var(--accent); width: 36px; height: 36px; left: 124px; top: 84px; font-size: 11px; }
+
+.s3_stage.visible .s3_tx_rect { animation: s3_fadeIn 0.4s ease 2.4s both; }
+.s3_stage.visible .s3_tx_user { animation: s3_fadeIn 0.4s ease 2.8s both; }
+.s3_stage.visible .s3_tx_model { animation: s3_fadeIn 0.4s ease 3.2s both; }
+
+/* SVG arrows */
+.s3_tx_svg { position: absolute; top: 0; left: 0; width: 170px; height: 220px; pointer-events: none; }
+.s3_tx_arrow_g { opacity: 0; }
+.s3_stage.visible .s3_tx_arrow_g { animation: s3_fadeInSimple 0.3s ease 3.6s both; }
+
+/* 1:1 badge */
+.s3_badge {
+  position: absolute; bottom: 32px; left: 50%;
+  transform: translateX(-50%) scale(0);
+  background: var(--accent); color: #fff;
+  font-size: 12px; font-weight: 700;
+  padding: 3px 14px; border-radius: 10px; opacity: 0;
+}
+.s3_stage.visible .s3_badge { animation: s3_popIn 0.4s ease 4.2s both; }
+
+.s3_stage.visible .s3_tx_wrap { animation: s3_glowOn 0.6s ease 5.0s both; }
+
+/* === KEYFRAMES === */
+@keyframes s3_fadeIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+@keyframes s3_fadeInSimple { from { opacity: 0; } to { opacity: 1; } }
+@keyframes s3_drawLine { to { stroke-dashoffset: 0; } }
+@keyframes s3_popIn {
+  0% { opacity: 0; transform: translateX(-50%) scale(0); }
+  70% { opacity: 1; transform: translateX(-50%) scale(1.15); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+@keyframes s3_dimOut { from { opacity: 1; } to { opacity: 0.3; } }
+@keyframes s3_glowOn {
+  from { filter: drop-shadow(0 0 0 transparent); }
+  to { filter: drop-shadow(0 0 10px rgba(34,197,94,0.4)); }
+}
+
+/* === S4 Animation === */
+
+.s4_stage {
+  position: relative;
+  width: 100%;
+  min-height: 340px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 20px;
+  padding: 48px 12px 24px;
+  box-sizing: border-box;
+}
+
+.s4_pod {
+  position: relative;
+  border: 2px solid #94A3B8;
+  border-radius: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 8px;
+  padding: 28px 8px 8px;
+  box-sizing: border-box;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.4s ease, transform 0.4s ease, border-color 0.3s ease;
+}
+
+.s4_pod--left {
+  width: 168px;
+  height: 210px;
+}
+
+.s4_pod--right {
+  width: 120px;
+  height: 120px;
+}
+
+.s4_pod_label {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #94A3B8;
+  letter-spacing: 0.5px;
+}
+
+.s4_port {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  background: rgba(148, 163, 184, 0.15);
+  border: 1px solid #94A3B8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 600;
+  color: #F1F5F9;
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.s4_port--green {
+  border-color: #22C55E;
+  background: rgba(34, 197, 94, 0.15);
+  color: #22C55E;
+}
+
+.s4_warning {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 700;
+  color: #EF4444;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.s4_check {
+  position: absolute;
+  top: -24px;
+  right: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #22C55E;
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* --- Triggered animations --- */
+.s4_stage.visible .s4_pod--left {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 0.4s;
+}
+
+/* Left pod ports: label is child 1, warning is child 2, ports are children 3-11 */
+.s4_stage.visible .s4_pod--left .s4_port:nth-of-type(1) {
+  opacity: 1; transform: scale(1); transition-delay: 0.9s;
+}
+.s4_stage.visible .s4_pod--left .s4_port:nth-of-type(2) {
+  opacity: 1; transform: scale(1); transition-delay: 1.3s;
+}
+.s4_stage.visible .s4_pod--left .s4_port:nth-of-type(3) {
+  opacity: 1; transform: scale(1); transition-delay: 1.7s;
+}
+.s4_stage.visible .s4_pod--left .s4_port:nth-of-type(4) {
+  opacity: 1; transform: scale(1); transition-delay: 2.0s;
+}
+.s4_stage.visible .s4_pod--left .s4_port:nth-of-type(5) {
+  opacity: 1; transform: scale(1); transition-delay: 2.2s;
+}
+.s4_stage.visible .s4_pod--left .s4_port:nth-of-type(6) {
+  opacity: 1; transform: scale(1); transition-delay: 2.4s;
+}
+.s4_stage.visible .s4_pod--left .s4_port:nth-of-type(7) {
+  opacity: 1; transform: scale(1); transition-delay: 2.5s;
+}
+.s4_stage.visible .s4_pod--left .s4_port:nth-of-type(8) {
+  opacity: 1; transform: scale(1); transition-delay: 2.6s;
+}
+.s4_stage.visible .s4_pod--left .s4_port:nth-of-type(9) {
+  opacity: 1; transform: scale(1); transition-delay: 2.7s;
+}
+
+.s4_stage.visible .s4_pod--left.s4_pod--overflow {
+  border-color: #EF4444;
+  transition-delay: 3.2s;
+}
+
+.s4_stage.visible .s4_warning--show {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+  transition-delay: 3.4s;
+}
+
+.s4_stage.visible .s4_pod--right {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 4.2s;
+}
+
+.s4_stage.visible .s4_pod--right .s4_port {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 4.6s;
+}
+
+.s4_stage.visible .s4_check--show {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 5.0s;
+}
+
+/* === S5 Animation === */
+
+.s5_stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 0;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.s5_stage.visible {
+  opacity: 1;
+}
+.s5_card {
+  width: 300px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  font-size: 14px;
+  font-family: sans-serif;
+  box-sizing: border-box;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s5_card.s5_show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.s5_card.s5_dim {
+  opacity: 0.3 !important;
+  transition: opacity 0.6s ease;
+}
+.s5_card--fail {
+  border: 2px solid #EF4444;
+  color: #EF4444;
+  background: rgba(239, 68, 68, 0.06);
+}
+.s5_card--warn {
+  border: 2px solid #F59E0B;
+  color: #F59E0B;
+  background: rgba(245, 158, 11, 0.06);
+}
+.s5_card--pass {
+  border: 2px solid #22C55E;
+  color: #22C55E;
+  background: rgba(34, 197, 94, 0.08);
+}
+.s5_label {
+  font-weight: 600;
+}
+.s5_icon {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* === S6 Animation === */
+
+.s6_stage {
+  width: 340px;
+  margin: 0 auto;
+  padding: 24px 0 18px 0;
+  position: relative;
+  font-family: -apple-system, sans-serif;
+}
+.s6_flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  position: relative;
+}
+.s6_node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.s6_circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-sizing: border-box;
+}
+.s6_circle--neutral {
+  border: 2px solid #94A3B8;
+  color: #475569;
+  background: #fff;
+}
+.s6_circle--accent {
+  border: 2px solid #22C55E;
+  color: #166534;
+  background: #F0FDF4;
+}
+.s6_rect {
+  width: 82px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  box-sizing: border-box;
+}
+.s6_rect--relay {
+  border: 2px solid #22C55E;
+  color: #166534;
+  background: #fff;
+}
+.s6_rect--transceiver {
+  background: #22C55E;
+  color: #fff;
+  border: 2px solid #22C55E;
+}
+.s6_label {
+  font-size: 11px;
+  color: #94A3B8;
+  margin-top: 4px;
+  white-space: nowrap;
+}
+.s6_arrow_wrap {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.s6_arrow {
+  position: relative;
+  width: 22px;
+  height: 2px;
+  background: #94A3B8;
+  margin: 0 2px;
+}
+.s6_arrow::after {
+  content: "";
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 6px solid #94A3B8;
+}
+.s6_dashed_box {
+  position: absolute;
+  border: 1.5px dashed #94A3B8;
+  border-radius: 12px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+.s6_dashed_label {
+  position: absolute;
+  font-size: 10px;
+  color: #94A3B8;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+/* Animation triggers */
+.s6_stage.visible .s6_node--1 { opacity:1; transform:scale(1); transition-delay:0.0s; }
+.s6_stage.visible .s6_arrow--1 { opacity:1; transition-delay:0.5s; }
+.s6_stage.visible .s6_node--2 { opacity:1; transform:scale(1); transition-delay:1.0s; }
+.s6_stage.visible .s6_arrow--2 { opacity:1; transition-delay:1.5s; }
+.s6_stage.visible .s6_node--3 { opacity:1; transform:scale(1); transition-delay:2.0s; }
+.s6_stage.visible .s6_arrow--3 { opacity:1; transition-delay:2.5s; }
+.s6_stage.visible .s6_node--4 { opacity:1; transform:scale(1); transition-delay:3.0s; }
+.s6_stage.visible .s6_dashed_box { opacity:1; transition-delay:3.8s; }
+.s6_stage.visible .s6_dashed_label { opacity:1; transition-delay:3.8s; }
+
+/* === S7 Animation === */
+
+.s7_stage {
+  position: relative;
+  width: 340px;
+  height: 320px;
+  margin: 0 auto;
+  font-family: sans-serif;
+  font-size: 13px;
+  overflow: hidden;
+}
+
+.s7_packet {
+  position: absolute;
+  top: 16px;
+  left: 110px;
+  width: 120px;
+  height: 40px;
+  border-radius: 8px;
+  border: 2px solid #94A3B8;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(-10px);
+}
+.s7_packet_label {
+  font-weight: 600;
+  color: #334155;
+  font-size: 13px;
+}
+.s7_ufrag_tag {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 9px;
+  background: #22C55E;
+  color: #fff;
+  border-radius: 3px;
+  padding: 1px 5px;
+  opacity: 0;
+}
+
+.s7_arrow1 {
+  position: absolute;
+  top: 58px;
+  left: 169px;
+  width: 2px;
+  height: 0;
+  background: #94A3B8;
+}
+.s7_arrow1_head {
+  position: absolute;
+  top: 98px;
+  left: 164px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid #94A3B8;
+  opacity: 0;
+}
+
+.s7_relay {
+  position: absolute;
+  top: 108px;
+  left: 120px;
+  width: 100px;
+  height: 36px;
+  border-radius: 6px;
+  border: 2px solid #F59E0B;
+  background: #FFFDE7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: #92400E;
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.s7_expand_box {
+  position: absolute;
+  top: 152px;
+  left: 60px;
+  width: 220px;
+  height: 34px;
+  border-radius: 6px;
+  border: 2px dashed #22C55E;
+  background: rgba(34,197,94,0.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 11px;
+  color: #166534;
+  font-weight: 500;
+  opacity: 0;
+  transform: scaleX(0.3);
+}
+.s7_expand_box span {
+  background: #DCFCE7;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid #BBF7D0;
+}
+
+.s7_arrow2 {
+  position: absolute;
+  top: 188px;
+  left: 169px;
+  width: 2px;
+  height: 0;
+  background: #94A3B8;
+}
+
+.s7_branch_line {
+  position: absolute;
+  top: 220px;
+  left: 65px;
+  width: 0;
+  height: 2px;
+  background: #22C55E;
+}
+.s7_branch_arrow {
+  position: absolute;
+  top: 228px;
+  left: 59px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid #22C55E;
+  opacity: 0;
+}
+
+.s7_trans_a {
+  position: absolute;
+  top: 236px;
+  left: 10px;
+  width: 110px;
+  height: 32px;
+  border-radius: 6px;
+  border: 2px solid #22C55E;
+  background: #F0FDF4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: #166534;
+  font-size: 12px;
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.s7_trans_b {
+  position: absolute;
+  top: 236px;
+  left: 220px;
+  width: 110px;
+  height: 32px;
+  border-radius: 6px;
+  border: 2px solid #CBD5E1;
+  background: #F1F5F9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  color: #94A3B8;
+  font-size: 12px;
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.s7_badge {
+  position: absolute;
+  top: 282px;
+  left: 90px;
+  width: 160px;
+  height: 28px;
+  border-radius: 14px;
+  background: #22C55E;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+/* Animations triggered by .visible */
+.s7_stage.visible .s7_packet {
+  animation: s7_fadeDown 0.4s 0.2s both;
+}
+.s7_stage.visible .s7_ufrag_tag {
+  animation: s7_fadeIn 0.3s 0.7s both, s7_glow 1.2s 0.7s both;
+}
+.s7_stage.visible .s7_arrow1 {
+  animation: s7_growDown 0.4s 1.1s both;
+}
+.s7_stage.visible .s7_arrow1_head {
+  animation: s7_fadeIn 0.2s 1.5s both;
+}
+.s7_stage.visible .s7_relay {
+  animation: s7_scaleIn 0.4s 1.7s both;
+}
+.s7_stage.visible .s7_expand_box {
+  animation: s7_expandX 0.5s 2.3s both;
+}
+.s7_stage.visible .s7_arrow2 {
+  animation: s7_growDown2 0.3s 3.0s both;
+}
+.s7_stage.visible .s7_branch_line {
+  animation: s7_growLeft 0.4s 3.4s both;
+}
+.s7_stage.visible .s7_branch_arrow {
+  animation: s7_fadeIn 0.2s 3.8s both;
+}
+.s7_stage.visible .s7_trans_a {
+  animation: s7_scaleIn 0.4s 4.0s both;
+}
+.s7_stage.visible .s7_trans_b {
+  animation: s7_scaleIn 0.4s 4.0s both;
+}
+.s7_stage.visible .s7_badge {
+  animation: s7_badgeIn 0.4s 4.8s both;
+}
+
+@keyframes s7_fadeDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s7_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes s7_glow {
+  0% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+  40% { box-shadow: 0 0 8px 3px rgba(34,197,94,0.5); }
+  100% { box-shadow: 0 0 4px 1px rgba(34,197,94,0.25); }
+}
+@keyframes s7_growDown {
+  from { height: 0; }
+  to { height: 40px; }
+}
+@keyframes s7_growDown2 {
+  from { height: 0; }
+  to { height: 32px; }
+}
+@keyframes s7_scaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s7_expandX {
+  from { opacity: 0; transform: scaleX(0.3); }
+  to { opacity: 1; transform: scaleX(1); }
+}
+@keyframes s7_growLeft {
+  from { width: 0; }
+  to { width: 105px; }
+}
+@keyframes s7_badgeIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* === S8 Animation === */
+
+.s8_stage {
+  width: 340px;
+  height: 350px;
+  position: relative;
+  opacity: 1;
+}
+
+.s8_center {
+  position: absolute;
+  top: 90px;
+  left: 138px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid #22C55E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #F1F5F9;
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.s8_stage.visible .s8_center {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.s8_region {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid #94A3B8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #F1F5F9;
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity 0.4s ease, transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.s8_r1 { top: 10px; left: 148px; }
+.s8_r2 { top: 55px; left: 40px; }
+.s8_r3 { top: 55px; left: 256px; }
+.s8_r4 { top: 160px; left: 40px; }
+.s8_r5 { top: 160px; left: 256px; }
+
+.s8_stage.visible .s8_region {
+  opacity: 1;
+  transform: scale(1);
+}
+.s8_stage.visible .s8_r1 { transition-delay: 0.6s; }
+.s8_stage.visible .s8_r2 { transition-delay: 0.8s; }
+.s8_stage.visible .s8_r3 { transition-delay: 1.0s; }
+.s8_stage.visible .s8_r4 { transition-delay: 1.2s; }
+.s8_stage.visible .s8_r5 { transition-delay: 1.4s; }
+
+.s8_line_container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 340px;
+  height: 210px;
+  pointer-events: none;
+}
+
+.s8_line_container svg {
+  width: 100%;
+  height: 100%;
+}
+
+.s8_line {
+  stroke: #22C55E;
+  stroke-width: 1.5;
+  fill: none;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  transition: stroke-dashoffset 0.6s ease;
+}
+
+.s8_stage.visible .s8_line { stroke-dashoffset: 0; }
+.s8_stage.visible .s8_l1 { transition-delay: 1.8s; }
+.s8_stage.visible .s8_l2 { transition-delay: 2.0s; }
+.s8_stage.visible .s8_l3 { transition-delay: 2.2s; }
+.s8_stage.visible .s8_l4 { transition-delay: 2.4s; }
+.s8_stage.visible .s8_l5 { transition-delay: 2.6s; }
+
+.s8_region.s8_glow {
+  box-shadow: 0 0 12px 4px rgba(34, 197, 94, 0.5);
+  border-color: #22C55E;
+}
+
+.s8_badges {
+  position: absolute;
+  top: 220px;
+  left: 0;
+  width: 340px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.s8_badge {
+  width: 110px;
+  height: 28px;
+  border-radius: 14px;
+  border: 1.5px solid #22C55E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #F1F5F9;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.s8_stage.visible .s8_b1 { opacity: 1; transform: translateY(0); transition-delay: 3.4s; }
+.s8_stage.visible .s8_b2 { opacity: 1; transform: translateY(0); transition-delay: 3.8s; }
+.s8_stage.visible .s8_b3 { opacity: 1; transform: translateY(0); transition-delay: 4.2s; }
+.s8_stage.visible .s8_b4 { opacity: 1; transform: translateY(0); transition-delay: 4.6s; }
+
+/* === A1 Animation === */
+
+.a1_stage {
+  position: relative;
+  width: 340px;
+  height: 300px;
+  font-family: sans-serif;
+  overflow: hidden;
+}
+
+.a1_stage * {
+  box-sizing: border-box;
+}
+
+.a1_left, .a1_right {
+  position: absolute;
+  top: 0;
+  width: 160px;
+  height: 240px;
+}
+
+.a1_left { left: 0; }
+.a1_right { left: 180px; }
+
+/* Pod boxes */
+.a1_pod {
+  position: absolute;
+  border: 2px solid #94A3B8;
+  border-radius: 6px;
+  padding: 6px;
+  opacity: 0;
+  transition: opacity 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.a1_pod_label {
+  font-size: 11px;
+  color: #94A3B8;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.a1_ports_grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+}
+
+.a1_port {
+  width: 28px;
+  height: 28px;
+  background: #22C55E;
+  border-radius: 3px;
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity 0.3s ease, transform 0.3s ease, background 0.3s ease;
+}
+
+.a1_port.a1_overflow {
+  background: #EF4444;
+}
+
+/* Left pod */
+.a1_pod_left {
+  top: 10px;
+  left: 10px;
+  width: 140px;
+  min-height: 100px;
+}
+
+/* Right pods */
+.a1_pod_a {
+  top: 10px;
+  left: 10px;
+  width: 140px;
+  height: 70px;
+}
+
+.a1_pod_b {
+  top: 90px;
+  left: 10px;
+  width: 140px;
+  height: 70px;
+}
+
+/* Packet arrows */
+.a1_arrow_wrong, .a1_arrow_right {
+  position: absolute;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.a1_arrow_wrong {
+  top: 60px;
+  left: -30px;
+  width: 30px;
+  height: 80px;
+}
+
+.a1_arrow_right {
+  top: 20px;
+  left: -30px;
+  width: 30px;
+  height: 40px;
+}
+
+.a1_mark {
+  position: absolute;
+  font-size: 18px;
+  font-weight: bold;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.a1_mark_x {
+  color: #EF4444;
+  top: 110px;
+  right: 14px;
+}
+
+.a1_mark_check {
+  color: #22C55E;
+  top: 30px;
+  right: 14px;
+}
+
+/* Session indicator */
+.a1_session {
+  position: absolute;
+  top: 70px;
+  left: -48px;
+  font-size: 10px;
+  color: #F59E0B;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  white-space: nowrap;
+}
+
+/* Bottom labels */
+.a1_bottom_label {
+  position: absolute;
+  bottom: 0;
+  width: 160px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: bold;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.a1_label_left {
+  left: 0;
+  color: #EF4444;
+}
+
+.a1_label_right {
+  left: 180px;
+  color: #F59E0B;
+}
+
+/* SVG arrows */
+.a1_svg_overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 160px;
+  height: 240px;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.a1_path_wrong {
+  stroke: #EF4444;
+  stroke-width: 2;
+  fill: none;
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  transition: stroke-dashoffset 0.6s ease;
+}
+
+.a1_path_right {
+  stroke: #22C55E;
+  stroke-width: 2;
+  fill: none;
+  stroke-dasharray: 80;
+  stroke-dashoffset: 80;
+  transition: stroke-dashoffset 0.6s ease;
+}
+
+/* Red glow on left pod */
+.a1_pod_left.a1_glow {
+  border-color: #EF4444;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+}
+
+/* Animation states triggered by .visible */
+.a1_stage.visible .a1_step1 { opacity: 1; }
+.a1_stage.visible .a1_port_init {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* === A2 Animation === */
+
+.a2_stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 0;
+  position: relative;
+}
+
+.a2_card {
+  width: 280px;
+  height: 70px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1.5px solid #E2E8F0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  opacity: 0;
+  transform: translateY(18px);
+  transition: none;
+}
+
+.a2_stage.visible .a2_card {
+  animation: a2_fadeSlideUp 0.5s ease forwards;
+}
+.a2_stage.visible .a2_card:nth-child(1) { animation-delay: 0.4s; }
+.a2_stage.visible .a2_card:nth-child(2) { animation-delay: 1.0s; }
+.a2_stage.visible .a2_card:nth-child(3) { animation-delay: 1.6s; }
+
+@keyframes a2_fadeSlideUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.a2_icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.a2_text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.a2_label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1E293B;
+  font-family: sans-serif;
+  line-height: 1.2;
+}
+
+.a2_sublabel {
+  font-size: 12px;
+  color: #94A3B8;
+  font-family: sans-serif;
+  line-height: 1.2;
+}
+
+/* Icon 1: SO_REUSEPORT - 3 lines converging */
+.a2_icon_reuseport line {
+  stroke: #22C55E;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+/* Icon 2: LockOSThread - thread pinned to CPU */
+.a2_icon_lock rect.a2_cpu {
+  fill: none;
+  stroke: #EF4444;
+  stroke-width: 2;
+  rx: 3;
+}
+.a2_icon_lock line.a2_thread {
+  stroke: #EF4444;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.a2_icon_lock circle.a2_pin {
+  fill: #EF4444;
+}
+
+/* Icon 3: Pre-allocated buffers */
+.a2_icon_buf rect.a2_buf_outline {
+  fill: none;
+  stroke: #94A3B8;
+  stroke-width: 1.5;
+  rx: 2;
+}
+.a2_icon_buf rect.a2_buf_fill {
+  fill: #22C55E;
+  rx: 2;
+  opacity: 0;
+}
+
+.a2_stage.visible .a2_card:nth-child(3) .a2_buf_fill {
+  animation: a2_bufFill 0.6s ease forwards;
+}
+.a2_stage.visible .a2_card:nth-child(3) .a2_buf_fill:nth-of-type(1) { animation-delay: 2.2s; }
+.a2_stage.visible .a2_card:nth-child(3) .a2_buf_fill:nth-of-type(2) { animation-delay: 2.5s; }
+.a2_stage.visible .a2_card:nth-child(3) .a2_buf_fill:nth-of-type(3) { animation-delay: 2.8s; }
+
+@keyframes a2_bufFill {
+  from { opacity: 0; }
+  to   { opacity: 0.85; }
+}
+
+/* Connecting line */
+.a2_connector {
+  position: absolute;
+  left: 50%;
+  top: 59px;
+  width: 2px;
+  height: 0;
+  background: #94A3B8;
+  transform: translateX(-50%);
+  opacity: 0;
+}
+
+.a2_stage.visible .a2_connector {
+  animation: a2_lineGrow 0.6s ease forwards;
+  animation-delay: 2.6s;
+}
+
+@keyframes a2_lineGrow {
+  from { opacity: 0; height: 0; }
+  to   { opacity: 1; height: 180px; }
+}
+
+/* Badge */
+.a2_badge {
+  margin-top: 8px;
+  padding: 6px 18px;
+  border-radius: 20px;
+  background: #22C55E;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: sans-serif;
+  opacity: 0;
+  transform: scale(0.85);
+}
+
+.a2_stage.visible .a2_badge {
+  animation: a2_badgePop 0.4s ease forwards;
+  animation-delay: 3.4s;
+}
+
+@keyframes a2_badgePop {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+</style>
+
+<meta name="description" content="语音 AI 要想让人觉得自然，对话节奏必须跟上真人说话的速度。一旦网络拖了后腿，用户马上就能听出来——尴尬的停顿、被截断的打断、延迟的插话。这对 ChatGPT 语音模式、Realtime API 开发者、以及需要在用户还在说话时就处理音频的模型来说，都是致命的体验问题。在 OpenAI 的规模下，这意味着三个硬性要求： 全球覆盖 9亿周活用户、 快速建连 ">
+<link rel="canonical" href="https://chendi.me/readings/voice-ai-latency/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<div class="breadcrumb" id="breadcrumb"></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">&#8592;</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div><div class="dot"></div></div>
+
+<!-- ======== LAYER: OVERVIEW ======== -->
+<div class="layer active" id="layer-overview">
+
+  <!-- S1: 9亿用户的语音延迟之战 -->
+  <section class="feed-section" style="background:var(--bg-act1);">
+    <div class="section-inner">
+      <p class="big-statement reveal">每周 <span style="color:var(--accent);">9 亿</span>活跃用户在和 AI 对话，但语音只有在<span style="color:var(--accent2);">对话速度</span>跟上语速时才自然</p>
+      <p class="body-text reveal reveal-d1">语音 AI 要想让人觉得自然，对话节奏必须跟上真人说话的速度。一旦网络拖了后腿，用户马上就能听出来——尴尬的停顿、被截断的打断、延迟的插话。这对 ChatGPT 语音模式、Realtime API 开发者、以及需要在用户还在说话时就处理音频的模型来说，都是致命的体验问题。在 OpenAI 的规模下，这意味着三个硬性要求：<span class="hl">全球覆盖</span>9亿周活用户、<span class="hl">快速建连</span>让用户开口就能说话、以及<span class="hl">低且稳定的往返延迟</span>让轮替对话干脆利落。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s1_stage">
+  <div class="s1_title">9亿用户的语音延迟之战</div>
+  <div class="s1_grid">
+    <div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div>
+    <div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div>
+    <div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div>
+    <div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div>
+    <div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div>
+    <div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div>
+    <div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div>
+    <div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div>
+    <div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div>
+    <div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div><div class="s1_dot"></div>
+  </div>
+  <div class="s1_scale_label"><span class="s1_scale_num">9亿</span> 周活跃用户</div>
+  <div class="s1_divider"></div>
+  <div class="s1_badges">
+    <div class="s1_badge s1_badge--1">全球覆盖</div>
+    <div class="s1_badge s1_badge--2">快速建连</div>
+    <div class="s1_badge s1_badge--3">低延迟</div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>Voice AI only feels natural if conversation moves at the speed of speech. When the network gets in the way, people hear it immediately as awkward pauses, clipped interruptions, or delayed barge-in. That matters for ChatGPT voice, for developers building with the Realtime API, for agents working in interactive workflows, and for models that need to process audio while a user is still talking.</p>
+<p>At OpenAI's scale, that translates into three concrete requirements:
+
+Global reach for more than 900 million weekly active users
+Fast connection setup so a user can start speaking as soon as a session begins
+Low and stable media round-trip time, with low jitter and packet loss, so turn-taking feels crisp</p>
+<p>The team at OpenAI responsible for real-time AI interactions recently rearchitected our WebRTC stack to address three constraints that started to collide at scale: one-port-per-session media termination does not fit OpenAI infrastructure well, stateful ICE and DTLS sessions need stable ownership, and global routing has to keep first-hop latency low.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S2: WebRTC：实时AI的协议基石 -->
+  <section class="feed-section" style="background:var(--bg-act1);">
+    <div class="section-inner">
+      <p class="big-statement reveal">WebRTC 把实时通信的<span style="color:var(--accent);">所有难题</span>都标准化了——AI 只需接上去就行</p>
+      <p class="body-text reveal reveal-d1">WebRTC 是一个开放标准，用于在浏览器、移动端和服务器之间传输低延迟的音频、视频和数据。它把交互式媒体中最困难的部分全部标准化了：ICE 负责连接建立和 NAT 穿透，DTLS 和 SRTP 负责加密传输，编解码器协商负责音频压缩，RTCP 负责质量控制，还有客户端的回声消除和抖动缓冲。如果没有 WebRTC，每个客户端都需要自己解决 NAT 穿透、媒体加密、编解码器选择等问题。而对 AI 来说，最关键的特性是音频以<span class="hl">连续流</span>到达——语音 agent 可以在用户还在说话时就开始转写、推理、调用工具或生成语音，而不是等一整段上传完毕。这就是「对话感」和「对讲机感」的本质区别。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s2_stage">
+  <div class="s2_stack">
+    <div class="s2_layer s2_layer1">ICE (连接建立)</div>
+    <div class="s2_layer s2_layer2">DTLS+SRTP (加密传输)</div>
+    <div class="s2_layer s2_layer3">编解码器协商</div>
+    <div class="s2_layer s2_layer4">RTCP (质量控制)</div>
+    <div class="s2_layer s2_layer5">回声消除+抖动缓冲</div>
+  </div>
+  <div class="s2_border">
+    <div class="s2_label_side">WebRTC</div>
+  </div>
+  <div class="s2_arrow_group">
+    <div class="s2_arrow_line"></div>
+    <div class="s2_arrow_head"></div>
+    <div class="s2_ai_circle">AI</div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>WebRTC is an open standard for sending low-latency audio, video, and data between browsers, mobile apps, and servers. It's often associated with peer-to-peer calling, but it's also a practical foundation for client-to-server real-time systems because it standardizes the hard parts of interactive media: ICE for connectivity establishment and NAT traversal, DTLS and SRTP for encrypted transport, codec negotiation for compressing and decoding audio, RTCP for quality control, and client-side features such as echo cancellation and jitter buffering.</p>
+<p>That standardization matters for AI products. Without WebRTC, every client would need a different answer for how to establish connectivity across NATs, encrypt media, negotiate codecs and adapt to changing network conditions. With WebRTC, we can build on a protocol stack that's already implemented across browsers and mobile platforms, focusing our own work on the infrastructure that connects real-time media to models.</p>
+<p>We also build on the WebRTC ecosystem itself, including mature open-source implementations and the standard work that keeps browsers, mobile apps, and servers interoperable.</p>
+<p>For AI, the most important property is that audio arrives as a continuous stream. A spoken agent can begin transcribing, reasoning, calling tools, or generating speech while the user is still talking, instead of waiting for a full upload. That's the difference between a system that feels conversational and one that feels like push-to-talk.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Act Divider -->
+  <div class="act-divider" style="background:var(--bg-act1);"><div class="act-label reveal">ACT II · 架构选择</div></div>
+
+  <!-- S3: 不选SFU，选Transceiver -->
+  <section class="feed-section" style="background:var(--bg-act2);">
+    <div class="section-inner">
+      <p class="big-statement reveal">多人会议用 SFU，但 <span style="color:var(--accent);">1:1 语音AI</span> 需要更直接的路径</p>
+      <p class="body-text reveal reveal-d1">选定 WebRTC 后，下一个问题是在哪里终结（terminate）连接、如何把会话接入推理后端。SFU（选择性转发单元）是多方通话的经典方案——它为每个参与者终结一条 WebRTC 连接，AI 作为另一个参与者加入。但 OpenAI 的场景不同：绝大多数会话是 <span class="hl">1:1</span>——一个用户对一个模型，或一个应用对一个实时 agent——而且每一轮对话都对延迟极度敏感。因此 OpenAI 选择了 <span class="hl">Transceiver 模型</span>：一个 WebRTC 边缘服务终结客户端连接，然后把媒体和事件转换成更简单的内部协议，分发给推理、转写、语音生成和编排服务。Transceiver 是唯一拥有 WebRTC 会话状态的服务，后端服务可以像普通服务一样扩展，不需要自己充当 WebRTC peer。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s3_stage">
+  <!-- LEFT: SFU -->
+  <div class="s3_sfu_wrap">
+    <div class="s3_label_top">SFU (星形)</div>
+    <div class="s3_sfu_canvas">
+      <svg class="s3_sfu_svg">
+        <!-- rect center ~75,102. c1 center: 75,32. c2: 126,88. c3: 75,170. c4: 24,88 -->
+        <line class="s3_sl1" x1="75" y1="88" x2="75" y2="52"/>
+        <line class="s3_sl2" x1="100" y1="102" x2="106" y2="88"/>
+        <line class="s3_sl3" x1="75" y1="116" x2="75" y2="150"/>
+        <line class="s3_sl4" x1="50" y1="102" x2="44" y2="88"/>
+      </svg>
+      <div class="s3_rect s3_sfu_rect">SFU</div>
+      <div class="s3_circle s3_sfu_c1">用户A</div>
+      <div class="s3_circle s3_sfu_c2">用户B</div>
+      <div class="s3_circle s3_sfu_c3">AI</div>
+      <div class="s3_circle s3_sfu_c4">用户C</div>
+    </div>
+  </div>
+
+  <div class="s3_divider"></div>
+
+  <!-- RIGHT: Transceiver -->
+  <div class="s3_tx_wrap">
+    <div class="s3_label_top">Transceiver (1:1)</div>
+    <div class="s3_tx_canvas">
+      <svg class="s3_tx_svg">
+        <g class="s3_tx_arrow_g">
+          <!-- user right: 38. rect left: 47. Arrow from 39 to 46 -->
+          <line x1="39" y1="102" x2="43" y2="102" stroke="#22C55E" stroke-width="2"/>
+          <polygon points="47,102 40,98 40,106" fill="#22C55E"/>
+          <!-- rect right: 117. model left: 124. Arrow from 118 to 123 -->
+          <line x1="117" y1="102" x2="121" y2="102" stroke="#22C55E" stroke-width="2"/>
+          <polygon points="124,102 118,98 118,106" fill="#22C55E"/>
+        </g>
+      </svg>
+      <div class="s3_rect s3_tx_rect">Transceiver</div>
+      <div class="s3_circle s3_tx_user">用户</div>
+      <div class="s3_circle s3_tx_model">模型</div>
+      <div class="s3_badge">1:1</div>
+    </div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>An SFU, or selective forwarding unit, is a media server that receives one WebRTC stream from each participant and selectively forwards streams to the others. In this model, the SFU terminates a separate WebRTC connection for every participant, and the AI joins as another participant in the session. That can be a good fit for products that are inherently multiparty, such as group calls, classrooms, or collaborative meetings.</p>
+<p>Our workload is different. Most sessions are 1:1—one user talking to one model, or one application talking to one real-time agent—with latency sensitivity on every turn. For that shape of traffic, we chose a transceiver model: a WebRTC edge service terminates the client connection and then converts media and events into simpler internal protocols for model inference, transcription, speech generation, tool use, and orchestration.</p>
+<p>In this design, the transceiver is the only service that owns the WebRTC session state, including ICE connectivity checks, the DTLS handshake, SRTP encryption keys, and session lifecycle. Keeping that state in one place made session ownership easier to reason about, and it let backend services scale like ordinary services instead of acting as WebRTC peers themselves.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S4: 核心难题：WebRTC遇上Kubernetes -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <p class="big-statement reveal"><span style="color:#FCA5A5;">每个会话一个端口</span>的传统模型，在 Kubernetes 上彻底走不通了</p>
+      <p class="body-text reveal reveal-d1">选好 Transceiver 模型后，OpenAI 的第一版实现是一个基于 Pion 的 Go 服务，同时处理信令和媒体终结。但问题很快暴露了：传统 WebRTC 的「每个会话一个 UDP 端口」模型与 Kubernetes 环境严重冲突。高并发下需要暴露和管理大量 UDP 端口范围，而云负载均衡器和 K8s service 根本不是为成千上万个公共 UDP 端口设计的。更糟糕的是，大量 UDP 端口范围扩大了外部可达的攻击面，让网络策略审计变得困难。而且 Pod 在 K8s 中不断被添加、移除和重新调度，要求每个 Pod 预留大段稳定端口范围会让弹性伸缩变得脆弱。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s4_stage">
+  <div class="s4_pod s4_pod--left s4_pod--overflow">
+    <span class="s4_pod_label">K8s Pod</span>
+    <span class="s4_warning s4_warning--show">Port Exhausted!</span>
+    <div class="s4_port">P1</div>
+    <div class="s4_port">P2</div>
+    <div class="s4_port">P3</div>
+    <div class="s4_port">P4</div>
+    <div class="s4_port">P5</div>
+    <div class="s4_port">P6</div>
+    <div class="s4_port">P7</div>
+    <div class="s4_port">P8</div>
+    <div class="s4_port">P9</div>
+  </div>
+  <div class="s4_pod s4_pod--right">
+    <span class="s4_pod_label">K8s Pod</span>
+    <span class="s4_check s4_check--show">&#10003;</span>
+    <div class="s4_port s4_port--green">P1</div>
+  </div>
+</div></div>
+      <p class="hook-line reveal reveal-d3">端口耗尽只是第一道坎——状态粘性才是更深的陷阱 &#8594;</p>
+      <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-k8s-problem',this)">深入：端口与状态的双重困境 &#8594;</button>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>After choosing the transceiver model, our first implementation was a single Go service built on Pion that handled both signaling and media termination. It powers ChatGPT voice, the Realtime API's WebRTC endpoint, and a number of research projects.</p>
+<p>We wanted the service to run like the rest of our infrastructure: on Kubernetes, where workloads can scale up and down, and move across hosts as demand changes. But the conventional one-port-per-session WebRTC model fits that environment poorly, because it depends on large public UDP port ranges that are difficult to expose, secure, and preserve as pods are added, removed, or rescheduled.</p>
+<p>Cloud load balancers and Kubernetes services are not designed around tens of thousands of public UDP ports per service. Each additional range adds operational complexity in load balancer config, health checking, firewall policy, and rollout safety.</p>
+<p>Large UDP port ranges are hard to secure because they expand the externally reachable surface area and make network policy harder to audit.</p>
+<p>They're also a poor fit for autoscaling. Pods are constantly added, removed, and rescheduled in Kubernetes. Requiring each pod to reserve and advertise a large stable port range makes that elasticity brittle.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Act Divider -->
+  <div class="act-divider" style="background:var(--bg-act2);"><div class="act-label reveal">ACT III · 解决方案</div></div>
+
+  <!-- S5: 四种架构方案的取舍 -->
+  <section class="feed-section" style="background:var(--bg-act2);">
+    <div class="section-inner">
+      <p class="big-statement reveal">四种路径，只有一种能同时满足<span style="color:var(--accent);">小端口面</span>、<span style="color:var(--accent2);">会话粘性</span>和<span style="color:var(--warm);">弹性伸缩</span></p>
+      <p class="body-text reveal reveal-d1">OpenAI 评估了四种方案：最传统的「每会话一个端口」直接暴露——端口面大、K8s 不友好；「每服务器一个端口」能减少端口数，但在负载均衡的集群中仍无法保证首包路由到正确实例；TURN 中继能集中入口策略，但分配过程增加了建连往返，且跨服务器迁移困难。最终 OpenAI 选择了第四条路：<span class="hl">无状态转发器 + 有状态终结器</span>——也就是 Relay + Transceiver 的分离架构。Relay 只负责转发包，不解密、不运行 ICE 状态机、不参与编解码器协商；Transceiver 仍然拥有完整的 WebRTC 会话。这样既缩小了公共 UDP 暴露面，又保持了标准 WebRTC 行为。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s5_stage">
+  <div class="s5_card s5_card--fail" data-s5-order="1">
+    <span class="s5_label">每会话一端口</span>
+    <span class="s5_icon">X</span>
+  </div>
+  <div class="s5_card s5_card--warn" data-s5-order="2">
+    <span class="s5_label">每服务器一端口</span>
+    <span class="s5_icon">~</span>
+  </div>
+  <div class="s5_card s5_card--warn" data-s5-order="3">
+    <span class="s5_label">TURN 中继</span>
+    <span class="s5_icon">~</span>
+  </div>
+  <div class="s5_card s5_card--pass" data-s5-order="4">
+    <span class="s5_label">Relay + Transceiver</span>
+    <span class="s5_icon">&#10003;</span>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>We evaluated several ways to get there, including TURN, where an edge relay terminates client allocations and forwards traffic on their behalf.</p>
+<p>Unique IP:port per session: Direct client-to-server media path, no forwarding layer. But requires one public UDP port per session, large port ranges difficult to expose and secure, poor fit for Kubernetes.</p>
+<p>Unique IP:port per server: Much smaller public UDP footprint, one shared socket per server. But works cleanly on a single host only; across a load-balanced fleet, the first packet can still land on the wrong instance.</p>
+<p>TURN relay: Clients only need to reach the TURN relay address and port, can centralize policy at the edge. But TURN allocations add setup round trips, moving or recovering allocations across TURN servers is still difficult.</p>
+<p>Stateless forwarder + stateful terminator (OpenAI's relay + transceiver): Small public UDP footprint, transceiver still owns the full WebRTC session. Adds one forwarding hop, requires custom coordination between relay and transceiver.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S6: Relay + Transceiver 分离架构 -->
+  <section class="feed-section" style="background:var(--bg-act3);">
+    <div class="section-inner">
+      <p class="big-statement reveal">把<span style="color:var(--accent);">包路由</span>和<span style="color:var(--accent2);">协议终结</span>彻底分开——Relay 只转发，Transceiver 管状态</p>
+      <p class="body-text reveal reveal-d1">OpenAI 最终交付的架构把包路由和协议终结分成了两层。信令仍然直达 Transceiver 完成会话建立，而媒体流量先经过 Relay 再转发。Relay 是一个轻量级的 UDP 转发层，公共暴露面很小；Transceiver 是它背后的有状态 WebRTC 端点。Relay 不解密媒体、不运行 ICE 状态机、不参与编解码器协商——它只读取足够的包元数据来选择目的地，然后把包转发给拥有该会话的 Transceiver。从客户端的视角来看，WebRTC 会话没有任何变化。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s6_stage">
+  <div class="s6_flow" id="s6_flow">
+    <!-- 1. Client circle -->
+    <div class="s6_node s6_node--1">
+      <div class="s6_circle s6_circle--neutral">客户端</div>
+    </div>
+
+    <!-- Arrow 1 -->
+    <div class="s6_arrow_wrap s6_arrow--1">
+      <div class="s6_arrow"></div>
+    </div>
+
+    <!-- 2. Relay rect -->
+    <div class="s6_node s6_node--2" id="s6_relay">
+      <div class="s6_rect s6_rect--relay">Relay</div>
+      <div class="s6_label">无状态转发</div>
+    </div>
+
+    <!-- Arrow 2 -->
+    <div class="s6_arrow_wrap s6_arrow--2">
+      <div class="s6_arrow"></div>
+    </div>
+
+    <!-- 3. Transceiver rect -->
+    <div class="s6_node s6_node--3" id="s6_trans">
+      <div class="s6_rect s6_rect--transceiver">Transceiver</div>
+      <div class="s6_label">有状态终结</div>
+    </div>
+
+    <!-- Arrow 3 -->
+    <div class="s6_arrow_wrap s6_arrow--3">
+      <div class="s6_arrow"></div>
+    </div>
+
+    <!-- 4. Model circle -->
+    <div class="s6_node s6_node--4">
+      <div class="s6_circle s6_circle--accent">模型</div>
+    </div>
+  </div>
+
+  <!-- Dashed box around Relay + Transceiver -->
+  <div class="s6_dashed_box" id="s6_dbox"></div>
+  <div class="s6_dashed_label" id="s6_dlabel">OpenAI 内部</div>
+
+  </div></div>
+      <p class="hook-line reveal reveal-d3">架构画完了——但 Relay 到底是怎么写出来的？</p>
+      <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-implementation',this)">深入：Go 实现细节 &#8594;</button>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>The architecture we shipped splits packet routing from protocol termination. Signaling still reaches the transceiver for session setup, while media enters through the relay first. The relay is a lightweight UDP forwarding layer with a small public footprint, and the transceiver is the stateful WebRTC endpoint behind it.</p>
+<p>The relay does not decrypt media, run ICE state machines, or participate in codec negotiation. It reads enough packet metadata to choose a destination, then forwards the packet to the transceiver that owns the session. The transceiver still sees a normal WebRTC flow and still owns all protocol state. From the client's perspective, nothing about the WebRTC session changes.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S7: ICE ufrag：首包路由的秘密 -->
+  <section class="feed-section" style="background:var(--bg-act3);">
+    <div class="section-inner">
+      <p class="big-statement reveal">ICE ufrag：一个 WebRTC 里<span style="color:var(--accent);">本来就有</span>的路由钩子</p>
+      <p class="body-text reveal reveal-d1">首包路由是这个架构的关键步骤——Relay 必须在还没有任何会话存在时就能路由第一个包。每个 WebRTC 会话本身就携带一个协议原生的路由钩子：ICE 用户名片段（ufrag）。OpenAI 在生成服务端 ufrag 时嵌入了刚好足够的路由元数据，让 Relay 能推断出目标集群和拥有该会话的 Transceiver。信令阶段，Transceiver 分配会话状态并在 SDP 应答中返回共享的 Relay VIP 和 UDP 端口。客户端发出的第一个媒体路径包通常是一个 STUN 绑定请求。Relay 只需解析这个 STUN 包中的 ufrag，解码路由提示，就能把包转发到正确的 Transceiver。之后的 DTLS、RTP、RTCP 包都在已建立的会话内流动，不需要再解码 ufrag。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s7_stage">
+  <div class="s7_packet">
+    <span class="s7_packet_label">STUN 包</span>
+    <span class="s7_ufrag_tag">ufrag</span>
+  </div>
+  <div class="s7_arrow1"></div>
+  <div class="s7_arrow1_head"></div>
+  <div class="s7_relay">Relay</div>
+  <div class="s7_expand_box">
+    <span>集群ID</span> + <span>Transceiver ID</span>
+  </div>
+  <div class="s7_arrow2"></div>
+  <div class="s7_branch_line"></div>
+  <div class="s7_branch_arrow"></div>
+  <div class="s7_trans_a">Transceiver A</div>
+  <div class="s7_trans_b">Transceiver B</div>
+  <div class="s7_badge">首包路由完成</div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>First-packet routing is the key step in this setup. A relay has to route the first packet from a client before any session exists on the packet path itself rather than by pausing on an external lookup service.</p>
+<p>Every WebRTC session already carries a protocol-native routing hook: the ICE username fragment, or ufrag, a short identifier exchanged during session setup and echoed in STUN connectivity checks. We generate the server-side ufrag so it contains just enough routing metadata for relay to infer the destination cluster and owning transceiver.</p>
+<p>During signaling, the transceiver allocates session state and returns a shared relay VIP and UDP port in the SDP answer. A VIP is a virtual IP address fronting the relay fleet; combined with the port, it gives the client a single stable destination, such as 203.0.113.10:3478, even though many relay instances sit behind it. The client's first media-path packet is usually a STUN binding request, which ICE uses to verify that packets can reach the advertised address.</p>
+<p>Relay parses just enough of that first STUN packet to read the server ufrag, decode the routing hint, and forward the packet to the owning transceiver. Each transceiver listens on a shared UDP socket, meaning one operating system endpoint bound to an internal IP:port, not one socket per session. After the relay creates a session from the client's source IP:port to that transceiver destination, subsequent DTLS, RTP, and RTCP packets flow within the session without re-decoding the ufrag.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S8: 全球部署与启示 -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <p class="big-statement reveal">最好的复杂度藏在<span style="color:#86EFAC;">薄薄的路由层</span>里，而不是每个后端服务中</p>
+      <p class="body-text reveal reveal-d1">缩小公共 UDP 暴露面后，OpenAI 将同样的 Relay 模式部署到了全球。Global Relay 是一组地理分布的中继入口点，用户的包在离自己最近的 Relay 进入 OpenAI 网络，而不是穿越公网到远端区域。这意味着更低的延迟、更少的抖动、更少的丢包。配合 Cloudflare 的地理引导信令，初始 HTTP/WebSocket 请求也会到达最近的 Transceiver 集群。这套架构的核心教训是：保持客户端的标准 WebRTC 行为不变、把硬状态集中在一个地方、利用协议中已有的信息做路由、在需要内核旁路之前先把简单的 Go 实现优化到位。实时语音 AI 只有在基础设施让延迟「隐形」时才真正可用。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s8_stage">
+  <div class="s8_line_container">
+    <svg viewBox="0 0 340 210">
+      <line class="s8_line s8_l1" x1="170" y1="32" x2="170" y2="90"/>
+      <line class="s8_line s8_l2" x1="62" y1="77" x2="138" y2="110"/>
+      <line class="s8_line s8_l3" x1="278" y1="77" x2="202" y2="110"/>
+      <line class="s8_line s8_l4" x1="62" y1="182" x2="138" y2="142"/>
+      <line class="s8_line s8_l5" x1="278" y1="182" x2="202" y2="142"/>
+    </svg>
+  </div>
+  <div class="s8_center">骨干网</div>
+  <div class="s8_region s8_r1">北美</div>
+  <div class="s8_region s8_r2">欧洲</div>
+  <div class="s8_region s8_r3">亚太</div>
+  <div class="s8_region s8_r4">南美</div>
+  <div class="s8_region s8_r5">中东</div>
+  <div class="s8_badges">
+    <div class="s8_badge s8_b1">标准WebRTC</div>
+    <div class="s8_badge s8_b2">状态集中</div>
+    <div class="s8_badge s8_b3">协议原生路由</div>
+    <div class="s8_badge s8_b4">简单Go实现</div>
+  </div>
+  </div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>Once we reduced the public UDP surface to a small number of stable addresses and ports, we could deploy the same relay pattern globally. Global Relay is our fleet of geographically distributed relay ingress points that all implement the same packet-forwarding behavior.</p>
+<p>Broad geographic ingress shortens the first client-to-OpenAI hop because a packet can enter our network at a relay close to the user, in both geography and network topology, instead of crossing the public internet to a distant region first.</p>
+<p>We use Cloudflare geo and proximity steering for signaling so the initial HTTP or WebSocket request reaches a nearby transceiver cluster.</p>
+<p>The broader lesson is that the best place to add complexity is in a thin routing layer, not in every backend service, and not in custom client behavior. Encoding routing metadata into a protocol-native field gave us deterministic first-packet routing, a small public UDP footprint, and enough flexibility to place ingress close to users around the world.</p>
+<p>Preserve protocol semantics at the edge. Clients still speak standard WebRTC, which keeps browser and mobile interoperability intact.</p>
+<p>Keep hard session states in one place. Transceiver owns ICE, DTLS, SRTP, and session lifecycle; relay only forwards packets.</p>
+<p>Route on information already present in setup. The ICE ufrag gave us a first-packet routing hook without adding a hot-path lookup dependency.</p>
+<p>Real-time voice AI only works when infrastructure makes latency feel invisible.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ======== LAYER: K8S PROBLEM (A1 drill from S4) ======== -->
+<div class="layer" id="layer-k8s-problem">
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <p class="big-statement reveal"><span style="color:#FCA5A5;">端口耗尽</span>和<span style="color:#FDE68A;">状态粘性</span>：Kubernetes 上 WebRTC 的双重陷阱</p>
+      <p class="body-text reveal reveal-d1">第一个问题是端口模型本身。在高并发下，「每会话一个端口」意味着要暴露和管理巨大的 UDP 端口范围。云负载均衡器和 K8s service 不是为每个服务维护上万个公共 UDP 端口而设计的——每增加一段端口范围，就在负载均衡配置、健康检查、防火墙策略和发布安全上叠加一层运维复杂度。大量 UDP 端口还扩大了外部可达的攻击面，让网络策略审计更加困难。而且 K8s 中 Pod 不断被增删和重新调度，要求每个 Pod 预留大段稳定端口范围会破坏弹性伸缩。第二个问题更棘手：即使用「每服务器一个端口」解决了端口数量，还需要保证每个会话的包始终路由到拥有该会话的进程。因为 ICE 和 DTLS 是有状态协议——创建会话的进程必须持续接收该会话的包，才能验证连接检查、完成 DTLS 握手、解密 SRTP。如果同一会话的包落到了不同进程上，建连会失败或媒体会中断。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="a1_stage">
+  <!-- LEFT: Port exhaustion -->
+  <div class="a1_left">
+    <div class="a1_pod a1_pod_left" id="a1_pod_left">
+      <div class="a1_pod_label">Pod</div>
+      <div class="a1_ports_grid" id="a1_ports_grid">
+        <div class="a1_port" id="a1_p1"></div>
+        <div class="a1_port" id="a1_p2"></div>
+        <div class="a1_port" id="a1_p3"></div>
+        <div class="a1_port a1_overflow" id="a1_p4"></div>
+        <div class="a1_port a1_overflow" id="a1_p5"></div>
+        <div class="a1_port a1_overflow" id="a1_p6"></div>
+        <div class="a1_port a1_overflow" id="a1_p7"></div>
+        <div class="a1_port a1_overflow" id="a1_p8"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Session stickiness -->
+  <div class="a1_right">
+    <div class="a1_pod a1_pod_a" id="a1_pod_a">
+      <div class="a1_pod_label">Pod A</div>
+    </div>
+    <div class="a1_pod a1_pod_b" id="a1_pod_b">
+      <div class="a1_pod_label">Pod B</div>
+    </div>
+    <div class="a1_session" id="a1_session">Session</div>
+    <svg class="a1_svg_overlay" id="a1_svg">
+      <defs>
+        <marker id="a1_arrow_red" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6" fill="#EF4444"/>
+        </marker>
+        <marker id="a1_arrow_green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6" fill="#22C55E"/>
+        </marker>
+      </defs>
+      <!-- Wrong path: session -> Pod B -->
+      <path class="a1_path_wrong" id="a1_pw" d="M 2,80 L 40,80 L 40,125 L 70,125" marker-end="url(#a1_arrow_red)"/>
+      <!-- Correct path: session -> Pod A -->
+      <path class="a1_path_right" id="a1_pr" d="M 2,80 L 30,80 L 30,45 L 70,45" marker-end="url(#a1_arrow_green)"/>
+    </svg>
+    <div class="a1_mark a1_mark_x" id="a1_mark_x">X</div>
+    <div class="a1_mark a1_mark_check" id="a1_mark_check">&#10003;</div>
+  </div>
+
+  <!-- Bottom labels -->
+  <div class="a1_bottom_label a1_label_left" id="a1_lbl_left">端口耗尽</div>
+  <div class="a1_bottom_label a1_label_right" id="a1_lbl_right">状态粘性</div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>The first problem was the one-port-per-session model itself. At high concurrency, that means exposing and managing very large UDP port ranges.</p>
+<p>Cloud load balancers and Kubernetes services are not designed around tens of thousands of public UDP ports per service. Each additional range adds operational complexity in load balancer config, health checking, firewall policy, and rollout safety.</p>
+<p>Large UDP port ranges are hard to secure because they expand the externally reachable surface area and make network policy harder to audit.</p>
+<p>They're also a poor fit for autoscaling. Pods are constantly added, removed, and rescheduled in Kubernetes. Requiring each pod to reserve and advertise a large stable port range makes that elasticity brittle.</p>
+<p>Single-port-per-server designs solve port count, but they introduce a second problem: preserving ownership of each session across a fleet.</p>
+<p>ICE and DTLS are stateful protocols. The process that created a session needs to keep receiving that session's packets so it can validate connectivity checks, complete the DTLS handshake, decrypt SRTP, and process later session changes such as ICE restarts. If packets for the same session land on a different process, setup can fail or media can break.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ======== LAYER: IMPLEMENTATION (A2 drill from S6) ======== -->
+<div class="layer" id="layer-implementation">
+  <section class="feed-section" style="background:var(--bg-act3);">
+    <div class="section-inner">
+      <p class="big-statement reveal">用 Go 写一个<span style="color:var(--accent);">足够窄</span>的转发器，简单到不需要内核旁路</p>
+      <p class="body-text reveal reveal-d1">Relay 服务用 Go 编写，设计上刻意保持狭窄。在 Linux 上，内核网络栈从网卡接收 UDP 包并投递到 socket——Relay 作为用户态进程从该 socket 读取包头、更新少量流状态、然后转发包，全程不终结 WebRTC。三个关键设计选择：不做协议终结（只解析 STUN 头和 ufrag，后续 DTLS/RTP/RTCP 包保持不透明）、临时状态（维护一个小型、短超时的内存映射）、水平可扩展（多个实例并行运行在负载均衡器后面，重启只造成短暂流量中断）。性能优化方面：<span class="hl">SO_REUSEPORT</span> 让同一机器上的多个 worker 绑定同一个 UDP 端口，内核自动分发包避免单读循环瓶颈；<span class="hl">runtime.LockOSThread</span> 把每个 UDP 读取的 goroutine 固定到特定 OS 线程，配合 SO_REUSEPORT 让同一流的包倾向于落在同一 CPU 核上，改善缓存局部性；预分配缓冲区和最小化拷贝降低解析开销，避免 Go 的垃圾回收。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="a2_stage">
+  <div class="a2_connector"></div>
+
+  <div class="a2_card">
+    <svg class="a2_icon a2_icon_reuseport" viewBox="0 0 40 40">
+      <line x1="4" y1="10" x2="32" y2="20" />
+      <line x1="4" y1="20" x2="32" y2="20" />
+      <line x1="4" y1="30" x2="32" y2="20" />
+      <circle cx="34" cy="20" r="3" fill="#22C55E" />
+    </svg>
+    <div class="a2_text">
+      <span class="a2_label">SO_REUSEPORT</span>
+      <span class="a2_sublabel">多 worker 共享端口</span>
+    </div>
+  </div>
+
+  <div class="a2_card">
+    <svg class="a2_icon a2_icon_lock" viewBox="0 0 40 40">
+      <rect class="a2_cpu" x="18" y="10" width="18" height="20" />
+      <line class="a2_thread" x1="4" y1="20" x2="18" y2="20" />
+      <circle class="a2_pin" cx="18" cy="20" r="3" />
+    </svg>
+    <div class="a2_text">
+      <span class="a2_label">LockOSThread</span>
+      <span class="a2_sublabel">goroutine 绑定线程</span>
+    </div>
+  </div>
+
+  <div class="a2_card">
+    <svg class="a2_icon a2_icon_buf" viewBox="0 0 40 40">
+      <rect class="a2_buf_outline" x="3" y="6" width="34" height="8" />
+      <rect class="a2_buf_outline" x="3" y="16" width="34" height="8" />
+      <rect class="a2_buf_outline" x="3" y="26" width="34" height="8" />
+      <rect class="a2_buf_fill" x="3" y="6" width="34" height="8" />
+      <rect class="a2_buf_fill" x="3" y="16" width="34" height="8" />
+      <rect class="a2_buf_fill" x="3" y="26" width="34" height="8" />
+    </svg>
+    <div class="a2_text">
+      <span class="a2_label">预分配缓冲区</span>
+      <span class="a2_sublabel">零 GC 开销</span>
+    </div>
+  </div>
+
+  <div class="a2_badge">无需内核旁路</div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>We wrote the relay service in Go and kept the implementation narrow on purpose. On Linux, the kernel's networking stack receives UDP packets from the machine's network interface and delivers them to a socket, the operating system endpoint that a process reads after binding an IP:Port. Relay runs in userspace, so a regular Go process reads packet headers from that socket, updates a small amount of flow state, and forwards packets without terminating WebRTC. We did not need any kernel-bypass framework.</p>
+<p>No protocol termination: Relay parses only STUN headers/ufrag; it uses cached state for subsequent DTLS, RTP, and RTCP, keeping packets opaque.</p>
+<p>Ephemeral state: It maintains a small, short-timeout, in-memory map of client address to transceiver destination for flow state and observability.</p>
+<p>Horizontal scalability: Multiple relay instances run in parallel behind a load balancer. State is not hard WebRTC state, so restarts cause minimal traffic drops and quick flow recovery.</p>
+<p>SO_REUSEPORT is a Linux socket option that allows multiple relay workers on the same machine to bind the same UDP port. The kernel then distributes incoming packets across those workers, which avoids a single read-loop bottleneck.</p>
+<p>runtime.LockOSThread pins each UDP-reading goroutine to a specific OS thread. Combined with SO_REUSEPORT, that tends to keep packets from the same flow on the same CPU core, improving cache locality and reducing context switching.</p>
+<p>Pre-allocated buffers and minimal copying keep parsing and allocation overhead low to avoid garbage collection in Go.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+var layerStack = ['layer-overview'];
+var transitioning = false;
+var layerNames = {
+  'layer-overview': '概览',
+  'layer-k8s-problem': 'K8s困境',
+  'layer-implementation': 'Go实现'
+};
+var observers = new Map();
+
+function setupObserver(layerId) {
+  if (observers.has(layerId)) return;
+  var layer = document.getElementById(layerId);
+  var reveals = layer.querySelectorAll('.reveal, [class*="_stage"]');
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) { e.target.classList.add('visible'); }
+    });
+  }, { threshold: 0.15, root: layer });
+  reveals.forEach(function(el) { obs.observe(el); });
+  observers.set(layerId, obs);
+}
+
+function resetReveals(layerId) {
+  var layer = document.getElementById(layerId);
+  layer.querySelectorAll('.reveal').forEach(function(el) { el.classList.remove('visible'); });
+  layer.querySelectorAll('[class*="_stage"]').forEach(function(el) { el.classList.remove('visible'); });
+}
+
+function activateReveals(layerId) {
+  resetReveals(layerId);
+  if (observers.has(layerId)) { observers.get(layerId).disconnect(); observers.delete(layerId); }
+  requestAnimationFrame(function() { setupObserver(layerId); });
+}
+
+function updateBreadcrumb() {
+  var bc = document.getElementById('breadcrumb');
+  bc.innerHTML = '';
+  layerStack.forEach(function(id, i) {
+    if (i > 0) { var sep = document.createElement('span'); sep.className = 'sep'; sep.textContent = '>'; bc.appendChild(sep); }
+    var span = document.createElement('span');
+    span.textContent = layerNames[id] || id;
+    if (i === layerStack.length - 1) { span.className = 'current'; }
+    else { span.addEventListener('click', function() { goBackTo(i); }); }
+    bc.appendChild(span);
+  });
+  var backBtn = document.getElementById('backBtn');
+  backBtn.style.display = layerStack.length > 1 ? 'flex' : 'none';
+  bc.style.left = layerStack.length > 1 ? '60px' : '16px';
+  var dots = document.getElementById('depthDots');
+  var depth = layerStack.length - 1;
+  dots.querySelectorAll('.dot').forEach(function(d, i) { d.classList.toggle('active', i === depth); });
+}
+
+function drillDown(targetId, btnEl) {
+  if (transitioning) return; transitioning = true;
+  var currentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var targetLayer = document.getElementById(targetId);
+  targetLayer.scrollTop = 0; resetReveals(targetId); targetLayer.style.visibility = 'visible';
+  var duration = 600;
+  currentLayer.style.transition = 'transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  currentLayer.style.transformOrigin = 'center center';
+  currentLayer.style.transform = 'scale(1.3)'; currentLayer.style.opacity = '0';
+  targetLayer.classList.add('active'); targetLayer.style.opacity = '0'; targetLayer.style.transform = 'scale(0.85)';
+  targetLayer.style.transition = 'transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  requestAnimationFrame(function() { requestAnimationFrame(function() { targetLayer.style.opacity = '1'; targetLayer.style.transform = 'scale(1)'; }); });
+  setTimeout(function() {
+    currentLayer.classList.remove('active'); currentLayer.style.transition=''; currentLayer.style.transform=''; currentLayer.style.opacity='';
+    targetLayer.style.transition=''; targetLayer.style.transform=''; activateReveals(targetId); transitioning = false;
+  }, duration + 50);
+  layerStack.push(targetId); updateBreadcrumb();
+}
+
+function goBack() {
+  if (layerStack.length <= 1 || transitioning) return; transitioning = true;
+  var currentId = layerStack.pop(); var parentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId); var parentLayer = document.getElementById(parentId);
+  var duration = 600;
+  currentLayer.style.transition = 'transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  currentLayer.style.transform = 'scale(0.85)'; currentLayer.style.opacity = '0';
+  parentLayer.classList.add('active'); parentLayer.style.transform = 'scale(1.3)'; parentLayer.style.opacity = '0';
+  parentLayer.style.transition = 'transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  requestAnimationFrame(function() { requestAnimationFrame(function() { parentLayer.style.transform = 'scale(1)'; parentLayer.style.opacity = '1'; }); });
+  setTimeout(function() {
+    currentLayer.classList.remove('active'); currentLayer.style.transition=''; currentLayer.style.transform=''; currentLayer.style.opacity=''; currentLayer.style.visibility='';
+    parentLayer.style.transition=''; parentLayer.style.transform=''; transitioning = false;
+  }, duration + 50);
+  updateBreadcrumb();
+}
+
+function goBackTo(targetIndex) { if (transitioning) return; while (layerStack.length - 1 > targetIndex) { if (layerStack.length <= 1) break; goBack(); return; } }
+function toggleSource(btn) { btn.classList.toggle('open'); btn.nextElementSibling.classList.toggle('open'); }
+setupObserver('layer-overview'); updateBreadcrumb();
+</script>
+</body>
+</html>

@@ -1,0 +1,2116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Rich Sutton — OaK 架构：从经验中生长出超级智能</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #F5F3FF;
+  --bg-act2: #F0FDFA;
+  --bg-act3: #FFF7ED;
+  --bg-dark: #0F172A;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --accent: #4C1D95;
+  --accent2: #115E59;
+  --warm: #F59E0B;
+  --danger: #DC2626;
+  --neutral: #94A3B8;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Noto Sans SC',sans-serif;-webkit-font-smoothing:antialiased;}
+.reveal{opacity:0;transform:translateY(40px);transition:opacity .8s ease,transform .8s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-d1{transition-delay:.15s;}
+.reveal-d2{transition-delay:.3s;}
+.reveal-d3{transition-delay:.45s;}
+.reveal-d4{transition-delay:.6s;}
+.big-statement{font-family:'Noto Serif SC',serif;font-size:clamp(22px,5.5vw,32px);font-weight:700;line-height:1.5;margin-bottom:32px;color:var(--text);}
+.body-text{font-size:16px;line-height:1.9;color:var(--text);margin-bottom:28px;}
+.body-text .hl{color:var(--accent);font-weight:500;}
+.body-text .hl2{color:var(--accent2);font-weight:500;}
+.body-text .hl-warm{color:var(--warm);font-weight:500;}
+.hook-line{font-size:15px;line-height:1.7;color:var(--accent);font-weight:600;margin-bottom:20px;}
+.layer{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;visibility:hidden;opacity:0;will-change:transform,opacity;scroll-snap-type:y proximity;}
+.layer.active{visibility:visible;opacity:1;}
+.feed-section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;scroll-snap-align:start;}
+.feed-section.dark{background:var(--bg-dark);color:#F1F5F9;}
+.feed-section.dark .body-text{color:#94A3B8;}
+.feed-section.dark .big-statement{color:#F1F5F9;}
+.feed-section.dark .hook-line{color:#C4B5FD;}
+.section-inner{max-width:600px;width:100%;}
+.breadcrumb{position:fixed;top:16px;left:16px;z-index:1000;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);padding:8px 14px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,.1);font-size:13px;font-weight:500;}
+.breadcrumb span{color:var(--text-muted);cursor:pointer;transition:color .2s;}
+.breadcrumb span:hover{color:var(--accent);}
+.breadcrumb span.current{color:var(--text);cursor:default;}
+.breadcrumb .sep{color:#CBD5E1;margin:0 2px;cursor:default;}
+.back-btn{position:fixed;top:16px;left:16px;z-index:1001;width:38px;height:38px;border-radius:10px;border:none;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(0,0,0,.1);font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--text);transition:all .2s;}
+.back-btn:hover{background:var(--accent);color:#fff;}
+.depth-dots{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;gap:8px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);padding:8px 14px;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,.1);}
+.dot{width:10px;height:10px;border-radius:50%;background:#CBD5E1;transition:all .3s;}
+.dot.active{background:var(--accent);box-shadow:0 0 8px rgba(76,29,149,.5);transform:scale(1.2);}
+.drill-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:1.5px solid rgba(76,29,149,.3);border-radius:10px;background:transparent;color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;transition:all .25s;}
+.drill-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(76,29,149,.3);}
+.dark .drill-btn{border-color:rgba(196,181,253,.4);color:#C4B5FD;}
+.dark .drill-btn:hover{background:#C4B5FD;color:#0F172A;border-color:#C4B5FD;}
+.source-panel{margin-top:24px;border-radius:12px;overflow:hidden;border:1px solid rgba(76,29,149,.15);background:rgba(76,29,149,.03);}
+.dark .source-panel{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.04);}
+.source-toggle{width:100%;padding:12px 16px;border:none;background:none;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);}
+.dark .source-toggle{color:#C4B5FD;}
+.source-toggle:hover{background:rgba(76,29,149,.06);}
+.source-toggle .arrow{transition:transform .3s;font-size:11px;}
+.source-toggle.open .arrow{transform:rotate(90deg);}
+.source-body{max-height:0;overflow:hidden;transition:max-height .4s ease;padding:0 16px;}
+.source-body.open{max-height:2000px;padding:0 16px 16px;overflow-y:auto;}
+.source-body p{font-size:13px;line-height:1.8;color:var(--text-muted);margin:0 0 12px;white-space:pre-wrap;}
+.dark .source-body p{color:#94A3B8;}
+.source-body .source-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:8px;display:block;}
+.dark .source-body .source-label{color:#C4B5FD;}
+.anim-stage{width:100%;display:flex;justify-content:center;margin:28px 0;min-height:180px;}
+.anim-stage > div{width:100%;}
+
+/* === S1 Animation === */
+
+/* ── S1 Rich Sutton: LLM vs RL ── */
+
+/* Keyframes */
+@keyframes s1rs_fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes s1rs_scaleIn {
+  from { opacity: 0; transform: scale(0); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes s1rs_drawUp {
+  from { height: 0; opacity: 1; }
+  to   { height: 64px; opacity: 1; }
+}
+@keyframes s1rs_arrowHead {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes s1rs_labelFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes s1rs_pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(76,29,149,0.25); }
+  70%  { box-shadow: 0 0 0 10px rgba(76,29,149,0); }
+  100% { box-shadow: 0 0 0 0 rgba(76,29,149,0); }
+}
+
+/* Stage container */
+.s1rs_stage {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  height: 320px;
+  margin: 0 auto;
+  border-radius: 12px;
+  background: #F8FAFC;
+  font-family: -apple-system, 'Helvetica Neue', 'PingFang SC', 'Noto Sans SC', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* All animated elements start invisible */
+.s1rs_anim { opacity: 0; }
+
+/* ── LLM Box (left) ── */
+.s1rs_llm_box {
+  position: absolute;
+  top: 80px;
+  left: 48px;
+  width: 120px;
+  height: 72px;
+  border-radius: 10px;
+  border: 2.5px solid #94A3B8;
+  background: #F1F5F9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.s1rs_llm_text {
+  font-size: 22px;
+  font-weight: 700;
+  color: #64748B;
+  letter-spacing: 1px;
+}
+
+/* LLM label "设计时" */
+.s1rs_llm_label {
+  position: absolute;
+  top: 160px;
+  left: 48px;
+  width: 120px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #94A3B8;
+}
+
+/* ── RL Agent Box (right) ── */
+.s1rs_rl_box {
+  position: absolute;
+  top: 80px;
+  right: 48px;
+  width: 120px;
+  height: 72px;
+  border-radius: 10px;
+  border: 2.5px solid #4C1D95;
+  background: rgba(76,29,149,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.s1rs_rl_text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #4C1D95;
+}
+
+/* RL label "运行时" */
+.s1rs_rl_label {
+  position: absolute;
+  top: 160px;
+  right: 48px;
+  width: 120px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4C1D95;
+}
+
+/* ── Upward arrow from RL toward 超级智能 ── */
+.s1rs_arrow_line {
+  position: absolute;
+  top: 14px;
+  right: 104px;
+  width: 2.5px;
+  height: 0;
+  background: #115E59;
+  border-radius: 1px;
+  transform-origin: bottom center;
+}
+
+.s1rs_arrow_head {
+  position: absolute;
+  top: 6px;
+  right: 96px;
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 9px solid #115E59;
+  transform: translateX(-50%);
+}
+
+/* 超级智能 label */
+.s1rs_super_label {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 700;
+  color: #115E59;
+  letter-spacing: 1px;
+}
+
+/* ── Divider line between LLM and RL ── */
+.s1rs_divider {
+  position: absolute;
+  top: 68px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 120px;
+  background: repeating-linear-gradient(
+    to bottom,
+    #CBD5E1 0px,
+    #CBD5E1 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+/* ── Citation at bottom ── */
+.s1rs_citation {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: #94A3B8;
+  letter-spacing: 0.3px;
+}
+
+/* ── Static dim indicator on LLM side ── */
+.s1rs_static_dot {
+  position: absolute;
+  top: 196px;
+  left: 96px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #CBD5E1;
+}
+
+/* ── Pulsing indicator on RL side ── */
+.s1rs_active_dot {
+  position: absolute;
+  top: 196px;
+  right: 100px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4C1D95;
+}
+
+/* ══════════════════════════════════════
+   Animation triggers — all on .visible
+   ══════════════════════════════════════ */
+
+/* Step 1 (0s): LLM box + label fade in */
+.s1rs_stage.visible .s1rs_llm_box {
+  animation: s1rs_fadeIn 0.5s 0s forwards;
+}
+.s1rs_stage.visible .s1rs_llm_label {
+  animation: s1rs_fadeIn 0.4s 0.15s forwards;
+}
+.s1rs_stage.visible .s1rs_static_dot {
+  animation: s1rs_fadeIn 0.3s 0.2s forwards;
+}
+.s1rs_stage.visible .s1rs_divider {
+  animation: s1rs_labelFade 0.4s 0.1s forwards;
+}
+
+/* Step 2 (0.5s): RL Agent box + label fade in */
+.s1rs_stage.visible .s1rs_rl_box {
+  animation: s1rs_fadeIn 0.5s 0.5s forwards;
+}
+.s1rs_stage.visible .s1rs_rl_label {
+  animation: s1rs_fadeIn 0.4s 0.65s forwards;
+}
+.s1rs_stage.visible .s1rs_active_dot {
+  animation: s1rs_fadeIn 0.3s 0.7s forwards, s1rs_pulse 1.5s 1.2s infinite;
+}
+
+/* Step 3 (1.0s): Arrow + 超级智能 label */
+.s1rs_stage.visible .s1rs_arrow_line {
+  animation: s1rs_drawUp 0.45s 1.0s forwards;
+}
+.s1rs_stage.visible .s1rs_arrow_head {
+  animation: s1rs_arrowHead 0.3s 1.45s forwards;
+}
+.s1rs_stage.visible .s1rs_super_label {
+  animation: s1rs_fadeIn 0.4s 1.5s forwards;
+}
+
+/* Step 4 (1.9s): Citation fades in */
+.s1rs_stage.visible .s1rs_citation {
+  animation: s1rs_labelFade 0.5s 1.9s forwards;
+}
+
+/* === S2 Animation === */
+
+.s2rs_stage {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 28px 20px 24px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.s2rs_anim {
+  opacity: 0;
+}
+
+.s2rs_card {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 18px 20px;
+  border-left: 4px solid transparent;
+}
+
+.s2rs_card_1 { border-left-color: #4C1D95; }
+.s2rs_card_2 { border-left-color: #115E59; }
+.s2rs_card_3 { border-left-color: #4C1D95; }
+
+.s2rs_num {
+  display: inline-block;
+  width: 26px;
+  height: 26px;
+  line-height: 26px;
+  text-align: center;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.s2rs_card_1 .s2rs_num { background: #4C1D95; }
+.s2rs_card_2 .s2rs_num { background: #115E59; }
+.s2rs_card_3 .s2rs_num { background: #4C1D95; }
+
+.s2rs_title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  vertical-align: middle;
+}
+
+.s2rs_sub {
+  margin-top: 6px;
+  padding-left: 36px;
+  font-size: 13px;
+  color: #94A3B8;
+  line-height: 1.5;
+}
+
+.s2rs_quote {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4C1D95;
+  padding: 10px 16px;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 4px;
+  line-height: 1.6;
+}
+
+@keyframes s2rs_fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.s2rs_stage.visible .s2rs_card_1 {
+  animation: s2rs_fadeUp 0.5s ease-out 0s forwards;
+}
+
+.s2rs_stage.visible .s2rs_card_2 {
+  animation: s2rs_fadeUp 0.5s ease-out 0.5s forwards;
+}
+
+.s2rs_stage.visible .s2rs_card_3 {
+  animation: s2rs_fadeUp 0.5s ease-out 1.0s forwards;
+}
+
+.s2rs_stage.visible .s2rs_quote {
+  animation: s2rs_fadeUp 0.5s ease-out 1.5s forwards;
+}
+
+/* === S3 Animation === */
+
+.s3rs_stage {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 32px 24px 28px;
+  border-radius: 12px;
+  background: #f8fafc;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.s3rs_title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #4C1D95;
+  margin-bottom: 24px;
+  letter-spacing: 0.02em;
+}
+
+.s3rs_anim {
+  opacity: 0;
+}
+
+/* World container */
+.s3rs_world {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  margin: 0 auto 24px;
+  border-radius: 50%;
+  border: 2.5px solid #94A3B8;
+  background: radial-gradient(circle at 50% 50%, #f1f5f9 0%, #e2e8f0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.s3rs_stage.visible .s3rs_world {
+  animation: s3rs_fadeScale 0.6s ease-out forwards;
+}
+
+.s3rs_world_label {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  font-weight: 600;
+  color: #94A3B8;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Agent dot */
+.s3rs_agent {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #4C1D95;
+  position: relative;
+  box-shadow: 0 0 0 4px rgba(76, 29, 149, 0.15);
+}
+
+.s3rs_stage.visible .s3rs_agent {
+  animation: s3rs_fadeScale 0.5s ease-out 0.5s forwards;
+}
+
+.s3rs_agent_label {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 700;
+  color: #4C1D95;
+  white-space: nowrap;
+}
+
+/* Consequence labels around the world circle */
+.s3rs_consequences {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.s3rs_tag {
+  display: inline-block;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  background: #115E59;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+.s3rs_stage.visible .s3rs_tag1 {
+  animation: s3rs_fadeUp 0.45s ease-out 1.0s forwards;
+}
+
+.s3rs_stage.visible .s3rs_tag2 {
+  animation: s3rs_fadeUp 0.45s ease-out 1.15s forwards;
+}
+
+.s3rs_stage.visible .s3rs_tag3 {
+  animation: s3rs_fadeUp 0.45s ease-out 1.3s forwards;
+}
+
+/* Bottom conclusion */
+.s3rs_conclusion {
+  font-size: 15px;
+  font-weight: 700;
+  color: #4C1D95;
+  margin-top: 4px;
+  letter-spacing: 0.01em;
+}
+
+.s3rs_stage.visible .s3rs_conclusion {
+  animation: s3rs_fadeUp 0.5s ease-out 1.5s forwards;
+}
+
+/* Keyframes */
+@keyframes s3rs_fadeScale {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes s3rs_fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === S4 Animation === */
+
+.s4rs_stage {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 36px 24px;
+  position: relative;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  min-height: 360px;
+}
+
+.s4rs_anim {
+  opacity: 0;
+}
+
+/* --- Box base --- */
+.s4rs_box {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  color: #fff;
+  font-weight: 700;
+  position: absolute;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+
+.s4rs_box_letter {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.s4rs_box_label {
+  font-size: 9px;
+  font-weight: 500;
+  margin-top: 4px;
+  opacity: 0.85;
+  text-align: center;
+  line-height: 1.15;
+}
+
+/* --- Colors --- */
+.s4rs_box--accent  { background: #4C1D95; }
+.s4rs_box--accent2 { background: #115E59; }
+
+/* --- Positions (clockwise cycle) --- */
+.s4rs_box--F { left: 40px;  top: 24px; }
+.s4rs_box--S { left: 200px; top: 24px; }
+.s4rs_box--O { left: 360px; top: 24px; }
+.s4rs_box--M { left: 360px; top: 180px; }
+.s4rs_box--P { left: 200px; top: 180px; }
+
+/* --- Arrows base --- */
+.s4rs_arrow {
+  position: absolute;
+  color: #94A3B8;
+  font-size: 22px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* F→S arrow */
+.s4rs_arrow--fs {
+  left: 130px;
+  top: 48px;
+  width: 60px;
+}
+
+/* S→O arrow */
+.s4rs_arrow--so {
+  left: 290px;
+  top: 48px;
+  width: 60px;
+}
+
+/* O→M arrow (downward) */
+.s4rs_arrow--om {
+  left: 386px;
+  top: 114px;
+  width: 30px;
+  transform: rotate(90deg);
+}
+
+/* M→P arrow (leftward) */
+.s4rs_arrow--mp {
+  left: 290px;
+  top: 204px;
+  width: 60px;
+}
+
+/* --- Feedback arrow (P back to F, curved) --- */
+.s4rs_feedback {
+  position: absolute;
+  left: 20px;
+  top: 60px;
+  width: 180px;
+  height: 180px;
+  pointer-events: none;
+}
+
+.s4rs_feedback_path {
+  fill: none;
+  stroke: #94A3B8;
+  stroke-width: 2.5;
+  stroke-dasharray: 6 4;
+  stroke-dashoffset: 200;
+}
+
+.s4rs_feedback_head {
+  fill: #94A3B8;
+}
+
+.s4rs_feedback_label {
+  position: absolute;
+  left: -18px;
+  top: 112px;
+  font-size: 10px;
+  color: #4C1D95;
+  font-weight: 600;
+  white-space: nowrap;
+  background: rgba(255,255,255,0.85);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #e2e0f0;
+}
+
+/* --- Title --- */
+.s4rs_title {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #4C1D95;
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+}
+
+.s4rs_subtitle {
+  text-align: center;
+  font-size: 11px;
+  color: #94A3B8;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+/* ================= ANIMATIONS ================= */
+
+@keyframes s4rs_fadeUp {
+  from { opacity: 0; transform: translateY(14px) scale(0.92); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes s4rs_fadeRight {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes s4rs_fadeDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s4rs_fadeLeft {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes s4rs_drawPath {
+  from { stroke-dashoffset: 200; }
+  to   { stroke-dashoffset: 0; }
+}
+
+@keyframes s4rs_fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* --- Phase 1 (0s): F box + title --- */
+.s4rs_stage.visible .s4rs_title,
+.s4rs_stage.visible .s4rs_subtitle {
+  animation: s4rs_fadeIn 0.5s ease-out forwards;
+  animation-fill-mode: forwards;
+}
+
+.s4rs_stage.visible .s4rs_box--F {
+  animation: s4rs_fadeUp 0.5s ease-out 0s forwards;
+  animation-fill-mode: forwards;
+}
+
+/* --- Phase 2 (0.5s): S + O boxes + connecting arrows --- */
+.s4rs_stage.visible .s4rs_arrow--fs {
+  animation: s4rs_fadeRight 0.4s ease-out 0.4s forwards;
+  animation-fill-mode: forwards;
+}
+
+.s4rs_stage.visible .s4rs_box--S {
+  animation: s4rs_fadeRight 0.5s ease-out 0.5s forwards;
+  animation-fill-mode: forwards;
+}
+
+.s4rs_stage.visible .s4rs_arrow--so {
+  animation: s4rs_fadeRight 0.4s ease-out 0.7s forwards;
+  animation-fill-mode: forwards;
+}
+
+.s4rs_stage.visible .s4rs_box--O {
+  animation: s4rs_fadeRight 0.5s ease-out 0.9s forwards;
+  animation-fill-mode: forwards;
+}
+
+/* --- Phase 3 (1.0s): M + P boxes + connecting arrows --- */
+.s4rs_stage.visible .s4rs_arrow--om {
+  animation: s4rs_fadeDown 0.4s ease-out 1.0s forwards;
+  animation-fill-mode: forwards;
+}
+
+.s4rs_stage.visible .s4rs_box--M {
+  animation: s4rs_fadeDown 0.5s ease-out 1.1s forwards;
+  animation-fill-mode: forwards;
+}
+
+.s4rs_stage.visible .s4rs_arrow--mp {
+  animation: s4rs_fadeLeft 0.4s ease-out 1.3s forwards;
+  animation-fill-mode: forwards;
+}
+
+.s4rs_stage.visible .s4rs_box--P {
+  animation: s4rs_fadeLeft 0.5s ease-out 1.4s forwards;
+  animation-fill-mode: forwards;
+}
+
+/* --- Phase 4 (1.5s): Feedback arc + label --- */
+.s4rs_stage.visible .s4rs_feedback_path {
+  animation: s4rs_drawPath 0.8s ease-in-out 1.5s forwards;
+  animation-fill-mode: forwards;
+}
+
+.s4rs_stage.visible .s4rs_feedback_head {
+  animation: s4rs_fadeIn 0.3s ease-out 2.2s forwards;
+  animation-fill-mode: forwards;
+  opacity: 0;
+}
+
+.s4rs_stage.visible .s4rs_feedback_label {
+  animation: s4rs_fadeIn 0.5s ease-out 1.9s forwards;
+  animation-fill-mode: forwards;
+}
+
+/* === S5 Animation === */
+
+.s5rs_stage {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 32px 24px 28px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #f8f7fc;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.s5rs_anim {
+  opacity: 0;
+}
+
+/* --- Flow row layout --- */
+.s5rs_flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 28px;
+}
+
+/* --- Boxes --- */
+.s5rs_box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 110px;
+  padding: 14px 12px 12px;
+  border-radius: 10px;
+  text-align: center;
+  line-height: 1.35;
+}
+
+.s5rs_box_label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.s5rs_box_text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Feature box */
+.s5rs_feat {
+  background: #ede9fe;
+  border: 2px solid #4C1D95;
+}
+.s5rs_feat .s5rs_box_label {
+  color: #4C1D95;
+}
+.s5rs_feat .s5rs_box_text {
+  color: #3b1276;
+}
+
+/* SubProblem box */
+.s5rs_sub {
+  background: #f0fdfa;
+  border: 2px solid #115E59;
+}
+.s5rs_sub .s5rs_box_label {
+  color: #115E59;
+}
+.s5rs_sub .s5rs_box_text {
+  color: #0d4a45;
+}
+
+/* Option box */
+.s5rs_opt {
+  background: #fef3c7;
+  border: 2px solid #92400e;
+}
+.s5rs_opt .s5rs_box_label {
+  color: #92400e;
+}
+.s5rs_opt .s5rs_box_text {
+  color: #78350f;
+}
+
+/* --- Arrows --- */
+.s5rs_arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  flex-shrink: 0;
+  color: #94A3B8;
+  font-size: 20px;
+  font-weight: 300;
+}
+
+.s5rs_arrow svg {
+  width: 32px;
+  height: 18px;
+}
+
+/* --- Cycle return arrow --- */
+.s5rs_cycle_wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.s5rs_cycle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: #f1f0fb;
+  border: 1.5px dashed #4C1D95;
+  border-radius: 20px;
+  color: #4C1D95;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.s5rs_cycle svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* --- Bottom label --- */
+.s5rs_label_wrap {
+  text-align: center;
+  padding-top: 4px;
+  border-top: 1.5px solid #e2e0ee;
+}
+
+.s5rs_label_main {
+  font-size: 16px;
+  font-weight: 700;
+  color: #4C1D95;
+  margin-bottom: 6px;
+}
+
+.s5rs_label_examples {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  font-size: 12px;
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+.s5rs_label_examples span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ========== Animations ========== */
+
+@keyframes s5rs_fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes s5rs_arrowSlide {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes s5rs_popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Step 1: Feature box at 0s */
+.s5rs_stage.visible .s5rs_step1 {
+  animation: s5rs_fadeUp 0.5s ease-out 0s forwards;
+}
+
+/* Step 2: First arrow at 0.4s, SubProblem box at 0.6s */
+.s5rs_stage.visible .s5rs_step2a {
+  animation: s5rs_arrowSlide 0.35s ease-out 0.4s forwards;
+}
+.s5rs_stage.visible .s5rs_step2 {
+  animation: s5rs_fadeUp 0.5s ease-out 0.6s forwards;
+}
+
+/* Step 3: Second arrow at 1.0s, Option box at 1.2s */
+.s5rs_stage.visible .s5rs_step3a {
+  animation: s5rs_arrowSlide 0.35s ease-out 1.0s forwards;
+}
+.s5rs_stage.visible .s5rs_step3 {
+  animation: s5rs_fadeUp 0.5s ease-out 1.2s forwards;
+}
+
+/* Step 4: Cycle arrow at 1.6s */
+.s5rs_stage.visible .s5rs_step4 {
+  animation: s5rs_popIn 0.5s ease-out 1.6s forwards;
+}
+
+/* Step 5: Bottom label at 1.8s, examples at 2.2s */
+.s5rs_stage.visible .s5rs_step5 {
+  animation: s5rs_fadeUp 0.5s ease-out 1.8s forwards;
+}
+.s5rs_stage.visible .s5rs_step5b {
+  animation: s5rs_fadeUp 0.5s ease-out 2.2s forwards;
+}
+
+/* === S6 Animation === */
+
+.s6rs_stage {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 28px 24px;
+  background: linear-gradient(135deg, #faf5ff 0%, #f0fdfa 100%);
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow: hidden;
+}
+
+.s6rs_title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #4C1D95;
+  text-align: center;
+  margin-bottom: 20px;
+  letter-spacing: 0.3px;
+}
+
+.s6rs_anim {
+  opacity: 0;
+}
+
+.s6rs_list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.s6rs_item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.s6rs_item--done {
+  background: rgba(17, 94, 89, 0.08);
+  color: #115E59;
+}
+
+.s6rs_item--warn {
+  background: rgba(220, 38, 38, 0.07);
+  color: #DC2626;
+}
+
+.s6rs_icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.s6rs_icon--done {
+  background: #115E59;
+  color: #fff;
+}
+
+.s6rs_icon--warn {
+  background: #DC2626;
+  color: #fff;
+}
+
+.s6rs_divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #94A3B8, transparent);
+  margin: 18px 0;
+}
+
+.s6rs_label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #4C1D95;
+  margin-bottom: 12px;
+  padding-left: 4px;
+}
+
+.s6rs_questions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.s6rs_q {
+  display: inline-block;
+  padding: 6px 14px;
+  background: #4C1D95;
+  color: #fff;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+}
+
+/* --- Animations --- */
+
+@keyframes s6rs_fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Group 1: done items at 0s */
+.s6rs_stage.visible .s6rs_done1 {
+  animation: s6rs_fadeUp 0.4s ease-out 0s forwards;
+}
+
+.s6rs_stage.visible .s6rs_done2 {
+  animation: s6rs_fadeUp 0.4s ease-out 0.15s forwards;
+}
+
+/* Group 2: warning items at 0.6s */
+.s6rs_stage.visible .s6rs_warn1 {
+  animation: s6rs_fadeUp 0.4s ease-out 0.6s forwards;
+}
+
+.s6rs_stage.visible .s6rs_warn2 {
+  animation: s6rs_fadeUp 0.4s ease-out 0.75s forwards;
+}
+
+/* Group 3: divider + label at 1.2s */
+.s6rs_stage.visible .s6rs_mid {
+  animation: s6rs_fadeUp 0.4s ease-out 1.2s forwards;
+}
+
+.s6rs_stage.visible .s6rs_lbl {
+  animation: s6rs_fadeUp 0.4s ease-out 1.35s forwards;
+}
+
+/* Group 4: questions at 1.8s */
+.s6rs_stage.visible .s6rs_q1 {
+  animation: s6rs_fadeUp 0.4s ease-out 1.8s forwards;
+}
+
+.s6rs_stage.visible .s6rs_q2 {
+  animation: s6rs_fadeUp 0.4s ease-out 1.95s forwards;
+}
+
+.s6rs_stage.visible .s6rs_q3 {
+  animation: s6rs_fadeUp 0.4s ease-out 2.1s forwards;
+}
+
+.s6rs_stage.visible .s6rs_q4 {
+  animation: s6rs_fadeUp 0.4s ease-out 2.25s forwards;
+}
+
+/* === A1 Animation === */
+
+.a1rs_stage {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #0F172A;
+  border-radius: 12px;
+  color: #E2E8F0;
+}
+
+.a1rs_title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #C4B5FD;
+  margin-bottom: 20px;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+.a1rs_cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.a1rs_card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #1E293B;
+  border: 1px solid #334155;
+  transition: border-color 0.3s ease;
+}
+
+.a1rs_num {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #4C1D95;
+  color: #E2E8F0;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.a1rs_card_body {
+  flex: 1;
+  min-width: 0;
+}
+
+.a1rs_card_label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #F1F5F9;
+  margin-bottom: 3px;
+}
+
+.a1rs_card_desc {
+  font-size: 13px;
+  color: #94A3B8;
+  line-height: 1.45;
+}
+
+.a1rs_highlight {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.a1rs_hl_bitter {
+  background: rgba(76, 29, 149, 0.25);
+  color: #C4B5FD;
+  border: 1px solid rgba(76, 29, 149, 0.5);
+}
+
+.a1rs_hl_meta {
+  background: rgba(17, 94, 89, 0.25);
+  color: #5EEAD4;
+  border: 1px solid rgba(17, 94, 89, 0.5);
+}
+
+.a1rs_summary {
+  margin-top: 18px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(76, 29, 149, 0.15), rgba(17, 94, 89, 0.15));
+  border: 1px solid rgba(76, 29, 149, 0.3);
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #C4B5FD;
+  letter-spacing: 0.03em;
+}
+
+/* --- Animation base --- */
+.a1rs_anim {
+  opacity: 0;
+}
+
+/* --- Keyframes --- */
+@keyframes a1rs_fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes a1rs_fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* --- Triggered animations --- */
+.a1rs_stage.visible .a1rs_card1 {
+  animation: a1rs_fadeUp 0.5s ease-out forwards;
+  animation-delay: 0s;
+}
+
+.a1rs_stage.visible .a1rs_card2 {
+  animation: a1rs_fadeUp 0.5s ease-out forwards;
+  animation-delay: 0s;
+}
+
+.a1rs_stage.visible .a1rs_card3 {
+  animation: a1rs_fadeUp 0.5s ease-out forwards;
+  animation-delay: 0.5s;
+}
+
+.a1rs_stage.visible .a1rs_card4 {
+  animation: a1rs_fadeUp 0.5s ease-out forwards;
+  animation-delay: 1.0s;
+}
+
+.a1rs_stage.visible .a1rs_summary_anim {
+  animation: a1rs_fadeIn 0.5s ease-out forwards;
+  animation-delay: 1.5s;
+}
+
+/* === A2 Animation === */
+
+.a2rs_stage {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 28px 24px 24px;
+  background: #f8f7ff;
+  border-radius: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow: hidden;
+}
+
+.a2rs_title {
+  text-align: center;
+  font-size: 17px;
+  font-weight: 700;
+  color: #4C1D95;
+  margin-bottom: 6px;
+  letter-spacing: 0.3px;
+}
+
+.a2rs_subtitle {
+  text-align: center;
+  font-size: 13px;
+  color: #94A3B8;
+  margin-bottom: 22px;
+}
+
+.a2rs_pipeline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.a2rs_anim {
+  opacity: 0;
+}
+
+.a2rs_step {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 10px;
+  padding: 12px 16px;
+  border-left: 4px solid #4C1D95;
+  box-shadow: 0 1px 4px rgba(76, 29, 149, 0.08);
+}
+
+.a2rs_step_letter {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #4C1D95;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 14px;
+}
+
+.a2rs_step_body {
+  flex: 1;
+  min-width: 0;
+}
+
+.a2rs_step_en {
+  font-size: 13px;
+  font-weight: 700;
+  color: #115E59;
+  margin-bottom: 2px;
+}
+
+.a2rs_step_zh {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.a2rs_arrow {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0;
+  color: #94A3B8;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.a2rs_warn_section {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.a2rs_warn_label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+
+.a2rs_warn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 420px;
+  background: #fef2f2;
+  border-radius: 8px;
+  padding: 10px 14px;
+  border-left: 4px solid #DC2626;
+}
+
+.a2rs_warn_icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #DC2626;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.a2rs_warn_text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #DC2626;
+}
+
+/* --- Animations --- */
+
+@keyframes a2rs_fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes a2rs_arrowPulse {
+  from {
+    opacity: 0;
+    transform: scaleY(0.5);
+  }
+  to {
+    opacity: 0.7;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes a2rs_warnShake {
+  0% {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateX(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Group 1: F and S (0s) */
+.a2rs_stage.visible .a2rs_step_f {
+  animation: a2rs_fadeSlideIn 0.5s ease-out 0s forwards;
+}
+.a2rs_stage.visible .a2rs_arrow_fs {
+  animation: a2rs_arrowPulse 0.4s ease-out 0.4s forwards;
+}
+.a2rs_stage.visible .a2rs_step_s {
+  animation: a2rs_fadeSlideIn 0.5s ease-out 0.4s forwards;
+}
+
+/* Group 2: O (0.5s from last visible = ~0.9s) */
+.a2rs_stage.visible .a2rs_arrow_so {
+  animation: a2rs_arrowPulse 0.4s ease-out 0.9s forwards;
+}
+.a2rs_stage.visible .a2rs_step_o {
+  animation: a2rs_fadeSlideIn 0.5s ease-out 1.0s forwards;
+}
+
+/* Group 3: M and P (1.0s from start concept = ~1.5s) */
+.a2rs_stage.visible .a2rs_arrow_om {
+  animation: a2rs_arrowPulse 0.4s ease-out 1.5s forwards;
+}
+.a2rs_stage.visible .a2rs_step_m {
+  animation: a2rs_fadeSlideIn 0.5s ease-out 1.6s forwards;
+}
+.a2rs_stage.visible .a2rs_arrow_mp {
+  animation: a2rs_arrowPulse 0.4s ease-out 2.0s forwards;
+}
+.a2rs_stage.visible .a2rs_step_p {
+  animation: a2rs_fadeSlideIn 0.5s ease-out 2.1s forwards;
+}
+
+/* Group 4: Warnings (1.5s concept = ~2.6s) */
+.a2rs_stage.visible .a2rs_warn_label_el {
+  animation: a2rs_fadeSlideIn 0.4s ease-out 2.6s forwards;
+}
+.a2rs_stage.visible .a2rs_warn1 {
+  animation: a2rs_warnShake 0.5s ease-out 2.7s forwards;
+}
+.a2rs_stage.visible .a2rs_warn2 {
+  animation: a2rs_warnShake 0.5s ease-out 3.1s forwards;
+}
+
+</style>
+
+<meta name="description" content="Rich Sutton 在 RLC 2025 上说了一句让半个 AI 圈不舒服的话： 通往真正 AI 的道路穿过强化学习，而不是大语言模型 。LLM 所有重要的事情都在「设计时」完成——训练完就部署，到了真实世界它什么都不学。而 Sutton 要的恰恰相反： 所有重要的事情都必须在运行时完成 ——在线学习、建模、规划、抽象，全部在 Agent 与世界的交互中">
+<link rel="canonical" href="https://chendi.me/readings/sutton-oak-architecture/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+<div id="breadcrumb" class="breadcrumb"></div>
+<button id="backBtn" class="back-btn" onclick="goBack()">←</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ 概览层 ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+<!-- S1: AI的圣杯之路绕不开强化学习 -->
+<section class="feed-section" style="background:var(--bg-act1)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">通往超级智能的路<br>绕不开强化学习——<br>LLM 走的是捷径</h2>
+  <p class="body-text reveal reveal-d1">Rich Sutton 在 RLC 2025 上说了一句让半个 AI 圈不舒服的话：<span class="hl">通往真正 AI 的道路穿过强化学习，而不是大语言模型</span>。LLM 所有重要的事情都在「设计时」完成——训练完就部署，到了真实世界它什么都不学。而 Sutton 要的恰恰相反：<span class="hl2">所有重要的事情都必须在运行时完成</span>——在线学习、建模、规划、抽象，全部在 Agent 与世界的交互中生长出来。他花了半个世纪想这个问题，现在给出了他的答案：<span class="hl">OaK 架构</span>——Options and Knowledge。一个从经验中生长出超级智能的蓝图。</p>
+  <div class="anim-stage reveal reveal-d2" id="s1-anim"><div class="s1rs_stage">
+  <!-- Dashed divider between two sides -->
+  <div class="s1rs_divider s1rs_anim"></div>
+
+  <!-- LLM Box (left, neutral) -->
+  <div class="s1rs_llm_box s1rs_anim">
+    <span class="s1rs_llm_text">LLM</span>
+  </div>
+  <div class="s1rs_llm_label s1rs_anim">设计时</div>
+  <div class="s1rs_static_dot s1rs_anim"></div>
+
+  <!-- RL Agent Box (right, accent) -->
+  <div class="s1rs_rl_box s1rs_anim">
+    <span class="s1rs_rl_text">RL Agent</span>
+  </div>
+  <div class="s1rs_rl_label s1rs_anim">运行时</div>
+  <div class="s1rs_active_dot s1rs_anim"></div>
+
+  <!-- Upward arrow from RL toward 超级智能 -->
+  <div class="s1rs_arrow_line s1rs_anim"></div>
+  <div class="s1rs_arrow_head s1rs_anim"></div>
+  <div class="s1rs_super_label s1rs_anim">超级智能</div>
+
+  <!-- Citation -->
+  <div class="s1rs_citation s1rs_anim">Rich Sutton · RLC 2025</div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Transcript</span>
+      <p>I think this is just going to be good. The greatest advances are still ahead of us. It's a marathon. The path to full AI, strong AI, runs through reinforcement learning and not through things like non-experiential things like large language models.</p>
+      <p>The biggest bottleneck strangely is we have inadequate learning algorithms. You may think we have deep learning and that's the one thing we know, but I think it's more like our algorithms are very crude. They need to be better and that is what we should be working on.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S2: 三条铁律：通用·经验·开放 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">设计一个心智<br>只需要三条铁律</h2>
+  <p class="body-text reveal reveal-d1"><span class="hl">第一条：领域通用</span>。Agent 的设计不应该反映它将要使用的世界。完美的 AI 设计不是一部百科全书——它应该能写在三张幻灯片上。世界的复杂性是无穷的，你不应该试图把它编码进设计里，而应该<span class="hl2">只内置能发现和捕获任意复杂性的元方法</span>。<span class="hl">第二条：纯经验驱动</span>。Agent 只从运行时经验中学习，不依赖特殊的训练数据。你去上班、遇见同事、记住名字——这些都不可能在工厂里预编程。<span class="hl2">第三条：开放式抽象</span>。Agent 能形成任何需要的概念来应对它遇到的世界，只受计算资源限制。这三条合在一起就是 Sutton 的追求：<span class="hl">我们想要能自己发现的 Agent，而不是装着我们已发现知识的容器</span>。</p>
+  <div class="anim-stage reveal reveal-d2" id="s2-anim"><div class="s2rs_stage">
+  <div class="s2rs_anim s2rs_card s2rs_card_1">
+    <div>
+      <span class="s2rs_num">1</span>
+      <span class="s2rs_title">领域通用 Domain General</span>
+    </div>
+    <div class="s2rs_sub">"设计不反映世界" — 架构本身不编码任何领域知识</div>
+  </div>
+
+  <div class="s2rs_anim s2rs_card s2rs_card_2">
+    <div>
+      <span class="s2rs_num">2</span>
+      <span class="s2rs_title">纯经验驱动 Experiential</span>
+    </div>
+    <div class="s2rs_sub">"只从运行时学习" — 所有知识来自与环境的交互</div>
+  </div>
+
+  <div class="s2rs_anim s2rs_card s2rs_card_3">
+    <div>
+      <span class="s2rs_num">3</span>
+      <span class="s2rs_title">开放式抽象 Open-ended</span>
+    </div>
+    <div class="s2rs_sub">"无限概念生成" — 表征空间不设上限，持续生长</div>
+  </div>
+
+  <div class="s2rs_anim s2rs_quote">
+    能发现的 Agent &gt; 装满知识的容器
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Transcript</span>
+      <p>The actual contents of minds are part of the arbitrary intrinsically complex outside world. They are not what should be built in as their complexity is endless, genuinely endless. Instead, we should build in only the meta methods that can find and capture this arbitrary complexity.</p>
+      <p>In short, we want agents that can discover like we can, not which contain what we have already discovered.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S3: 大世界视角：Agent永远比世界小 -->
+<section class="feed-section" style="background:var(--bg-act2)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">世界比 Agent 大得多<br>所以一切都是近似的<br>一切都在变</h2>
+  <p class="body-text reveal reveal-d1">Sutton 提出了一个叫<span class="hl">「大世界视角」</span>的概念。世界不只是比 Agent 大一点——它大得多。世界包含数十亿其他 Agent，每个 Agent 脑子里在想什么都跟你有关。你<span class="hl2">永远不可能在脑子里装下世界的完整状态</span>。所以一切必然是近似的：近似的值函数、近似的策略、近似的模型。更关键的是，由于你的函数近似器无法捕获所有东西，<span class="hl">世界看起来是非平稳的</span>——即使它的动力学并没有真的变。你今天想去厕所、明天想喝咖啡、后天想去图书馆——环境规律没变，但你的价值在变。这就是为什么<span class="hl2">运行时学习不是可选的锦上添花，而是生存的必需</span>。</p>
+  <div class="anim-stage reveal reveal-d2" id="s3-anim"><div class="s3rs_stage">
+  <div class="s3rs_title">S3: 世界比Agent大得多</div>
+
+  <div class="s3rs_world s3rs_anim">
+    <span class="s3rs_world_label">World</span>
+    <div class="s3rs_agent s3rs_anim">
+      <span class="s3rs_agent_label">Agent</span>
+    </div>
+  </div>
+
+  <div class="s3rs_consequences">
+    <span class="s3rs_tag s3rs_tag1 s3rs_anim">近似值函数</span>
+    <span class="s3rs_tag s3rs_tag2 s3rs_anim">近似策略</span>
+    <span class="s3rs_tag s3rs_tag3 s3rs_anim">近似模型</span>
+  </div>
+
+  <div class="s3rs_conclusion s3rs_anim">→ 必须在运行时学习</div>
+</div></div>
+  <p class="hook-line reveal reveal-d3">运行时学习为什么总是赢？Bitter Lesson 的深层逻辑？</p>
+  <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-details',this)">深入了解 ↓</button>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Transcript</span>
+      <p>The big world perspective: the world is bigger, more complex than the agent. And it's much bigger really. The world contains billions of other agents and all the intricacies of the objects spread around.</p>
+      <p>One of the most important consequences of this is that the world ends up appearing non-stationary. If you don't have a good sense of the state of the world, things look the same but your function approximator cannot capture everything, the world's going to look non-stationary.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S4: OaK架构的核心循环 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">感知 → 子问题 → 选项<br>→ 模型 → 规划<br>一个无限循环</h2>
+  <p class="body-text reveal reveal-d1">OaK 的名字来自 <span class="hl">Options and Knowledge</span>。一个选项（Option）就是一对：一种行为策略加一种决定何时停止的方式。Agent 拥有大量选项，而它的知识就是关于「执行某个选项后会发生什么」的<span class="hl2">高层转移模型</span>。核心是一个五步循环——<span class="hl">FC-STOMP</span>：感知过程构造有趣的状态特征（Feature Construction），然后为高排名的特征创建<span class="hl2">子问题</span>（SubTask），学习解决子问题的<span class="hl">选项</span>（Option），学习选项的<span class="hl2">转移模型</span>（Model），用模型做<span class="hl">规划</span>（Planning）。后续步骤的反馈又会回传给特征构造——哪些特征被证明有用、哪些没有——形成一个<span class="hl2">永不停止的发现循环</span>。八个步骤全部在运行时并行执行。</p>
+  <div class="anim-stage reveal reveal-d2" id="s4-anim"><div class="s4rs_stage">
+  <!-- Title -->
+  <div class="s4rs_anim s4rs_title">FC-STOMP Cycle</div>
+  <div class="s4rs_anim s4rs_subtitle">感知 → 子问题 → 选项 → 模型 → 规划</div>
+
+  <!-- Cycle container -->
+  <div style="position:relative; height:290px;">
+
+    <!-- Phase 1: Feature Construction -->
+    <div class="s4rs_anim s4rs_box s4rs_box--accent s4rs_box--F">
+      <span class="s4rs_box_letter">F</span>
+      <span class="s4rs_box_label">Feature<br>Construction</span>
+    </div>
+
+    <!-- Phase 2: SubTask + Option -->
+    <div class="s4rs_anim s4rs_arrow s4rs_arrow--fs">&rarr;</div>
+    <div class="s4rs_anim s4rs_box s4rs_box--accent2 s4rs_box--S">
+      <span class="s4rs_box_letter">S</span>
+      <span class="s4rs_box_label">SubTask</span>
+    </div>
+    <div class="s4rs_anim s4rs_arrow s4rs_arrow--so">&rarr;</div>
+    <div class="s4rs_anim s4rs_box s4rs_box--accent2 s4rs_box--O">
+      <span class="s4rs_box_letter">O</span>
+      <span class="s4rs_box_label">Option</span>
+    </div>
+
+    <!-- Phase 3: Model + Planning -->
+    <div class="s4rs_anim s4rs_arrow s4rs_arrow--om">&darr;</div>
+    <div class="s4rs_anim s4rs_box s4rs_box--accent s4rs_box--M">
+      <span class="s4rs_box_letter">M</span>
+      <span class="s4rs_box_label">Model</span>
+    </div>
+    <div class="s4rs_anim s4rs_arrow s4rs_arrow--mp">&larr;</div>
+    <div class="s4rs_anim s4rs_box s4rs_box--accent s4rs_box--P">
+      <span class="s4rs_box_letter">P</span>
+      <span class="s4rs_box_label">Planning</span>
+    </div>
+
+    <!-- Phase 4: Feedback arc from P back to F -->
+    <svg class="s4rs_anim s4rs_feedback" viewBox="0 0 180 180">
+      <path class="s4rs_feedback_path"
+            d="M 172,160 C 172,200 8,200 8,30"
+            />
+      <polygon class="s4rs_feedback_head"
+               points="2,36 14,36 8,22" />
+    </svg>
+    <div class="s4rs_anim s4rs_feedback_label">反馈：哪些特征有用？</div>
+
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Transcript</span>
+      <p>In the Oak architecture, the agent has lots of options and its knowledge will be about what happens when you follow the option. So in this way the agent is meant to learn a high level transition model of the world that enables planning with larger jumps and hopefully carves the world at its joints.</p>
+      <p>The perception process is responsible for constructing interesting state features. The play process — problem posing and solving — that's where you do the core reinforcement learning things. And then you predict the consequences of those options to form a transition model. And then you plan with the transition model to get improved policies and values.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S5: 子问题是Agent自己造的 -->
+<section class="feed-section" style="background:var(--bg-act3)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">Agent 必须自己提问<br>而不是等人类出题</h2>
+  <p class="body-text reveal reveal-d1">OaK 最大胆的主张是：<span class="hl">子问题不能由人给定，必须由 Agent 自己创造</span>。怎么创造？当 Agent 发现一个有趣的特征——比如一个声音、一个画面、一个触感——它就把「重新产生这个特征」变成一个子问题。Sutton 叫它<span class="hl2">「尊重奖励的特征达成子问题」</span>：驱动世界到特征值高的状态，但不能牺牲太多主奖励。就像小猩猩荡秋千——它不是在觅食，它只是觉得那个感觉<span class="hl">有趣</span>，然后反复尝试控制它。虎鲸把浮标顶在背上、婴儿从一个玩具转到另一个——<span class="hl2">玩耍就是自我出题的过程</span>。每个子问题的解就是一个选项，每个选项又生成新的特征，新特征又变成新问题——<span class="hl">无限循环，开放式生长</span>。</p>
+  <div class="anim-stage reveal reveal-d2" id="s5-anim"><div class="s5rs_stage">
+
+  <!-- Flow: Feature → SubProblem → Option -->
+  <div class="s5rs_flow">
+
+    <!-- Feature -->
+    <div class="s5rs_box s5rs_feat s5rs_anim s5rs_step1">
+      <div class="s5rs_box_label">Feature</div>
+      <div class="s5rs_box_text">有趣的感觉</div>
+    </div>
+
+    <!-- Arrow 1 -->
+    <div class="s5rs_arrow s5rs_anim s5rs_step2a">
+      <svg viewBox="0 0 32 18" fill="none">
+        <path d="M2 9h24m0 0l-6-5.5m6 5.5l-6 5.5" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+    <!-- SubProblem -->
+    <div class="s5rs_box s5rs_sub s5rs_anim s5rs_step2">
+      <div class="s5rs_box_label">SubProblem</div>
+      <div class="s5rs_box_text">重新产生它</div>
+    </div>
+
+    <!-- Arrow 2 -->
+    <div class="s5rs_arrow s5rs_anim s5rs_step3a">
+      <svg viewBox="0 0 32 18" fill="none">
+        <path d="M2 9h24m0 0l-6-5.5m6 5.5l-6 5.5" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+    <!-- Option -->
+    <div class="s5rs_box s5rs_opt s5rs_anim s5rs_step3">
+      <div class="s5rs_box_label">Option</div>
+      <div class="s5rs_box_text">学会控制</div>
+    </div>
+
+  </div>
+
+  <!-- Cycle return indicator -->
+  <div class="s5rs_cycle_wrap">
+    <div class="s5rs_cycle s5rs_anim s5rs_step4">
+      <svg viewBox="0 0 16 16" fill="none">
+        <path d="M13.5 8a5.5 5.5 0 1 1-1.3-3.5" stroke="#4C1D95" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M13.5 2.5v2.5H11" stroke="#4C1D95" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      产生新 Feature &rarr; 循环
+    </div>
+  </div>
+
+  <!-- Bottom label -->
+  <div class="s5rs_label_wrap">
+    <div class="s5rs_label_main s5rs_anim s5rs_step5">玩耍 = 自我出题</div>
+    <div class="s5rs_label_examples s5rs_anim s5rs_step5b">
+      <span>&#x1f9a7; 猩猩幼崽</span>
+      <span>&#x1f42c; 虎鲸</span>
+      <span>&#x1f476; 人类婴儿</span>
+    </div>
+  </div>
+
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Transcript</span>
+      <p>The agent must create its own sub problems. Sub problems can't be given to you. Can't be given to you at design time. You've got to create your own — that's far too various and world dependent to have been built in.</p>
+      <p>What is he doing? Like he's not getting food. He's just interested in what it feels like when he swings. That sensation is interesting, and he got it once and now he's trying to get it again and understand how to control it.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S6: 未完成的蓝图——但可能是对的 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">蓝图还没画完<br>但它可能第一次<br>画对了方向</h2>
+  <p class="body-text reveal reveal-d1">Sutton 很坦诚：<span class="hl">OaK 还没完成</span>。两个关键问题标着红色。第一个是<span class="hl2">可靠的持续深度学习</span>——我们能做线性情况、表格情况，但深度网络的持续学习仍然有灾难性遗忘和可塑性丧失的问题。第二个是<span class="hl">自动生成新状态特征</span>——这是从 1960 年 Minsky 就开始谈的老问题。反向传播本应在 1986 年解决它，但它没有。但即使不完整，Sutton 认为 OaK <span class="hl2">第一次给出了几个根本问题的机械性回答</span>：高层知识如何从低层经验中学到？概念从哪来？推理是什么？（也许就是用学到的模型做规划。）玩耍的目的是什么？（发现结构化认知的子问题。）感知是什么？（不依赖人类标签、从经验中生长出来的概念。）</p>
+  <div class="anim-stage reveal reveal-d2" id="s6-anim"><div class="s6rs_stage">
+  <div class="s6rs_title">OaK 蓝图状态</div>
+
+  <ul class="s6rs_list">
+    <li class="s6rs_item s6rs_item--done s6rs_anim s6rs_done1">
+      <span class="s6rs_icon s6rs_icon--done">&#10003;</span>
+      <span>领域通用设计 (Domain General Design)</span>
+    </li>
+    <li class="s6rs_item s6rs_item--done s6rs_anim s6rs_done2">
+      <span class="s6rs_icon s6rs_icon--done">&#10003;</span>
+      <span>基于选项的规划 (Option-based Planning)</span>
+    </li>
+    <li class="s6rs_item s6rs_item--warn s6rs_anim s6rs_warn1">
+      <span class="s6rs_icon s6rs_icon--warn">!</span>
+      <span>持续深度学习 (Continual Deep Learning)</span>
+    </li>
+    <li class="s6rs_item s6rs_item--warn s6rs_anim s6rs_warn2">
+      <span class="s6rs_icon s6rs_icon--warn">!</span>
+      <span>自动特征生成 (Auto Feature Generation)</span>
+    </li>
+  </ul>
+
+  <div class="s6rs_divider s6rs_anim s6rs_mid"></div>
+
+  <div class="s6rs_label s6rs_anim s6rs_lbl">第一次回答了:</div>
+
+  <div class="s6rs_questions">
+    <span class="s6rs_q s6rs_anim s6rs_q1">概念从哪来？</span>
+    <span class="s6rs_q s6rs_anim s6rs_q2">推理是什么？</span>
+    <span class="s6rs_q s6rs_anim s6rs_q3">玩耍的目的？</span>
+    <span class="s6rs_q s6rs_anim s6rs_q4">感知是什么？</span>
+  </div>
+</div></div>
+  <p class="hook-line reveal reveal-d3">FC-STOMP 每一步怎么工作？选项模型如何规划？</p>
+  <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-details',this)">深入了解 ↓</button>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Transcript</span>
+      <p>Arguably reinforcement learning and OaK offer the first plausible mechanistic answer to several important questions. How can high level knowledge be learned from low-level experience? Where do concepts come from? What is reason? Perhaps reason is just planning in this way. What is the purpose of play? And what is the purpose of perception?</p>
+      <p>It's a vision of how we can obtain an open-ended super intelligence entirely grown from experience.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+</div>
+
+<!-- ═══ 详解层 ═══ -->
+<div class="layer" id="layer-details" data-depth="1">
+
+<!-- A1: 运行时学习为什么总赢设计时 -->
+<section class="feed-section" style="background:var(--bg-act2)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">运行时学习为什么<br>总是赢过设计时？</h2>
+  <p class="body-text reveal reveal-d1">Sutton 给了四个理由。<span class="hl">第一</span>，设计时不可能覆盖所有情况——世界太大、太复杂、有太多不可预见的细节。你的机器人出厂后遇到的同事名字，不可能在工厂里预编程。<span class="hl2">第二</span>，运行时学习能针对实际遇到的世界部分进行定制——你不需要知道全世界，只需要深入理解你此刻所在的角落。<span class="hl">第三</span>，运行时学习随可用算力扩展，而设计时学习随可用的人类专家知识扩展——历史上，<span class="hl2">随算力扩展的方法总是长期赢家</span>，这正是「苦涩教训」（Bitter Lesson）的核心。<span class="hl">第四</span>，运行时学习使元学习成为可能——你尝试一种学习方式，再尝试另一种，发现哪种更好，下次就用更好的。这种「学习如何学习」的能力，只有在运行时才能实现。如果所有事情都是一次性的设计时决定，你永远无法变得更善于学习。</p>
+  <div class="anim-stage reveal reveal-d2" id="a1-anim"><div class="a1rs_stage">
+  <div class="a1rs_title">运行时学习为什么总是赢过设计时？</div>
+
+  <div class="a1rs_cards">
+    <!-- Card 1 -->
+    <div class="a1rs_card a1rs_anim a1rs_card1">
+      <div class="a1rs_num">1</div>
+      <div class="a1rs_card_body">
+        <div class="a1rs_card_label">世界太大</div>
+        <div class="a1rs_card_desc">设计时无法覆盖所有情况，世界的复杂度远超预设方案</div>
+      </div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="a1rs_card a1rs_anim a1rs_card2">
+      <div class="a1rs_num">2</div>
+      <div class="a1rs_card_body">
+        <div class="a1rs_card_label">定制化</div>
+        <div class="a1rs_card_desc">运行时根据实际遇到的世界做针对性适配</div>
+      </div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="a1rs_card a1rs_anim a1rs_card3">
+      <div class="a1rs_num">3</div>
+      <div class="a1rs_card_body">
+        <div class="a1rs_card_label">
+          随算力扩展
+          <span class="a1rs_highlight a1rs_hl_bitter">Bitter Lesson</span>
+        </div>
+        <div class="a1rs_card_desc">算力增长时，学习方法自动受益；手工设计无法扩展</div>
+      </div>
+    </div>
+
+    <!-- Card 4 -->
+    <div class="a1rs_card a1rs_anim a1rs_card4">
+      <div class="a1rs_num">4</div>
+      <div class="a1rs_card_body">
+        <div class="a1rs_card_label">
+          元学习
+          <span class="a1rs_highlight a1rs_hl_meta">meta-learning</span>
+        </div>
+        <div class="a1rs_card_desc">不只学具体知识，还能学会如何更好地学习</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <div class="a1rs_summary a1rs_anim a1rs_summary_anim">
+    随算力扩展的方法长期总赢
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Transcript</span>
+      <p>Runtime learning always wins over design time because the world is much bigger than the agent. Design time can't cover every case. Runtime learning can customize to the part of the world actually encountered. Runtime learning scales with available compute whereas design time learning scales with the available human expertise.</p>
+      <p>Historically scaling with compute wins in the long run. That's what the bitter lesson is explicitly about. Runtime learning does enable meta-learning — becoming better at learning requires that you try learning one way and then try a different way and pick the better one.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- A2: 从特征到规划的五步循环 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">FC-STOMP：<br>从特征到规划的五步<br>是 OaK 的心脏</h2>
+  <p class="body-text reveal reveal-d1"><span class="hl">Feature Construction</span>：感知过程从原始观察中构造状态特征向量，每个分量代表世界的某个有趣方面。<span class="hl2">SubTask</span>：为高排名的特征创建子问题——「驱动世界到这个特征值高的状态，同时不丢太多奖励」。<span class="hl">Option</span>：用离策略算法（GTD、Emphatic TD 等）解决子问题，产出一个选项（策略+终止函数）。<span class="hl2">Model</span>：学习选项的转移模型——给定起始状态和选项，预测终止时的状态分布和累计奖励。关键洞察：<span class="hl">选项模型的规划方程和单步动作的值迭代几乎一样</span>，只是把 action 换成 option、单步奖励换成选项期间的累计奖励。<span class="hl2">Planning</span>：用选项模型做值迭代来改进策略。「任何能学到的东西也能被规划」——这是 OaK 的口号。最后，规划和学习过程会产生<span class="hl">反馈</span>，告诉感知层哪些特征被证明有用，形成闭环。两个未解决的问题用红色标注：<span class="hl2">持续深度学习</span>（灾难性遗忘和可塑性丧失）以及<span class="hl">自动特征生成</span>（表征学习的老难题）。Sutton 认为这两个问题可能在几年内被解决——届时将彻底改变深度学习的格局。</p>
+  <div class="anim-stage reveal reveal-d2" id="a2-anim"><div class="a2rs_stage">
+  <div class="a2rs_title">FC-STOMP</div>
+  <div class="a2rs_subtitle">从特征到规划的五步 &mdash; OaK 的心脏</div>
+
+  <div class="a2rs_pipeline">
+    <!-- F -->
+    <div class="a2rs_anim a2rs_step a2rs_step_f">
+      <div class="a2rs_step_letter">F</div>
+      <div class="a2rs_step_body">
+        <div class="a2rs_step_en">Feature Construction</div>
+        <div class="a2rs_step_zh">构造状态特征</div>
+      </div>
+    </div>
+
+    <div class="a2rs_anim a2rs_arrow a2rs_arrow_fs">&#9660;</div>
+
+    <!-- S -->
+    <div class="a2rs_anim a2rs_step a2rs_step_s">
+      <div class="a2rs_step_letter">S</div>
+      <div class="a2rs_step_body">
+        <div class="a2rs_step_en">SubTask</div>
+        <div class="a2rs_step_zh">为高排名特征创建子问题</div>
+      </div>
+    </div>
+
+    <div class="a2rs_anim a2rs_arrow a2rs_arrow_so">&#9660;</div>
+
+    <!-- O -->
+    <div class="a2rs_anim a2rs_step a2rs_step_o">
+      <div class="a2rs_step_letter">O</div>
+      <div class="a2rs_step_body">
+        <div class="a2rs_step_en">Option</div>
+        <div class="a2rs_step_zh">策略 + 终止函数</div>
+      </div>
+    </div>
+
+    <div class="a2rs_anim a2rs_arrow a2rs_arrow_om">&#9660;</div>
+
+    <!-- M -->
+    <div class="a2rs_anim a2rs_step a2rs_step_m">
+      <div class="a2rs_step_letter">M</div>
+      <div class="a2rs_step_body">
+        <div class="a2rs_step_en">Model</div>
+        <div class="a2rs_step_zh">选项转移模型</div>
+      </div>
+    </div>
+
+    <div class="a2rs_anim a2rs_arrow a2rs_arrow_mp">&#9660;</div>
+
+    <!-- P -->
+    <div class="a2rs_anim a2rs_step a2rs_step_p">
+      <div class="a2rs_step_letter">P</div>
+      <div class="a2rs_step_body">
+        <div class="a2rs_step_en">Planning</div>
+        <div class="a2rs_step_zh">值迭代 (action &rarr; option)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Warnings -->
+  <div class="a2rs_warn_section">
+    <div class="a2rs_anim a2rs_warn_label a2rs_warn_label_el">&#9888; 未解决问题</div>
+
+    <div class="a2rs_anim a2rs_warn a2rs_warn1">
+      <div class="a2rs_warn_icon">!</div>
+      <div class="a2rs_warn_text">持续深度学习</div>
+    </div>
+
+    <div class="a2rs_anim a2rs_warn a2rs_warn2">
+      <div class="a2rs_warn_icon">!</div>
+      <div class="a2rs_warn_text">自动特征生成</div>
+    </div>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Transcript</span>
+      <p>Although life is lived one step at a time, we have to plan it at a higher level. So our knowledge of the world should be about the large scale dynamics — conditional not on single actions but on a sustained way of acting, that is, on an option.</p>
+      <p>Anything that can be learned can also be planned. That's a good slogan.</p>
+      <p>Do we have reliable continual learning? For the linear case, for the tabular case, yes. But for the nonlinear case, for the deep learning case — not yet. We have catastrophic forgetting and the catastrophic loss of plasticity. I think it's a really important problem and maybe it will be worked out in the next couple of years.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+</div>
+
+<script>
+var layerStack=['layer-overview'];
+var transitioning=false;
+var layerNames={'layer-overview':'概览','layer-details':'原理与循环详解'};
+var observers=new Map();
+
+function setupObserver(layerId){if(observers.has(layerId))return;var layer=document.getElementById(layerId);var reveals=layer.querySelectorAll('.reveal,[class*="_stage"]');var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.15,root:layer});reveals.forEach(function(el){obs.observe(el);});observers.set(layerId,obs);}
+function resetReveals(layerId){var layer=document.getElementById(layerId);layer.querySelectorAll('.reveal').forEach(function(el){el.classList.remove('visible');});layer.querySelectorAll('[class*="_stage"]').forEach(function(el){el.classList.remove('visible');});}
+function activateReveals(layerId){resetReveals(layerId);if(observers.has(layerId)){observers.get(layerId).disconnect();observers.delete(layerId);}requestAnimationFrame(function(){setupObserver(layerId);});}
+
+function updateBreadcrumb(){var bc=document.getElementById('breadcrumb');bc.innerHTML='';layerStack.forEach(function(id,i){if(i>0){var sep=document.createElement('span');sep.className='sep';sep.textContent='>';bc.appendChild(sep);}var span=document.createElement('span');span.textContent=layerNames[id]||id;if(i===layerStack.length-1){span.className='current';}else{span.addEventListener('click',function(){goBackTo(i);});}bc.appendChild(span);});var backBtn=document.getElementById('backBtn');backBtn.style.display=layerStack.length>1?'flex':'none';bc.style.left=layerStack.length>1?'60px':'16px';var dots=document.getElementById('depthDots');var depth=layerStack.length-1;dots.querySelectorAll('.dot').forEach(function(d,i){d.classList.toggle('active',i===depth);});}
+
+function drillDown(targetId,btnEl){if(transitioning)return;transitioning=true;var currentId=layerStack[layerStack.length-1];var currentLayer=document.getElementById(currentId);var targetLayer=document.getElementById(targetId);targetLayer.scrollTop=0;resetReveals(targetId);targetLayer.style.visibility='visible';var duration=600;currentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';currentLayer.style.transformOrigin='center center';currentLayer.style.transform='scale(1.3)';currentLayer.style.opacity='0';targetLayer.classList.add('active');targetLayer.style.opacity='0';targetLayer.style.transform='scale(0.85)';targetLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){targetLayer.style.opacity='1';targetLayer.style.transform='scale(1)';});});setTimeout(function(){currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';targetLayer.style.transition='';targetLayer.style.transform='';activateReveals(targetId);transitioning=false;},duration+50);layerStack.push(targetId);updateBreadcrumb();}
+
+function goBack(){if(layerStack.length<=1||transitioning)return;transitioning=true;var currentId=layerStack.pop();var parentId=layerStack[layerStack.length-1];var currentLayer=document.getElementById(currentId);var parentLayer=document.getElementById(parentId);var duration=600;currentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';currentLayer.style.transform='scale(0.85)';currentLayer.style.opacity='0';parentLayer.classList.add('active');parentLayer.style.transform='scale(1.3)';parentLayer.style.opacity='0';parentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){parentLayer.style.transform='scale(1)';parentLayer.style.opacity='1';});});setTimeout(function(){currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';currentLayer.style.visibility='';parentLayer.style.transition='';parentLayer.style.transform='';transitioning=false;},duration+50);updateBreadcrumb();}
+
+function goBackTo(targetIndex){if(transitioning)return;while(layerStack.length-1>targetIndex){if(layerStack.length<=1)break;goBack();return;}}
+
+function toggleSource(btn){btn.classList.toggle('open');btn.nextElementSibling.classList.toggle('open');}
+
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+</body>
+</html>

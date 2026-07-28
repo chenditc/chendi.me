@@ -1,0 +1,3474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Context Engineering — 上下文是 Agent 最稀缺的资源</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-act1: #EFF6FF;
+  --bg-act2: #F5F3FF;
+  --bg-act3: #F0FDF4;
+  --bg-dark: #0F172A;
+  --bg-close: #1E1B4B;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --dim: #94A3B8;
+  --accent: #3B82F6;
+  --accent2: #8B5CF6;
+  --warm: #F59E0B;
+  --danger: #EF4444;
+  --neutral: #94A3B8;
+  --card-bg: #FFFFFF;
+}
+
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: -apple-system, 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; background: var(--bg-act1); }
+
+/* ── 排版 ── */
+.content-width { max-width: 640px; margin: 0 auto; padding: 0 28px; }
+.big-statement { font-family: 'Noto Serif SC', serif; font-size: clamp(22px, 5.5vw, 32px); font-weight: 700; line-height: 1.5; margin-bottom: 32px; }
+.body-text { font-size: 16px; line-height: 1.9; color: var(--text); margin-bottom: 28px; }
+.body-text .hl { color: var(--accent); font-weight: 500; }
+.body-text .hl2 { color: var(--accent2); font-weight: 500; }
+.body-text .hl-danger { color: var(--danger); font-weight: 500; }
+.body-text .hl-warm { color: var(--warm); font-weight: 500; }
+.hook-line { font-size: 15px; color: var(--accent2); font-weight: 600; margin-top: 12px; }
+
+/* ── Reveal ── */
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-d1 { transition-delay: 0.15s; }
+.reveal-d2 { transition-delay: 0.3s; }
+.reveal-d3 { transition-delay: 0.45s; }
+.reveal-d4 { transition-delay: 0.6s; }
+
+/* ── 层系统 ── */
+.layer {
+  position: fixed; inset: 0; overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  visibility: hidden; opacity: 0;
+  will-change: transform, opacity;
+  scroll-snap-type: y proximity;
+}
+.layer.active { visibility: visible; opacity: 1; }
+
+/* ── Section ── */
+.feed-section {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 80px 24px;
+  scroll-snap-align: start;
+}
+.feed-section.dark { background: var(--bg-dark); color: #F1F5F9; }
+.feed-section.dark .body-text { color: #94A3B8; }
+.feed-section.dark .big-statement { color: #F1F5F9; }
+.feed-section.dark .hook-line { color: #A78BFA; }
+.feed-section.purple-bg { background: var(--bg-act2); }
+.feed-section.green-bg { background: var(--bg-act3); }
+.section-inner { max-width: 600px; width: 100%; }
+
+/* ── 幕间 ── */
+.act-divider {
+  min-height: 40vh; display: flex; align-items: center; justify-content: center;
+  padding: 40px 24px; background: var(--bg-close); color: #E2E8F0;
+  scroll-snap-align: start;
+}
+.act-divider .act-label { font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--dim); margin-bottom: 12px; }
+.act-divider .act-title { font-family: 'Noto Serif SC', serif; font-size: clamp(20px, 5vw, 28px); font-weight: 700; }
+
+/* ── 面包屑 ── */
+.breadcrumb {
+  position: fixed; top: 16px; left: 16px; z-index: 1000;
+  display: flex; align-items: center; gap: 4px;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+  padding: 8px 14px; border-radius: 10px; box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+  font-size: 13px; font-weight: 500;
+}
+.breadcrumb span { color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
+.breadcrumb span:hover { color: var(--accent); }
+.breadcrumb span.current { color: var(--text); cursor: default; }
+.breadcrumb .sep { color: #CBD5E1; margin: 0 2px; cursor: default; }
+
+/* ── 返回按钮 ── */
+.back-btn {
+  position: fixed; top: 16px; left: 16px; z-index: 1001;
+  width: 38px; height: 38px; border-radius: 10px; border: none;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  font-size: 18px; cursor: pointer; display: none; align-items: center; justify-content: center;
+  color: var(--text); transition: all 0.2s;
+}
+.back-btn:hover { background: var(--accent); color: #fff; }
+
+/* ── 深度圆点 ── */
+.depth-dots {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1000;
+  display: flex; gap: 8px; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px);
+  padding: 8px 14px; border-radius: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #CBD5E1; transition: all 0.3s; }
+.dot.active { background: var(--accent); box-shadow: 0 0 8px rgba(59,130,246,0.5); transform: scale(1.2); }
+
+/* ── Drill 按钮 ── */
+.drill-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border: 1.5px solid rgba(59,130,246,0.3); border-radius: 10px;
+  background: transparent; color: var(--accent); font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.25s;
+}
+.drill-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+.dark .drill-btn { border-color: rgba(139,92,246,0.4); color: #A78BFA; }
+.dark .drill-btn:hover { background: var(--accent2); color: #fff; border-color: var(--accent2); }
+
+/* ── 原文对照面板 ── */
+.source-panel {
+  margin-top: 24px; border-radius: 12px; overflow: hidden;
+  border: 1px solid rgba(59,130,246,0.15); background: rgba(59,130,246,0.03);
+}
+.dark .source-panel { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
+.source-toggle {
+  width: 100%; padding: 12px 16px; border: none; background: none;
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 600; color: var(--accent);
+}
+.dark .source-toggle { color: #818CF8; }
+.source-toggle:hover { background: rgba(59,130,246,0.06); }
+.source-toggle .arrow { transition: transform 0.3s; font-size: 11px; }
+.source-toggle.open .arrow { transform: rotate(90deg); }
+.source-body {
+  max-height: 0; overflow: hidden; transition: max-height 0.4s ease; padding: 0 16px;
+}
+.source-body.open { max-height: 2000px; padding: 0 16px 16px; overflow-y: auto; }
+.source-body p { font-size: 13px; line-height: 1.8; color: var(--text-muted); margin: 0 0 10px; white-space: pre-wrap; }
+.dark .source-body p { color: #94A3B8; }
+.source-body .source-label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--accent); margin-bottom: 8px; display: block;
+}
+.dark .source-body .source-label { color: #818CF8; }
+
+/* ── 动画舞台 ── */
+.anim-stage { width: 100%; display: flex; justify-content: center; margin: 28px 0; min-height: 180px; }
+.anim-stage > div { width: 100%; }
+
+/* ── Topic Ticker ── */
+.topic-ticker {
+  margin-top: 16px; display: flex; flex-wrap: wrap; gap: 6px;
+}
+.topic-chip {
+  padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 500;
+  background: rgba(59,130,246,0.08); color: var(--accent); border: 1px solid rgba(59,130,246,0.15);
+}
+.topic-chip.deep-dive { background: rgba(139,92,246,0.08); color: var(--accent2); border-color: rgba(139,92,246,0.15); }
+.topic-chip.compressed { background: rgba(148,163,184,0.08); color: var(--dim); border-color: rgba(148,163,184,0.15); cursor: pointer; }
+.dark .topic-chip { background: rgba(59,130,246,0.15); border-color: rgba(59,130,246,0.25); }
+.dark .topic-chip.deep-dive { background: rgba(139,92,246,0.15); border-color: rgba(139,92,246,0.25); }
+.dark .topic-chip.compressed { background: rgba(148,163,184,0.12); border-color: rgba(148,163,184,0.2); }
+
+/* ── 数据高亮卡片 ── */
+.data-card {
+  background: var(--card-bg); border-radius: 12px; padding: 20px; margin: 20px 0;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.06);
+}
+.dark .data-card { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.08); }
+.data-card .metric { font-size: 36px; font-weight: 800; color: var(--accent); line-height: 1.2; }
+.data-card .metric-label { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+
+/* === S1 Animation === */
+
+/* ===== S1: Context Rot — 上下文越长，回忆越差 ===== */
+
+/* Keyframes */
+@keyframes s1_fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s1_drawBox {
+  from { opacity: 0; transform: scaleX(0.6) scaleY(0.7); }
+  to   { opacity: 1; transform: scaleX(1) scaleY(1); }
+}
+
+@keyframes s1_popIn {
+  0%   { opacity: 0; transform: scale(0.4); }
+  70%  { opacity: 1; transform: scale(1.12); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s1_dimOut {
+  from { opacity: 1; filter: brightness(1) grayscale(0); transform: scale(1); }
+  to   { opacity: 0.25; filter: brightness(0.5) grayscale(0.8); transform: scale(0.78); }
+}
+
+@keyframes s1_labelFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes s1_conclusionSlide {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Stage */
+.s1_stage {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 40px 24px 48px;
+  font-family: 'Noto Sans SC', -apple-system, sans-serif;
+  position: relative;
+}
+
+/* Window box */
+.s1_window {
+  position: relative;
+  border: 2.5px solid #94A3B8;
+  border-radius: 12px;
+  padding: 28px 20px 32px;
+  background: #F8FAFC;
+  min-height: 200px;
+  opacity: 0;
+}
+
+.s1_stage.visible .s1_window {
+  animation: s1_drawBox 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s forwards;
+}
+
+/* Window label */
+.s1_window_label {
+  position: absolute;
+  top: -13px;
+  left: 18px;
+  background: #F8FAFC;
+  padding: 0 8px;
+  font-size: 12px;
+  color: #94A3B8;
+  letter-spacing: 0.06em;
+  opacity: 0;
+}
+
+.s1_stage.visible .s1_window_label {
+  animation: s1_labelFade 0.4s ease 0.65s forwards;
+}
+
+/* Token row */
+.s1_token_row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  justify-content: center;
+  min-height: 72px;
+}
+
+/* Individual token circle */
+.s1_token {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  opacity: 0;
+}
+
+/* Early tokens — will dim */
+.s1_token.s1_early {
+  background: #3B82F6;
+}
+
+/* Later tokens — normal */
+.s1_token.s1_later {
+  background: #8B5CF6;
+}
+
+/* Trigger all pop-in animations only when .visible is applied */
+.s1_stage.visible .s1_t1 { animation: s1_popIn 0.4s ease 0.8s  forwards; }
+.s1_stage.visible .s1_t2 { animation: s1_popIn 0.4s ease 1.05s forwards; }
+.s1_stage.visible .s1_t3 { animation: s1_popIn 0.4s ease 1.30s forwards; }
+.s1_stage.visible .s1_t4 { animation: s1_popIn 0.4s ease 1.70s forwards; }
+.s1_stage.visible .s1_t5 { animation: s1_popIn 0.4s ease 1.95s forwards; }
+.s1_stage.visible .s1_t6 { animation: s1_popIn 0.4s ease 2.20s forwards; }
+.s1_stage.visible .s1_t7 { animation: s1_popIn 0.4s ease 2.45s forwards; }
+.s1_stage.visible .s1_t8 { animation: s1_popIn 0.4s ease 2.70s forwards; }
+.s1_stage.visible .s1_t9 { animation: s1_popIn 0.4s ease 2.95s forwards; }
+
+/* Dim early tokens after later ones appear */
+.s1_stage.visible .s1_early.s1_t1 {
+  animation:
+    s1_popIn  0.4s ease 0.8s  forwards,
+    s1_dimOut 0.9s ease 3.5s  forwards;
+}
+.s1_stage.visible .s1_early.s1_t2 {
+  animation:
+    s1_popIn  0.4s ease 1.05s forwards,
+    s1_dimOut 0.9s ease 3.7s  forwards;
+}
+.s1_stage.visible .s1_early.s1_t3 {
+  animation:
+    s1_popIn  0.4s ease 1.30s forwards,
+    s1_dimOut 0.9s ease 3.9s  forwards;
+}
+
+/* Overflow indicator arrow row */
+.s1_overflow_bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 14px;
+  opacity: 0;
+  gap: 4px;
+}
+
+.s1_stage.visible .s1_overflow_bar {
+  animation: s1_labelFade 0.5s ease 3.2s forwards;
+}
+
+.s1_overflow_bar span {
+  font-size: 11px;
+  color: #8B5CF6;
+  letter-spacing: 0.04em;
+}
+
+.s1_overflow_bar .s1_arrow {
+  display: inline-block;
+  width: 24px;
+  height: 2px;
+  background: #8B5CF6;
+  position: relative;
+  margin-left: 2px;
+}
+
+.s1_overflow_bar .s1_arrow::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: -4px;
+  border: 5px solid transparent;
+  border-left: 7px solid #8B5CF6;
+}
+
+/* Conclusion line */
+.s1_conclusion {
+  margin-top: 28px;
+  text-align: center;
+  opacity: 0;
+}
+
+.s1_stage.visible .s1_conclusion {
+  animation: s1_conclusionSlide 0.6s ease 4.6s forwards;
+}
+
+.s1_conclusion_inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #FEF3C7;
+  border: 1.5px solid #F59E0B;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 15px;
+  color: #92400E;
+  font-weight: 500;
+}
+
+.s1_conclusion_arrow {
+  font-size: 17px;
+  color: #F59E0B;
+}
+
+/* Dim ghost overlay label */
+.s1_dim_label {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  font-size: 11px;
+  color: #94A3B8;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.s1_stage.visible .s1_dim_label {
+  animation: s1_labelFade 0.5s ease 4.2s forwards;
+}
+
+/* === S2 Animation === */
+
+/* ===== S2: 上下文窗口组成 ===== */
+.s2_stage {
+  position: relative;
+  width: 100%;
+  min-height: 520px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 64px;
+  padding: 40px 24px;
+  box-sizing: border-box;
+  font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+}
+
+/* --- 左侧：8 篇论文小方块 --- */
+.s2_papers {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.s2_paper {
+  width: 72px;
+  height: 40px;
+  border-radius: 6px;
+  background: #1E293B;
+  border: 2px solid #94A3B8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateX(-16px);
+}
+
+.s2_paper_label {
+  font-size: 11px;
+  color: #94A3B8;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.s2_paper_sub {
+  font-size: 10px;
+  color: #64748B;
+  line-height: 1.2;
+}
+
+/* stagger papers: steps 1–8, delay 0.4s each */
+.s2_stage.visible .s2_paper:nth-child(1) { animation: s2_slideInLeft 0.4s ease forwards 0.2s; }
+.s2_stage.visible .s2_paper:nth-child(2) { animation: s2_slideInLeft 0.4s ease forwards 0.6s; }
+.s2_stage.visible .s2_paper:nth-child(3) { animation: s2_slideInLeft 0.4s ease forwards 1.0s; }
+.s2_stage.visible .s2_paper:nth-child(4) { animation: s2_slideInLeft 0.4s ease forwards 1.4s; }
+.s2_stage.visible .s2_paper:nth-child(5) { animation: s2_slideInLeft 0.4s ease forwards 1.8s; }
+.s2_stage.visible .s2_paper:nth-child(6) { animation: s2_slideInLeft 0.4s ease forwards 2.2s; }
+.s2_stage.visible .s2_paper:nth-child(7) { animation: s2_slideInLeft 0.4s ease forwards 2.6s; }
+.s2_stage.visible .s2_paper:nth-child(8) { animation: s2_slideInLeft 0.4s ease forwards 3.0s; }
+
+@keyframes s2_slideInLeft {
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* --- 中间：箭头束 --- */
+.s2_arrow_group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  opacity: 0;
+}
+
+.s2_stage.visible .s2_arrow_group {
+  animation: s2_fadeIn 0.5s ease forwards 3.5s;
+}
+
+.s2_arrow_line {
+  width: 48px;
+  height: 2px;
+  background: #94A3B8;
+  position: relative;
+  margin: 5px 0;
+}
+
+.s2_arrow_line::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left: 8px solid #94A3B8;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+
+.s2_arrow_label {
+  font-size: 11px;
+  color: #64748B;
+  margin-top: 6px;
+  white-space: nowrap;
+}
+
+@keyframes s2_fadeIn {
+  to { opacity: 1; }
+}
+
+/* --- 右侧：上下文窗口大矩形 --- */
+.s2_ctx_wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.s2_ctx_title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #E2E8F0;
+  opacity: 0;
+  letter-spacing: 0.02em;
+}
+
+.s2_stage.visible .s2_ctx_title {
+  animation: s2_fadeIn 0.4s ease forwards 0.1s;
+}
+
+.s2_ctx_box {
+  width: 160px;
+  height: 340px;
+  border: 2.5px solid #94A3B8;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  background: #0F172A;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+/* 96.3% 蓝色区域：从底部向上生长 */
+.s2_ctx_blue {
+  width: 100%;
+  height: 0%;
+  background: #3B82F6;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.s2_stage.visible .s2_ctx_blue {
+  animation: s2_growBlue 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards 4.0s;
+}
+
+@keyframes s2_growBlue {
+  to { height: 96.3%; }
+}
+
+.s2_ctx_blue_label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+  text-align: center;
+  line-height: 1.3;
+  padding: 0 6px;
+}
+
+.s2_stage.visible .s2_ctx_blue_label {
+  animation: s2_fadeIn 0.4s ease forwards 5.4s;
+}
+
+.s2_ctx_blue_pct {
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  opacity: 0;
+}
+
+.s2_stage.visible .s2_ctx_blue_pct {
+  animation: s2_fadeIn 0.4s ease forwards 5.2s;
+}
+
+/* 3.7% 紫色区域：顶部小条，紧接蓝色动画后显示 */
+.s2_ctx_purple {
+  width: 100%;
+  height: 3.7%;
+  background: #8B5CF6;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+}
+
+.s2_stage.visible .s2_ctx_purple {
+  animation: s2_fadeIn 0.5s ease forwards 5.3s;
+}
+
+.s2_ctx_purple_label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+.s2_stage.visible .s2_ctx_purple_label {
+  animation: s2_fadeIn 0.4s ease forwards 5.6s;
+}
+
+/* 旁注标签 */
+.s2_ctx_annotations {
+  position: absolute;
+  right: -120px;
+  top: 0;
+  height: 100%;
+  width: 110px;
+  display: flex;
+  flex-direction: column;
+}
+
+.s2_anno_top {
+  height: 3.7%;
+  display: flex;
+  align-items: center;
+}
+
+.s2_anno_bottom {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.s2_anno_line {
+  width: 12px;
+  height: 2px;
+  background: #64748B;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.s2_anno_text {
+  font-size: 11px;
+  color: #94A3B8;
+  line-height: 1.3;
+  opacity: 0;
+}
+
+.s2_stage.visible .s2_anno_top .s2_anno_text {
+  animation: s2_fadeIn 0.4s ease forwards 5.7s;
+}
+
+.s2_stage.visible .s2_anno_bottom .s2_anno_text {
+  animation: s2_fadeIn 0.4s ease forwards 5.5s;
+}
+
+/* 总量标注 */
+.s2_ctx_total {
+  font-size: 13px;
+  color: #94A3B8;
+  text-align: center;
+  opacity: 0;
+  margin-top: 2px;
+}
+
+.s2_stage.visible .s2_ctx_total {
+  animation: s2_fadeIn 0.4s ease forwards 4.2s;
+}
+
+/* === S3 Animation === */
+
+/* ===== S3: 三个原语，三条路 ===== */
+
+.s3_stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 24px 64px;
+  font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: transparent;
+  min-height: 420px;
+  position: relative;
+}
+
+/* 顶部「上下文膨胀」方框 */
+.s3_top_box {
+  border: 2px solid #94A3B8;
+  border-radius: 12px;
+  padding: 12px 28px;
+  color: #94A3B8;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  background: transparent;
+  opacity: 0;
+  transform: translateY(-12px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.s3_stage.visible .s3_top_box {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0s;
+}
+
+/* 连线区域 */
+.s3_lines_wrap {
+  position: relative;
+  width: 420px;
+  height: 90px;
+  margin-top: 0;
+  flex-shrink: 0;
+}
+
+/* 中心竖线：从顶部方框向下 */
+.s3_line_center {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 0;
+  background: #94A3B8;
+  transform-origin: top center;
+  transition: height 0.4s ease;
+  transition-delay: 0s;
+}
+
+.s3_stage.visible .s3_line_center {
+  height: 40px;
+  transition-delay: 0.6s;
+}
+
+/* 横线：三叉 */
+.s3_line_horiz {
+  position: absolute;
+  left: 50%;
+  top: 40px;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: #94A3B8;
+  transform-origin: center center;
+  transition: width 0.4s ease;
+  transition-delay: 0s;
+}
+
+.s3_stage.visible .s3_line_horiz {
+  width: 280px;
+  transition-delay: 1.0s;
+}
+
+/* 三根竖线：左、中、右 */
+.s3_line_left,
+.s3_line_mid,
+.s3_line_right {
+  position: absolute;
+  top: 40px;
+  width: 2px;
+  height: 0;
+  background: #94A3B8;
+  transform-origin: top center;
+  transition: height 0.4s ease;
+  transition-delay: 0s;
+}
+
+.s3_line_left  { left: calc(50% - 140px); transform: translateX(-50%); }
+.s3_line_mid   { left: 50%;               transform: translateX(-50%); }
+.s3_line_right { left: calc(50% + 140px); transform: translateX(-50%); }
+
+.s3_stage.visible .s3_line_left  { height: 48px; transition-delay: 1.4s; }
+.s3_stage.visible .s3_line_mid   { height: 48px; transition-delay: 1.5s; }
+.s3_stage.visible .s3_line_right { height: 48px; transition-delay: 1.6s; }
+
+/* 三个卡片区域 */
+.s3_cards {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+}
+
+/* 每张卡片（圆角方框 + 小字） */
+.s3_card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 120px;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.s3_card_box {
+  border-radius: 14px;
+  padding: 14px 18px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-align: center;
+  line-height: 1.4;
+  min-width: 100px;
+  border: 2px solid transparent;
+}
+
+.s3_card_sub {
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+  color: #94A3B8;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* 左：Compaction，紫色 */
+.s3_card_compaction .s3_card_box {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: #8B5CF6;
+  color: #8B5CF6;
+}
+
+/* 中：Clearing，蓝色 */
+.s3_card_clearing .s3_card_box {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: #3B82F6;
+  color: #3B82F6;
+}
+
+/* 右：Memory，金色 */
+.s3_card_memory .s3_card_box {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: #F59E0B;
+  color: #F59E0B;
+}
+
+/* 卡片出现 */
+.s3_stage.visible .s3_card_compaction {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 1.8s;
+}
+
+.s3_stage.visible .s3_card_clearing {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 2.0s;
+}
+
+.s3_stage.visible .s3_card_memory {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 2.2s;
+}
+
+/* 小字随卡片后出现 */
+.s3_stage.visible .s3_card_compaction .s3_card_sub {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 2.3s;
+}
+
+.s3_stage.visible .s3_card_clearing .s3_card_sub {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 2.5s;
+}
+
+.s3_stage.visible .s3_card_memory .s3_card_sub {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 2.7s;
+}
+
+/* === S4 Animation === */
+
+/* ===== S4: Compaction ===== */
+.s4_stage {
+  position: relative;
+  width: 100%;
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 32px 0 40px;
+  overflow: hidden;
+}
+
+/* ---------- 大矩形（169K 对话窗口） ---------- */
+.s4_big_rect {
+  position: relative;
+  width: 72px;
+  height: 200px;
+  border: 2.5px solid #3B82F6;
+  border-radius: 6px;
+  background: rgba(59,130,246,0.08);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10px;
+  opacity: 0;
+  transform: scaleY(0);
+  transform-origin: top center;
+  transition: none;
+}
+.s4_big_rect_label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #3B82F6;
+  letter-spacing: 0.5px;
+}
+
+/* ---------- 齿轮/压缩圆（摘要符号） ---------- */
+.s4_compress_icon {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2.5px solid #8B5CF6;
+  background: rgba(139,92,246,0.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 24px;
+  opacity: 0;
+  transform: scale(0.4);
+  transition: none;
+}
+.s4_compress_icon_text {
+  font-size: 12px;
+  font-weight: 700;
+  color: #8B5CF6;
+  white-space: nowrap;
+}
+
+/* ---------- 小矩形（2,783 摘要） ---------- */
+.s4_small_rect {
+  position: relative;
+  width: 72px;
+  height: 10px;
+  border: 2.5px solid #8B5CF6;
+  border-radius: 4px;
+  background: rgba(139,92,246,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: none;
+  box-shadow: 0 0 0 0 rgba(139,92,246,0);
+}
+.s4_small_rect_label {
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 700;
+  color: #8B5CF6;
+  white-space: nowrap;
+}
+
+/* ---------- 行容器 ---------- */
+.s4_row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 40px;
+}
+
+/* ---------- 底部对比文字 ---------- */
+.s4_stat {
+  font-size: 20px;
+  font-weight: 700;
+  color: #8B5CF6;
+  letter-spacing: 1px;
+  opacity: 0;
+  transition: none;
+  text-align: center;
+}
+.s4_stat_sub {
+  font-size: 13px;
+  color: #94A3B8;
+  margin-top: 6px;
+  opacity: 0;
+  transition: none;
+  text-align: center;
+}
+
+/* ===== 触发态：.s4_stage.visible ===== */
+
+/* Step 1 — 大矩形展开 (delay 0s) */
+.s4_stage.visible .s4_big_rect {
+  opacity: 1;
+  transform: scaleY(1);
+  transition: opacity 0.5s ease 0s, transform 0.6s cubic-bezier(0.22,1,0.36,1) 0s;
+}
+
+/* Step 2 — 压缩图标出现 (delay 0.8s) */
+.s4_stage.visible .s4_compress_icon {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.4s ease 0.8s, transform 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.8s;
+}
+
+/* Step 3 — 大矩形收缩 (delay 1.4s) */
+.s4_stage.visible .s4_big_rect.s4_shrink {
+  height: 10px;
+  border-color: #94A3B8;
+  background: rgba(148,163,184,0.10);
+  transition:
+    height 0.7s cubic-bezier(0.4,0,0.2,1) 1.4s,
+    border-color 0.4s ease 1.4s,
+    background 0.4s ease 1.4s;
+}
+/* 大矩形收缩时标签淡出 */
+.s4_stage.visible .s4_big_rect.s4_shrink .s4_big_rect_label {
+  opacity: 0;
+  transition: opacity 0.3s ease 1.4s;
+}
+
+/* Step 4 — 小矩形发光出现 (delay 2.3s) */
+.s4_stage.visible .s4_small_rect {
+  opacity: 1;
+  box-shadow: 0 0 12px 4px rgba(139,92,246,0.35);
+  transition:
+    opacity 0.5s ease 2.3s,
+    box-shadow 0.6s ease 2.3s;
+}
+
+/* Step 5 — 底部文字淡入 (delay 3.0s) */
+.s4_stage.visible .s4_stat {
+  opacity: 1;
+  transition: opacity 0.5s ease 3.0s;
+}
+.s4_stage.visible .s4_stat_sub {
+  opacity: 1;
+  transition: opacity 0.5s ease 3.4s;
+}
+
+/* ---------- 大矩形原始标签（收缩前显示） ---------- */
+.s4_big_rect_label {
+  transition: opacity 0s;
+}
+
+/* === S5 Animation === */
+
+  .s5_stage {
+    position: relative;
+    width: 360px;
+    margin: 0 auto;
+    padding: 32px 24px 40px;
+    font-family: 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  }
+
+  /* ── 标题 ── */
+  .s5_title {
+    font-size: 15px;
+    color: #94A3B8;
+    letter-spacing: 0.08em;
+    margin-bottom: 24px;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .s5_stage.visible .s5_title {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0s;
+  }
+
+  /* ── 消息条容器 ── */
+  .s5_list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+  }
+
+  /* ── 单条消息行 ── */
+  .s5_row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transform: translateX(-16px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+
+  .s5_stage.visible .s5_row:nth-child(1) { opacity: 1; transform: translateX(0); transition-delay: 0.2s; }
+  .s5_stage.visible .s5_row:nth-child(2) { opacity: 1; transform: translateX(0); transition-delay: 0.5s; }
+  .s5_stage.visible .s5_row:nth-child(3) { opacity: 1; transform: translateX(0); transition-delay: 0.8s; }
+  .s5_stage.visible .s5_row:nth-child(4) { opacity: 1; transform: translateX(0); transition-delay: 1.1s; }
+
+  /* ── tool_use 保留标记 ── */
+  .s5_check {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 2px solid #3B82F6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #3B82F6;
+    font-weight: 700;
+    background: transparent;
+  }
+  /* 被清除的行，标记变灰 */
+  .s5_row.s5_cleared .s5_check {
+    border-color: #94A3B8;
+    color: #94A3B8;
+  }
+
+  /* ── tool_result 矩形条 ── */
+  .s5_bar {
+    flex: 1;
+    height: 40px;
+    border-radius: 6px;
+    background: #3B82F6;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 0.04em;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.5s ease, color 0.5s ease;
+  }
+
+  /* 覆盖层：cleared 文字 */
+  .s5_bar::after {
+    content: '[cleared]';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    padding-left: 14px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #94A3B8;
+    letter-spacing: 0.06em;
+    opacity: 0;
+    transition: opacity 0.4s ease 0.15s;
+  }
+
+  /* 标签文字（原文件名）*/
+  .s5_bar span {
+    transition: opacity 0.3s ease;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* cleared 状态 */
+  .s5_row.s5_cleared .s5_bar {
+    background: #1E293B;
+    color: transparent;
+  }
+  .s5_row.s5_cleared .s5_bar span {
+    opacity: 0;
+  }
+  .s5_row.s5_cleared .s5_bar::after {
+    opacity: 1;
+  }
+
+  /* ── keep 标签（第 4 条右侧） ── */
+  .s5_keep_tag {
+    font-size: 11px;
+    color: #8B5CF6;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .s5_stage.visible .s5_keep_tag {
+    opacity: 1;
+    transition-delay: 1.5s;
+  }
+
+  /* ── clearing 动画：逐行触发 ── */
+  /* row 1 cleared after appearing */
+  .s5_stage.visible .s5_row:nth-child(1) {
+    animation: s5_appear_clear 0.4s ease 0.2s both;
+  }
+  .s5_stage.visible .s5_row:nth-child(2) {
+    animation: s5_appear_clear 0.4s ease 0.5s both;
+  }
+  .s5_stage.visible .s5_row:nth-child(3) {
+    animation: s5_appear_clear 0.4s ease 0.8s both;
+  }
+  /* row 4 只出现，不 clear */
+  .s5_stage.visible .s5_row:nth-child(4) {
+    animation: s5_appear_only 0.4s ease 1.1s both;
+  }
+
+  @keyframes s5_appear_clear {
+    0%   { opacity: 0; transform: translateX(-16px); }
+    30%  { opacity: 1; transform: translateX(0); }
+    /* 停留片刻后触发 cleared class —— 用纯 CSS 近似：颜色在后半段切换 */
+    70%  { opacity: 1; transform: translateX(0); }
+    100% { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes s5_appear_only {
+    from { opacity: 0; transform: translateX(-16px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  /* 实际 cleared 状态由延迟 class + CSS transition 实现 */
+  /* 用相同的 animation-delay + 额外 animation 切换背景 */
+  .s5_stage.visible .s5_row:nth-child(1) .s5_bar {
+    animation: s5_bar_clear 0.5s ease 0.75s both;
+  }
+  .s5_stage.visible .s5_row:nth-child(2) .s5_bar {
+    animation: s5_bar_clear 0.5s ease 1.05s both;
+  }
+  .s5_stage.visible .s5_row:nth-child(3) .s5_bar {
+    animation: s5_bar_clear 0.5s ease 1.35s both;
+  }
+
+  .s5_stage.visible .s5_row:nth-child(1) .s5_bar span,
+  .s5_stage.visible .s5_row:nth-child(2) .s5_bar span,
+  .s5_stage.visible .s5_row:nth-child(3) .s5_bar span {
+    animation: s5_text_fade 0.3s ease forwards;
+  }
+  .s5_stage.visible .s5_row:nth-child(1) .s5_bar span { animation-delay: 0.75s; }
+  .s5_stage.visible .s5_row:nth-child(2) .s5_bar span { animation-delay: 1.05s; }
+  .s5_stage.visible .s5_row:nth-child(3) .s5_bar span { animation-delay: 1.35s; }
+
+  .s5_stage.visible .s5_row:nth-child(1) .s5_check,
+  .s5_stage.visible .s5_row:nth-child(2) .s5_check,
+  .s5_stage.visible .s5_row:nth-child(3) .s5_check {
+    animation: s5_check_dim 0.4s ease forwards;
+  }
+  .s5_stage.visible .s5_row:nth-child(1) .s5_check { animation-delay: 0.75s; }
+  .s5_stage.visible .s5_row:nth-child(2) .s5_check { animation-delay: 1.05s; }
+  .s5_stage.visible .s5_row:nth-child(3) .s5_check { animation-delay: 1.35s; }
+
+  @keyframes s5_bar_clear {
+    from { background: #3B82F6; }
+    to   { background: #1E293B; }
+  }
+
+  @keyframes s5_text_fade {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+  }
+
+  @keyframes s5_check_dim {
+    from { border-color: #3B82F6; color: #3B82F6; }
+    to   { border-color: #475569; color: #475569; }
+  }
+
+  /* cleared 后 ::after 浮现 */
+  .s5_stage.visible .s5_row:nth-child(1) .s5_bar::after { animation: s5_cleared_label 0.4s ease 0.9s both; }
+  .s5_stage.visible .s5_row:nth-child(2) .s5_bar::after { animation: s5_cleared_label 0.4s ease 1.2s both; }
+  .s5_stage.visible .s5_row:nth-child(3) .s5_bar::after { animation: s5_cleared_label 0.4s ease 1.5s both; }
+
+  @keyframes s5_cleared_label {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  /* ── 底部注释 ── */
+  .s5_footer {
+    margin-top: 28px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .s5_stage.visible .s5_footer {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 2.0s;
+  }
+
+  .s5_footer_dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #8B5CF6;
+    flex-shrink: 0;
+  }
+
+  .s5_footer_text {
+    font-size: 14px;
+    color: #8B5CF6;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+  }
+
+  /* ── 辅助：竖线连接各行 ── */
+  .s5_list::before {
+    content: '';
+    position: absolute;
+    left: 9px;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background: linear-gradient(to bottom, #3B82F6 60%, #475569);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .s5_stage.visible .s5_list::before {
+    opacity: 0.3;
+    transition-delay: 0.15s;
+  }
+
+/* === S6 Animation === */
+
+/* ── S6 Memory: Cross-Session Persistent Memory ── */
+
+.s6_stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 48px 32px;
+  min-height: 260px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.s6_stage.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── Shared box ── */
+.s6_box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 72px;
+  border-radius: 14px;
+  border: 2.5px solid #F59E0B;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 700;
+  color: #F59E0B;
+  letter-spacing: 0.05em;
+  opacity: 0;
+  transform: translateY(12px);
+  flex-shrink: 0;
+}
+
+/* ── /memories/ file box ── */
+.s6_file {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 80px;
+  border-radius: 8px;
+  border: 2px solid #94A3B8;
+  background: transparent;
+  gap: 4px;
+  opacity: 0;
+  transform: translateY(12px);
+  flex-shrink: 0;
+}
+
+.s6_file_icon {
+  width: 28px;
+  height: 34px;
+  border: 2px solid #94A3B8;
+  border-radius: 2px 8px 2px 2px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.s6_file_icon::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 10px;
+  height: 10px;
+  border-left: 2px solid #94A3B8;
+  border-bottom: 2px solid #94A3B8;
+  background: #0f172a;
+  border-radius: 0 6px 0 0;
+}
+
+.s6_file_label {
+  font-size: 11px;
+  color: #94A3B8;
+  font-family: monospace;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+/* ── Connector wrappers ── */
+.s6_connector {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 72px;
+  flex-shrink: 0;
+}
+
+.s6_line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #94A3B8;
+  transform: translateY(-50%);
+  transform-origin: left center;
+}
+
+.s6_arrowhead {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%) translateX(0);
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 10px solid #94A3B8;
+  opacity: 0;
+}
+
+.s6_line_label {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #94A3B8;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+/* ── Glow ring for Session 2 activation ── */
+.s6_glow {
+  position: absolute;
+  inset: -6px;
+  border-radius: 18px;
+  border: 2.5px solid #F59E0B;
+  opacity: 0;
+  filter: blur(3px);
+}
+
+/* ═══════════════════════════════════════
+   KEYFRAMES
+═══════════════════════════════════════ */
+
+@keyframes s6_fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s6_lineGrow {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+
+@keyframes s6_lineGold {
+  from { background: #94A3B8; }
+  to   { background: #F59E0B; }
+}
+
+@keyframes s6_arrowAppear {
+  from { opacity: 0; border-left-color: #94A3B8; }
+  to   { opacity: 1; border-left-color: #F59E0B; }
+}
+
+@keyframes s6_arrowBlue {
+  from { opacity: 0; border-left-color: #94A3B8; }
+  to   { opacity: 1; border-left-color: #3B82F6; }
+}
+
+@keyframes s6_lineBlue {
+  from { background: #94A3B8; width: 0; }
+  to   { background: #3B82F6; width: 100%; }
+}
+
+@keyframes s6_labelFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes s6_glowPulse {
+  0%   { opacity: 0; }
+  50%  { opacity: 0.75; }
+  100% { opacity: 0.4; }
+}
+
+@keyframes s6_fileActivate {
+  0%   { border-color: #94A3B8; }
+  100% { border-color: #F59E0B; }
+}
+
+/* ═══════════════════════════════════════
+   TIMED ANIMATIONS (triggered by .visible)
+═══════════════════════════════════════ */
+
+/* Step 1 — 0.0s: Session 1 box appears */
+.s6_stage.visible .s6_box_s1 {
+  animation: s6_fadeUp 0.45s ease forwards;
+  animation-delay: 0s;
+}
+
+/* Step 2 — 0.6s: write connector line grows */
+.s6_stage.visible .s6_line_write {
+  animation: s6_lineGrow 0.4s ease forwards;
+  animation-delay: 0.6s;
+}
+
+/* Step 3 — 1.1s: line turns gold (write) */
+.s6_stage.visible .s6_line_write {
+  animation:
+    s6_lineGrow 0.4s ease 0.6s forwards,
+    s6_lineGold 0.3s ease 1.1s forwards;
+}
+
+.s6_stage.visible .s6_arrow_write {
+  animation: s6_arrowAppear 0.25s ease 1.1s forwards;
+}
+
+.s6_stage.visible .s6_label_write {
+  animation: s6_labelFade 0.3s ease 1.2s forwards;
+}
+
+/* Step 4 — 1.5s: /memories/ file appears */
+.s6_stage.visible .s6_file {
+  animation: s6_fadeUp 0.4s ease 1.5s forwards;
+}
+
+/* Step 5 — 2.2s: Session 2 box appears */
+.s6_stage.visible .s6_box_s2 {
+  animation: s6_fadeUp 0.45s ease 2.2s forwards;
+}
+
+/* Step 6 — 2.8s: read connector line (blue) */
+.s6_stage.visible .s6_line_read {
+  animation: s6_lineBlue 0.4s ease 2.8s forwards;
+}
+
+.s6_stage.visible .s6_arrow_read {
+  animation: s6_arrowBlue 0.25s ease 3.2s forwards;
+}
+
+.s6_stage.visible .s6_label_read {
+  animation: s6_labelFade 0.3s ease 3.3s forwards;
+}
+
+/* Step 7 — 3.6s: Session 2 glow / activation */
+.s6_stage.visible .s6_glow {
+  animation: s6_glowPulse 0.8s ease 3.6s forwards;
+}
+
+.s6_stage.visible .s6_box_s2_inner {
+  animation: s6_fileActivate 0.4s ease 3.6s forwards;
+}
+
+/* === S7 Animation === */
+
+/* ===== S7 Stage Base ===== */
+.s7_stage {
+  position: relative;
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 32px 16px 48px;
+  font-family: sans-serif;
+  overflow: hidden;
+}
+
+/* ===== Keyframes ===== */
+@keyframes s7_fadeDown {
+  from { opacity: 0; transform: translateY(-14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s7_fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s7_growLine {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+
+@keyframes s7_growLineH {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@keyframes s7_popIn {
+  0%   { opacity: 0; transform: scale(0.7); }
+  70%  { transform: scale(1.06); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* ===== Default hidden state ===== */
+.s7_question,
+.s7_trunk,
+.s7_hbar,
+.s7_branch,
+.s7_label_box,
+.s7_answer_box,
+.s7_arrow_down {
+  opacity: 0;
+}
+
+/* ===== Triggered state ===== */
+
+/* Step 1 – question box (delay 0s) */
+.s7_stage.visible .s7_question {
+  animation: s7_fadeDown 0.5s ease forwards;
+  animation-delay: 0s;
+}
+
+/* Step 2 – vertical trunk line (delay 0.6s) */
+.s7_stage.visible .s7_trunk {
+  animation: s7_growLine 0.4s ease forwards;
+  animation-delay: 0.6s;
+  transform-origin: top center;
+}
+
+/* Step 3 – horizontal bar (delay 1.1s) */
+.s7_stage.visible .s7_hbar {
+  animation: s7_growLineH 0.45s ease forwards;
+  animation-delay: 1.1s;
+  transform-origin: center center;
+}
+
+/* Step 4 – three branch lines (delay 1.6s) */
+.s7_stage.visible .s7_branch {
+  animation: s7_growLine 0.35s ease forwards;
+  animation-delay: 1.6s;
+  transform-origin: top center;
+}
+
+/* Step 5 – label boxes (delay 2.1 / 2.5 / 2.9s) */
+.s7_stage.visible .s7_label_box.s7_left  { animation: s7_popIn 0.4s ease forwards; animation-delay: 2.1s; }
+.s7_stage.visible .s7_label_box.s7_mid   { animation: s7_popIn 0.4s ease forwards; animation-delay: 2.5s; }
+.s7_stage.visible .s7_label_box.s7_right { animation: s7_popIn 0.4s ease forwards; animation-delay: 2.9s; }
+
+/* Step 6 – small arrows between label and answer (delay 2.4 / 2.8 / 3.2s) */
+.s7_stage.visible .s7_arrow_down.s7_left  { animation: s7_fadeDown 0.3s ease forwards; animation-delay: 2.4s; }
+.s7_stage.visible .s7_arrow_down.s7_mid   { animation: s7_fadeDown 0.3s ease forwards; animation-delay: 2.8s; }
+.s7_stage.visible .s7_arrow_down.s7_right { animation: s7_fadeDown 0.3s ease forwards; animation-delay: 3.2s; }
+
+/* Step 7 – answer boxes (delay 2.7 / 3.1 / 3.5s) */
+.s7_stage.visible .s7_answer_box.s7_left  { animation: s7_popIn 0.45s ease forwards; animation-delay: 2.7s; }
+.s7_stage.visible .s7_answer_box.s7_mid   { animation: s7_popIn 0.45s ease forwards; animation-delay: 3.1s; }
+.s7_stage.visible .s7_answer_box.s7_right { animation: s7_popIn 0.45s ease forwards; animation-delay: 3.5s; }
+
+/* ===== Question box ===== */
+.s7_question {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0;
+  width: fit-content;
+  min-width: 140px;
+  padding: 10px 24px;
+  border: 2px solid #94A3B8;
+  border-radius: 8px;
+  color: #94A3B8;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background: transparent;
+}
+
+/* ===== Connector lines ===== */
+/* Trunk: from question box down to horizontal bar */
+.s7_trunk {
+  width: 2px;
+  height: 36px;
+  background: #94A3B8;
+  margin: 0 auto;
+}
+
+/* Horizontal bar spanning full width of three columns */
+.s7_hbar {
+  position: relative;
+  height: 2px;
+  background: #94A3B8;
+  width: calc(100% - 80px);  /* leave side margins */
+  margin: 0 auto;
+}
+
+/* Three vertical branch lines, positioned via flex columns below */
+.s7_branch {
+  width: 2px;
+  height: 32px;
+  background: #94A3B8;
+  margin: 0 auto;
+}
+
+/* ===== Three-column layout ===== */
+.s7_columns {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 0;
+}
+
+.s7_col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+/* ===== Label boxes (condition) ===== */
+.s7_label_box {
+  min-width: 88px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  letter-spacing: 0.02em;
+  border: 1.5px solid;
+}
+
+.s7_label_box.s7_left  { border-color: #3B82F6; color: #3B82F6; background: rgba(59,130,246,0.07); }
+.s7_label_box.s7_mid   { border-color: #8B5CF6; color: #8B5CF6; background: rgba(139,92,246,0.07); }
+.s7_label_box.s7_right { border-color: #F59E0B; color: #F59E0B; background: rgba(245,158,11,0.07); }
+
+/* ===== Small down arrows ===== */
+.s7_arrow_down {
+  font-size: 18px;
+  line-height: 1;
+  margin: 4px 0;
+  color: #94A3B8;
+}
+
+/* ===== Answer boxes (primitive) ===== */
+.s7_answer_box {
+  min-width: 88px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+
+.s7_answer_box.s7_left  { background: #3B82F6; }
+.s7_answer_box.s7_mid   { background: #8B5CF6; }
+.s7_answer_box.s7_right { background: #F59E0B; color: #1a1a1a; }
+
+/* ===== Subtitle hint below each answer ===== */
+.s7_hint {
+  font-size: 11px;
+  color: #94A3B8;
+  margin-top: 6px;
+  text-align: center;
+  line-height: 1.4;
+  max-width: 110px;
+}
+
+/* === S8 Animation === */
+
+/* ===== S8: 最小高信号 tokens ===== */
+
+.s8_stage {
+  position: relative;
+  width: 100%;
+  min-height: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-family: sans-serif;
+}
+
+/* 上下文窗口大框 */
+.s8_window {
+  position: relative;
+  width: 320px;
+  height: 240px;
+  border: 2.5px solid #94A3B8;
+  border-radius: 12px;
+  background: #0f172a;
+  overflow: hidden;
+  opacity: 0;
+  transform: scale(0.92);
+  transition: transform 0.6s ease, box-shadow 0.8s ease;
+}
+
+.s8_stage.visible .s8_window {
+  animation: s8_windowAppear 0.6s ease forwards;
+}
+
+@keyframes s8_windowAppear {
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* 灰色噪声点（低信号） */
+.s8_dot {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #94A3B8;
+  opacity: 0;
+}
+
+.s8_stage.visible .s8_dot {
+  animation: s8_dotFadeIn 0.3s ease forwards, s8_dotFadeOut 0.5s ease forwards;
+}
+
+@keyframes s8_dotFadeIn {
+  to { opacity: 0.55; }
+}
+
+@keyframes s8_dotFadeOut {
+  to { opacity: 0; }
+}
+
+/* 各个灰点：先出现，再依次被清除 */
+.s8_stage.visible .s8_dot:nth-child(1)  { animation-delay: 0.3s, 1.6s; top: 18%;  left: 12%; }
+.s8_stage.visible .s8_dot:nth-child(2)  { animation-delay: 0.3s, 1.8s; top: 18%;  left: 24%; }
+.s8_stage.visible .s8_dot:nth-child(3)  { animation-delay: 0.3s, 2.0s; top: 18%;  left: 36%; }
+.s8_stage.visible .s8_dot:nth-child(4)  { animation-delay: 0.3s, 2.2s; top: 18%;  left: 48%; }
+.s8_stage.visible .s8_dot:nth-child(5)  { animation-delay: 0.3s, 2.4s; top: 18%;  left: 60%; }
+.s8_stage.visible .s8_dot:nth-child(6)  { animation-delay: 0.3s, 2.6s; top: 18%;  left: 72%; }
+.s8_stage.visible .s8_dot:nth-child(7)  { animation-delay: 0.4s, 2.0s; top: 36%;  left: 12%; }
+.s8_stage.visible .s8_dot:nth-child(8)  { animation-delay: 0.4s, 2.2s; top: 36%;  left: 24%; }
+.s8_stage.visible .s8_dot:nth-child(9)  { animation-delay: 0.4s, 2.4s; top: 36%;  left: 36%; }
+.s8_stage.visible .s8_dot:nth-child(10) { animation-delay: 0.4s, 2.6s; top: 36%;  left: 48%; }
+.s8_stage.visible .s8_dot:nth-child(11) { animation-delay: 0.4s, 2.8s; top: 36%;  left: 60%; }
+.s8_stage.visible .s8_dot:nth-child(12) { animation-delay: 0.4s, 3.0s; top: 36%;  left: 72%; }
+.s8_stage.visible .s8_dot:nth-child(13) { animation-delay: 0.5s, 2.4s; top: 54%;  left: 12%; }
+.s8_stage.visible .s8_dot:nth-child(14) { animation-delay: 0.5s, 2.6s; top: 54%;  left: 24%; }
+.s8_stage.visible .s8_dot:nth-child(15) { animation-delay: 0.5s, 2.8s; top: 54%;  left: 36%; }
+.s8_stage.visible .s8_dot:nth-child(16) { animation-delay: 0.5s, 3.0s; top: 54%;  left: 48%; }
+.s8_stage.visible .s8_dot:nth-child(17) { animation-delay: 0.5s, 3.2s; top: 54%;  left: 60%; }
+.s8_stage.visible .s8_dot:nth-child(18) { animation-delay: 0.5s, 3.4s; top: 54%;  left: 72%; }
+.s8_stage.visible .s8_dot:nth-child(19) { animation-delay: 0.6s, 2.8s; top: 72%;  left: 12%; }
+.s8_stage.visible .s8_dot:nth-child(20) { animation-delay: 0.6s, 3.0s; top: 72%;  left: 24%; }
+.s8_stage.visible .s8_dot:nth-child(21) { animation-delay: 0.6s, 3.2s; top: 72%;  left: 36%; }
+.s8_stage.visible .s8_dot:nth-child(22) { animation-delay: 0.6s, 3.4s; top: 72%;  left: 48%; }
+.s8_stage.visible .s8_dot:nth-child(23) { animation-delay: 0.6s, 3.6s; top: 72%;  left: 60%; }
+.s8_stage.visible .s8_dot:nth-child(24) { animation-delay: 0.6s, 3.8s; top: 72%;  left: 72%; }
+
+/* ===== 工具图标：扫把 / 压缩器 / 书签 ===== */
+/* 共用基础 */
+.s8_tool {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  bottom: -80px;
+}
+
+.s8_tool_icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.s8_tool_label {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* 蓝色 Clearing 扫把 */
+.s8_tool_clear {
+  left: 48px;
+}
+.s8_tool_clear .s8_tool_icon {
+  background: #3B82F6;
+  color: #fff;
+  /* 扫把：一个竖线 + 斜线组合用 CSS 模拟 */
+  position: relative;
+  overflow: hidden;
+}
+.s8_tool_clear .s8_tool_icon::before {
+  content: '';
+  position: absolute;
+  width: 3px;
+  height: 22px;
+  background: #fff;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-18deg);
+  border-radius: 2px;
+}
+.s8_tool_clear .s8_tool_icon::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 5px;
+  background: #fff;
+  border-radius: 2px;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%) skewX(-15deg);
+}
+.s8_tool_clear .s8_tool_label { color: #3B82F6; }
+
+/* 紫色 Compaction 压缩器 */
+.s8_tool_compact {
+  left: 50%;
+  transform: translateX(-50%);
+}
+.s8_tool_compact .s8_tool_icon {
+  background: #8B5CF6;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+/* 三条横线收窄效果 */
+.s8_tool_compact .s8_tool_icon::before {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 3px;
+  background: #fff;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  box-shadow: 0 7px 0 #fff, 0 14px 0 #fff;
+}
+.s8_tool_compact .s8_tool_icon::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 3px;
+  background: rgba(255,255,255,0.5);
+  bottom: 7px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  box-shadow: 0 -7px 0 rgba(255,255,255,0.5);
+}
+.s8_tool_compact .s8_tool_label { color: #8B5CF6; }
+
+/* 金色 Memory 书签 */
+.s8_tool_memory {
+  right: 48px;
+}
+.s8_tool_memory .s8_tool_icon {
+  background: #D97706;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.s8_tool_memory .s8_tool_icon::before {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 22px;
+  background: #fff;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%);
+}
+.s8_tool_memory .s8_tool_label { color: #D97706; }
+
+/* 工具出现动画 */
+.s8_stage.visible .s8_tool_clear {
+  animation: s8_toolRise 0.5s ease forwards;
+  animation-delay: 1.2s;
+}
+.s8_stage.visible .s8_tool_compact {
+  animation: s8_toolRise 0.5s ease forwards;
+  animation-delay: 1.7s;
+}
+.s8_stage.visible .s8_tool_memory {
+  animation: s8_toolRise 0.5s ease forwards;
+  animation-delay: 2.2s;
+}
+
+@keyframes s8_toolRise {
+  to { opacity: 1; bottom: 12px; }
+}
+
+/* ===== 高信号大蓝点（精炼后） ===== */
+.s8_signal {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #3B82F6;
+  opacity: 0;
+  box-shadow: 0 0 8px #3B82F6;
+}
+
+.s8_signal:nth-child(1) { top: 28%; left: 20%; }
+.s8_signal:nth-child(2) { top: 28%; left: 44%; }
+.s8_signal:nth-child(3) { top: 28%; left: 68%; }
+.s8_signal:nth-child(4) { top: 62%; left: 32%; }
+.s8_signal:nth-child(5) { top: 62%; left: 56%; }
+
+.s8_stage.visible .s8_signal:nth-child(1) { animation: s8_signalAppear 0.4s ease forwards 4.0s; }
+.s8_stage.visible .s8_signal:nth-child(2) { animation: s8_signalAppear 0.4s ease forwards 4.3s; }
+.s8_stage.visible .s8_signal:nth-child(3) { animation: s8_signalAppear 0.4s ease forwards 4.6s; }
+.s8_stage.visible .s8_signal:nth-child(4) { animation: s8_signalAppear 0.4s ease forwards 4.9s; }
+.s8_stage.visible .s8_signal:nth-child(5) { animation: s8_signalAppear 0.4s ease forwards 5.2s; }
+
+@keyframes s8_signalAppear {
+  from { opacity: 0; transform: scale(0.4); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* 窗口收缩 + 发光 */
+.s8_stage.visible .s8_window {
+  animation:
+    s8_windowAppear 0.6s ease forwards,
+    s8_windowGlow 0.8s ease forwards 5.5s;
+}
+
+@keyframes s8_windowGlow {
+  to {
+    border-color: #3B82F6;
+    box-shadow: 0 0 24px rgba(59,130,246,0.5), 0 0 6px rgba(59,130,246,0.3);
+    transform: scale(0.9);
+  }
+}
+
+/* ===== 标注「最小 · 高信号」 ===== */
+.s8_caption {
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  font-weight: 700;
+  color: #3B82F6;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+.s8_stage.visible .s8_caption {
+  animation: s8_captionIn 0.5s ease forwards 6.2s;
+}
+
+@keyframes s8_captionIn {
+  to { opacity: 1; bottom: -24px; }
+}
+
+/* ===== 阶段标题（左上角） ===== */
+.s8_title {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #94A3B8;
+  letter-spacing: 0.05em;
+  opacity: 0;
+}
+
+.s8_stage.visible .s8_title {
+  animation: s8_titleIn 0.5s ease forwards 0.1s;
+}
+
+@keyframes s8_titleIn {
+  to { opacity: 1; }
+}
+
+/* ===== 整体布局容器 ===== */
+.s8_scene {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+/* === A1 Animation === */
+
+/* ============================================================
+   A1 Compaction 探针测试 — 猫头鹰式逐步叙事
+   三色原则：蓝 #3B82F6 · 红 #EF4444 · 灰 #94A3B8
+   所有动画由 .a1_stage.visible 触发
+   ============================================================ */
+
+/* --- keyframes --- */
+@keyframes a1_fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes a1_growBar {
+  from { transform: scaleX(0); opacity: 0; }
+  to   { transform: scaleX(1); opacity: 1; }
+}
+
+@keyframes a1_popScore {
+  0%   { opacity: 0; transform: scale(0.6); }
+  70%  { transform: scale(1.12); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* --- stage wrapper --- */
+.a1_stage {
+  font-family: "PingFang SC", "Noto Sans SC", sans-serif;
+  background: #0F172A;
+  border-radius: 12px;
+  padding: 36px 32px 40px;
+  max-width: 660px;
+  margin: 0 auto;
+  color: #E2E8F0;
+  /* 初始状态：所有子元素隐藏 */
+}
+
+/* 未触发时隐藏所有动画元素 */
+.a1_stage [class*="a1_"] {
+  opacity: 0;
+}
+
+/* ---- 标题「探针测试」---- */
+.a1_title {
+  text-align: center;
+  font-size: 15px;
+  letter-spacing: 0.18em;
+  color: #94A3B8;
+  margin-bottom: 28px;
+}
+
+.a1_stage.visible .a1_title {
+  animation: a1_fadeUp 0.5s ease forwards;
+  animation-delay: 0s;
+}
+
+/* ---- 双列容器 ---- */
+.a1_columns {
+  display: flex;
+  gap: 32px;
+  opacity: 1 !important; /* 容器本身不参与动画，只做布局 */
+}
+
+.a1_col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  opacity: 1 !important;
+}
+
+/* ---- 列标题 ---- */
+.a1_col_title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  margin-bottom: 16px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid currentColor;
+}
+
+.a1_col_title--keep {
+  color: #3B82F6;
+}
+
+.a1_col_title--lost {
+  color: #EF4444;
+}
+
+.a1_stage.visible .a1_col_title--keep {
+  animation: a1_fadeUp 0.45s ease forwards;
+  animation-delay: 0.5s;
+}
+
+.a1_stage.visible .a1_col_title--lost {
+  animation: a1_fadeUp 0.45s ease forwards;
+  animation-delay: 0.5s;
+}
+
+/* ---- 条目行 ---- */
+.a1_bar_row {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  margin-bottom: 10px;
+  gap: 10px;
+}
+
+/* 填色条 */
+.a1_bar {
+  height: 36px;
+  border-radius: 4px;
+  transform-origin: left center;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.a1_bar--keep {
+  background: rgba(59, 130, 246, 0.18);
+  border-left: 3px solid #3B82F6;
+  color: #93C5FD;
+}
+
+.a1_bar--lost {
+  background: rgba(239, 68, 68, 0.15);
+  border-left: 3px solid #EF4444;
+  color: #FCA5A5;
+}
+
+/* 保留列三行 */
+.a1_stage.visible .a1_keep_bar_1 {
+  animation: a1_growBar 0.4s ease forwards;
+  animation-delay: 1.0s;
+}
+.a1_stage.visible .a1_keep_bar_2 {
+  animation: a1_growBar 0.4s ease forwards;
+  animation-delay: 1.5s;
+}
+.a1_stage.visible .a1_keep_bar_3 {
+  animation: a1_growBar 0.4s ease forwards;
+  animation-delay: 2.0s;
+}
+
+/* 丢失列三行 */
+.a1_stage.visible .a1_lost_bar_1 {
+  animation: a1_growBar 0.4s ease forwards;
+  animation-delay: 1.0s;
+}
+.a1_stage.visible .a1_lost_bar_2 {
+  animation: a1_growBar 0.4s ease forwards;
+  animation-delay: 1.5s;
+}
+.a1_stage.visible .a1_lost_bar_3 {
+  animation: a1_growBar 0.4s ease forwards;
+  animation-delay: 2.0s;
+}
+
+/* ---- 底部得分 ---- */
+.a1_score {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.a1_score--keep {
+  color: #3B82F6;
+}
+
+.a1_score--lost {
+  color: #EF4444;
+}
+
+.a1_score_label {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  margin-top: 4px;
+  opacity: 0.6;
+  color: #94A3B8;
+}
+
+.a1_stage.visible .a1_score--keep {
+  animation: a1_popScore 0.5s ease forwards;
+  animation-delay: 2.6s;
+}
+
+.a1_stage.visible .a1_score--lost {
+  animation: a1_popScore 0.5s ease forwards;
+  animation-delay: 2.6s;
+}
+
+/* === A2 Animation === */
+
+/* ===== A2: Memory 跨 Session 对比 ===== */
+
+/* 入场动画：淡入 + 上移 */
+@keyframes a2_fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 金色发光脉冲（有记忆步骤框） */
+@keyframes a2_glow {
+  0%, 100% { box-shadow: 0 0 6px 1px rgba(245,158,11,0.35); }
+  50%       { box-shadow: 0 0 14px 4px rgba(245,158,11,0.70); }
+}
+
+/* 连接箭头线从左延伸 */
+@keyframes a2_lineGrow {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+
+/* 右侧对比标注弹入 */
+@keyframes a2_popIn {
+  0%   { opacity: 0; transform: scale(0.7); }
+  70%  { transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* ---- 舞台容器 ---- */
+.a2_stage {
+  position: relative;
+  width: 100%;
+  padding: 36px 16px 44px;
+  background: #1A1A2E;
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: 'Noto Sans SC', -apple-system, sans-serif;
+}
+
+/* 所有动画子元素初始隐藏，visible 后按 delay 顺序播 */
+.a2_stage .a2_anim {
+  opacity: 0;
+}
+.a2_stage.visible .a2_anim {
+  animation: a2_fadeUp 0.5s ease forwards;
+}
+
+/* ---- Session 1 标签 ---- */
+.a2_session1_label {
+  display: inline-block;
+  color: #F59E0B;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1.5px solid #F59E0B;
+  border-radius: 4px;
+  padding: 3px 10px;
+  margin-bottom: 8px;
+  animation-delay: 0.1s;
+}
+
+/* ---- 笔记文件图标（右上角） ---- */
+.a2_note_icon {
+  position: absolute;
+  top: 36px;
+  right: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  animation-delay: 0.5s;
+}
+.a2_note_icon_box {
+  width: 44px;
+  height: 52px;
+  background: #2D2D4E;
+  border: 2px solid #F59E0B;
+  border-radius: 5px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* 折角 */
+.a2_note_icon_box::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 12px; height: 12px;
+  background: #1A1A2E;
+  clip-path: polygon(100% 0, 0 0, 100% 100%);
+}
+.a2_note_icon_box::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 12px; height: 12px;
+  border-left: 2px solid #F59E0B;
+  border-bottom: 2px solid #F59E0B;
+  border-radius: 0 0 0 3px;
+}
+.a2_note_icon_lines {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 22px;
+}
+.a2_note_icon_lines span {
+  display: block;
+  height: 2px;
+  background: #F59E0B;
+  border-radius: 1px;
+  opacity: 0.7;
+}
+.a2_note_label {
+  font-size: 11px;
+  color: #F59E0B;
+  font-weight: 500;
+}
+
+/* ---- 双行对比容器 ---- */
+.a2_compare {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* 单行 */
+.a2_row {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 行标注（无记忆 / 有记忆） */
+.a2_row_label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  animation-delay: inherit;
+}
+.a2_row_label.a2_no  { color: #EF4444; }
+.a2_row_label.a2_yes { color: #F59E0B; }
+
+/* 步骤框水平列 */
+.a2_steps {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: nowrap;
+}
+
+/* 箭头连接线 */
+.a2_arrow {
+  flex-shrink: 0;
+  width: 24px;
+  height: 2px;
+  position: relative;
+  overflow: visible;
+}
+.a2_stage.visible .a2_arrow_line {
+  animation: a2_lineGrow 0.3s ease forwards;
+}
+.a2_arrow_line {
+  display: block;
+  height: 2px;
+  width: 0;
+  background: #94A3B8;
+  border-radius: 1px;
+}
+/* 箭头头部（纯 CSS 三角） */
+.a2_arrow::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left: 5px solid #94A3B8;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.a2_stage.visible .a2_arrow::after {
+  opacity: 1;
+}
+
+/* 步骤框基础 */
+.a2_step {
+  flex-shrink: 0;
+  min-width: 56px;
+  height: 40px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  padding: 0 10px;
+}
+
+/* 无记忆行：红色虚线边框 */
+.a2_step.a2_no {
+  background: rgba(239,68,68,0.08);
+  border: 2px dashed #EF4444;
+  color: #EF4444;
+}
+
+/* 有记忆行：金色实线 + 发光 */
+.a2_step.a2_yes {
+  background: rgba(245,158,11,0.12);
+  border: 2px solid #F59E0B;
+  color: #F59E0B;
+}
+.a2_stage.visible .a2_step.a2_yes {
+  animation: a2_fadeUp 0.5s ease forwards, a2_glow 2s ease-in-out 1s infinite;
+}
+
+/* ---- 右侧对比标注 ---- */
+.a2_badge_wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  position: absolute;
+  right: 16px;
+  /* 垂直对齐双行，由 JS/CSS 手动微调 —— 此处简化为 margin-top 在父级 */
+  top: 50%;
+  transform: translateY(-50%);
+}
+/* 当屏幕较窄时把 badge 放在行内 */
+@media (max-width: 520px) {
+  .a2_badge_wrap { display: none; }
+  .a2_row_inline_badge { display: inline-block !important; }
+}
+
+.a2_badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.a2_badge.a2_bad {
+  background: rgba(239,68,68,0.15);
+  color: #EF4444;
+  border: 1.5px solid #EF4444;
+}
+.a2_badge.a2_good {
+  background: rgba(245,158,11,0.15);
+  color: #F59E0B;
+  border: 1.5px solid #F59E0B;
+}
+.a2_stage.visible .a2_badge.a2_anim {
+  animation: a2_popIn 0.5s ease forwards;
+}
+/* 行内备用 badge（小屏） */
+.a2_row_inline_badge {
+  display: none;
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 10px;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+</style>
+
+<meta name="description" content="Claude Cookbook · Context Engineering">
+<link rel="canonical" href="https://chendi.me/readings/context-engineering/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<!-- 面包屑 -->
+<div class="breadcrumb" id="breadcrumb">
+  <span class="current">概览</span>
+</div>
+
+<!-- 返回按钮 -->
+<button class="back-btn" id="backBtn" onclick="goBack()">&#8592;</button>
+
+<!-- 深度圆点 -->
+<div class="depth-dots" id="depthDots">
+  <div class="dot active"></div>
+  <div class="dot"></div>
+</div>
+
+<!-- ═══ Layer 0: 概览 ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+  <!-- S1: Hero — 上下文越长，回忆越差 -->
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <p class="body-text reveal" style="font-size:13px; letter-spacing:0.1em; text-transform:uppercase; color:var(--dim); margin-bottom:16px;">Claude Cookbook · Context Engineering</p>
+      <h2 class="big-statement reveal reveal-d1">上下文越长，<br>回忆越差</h2>
+      <p class="body-text reveal reveal-d2">当 Agent 的上下文窗口越来越长，模型准确回忆信息的能力就会下降——这被称为<span class="hl">「上下文腐烂」（context rot）</span>。即使还没到硬性 token 上限，Agent 从每个 token 中获得的价值已经在衰减。因此上下文工程的核心纪律是：<span class="hl2">找到最小的高信号 token 集合，最大化你想要的结果的概率</span>。</p>
+      <div class="anim-stage reveal reveal-d3"><div class="s1_stage">
+
+  <!-- Context window box -->
+  <div class="s1_window">
+    <div class="s1_window_label">上下文窗口</div>
+
+    <!-- Token row: early (blue, will dim) + later (purple) -->
+    <div class="s1_token_row">
+      <div class="s1_token s1_early s1_t1">1</div>
+      <div class="s1_token s1_early s1_t2">2</div>
+      <div class="s1_token s1_early s1_t3">3</div>
+      <div class="s1_token s1_later s1_t4">4</div>
+      <div class="s1_token s1_later s1_t5">5</div>
+      <div class="s1_token s1_later s1_t6">6</div>
+      <div class="s1_token s1_later s1_t7">7</div>
+      <div class="s1_token s1_later s1_t8">8</div>
+      <div class="s1_token s1_later s1_t9">9</div>
+    </div>
+
+    <!-- Overflow indicator -->
+    <div class="s1_overflow_bar">
+      <span>更多 token 涌入</span>
+      <span class="s1_arrow"></span>
+    </div>
+
+    <!-- Dim ghost label inside box -->
+    <div class="s1_dim_label">早期信息已被淹没</div>
+  </div>
+
+  <!-- Conclusion -->
+  <div class="s1_conclusion">
+    <div class="s1_conclusion_inner">
+      <span>越多</span>
+      <span class="s1_conclusion_arrow">→</span>
+      <span>越难回忆</span>
+    </div>
+  </div>
+
+</div></div>
+      <p class="hook-line reveal reveal-d4">一个生物学研究 Agent，8 篇论文，335K tokens——问题有多严重？</p>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">原文</span>
+          <p>A common challenge when building long-horizon agents is managing context. Tool results, the model's own reasoning, and user messages all accumulate, and eventually you either hit the token limit or start paying for context that isn't helping anymore. Studies on needle-in-a-haystack style benchmarking have uncovered the concept of context rot: as the number of tokens in the context window increases, the model's ability to accurately recall information from that context decreases. So, even before the hard context limit is reached, the agent may be getting less out of each token.</p>
+          <p>Our engineering blog on effective context engineering for AI agents frames this as a resource problem: context is finite with diminishing marginal returns, and the core discipline is finding the smallest set of high-signal tokens that maximize the likelihood of your desired outcome. There are several levers for this: subagents that isolate work in their own context, programmatic tool calling that keeps large results out of the window entirely, and others.</p>
+          <p>This cookbook focuses on three: compaction, tool-result clearing, and memory. All three are effective strategies for context engineering, but since they all operate to make the context window more efficient in different ways, they can be hard to distinguish. Understanding those distinctions is what lets you map each tool to the part of your workload it actually helps with.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S2: 8 篇论文，335K tokens -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">8 篇论文，335K tokens<br>96% 是过期文件</h2>
+      <p class="body-text reveal reveal-d1">这个 cookbook 用一个<span class="hl">生物学研究 Agent</span> 做测试：它要读 8 篇关于衰老模型生物的综述文档（每篇约 40K tokens），分两批阅读、做笔记、最后写综合对比。在没有任何上下文管理的情况下跑完，Agent 的上下文攀升到 <span class="hl-danger">335,279 tokens</span>——其中 <span class="hl-danger">96.3%</span> 是文件读取结果，全部堆在窗口里。第一篇读的文档还在，但已经被几十万 tokens 的其他内容埋在下面了。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s2_stage">
+
+  <!-- 左侧：8 篇论文 -->
+  <div class="s2_papers">
+    <div class="s2_paper"><span class="s2_paper_label">论文 1</span><span class="s2_paper_sub">~40K</span></div>
+    <div class="s2_paper"><span class="s2_paper_label">论文 2</span><span class="s2_paper_sub">~40K</span></div>
+    <div class="s2_paper"><span class="s2_paper_label">论文 3</span><span class="s2_paper_sub">~40K</span></div>
+    <div class="s2_paper"><span class="s2_paper_label">论文 4</span><span class="s2_paper_sub">~40K</span></div>
+    <div class="s2_paper"><span class="s2_paper_label">论文 5</span><span class="s2_paper_sub">~40K</span></div>
+    <div class="s2_paper"><span class="s2_paper_label">论文 6</span><span class="s2_paper_sub">~40K</span></div>
+    <div class="s2_paper"><span class="s2_paper_label">论文 7</span><span class="s2_paper_sub">~40K</span></div>
+    <div class="s2_paper"><span class="s2_paper_label">论文 8</span><span class="s2_paper_sub">~40K</span></div>
+  </div>
+
+  <!-- 中间：箭头 -->
+  <div class="s2_arrow_group">
+    <div class="s2_arrow_line"></div>
+    <div class="s2_arrow_line"></div>
+    <div class="s2_arrow_line"></div>
+    <div class="s2_arrow_line"></div>
+    <div class="s2_arrow_line"></div>
+    <div class="s2_arrow_line"></div>
+    <div class="s2_arrow_line"></div>
+    <div class="s2_arrow_line"></div>
+    <div class="s2_arrow_label">全部读入</div>
+  </div>
+
+  <!-- 右侧：上下文窗口 -->
+  <div class="s2_ctx_wrap">
+    <div class="s2_ctx_title">上下文窗口</div>
+    <div style="position:relative;">
+      <div class="s2_ctx_box">
+        <!-- 紫色顶部 3.7% -->
+        <div class="s2_ctx_purple">
+          <span class="s2_ctx_purple_label">推理+记录</span>
+        </div>
+        <!-- 蓝色主体 96.3% -->
+        <div class="s2_ctx_blue">
+          <span class="s2_ctx_blue_pct">96.3%</span>
+          <span class="s2_ctx_blue_label">文件读取</span>
+        </div>
+      </div>
+      <!-- 旁注 -->
+      <div class="s2_ctx_annotations">
+        <div class="s2_anno_top">
+          <div class="s2_anno_line"></div>
+          <span class="s2_anno_text">推理+记录<br>3.7%</span>
+        </div>
+        <div class="s2_anno_bottom">
+          <div class="s2_anno_line"></div>
+          <span class="s2_anno_text">文件读取<br>96.3%</span>
+        </div>
+      </div>
+    </div>
+    <div class="s2_ctx_total">共 335,279 tokens</div>
+  </div>
+
+</div></div>
+      <p class="hook-line reveal reveal-d3">三个 API 原语，分别解决三种不同的上下文膨胀</p>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">原文</span>
+          <p>The agent in this cookbook plays the role of a biology researcher writing a comparative review of model organisms for aging and longevity research. The task is realistic enough to matter: it involves reading through a corpus of review documents (one per organism), extracting comparable facts (lifespans, genetic tractability, translational relevance), taking structured notes, and synthesizing findings across everything read.</p>
+          <p>This kind of work is where context management starts to bite. Each document is around 40K tokens (narrative plus extensive appendix tables of intervention data), and the task asks the agent to read them in two batches: four high-throughput organisms (C. elegans, Drosophila, yeast, killifish) first, then four low-throughput organisms (mouse, zebrafish, naked mole-rat, rhesus).</p>
+          <p>The breakdown above makes the scale concrete. The model is carrying hundreds of thousands of tokens of file contents on every turn, most of it documents the agent already processed and took notes on. The first document read is still in the window, but by the end of the run it's sitting behind hundreds of thousands of tokens of other tool results plus all the agent's reasoning and notes. It hasn't been removed; it's competing with everything else for attention.</p>
+          <p>Context breakdown (335,279 tokens total per API usage):
+  File-read results          ~ 322,946 tokens  (  8 blocks, 96.3%)
+  Agent reasoning text       ~   5,660 tokens  (  5 blocks,  1.7%)
+  Tool-call records          ~   6,287 tokens  ( 10 blocks,  1.9%)
+  User/task prompts          ~     357 tokens  (  1 blocks,  0.1%)</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S3: 三个原语三条路 -->
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">三个原语，三条路</h2>
+      <p class="body-text reveal reveal-d1">这三个 API 原语分别解决不同类型的上下文膨胀。<span class="hl2">Compaction</span> 把整个对话窗口浓缩成高保真摘要，让 Agent 继续工作而性能损失最小。<span class="hl">Clearing</span> 只针对工具调用结果——把旧的、可重新获取的 tool_result 替换成占位符，不花推理成本。<span class="hl-warm">Memory</span> 是结构化笔记：Agent 主动写入外部持久存储，让知识跨 Session 存活。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s3_stage">
+
+  <!-- 1. 顶部「上下文膨胀」 -->
+  <div class="s3_top_box">上下文膨胀</div>
+
+  <!-- 2. 连线区域 -->
+  <div class="s3_lines_wrap">
+    <div class="s3_line_center"></div>
+    <div class="s3_line_horiz"></div>
+    <div class="s3_line_left"></div>
+    <div class="s3_line_mid"></div>
+    <div class="s3_line_right"></div>
+  </div>
+
+  <!-- 3. 三个卡片 -->
+  <div class="s3_cards">
+
+    <div class="s3_card s3_card_compaction">
+      <div class="s3_card_box">Compaction</div>
+      <div class="s3_card_sub">压缩整个窗口</div>
+    </div>
+
+    <div class="s3_card s3_card_clearing">
+      <div class="s3_card_box">Clearing</div>
+      <div class="s3_card_sub">丢弃可重取结果</div>
+    </div>
+
+    <div class="s3_card s3_card_memory">
+      <div class="s3_card_box">Memory</div>
+      <div class="s3_card_sub">跨 Session 存活</div>
+    </div>
+
+  </div>
+
+</div></div>
+      <p class="hook-line reveal reveal-d3">先看 Compaction：335K 的对话，怎么浓缩成不到 3K？</p>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">原文</span>
+          <p>Compaction distills the contents of a context window into a high-fidelity summary, letting the agent continue with minimal performance degradation when the conversation gets long.</p>
+          <p>Tool-result clearing addresses the bloat from tool use itself. As an agent pulls in tools and calls them, the results pile up, and deciding how much of that tool output to keep becomes an increasingly important part of managing context. Clearing drops old, re-fetchable results while keeping the record that the call happened.</p>
+          <p>Memory is structured note-taking: the agent writes to persistent external storage so it can track progress across tasks and sessions without keeping everything in active context.</p>
+          <p>A rough mental model for prioritizing: compaction compresses the whole window when it grows too large, clearing drops stale re-fetchable data inside the window, and memory moves information out of the window so it survives across sessions. Each layer adds config to tune and interactions to understand, so it's worth starting with the one that matches the bottleneck you're actually observing.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 幕间：三个解法 -->
+  <div class="act-divider">
+    <div style="text-align:center;">
+      <p class="act-label reveal">Act II</p>
+      <p class="act-title reveal reveal-d1">三个解法</p>
+    </div>
+  </div>
+
+  <!-- S4: Compaction -->
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">Compaction<br>335K → 2,783 tokens</h2>
+      <p class="body-text reveal reveal-d1">Compaction 是整个对话窗口的「浓缩」操作。当 Agent 的上下文逼近阈值（这里设为 180K），服务端自动触发：用一个摘要模型把之前所有的对话——用户消息、助手推理、工具调用和结果——压缩成一份高保真摘要。在研究 Agent 的测试中，<span class="hl">169K tokens 的对话被浓缩成 2,783 tokens 的摘要</span>，之后 Agent 继续工作，最终上下文只有 5,829 tokens。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s4_stage">
+  <div class="s4_row">
+    <!-- 左：大矩形（169K 对话窗口） -->
+    <div class="s4_big_rect s4_shrink">
+      <span class="s4_big_rect_label">169K</span>
+    </div>
+
+    <!-- 中：压缩符号 -->
+    <div class="s4_compress_icon">
+      <span class="s4_compress_icon_text">摘要</span>
+    </div>
+
+    <!-- 右：小矩形（2,783 tokens） -->
+    <div style="position:relative; display:flex; flex-direction:column; align-items:center;">
+      <div class="s4_small_rect">
+        <span class="s4_small_rect_label">2,783</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部对比 -->
+  <div class="s4_stat">98.4% 压缩率</div>
+  <div class="s4_stat_sub">169K tokens → 2,783 token 摘要，对话得以继续</div>
+</div></div>
+      <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-compaction-probe', this)">摘要保留了什么，丢了什么？ &#8595;</button>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">原文</span>
+          <p>Compaction is a useful strategy for managing context in long-running conversations: it takes a conversation nearing the context window limit, summarizes its contents, and reinitiates with that summary. This addresses the agent's own reasoning text, user back-and-forth, and decisions made over the course of a session.</p>
+          <p>At its core, compaction distills the contents of a context window in a high-fidelity manner, enabling the agent to continue with minimal performance degradation. The trade-off is in choosing what the summary must retain versus what it can safely drop: overly aggressive compaction can lose subtle but critical context whose importance only becomes apparent later. The summary preserves key decisions and facts but may drop specific numbers or exact phrasing.</p>
+          <p>Compaction: completed turn 7, peak 169,164 tokens, 1 compaction event(s)
+  Compaction #1 at turn 4: ~2,783-token summary</p>
+          <p>What compaction gets you is a general-purpose way to keep the window lean: it handles dialogue and tool results together, the important content survives in summarized form, and the agent keeps working under conditions where it would otherwise be cut off or swamped. What it doesn't get you is verbatim fidelity on specifics, or cross-session persistence.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S5: Clearing -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">Clearing<br>扔掉能重新查的东西</h2>
+      <p class="body-text reveal reveal-d1">Clearing 是三个原语中最轻量的：<span class="hl">零推理成本</span>，纯机械操作。它遍历消息列表，把旧的 <code style="color:#A78BFA">tool_result</code> 内容替换成占位符，但保留 <code style="color:#A78BFA">tool_use</code> 记录——模型知道自己调用过什么，只是看不到结果了。如果需要，Agent 可以再调用一次。在研究 Agent 测试中，Clearing 触发了 4 次，每次释放约 163K tokens，峰值上下文控制在 <span class="hl">173,137 tokens</span>（baseline 是 335K）。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s5_stage">
+
+  <div class="s5_title">Clearing · 遍历消息列表</div>
+
+  <div class="s5_list">
+
+    <div class="s5_row">
+      <div class="s5_check">✓</div>
+      <div class="s5_bar"><span>celegans</span></div>
+    </div>
+
+    <div class="s5_row">
+      <div class="s5_check">✓</div>
+      <div class="s5_bar"><span>drosophila</span></div>
+    </div>
+
+    <div class="s5_row">
+      <div class="s5_check">✓</div>
+      <div class="s5_bar"><span>yeast</span></div>
+    </div>
+
+    <div class="s5_row">
+      <div class="s5_check">✓</div>
+      <div class="s5_bar"><span>killifish</span></div>
+      <div class="s5_keep_tag">keep=1</div>
+    </div>
+
+  </div>
+
+  <div class="s5_footer">
+    <div class="s5_footer_dot"></div>
+    <div class="s5_footer_text">零推理成本</div>
+  </div>
+
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">原文</span>
+          <p>Tool-result clearing, by contrast, is a sub-transcript operation. It walks the message list and surgically replaces tool_result content blocks, leaving everything else — user messages, assistant reasoning, the tool_use record — untouched. When an agent calls tools, the results become part of the conversation history and count against the context budget on every subsequent turn. Much of that content is re-fetchable: file contents the agent can re-read, API responses it can re-request. Clearing replaces old tool_result blocks with a short placeholder, keeping the tool_use record so the model still knows it made the call, but dropping the bulky payload.</p>
+          <p>Clearing events: 4
+File reads: baseline=8, clearing=8
+
+Reads cleared from context: 7
+  ✗ turn  1: /research/celegans_review.md
+  ✗ turn  1: /research/drosophila_review.md
+  ✗ turn  1: /research/yeast_review.md
+  ✗ turn  1: /research/killifish_review.md
+  ✗ turn  3: /research/mouse_review.md
+  ✗ turn  3: /research/zebrafish_review.md
+  ✗ turn  3: /research/nmr_review.md
+
+Reads still in context (within the keep=4 window): 1
+  ✓ turn  3: /research/rhesus_review.md</p>
+          <p>What clearing gets you is a bounded window at no inference cost, avoiding both the hard-limit cutoff and the recall degradation that comes with a large accumulated context. What it doesn't get you is any help with content that isn't a tool result (the agent's own reasoning, user messages) or any persistence across sessions.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S6: Memory -->
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">Memory<br>跨 Session 的持久记忆</h2>
+      <p class="body-text reveal reveal-d1">Compaction 和 Clearing 都只处理当前上下文；新 Session 开始时窗口是空的，之前学到的一切都丢了。<span class="hl-warm">Memory</span> 解决这个问题：Agent 在推理过程中主动写入外部文件存储（<code style="color:#F59E0B">/memories/</code>），下次 Session 开始时读取这些笔记继续工作。在测试中，Session 1 的 Agent 读了 4 篇综述并写入了一份 2,999 tokens 的对比笔记；<span class="hl-warm">Session 2 带着记忆启动时，直接在笔记基础上扩展</span>，而不是从头重新读文档。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s6_stage">
+
+  <!-- Session 1 -->
+  <div class="s6_box s6_box_s1">Session 1</div>
+
+  <!-- Write connector -->
+  <div class="s6_connector">
+    <div class="s6_line s6_line_write"></div>
+    <div class="s6_arrowhead s6_arrow_write"></div>
+    <div class="s6_line_label s6_label_write">写入</div>
+  </div>
+
+  <!-- /memories/ file -->
+  <div class="s6_file">
+    <div class="s6_file_icon"></div>
+    <div class="s6_file_label">/memories/</div>
+  </div>
+
+  <!-- Read connector -->
+  <div class="s6_connector">
+    <div class="s6_line s6_line_read"></div>
+    <div class="s6_arrowhead s6_arrow_read"></div>
+    <div class="s6_line_label s6_label_read">读取</div>
+  </div>
+
+  <!-- Session 2 -->
+  <div class="s6_box s6_box_s2">
+    <div class="s6_glow"></div>
+    <span class="s6_box_s2_inner">Session 2</span>
+  </div>
+
+</div></div>
+      <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-memory-sessions', this)">跨 Session 对比：有记忆 vs 没记忆 &#8595;</button>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">原文</span>
+          <p>The memory tool enables Claude to store and retrieve information across conversations through a memory file directory. Claude can create, read, update, and delete files that persist between sessions, allowing it to build knowledge over time without keeping everything in the context window.</p>
+          <p>This is the key primitive for just-in-time context retrieval: rather than loading all relevant information upfront, agents store what they learn in memory and pull it back on demand. This keeps the active context focused on what's currently relevant, which is critical for long-running workflows where loading everything at once would overwhelm the window. Clearing and compaction both operate on the current context; neither helps when a new session starts and the window is empty. Memory solves that problem.</p>
+          <p>The memory tool operates client-side: Claude makes tool calls to perform memory operations, and your application executes those operations locally. This gives you complete control over where and how the data is stored. The API provides the tool protocol and auto-injects a system prompt establishing the memory-checking behavior; you implement the storage backend.</p>
+          <p>Session 1 wrote to /memories:
+▸ aging_model_organisms_comparison.md (~2,999 tokens)
+  # Comparative Notes: Four Model Organisms in Aging Research
+  ## Source files read: /research/celegans_review.md, mouse_review.md, killifish_review.md, yeast_review.md
+  ## Session status: COMPLETE — all four reviews read, notes synthesised</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 幕间：组合策略 -->
+  <div class="act-divider">
+    <div style="text-align:center;">
+      <p class="act-label reveal">Act III</p>
+      <p class="act-title reveal reveal-d1">组合与选择</p>
+    </div>
+  </div>
+
+  <!-- S7: 三个原语怎么选 -->
+  <section class="feed-section" style="background: var(--bg-act3);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">三个原语<br>怎么选</h2>
+      <p class="body-text reveal reveal-d1">三个原语是正交的，可以自由组合。但选哪个取决于你的<span class="hl">瓶颈在哪</span>：如果上下文主要被大量工具结果撑满（文件读取、API 响应），<span class="hl">先上 Clearing</span>——零推理成本、无损（Agent 可以重新调用）。如果对话本身很长（多轮推理、用户来回），<span class="hl2">上 Compaction</span>——它压缩整个窗口，但会丢失细节。如果工作跨 Session，<span class="hl-warm">上 Memory</span>——让 Agent 把关键发现写出去，下次读回来。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s7_stage">
+
+  <!-- Step 1: Question -->
+  <div class="s7_question">瓶颈在哪？</div>
+
+  <!-- Step 2: Trunk -->
+  <div class="s7_trunk"></div>
+
+  <!-- Step 3: Horizontal bar -->
+  <div class="s7_hbar"></div>
+
+  <!-- Three columns: branch + label + arrow + answer -->
+  <div class="s7_columns">
+
+    <!-- Left: Clearing -->
+    <div class="s7_col">
+      <div class="s7_branch s7_left"></div>
+      <div class="s7_label_box s7_left">工具结果</div>
+      <div class="s7_arrow_down s7_left">↓</div>
+      <div class="s7_answer_box s7_left">Clearing</div>
+      <div class="s7_hint">零推理成本<br>清空工具输出</div>
+    </div>
+
+    <!-- Mid: Compaction -->
+    <div class="s7_col">
+      <div class="s7_branch s7_mid"></div>
+      <div class="s7_label_box s7_mid">对话本身长</div>
+      <div class="s7_arrow_down s7_mid">↓</div>
+      <div class="s7_answer_box s7_mid">Compaction</div>
+      <div class="s7_hint">压缩整个窗口<br>保留要点</div>
+    </div>
+
+    <!-- Right: Memory -->
+    <div class="s7_col">
+      <div class="s7_branch s7_right"></div>
+      <div class="s7_label_box s7_right">跨 Session</div>
+      <div class="s7_arrow_down s7_right">↓</div>
+      <div class="s7_answer_box s7_right">Memory</div>
+      <div class="s7_hint">持久存储<br>跨会话共享</div>
+    </div>
+
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">原文</span>
+          <p>The agent's running commentary and the user's follow-up questions accumulate into a long dialogue. That's a compaction problem.</p>
+          <p>Reading eight ~40K-token review documents produces roughly 320K tokens of tool-result volume, significantly into the range where model performance decays from context rot. Most of it the agent could re-read on demand. That's a clearing problem.</p>
+          <p>The work spans multiple sessions. If Session 1 determined that killifish is the shortest-lived vertebrate (4-6 months), we want Session 2 to retain that finding and build on it rather than rediscover it from scratch. That's a memory problem.</p>
+          <p>A rough mental model for prioritizing: compaction compresses the whole window when it grows too large, clearing drops stale re-fetchable data inside the window, and memory moves information out of the window so it survives across sessions. Each layer adds config to tune and interactions to understand, so it's worth starting with the one that matches the bottleneck you're actually observing.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S8: Takeaway -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">最小高信号 tokens</h2>
+      <p class="body-text reveal reveal-d1">上下文工程的核心不是「怎么塞更多东西进窗口」，而是<span class="hl">「怎么让窗口里的每个 token 都在工作」</span>。三个原语各有所长：Clearing 是最便宜的——零推理成本、机械式清理可重取的工具结果。Compaction 是最通用的——压缩整个窗口，高层事实幸存，细节牺牲。Memory 是跨越时间的——让知识不随 Session 消亡。三者都有一手 API 支持，不需要自建编排基础设施。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s8_stage">
+  <div class="s8_scene">
+
+    <div class="s8_title">S8 · 上下文工程：最小高信号 tokens</div>
+
+    <!-- 上下文窗口 -->
+    <div class="s8_window" id="s8win">
+      <!-- 24 个灰色低信号点 -->
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+      <div class="s8_dot"></div>
+
+      <!-- 5 个高信号蓝点（精炼后出现） -->
+      <div class="s8_signal"></div>
+      <div class="s8_signal"></div>
+      <div class="s8_signal"></div>
+      <div class="s8_signal"></div>
+      <div class="s8_signal"></div>
+
+      <!-- 三个工具图标：在窗口底部升起 -->
+      <div class="s8_tool s8_tool_clear">
+        <div class="s8_tool_icon"></div>
+        <div class="s8_tool_label">Clearing</div>
+      </div>
+      <div class="s8_tool s8_tool_compact">
+        <div class="s8_tool_icon"></div>
+        <div class="s8_tool_label">Compaction</div>
+      </div>
+      <div class="s8_tool s8_tool_memory">
+        <div class="s8_tool_icon"></div>
+        <div class="s8_tool_label">Memory</div>
+      </div>
+    </div>
+
+    <!-- 标注 -->
+    <div class="s8_caption">最小 · 高信号</div>
+
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">原文</span>
+          <p>Both failure modes come from the same underlying problem: the context window fills with hundreds of thousands of tokens of file content, most of it already processed and noted. What differs is how the failure surfaces. On a 200K window it's a hard stop: the API rejects the next request and the task ends mid-phase. On a 1M window the agent keeps running, but context rot sets in as the window fills.</p>
+          <p>The primitives below each address this by keeping the working set small enough that neither failure mode bites: the window doesn't fill, so smaller models don't stop and larger models don't degrade.</p>
+          <p>They also all have first-party API support, so you can adopt them without building orchestration infrastructure.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ Layer 1: Compaction 探针 ═══ -->
+<div class="layer" id="layer-compaction-probe" data-depth="1">
+
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">Compaction 探针测试<br>什么活下来了？</h2>
+      <p class="body-text reveal reveal-d1">Compaction 的摘要会保留什么、丢失什么？研究者用 6 个探针测试：3 个<span class="hl">高层事实</span>（对任务核心、容易被摘要保留）和 3 个<span class="hl-danger">冷门细节</span>（附录表格里的某个数值）。结果：<span class="hl">高层事实 3/3 全部保留</span>——C. elegans 18 天寿命、killifish 是最短命脊椎动物、果蝇 60% 人类同源性。但<span class="hl-danger">冷门细节 0/3 全部丢失</span>——NAD+ 前体干预的 I-squared 值 61、IIS 降低干预效果 55、表观遗传时钟比率 0.72，这些在摘要中找不到了。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="a1_stage visible">
+
+  <!-- 步骤1：标题 -->
+  <div class="a1_title">探 针 测 试</div>
+
+  <!-- 步骤2：双列 -->
+  <div class="a1_columns">
+
+    <!-- 左列：保留 -->
+    <div class="a1_col">
+      <div class="a1_col_title a1_col_title--keep">高层事实</div>
+
+      <!-- 步骤3：逐个蓝色条 -->
+      <div class="a1_bar_row">
+        <div class="a1_bar a1_bar--keep a1_keep_bar_1">18天寿命 ✓</div>
+      </div>
+      <div class="a1_bar_row">
+        <div class="a1_bar a1_bar--keep a1_keep_bar_2">最短脊椎 ✓</div>
+      </div>
+      <div class="a1_bar_row">
+        <div class="a1_bar a1_bar--keep a1_keep_bar_3">60%同源 ✓</div>
+      </div>
+
+      <!-- 步骤5：得分 -->
+      <div class="a1_score a1_score--keep">
+        3/3
+        <span class="a1_score_label">完整保留</span>
+      </div>
+    </div>
+
+    <!-- 右列：丢失 -->
+    <div class="a1_col">
+      <div class="a1_col_title a1_col_title--lost">冷门细节</div>
+
+      <!-- 步骤4：逐个红色条 -->
+      <div class="a1_bar_row">
+        <div class="a1_bar a1_bar--lost a1_lost_bar_1">I²=61 ✗</div>
+      </div>
+      <div class="a1_bar_row">
+        <div class="a1_bar a1_bar--lost a1_lost_bar_2">效果=55 ✗</div>
+      </div>
+      <div class="a1_bar_row">
+        <div class="a1_bar a1_bar--lost a1_lost_bar_3">比率0.72 ✗</div>
+      </div>
+
+      <!-- 步骤5：得分 -->
+      <div class="a1_score a1_score--lost">
+        0/3
+        <span class="a1_score_label">全部丢失</span>
+      </div>
+    </div>
+
+  </div>
+</div></div>
+      <p class="body-text reveal reveal-d3">这揭示了 Compaction 与 Clearing 的本质区别：Clearing 是<span class="hl">全删</span>——工具结果整体被替换，但 Agent 可以重新调用获取原始数据。Compaction 是<span class="hl2">有损压缩</span>——内容的实质以摘要形式保留，但逐字的精确细节丢失了。如果你的上下文主要是可重取的工具输出，Clearing 更便宜且无损；如果是不可重取的对话和推理，Compaction 才是正确选择。</p>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">原文</span>
+          <p>The probe above checks the summary text directly for a mix of details. The pattern that tends to emerge: high-level facts central to the task (lifespan figures the agent noted, organism identities, major comparisons) usually survive in the summary. Obscure specifics (a single cell in an appendix table, a heterogeneity statistic) usually don't.</p>
+          <p>HIGH-LEVEL FACTS (expected to survive):
+  ✓ in summary       looking for '18' — What is the approximate median lifespan of C. elegans at 20°C?
+  ✓ in summary       looking for 'killifish' — Which model organism is the shortest-lived vertebrate used in aging research?
+  ✓ in summary       looking for '60' — Roughly what percentage of human disease genes have Drosophila orthologs?
+
+OBSCURE SPECIFICS (expected to be lost):
+  ✗ not in summary   looking for '61' — In the appendix Table A5, what is the I-squared heterogeneity value for the NAD+ precursor intervention?
+  ✗ not in summary   looking for '55' — In appendix Table A2, what was the effect magnitude for the IIS reduction intervention in cohort 2?
+  ✗ not in summary   looking for '0.72' — In appendix Table A7, what is the PhenoAge-like epigenetic clock acceleration ratio under DR for liver tissue?</p>
+          <p>This is a meaningful difference from tool-result clearing: clearing drops tool results wholesale so the content is gone until re-fetched, while compaction keeps the substance in compressed form but loses verbatim detail.</p>
+          <p>What compaction gets you is a general-purpose way to keep the window lean: it handles dialogue and tool results together, the important content survives in summarized form, and the agent keeps working under conditions where it would otherwise be cut off or swamped. What it doesn't get you is verbatim fidelity on specifics, or cross-session persistence. If your context bloat is mostly re-fetchable tool output, clearing is cheaper and lossless (the agent can just call the tool again). If it's dialogue and reasoning that can't be re-fetched, compaction is the right fit.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ Layer 1: Memory 跨 Session 对比 ═══ -->
+<div class="layer" id="layer-memory-sessions" data-depth="1">
+
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">有记忆 vs 没记忆<br>Session 2 的差距</h2>
+      <p class="body-text reveal reveal-d1">为了直观展示 Memory 的价值，研究者设计了三个 Session 的对照实验。<span class="hl-warm">Session 1</span> 做初始研究：读 4 篇综述文档，写入一份结构化的对比笔记到 <code style="color:#F59E0B">/memories/aging_model_organisms_comparison.md</code>（约 2,999 tokens）。然后分两条路进入 Session 2。</p>
+      <p class="body-text reveal reveal-d2"><span class="hl-danger">没有记忆的 Session 2</span> 面对一个空的记忆目录，必须从零开始——重新搜索文件、重新读取文档、重新发现所有 Session 1 已经得出的结论。而<span class="hl-warm">有记忆的 Session 2</span> 启动时首先查看 <code style="color:#F59E0B">/memories/</code>，读取 Session 1 的笔记，然后直接在已有发现的基础上扩展分析，跳过了重复劳动。</p>
+      <div class="anim-stage reveal reveal-d3"><div class="a2_stage">
+
+  <!-- Session 1 标签 -->
+  <span class="a2_anim a2_session1_label" style="animation-delay:0.1s">Session 1 结束</span>
+
+  <!-- 笔记文件图标（右上） -->
+  <div class="a2_anim a2_note_icon" style="animation-delay:0.5s">
+    <div class="a2_note_icon_box">
+      <div class="a2_note_icon_lines">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+    <span class="a2_note_label">笔记</span>
+  </div>
+
+  <!-- 双行对比 -->
+  <div class="a2_compare">
+
+    <!-- 上行：无记忆 -->
+    <div class="a2_row">
+      <div class="a2_anim a2_row_label a2_no" style="animation-delay:0.8s">
+        ✕ 无记忆
+        <span class="a2_row_inline_badge a2_badge a2_bad">重复劳动</span>
+      </div>
+      <div class="a2_steps">
+        <div class="a2_anim a2_step a2_no" style="animation-delay:1.0s">搜索</div>
+
+        <div class="a2_arrow" style="animation-delay:1.3s">
+          <span class="a2_arrow_line" style="animation-delay:1.3s"></span>
+        </div>
+
+        <div class="a2_anim a2_step a2_no" style="animation-delay:1.4s">读取</div>
+
+        <div class="a2_arrow">
+          <span class="a2_arrow_line" style="animation-delay:1.7s"></span>
+        </div>
+
+        <div class="a2_anim a2_step a2_no" style="animation-delay:1.8s">发现</div>
+
+        <div class="a2_arrow">
+          <span class="a2_arrow_line" style="animation-delay:2.1s"></span>
+        </div>
+
+        <div class="a2_anim a2_step a2_no" style="animation-delay:2.2s">分析</div>
+      </div>
+    </div>
+
+    <!-- 下行：有记忆 -->
+    <div class="a2_row">
+      <div class="a2_anim a2_row_label a2_yes" style="animation-delay:2.7s">
+        ✓ 有记忆
+        <span class="a2_row_inline_badge a2_badge a2_good">直接继续</span>
+      </div>
+      <div class="a2_steps">
+        <div class="a2_anim a2_step a2_yes" style="animation-delay:2.9s">读笔记</div>
+
+        <div class="a2_arrow">
+          <span class="a2_arrow_line" style="animation-delay:3.2s"></span>
+        </div>
+
+        <div class="a2_anim a2_step a2_yes" style="animation-delay:3.3s">扩展</div>
+      </div>
+    </div>
+
+  </div><!-- /.a2_compare -->
+
+  <!-- 右侧对比标注（宽屏显示） -->
+  <div class="a2_badge_wrap">
+    <div class="a2_anim a2_badge a2_bad"  style="animation-delay:2.5s">重复劳动</div>
+    <div class="a2_anim a2_badge a2_good" style="animation-delay:3.6s">直接继续</div>
+  </div>
+
+</div><!-- /.a2_stage --></div>
+      <p class="body-text reveal reveal-d4">Memory 的实现是客户端的：API 提供工具协议（<code style="color:#A78BFA">memory_20250818</code>），你实现存储后端。模型自己决定什么时候写、写什么——这不是你手动提取的摘要，而是模型在推理过程中主动记录的结构化笔记。auto-inject 的 system prompt 会引导模型「在做任何事之前先查看记忆目录」。</p>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">原文</span>
+          <p>To see the effect concretely, we run the agent across three sessions:
+1. Session 1 does the initial research pass and writes its findings to /memories.
+2. Session 2 (without memory) runs a follow-up task with an empty memory directory. It has to rediscover everything from scratch.
+3. Session 2 (with memory) runs the same follow-up task but with access to Session 1's saved files. It reads those first and builds on them instead of re-researching.</p>
+          <p>The comparison between the two Session 2 runs is where the memory benefit becomes visible.</p>
+          <p>Session 1 wrote to /memories:
+▸ aging_model_organisms_comparison.md (~2,999 tokens)
+  # Comparative Notes: Four Model Organisms in Aging Research
+  ## Source files read: /research/celegans_review.md, mouse_review.md, killifish_review.md, yeast_review.md
+  ## Session status: COMPLETE — all four reviews read, notes synthesised</p>
+          <p>The memory tool operates client-side: Claude makes tool calls to perform memory operations, and your application executes those operations locally. This gives you complete control over where and how the data is stored. The API provides the tool protocol and auto-injects a system prompt establishing the memory-checking behavior; you implement the storage backend.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+// ── 状态 ──
+var layerStack = ['layer-overview'];
+var transitioning = false;
+var layerNames = {
+  'layer-overview': '概览',
+  'layer-compaction-probe': 'Compaction 探针',
+  'layer-memory-sessions': 'Memory 跨 Session'
+};
+
+// ── IntersectionObserver ──
+var observers = new Map();
+
+function setupObserver(layerId) {
+  if (observers.has(layerId)) return;
+  var layer = document.getElementById(layerId);
+  var reveals = layer.querySelectorAll('.reveal, [class*="_stage"]');
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) { e.target.classList.add('visible'); }
+    });
+  }, { threshold: 0.15, root: layer });
+  reveals.forEach(function(el) { obs.observe(el); });
+  observers.set(layerId, obs);
+}
+
+function resetReveals(layerId) {
+  var layer = document.getElementById(layerId);
+  layer.querySelectorAll('.reveal').forEach(function(el) { el.classList.remove('visible'); });
+  layer.querySelectorAll('[class*="_stage"]').forEach(function(el) { el.classList.remove('visible'); });
+}
+
+function activateReveals(layerId) {
+  resetReveals(layerId);
+  if (observers.has(layerId)) { observers.get(layerId).disconnect(); observers.delete(layerId); }
+  requestAnimationFrame(function() { setupObserver(layerId); });
+}
+
+// ── 面包屑 ──
+function updateBreadcrumb() {
+  var bc = document.getElementById('breadcrumb');
+  bc.innerHTML = '';
+  layerStack.forEach(function(id, i) {
+    if (i > 0) {
+      var sep = document.createElement('span');
+      sep.className = 'sep'; sep.textContent = '>';
+      bc.appendChild(sep);
+    }
+    var span = document.createElement('span');
+    span.textContent = layerNames[id] || id;
+    if (i === layerStack.length - 1) { span.className = 'current'; }
+    else { span.addEventListener('click', function() { goBackTo(i); }); }
+    bc.appendChild(span);
+  });
+  var backBtn = document.getElementById('backBtn');
+  backBtn.style.display = layerStack.length > 1 ? 'flex' : 'none';
+  bc.style.left = layerStack.length > 1 ? '60px' : '16px';
+  var dots = document.getElementById('depthDots');
+  var depth = layerStack.length - 1;
+  dots.querySelectorAll('.dot').forEach(function(d, i) {
+    d.classList.toggle('active', i === depth);
+  });
+}
+
+// ── 转场：穿越进入 ──
+function drillDown(targetId, btnEl) {
+  if (transitioning) return;
+  transitioning = true;
+  var currentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var targetLayer = document.getElementById(targetId);
+  targetLayer.scrollTop = 0;
+  resetReveals(targetId);
+  targetLayer.style.visibility = 'visible';
+  var duration = 600;
+  currentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  currentLayer.style.transformOrigin = 'center center';
+  currentLayer.style.transform = 'scale(1.3)';
+  currentLayer.style.opacity = '0';
+  targetLayer.classList.add('active');
+  targetLayer.style.opacity = '0';
+  targetLayer.style.transform = 'scale(0.85)';
+  targetLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      targetLayer.style.opacity = '1';
+      targetLayer.style.transform = 'scale(1)';
+    });
+  });
+  setTimeout(function() {
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition = ''; currentLayer.style.transform = ''; currentLayer.style.opacity = '';
+    targetLayer.style.transition = ''; targetLayer.style.transform = '';
+    activateReveals(targetId);
+    transitioning = false;
+  }, duration + 50);
+  layerStack.push(targetId);
+  updateBreadcrumb();
+}
+
+// ── 转场：返回上层 ──
+function goBack() {
+  if (layerStack.length <= 1 || transitioning) return;
+  transitioning = true;
+  var currentId = layerStack.pop();
+  var parentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var parentLayer = document.getElementById(parentId);
+  var duration = 600;
+  currentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  currentLayer.style.transform = 'scale(0.85)';
+  currentLayer.style.opacity = '0';
+  parentLayer.classList.add('active');
+  parentLayer.style.transform = 'scale(1.3)';
+  parentLayer.style.opacity = '0';
+  parentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      parentLayer.style.transform = 'scale(1)';
+      parentLayer.style.opacity = '1';
+    });
+  });
+  setTimeout(function() {
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition = ''; currentLayer.style.transform = '';
+    currentLayer.style.opacity = ''; currentLayer.style.visibility = '';
+    parentLayer.style.transition = ''; parentLayer.style.transform = '';
+    transitioning = false;
+  }, duration + 50);
+  updateBreadcrumb();
+}
+
+function goBackTo(targetIndex) {
+  if (transitioning) return;
+  while (layerStack.length - 1 > targetIndex) {
+    if (layerStack.length <= 1) break;
+    goBack(); return;
+  }
+}
+
+// ── 原文对照 ──
+function toggleSource(btn) {
+  btn.classList.toggle('open');
+  btn.nextElementSibling.classList.toggle('open');
+}
+
+// ── 初始化 ──
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+</body>
+</html>

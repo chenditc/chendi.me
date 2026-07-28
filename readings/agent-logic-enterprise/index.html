@@ -1,0 +1,2018 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Agent Logic — 企业级 AI 的 GPS</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #ECFEFF;
+  --bg-act2: #FFF7ED;
+  --bg-act3: #F0FDFA;
+  --bg-dark: #0F172A;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --accent: #0E7490;
+  --accent2: #C2410C;
+  --warm: #D97706;
+  --danger: #DC2626;
+  --neutral: #94A3B8;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Noto Sans SC',sans-serif;-webkit-font-smoothing:antialiased;}
+.reveal{opacity:0;transform:translateY(40px);transition:opacity .8s ease,transform .8s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-d1{transition-delay:.15s;}
+.reveal-d2{transition-delay:.3s;}
+.reveal-d3{transition-delay:.45s;}
+.reveal-d4{transition-delay:.6s;}
+.big-statement{font-family:'Noto Serif SC',serif;font-size:clamp(22px,5.5vw,32px);font-weight:700;line-height:1.5;margin-bottom:32px;color:var(--text);}
+.body-text{font-size:16px;line-height:1.9;color:var(--text);margin-bottom:28px;}
+.body-text .hl{color:var(--accent);font-weight:500;}
+.body-text .hl2{color:var(--accent2);font-weight:500;}
+.body-text .hl-warm{color:var(--warm);font-weight:500;}
+.hook-line{font-size:15px;line-height:1.7;color:var(--accent);font-weight:600;margin-bottom:20px;}
+.layer{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;visibility:hidden;opacity:0;will-change:transform,opacity;scroll-snap-type:y proximity;}
+.layer.active{visibility:visible;opacity:1;}
+.feed-section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;scroll-snap-align:start;}
+.feed-section.dark{background:var(--bg-dark);color:#F1F5F9;}
+.feed-section.dark .body-text{color:#94A3B8;}
+.feed-section.dark .big-statement{color:#F1F5F9;}
+.feed-section.dark .hook-line{color:#67E8F9;}
+.section-inner{max-width:600px;width:100%;}
+.breadcrumb{position:fixed;top:16px;left:16px;z-index:1000;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);padding:8px 14px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,.1);font-size:13px;font-weight:500;}
+.breadcrumb span{color:var(--text-muted);cursor:pointer;transition:color .2s;}
+.breadcrumb span:hover{color:var(--accent);}
+.breadcrumb span.current{color:var(--text);cursor:default;}
+.breadcrumb .sep{color:#CBD5E1;margin:0 2px;cursor:default;}
+.back-btn{position:fixed;top:16px;left:16px;z-index:1001;width:38px;height:38px;border-radius:10px;border:none;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(0,0,0,.1);font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--text);transition:all .2s;}
+.back-btn:hover{background:var(--accent);color:#fff;}
+.depth-dots{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;gap:8px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);padding:8px 14px;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,.1);}
+.dot{width:10px;height:10px;border-radius:50%;background:#CBD5E1;transition:all .3s;}
+.dot.active{background:var(--accent);box-shadow:0 0 8px rgba(14,116,144,.5);transform:scale(1.2);}
+.drill-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:1.5px solid rgba(14,116,144,.3);border-radius:10px;background:transparent;color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;transition:all .25s;}
+.drill-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(14,116,144,.3);}
+.dark .drill-btn{border-color:rgba(103,232,249,.4);color:#67E8F9;}
+.dark .drill-btn:hover{background:#67E8F9;color:#0F172A;border-color:#67E8F9;}
+.source-panel{margin-top:24px;border-radius:12px;overflow:hidden;border:1px solid rgba(14,116,144,.15);background:rgba(14,116,144,.03);}
+.dark .source-panel{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.04);}
+.source-toggle{width:100%;padding:12px 16px;border:none;background:none;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);}
+.dark .source-toggle{color:#67E8F9;}
+.source-toggle:hover{background:rgba(14,116,144,.06);}
+.source-toggle .arrow{transition:transform .3s;font-size:11px;}
+.source-toggle.open .arrow{transform:rotate(90deg);}
+.source-body{max-height:0;overflow:hidden;transition:max-height .4s ease;padding:0 16px;}
+.source-body.open{max-height:2000px;padding:0 16px 16px;overflow-y:auto;}
+.source-body p{font-size:13px;line-height:1.8;color:var(--text-muted);margin:0 0 12px;white-space:pre-wrap;}
+.dark .source-body p{color:#94A3B8;}
+.source-body .source-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:8px;display:block;}
+.dark .source-body .source-label{color:#67E8F9;}
+.anim-stage{width:100%;display:flex;justify-content:center;margin:28px 0;min-height:180px;}
+.anim-stage > div{width:100%;}
+
+/* === S1 Animation === */
+
+.s1_stage {
+  max-width: 360px;
+  height: 260px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #334155;
+  overflow: hidden;
+  position: relative;
+}
+
+.s1_columns {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.s1_col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 140px;
+  opacity: 0;
+}
+
+.s1_col_left {
+  transform: translateX(-20px);
+}
+
+.s1_col_right {
+  transform: translateX(20px);
+}
+
+.s1_stage.visible .s1_col_left {
+  animation: s1_fadeInLeft 0.6s ease-out 0.2s forwards;
+}
+
+.s1_stage.visible .s1_col_right {
+  animation: s1_fadeInRight 0.6s ease-out 1.2s forwards;
+}
+
+.s1_circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 2.5px solid #94A3B8;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #f8fafc;
+}
+
+.s1_col_right .s1_circle {
+  border-color: #0E7490;
+}
+
+/* Scattered chaos dots for left circle */
+.s1_dot {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #94A3B8;
+  opacity: 0;
+}
+
+.s1_stage.visible .s1_dot {
+  animation: s1_dotAppear 0.3s ease-out forwards;
+}
+
+.s1_dot:nth-child(1) { top: 18px; left: 22px; animation-delay: 0.5s; }
+.s1_dot:nth-child(2) { top: 55px; left: 15px; animation-delay: 0.6s; }
+.s1_dot:nth-child(3) { top: 30px; left: 60px; animation-delay: 0.7s; }
+.s1_dot:nth-child(4) { top: 65px; left: 50px; animation-delay: 0.55s; }
+.s1_dot:nth-child(5) { top: 40px; left: 35px; animation-delay: 0.65s; }
+.s1_dot:nth-child(6) { top: 20px; left: 72px; animation-delay: 0.75s; }
+.s1_dot:nth-child(7) { top: 70px; left: 28px; animation-delay: 0.58s; }
+.s1_dot:nth-child(8) { top: 50px; left: 70px; animation-delay: 0.68s; }
+
+.s1_stage.visible .s1_dot:nth-child(1) { animation: s1_dotAppear 0.3s ease-out 0.5s forwards, s1_dotDrift 2s ease-in-out 0.8s infinite alternate; }
+.s1_stage.visible .s1_dot:nth-child(2) { animation: s1_dotAppear 0.3s ease-out 0.6s forwards, s1_dotDrift 2.2s ease-in-out 0.9s infinite alternate; }
+.s1_stage.visible .s1_dot:nth-child(3) { animation: s1_dotAppear 0.3s ease-out 0.7s forwards, s1_dotDrift 1.8s ease-in-out 1s infinite alternate; }
+.s1_stage.visible .s1_dot:nth-child(4) { animation: s1_dotAppear 0.3s ease-out 0.55s forwards, s1_dotDrift 2.4s ease-in-out 0.85s infinite alternate; }
+.s1_stage.visible .s1_dot:nth-child(5) { animation: s1_dotAppear 0.3s ease-out 0.65s forwards, s1_dotDrift 1.9s ease-in-out 0.95s infinite alternate; }
+.s1_stage.visible .s1_dot:nth-child(6) { animation: s1_dotAppear 0.3s ease-out 0.75s forwards, s1_dotDrift 2.1s ease-in-out 1.05s infinite alternate; }
+.s1_stage.visible .s1_dot:nth-child(7) { animation: s1_dotAppear 0.3s ease-out 0.58s forwards, s1_dotDrift 2.3s ease-in-out 0.88s infinite alternate; }
+.s1_stage.visible .s1_dot:nth-child(8) { animation: s1_dotAppear 0.3s ease-out 0.68s forwards, s1_dotDrift 2s ease-in-out 0.98s infinite alternate; }
+
+/* Warning icon for left */
+.s1_icon_warn {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 26px;
+  height: 26px;
+  background: #C2410C;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0;
+}
+
+.s1_stage.visible .s1_icon_warn {
+  animation: s1_popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) 0.9s forwards;
+}
+
+/* Checkmark icon for right */
+.s1_icon_check {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 26px;
+  height: 26px;
+  background: #0E7490;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0;
+}
+
+.s1_stage.visible .s1_icon_check {
+  animation: s1_popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) 1.9s forwards;
+}
+
+/* GPS path arrow through right circle */
+.s1_path {
+  position: absolute;
+  width: 70px;
+  height: 2.5px;
+  background: #0E7490;
+  top: 50%;
+  left: 15px;
+  transform: translateY(-50%) scaleX(0);
+  transform-origin: left center;
+  border-radius: 2px;
+}
+
+.s1_stage.visible .s1_path {
+  animation: s1_drawPath 0.5s ease-out 1.6s forwards;
+}
+
+.s1_path_head {
+  position: absolute;
+  right: -8px;
+  top: -4px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid #0E7490;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+
+/* Waypoint dots along the GPS path */
+.s1_waypoint {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #0E7490;
+  top: 50%;
+  transform: translateY(-50%) scale(0);
+}
+
+.s1_waypoint:nth-child(1) { left: 25px; }
+.s1_waypoint:nth-child(2) { left: 45px; }
+.s1_waypoint:nth-child(3) { left: 65px; }
+
+.s1_stage.visible .s1_waypoint:nth-child(1) { animation: s1_popIn 0.3s ease-out 1.7s forwards; }
+.s1_stage.visible .s1_waypoint:nth-child(2) { animation: s1_popIn 0.3s ease-out 1.8s forwards; }
+.s1_stage.visible .s1_waypoint:nth-child(3) { animation: s1_popIn 0.3s ease-out 1.9s forwards; }
+
+/* Labels */
+.s1_label {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.s1_col_left .s1_label { color: #94A3B8; }
+.s1_col_right .s1_label { color: #0E7490; }
+
+.s1_sublabel {
+  font-size: 10px;
+  color: #94A3B8;
+  margin-top: 2px;
+}
+
+/* Bottom arrow section */
+.s1_bottom {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #0E7490;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.s1_stage.visible .s1_bottom {
+  animation: s1_fadeUp 0.5s ease-out 2.3s forwards;
+}
+
+.s1_bottom_arrow {
+  display: inline-block;
+  font-size: 13px;
+}
+
+/* Keyframes */
+@keyframes s1_fadeInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes s1_fadeInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes s1_dotAppear {
+  from { opacity: 0; transform: scale(0); }
+  to { opacity: 0.6; transform: scale(1); }
+}
+
+@keyframes s1_dotDrift {
+  from { transform: translate(0, 0); }
+  to { transform: translate(3px, -3px); }
+}
+
+@keyframes s1_popIn {
+  from { opacity: 0; transform: translateY(-50%) scale(0); }
+  to { opacity: 1; transform: translateY(-50%) scale(1); }
+}
+
+@keyframes s1_drawPath {
+  from { transform: translateY(-50%) scaleX(0); }
+  to { transform: translateY(-50%) scaleX(1); }
+}
+
+@keyframes s1_fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === S2 Animation === */
+
+.s2_stage {
+  max-width: 360px;
+  height: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 18px 12px 12px;
+  box-sizing: border-box;
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  gap: 8px;
+}
+
+.s2_cards {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  justify-content: center;
+}
+
+.s2_card {
+  flex: 1;
+  max-width: 105px;
+  border: 1.5px solid #67E8F9;
+  border-radius: 10px;
+  background: rgba(103, 232, 249, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 6px 12px;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(18px) scale(0.92);
+  transition: none;
+}
+
+.s2_icon {
+  font-size: 28px;
+  line-height: 1;
+  color: #67E8F9;
+}
+
+.s2_label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #F1F5F9;
+  text-align: center;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.s2_banner {
+  width: 100%;
+  background: rgba(251, 146, 60, 0.12);
+  border: 1.5px solid #FB923C;
+  border-radius: 8px;
+  padding: 10px 14px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #FB923C;
+  letter-spacing: 0.01em;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: none;
+  margin-top: 4px;
+}
+
+/* Animations triggered by .visible */
+.s2_stage.visible .s2_card {
+  animation: s2_cardIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.s2_stage.visible .s2_card:nth-child(1) { animation-delay: 0s; }
+.s2_stage.visible .s2_card:nth-child(2) { animation-delay: 0.4s; }
+.s2_stage.visible .s2_card:nth-child(3) { animation-delay: 0.8s; }
+
+.s2_stage.visible .s2_banner {
+  animation: s2_bannerIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) 1.5s forwards;
+}
+
+@keyframes s2_cardIn {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes s2_bannerIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === S3 Animation === */
+
+.s3_stage {
+  max-width: 360px;
+  height: 280px;
+  background: #1E293B;
+  border-radius: 12px;
+  padding: 24px 20px;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  overflow: hidden;
+}
+
+.s3_row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.s3_stage.visible .s3_row {
+  animation: s3_fadeIn 0.5s ease-out forwards;
+}
+
+.s3_stage.visible .s3_row:nth-child(1) { animation-delay: 0s; }
+.s3_stage.visible .s3_row:nth-child(2) { animation-delay: 0.35s; }
+.s3_stage.visible .s3_row:nth-child(3) { animation-delay: 0.7s; }
+.s3_stage.visible .s3_row:nth-child(4) { animation-delay: 1.05s; }
+
+@keyframes s3_fadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.s3_label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #94A3B8;
+  letter-spacing: 0.02em;
+}
+
+.s3_bar_track {
+  height: 28px;
+  background: rgba(148, 163, 184, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.s3_bar_fill {
+  height: 100%;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  box-sizing: border-box;
+  width: 0%;
+  white-space: nowrap;
+}
+
+.s3_bar_fill.s3_cyan {
+  background: #0E7490;
+}
+
+.s3_bar_fill.s3_orange {
+  background: #C2410C;
+}
+
+.s3_stage.visible .s3_bar_fill {
+  animation: s3_barGrow 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.s3_stage.visible .s3_row:nth-child(1) .s3_bar_fill { animation-delay: 0.15s; --s3-bar-w: 88%; }
+.s3_stage.visible .s3_row:nth-child(2) .s3_bar_fill { animation-delay: 0.5s; --s3-bar-w: 78%; }
+.s3_stage.visible .s3_row:nth-child(3) .s3_bar_fill { animation-delay: 0.85s; --s3-bar-w: 80%; }
+.s3_stage.visible .s3_row:nth-child(4) .s3_bar_fill { animation-delay: 1.2s; --s3-bar-w: 95%; }
+
+@keyframes s3_barGrow {
+  to {
+    width: var(--s3-bar-w);
+  }
+}
+
+.s3_metric {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: 0.01em;
+}
+
+/* === S4 Animation === */
+
+.s4_stage {
+  max-width: 360px;
+  height: 280px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+  padding: 16px;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #F1F5F9;
+}
+
+/* --- Shared panel --- */
+.s4_panel {
+  background: rgba(148,163,184,0.08);
+  border: 1px solid rgba(148,163,184,0.15);
+  border-radius: 10px;
+  padding: 12px 14px;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: none;
+}
+
+.s4_stage.visible .s4_panel {
+  animation: s4_slideIn 0.55s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+
+.s4_stage.visible .s4_panel_two {
+  animation-delay: 0.5s;
+}
+
+@keyframes s4_slideIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Title row --- */
+.s4_title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #94A3B8;
+  margin-bottom: 8px;
+}
+
+/* === Panel 1: CUGA bars === */
+.s4_bars {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.s4_bar_row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.s4_bar_label {
+  font-size: 10px;
+  color: #94A3B8;
+  width: 52px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.s4_bar_track {
+  flex: 1;
+  height: 14px;
+  background: rgba(103,232,249,0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.s4_bar_fill {
+  height: 100%;
+  background: linear-gradient(90deg, #67E8F9, #67E8F9cc);
+  border-radius: 4px;
+  width: 0%;
+  transition: none;
+}
+
+.s4_stage.visible .s4_bar_fill {
+  animation: s4_grow 0.7s cubic-bezier(0.22,1,0.36,1) forwards;
+  animation-delay: 0.45s;
+}
+
+.s4_bar_fill_b { --s4-w: 62%; }
+.s4_bar_fill_c { --s4-w: 48%; }
+.s4_bar_fill_d { --s4-w: 55%; }
+
+@keyframes s4_grow {
+  to { width: var(--s4-w); }
+}
+
+.s4_bar_val {
+  font-size: 10px;
+  font-weight: 700;
+  color: #67E8F9;
+  width: 36px;
+  flex-shrink: 0;
+}
+
+.s4_acc_head {
+  font-size: 12px;
+  font-weight: 700;
+  color: #67E8F9;
+  margin-bottom: 6px;
+}
+
+/* === Panel 2: Maximo === */
+.s4_before_after {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.s4_time {
+  font-size: 13px;
+  font-weight: 600;
+  color: #94A3B8;
+}
+
+.s4_time_after {
+  color: #67E8F9;
+  font-weight: 700;
+}
+
+.s4_arrow {
+  font-size: 16px;
+  color: #67E8F9;
+  opacity: 0;
+}
+
+.s4_stage.visible .s4_arrow {
+  animation: s4_fadeIn 0.3s ease forwards;
+  animation-delay: 0.9s;
+}
+
+@keyframes s4_fadeIn {
+  to { opacity: 1; }
+}
+
+.s4_badges {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.s4_badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.s4_stage.visible .s4_badge {
+  animation: s4_pop 0.4s cubic-bezier(0.22,1,0.36,1) forwards;
+  animation-delay: 1.1s;
+}
+
+.s4_badge_cyan {
+  background: rgba(103,232,249,0.15);
+  color: #67E8F9;
+  border: 1px solid rgba(103,232,249,0.3);
+}
+
+.s4_badge_orange {
+  background: rgba(251,146,60,0.15);
+  color: #FB923C;
+  border: 1px solid rgba(251,146,60,0.3);
+}
+
+.s4_stage.visible .s4_badge_orange {
+  animation-delay: 1.25s;
+}
+
+@keyframes s4_pop {
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* === S5 Animation === */
+
+.s5_stage {
+  width: 360px;
+  max-width: 360px;
+  height: 280px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* Big circle - full context */
+.s5_big_circle {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: #94A3B8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+}
+.s5_big_circle span {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Arrow connector top */
+.s5_arrow_down {
+  position: absolute;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 0;
+  background: #94A3B8;
+  opacity: 0;
+}
+.s5_arrow_down::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: -4px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #94A3B8;
+}
+
+/* Filter box */
+.s5_filter {
+  position: absolute;
+  top: 120px;
+  left: 50%;
+  transform: translateX(-50%) scaleY(0);
+  width: 160px;
+  height: 48px;
+  background: #0E7490;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  opacity: 0;
+  transform-origin: top center;
+}
+.s5_filter_label {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: #0E7490;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.s5_filter_tag {
+  font-size: 9px;
+  color: #fff;
+  background: rgba(255,255,255,0.18);
+  padding: 2px 6px;
+  border-radius: 3px;
+  opacity: 0;
+}
+
+/* Arrow connector bottom */
+.s5_arrow_down2 {
+  position: absolute;
+  top: 168px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 0;
+  background: #0E7490;
+  opacity: 0;
+}
+.s5_arrow_down2::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: -4px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #0E7490;
+}
+
+/* Small circle - precise context */
+.s5_small_circle {
+  position: absolute;
+  top: 196px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #0E7490;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+}
+.s5_small_circle span {
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Result badges */
+.s5_badges {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+}
+.s5_badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 10px;
+  opacity: 0;
+  transform: translateY(8px);
+}
+.s5_badge_up {
+  color: #0E7490;
+  background: rgba(14,116,144,0.12);
+}
+.s5_badge_cost {
+  color: #C2410C;
+  background: rgba(194,65,12,0.12);
+}
+.s5_badge_hal {
+  color: #334155;
+  background: rgba(148,163,184,0.15);
+}
+
+/* === Animations === */
+@keyframes s5_pop_in {
+  0% { opacity: 0; transform: translateX(-50%) scale(0); }
+  60% { opacity: 1; transform: translateX(-50%) scale(1.08); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+@keyframes s5_arrow_grow {
+  0% { opacity: 0; height: 0; }
+  100% { opacity: 1; height: 18px; }
+}
+@keyframes s5_filter_open {
+  0% { opacity: 0; transform: translateX(-50%) scaleY(0); }
+  60% { opacity: 1; transform: translateX(-50%) scaleY(1.06); }
+  100% { opacity: 1; transform: translateX(-50%) scaleY(1); }
+}
+@keyframes s5_tag_in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes s5_badge_in {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Trigger on .visible */
+.s5_stage.visible .s5_big_circle {
+  animation: s5_pop_in 0.5s ease-out 0.1s forwards;
+}
+.s5_stage.visible .s5_arrow_down {
+  animation: s5_arrow_grow 0.35s ease-out 0.55s forwards;
+}
+.s5_stage.visible .s5_filter {
+  animation: s5_filter_open 0.45s ease-out 0.85s forwards;
+}
+.s5_stage.visible .s5_filter_tag:nth-child(2) {
+  animation: s5_tag_in 0.3s ease-out 1.2s forwards;
+}
+.s5_stage.visible .s5_filter_tag:nth-child(3) {
+  animation: s5_tag_in 0.3s ease-out 1.35s forwards;
+}
+.s5_stage.visible .s5_filter_tag:nth-child(4) {
+  animation: s5_tag_in 0.3s ease-out 1.5s forwards;
+}
+.s5_stage.visible .s5_arrow_down2 {
+  animation: s5_arrow_grow 0.35s ease-out 1.7s forwards;
+}
+.s5_stage.visible .s5_small_circle {
+  animation: s5_pop_in 0.5s ease-out 2.0s forwards;
+}
+.s5_stage.visible .s5_badge:nth-child(1) {
+  animation: s5_badge_in 0.35s ease-out 2.5s forwards;
+}
+.s5_stage.visible .s5_badge:nth-child(2) {
+  animation: s5_badge_in 0.35s ease-out 2.65s forwards;
+}
+.s5_stage.visible .s5_badge:nth-child(3) {
+  animation: s5_badge_in 0.35s ease-out 2.8s forwards;
+}
+
+/* === S6 Animation === */
+
+.s6_stage {
+  max-width: 360px;
+  height: 240px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+.s6_timeline_track {
+  display: flex;
+  align-items: center;
+  width: 320px;
+  position: relative;
+  margin-bottom: 28px;
+}
+
+.s6_line {
+  position: absolute;
+  top: 50%;
+  left: 24px;
+  right: 24px;
+  height: 2px;
+  background: #334155;
+  transform: translateY(-50%);
+}
+
+.s6_line_fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #94A3B8 0%, #67E8F9 100%);
+}
+
+.s6_stage.visible .s6_line_fill {
+  animation: s6_linegrow 2.5s ease-out 0.3s forwards;
+}
+
+@keyframes s6_linegrow {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+.s6_nodes {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.s6_node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: scale(0.3);
+}
+
+.s6_dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #94A3B8;
+  border: 2px solid #475569;
+  box-sizing: border-box;
+}
+
+.s6_node_label {
+  font-size: 10px;
+  color: #94A3B8;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.s6_node:nth-child(5) .s6_dot {
+  background: #67E8F9;
+  border-color: #67E8F9;
+  box-shadow: 0 0 8px rgba(103, 232, 249, 0.5);
+}
+
+.s6_node:nth-child(5) .s6_node_label {
+  color: #67E8F9;
+  font-weight: 600;
+}
+
+/* Sequential node appearance */
+.s6_stage.visible .s6_node:nth-child(1) {
+  animation: s6_nodeIn 0.4s ease-out 0.4s forwards;
+}
+.s6_stage.visible .s6_node:nth-child(2) {
+  animation: s6_nodeIn 0.4s ease-out 0.8s forwards;
+}
+.s6_stage.visible .s6_node:nth-child(3) {
+  animation: s6_nodeIn 0.4s ease-out 1.2s forwards;
+}
+.s6_stage.visible .s6_node:nth-child(4) {
+  animation: s6_nodeIn 0.4s ease-out 1.6s forwards;
+}
+.s6_stage.visible .s6_node:nth-child(5) {
+  animation: s6_nodeIn 0.4s ease-out 2.0s forwards, s6_pulse 2s ease-in-out 2.4s infinite;
+}
+
+@keyframes s6_nodeIn {
+  0% { opacity: 0; transform: scale(0.3); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s6_pulse {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(103, 232, 249, 0.3)); }
+  50% { filter: drop-shadow(0 0 12px rgba(103, 232, 249, 0.7)); }
+}
+
+/* Arrows between nodes */
+.s6_arrow {
+  font-size: 10px;
+  color: #475569;
+  align-self: center;
+  margin-top: -8px;
+  opacity: 0;
+}
+
+.s6_stage.visible .s6_arrow:nth-of-type(1) {
+  animation: s6_fadeIn 0.3s ease-out 0.7s forwards;
+}
+.s6_stage.visible .s6_arrow:nth-of-type(2) {
+  animation: s6_fadeIn 0.3s ease-out 1.1s forwards;
+}
+.s6_stage.visible .s6_arrow:nth-of-type(3) {
+  animation: s6_fadeIn 0.3s ease-out 1.5s forwards;
+}
+.s6_stage.visible .s6_arrow:nth-of-type(4) {
+  animation: s6_fadeIn 0.3s ease-out 1.9s forwards;
+}
+
+@keyframes s6_fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.s6_subtitle {
+  font-size: 11px;
+  color: #94A3B8;
+  text-align: center;
+  opacity: 0;
+  letter-spacing: 0.04em;
+}
+
+.s6_stage.visible .s6_subtitle {
+  animation: s6_fadeIn 0.6s ease-out 2.6s forwards;
+}
+
+.s6_subtitle span {
+  color: #67E8F9;
+}
+
+/* === A1 Animation === */
+
+.a1_stage {
+  max-width: 360px;
+  height: 280px;
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 20px 24px;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  box-sizing: border-box;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.a1_section {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.a1_stage.visible .a1_section1 {
+  animation: a1_fadeUp 0.5s ease-out 0.2s forwards;
+}
+
+.a1_stage.visible .a1_section2 {
+  animation: a1_fadeUp 0.5s ease-out 0.9s forwards;
+}
+
+@keyframes a1_fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.a1_title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 10px;
+  letter-spacing: 0.02em;
+}
+
+.a1_bars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.a1_barRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.a1_barLabel {
+  font-size: 10px;
+  color: #94A3B8;
+  width: 68px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.a1_barTrack {
+  flex: 1;
+  height: 18px;
+  background: #F1F5F9;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.a1_barFill {
+  height: 100%;
+  border-radius: 4px;
+  width: 0;
+}
+
+.a1_barFill--neutral {
+  background: #94A3B8;
+}
+
+.a1_barFill--accent {
+  background: #0E7490;
+}
+
+.a1_stage.visible .a1_barFill--long {
+  animation: a1_growBar 0.8s ease-out 0.5s forwards;
+}
+
+.a1_stage.visible .a1_barFill--short {
+  animation: a1_growBarShort 0.6s ease-out 0.7s forwards;
+}
+
+@keyframes a1_growBar {
+  to { width: 92%; }
+}
+
+@keyframes a1_growBarShort {
+  to { width: 3%; }
+}
+
+.a1_meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.a1_badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0E7490;
+  background: rgba(14, 116, 144, 0.1);
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.a1_badge--orange {
+  color: #C2410C;
+  background: rgba(194, 65, 12, 0.1);
+}
+
+.a1_metaText {
+  font-size: 10px;
+  color: #94A3B8;
+}
+
+/* Section 2: Coverage bar */
+.a1_coverageTrack {
+  flex: 1;
+  height: 18px;
+  background: #F1F5F9;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.a1_coverageBase {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 30%;
+  background: #94A3B8;
+  border-radius: 4px 0 0 4px;
+}
+
+.a1_coverageGrow {
+  position: absolute;
+  top: 0;
+  left: 30%;
+  height: 100%;
+  width: 0;
+  background: #0E7490;
+  border-radius: 0 4px 4px 0;
+}
+
+.a1_stage.visible .a1_coverageGrow {
+  animation: a1_growCoverage 1s ease-out 1.3s forwards;
+}
+
+@keyframes a1_growCoverage {
+  to { width: 40%; }
+}
+
+.a1_coverageLabel {
+  font-size: 9px;
+  color: #94A3B8;
+  margin-top: 2px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.a1_section2Meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* === A2 Animation === */
+
+.a2_stage {
+  max-width: 360px;
+  height: 300px;
+  background: #0F172A;
+  border-radius: 12px;
+  padding: 20px;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #F1F5F9;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Section 1: Incident Response */
+.a2_sec1,
+.a2_sec2 {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: none;
+}
+.a2_stage.visible .a2_sec1 {
+  animation: a2_fadeUp 0.5s ease-out 0.1s forwards;
+}
+.a2_stage.visible .a2_sec2 {
+  animation: a2_fadeUp 0.5s ease-out 0.6s forwards;
+}
+
+@keyframes a2_fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.a2_title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  color: #94A3B8;
+}
+.a2_title span {
+  color: #67E8F9;
+}
+
+/* Bar chart area */
+.a2_bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  height: 80px;
+  margin-bottom: 6px;
+}
+.a2_bar_group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+.a2_bar_track {
+  width: 100%;
+  height: 70px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.a2_bar {
+  width: 28px;
+  border-radius: 4px 4px 0 0;
+  transform-origin: bottom;
+}
+.a2_bar--baseline {
+  background: #94A3B8;
+  height: 16px;
+  opacity: 0;
+}
+.a2_bar--agent {
+  background: linear-gradient(180deg, #67E8F9, #22D3EE);
+  height: 64px;
+  opacity: 0;
+  box-shadow: 0 0 12px rgba(103,232,249,0.3);
+}
+.a2_stage.visible .a2_bar--baseline {
+  animation: a2_growBar 0.4s ease-out 0.3s forwards;
+}
+.a2_stage.visible .a2_bar--agent {
+  animation: a2_growBar 0.5s ease-out 0.5s forwards;
+}
+
+@keyframes a2_growBar {
+  from { opacity: 1; transform: scaleY(0); }
+  to { opacity: 1; transform: scaleY(1); }
+}
+
+.a2_bar_label {
+  font-size: 9px;
+  color: #94A3B8;
+  white-space: nowrap;
+}
+.a2_bar_label--cyan {
+  color: #67E8F9;
+  font-weight: 600;
+}
+.a2_multiplier {
+  font-size: 18px;
+  font-weight: 800;
+  color: #67E8F9;
+  position: absolute;
+  right: 0;
+  top: -2px;
+  opacity: 0;
+}
+.a2_stage.visible .a2_multiplier {
+  animation: a2_fadeUp 0.3s ease-out 0.7s forwards;
+}
+
+/* Badges row */
+.a2_badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  opacity: 0;
+}
+.a2_stage.visible .a2_badges {
+  animation: a2_fadeUp 0.3s ease-out 0.8s forwards;
+}
+.a2_badge {
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: rgba(103,232,249,0.12);
+  color: #67E8F9;
+  border: 1px solid rgba(103,232,249,0.2);
+  white-space: nowrap;
+}
+.a2_badge--token {
+  background: rgba(148,163,184,0.1);
+  color: #94A3B8;
+  border-color: rgba(148,163,184,0.2);
+}
+
+/* Section 2: Compliance */
+.a2_compliance {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.a2_comp_row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.a2_comp_track {
+  flex: 1;
+  height: 18px;
+  background: rgba(148,163,184,0.1);
+  border-radius: 9px;
+  overflow: hidden;
+  position: relative;
+}
+.a2_comp_fill--before {
+  height: 100%;
+  width: 0%;
+  background: #FCA5A5;
+  border-radius: 9px;
+  opacity: 0.7;
+}
+.a2_comp_fill--after {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #FB923C, #F59E0B);
+  border-radius: 9px;
+  box-shadow: 0 0 10px rgba(251,146,60,0.3);
+}
+.a2_stage.visible .a2_comp_fill--before {
+  animation: a2_fillBefore 0.4s ease-out 0.8s forwards;
+}
+.a2_stage.visible .a2_comp_fill--after {
+  animation: a2_fillAfter 0.6s ease-out 1.1s forwards;
+}
+
+@keyframes a2_fillBefore {
+  to { width: 8%; }
+}
+@keyframes a2_fillAfter {
+  to { width: 82%; }
+}
+
+.a2_comp_label {
+  font-size: 10px;
+  min-width: 52px;
+  text-align: right;
+  white-space: nowrap;
+}
+.a2_comp_label--danger {
+  color: #FCA5A5;
+}
+.a2_comp_label--accent2 {
+  color: #FB923C;
+  font-weight: 700;
+}
+
+.a2_comp_note {
+  font-size: 9px;
+  color: #94A3B8;
+  text-align: center;
+  opacity: 0;
+  margin-top: 2px;
+}
+.a2_stage.visible .a2_comp_note {
+  animation: a2_fadeUp 0.3s ease-out 1.4s forwards;
+}
+
+/* Bar chart wrapper for positioning */
+.a2_chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  position: relative;
+}
+
+</style>
+
+<meta name="description" content="从远古的太阳月亮到地图、指南针，再到今天的 GPS 导航，人类的每次探索都依赖一个好的「导引者」。IBM Research 的 Nicholas Fuller 认为，在 agentic AI 时代，AI agent 确实有潜力实现可扩展的企业 AI 采用，但要释放这个潜力，需要一个智能导引—— Agent Logic 。Agent Logic 是一组运行在 ">
+<link rel="canonical" href="https://chendi.me/readings/agent-logic-enterprise/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">←</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ Layer: Overview ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+<!-- S1: GPS 隐喻 -->
+<section class="feed-section" style="background:var(--bg-act1)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">不是 LLM 不够大，<br>是缺一个 GPS</h2>
+  <p class="body-text reveal reveal-d1">从远古的太阳月亮到地图、指南针，再到今天的 GPS 导航，人类的每次探索都依赖一个好的「导引者」。IBM Research 的 Nicholas Fuller 认为，在 agentic AI 时代，AI agent 确实有潜力实现可扩展的企业 AI 采用，但要释放这个潜力，需要一个智能导引——<span class="hl">Agent Logic</span>。Agent Logic 是一组运行在 agentic 层的软件原语——知识图谱、算法、程序分析库——它们有意识地将 LLM 引导向企业工作流的方向，同时<span class="hl2">缩小上下文空间</span>。这么做的结果是：在更高精度的同时，实现更低的 token 消耗和更少的幻觉。核心论点很清晰：单靠 LLM 的大上下文窗口并不能解决企业 AI 落地的问题，你还需要一个 GPS 来告诉 AI 该走哪条路。</p>
+  <div class="anim-stage reveal reveal-d2" id="s1-anim"><div class="s1_stage">
+  <div class="s1_columns">
+    <div class="s1_col s1_col_left">
+      <div class="s1_circle">
+        <span class="s1_dot"></span>
+        <span class="s1_dot"></span>
+        <span class="s1_dot"></span>
+        <span class="s1_dot"></span>
+        <span class="s1_dot"></span>
+        <span class="s1_dot"></span>
+        <span class="s1_dot"></span>
+        <span class="s1_dot"></span>
+        <span class="s1_icon_warn">?</span>
+      </div>
+      <div class="s1_label">LLM Only</div>
+      <div class="s1_sublabel">大上下文</div>
+    </div>
+    <div class="s1_col s1_col_right">
+      <div class="s1_circle">
+        <div class="s1_path"><div class="s1_path_head"></div></div>
+        <span class="s1_waypoint"></span>
+        <span class="s1_waypoint"></span>
+        <span class="s1_waypoint"></span>
+        <span class="s1_icon_check">&#10003;</span>
+      </div>
+      <div class="s1_label">LLM + Agent Logic</div>
+      <div class="s1_sublabel">大上下文</div>
+    </div>
+  </div>
+  <div class="s1_bottom">
+    <span>缩小上下文</span>
+    <span class="s1_bottom_arrow">→</span>
+    <span>更高精度</span>
+    <span class="s1_bottom_arrow">→</span>
+    <span>更低成本</span>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>Guides have aided humanity throughout history. Prehistoric civilizations understood that the sun and the moon could be used to navigate vast distances on land and the high seas. Over time, various journeys facilitated the production of maps for better planning and faster travel time to repeat destinations. Centuries later, the introduction of the compass enabled seagoers to achieve greater accuracy in seeking unexplored destinations. And today, GPS navigation apps guide our every journey. In today's world of agentic AI, AI agents, admittedly, have the potential to enable scalable AI adoption, transforming industries as we know them. However, an intelligent guide, agentic logic, is needed to realize this potential by fueling high agent quality, cost-effectiveness, and consequent end-user trust.</p>
+<p>Agent logic is software primitives, such as knowledge graphs, algorithms, program analysis libraries, which operate at the agentic layer (within an agent harness) and can intentionally steer the LLM in the direction of the enterprise workflow, reducing the context space. In so doing, have strong tendency to drive more performant outcomes in a more cost-effective manner.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S2: 企业工作流的挑战 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">企业工作流的三个特征：<br>为什么 LLM 独木难支</h2>
+  <p class="body-text reveal reveal-d1">大量研究指出 AI pilot 项目的失败率惊人地高，同时也强调 AI 必须在企业工作流的核心运作才能实现可扩展的采用。而企业工作流有三个关键特征：首先，它们是<span class="hl" style="color:#67E8F9">动态且长时间运行的</span>；其次，它们拥有大量 API、数据库和服务；第三，它们常常受到业务策略和/或法规的约束。要让 agent 在这样的环境中有效运作，自然需要扩大模型上下文——前沿 LLM 确实有这个能力，但代价是什么？更多的幻觉和更高的 token 消耗。团队提出的假设是：<span class="hl" style="color:#FB923C">能否给 LLM 装备一个智能导引（GPS），让 agentic AI 在工作流核心执行时产出更理想的结果？</span>他们通过在四个 IBM 产品中设计和构建配备 agent logic 的 agent 来验证这个假设，这些产品覆盖了企业软件交付生命周期中一些最具挑战性的任务。</p>
+  <div class="anim-stage reveal reveal-d2" id="s2-anim"><div class="s2_stage">
+  <div class="s2_cards">
+    <div class="s2_card">
+      <div class="s2_icon">&#x1F504;</div>
+      <div class="s2_label">动态长运行</div>
+    </div>
+    <div class="s2_card">
+      <div class="s2_icon">&#x1F5C4;</div>
+      <div class="s2_label">海量 API/DB</div>
+    </div>
+    <div class="s2_card">
+      <div class="s2_icon">&#x1F6E1;</div>
+      <div class="s2_label">策略与法规</div>
+    </div>
+  </div>
+  <div class="s2_banner">= 需要扩大上下文 → 幻觉 ↑ 成本 ↑</div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>Numerous studies have cited the overwhelming failure of AI pilots, while others have also highlighted the need for AI to operate at the core of enterprise workflows to enable scalable adoption. To better understand this phenomenon and the associated assertion, some analysis of enterprise workflows is required. These workflows are: A. Dynamic and long-running B. Possess a plethora of APIs, databases and services C. Oftentimes are constrained by business policies and/or regulations</p>
+<p>For an agent to function effectively, given these above characteristics, naturally demands an expanded model context, which state-of-the-art frontier LLMs certainly possess, but at what tradeoff? Increased hallucinations, token consumption? Further, can LLMs be equipped with an intelligent guide, GPS, to enable agentic AI execution at the core of the workflow, driving more desirable outcomes? We tested these hypotheses by designing and building agents, equipped with pertinent agent logic, for IBM offerings fully considering the above characteristics.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S3: 四大用例 -->
+<section class="feed-section" style="background:var(--bg-act2)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">四大用例，一个共同模式：<br>缩小上下文，放大效果</h2>
+  <p class="body-text reveal reveal-d1">团队在四个 IBM 产品领域验证了 agent logic 的效果，涵盖企业软件交付生命周期的关键环节。<span class="hl">遗留代码理解</span>（WCA4Z）：利用深度静态分析和预索引数据库，在百万行级 COBOL/PL1 应用上保持接近的理解精度，同时 token 消耗降低约 30 倍。<span class="hl">测试生成</span>（Aster）：通过程序分析输出引导 LLM，在 75+ 个 Java 应用上实现 20-45% 的覆盖率提升，token 消耗比同类最先进编码 agent 低最多 15 倍。<span class="hl">事件响应</span>（I3 Agent）：用知识图谱和可观测性数据驱动的编排，在 ITBench 上实现比 ReAct agent 高 4.0 倍的表现。<span class="hl">合规自动化</span>：多 agent 系统通过算法分解和自适应规划，将成功率从个位数提升到 80% 以上。每个用例的核心模式都是一样的：<span class="hl2">用 agent logic 缩小 LLM 的上下文空间，引导它走对的路</span>。</p>
+  <div class="anim-stage reveal reveal-d2" id="s3-anim"><div class="s3_stage">
+  <div class="s3_row">
+    <span class="s3_label">代码理解</span>
+    <div class="s3_bar_track">
+      <div class="s3_bar_fill s3_cyan"><span class="s3_metric">30x token 节省</span></div>
+    </div>
+  </div>
+  <div class="s3_row">
+    <span class="s3_label">测试生成</span>
+    <div class="s3_bar_track">
+      <div class="s3_bar_fill s3_cyan"><span class="s3_metric">20-45% 覆盖率 ↑</span></div>
+    </div>
+  </div>
+  <div class="s3_row">
+    <span class="s3_label">事件响应</span>
+    <div class="s3_bar_track">
+      <div class="s3_bar_fill s3_orange"><span class="s3_metric">4.0x 性能提升</span></div>
+    </div>
+  </div>
+  <div class="s3_row">
+    <span class="s3_label">合规自动化</span>
+    <div class="s3_bar_track">
+      <div class="s3_bar_fill s3_orange"><span class="s3_metric">个位数 → 80%+</span></div>
+    </div>
+  </div>
+</div></div>
+  <p class="hook-line reveal reveal-d3">30 倍 token 节省、4 倍性能提升、个位数到 80%——每个数字背后的技术细节在这里。</p>
+  <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-details',this)">深入用例详解 →</button>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>These offerings pertain to some of the most challenging tasks confronting subject matter experts who own various stages of the enterprise software delivery lifecycle for mission critical workloads including: Understanding applications written in legacy code (Cobol / PL/1), Expediting test generation for developers, Proactively responding to incidents and enabling shift-left app resiliency, Automating compliance modernization for critical environments.</p>
+<p>The above examples illustrate the impact of agent logic in reducing LLM context and guiding the LLM to traverse the core of the workflow in a highly performant and cost-effective manner.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S4: 案例研究 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">案例研究：医疗合规<br>与资产维护的实战验证</h2>
+  <p class="body-text reveal reveal-d1">除了四个产品用例外，团队还在两个外部场景中验证了 agent logic 的效果。第一个是<span class="hl" style="color:#67E8F9">医疗健康领域</span>的 CUGA（可配置通用 agent）：在健康保险客服场景中，CUGA 的策略系统实现了 policy-as-code 的 agent 治理——在运行时独立于模型 prompt 执行，无需微调。实验表明，这个策略系统在所有模型家族（Claude Opus 4.5、GPT OSS 120B、GPT 4.1）上都弥合了任务正确性的巨大差距，精度提升 15-26%。第二个是<span class="hl" style="color:#67E8F9">物理资产维护</span>的 Maximo Condition Insights：这个 agent 分析跨数千个资产和位置的大规模数据（传感器、工单、故障模式），使用结构化证据和验证循环来可靠地识别问题。在 IBM Global Real Estate 的内部试点中，它将资产分析时间从 15-20 分钟缩短到 15-30 秒——<span class="hl" style="color:#FB923C">97% 的改善</span>，同时 token 消耗降低了 77%。</p>
+  <div class="anim-stage reveal reveal-d2" id="s4-anim"><div class="s4_stage">
+  <!-- Panel 1: CUGA -->
+  <div class="s4_panel">
+    <div class="s4_title">CUGA 医疗</div>
+    <div class="s4_acc_head">准确率提升 15-26%</div>
+    <div class="s4_bars">
+      <div class="s4_bar_row">
+        <span class="s4_bar_label">Claude</span>
+        <div class="s4_bar_track"><div class="s4_bar_fill s4_bar_fill_b"></div></div>
+        <span class="s4_bar_val">+26%</span>
+      </div>
+      <div class="s4_bar_row">
+        <span class="s4_bar_label">GPT OSS</span>
+        <div class="s4_bar_track"><div class="s4_bar_fill s4_bar_fill_c"></div></div>
+        <span class="s4_bar_val">+15%</span>
+      </div>
+      <div class="s4_bar_row">
+        <span class="s4_bar_label">GPT 4.1</span>
+        <div class="s4_bar_track"><div class="s4_bar_fill s4_bar_fill_d"></div></div>
+        <span class="s4_bar_val">+20%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel 2: Maximo -->
+  <div class="s4_panel s4_panel_two">
+    <div class="s4_title">Maximo 资产维护</div>
+    <div class="s4_before_after">
+      <span class="s4_time">15-20 min</span>
+      <span class="s4_arrow">→</span>
+      <span class="s4_time s4_time_after">15-30 sec</span>
+    </div>
+    <div class="s4_badges">
+      <span class="s4_badge s4_badge_cyan">97% ↓</span>
+      <span class="s4_badge s4_badge_orange">token −77%</span>
+    </div>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>CUGA's (configurable generalist agent) policy system implements policy-as-code for agent governance, which is enforced at runtime independent of model prompts and without fine-tuning. Our experiments show that the agent's policy system closes large gaps in task correctness, enforcing structured workflows, safe intent handling, reliable tool usage, and controlled output formatting across all model families (Claude Opus – 4.5, GPT OSS 120B and GPT – 4.1) with accuracy improvements ranging from 15% to 26%. Authority is enforced through least-privilege disclosure, explicit compliance rules, and human escalation paths.</p>
+<p>Our recently launched Maximo Condition Insights agent analyzes large-scale asset data across thousands of assets and locations (sensors, work orders, failure modes and events analysis), using structured evidence and validation loops to reliably identify issues, prioritize actions and support decision-making with consistent, traceable insights. We have piloted this agent (using GPT OSS 120B) internally with IBM Global Real Estate (GRE), reducing asset analysis time from 15-20 mins to 15-30 sec (a 97% improvement) and increasing asset review coverage from ~1% to ~30% spanning over 120 sites and 6K physical assets.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S5: 核心模式 -->
+<section class="feed-section" style="background:var(--bg-act3)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">核心模式：<br>简化上下文，导航核心流程</h2>
+  <p class="body-text reveal reveal-d1">纵观所有六个验证场景——四个产品用例和两个案例研究——一个统一的模式浮现出来：<span class="hl">agent logic 通过在 agentic 层引入领域特定的软件原语，将 LLM 需要处理的上下文空间大幅缩小，同时精准引导它穿越企业工作流的核心路径</span>。具体来说，知识图谱为事件响应提供了结构化的实体关系网络，程序分析库为代码理解和测试生成提供了预索引的精确信息，算法分解和自适应规划为合规自动化提供了协调的多步骤执行框架，而 policy-as-code 为医疗场景提供了运行时治理保障。这些原语的共同点在于：它们不是替代 LLM，而是给 LLM 装上了<span class="hl2">一个聪明的 GPS</span>——告诉模型该看什么、该忽略什么、该沿着哪条路走。结果是：更高的精度、更低的 token 消耗、更少的幻觉，以及因此而来的用户信任。</p>
+  <div class="anim-stage reveal reveal-d2" id="s5-anim"><div class="s5_stage">
+  <div class="s5_big_circle"><span>全量上下文</span></div>
+  <div class="s5_arrow_down"></div>
+  <div class="s5_filter">
+    <span class="s5_filter_label">Agent Logic</span>
+    <span class="s5_filter_tag">知识图谱</span>
+    <span class="s5_filter_tag">程序分析</span>
+    <span class="s5_filter_tag">算法</span>
+  </div>
+  <div class="s5_arrow_down2"></div>
+  <div class="s5_small_circle"><span>精准上下文</span></div>
+  <div class="s5_badges">
+    <span class="s5_badge s5_badge_up">精度 ↑</span>
+    <span class="s5_badge s5_badge_cost">成本 ↓</span>
+    <span class="s5_badge s5_badge_hal">幻觉 ↓</span>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>The above examples illustrate the impact of agent logic in reducing LLM context and guiding the LLM to traverse the core of the workflow in a highly performant and cost-effective manner. Additionally, we have employed similar approaches to two case studies, one with a configurable generalist agent and runtime (CUGA) in the healthcare domain and another for the condition-based maintenance for physical assets with IBM Global Real Estate.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S6: 收束 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">可扩展采用的前提：<br>不是更大的模型，是更好的导引</h2>
+  <p class="body-text reveal reveal-d1">几个世纪以来，人类受益于各种导引——从太阳到 GPS——它们简化了我们的生活并扩展了我们的能力。随着技术的演进，导引工具也在进化，让我们能做更多事情、进一步缩小地球村的距离。在这个 agentic AI 时代，当我们寻求通过规模效应进一步提升社会效能时，应该延续这个趋势：<span class="hl" style="color:#67E8F9">充分利用 agent logic 来简化模型上下文，智能地穿越企业工作流的核心</span>。文章的结论明确而有力：只有这样，以最优运营成本实现真正可扩展的采用才具有可行性。这不是一个关于「大模型 vs 小模型」的争论——而是关于<span class="hl" style="color:#FB923C">有没有给 AI 一个好的 GPS</span>的问题。数据表明，配备 agent logic 的系统在精度、成本和可信度上全面胜出，而这正是企业大规模落地所需要的。</p>
+  <div class="anim-stage reveal reveal-d2" id="s6-anim"><div class="s6_stage">
+  <div class="s6_timeline_track">
+    <div class="s6_line">
+      <div class="s6_line_fill"></div>
+    </div>
+    <div class="s6_nodes">
+      <div class="s6_node">
+        <div class="s6_dot"></div>
+        <div class="s6_node_label">太阳</div>
+      </div>
+      <div class="s6_node">
+        <div class="s6_dot"></div>
+        <div class="s6_node_label">地图</div>
+      </div>
+      <div class="s6_node">
+        <div class="s6_dot"></div>
+        <div class="s6_node_label">指南针</div>
+      </div>
+      <div class="s6_node">
+        <div class="s6_dot"></div>
+        <div class="s6_node_label">GPS</div>
+      </div>
+      <div class="s6_node">
+        <div class="s6_dot"></div>
+        <div class="s6_node_label">Agent Logic</div>
+      </div>
+    </div>
+  </div>
+  <div class="s6_subtitle">导引进化 → <span>可扩展 AI 采用</span></div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>Summary and References: We have benefited from guides for centuries, which have simplified and enhanced our lives. As technology has evolved, so have the guides we use, enabling us to do more and further shrink our global village. With the arrival of this agentic AI era, as we seek to further enhance society in part through economies of scale, we should continue this trend and fully leverage agent logic to simplify model context and intelligently traverse enterprise workflows at the core; only then will scalable adoption at optimal operating costs be truly feasible.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+</div>
+
+<!-- ═══ Layer: Details ═══ -->
+<div class="layer" id="layer-details" data-depth="1">
+
+<!-- A1: 代码理解+测试生成 -->
+<section class="feed-section" style="background:var(--bg-act2)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">代码理解与测试生成：<br>程序分析的威力</h2>
+  <p class="body-text reveal reveal-d1"><span class="hl">遗留代码理解（WCA4Z）</span>：IBM watsonx Code Assistant for Z 的 App Insights agent 利用深度静态分析遍历整个应用程序，并将预索引的表示存储在跨越数百个相互关联的表的数据库 schema 中。这使得 agent 能够检索精确的、结构化的、已有的信息，从而提高回答准确率、减少 token 使用，并最大限度减少与语言模型（此例中为 Mistral Medium 250B）的反复交互。当应用于多个关键任务遗留系统（最多 100 万行代码和 1,000 个程序）时，这种方法保持了略优于基线的应用理解性能，同时 <span class="hl2">token 消耗降低约 30 倍</span>。<span class="hl">测试生成（Aster）</span>：Aster 是 IBM 专有的程序分析和数据前后处理库，用于基于 agent 的单元测试、集成测试、API 测试和变更测试生成。在 75+ 个 Java IBM CIO 应用（最多 560+ 个类和 67,000+ 行代码）上使用 Devstral 24B 模型运行，稳定结果显示行/分支/方法覆盖率提升 20-45%，与最先进的编码 agent 相比，在子集应用上表现更优，同时 <span class="hl2">token 消耗低最多 15 倍</span>。其原理在于：程序分析输出用来聚焦 LLM 的 prompt，加上用于增强覆盖率和修复运行时/编译错误的 sub-agent，实现了更高性能和显著成本降低的双重效果。</p>
+  <div class="anim-stage reveal reveal-d2" id="a1-anim"><div class="a1_stage">
+  <div class="a1_section a1_section1">
+    <div class="a1_title">WCA4Z 代码理解</div>
+    <div class="a1_bars">
+      <div class="a1_barRow">
+        <span class="a1_barLabel">LLM Only</span>
+        <div class="a1_barTrack">
+          <div class="a1_barFill a1_barFill--neutral a1_barFill--long"></div>
+        </div>
+      </div>
+      <div class="a1_barRow">
+        <span class="a1_barLabel">Agent Logic</span>
+        <div class="a1_barTrack">
+          <div class="a1_barFill a1_barFill--accent a1_barFill--short"></div>
+        </div>
+      </div>
+    </div>
+    <div class="a1_meta">
+      <span class="a1_badge">~30x token 节省</span>
+      <span class="a1_metaText">1M 行 COBOL</span>
+    </div>
+  </div>
+
+  <div class="a1_section a1_section2">
+    <div class="a1_title">Aster 测试生成</div>
+    <div class="a1_barRow">
+      <span class="a1_barLabel">覆盖率</span>
+      <div class="a1_coverageTrack">
+        <div class="a1_coverageBase"></div>
+        <div class="a1_coverageGrow"></div>
+      </div>
+    </div>
+    <div class="a1_coverageLabel">
+      <span></span>
+      <span>+20-45%</span>
+    </div>
+    <div class="a1_section2Meta">
+      <span class="a1_badge a1_badge--orange">15x 更少 token</span>
+      <span class="a1_metaText">75+ Java 应用</span>
+    </div>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>IBM watsonx Code assistant for Z (WCA4Z), used to accelerate mainframe application development and modernization with AI and automation, is equipped with an App Insights agent for application understanding - one of the primary focus areas of enterprise clients running mission critical workloads on IBM mainframe. This agent leverages deep static analysis across the application and stores a pre-indexed representation in a database schema that spans hundreds of interrelated tables with complex semantics, allowing the agent to retrieve precise, structured already available information; thereby improving answer accuracy, reducing token usage, and minimizing back-and-forth interactions with the language model (Mistral Medium 250B in this instance). This approach when applied to multiple mission-critical legacy systems (up to 1M lines of code and 1K programs) maintains marginally superior app understanding performance with ~30x lower token consumption than a baseline frontier LLM-only approach.</p>
+<p>Aster is an IBM proprietary program analysis and data pre- and post-processing-based library utilized for agent-based generation of unit, integration, API and change-based tests; which from analysis of multiple developer communities achieves higher developer ratings compared with various open-sourced tools or developer-written tests. Based on the latter and superior line, branch and method coverage benchmarks compared with similar open-sourced tools (integration tests) and zero-shot LLMs and coding agents (unit tests), all tested on open-sourced applications, we have been running Aster in pre-production mode on 75+ java IBM CIO applications (up to 560+ classes and 67K+ lines of code) with Devstral 24B model. Steady-state results to date yield +20% - 45% improvement in line, branch and method coverage coupled with superior performance on a subset of these apps compared with state-of-the-art coding agent with orders of magnitude lower token consumption (up to 15x).</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- A2: 事件响应+合规 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">事件响应与合规自动化：<br>知识图谱与自适应规划</h2>
+  <p class="body-text reveal reveal-d1"><span class="hl" style="color:#67E8F9">事件响应（I3 Agent）</span>：与代码相关的用例不同，运行时管理需要覆盖整个 IT 全栈。团队定义了一个知识图谱（KG），包含微服务、数据库/中间件服务、MELT 等实体，以及来自领域专家的嵌入式「部落知识」。通过将 LLM 限制在局部推理范围内处理非确定性结果，并使用可观测性驱动的方法，实现了跨 IT 栈和底层应用源代码的上下文空间缩减。在 ITBench 上，I3 agent 比 ReAct agent（GPT-5.1）实现了 <span class="hl" style="color:#FB923C">4.0 倍的改善</span>。团队还将此方法扩展到源代码分析（利用程序依赖图）和 bug 修复（利用推理扩展），在查找罪责微服务时实现了 3.0 倍的提升，同时分别消耗 3.7 倍和 5.9 倍更少的 token。<span class="hl" style="color:#67E8F9">合规自动化</span>：企业面临日益复杂和碎片化的合规要求。团队构建的多 agent 系统通过算法分解将复杂任务拆分为协调步骤，使用自适应规划、动态分解和带持续反馈的工作流排序来迭代识别修复方案。该系统比使用固定规划策略的先前 agent（Claude 4 Sonnet）性能高 1.3-2.0 倍，并将成功率从<span class="hl" style="color:#FB923C">个位数提升到 80% 以上</span>。</p>
+  <div class="anim-stage reveal reveal-d2" id="a2-anim"><div class="a2_stage">
+  <div class="a2_sec1">
+    <div class="a2_title"><span>I3</span> 事件响应</div>
+    <div class="a2_bars">
+      <div class="a2_bar_group">
+        <div class="a2_bar_track">
+          <div class="a2_bar a2_bar--baseline"></div>
+        </div>
+        <div class="a2_bar_label">ReAct</div>
+      </div>
+      <div class="a2_bar_group">
+        <div class="a2_bar_track">
+          <div class="a2_bar a2_bar--agent"></div>
+        </div>
+        <div class="a2_bar_label a2_bar_label--cyan">I3 Agent · 4.0x</div>
+      </div>
+    </div>
+    <div class="a2_badges">
+      <span class="a2_badge">代码分析 3.0x</span>
+      <span class="a2_badge">Bug修复 1.6x</span>
+      <span class="a2_badge a2_badge--token">3.7x-5.9x 更少 token</span>
+    </div>
+  </div>
+
+  <div class="a2_sec2">
+    <div class="a2_title" style="color:#FB923C;">合规自动化</div>
+    <div class="a2_compliance">
+      <div class="a2_comp_row">
+        <div class="a2_comp_label a2_comp_label--danger">个位数%</div>
+        <div class="a2_comp_track">
+          <div class="a2_comp_fill--before"></div>
+        </div>
+      </div>
+      <div class="a2_comp_row">
+        <div class="a2_comp_label a2_comp_label--accent2">80%+</div>
+        <div class="a2_comp_track">
+          <div class="a2_comp_fill--after"></div>
+        </div>
+      </div>
+      <div class="a2_comp_note">1.3-2.0x 优于固定规划</div>
+    </div>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>While LLM context for app-related use cases as described in 1 and 2 are "restricted" to the app source code, for runtime management of apps on deployed infra, the underlying IT full stack comes into play. Here we define a knowledge graph (KG) encompassing entities (microservices, database/middleware services, MELT etc.) coupled with embedded ("tribal") knowledge from domain experts. With such a graph and bounding the LLM to local bound reasoning for non-deterministic outcomes, an observability-driven approach is used to achieve reduced context space spanning the IT stack and underlying app source code (if relevant) for incident root cause analysis (and other use cases). With this approach, leveraging the equivalent Instana data model, we have seen the proprietary Instana "I3" (intelligent incident investigation) agent achieve up to 4.0x improvement over ReAct agent with GPT-5.1 as measured using ITBench.</p>
+<p>Enterprises face increasingly complex and fragmented compliance requirements, forcing teams to spend considerable time manually creating controls, assessments and remediation plans. No centralized knowledge exists and fixes are written manually, which introduces a risk of errors and security gaps. Because compliance work is complex and multi-step, it requires coordinated policy-driven automation across specialized agents rather than manual effort or simple AI prompts. Our multi-agent system automates compliance by algorithmically decomposing complex tasks into coordinated steps, using adaptive planning, dynamic decomposition and workflow sequencing with continuous feedback to iteratively identify fixes and expand assessments. It is 1.3 – 2.0x more performant than prior agents (Claude 4 Sonnet) using fixed planning strategies, as also measured using ITBench. This approach transforms compliance into a continuously guided self-correcting process and dramatically improves outcomes, especially in complex scenarios, boosting success rates from single digits to as high as +80% (Claude 4 Sonnet).</p>
+    </div>
+  </div>
+</div>
+</section>
+
+</div>
+
+<script>
+var layerStack=['layer-overview'];
+var transitioning=false;
+var layerNames={'layer-overview':'概览','layer-details':'用例详解'};
+var observers=new Map();
+
+function setupObserver(layerId){
+  if(observers.has(layerId))return;
+  var layer=document.getElementById(layerId);
+  var reveals=layer.querySelectorAll('.reveal,[class*="_stage"]');
+  var obs=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});
+  },{threshold:0.15,root:layer});
+  reveals.forEach(function(el){obs.observe(el);});
+  observers.set(layerId,obs);
+}
+function resetReveals(layerId){
+  var layer=document.getElementById(layerId);
+  layer.querySelectorAll('.reveal').forEach(function(el){el.classList.remove('visible');});
+  layer.querySelectorAll('[class*="_stage"]').forEach(function(el){el.classList.remove('visible');});
+}
+function activateReveals(layerId){
+  resetReveals(layerId);
+  if(observers.has(layerId)){observers.get(layerId).disconnect();observers.delete(layerId);}
+  requestAnimationFrame(function(){setupObserver(layerId);});
+}
+function updateBreadcrumb(){
+  var bc=document.getElementById('breadcrumb');
+  bc.innerHTML='';
+  layerStack.forEach(function(id,i){
+    if(i>0){var sep=document.createElement('span');sep.className='sep';sep.textContent='>';bc.appendChild(sep);}
+    var span=document.createElement('span');
+    span.textContent=layerNames[id]||id;
+    if(i===layerStack.length-1){span.className='current';}
+    else{span.addEventListener('click',function(){goBackTo(i);});}
+    bc.appendChild(span);
+  });
+  var backBtn=document.getElementById('backBtn');
+  backBtn.style.display=layerStack.length>1?'flex':'none';
+  bc.style.left=layerStack.length>1?'60px':'16px';
+  var dots=document.getElementById('depthDots');
+  var depth=layerStack.length-1;
+  dots.querySelectorAll('.dot').forEach(function(d,i){d.classList.toggle('active',i===depth);});
+}
+function drillDown(targetId){
+  if(transitioning)return;transitioning=true;
+  var currentId=layerStack[layerStack.length-1];
+  var currentLayer=document.getElementById(currentId);
+  var targetLayer=document.getElementById(targetId);
+  targetLayer.scrollTop=0;resetReveals(targetId);targetLayer.style.visibility='visible';
+  var d=600;
+  currentLayer.style.transition='transform '+d+'ms ease-out,opacity '+d+'ms ease-out';
+  currentLayer.style.transformOrigin='center center';currentLayer.style.transform='scale(1.3)';currentLayer.style.opacity='0';
+  targetLayer.classList.add('active');targetLayer.style.opacity='0';targetLayer.style.transform='scale(0.85)';
+  targetLayer.style.transition='transform '+d+'ms ease-out,opacity '+d+'ms ease-out';
+  requestAnimationFrame(function(){requestAnimationFrame(function(){targetLayer.style.opacity='1';targetLayer.style.transform='scale(1)';});});
+  setTimeout(function(){
+    currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';
+    targetLayer.style.transition='';targetLayer.style.transform='';
+    activateReveals(targetId);transitioning=false;
+  },d+50);
+  layerStack.push(targetId);updateBreadcrumb();
+}
+function goBack(){
+  if(layerStack.length<=1||transitioning)return;transitioning=true;
+  var currentId=layerStack.pop();var parentId=layerStack[layerStack.length-1];
+  var cl=document.getElementById(currentId);var pl=document.getElementById(parentId);
+  var d=600;
+  cl.style.transition='transform '+d+'ms ease-out,opacity '+d+'ms ease-out';
+  cl.style.transform='scale(0.85)';cl.style.opacity='0';
+  pl.classList.add('active');pl.style.transform='scale(1.3)';pl.style.opacity='0';
+  pl.style.transition='transform '+d+'ms ease-out,opacity '+d+'ms ease-out';
+  requestAnimationFrame(function(){requestAnimationFrame(function(){pl.style.transform='scale(1)';pl.style.opacity='1';});});
+  setTimeout(function(){
+    cl.classList.remove('active');cl.style.transition='';cl.style.transform='';cl.style.opacity='';cl.style.visibility='';
+    pl.style.transition='';pl.style.transform='';
+    transitioning=false;
+  },d+50);
+  updateBreadcrumb();
+}
+function goBackTo(targetIndex){
+  if(transitioning)return;
+  while(layerStack.length-1>targetIndex){if(layerStack.length<=1)break;goBack();return;}
+}
+function toggleSource(btn){btn.classList.toggle('open');btn.nextElementSibling.classList.toggle('open');}
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+</body>
+</html>

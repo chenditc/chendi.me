@@ -1,0 +1,3001 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Omnigent — 坐在所有 Agent 之上的 Meta-Harness</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #EFF6FF;
+  --bg-act2: #FFF7ED;
+  --bg-act3: #F5F3FF;
+  --bg-dark: #0F172A;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --accent: #1E40AF;
+  --accent2: #9A3412;
+  --warm: #F59E0B;
+  --danger: #DC2626;
+  --neutral: #94A3B8;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Noto Sans SC',sans-serif;-webkit-font-smoothing:antialiased;}
+.reveal{opacity:0;transform:translateY(40px);transition:opacity .8s ease,transform .8s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-d1{transition-delay:.15s;}
+.reveal-d2{transition-delay:.3s;}
+.reveal-d3{transition-delay:.45s;}
+.reveal-d4{transition-delay:.6s;}
+.big-statement{font-family:'Noto Serif SC',serif;font-size:clamp(22px,5.5vw,32px);font-weight:700;line-height:1.5;margin-bottom:32px;color:var(--text);}
+.body-text{font-size:16px;line-height:1.9;color:var(--text);margin-bottom:28px;}
+.body-text .hl{color:var(--accent);font-weight:500;}
+.body-text .hl2{color:var(--accent2);font-weight:500;}
+.body-text .hl-warm{color:var(--warm);font-weight:500;}
+.hook-line{font-size:15px;line-height:1.7;color:var(--accent);font-weight:600;margin-bottom:20px;}
+.layer{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;visibility:hidden;opacity:0;will-change:transform,opacity;scroll-snap-type:y proximity;}
+.layer.active{visibility:visible;opacity:1;}
+.feed-section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;scroll-snap-align:start;}
+.feed-section.dark{background:var(--bg-dark);color:#F1F5F9;}
+.feed-section.dark .body-text{color:#94A3B8;}
+.feed-section.dark .big-statement{color:#F1F5F9;}
+.feed-section.dark .hook-line{color:#93C5FD;}
+.section-inner{max-width:600px;width:100%;}
+.breadcrumb{position:fixed;top:16px;left:16px;z-index:1000;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);padding:8px 14px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,.1);font-size:13px;font-weight:500;}
+.breadcrumb span{color:var(--text-muted);cursor:pointer;transition:color .2s;}
+.breadcrumb span:hover{color:var(--accent);}
+.breadcrumb span.current{color:var(--text);cursor:default;}
+.breadcrumb .sep{color:#CBD5E1;margin:0 2px;cursor:default;}
+.back-btn{position:fixed;top:16px;left:16px;z-index:1001;width:38px;height:38px;border-radius:10px;border:none;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(0,0,0,.1);font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--text);transition:all .2s;}
+.back-btn:hover{background:var(--accent);color:#fff;}
+.depth-dots{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;gap:8px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);padding:8px 14px;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,.1);}
+.dot{width:10px;height:10px;border-radius:50%;background:#CBD5E1;transition:all .3s;}
+.dot.active{background:var(--accent);box-shadow:0 0 8px rgba(30,64,175,.5);transform:scale(1.2);}
+.drill-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:1.5px solid rgba(30,64,175,.3);border-radius:10px;background:transparent;color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;transition:all .25s;}
+.drill-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(30,64,175,.3);}
+.dark .drill-btn{border-color:rgba(147,197,253,.4);color:#93C5FD;}
+.dark .drill-btn:hover{background:#93C5FD;color:#0F172A;border-color:#93C5FD;}
+.source-panel{margin-top:24px;border-radius:12px;overflow:hidden;border:1px solid rgba(30,64,175,.15);background:rgba(30,64,175,.03);}
+.dark .source-panel{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.04);}
+.source-toggle{width:100%;padding:12px 16px;border:none;background:none;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);}
+.dark .source-toggle{color:#93C5FD;}
+.source-toggle:hover{background:rgba(30,64,175,.06);}
+.source-toggle .arrow{transition:transform .3s;font-size:11px;}
+.source-toggle.open .arrow{transform:rotate(90deg);}
+.source-body{max-height:0;overflow:hidden;transition:max-height .4s ease;padding:0 16px;}
+.source-body.open{max-height:2000px;padding:0 16px 16px;overflow-y:auto;}
+.source-body p{font-size:13px;line-height:1.8;color:var(--text-muted);margin:0 0 12px;white-space:pre-wrap;}
+.dark .source-body p{color:#94A3B8;}
+.source-body .source-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:8px;display:block;}
+.dark .source-body .source-label{color:#93C5FD;}
+.anim-stage{width:100%;display:flex;justify-content:center;margin:28px 0;min-height:180px;}
+.anim-stage > div{width:100%;}
+
+/* === S1 Animation === */
+
+/* ── S1 OG: 4-5 Agent Windows Copy-Paste Chaos ── */
+
+.s1og_stage {
+  max-width: 520px;
+  margin: 0 auto;
+  font-family: -apple-system, 'Helvetica Neue', 'Noto Sans SC', Arial, sans-serif;
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 28px 24px 32px;
+  position: relative;
+  overflow: hidden;
+  min-height: 320px;
+}
+
+/* All animated elements start invisible */
+.s1og_anim {
+  opacity: 0;
+}
+
+/* When stage is visible, run animations with fill-mode: forwards */
+.s1og_stage.visible .s1og_anim {
+  animation-fill-mode: forwards;
+}
+
+/* ── Layout: two columns ── */
+.s1og_layout {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+/* ── Agent grid (left) ── */
+.s1og_agents {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ── Tool boxes (right) ── */
+.s1og_tools {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ── Individual boxes ── */
+.s1og_box {
+  width: 96px;
+  height: 52px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  position: relative;
+}
+
+.s1og_box--agent {
+  background: #dbeafe;
+  border: 2px solid #1E40AF;
+  color: #1E40AF;
+}
+
+.s1og_box--tool {
+  background: #fde8d8;
+  border: 2px solid #9A3412;
+  color: #9A3412;
+  width: 72px;
+  height: 52px;
+}
+
+/* ── SVG arrow overlay ── */
+.s1og_arrows {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ── Bottom label ── */
+.s1og_label {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #9A3412;
+  letter-spacing: 0.04em;
+}
+
+/* ════════════════════════════════
+   KEYFRAMES
+   ════════════════════════════════ */
+
+@keyframes s1og_fadeIn {
+  from { opacity: 0; transform: scale(0.88); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s1og_popIn {
+  0%   { opacity: 0; transform: scale(0.7); }
+  70%  { opacity: 1; transform: scale(1.06); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s1og_drawDash {
+  from { opacity: 0; stroke-dashoffset: 200; }
+  to   { opacity: 1; stroke-dashoffset: 0; }
+}
+
+@keyframes s1og_drawDashTool {
+  from { opacity: 0; stroke-dashoffset: 240; }
+  to   { opacity: 1; stroke-dashoffset: 0; }
+}
+
+@keyframes s1og_slideLabel {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ════════════════════════════════
+   STEP 1 — four agent boxes
+   ════════════════════════════════ */
+
+.s1og_stage.visible .s1og_box--a1 {
+  animation: s1og_popIn 0.4s ease-out 0.2s forwards;
+}
+.s1og_stage.visible .s1og_box--a2 {
+  animation: s1og_popIn 0.4s ease-out 0.6s forwards;
+}
+.s1og_stage.visible .s1og_box--a3 {
+  animation: s1og_popIn 0.4s ease-out 1.0s forwards;
+}
+.s1og_stage.visible .s1og_box--a4 {
+  animation: s1og_popIn 0.4s ease-out 1.4s forwards;
+}
+
+/* ════════════════════════════════
+   STEP 2 — criss-cross arrows between agents
+   ════════════════════════════════ */
+
+.s1og_arrow {
+  fill: none;
+  stroke: #94A3B8;
+  stroke-width: 1.8;
+  stroke-dasharray: 5 3;
+  stroke-dashoffset: 200;
+  marker-end: url(#s1og_arrowHead);
+  opacity: 0;
+}
+
+.s1og_stage.visible .s1og_arr1 {
+  animation: s1og_drawDash 0.5s ease-out 2.0s forwards;
+}
+.s1og_stage.visible .s1og_arr2 {
+  animation: s1og_drawDash 0.5s ease-out 2.4s forwards;
+}
+.s1og_stage.visible .s1og_arr3 {
+  animation: s1og_drawDash 0.5s ease-out 2.8s forwards;
+}
+.s1og_stage.visible .s1og_arr4 {
+  animation: s1og_drawDash 0.5s ease-out 3.2s forwards;
+}
+
+/* ════════════════════════════════
+   STEP 3 — tool boxes (Docs, Slack)
+   ════════════════════════════════ */
+
+.s1og_stage.visible .s1og_box--t1 {
+  animation: s1og_popIn 0.4s ease-out 3.8s forwards;
+}
+.s1og_stage.visible .s1og_box--t2 {
+  animation: s1og_popIn 0.4s ease-out 4.2s forwards;
+}
+
+/* ════════════════════════════════
+   STEP 4 — arrows to tools
+   ════════════════════════════════ */
+
+.s1og_arrow--tool {
+  fill: none;
+  stroke: #9A3412;
+  stroke-width: 1.8;
+  stroke-dasharray: 5 3;
+  stroke-dashoffset: 240;
+  marker-end: url(#s1og_arrowHeadOrange);
+  opacity: 0;
+}
+
+.s1og_stage.visible .s1og_tarr1 {
+  animation: s1og_drawDashTool 0.5s ease-out 4.8s forwards;
+}
+.s1og_stage.visible .s1og_tarr2 {
+  animation: s1og_drawDashTool 0.5s ease-out 5.2s forwards;
+}
+.s1og_stage.visible .s1og_tarr3 {
+  animation: s1og_drawDashTool 0.5s ease-out 5.6s forwards;
+}
+.s1og_stage.visible .s1og_tarr4 {
+  animation: s1og_drawDashTool 0.5s ease-out 6.0s forwards;
+}
+
+/* ════════════════════════════════
+   STEP 5 — bottom label
+   ════════════════════════════════ */
+
+.s1og_stage.visible .s1og_bottomlabel {
+  animation: s1og_slideLabel 0.5s ease-out 6.6s forwards;
+}
+
+
+/* === S2 Animation === */
+
+/* ── S2 Omnigent Meta-Harness ── */
+
+.s2og_stage {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 32px 24px 40px;
+  font-family: -apple-system, 'Helvetica Neue', 'Noto Sans SC', Arial, sans-serif;
+  box-sizing: border-box;
+  background: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+/* All animated elements start hidden */
+.s2og_anim {
+  opacity: 0;
+}
+
+/* When stage becomes visible, apply forwards fill */
+.s2og_stage.visible .s2og_anim {
+  animation-fill-mode: forwards;
+}
+
+/* ── Keyframes ── */
+
+@keyframes s2og_fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s2og_riseBar {
+  from { opacity: 0; transform: scaleY(0); }
+  to   { opacity: 1; transform: scaleY(1); }
+}
+
+@keyframes s2og_riseCol {
+  from { opacity: 0; transform: scaleY(0) translateX(0); }
+  to   { opacity: 1; transform: scaleY(1) translateX(0); }
+}
+
+@keyframes s2og_fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Pillar columns container ── */
+
+.s2og_columns {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 0;
+  height: 148px;
+}
+
+.s2og_col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  width: 120px;
+}
+
+/* The rising bar inside each column */
+.s2og_col_bar {
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  background: #1E40AF;
+  transform-origin: bottom center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 16px;
+  box-sizing: border-box;
+  height: 120px;
+}
+
+/* Icon area inside column */
+.s2og_col_icon {
+  width: 28px;
+  height: 28px;
+  margin-bottom: 8px;
+  opacity: 0;
+}
+
+/* Column label */
+.s2og_col_label {
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+/* Sub-label under icon */
+.s2og_col_sublabel {
+  color: rgba(255,255,255,0.75);
+  font-size: 11px;
+  margin-top: 4px;
+  opacity: 0;
+  text-align: center;
+  line-height: 1.3;
+}
+
+/* ── Omnigent bar ── */
+
+.s2og_omni_wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 0;
+}
+
+.s2og_omni_bar {
+  width: 100%;
+  background: #9A3412;
+  border-radius: 6px;
+  padding: 11px 20px;
+  text-align: center;
+  transform-origin: center center;
+}
+
+.s2og_omni_label {
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.s2og_omni_sub {
+  color: rgba(255,255,255,0.7);
+  font-size: 11px;
+  margin-top: 2px;
+  letter-spacing: 0.04em;
+}
+
+/* ── Agent bar ── */
+
+.s2og_agent_wrap {
+  margin-top: 10px;
+}
+
+.s2og_agent_bar {
+  background: #94A3B8;
+  border-radius: 6px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.s2og_agent_label {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.s2og_agent_boxes {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  justify-content: flex-start;
+}
+
+.s2og_agent_box {
+  background: rgba(255,255,255,0.25);
+  border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 4px;
+  padding: 4px 10px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* ── SVG icons inline ── */
+.s2og_icon_svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+/* ── Animation assignments ── */
+
+/* Step 1 — Agent bar */
+.s2og_stage.visible .s2og_agent_bar {
+  animation: s2og_fadeUp 0.55s ease-out 0.2s forwards;
+}
+.s2og_stage.visible .s2og_agent_box {
+  animation: s2og_fadeIn 0.4s ease-out 0.5s forwards;
+}
+
+/* Step 2 — Omnigent bar */
+.s2og_stage.visible .s2og_omni_bar {
+  animation: s2og_fadeUp 0.55s ease-out 0.9s forwards;
+}
+
+/* Step 3 — Column: Composition */
+.s2og_stage.visible .s2og_col_bar--zuhé {
+  animation: s2og_riseCol 0.55s cubic-bezier(0.22,1,0.36,1) 1.3s forwards;
+}
+.s2og_stage.visible .s2og_col_bar--zuhé .s2og_col_icon,
+.s2og_stage.visible .s2og_col_bar--zuhé .s2og_col_label,
+.s2og_stage.visible .s2og_col_bar--zuhé .s2og_col_sublabel {
+  animation: s2og_fadeIn 0.35s ease-out 1.75s forwards;
+}
+
+/* Step 4 — Column: Control */
+.s2og_stage.visible .s2og_col_bar--kongzhi {
+  animation: s2og_riseCol 0.55s cubic-bezier(0.22,1,0.36,1) 1.7s forwards;
+}
+.s2og_stage.visible .s2og_col_bar--kongzhi .s2og_col_icon,
+.s2og_stage.visible .s2og_col_bar--kongzhi .s2og_col_label,
+.s2og_stage.visible .s2og_col_bar--kongzhi .s2og_col_sublabel {
+  animation: s2og_fadeIn 0.35s ease-out 2.15s forwards;
+}
+
+/* Step 5 — Column: Collaboration */
+.s2og_stage.visible .s2og_col_bar--xiezuo {
+  animation: s2og_riseCol 0.55s cubic-bezier(0.22,1,0.36,1) 2.1s forwards;
+}
+.s2og_stage.visible .s2og_col_bar--xiezuo .s2og_col_icon,
+.s2og_stage.visible .s2og_col_bar--xiezuo .s2og_col_label,
+.s2og_stage.visible .s2og_col_bar--xiezuo .s2og_col_sublabel {
+  animation: s2og_fadeIn 0.35s ease-out 2.55s forwards;
+}
+
+/* === S3 Animation === */
+
+/* ── S3 OG: 前沿正在向上移动一层 ── */
+
+.s3og_stage {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 32px 24px 40px;
+  font-family: -apple-system, 'Helvetica Neue', 'Noto Sans SC', Arial, sans-serif;
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+}
+
+/* All animated elements start invisible */
+.s3og_anim {
+  opacity: 0;
+}
+
+/* ── Keyframes ── */
+
+@keyframes s3og_fadein {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s3og_dim {
+  from { opacity: 1; }
+  to   { opacity: 0.28; }
+}
+
+@keyframes s3og_cross {
+  from { opacity: 0; transform: scale(0.4); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s3og_riserow {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s3og_line {
+  from { opacity: 0; stroke-dashoffset: 80; }
+  to   { opacity: 1; stroke-dashoffset: 0; }
+}
+
+@keyframes s3og_arrow {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Base layout ── */
+
+.s3og_label-top {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94A3B8;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+/* ── Step 1: bottom row — three single-model boxes ── */
+
+.s3og_row-single {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-bottom: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.s3og_box-single {
+  position: relative;
+  width: 120px;
+  border: 2px solid #94A3B8;
+  border-radius: 8px;
+  padding: 10px 8px;
+  text-align: center;
+  color: #94A3B8;
+  font-size: 13px;
+  font-weight: 500;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.s3og_box-single .s3og_sublabel {
+  font-size: 10px;
+  color: #94A3B8;
+  margin-top: 2px;
+  opacity: 0.7;
+}
+
+/* Step 2: dim the single boxes + show X marks */
+
+.s3og_cross {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 18px;
+  height: 18px;
+  background: #9A3412;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  z-index: 10;
+  opacity: 0;
+}
+
+/* ── SVG connector lines between rows ── */
+
+.s3og_connectors {
+  width: 100%;
+  height: 44px;
+  display: block;
+  position: relative;
+  z-index: 1;
+  overflow: visible;
+}
+
+.s3og_conn-line {
+  fill: none;
+  stroke: #1E40AF;
+  stroke-width: 1.5;
+  stroke-dasharray: 80;
+  stroke-dashoffset: 80;
+  opacity: 0;
+}
+
+/* ── Step 3: upper row — harness pairs ── */
+
+.s3og_row-harness {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.s3og_box-harness {
+  width: 140px;
+  border: 2px solid #1E40AF;
+  border-radius: 8px;
+  padding: 8px 8px 10px;
+  text-align: center;
+  background: #fff;
+  box-sizing: border-box;
+  opacity: 0;
+}
+
+.s3og_box-harness .s3og_pair-label {
+  font-size: 10px;
+  color: #94A3B8;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.s3og_box-harness .s3og_pair-title {
+  font-size: 12px;
+  color: #1E40AF;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+/* Step 4: horizontal connector inside harness row */
+
+.s3og_harness-links {
+  width: 100%;
+  height: 20px;
+  display: block;
+  overflow: visible;
+  position: relative;
+  z-index: 1;
+}
+
+.s3og_hconn-line {
+  fill: none;
+  stroke: #1E40AF;
+  stroke-width: 1.5;
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  opacity: 0;
+}
+
+/* Step 5: upward arrow + label */
+
+.s3og_frontier {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 28px;
+  opacity: 0;
+}
+
+.s3og_arrow-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.s3og_arrow-shaft {
+  width: 2px;
+  height: 28px;
+  background: #1E40AF;
+  border-radius: 1px;
+}
+
+.s3og_arrow-head {
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 10px solid #1E40AF;
+}
+
+.s3og_frontier-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1E40AF;
+  letter-spacing: 0.02em;
+}
+
+/* ── Animation triggers on .visible ── */
+
+/* Step 1 — single-model boxes fade in */
+.s3og_stage.visible .s3og_box-single {
+  animation: s3og_fadein 0.5s ease forwards;
+}
+.s3og_stage.visible .s3og_box-single:nth-child(1) { animation-delay: 0.2s; }
+.s3og_stage.visible .s3og_box-single:nth-child(2) { animation-delay: 0.5s; }
+.s3og_stage.visible .s3og_box-single:nth-child(3) { animation-delay: 0.8s; }
+
+/* Step 2 — boxes dim + crosses appear */
+.s3og_stage.visible .s3og_box-single {
+  animation: s3og_fadein 0.5s ease forwards, s3og_dim 0.4s ease 1.6s forwards;
+}
+.s3og_stage.visible .s3og_box-single:nth-child(1) {
+  animation: s3og_fadein 0.5s 0.2s ease forwards, s3og_dim 0.4s 1.6s ease forwards;
+}
+.s3og_stage.visible .s3og_box-single:nth-child(2) {
+  animation: s3og_fadein 0.5s 0.5s ease forwards, s3og_dim 0.4s 1.7s ease forwards;
+}
+.s3og_stage.visible .s3og_box-single:nth-child(3) {
+  animation: s3og_fadein 0.5s 0.8s ease forwards, s3og_dim 0.4s 1.8s ease forwards;
+}
+
+.s3og_stage.visible .s3og_cross {
+  animation: s3og_cross 0.3s ease forwards;
+}
+.s3og_stage.visible .s3og_box-single:nth-child(1) .s3og_cross { animation-delay: 1.7s; }
+.s3og_stage.visible .s3og_box-single:nth-child(2) .s3og_cross { animation-delay: 1.9s; }
+.s3og_stage.visible .s3og_box-single:nth-child(3) .s3og_cross { animation-delay: 2.1s; }
+
+/* Step 3 — harness boxes rise in */
+.s3og_stage.visible .s3og_box-harness {
+  animation: s3og_riserow 0.5s ease forwards;
+}
+.s3og_stage.visible .s3og_box-harness:nth-child(1) { animation-delay: 2.6s; }
+.s3og_stage.visible .s3og_box-harness:nth-child(2) { animation-delay: 3.0s; }
+.s3og_stage.visible .s3og_box-harness:nth-child(3) { animation-delay: 3.4s; }
+
+/* Step 4 — vertical connectors (SVG lines) */
+.s3og_stage.visible .s3og_conn-line {
+  animation: s3og_line 0.5s ease forwards;
+}
+.s3og_stage.visible .s3og_conn-line:nth-child(1) { animation-delay: 3.9s; }
+.s3og_stage.visible .s3og_conn-line:nth-child(2) { animation-delay: 4.0s; }
+.s3og_stage.visible .s3og_conn-line:nth-child(3) { animation-delay: 4.1s; }
+
+/* Horizontal connector lines */
+.s3og_stage.visible .s3og_hconn-line {
+  animation: s3og_line 0.5s ease forwards;
+}
+.s3og_stage.visible .s3og_hconn-line:nth-child(1) { animation-delay: 4.3s; }
+.s3og_stage.visible .s3og_hconn-line:nth-child(2) { animation-delay: 4.5s; }
+
+/* Step 5 — frontier arrow */
+.s3og_stage.visible .s3og_frontier {
+  animation: s3og_arrow 0.6s ease 5.0s forwards;
+}
+
+/* fill-mode: forwards on all .s3og_anim when visible */
+.s3og_stage.visible .s3og_anim {
+  animation-fill-mode: forwards;
+}
+
+/* === S4 Animation === */
+
+  .s4og_stage {
+    max-width: 520px;
+    margin: 0 auto;
+    font-family: -apple-system, 'Helvetica Neue', 'Noto Sans SC', Arial, sans-serif;
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 32px 24px 28px;
+    position: relative;
+    box-sizing: border-box;
+  }
+
+  .s4og_anim {
+    opacity: 0;
+  }
+
+  .s4og_stage.visible .s4og_anim {
+    animation-fill-mode: forwards;
+  }
+
+  /* ── Keyframes ── */
+
+  @keyframes s4og_fadein {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes s4og_slidein_left {
+    from { opacity: 0; transform: translateX(-14px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes s4og_slidein_right {
+    from { opacity: 0; transform: translateX(14px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes s4og_slidedown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes s4og_popin {
+    from { opacity: 0; transform: scale(0.7); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  /* ── Server bar (top) ── */
+
+  .s4og_server {
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  .s4og_server_bar {
+    display: inline-block;
+    background: #9A3412;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    padding: 5px 18px;
+    border-radius: 6px;
+  }
+
+  .s4og_server_label {
+    font-size: 11px;
+    color: #9A3412;
+    margin-top: 4px;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── Main row: input arrow | runner box | output arrow ── */
+
+  .s4og_row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    justify-content: center;
+  }
+
+  /* Input side */
+  .s4og_input {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 88px;
+  }
+
+  .s4og_input_label {
+    font-size: 12px;
+    color: #1E40AF;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .s4og_arrow_right {
+    width: 36px;
+    height: 0;
+    border-top: 2.5px solid #94A3B8;
+    position: relative;
+    margin: 0 2px;
+  }
+
+  .s4og_arrow_right::after {
+    content: '';
+    position: absolute;
+    right: -1px;
+    top: -6px;
+    border: 6px solid transparent;
+    border-left: 9px solid #94A3B8;
+  }
+
+  /* Runner box */
+  .s4og_runner_wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .s4og_runner_box {
+    border: 2.5px solid #1E40AF;
+    border-radius: 14px;
+    padding: 12px 16px 10px;
+    background: #fff;
+    min-width: 160px;
+    text-align: center;
+    position: relative;
+  }
+
+  .s4og_runner_title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1E40AF;
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+  }
+
+  /* Agent icons row */
+  .s4og_agents {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .s4og_agent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .s4og_agent_icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: #1E40AF;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 0.03em;
+  }
+
+  .s4og_agent_icon.orange {
+    background: #9A3412;
+  }
+
+  .s4og_agent_icon.neutral {
+    background: #94A3B8;
+  }
+
+  .s4og_agent_name {
+    font-size: 10px;
+    color: #94A3B8;
+    font-weight: 500;
+  }
+
+  /* Output side */
+  .s4og_output {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 88px;
+  }
+
+  .s4og_output_label {
+    font-size: 12px;
+    color: #9A3412;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  /* ── Animation assignments ── */
+
+  /* Step 1: input arrow + label — delay 0.4s */
+  .s4og_input {
+    animation-name: s4og_slidein_left;
+    animation-duration: 0.5s;
+    animation-delay: 0.4s;
+    animation-timing-function: ease-out;
+  }
+
+  /* Step 2: Runner box — delay 0.8s */
+  .s4og_runner_box {
+    animation-name: s4og_fadein;
+    animation-duration: 0.5s;
+    animation-delay: 0.8s;
+    animation-timing-function: ease-out;
+  }
+
+  /* Step 3a: CC agent — delay 1.2s */
+  .s4og_agent_cc {
+    animation-name: s4og_popin;
+    animation-duration: 0.35s;
+    animation-delay: 1.2s;
+    animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Step 3b: CX agent — delay 1.6s */
+  .s4og_agent_cx {
+    animation-name: s4og_popin;
+    animation-duration: 0.35s;
+    animation-delay: 1.6s;
+    animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Step 3c: Pi agent — delay 2.0s */
+  .s4og_agent_pi {
+    animation-name: s4og_popin;
+    animation-duration: 0.35s;
+    animation-delay: 2.0s;
+    animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Step 4: output arrow — delay 2.4s */
+  .s4og_output {
+    animation-name: s4og_slidein_right;
+    animation-duration: 0.5s;
+    animation-delay: 2.4s;
+    animation-timing-function: ease-out;
+  }
+
+  /* Step 5: Server bar — delay 2.8s */
+  .s4og_server {
+    animation-name: s4og_slidedown;
+    animation-duration: 0.5s;
+    animation-delay: 2.8s;
+    animation-timing-function: ease-out;
+  }
+
+  /* Arrow connectors animate with runner */
+  .s4og_arrow_in {
+    animation-name: s4og_fadein;
+    animation-duration: 0.4s;
+    animation-delay: 0.6s;
+    animation-timing-function: ease-out;
+  }
+
+  .s4og_arrow_out {
+    animation-name: s4og_fadein;
+    animation-duration: 0.4s;
+    animation-delay: 2.4s;
+    animation-timing-function: ease-out;
+  }
+
+  /* Caption */
+  .s4og_caption {
+    text-align: center;
+    font-size: 11px;
+    color: #94A3B8;
+    margin-top: 16px;
+    letter-spacing: 0.03em;
+    animation-name: s4og_fadein;
+    animation-duration: 0.5s;
+    animation-delay: 3.2s;
+    animation-timing-function: ease-out;
+  }
+
+/* === S5 Animation === */
+
+  .s5og_stage {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 24px 16px;
+    font-family: -apple-system, 'Helvetica Neue', 'Noto Sans SC', Arial, sans-serif;
+  }
+
+  .s5og_anim {
+    opacity: 0;
+  }
+
+  .s5og_stage.visible .s5og_anim {
+    animation-fill-mode: forwards;
+  }
+
+  @keyframes s5og_fadeSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .s5og_item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    animation-name: s5og_fadeSlideIn;
+    animation-duration: 0.4s;
+    animation-timing-function: ease-out;
+  }
+
+  .s5og_item:nth-child(1) { animation-delay: 0.0s; }
+  .s5og_item:nth-child(2) { animation-delay: 0.35s; }
+  .s5og_item:nth-child(3) { animation-delay: 0.70s; }
+  .s5og_item:nth-child(4) { animation-delay: 1.05s; }
+  .s5og_item:nth-child(5) { animation-delay: 1.40s; }
+  .s5og_item:nth-child(6) { animation-delay: 1.75s; }
+  .s5og_item:nth-child(7) { animation-delay: 2.10s; }
+
+  .s5og_index {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .s5og_item:nth-child(odd) .s5og_index {
+    background-color: #1E40AF;
+  }
+
+  .s5og_item:nth-child(even) .s5og_index {
+    background-color: #9A3412;
+  }
+
+  .s5og_pill {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border-left: 3px solid;
+    background-color: #f8fafc;
+  }
+
+  .s5og_item:nth-child(odd) .s5og_pill {
+    border-color: #1E40AF;
+  }
+
+  .s5og_item:nth-child(even) .s5og_pill {
+    border-color: #9A3412;
+  }
+
+  .s5og_label {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1e293b;
+    display: block;
+    line-height: 1.3;
+  }
+
+  .s5og_item:nth-child(odd) .s5og_label {
+    color: #1E40AF;
+  }
+
+  .s5og_item:nth-child(even) .s5og_label {
+    color: #9A3412;
+  }
+
+  .s5og_sublabel {
+    font-size: 12px;
+    color: #94A3B8;
+    display: block;
+    margin-top: 2px;
+    font-weight: 400;
+  }
+
+/* === S6 Animation === */
+
+/* S6 OG — Agent's Kubernetes Moment */
+
+.s6og_stage {
+  max-width: 520px;
+  margin: 0 auto;
+  font-family: -apple-system, 'Helvetica Neue', 'Noto Sans SC', Arial, sans-serif;
+  padding: 32px 20px 28px;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+/* All animated elements start hidden */
+.s6og_anim {
+  opacity: 0;
+}
+
+/* When stage is visible, trigger animations with fill-mode */
+.s6og_stage.visible .s6og_anim {
+  animation-fill-mode: forwards;
+}
+
+/* ── Keyframes ─────────────────────────────────────────── */
+
+@keyframes s6og_fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s6og_arrowSlide {
+  from { opacity: 0; transform: scaleX(0.3); }
+  to   { opacity: 1; transform: scaleX(1); }
+}
+
+@keyframes s6og_boxCollapse {
+  0%   { opacity: 0; transform: scale(0.6); }
+  60%  { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s6og_scatter {
+  0%   { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s6og_label {
+  from { opacity: 0; letter-spacing: 0.12em; }
+  to   { opacity: 1; letter-spacing: 0; }
+}
+
+/* ── Layout ────────────────────────────────────────────── */
+
+.s6og_row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+/* ── Section header ────────────────────────────────────── */
+
+.s6og_era {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94A3B8;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+/* ── Scattered small boxes ─────────────────────────────── */
+
+.s6og_scattered {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+  width: 110px;
+}
+
+.s6og_sbox {
+  font-size: 10px;
+  padding: 4px 7px;
+  border-radius: 4px;
+  border: 1.5px solid;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.s6og_sbox--infra {
+  border-color: #94A3B8;
+  color: #94A3B8;
+  background: #f8fafc;
+}
+
+.s6og_sbox--harness {
+  border-color: #9A3412;
+  color: #9A3412;
+  background: #fff7f5;
+}
+
+/* ── Transform arrow ───────────────────────────────────── */
+
+.s6og_arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.s6og_arrow-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.s6og_arrow-label--k8s  { color: #94A3B8; }
+.s6og_arrow-label--meta { color: #1E40AF; }
+
+.s6og_arrow-line {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.s6og_arrow-shaft {
+  width: 32px;
+  height: 2px;
+}
+
+.s6og_arrow-shaft--k8s  { background: #94A3B8; }
+.s6og_arrow-shaft--meta { background: #1E40AF; }
+
+.s6og_arrow-head {
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+
+.s6og_arrow-head--k8s  { border-left: 7px solid #94A3B8; }
+.s6og_arrow-head--meta { border-left: 7px solid #1E40AF; }
+
+/* ── Unified cluster / orchestration box ───────────────── */
+
+.s6og_cluster {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 110px;
+  height: 60px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.s6og_cluster--k8s {
+  border: 2px solid #94A3B8;
+  color: #64748B;
+  background: #f1f5f9;
+}
+
+.s6og_cluster-sub {
+  font-size: 9px;
+  font-weight: 400;
+  color: #94A3B8;
+  margin-top: 2px;
+}
+
+.s6og_cluster--meta {
+  border: 2px solid #1E40AF;
+  color: #1E40AF;
+  background: #eff6ff;
+}
+
+/* ── Divider ────────────────────────────────────────────── */
+
+.s6og_divider {
+  width: 100%;
+  height: 1px;
+  background: #e2e8f0;
+  margin: 18px 0 16px;
+}
+
+/* ── Footer label ───────────────────────────────────────── */
+
+.s6og_footer {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1E40AF;
+  line-height: 1.4;
+  padding-top: 4px;
+}
+
+/* ── Animation assignments ─────────────────────────────── */
+
+/* Row 1 — old infra era label */
+.s6og_era--infra {
+  animation-name: s6og_fadeIn;
+  animation-duration: 0.5s;
+  animation-delay: 0.0s;
+}
+
+/* Scattered infra boxes — stagger */
+.s6og_infra-scatter .s6og_sbox:nth-child(1) {
+  animation-name: s6og_scatter;
+  animation-duration: 0.4s;
+  animation-delay: 0.4s;
+}
+.s6og_infra-scatter .s6og_sbox:nth-child(2) {
+  animation-name: s6og_scatter;
+  animation-duration: 0.4s;
+  animation-delay: 0.6s;
+}
+.s6og_infra-scatter .s6og_sbox:nth-child(3) {
+  animation-name: s6og_scatter;
+  animation-duration: 0.4s;
+  animation-delay: 0.8s;
+}
+
+/* K8s arrow */
+.s6og_arrow--k8s {
+  transform-origin: left center;
+  animation-name: s6og_arrowSlide;
+  animation-duration: 0.5s;
+  animation-delay: 1.2s;
+}
+
+/* K8s cluster box */
+.s6og_cluster--k8s {
+  animation-name: s6og_boxCollapse;
+  animation-duration: 0.6s;
+  animation-delay: 1.7s;
+}
+
+/* Divider */
+.s6og_divider {
+  animation-name: s6og_fadeIn;
+  animation-duration: 0.5s;
+  animation-delay: 2.3s;
+}
+
+/* Row 2 — agent era label */
+.s6og_era--agent {
+  animation-name: s6og_fadeIn;
+  animation-duration: 0.5s;
+  animation-delay: 2.7s;
+}
+
+/* Scattered harness boxes — stagger */
+.s6og_harness-scatter .s6og_sbox:nth-child(1) {
+  animation-name: s6og_scatter;
+  animation-duration: 0.4s;
+  animation-delay: 3.1s;
+}
+.s6og_harness-scatter .s6og_sbox:nth-child(2) {
+  animation-name: s6og_scatter;
+  animation-duration: 0.4s;
+  animation-delay: 3.5s;
+}
+.s6og_harness-scatter .s6og_sbox:nth-child(3) {
+  animation-name: s6og_scatter;
+  animation-duration: 0.4s;
+  animation-delay: 3.9s;
+}
+
+/* Meta arrow */
+.s6og_arrow--meta {
+  transform-origin: left center;
+  animation-name: s6og_arrowSlide;
+  animation-duration: 0.5s;
+  animation-delay: 4.3s;
+}
+
+/* Omnigent cluster box */
+.s6og_cluster--meta {
+  animation-name: s6og_boxCollapse;
+  animation-duration: 0.6s;
+  animation-delay: 4.8s;
+}
+
+/* Footer */
+.s6og_footer {
+  animation-name: s6og_label;
+  animation-duration: 0.7s;
+  animation-delay: 5.5s;
+}
+
+/* === A1 Animation === */
+
+/* ============================================================
+   a1og — Three Multi-Harness Precedents Animation
+   ============================================================ */
+
+.a1og_stage {
+  max-width: 520px;
+  margin: 0 auto;
+  font-family: -apple-system, 'Helvetica Neue', 'Noto Sans SC', Arial, sans-serif;
+  padding: 24px 16px;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* All animated elements start invisible */
+.a1og_anim {
+  opacity: 0;
+}
+
+/* When stage is visible, trigger animations with fill-mode forwards */
+.a1og_stage.visible .a1og_anim {
+  animation-fill-mode: forwards;
+}
+
+/* ---- Keyframes ---- */
+
+@keyframes a1og_fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes a1og_fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes a1og_drawLine {
+  from {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes a1og_growDown {
+  from {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes a1og_bracketIn {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes a1og_arrowPulse {
+  0%   { opacity: 0; transform: translateY(8px); }
+  60%  { opacity: 1; transform: translateY(-2px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   Layout
+   ============================================================ */
+
+.a1og_layout {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.a1og_cards_col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.a1og_bracket_col {
+  width: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-left: 4px;
+}
+
+/* ============================================================
+   Cards
+   ============================================================ */
+
+.a1og_card {
+  border: 1.5px solid #94A3B8;
+  border-radius: 10px;
+  padding: 14px 16px 16px;
+  background: #fff;
+  position: relative;
+}
+
+/* Card 1 — Harvey */
+.a1og_card1 {
+  animation: a1og_fadeSlideUp 0.45s ease-out;
+  animation-delay: 0.0s;
+}
+.a1og_stage.visible .a1og_card1 {
+  animation-delay: 0.0s;
+}
+
+/* Card 2 — Anthropic */
+.a1og_card2 {
+  animation: a1og_fadeSlideUp 0.45s ease-out;
+}
+.a1og_stage.visible .a1og_card2 {
+  animation-delay: 0.4s;
+}
+
+/* Card 3 — Genie */
+.a1og_card3 {
+  animation: a1og_fadeSlideUp 0.45s ease-out;
+}
+.a1og_stage.visible .a1og_card3 {
+  animation-delay: 0.8s;
+}
+
+/* ---- Card label ---- */
+.a1og_card_label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94A3B8;
+  margin-bottom: 12px;
+}
+
+/* ============================================================
+   Node circles
+   ============================================================ */
+
+.a1og_nodes {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  position: relative;
+}
+
+.a1og_node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.a1og_circle {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.a1og_circle--primary {
+  width: 52px;
+  height: 52px;
+  background: #1E40AF;
+  font-size: 10px;
+}
+
+.a1og_circle--secondary {
+  width: 42px;
+  height: 42px;
+  background: #9A3412;
+  font-size: 10px;
+}
+
+.a1og_circle--neutral {
+  width: 42px;
+  height: 42px;
+  background: #94A3B8;
+  font-size: 10px;
+}
+
+.a1og_node_label {
+  font-size: 10px;
+  color: #1E40AF;
+  font-weight: 600;
+}
+
+/* ============================================================
+   Card 1 — Harvey: Worker -> Advisor (horizontal arrow)
+   ============================================================ */
+
+.a1og_c1_worker {
+  animation: a1og_fadeIn 0.35s ease-out;
+}
+.a1og_stage.visible .a1og_c1_worker {
+  animation-delay: 0.15s;
+}
+
+.a1og_c1_arrow {
+  animation: a1og_drawLine 0.3s ease-out;
+  transform-origin: left center;
+}
+.a1og_stage.visible .a1og_c1_arrow {
+  animation-delay: 0.35s;
+}
+
+.a1og_c1_advisor {
+  animation: a1og_fadeIn 0.35s ease-out;
+}
+.a1og_stage.visible .a1og_c1_advisor {
+  animation-delay: 0.5s;
+}
+
+/* ---- Horizontal connector ---- */
+.a1og_connector_h {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  min-width: 28px;
+}
+
+.a1og_arrow_h {
+  position: relative;
+  height: 2px;
+  background: #94A3B8;
+  flex: 1;
+}
+
+.a1og_arrow_h::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left: 7px solid #94A3B8;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+
+/* ============================================================
+   Card 2 — Anthropic: Lead -> three Subs (vertical tree)
+   ============================================================ */
+
+.a1og_tree {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.a1og_tree_top {
+  display: flex;
+  justify-content: center;
+}
+
+.a1og_tree_trunk {
+  width: 2px;
+  height: 16px;
+  background: #94A3B8;
+  transform-origin: top center;
+}
+
+.a1og_tree_branch_row {
+  display: flex;
+  align-items: flex-start;
+  position: relative;
+}
+
+/* horizontal bar across all three subs */
+.a1og_tree_hbar {
+  position: absolute;
+  top: 0;
+  left: calc(21px);   /* half of sub circle width = 42/2 = 21 */
+  right: calc(21px);
+  height: 2px;
+  background: #94A3B8;
+  transform-origin: left center;
+}
+
+.a1og_tree_sub_wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.a1og_tree_vbar {
+  width: 2px;
+  height: 14px;
+  background: #94A3B8;
+  transform-origin: top center;
+}
+
+.a1og_tree_subs {
+  display: flex;
+  gap: 10px;
+  position: relative;
+  padding-top: 2px;
+}
+
+.a1og_c2_lead {
+  animation: a1og_fadeIn 0.35s ease-out;
+}
+.a1og_stage.visible .a1og_c2_lead {
+  animation-delay: 0.55s;
+}
+
+.a1og_c2_trunk {
+  animation: a1og_growDown 0.25s ease-out;
+  transform-origin: top center;
+}
+.a1og_stage.visible .a1og_c2_trunk {
+  animation-delay: 0.75s;
+}
+
+.a1og_c2_hbar {
+  animation: a1og_drawLine 0.3s ease-out;
+  transform-origin: left center;
+}
+.a1og_stage.visible .a1og_c2_hbar {
+  animation-delay: 0.9s;
+}
+
+.a1og_c2_sub1 {
+  animation: a1og_fadeIn 0.3s ease-out;
+}
+.a1og_stage.visible .a1og_c2_sub1 {
+  animation-delay: 1.05s;
+}
+
+.a1og_c2_sub2 {
+  animation: a1og_fadeIn 0.3s ease-out;
+}
+.a1og_stage.visible .a1og_c2_sub2 {
+  animation-delay: 1.15s;
+}
+
+.a1og_c2_sub3 {
+  animation: a1og_fadeIn 0.3s ease-out;
+}
+.a1og_stage.visible .a1og_c2_sub3 {
+  animation-delay: 1.25s;
+}
+
+/* ============================================================
+   Card 3 — Genie: three circles side by side
+   ============================================================ */
+
+.a1og_genie_nodes {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+}
+
+.a1og_c3_n1 {
+  animation: a1og_fadeIn 0.35s ease-out;
+}
+.a1og_stage.visible .a1og_c3_n1 {
+  animation-delay: 0.95s;
+}
+
+.a1og_c3_n2 {
+  animation: a1og_fadeIn 0.35s ease-out;
+}
+.a1og_stage.visible .a1og_c3_n2 {
+  animation-delay: 1.1s;
+}
+
+.a1og_c3_n3 {
+  animation: a1og_fadeIn 0.35s ease-out;
+}
+.a1og_stage.visible .a1og_c3_n3 {
+  animation-delay: 1.25s;
+}
+
+/* ============================================================
+   Right bracket + label
+   ============================================================ */
+
+.a1og_bracket_svg {
+  animation: a1og_bracketIn 0.4s ease-out;
+}
+.a1og_stage.visible .a1og_bracket_svg {
+  animation-delay: 1.4s;
+}
+
+.a1og_bracket_label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #1E40AF;
+  text-align: center;
+  line-height: 1.3;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  margin-top: 6px;
+  letter-spacing: 0.04em;
+  animation: a1og_fadeIn 0.4s ease-out;
+}
+.a1og_stage.visible .a1og_bracket_label {
+  animation-delay: 1.6s;
+}
+
+/* ============================================================
+   Meta-Harness arrow + label
+   ============================================================ */
+
+.a1og_meta_row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 18px;
+  gap: 4px;
+}
+
+.a1og_meta_arrow_wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  animation: a1og_arrowPulse 0.5s ease-out;
+}
+.a1og_stage.visible .a1og_meta_arrow_wrap {
+  animation-delay: 1.8s;
+}
+
+.a1og_meta_arrow_shaft {
+  width: 36px;
+  height: 2px;
+  background: #1E40AF;
+}
+
+.a1og_meta_arrow_head {
+  width: 0;
+  height: 0;
+  border-left: 9px solid #1E40AF;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+}
+
+.a1og_meta_label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1E40AF;
+  letter-spacing: 0.04em;
+  animation: a1og_fadeIn 0.4s ease-out;
+}
+.a1og_stage.visible .a1og_meta_label {
+  animation-delay: 2.0s;
+}
+
+.a1og_meta_sub {
+  font-size: 10px;
+  color: #94A3B8;
+  margin-top: 2px;
+  animation: a1og_fadeIn 0.4s ease-out;
+}
+.a1og_stage.visible .a1og_meta_sub {
+  animation-delay: 2.2s;
+}
+
+/* === A2 Animation === */
+
+/* === A2 Roadmap Animation === */
+
+.a2og_stage {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 40px 20px 32px;
+  font-family: -apple-system, 'Helvetica Neue', 'Noto Sans SC', Arial, sans-serif;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* All animated elements start invisible */
+.a2og_anim {
+  opacity: 0;
+}
+
+/* When stage becomes visible, fire animations */
+.a2og_stage.visible .a2og_anim {
+  animation-fill-mode: forwards;
+}
+
+/* ── Step 1: Center vertical line ── */
+@keyframes a2og_line_grow {
+  from { transform: scaleY(0); opacity: 0; }
+  to   { transform: scaleY(1); opacity: 1; }
+}
+
+.a2og_center_line {
+  position: absolute;
+  left: 50%;
+  transform-origin: top center;
+  transform: translateX(-50%) scaleY(0);
+  width: 2px;
+  top: 56px;
+  height: calc(100% - 180px);
+  background: #94A3B8;
+}
+
+.a2og_stage.visible .a2og_center_line {
+  animation: a2og_line_grow 0.6s ease-out 0.2s forwards;
+}
+
+/* ── Timeline rows ── */
+.a2og_timeline {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 28px;
+}
+
+.a2og_row {
+  display: grid;
+  grid-template-columns: 1fr 32px 1fr;
+  align-items: center;
+  min-height: 64px;
+}
+
+/* Dot on center line */
+.a2og_dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #94A3B8;
+  justify-self: center;
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+
+.a2og_dot.blue  { background: #1E40AF; }
+.a2og_dot.orange { background: #9A3412; }
+
+/* Item cards */
+.a2og_item {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #fff;
+  max-width: 200px;
+}
+
+.a2og_item.left  { justify-self: end; text-align: right; }
+.a2og_item.right { justify-self: start; text-align: left; }
+
+.a2og_item.blue   { background: #1E40AF; }
+.a2og_item.orange { background: #9A3412; }
+
+/* Sub-label inside item */
+.a2og_item_sub {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+/* ── Pop-in keyframes (left / right) ── */
+@keyframes a2og_pop_left {
+  from { opacity: 0; transform: translateX(18px) scale(0.88); }
+  60%  { transform: translateX(-3px) scale(1.03); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes a2og_pop_right {
+  from { opacity: 0; transform: translateX(-18px) scale(0.88); }
+  60%  { transform: translateX(3px) scale(1.03); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes a2og_pop_dot {
+  from { opacity: 0; transform: scale(0); }
+  70%  { transform: scale(1.3); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes a2og_fade_up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Step 2: Left — GEPA (delay 0.8s) */
+.a2og_dot_1 { animation-delay: 0.8s; }
+.a2og_item_1 { animation-delay: 0.9s; }
+
+.a2og_stage.visible .a2og_dot_1 {
+  animation: a2og_pop_dot 0.4s ease-out 0.8s forwards;
+}
+.a2og_stage.visible .a2og_item_1 {
+  animation: a2og_pop_left 0.45s ease-out 0.9s forwards;
+}
+
+/* Step 3: Right — MemEx (delay 1.3s) */
+.a2og_stage.visible .a2og_dot_2 {
+  animation: a2og_pop_dot 0.4s ease-out 1.3s forwards;
+}
+.a2og_stage.visible .a2og_item_2 {
+  animation: a2og_pop_right 0.45s ease-out 1.4s forwards;
+}
+
+/* Step 4: Left — MCP (delay 1.8s) */
+.a2og_stage.visible .a2og_dot_3 {
+  animation: a2og_pop_dot 0.4s ease-out 1.8s forwards;
+}
+.a2og_stage.visible .a2og_item_3 {
+  animation: a2og_pop_left 0.45s ease-out 1.9s forwards;
+}
+
+/* Step 5: Right — 更多 Harness (delay 2.3s) */
+.a2og_stage.visible .a2og_dot_4 {
+  animation: a2og_pop_dot 0.4s ease-out 2.3s forwards;
+}
+.a2og_stage.visible .a2og_item_4 {
+  animation: a2og_pop_right 0.45s ease-out 2.4s forwards;
+}
+
+/* ── Step 6: Deploy bar ── */
+.a2og_deploy {
+  border: 1.5px solid #94A3B8;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.a2og_deploy_label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94A3B8;
+  margin-bottom: 8px;
+}
+
+.a2og_deploy_logos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+}
+
+.a2og_logo_pill {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1E40AF;
+  background: #EFF6FF;
+  border-radius: 5px;
+  padding: 3px 9px;
+  white-space: nowrap;
+}
+
+.a2og_stage.visible .a2og_deploy {
+  animation: a2og_fade_up 0.5s ease-out 2.9s forwards;
+}
+
+/* ── Step 7: Apache 2.0 label ── */
+.a2og_license {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #9A3412;
+  padding-top: 4px;
+}
+
+.a2og_stage.visible .a2og_license {
+  animation: a2og_fade_up 0.45s ease-out 3.4s forwards;
+}
+
+</style>
+
+<meta name="description" content="在 Databricks，我们大规模地使用和构建 Agent——从大规模编码到 Genie 这样的 Agent 产品。但尽管 Agent 的能力越来越强， 使用体验却很笨拙 。作为用户，我们经常同时开着 4-5 个 Agent（编码 Agent、Gemini 搜索等），把时间花在它们和 Docs、Slack 等协作工具之间 复制粘贴文本 。作为 Agent ">
+<link rel="canonical" href="https://chendi.me/readings/omnigent-meta-harness/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+<div id="breadcrumb" class="breadcrumb"></div>
+<button id="backBtn" class="back-btn" onclick="goBack()">←</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ 概览层 ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+<!-- S1: 5个Agent窗口 一堆复制粘贴 -->
+<section class="feed-section" style="background:var(--bg-act1)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">同时开着 4-5 个 Agent，<br>整天在它们之间复制粘贴——<br>这就是 2026 年的日常</h2>
+  <p class="body-text reveal reveal-d1">在 Databricks，我们大规模地使用和构建 Agent——从大规模编码到 Genie 这样的 Agent 产品。但尽管 Agent 的能力越来越强，<span class="hl">使用体验却很笨拙</span>。作为用户，我们经常同时开着 4-5 个 Agent（编码 Agent、Gemini 搜索等），把时间花在它们和 Docs、Slack 等协作工具之间<span class="hl2">复制粘贴文本</span>。作为 Agent 构建者，我们疲于追赶最新的 harness、SDK 和模型来改进自己的 Agent。问题的根源在于：<span class="hl">LLM 的能力被封装在 Agent harness 里</span>，而这些 harness 有着不同的接口，使得组合或替换它们变得困难重重。</p>
+  <div class="anim-stage reveal reveal-d2" id="s1-anim"><div class="s1og_stage ">
+
+  <!-- SVG layer for arrows — sized to match layout area -->
+  <svg class="s1og_arrows" viewBox="0 0 520 280" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <!-- neutral arrowhead -->
+      <marker id="s1og_arrowHead" markerWidth="7" markerHeight="7"
+              refX="5" refY="3.5" orient="auto">
+        <path d="M0,0 L0,7 L7,3.5 Z" fill="#94A3B8"/>
+      </marker>
+      <!-- orange arrowhead -->
+      <marker id="s1og_arrowHeadOrange" markerWidth="7" markerHeight="7"
+              refX="5" refY="3.5" orient="auto">
+        <path d="M0,0 L0,7 L7,3.5 Z" fill="#9A3412"/>
+      </marker>
+    </defs>
+
+    <!--
+      Agent box approximate centers (in SVG coords, viewBox 520x280):
+      Layout: padding 28px left, agents grid starts ~60px from left edge of 520
+      Agent grid: 2x2, each box 96x52, gap 10
+      col1 center x ≈ 60+48 = 108   col2 center x ≈ 60+96+10+48 = 214
+      row1 center y ≈ 40+26 = 66     row2 center y ≈ 40+52+10+26 = 128
+      A1=108,66  A2=214,66  A3=108,128  A4=214,128
+
+      Tool boxes right side: start after agents + gap
+      tools start x ≈ 60+96+96+10+10+20 = 292, each 72x52, gap 10
+      T1 center: 292+36=328, y≈66   T2 center: 328, y≈128
+    -->
+
+    <!-- Step 2: criss-cross between agents -->
+    <!-- A1 top-left -> A4 bottom-right (diagonal) -->
+    <path class="s1og_arrow s1og_arr1" d="M128,76 C160,95 180,105 194,118"/>
+    <!-- A2 top-right -> A3 bottom-left (diagonal) -->
+    <path class="s1og_arrow s1og_arr2" d="M194,76 C165,92 145,108 128,118"/>
+    <!-- A1 -> A2 (top row, left to right) -->
+    <path class="s1og_arrow s1og_arr3" d="M156,60 C173,54 185,54 196,60"/>
+    <!-- A3 -> A4 (bottom row) -->
+    <path class="s1og_arrow s1og_arr4" d="M156,134 C173,140 185,140 196,134"/>
+
+    <!-- Step 4: agent boxes to tool boxes -->
+    <!-- A1 -> T1 -->
+    <path class="s1og_arrow--tool s1og_tarr1" d="M204,62 C250,52 290,58 316,66"/>
+    <!-- A2 -> T1 -->
+    <path class="s1og_arrow--tool s1og_tarr2" d="M214,60 C255,45 295,50 316,63"/>
+    <!-- A3 -> T2 -->
+    <path class="s1og_arrow--tool s1og_tarr3" d="M204,130 C250,138 290,132 316,128"/>
+    <!-- A4 -> T2 -->
+    <path class="s1og_arrow--tool s1og_tarr4" d="M214,132 C256,142 294,136 316,130"/>
+  </svg>
+
+  <!-- Boxes layout -->
+  <div class="s1og_layout">
+
+    <!-- Agent grid: Step 1 -->
+    <div class="s1og_agents">
+      <div class="s1og_box s1og_box--agent s1og_anim s1og_box--a1">Claude</div>
+      <div class="s1og_box s1og_box--agent s1og_anim s1og_box--a2">Codex</div>
+      <div class="s1og_box s1og_box--agent s1og_anim s1og_box--a3">Gemini</div>
+      <div class="s1og_box s1og_box--agent s1og_anim s1og_box--a4">&#x81EA;&#x5B9A;&#x4E49;</div>
+    </div>
+
+    <!-- Tool boxes: Step 3 -->
+    <div class="s1og_tools">
+      <div class="s1og_box s1og_box--tool s1og_anim s1og_box--t1">Docs</div>
+      <div class="s1og_box s1og_box--tool s1og_anim s1og_box--t2">Slack</div>
+    </div>
+
+  </div>
+
+  <!-- Step 5: bottom label -->
+  <div class="s1og_label s1og_anim s1og_bottomlabel">
+    &#x590D;&#x5236;&#x7C98;&#x8D34;&#x7684;&#x65E5;&#x5E38;
+  </div>
+
+</div></div>
+  <p class="hook-line reveal reveal-d3">怎么解决？</p>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+      <p>At Databricks, we use and build agents extensively, from coding with them at scale to shipping agent products like Genie. But even though the capabilities of agents have gotten much better, working with them feels clunky. As users, we often have 4-5 agents open at once (coding agents, Gemini search, etc) and spend our time copy-pasting text between them and Docs, Slack, and other collaboration tools. And as agent builders, we're on a treadmill to improve our agents by combining the latest harnesses, SDKs and models. The problem is that LLM capabilities are wrapped into an agent harness, and these harnesses have different interfaces that make combining them or swapping them difficult.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S2: Meta-Harness：坐在所有Agent之上 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">Omnigent：<br>坐在你所有 Agent 之上的<br>Meta-Harness</h2>
+  <p class="body-text reveal reveal-d1">所以我们构建了 Omnigent：一个<span class="hl">meta-harness</span>，坐在你已经在用的 Agent 之上——Claude Code、Codex、Pi 或自定义 Agent——让它们成为一个更丰富系统中<span class="hl2">可互操作的组件</span>。Omnigent 瞄准的是单个 harness 力所不能及的问题，提供三大能力。<span class="hl">组合（Composition）</span>：在不重写代码的前提下组合多个模型、harness 和技术，一行改动就能在 Claude Code、Codex、Pi 之间切换。<span class="hl2">控制（Control）</span>：有状态的、上下文感知的策略，在 meta-harness 层而非 prompt 层追踪 Agent 行为、执行成本预算和权限等护栏。<span class="hl">协作（Collaboration）</span>：通过 URL 共享实时 Agent 会话，团队成员可以一起审查、评论和引导 Agent。今天我们以 <span class="hl2">Apache 2.0</span> 开源了 Omnigent。</p>
+  <div class="anim-stage reveal reveal-d2" id="s2-anim"><div class="s2og_stage">
+
+  <!-- Pillar columns sit above Omnigent bar -->
+  <div class="s2og_columns">
+
+    <!-- Composition -->
+    <div class="s2og_col">
+      <div class="s2og_col_bar s2og_col_bar--zuhé s2og_anim">
+        <!-- Gear icon -->
+        <svg class="s2og_col_icon s2og_anim" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        <span class="s2og_col_label s2og_anim">组合</span>
+        <span class="s2og_col_sublabel s2og_anim">Composition</span>
+      </div>
+    </div>
+
+    <!-- Control -->
+    <div class="s2og_col">
+      <div class="s2og_col_bar s2og_col_bar--kongzhi s2og_anim">
+        <!-- Shield icon -->
+        <svg class="s2og_col_icon s2og_anim" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <span class="s2og_col_label s2og_anim">控制</span>
+        <span class="s2og_col_sublabel s2og_anim">Control</span>
+      </div>
+    </div>
+
+    <!-- Collaboration -->
+    <div class="s2og_col">
+      <div class="s2og_col_bar s2og_col_bar--xiezuo s2og_anim">
+        <!-- People icon -->
+        <svg class="s2og_col_icon s2og_anim" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <span class="s2og_col_label s2og_anim">协作</span>
+        <span class="s2og_col_sublabel s2og_anim">Collaboration</span>
+      </div>
+    </div>
+
+  </div><!-- /.s2og_columns -->
+
+  <!-- Omnigent meta-harness bar -->
+  <div class="s2og_omni_wrap">
+    <div class="s2og_omni_bar s2og_anim">
+      <div class="s2og_omni_label">Omnigent</div>
+      <div class="s2og_omni_sub">Meta-Harness Layer</div>
+    </div>
+  </div>
+
+  <!-- Agent layer bar -->
+  <div class="s2og_agent_wrap">
+    <div class="s2og_agent_bar s2og_anim">
+      <span class="s2og_agent_label">Agent层</span>
+      <div class="s2og_agent_boxes">
+        <span class="s2og_agent_box s2og_anim">Claude Code</span>
+        <span class="s2og_agent_box s2og_anim">Codex</span>
+        <span class="s2og_agent_box s2og_anim">Pi</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.s2og_stage --></div>
+  <p class="hook-line reveal reveal-d3">为什么现在需要这一层？</p>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+      <p>So we built Omnigent: a meta-harness that sits above the agents you already use (Claude Code, Codex, Pi, or custom agents) and makes them interoperable parts of a richer system. Omnigent targets the problems where a single harness stops: it adds easy ways to compose multiple agents, control them with advanced policies, and collaborate live with teammates.</p>
+      <p>We believe people will soon work with agents through this new layer, the meta-harness. That's why today we're open sourcing Omnigent under Apache 2.0.</p>
+      <p>Composition. Combine multiple models, harnesses, and techniques without rewriting code, and switch between Claude Code, Codex, Pi, and your own agents with one-line changes.</p>
+      <p>Control. Stateful, contextual policies that track agent actions and enforce guardrails like cost budgets and permissions at the meta-harness layer, not via prompts.</p>
+      <p>Collaboration. Share live agent sessions via URL and review files in them together, so teammates can review, comment, and steer agents together in real time.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S3: 为什么需要这一层 -->
+<section class="feed-section" style="background:var(--bg-act2)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">最好的结果不再来自<br>单个模型+单个 Harness——<br>而是来自它们的组合</h2>
+  <p class="body-text reveal reveal-d1">Databricks 在 5000+ 人的工程团队中早期采用了编码 Agent，并为客户构建了数千个 Agent。这些经验让他们确信：<span class="hl">Agent 工程的前沿正在向上移动一层</span>。Harvey 让一个开源 worker 模型拥有了一个前沿 advisor 来调用，在质量和成本上<span class="hl2">击败了单一前沿模型</span>。Anthropic 将其研究产品构建为一个 lead agent 编排并行 subagent。Databricks 自己的 Genie 对规划、搜索和代码生成使用不同的 LLM。工程师们也在改变工作方式：不再一次只 prompt 一个 Agent，而是<span class="hl">设计驱动整个 Agent 团队的循环</span>。这些模式跨越多个 harness、模型和人，但每个 harness 只理解自己的会话。要组合、治理 Agent 并与他人协作，<span class="hl2">你需要一个位于 harness 之上的层</span>。</p>
+  <div class="anim-stage reveal reveal-d2" id="s3-anim"><div class="s3og_stage ">
+
+  <div class="s3og_label-top">当前范式</div>
+
+  <!-- Step 1 + 2: single-model row -->
+  <div class="s3og_row-single">
+
+    <div class="s3og_box-single">
+      单模型
+      <div class="s3og_sublabel">Harvey</div>
+      <div class="s3og_cross s3og_anim">X</div>
+    </div>
+
+    <div class="s3og_box-single">
+      单模型
+      <div class="s3og_sublabel">Anthropic</div>
+      <div class="s3og_cross s3og_anim">X</div>
+    </div>
+
+    <div class="s3og_box-single">
+      单模型
+      <div class="s3og_sublabel">Genie</div>
+      <div class="s3og_cross s3og_anim">X</div>
+    </div>
+
+  </div>
+
+  <!-- Step 4: vertical connector SVG -->
+  <svg class="s3og_connectors" viewBox="0 0 520 44" preserveAspectRatio="none">
+    <!-- left: single box 1 center ≈ x=99 → harness box 1 center ≈ x=90 -->
+    <line class="s3og_conn-line s3og_anim"
+          x1="99" y1="0" x2="90" y2="44" stroke-dasharray="48" stroke-dashoffset="48"/>
+    <!-- center: single box 2 ≈ x=260 → harness box 2 ≈ x=260 -->
+    <line class="s3og_conn-line s3og_anim"
+          x1="260" y1="0" x2="260" y2="44" stroke-dasharray="44" stroke-dashoffset="44"/>
+    <!-- right: single box 3 ≈ x=421 → harness box 3 ≈ x=430 -->
+    <line class="s3og_conn-line s3og_anim"
+          x1="421" y1="0" x2="430" y2="44" stroke-dasharray="48" stroke-dashoffset="48"/>
+  </svg>
+
+  <!-- Step 3: harness pairs row -->
+  <div class="s3og_row-harness">
+
+    <div class="s3og_box-harness s3og_anim">
+      <div class="s3og_pair-label">Harvey</div>
+      <div class="s3og_pair-title">worker<br>+ advisor</div>
+    </div>
+
+    <div class="s3og_box-harness s3og_anim">
+      <div class="s3og_pair-label">Anthropic</div>
+      <div class="s3og_pair-title">lead<br>+ subagents</div>
+    </div>
+
+    <div class="s3og_box-harness s3og_anim">
+      <div class="s3og_pair-label">Genie</div>
+      <div class="s3og_pair-title">规划 + 搜索<br>+ 生成</div>
+    </div>
+
+  </div>
+
+  <!-- Step 4: horizontal connectors between harness boxes -->
+  <svg class="s3og_harness-links" viewBox="0 0 520 20" preserveAspectRatio="none">
+    <!-- line from harness box 1 right edge ≈ x=160 to harness box 2 left edge ≈ x=190 -->
+    <line class="s3og_hconn-line s3og_anim"
+          x1="163" y1="10" x2="190" y2="10" stroke-dasharray="30" stroke-dashoffset="30"/>
+    <!-- line from harness box 2 right edge ≈ x=330 to harness box 3 left edge ≈ x=357 -->
+    <line class="s3og_hconn-line s3og_anim"
+          x1="330" y1="10" x2="357" y2="10" stroke-dasharray="30" stroke-dashoffset="30"/>
+  </svg>
+
+  <!-- Step 5: upward arrow + label -->
+  <div class="s3og_frontier s3og_anim">
+    <div class="s3og_arrow-wrap">
+      <div class="s3og_arrow-head"></div>
+      <div class="s3og_arrow-shaft"></div>
+    </div>
+    <div class="s3og_frontier-text">工程前沿上移</div>
+  </div>
+
+</div></div>
+  <p class="hook-line reveal reveal-d3">Harvey、Anthropic、Genie——三个先例具体怎么做的？</p>
+  <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-details',this)">深入了解 ↓</button>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+      <p>We adopted coding agents early across our 5,000+ member engineering team and built thousands of agents for customers. That experience convinced us that the frontier of agent engineering is moving up a level. The best results no longer come from a single model in a single harness: Harvey beat a frontier model on quality and cost by giving an open-source worker model a frontier advisor it can call, Anthropic built its research product as a lead agent orchestrating parallel subagents, and our own Genie uses different LLMs for planning, search, and code generation. Engineers are changing how they work, too: instead of prompting one agent at a time, they design loops that drive whole teams of agents.</p>
+      <p>These patterns span multiple harnesses, models, and people, but each harness only understands its own sessions. To combine agents, govern them, and work on them with other people, you need a layer above the harness. Omnigent is that layer.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S4: 统一接口：消息进 流式出 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">无论内部怎么调用 LLM，<br>用户看到的接口都一样：<br>消息进，流式输出</h2>
+  <p class="body-text reveal reveal-d1">Omnigent 在命令行 Agent 和 Agent SDK 之上引入了一个<span class="hl">通用接口</span>，让你可以轻松组合和互换它们。核心洞察是：无论每个 Agent harness 内部如何调用 LLM，<span class="hl2">面向用户的接口都是相同的</span>——消息和文件输入，文本流和工具调用输出。因此 Omnigent 构建了一个通用 API，同时包装终端编码 Agent（Claude Code、Codex、Pi 等）和 SDK（OpenAI Agents、Claude Agents SDK 等）。一个 <span class="hl">runner</span> 将任意 Agent 包装在沙箱会话中并提供统一 API；一个 <span class="hl2">server</span> 提供策略和共享功能，通过终端、应用和 Web API 暴露每个会话。</p>
+  <div class="anim-stage reveal reveal-d2" id="s4-anim"><div class="s4og_stage ">
+
+  <!-- Step 5: Server policy bar (top) -->
+  <div class="s4og_server s4og_anim">
+    <div class="s4og_server_bar">Server</div>
+    <div class="s4og_server_label">策略 + 共享</div>
+  </div>
+
+  <!-- Main row -->
+  <div class="s4og_row">
+
+    <!-- Step 1: Input -->
+    <div class="s4og_input s4og_anim">
+      <div class="s4og_input_label">消息 + 文件</div>
+    </div>
+
+    <!-- Arrow in -->
+    <div class="s4og_arrow_right s4og_arrow_in s4og_anim"></div>
+
+    <!-- Step 2 + 3: Runner box with agents -->
+    <div class="s4og_runner_wrap">
+      <div class="s4og_runner_box s4og_anim">
+        <div class="s4og_runner_title">Runner</div>
+        <div class="s4og_agents">
+          <!-- Step 3a -->
+          <div class="s4og_agent s4og_agent_cc s4og_anim">
+            <div class="s4og_agent_icon">CC</div>
+            <div class="s4og_agent_name">Claude Code</div>
+          </div>
+          <!-- Step 3b -->
+          <div class="s4og_agent s4og_agent_cx s4og_anim">
+            <div class="s4og_agent_icon orange">CX</div>
+            <div class="s4og_agent_name">Codex</div>
+          </div>
+          <!-- Step 3c -->
+          <div class="s4og_agent s4og_agent_pi s4og_anim">
+            <div class="s4og_agent_icon neutral">Pi</div>
+            <div class="s4og_agent_name">Pi</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Arrow out -->
+    <div class="s4og_arrow_right s4og_arrow_out s4og_anim"></div>
+
+    <!-- Step 4: Output -->
+    <div class="s4og_output s4og_anim">
+      <div class="s4og_output_label">流式输出</div>
+    </div>
+
+  </div>
+
+  <!-- Caption -->
+  <div class="s4og_caption s4og_anim">消息进，流式出 — 统一接口</div>
+
+</div></div>
+  <p class="hook-line reveal reveal-d3">在这个接口之上可以做什么？</p>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+      <p>Omnigent introduces a common interface above command-line agents and agent SDKs to let you easily combine and interchange them, and then focuses on the shared problems where a harness stops. The key insight is that however each agent harness calls into its LLM internally, the interface to users is the same: messages and files in, text streams and tool calls out. Thus we built a common API that wraps both terminal-based coding agents (Claude Code, Codex, Pi, etc) and SDKs (OpenAI Agents, Claude Agents SDK, etc).</p>
+      <p>Omnigent architecture: A runner wraps any agent in a sandboxed session with a uniform API. A server provides policies and sharing, and exposes every session over the terminal, the app, and web APIs.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S5: 七个关键能力 -->
+<section class="feed-section" style="background:var(--bg-act3)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">实时协作、动态安全策略、<br>成本管控、OS 沙箱、<br>多 Harness 编排——<br>七个关键能力</h2>
+  <p class="body-text reveal reveal-d1">在统一接口之上，Omnigent 提供了七个关键能力。<span class="hl">实时协作</span>：邀请他人查看你的 Agent 会话、对工作区文件评论甚至发送命令。<span class="hl2">多端访问</span>：连接到 Omnigent server 后，通过 Web、移动端、macOS 原生应用或 API 访问同一个 Agent。<span class="hl">云端执行</span>：在本地或 Modal、Daytona 等托管沙箱中启动任意 Agent。<span class="hl2">上下文安全策略</span>：超越简单的 allow/deny，追踪每个会话的动态状态来做更智能的决策——例如 Agent 从 npm 下载了新包后，要求 git push 前获得人工批准。<span class="hl">成本策略</span>：动态追踪每个会话的 LLM 开销，例如每花 $100 就暂停并询问。<span class="hl2">强 OS 沙箱</span>：灵活锁定 OS 访问，拦截和转换网络请求——例如不让 Agent 看到你的 GitHub token，只在出站代理的批准请求中注入。<span class="hl">多 Harness 编排</span>：用 YAML 定义自定义 Agent，一行改动就能跨 harness 移植，或在同一个 Agent 中组合不同 harness 的 subagent。</p>
+  <div class="anim-stage reveal reveal-d2" id="s5-anim"><div class="s5og_stage ">
+
+  <div class="s5og_item s5og_anim">
+    <div class="s5og_index">1</div>
+    <div class="s5og_pill">
+      <span class="s5og_label">实时协作</span>
+      <span class="s5og_sublabel">real-time collaboration</span>
+    </div>
+  </div>
+
+  <div class="s5og_item s5og_anim">
+    <div class="s5og_index">2</div>
+    <div class="s5og_pill">
+      <span class="s5og_label">多端访问</span>
+      <span class="s5og_sublabel">multiple interfaces</span>
+    </div>
+  </div>
+
+  <div class="s5og_item s5og_anim">
+    <div class="s5og_index">3</div>
+    <div class="s5og_pill">
+      <span class="s5og_label">云端执行</span>
+      <span class="s5og_sublabel">cloud execution</span>
+    </div>
+  </div>
+
+  <div class="s5og_item s5og_anim">
+    <div class="s5og_index">4</div>
+    <div class="s5og_pill">
+      <span class="s5og_label">动态安全</span>
+      <span class="s5og_sublabel">contextual security</span>
+    </div>
+  </div>
+
+  <div class="s5og_item s5og_anim">
+    <div class="s5og_index">5</div>
+    <div class="s5og_pill">
+      <span class="s5og_label">成本管控</span>
+      <span class="s5og_sublabel">cost policies</span>
+    </div>
+  </div>
+
+  <div class="s5og_item s5og_anim">
+    <div class="s5og_index">6</div>
+    <div class="s5og_pill">
+      <span class="s5og_label">OS 沙箱</span>
+      <span class="s5og_sublabel">OS sandbox</span>
+    </div>
+  </div>
+
+  <div class="s5og_item s5og_anim">
+    <div class="s5og_index">7</div>
+    <div class="s5og_pill">
+      <span class="s5og_label">YAML 编排</span>
+      <span class="s5og_sublabel">multi-harness authoring</span>
+    </div>
+  </div>
+
+</div></div>
+  <p class="hook-line reveal reveal-d3">这些只是 meta-harness 的冰山一角</p>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+      <p>Real-time collaboration: you can invite other people to view your agent session, comment on files in its workspace, or even send commands, so your sessions and working directories become the main place you collaborate.</p>
+      <p>Multiple interfaces to the same agent: once you connect an agent such as Claude Code to the Omnigent server, you can access it on the web, mobile, Mac OS native app, or APIs.</p>
+      <p>Cloud execution: launch any agent on your own machine or on hosted sandbox providers like Modal and Daytona, for safe collaboration in a hermetic environment.</p>
+      <p>Contextual security policies: Omnigent's security policies go beyond the simple "allow X / deny Y" of coding agents, to track dynamic state about each session and make smarter decisions. For example, you can say that after an agent downloads a new package from npm, it should require human approval to git push, or that it should only be able to write to docs it created, not any doc.</p>
+      <p>Cost policies: One of the things we track dynamically is each session's LLM cost. For example, you can ask Omnigent to pause an agent and ask to continue after every $100 it spends.</p>
+      <p>Strong OS sandbox: In Omnigent, we include a flexible OS sandbox from our security team with the ability to flexibly lock down OS access and intercept and transform network requests (e.g., don't let an agent ever see your GitHub security token, but instead, inject it only in the egress proxy on approved requests).</p>
+      <p>Multi-harness authoring: Specify a custom agent as a YAML and port it across harnesses with a one-line change, or combine subagents using different harnesses in the same agent.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S6: Agent的Kubernetes时刻 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">Agent 正在经历<br>它们的 Kubernetes 时刻——<br>从管理进程到管理集群</h2>
+  <p class="body-text reveal reveal-d1">我们行业中许多最大的变革来自<span class="hl">抽象层的上移</span>：工程师曾经管理单个进程和服务器，现在通过 Kubernetes 和 Terraform 等云系统管理整个集群。Databricks 认为 Agent 今天正处于同样的转折点。<span class="hl2">每个 harness 都是自己的孤岛</span>，有自己的上下文、自己的控制和自己的运行方式——当你切换工具时，这些都不会跟着你走。而且许多问题<span class="hl">天然地跨越 harness</span>，包括组合、安全和协作。Meta-harness 把你的工作提升到任何单一 harness 之上，这样你的会话、策略和技能就<span class="hl2">无论哪个 Agent 或模型在运行都会跟着你</span>。模型和 harness 会随着领域演进而不断变化；你工作的那一层不应该变。</p>
+  <div class="anim-stage reveal reveal-d2" id="s6-anim"><div class="s6og_stage ">
+
+  <!-- Row 1: Infra era -->
+  <div class="s6og_era s6og_era--infra s6og_anim">过去 — 基础设施时代</div>
+
+  <div class="s6og_row">
+    <!-- Scattered infra boxes -->
+    <div class="s6og_scattered s6og_infra-scatter">
+      <div class="s6og_sbox s6og_sbox--infra s6og_anim">进程</div>
+      <div class="s6og_sbox s6og_sbox--infra s6og_anim">服务器</div>
+      <div class="s6og_sbox s6og_sbox--infra s6og_anim">容器</div>
+    </div>
+
+    <!-- K8s arrow -->
+    <div class="s6og_arrow s6og_arrow--k8s s6og_anim">
+      <span class="s6og_arrow-label s6og_arrow-label--k8s">K8s</span>
+      <div class="s6og_arrow-line">
+        <div class="s6og_arrow-shaft s6og_arrow-shaft--k8s"></div>
+        <div class="s6og_arrow-head s6og_arrow-head--k8s"></div>
+      </div>
+    </div>
+
+    <!-- Unified cluster -->
+    <div class="s6og_cluster s6og_cluster--k8s s6og_anim">
+      Cluster
+      <span class="s6og_cluster-sub">统一编排</span>
+    </div>
+  </div>
+
+  <!-- Divider -->
+  <div class="s6og_divider s6og_anim"></div>
+
+  <!-- Row 2: Agent era -->
+  <div class="s6og_era s6og_era--agent s6og_anim">现在 — Agent 时代</div>
+
+  <div class="s6og_row">
+    <!-- Scattered harness boxes -->
+    <div class="s6og_scattered s6og_harness-scatter">
+      <div class="s6og_sbox s6og_sbox--harness s6og_anim">Harness A</div>
+      <div class="s6og_sbox s6og_sbox--harness s6og_anim">Harness B</div>
+      <div class="s6og_sbox s6og_sbox--harness s6og_anim">Harness C</div>
+    </div>
+
+    <!-- Meta arrow -->
+    <div class="s6og_arrow s6og_arrow--meta s6og_anim">
+      <span class="s6og_arrow-label s6og_arrow-label--meta">Meta</span>
+      <div class="s6og_arrow-line">
+        <div class="s6og_arrow-shaft s6og_arrow-shaft--meta"></div>
+        <div class="s6og_arrow-head s6og_arrow-head--meta"></div>
+      </div>
+    </div>
+
+    <!-- Omnigent unified box -->
+    <div class="s6og_cluster s6og_cluster--meta s6og_anim">
+      Omnigent
+      <span class="s6og_cluster-sub" style="color:#1E40AF;">统一编排层</span>
+    </div>
+  </div>
+
+  <!-- Footer label -->
+  <div class="s6og_footer s6og_anim">你的层不该随工具而变</div>
+
+</div></div>
+  <p class="hook-line reveal reveal-d3">路线图上还有什么？</p>
+  <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-details',this)">深入了解 ↓</button>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+      <p>Many of the biggest shifts in our industry came from moving to a new layer of abstraction: for example, while engineers used to manage individual processes and servers, they can now manage a whole fleet via cloud systems like Kubernetes and Terraform.</p>
+      <p>We think agents are at the same point today. Each harness is its own silo, with its own context, its own controls, and its own way of running, and none of it carries over when you switch tools. Moreover, many problems intrinsically span harnesses, including composition, security and collaboration. A meta-harness lifts your work above any single harness, so your sessions, policies, and skills stay with you no matter which agent or model is running. The models and harnesses will keep changing as the field evolves; the layer you work at shouldn't have to.</p>
+      <p>We're building that layer in the open, and we'd love for you to build it with us.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+</div>
+
+<!-- ═══ 详解层 ═══ -->
+<div class="layer" id="layer-details" data-depth="1">
+
+<!-- A1: 多Harness协作的三个先例 -->
+<section class="feed-section" style="background:var(--bg-act2)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">Harvey、Anthropic、Genie——<br>三个先例证明<br>多 Harness 协作已经到来</h2>
+  <p class="body-text reveal reveal-d1"><span class="hl">Harvey</span> 给一个开源 worker 模型配了一个前沿 advisor，让 worker 在需要时可以调用它。这个组合在质量和成本上都击败了单独使用前沿模型的方案——因为大部分日常任务由成本更低的 worker 处理，只有难题才升级到 advisor。<span class="hl2">Anthropic</span> 将其研究产品构建为一个 lead agent 编排并行 subagent 的架构——lead 负责规划和协调，多个 subagent 并行执行不同的研究任务，然后将结果汇总回 lead。<span class="hl">Genie</span>（Databricks 的 Agent 产品）则对规划、搜索和代码生成使用不同的 LLM——每个子任务选择最适合的模型，而不是用一个「万能」模型做所有事。这三个案例的共同点是：<span class="hl2">最好的结果来自多模型、多 harness 的组合</span>，但每个 harness 只理解自己的会话——这就是 meta-harness 层需要存在的原因。</p>
+  <div class="anim-stage reveal reveal-d2" id="a1-anim"><div class="a1og_stage ">
+
+  <div class="a1og_layout">
+
+    <!-- Cards column -->
+    <div class="a1og_cards_col">
+
+      <!-- Card 1: Harvey -->
+      <div class="a1og_card a1og_card1 a1og_anim">
+        <div class="a1og_card_label">Harvey</div>
+        <div class="a1og_nodes">
+
+          <div class="a1og_node a1og_c1_worker a1og_anim">
+            <div class="a1og_circle a1og_circle--primary">Worker</div>
+          </div>
+
+          <div class="a1og_connector_h">
+            <div class="a1og_arrow_h a1og_c1_arrow a1og_anim"></div>
+          </div>
+
+          <div class="a1og_node a1og_c1_advisor a1og_anim">
+            <div class="a1og_circle a1og_circle--secondary">Advisor</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Card 2: Anthropic -->
+      <div class="a1og_card a1og_card2 a1og_anim">
+        <div class="a1og_card_label">Anthropic</div>
+        <div class="a1og_tree">
+
+          <div class="a1og_tree_top">
+            <div class="a1og_node a1og_c2_lead a1og_anim">
+              <div class="a1og_circle a1og_circle--primary">Lead</div>
+            </div>
+          </div>
+
+          <div class="a1og_tree_trunk a1og_c2_trunk a1og_anim"></div>
+
+          <div class="a1og_tree_subs">
+            <div class="a1og_tree_hbar a1og_c2_hbar a1og_anim"></div>
+
+            <div class="a1og_tree_sub_wrap a1og_c2_sub1 a1og_anim">
+              <div class="a1og_tree_vbar"></div>
+              <div class="a1og_circle a1og_circle--secondary">Sub</div>
+            </div>
+
+            <div class="a1og_tree_sub_wrap a1og_c2_sub2 a1og_anim">
+              <div class="a1og_tree_vbar"></div>
+              <div class="a1og_circle a1og_circle--secondary">Sub</div>
+            </div>
+
+            <div class="a1og_tree_sub_wrap a1og_c2_sub3 a1og_anim">
+              <div class="a1og_tree_vbar"></div>
+              <div class="a1og_circle a1og_circle--secondary">Sub</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Card 3: Genie -->
+      <div class="a1og_card a1og_card3 a1og_anim">
+        <div class="a1og_card_label">Genie</div>
+        <div class="a1og_genie_nodes">
+
+          <div class="a1og_node a1og_c3_n1 a1og_anim">
+            <div class="a1og_circle a1og_circle--neutral">&#35268;&#21010;</div>
+          </div>
+
+          <div class="a1og_node a1og_c3_n2 a1og_anim">
+            <div class="a1og_circle a1og_circle--neutral">&#25628;&#32034;</div>
+          </div>
+
+          <div class="a1og_node a1og_c3_n3 a1og_anim">
+            <div class="a1og_circle a1og_circle--neutral">&#20195;&#30721;</div>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /cards_col -->
+
+    <!-- Bracket column -->
+    <div class="a1og_bracket_col">
+      <svg
+        class="a1og_bracket_svg a1og_anim"
+        width="28"
+        height="220"
+        viewBox="0 0 28 220"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <!-- Right-facing bracket: top arm, vertical bar, bottom arm, midpoint tick -->
+        <path
+          d="M 20 4
+             L 8 4
+             L 8 216
+             L 20 216"
+          stroke="#1E40AF"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          fill="none"
+        />
+        <!-- Mid tick pointing right -->
+        <path
+          d="M 8 110 L 24 110"
+          stroke="#1E40AF"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          fill="none"
+        />
+      </svg>
+
+      <div class="a1og_bracket_label a1og_anim">&#22810;&#27169;&#22411;&#32452;&#21512;</div>
+    </div>
+
+  </div><!-- /layout -->
+
+  <!-- Meta-Harness -->
+  <div class="a1og_meta_row">
+    <div class="a1og_meta_arrow_wrap a1og_anim">
+      <div class="a1og_meta_arrow_shaft"></div>
+      <div class="a1og_meta_arrow_head"></div>
+    </div>
+    <div class="a1og_meta_label a1og_anim">Meta-Harness</div>
+    <div class="a1og_meta_sub a1og_anim">orchestrates across harness instances</div>
+  </div>
+
+</div><!-- /a1og_stage --></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+      <p>The best results no longer come from a single model in a single harness: Harvey beat a frontier model on quality and cost by giving an open-source worker model a frontier advisor it can call, Anthropic built its research product as a lead agent orchestrating parallel subagents, and our own Genie uses different LLMs for planning, search, and code generation. Engineers are changing how they work, too: instead of prompting one agent at a time, they design loops that drive whole teams of agents.</p>
+      <p>These patterns span multiple harnesses, models, and people, but each harness only understands its own sessions. To combine agents, govern them, and work on them with other people, you need a layer above the harness.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- A2: 路线图与未来 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">GEPA 优化、MemEx 内省、<br>MCP 跨会话——<br>meta-harness 的路线图</h2>
+  <p class="body-text reveal reveal-d1">当前版本只是 meta-harness 层能做的事情的开始。Omnigent 的路线图包括：<span class="hl">GEPA</span>——在 meta-harness 层面的自动优化，让系统自动找到最佳的模型组合和路由策略。<span class="hl2">MemEx 和 RLM</span> 风格的基于代码的 Agent 内省——让 meta-harness 能够理解和分析 Agent 的内部行为，而不只是看输入输出。<span class="hl">Omnigent Server MCP</span>——让 Agent 能够跨会话工作，一个 Agent 的输出可以成为另一个 Agent 的输入。更多 harness 集成也在计划中。在部署层面，Omnigent 已经支持 <span class="hl2">Fly.io、Railway、Modal 和 Daytona 沙箱</span>以及众多 LLM provider，团队欢迎社区贡献更多集成。正如 Matei Zaharia 所说：<span class="hl">"我们在开放中构建这一层，希望你和我们一起来建设。"</span></p>
+  <div class="anim-stage reveal reveal-d2" id="a2-anim"><div class="a2og_stage ">
+
+  <!-- Step 1: Center line -->
+  <div class="a2og_center_line a2og_anim"></div>
+
+  <!-- Timeline rows -->
+  <div class="a2og_timeline">
+
+    <!-- Step 2: Left — GEPA -->
+    <div class="a2og_row">
+      <div class="a2og_item blue left a2og_anim a2og_item_1">
+        GEPA 自动优化
+        <span class="a2og_item_sub">评估 + 提示自动迭代</span>
+      </div>
+      <div class="a2og_dot blue a2og_anim a2og_dot_1"></div>
+      <div></div>
+    </div>
+
+    <!-- Step 3: Right — MemEx -->
+    <div class="a2og_row">
+      <div></div>
+      <div class="a2og_dot orange a2og_anim a2og_dot_2"></div>
+      <div class="a2og_item orange right a2og_anim a2og_item_2">
+        MemEx 内省
+        <span class="a2og_item_sub">RLM 运行时自我审视</span>
+      </div>
+    </div>
+
+    <!-- Step 4: Left — MCP -->
+    <div class="a2og_row">
+      <div class="a2og_item blue left a2og_anim a2og_item_3">
+        MCP 跨会话
+        <span class="a2og_item_sub">Omnigent Server 多会话</span>
+      </div>
+      <div class="a2og_dot blue a2og_anim a2og_dot_3"></div>
+      <div></div>
+    </div>
+
+    <!-- Step 5: Right — 更多 Harness -->
+    <div class="a2og_row">
+      <div></div>
+      <div class="a2og_dot orange a2og_anim a2og_dot_4"></div>
+      <div class="a2og_item orange right a2og_anim a2og_item_4">
+        更多 Harness
+        <span class="a2og_item_sub">覆盖更多长周期场景</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Step 6: Deploy bar -->
+  <div class="a2og_deploy a2og_anim">
+    <div class="a2og_deploy_label">一键部署</div>
+    <div class="a2og_deploy_logos">
+      <span class="a2og_logo_pill">Fly.io</span>
+      <span class="a2og_logo_pill">Railway</span>
+      <span class="a2og_logo_pill">Modal</span>
+      <span class="a2og_logo_pill">Daytona</span>
+    </div>
+  </div>
+
+  <!-- Step 7: License -->
+  <div class="a2og_license a2og_anim">Apache 2.0 开源</div>
+
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+      <p>These features are just scratching the surface of what can be done at the meta-harness layer, however, and we expect to see a lot more ideas soon from our team and the open source community. Some items on our roadmap include automatic optimization at the meta-harness level with GEPA, code-based introspection within agents similar to MemEx and RLM, an Omnigent Server MCP so agents can work across your sessions, and more harnesses.</p>
+      <p>We've also made Omnigent easy to deploy on a wide range of infrastructure, including Fly.io, Railway, Modal and Daytona sandboxes, and many LLM providers, and we welcome patches for more integrations.</p>
+      <p>We're building that layer in the open, and we'd love for you to build it with us.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+</div>
+
+<script>
+var layerStack=['layer-overview'];
+var transitioning=false;
+var layerNames={'layer-overview':'概览','layer-details':'先例与路线图详解'};
+var observers=new Map();
+
+function setupObserver(layerId){if(observers.has(layerId))return;var layer=document.getElementById(layerId);var reveals=layer.querySelectorAll('.reveal,[class*="_stage"]');var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.15,root:layer});reveals.forEach(function(el){obs.observe(el);});observers.set(layerId,obs);}
+function resetReveals(layerId){var layer=document.getElementById(layerId);layer.querySelectorAll('.reveal').forEach(function(el){el.classList.remove('visible');});layer.querySelectorAll('[class*="_stage"]').forEach(function(el){el.classList.remove('visible');});}
+function activateReveals(layerId){resetReveals(layerId);if(observers.has(layerId)){observers.get(layerId).disconnect();observers.delete(layerId);}requestAnimationFrame(function(){setupObserver(layerId);});}
+
+function updateBreadcrumb(){var bc=document.getElementById('breadcrumb');bc.innerHTML='';layerStack.forEach(function(id,i){if(i>0){var sep=document.createElement('span');sep.className='sep';sep.textContent='>';bc.appendChild(sep);}var span=document.createElement('span');span.textContent=layerNames[id]||id;if(i===layerStack.length-1){span.className='current';}else{span.addEventListener('click',function(){goBackTo(i);});}bc.appendChild(span);});var backBtn=document.getElementById('backBtn');backBtn.style.display=layerStack.length>1?'flex':'none';bc.style.left=layerStack.length>1?'60px':'16px';var dots=document.getElementById('depthDots');var depth=layerStack.length-1;dots.querySelectorAll('.dot').forEach(function(d,i){d.classList.toggle('active',i===depth);});}
+
+function drillDown(targetId,btnEl){if(transitioning)return;transitioning=true;var currentId=layerStack[layerStack.length-1];var currentLayer=document.getElementById(currentId);var targetLayer=document.getElementById(targetId);targetLayer.scrollTop=0;resetReveals(targetId);targetLayer.style.visibility='visible';var duration=600;currentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';currentLayer.style.transformOrigin='center center';currentLayer.style.transform='scale(1.3)';currentLayer.style.opacity='0';targetLayer.classList.add('active');targetLayer.style.opacity='0';targetLayer.style.transform='scale(0.85)';targetLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){targetLayer.style.opacity='1';targetLayer.style.transform='scale(1)';});});setTimeout(function(){currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';targetLayer.style.transition='';targetLayer.style.transform='';activateReveals(targetId);transitioning=false;},duration+50);layerStack.push(targetId);updateBreadcrumb();}
+
+function goBack(){if(layerStack.length<=1||transitioning)return;transitioning=true;var currentId=layerStack.pop();var parentId=layerStack[layerStack.length-1];var currentLayer=document.getElementById(currentId);var parentLayer=document.getElementById(parentId);var duration=600;currentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';currentLayer.style.transform='scale(0.85)';currentLayer.style.opacity='0';parentLayer.classList.add('active');parentLayer.style.transform='scale(1.3)';parentLayer.style.opacity='0';parentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){parentLayer.style.transform='scale(1)';parentLayer.style.opacity='1';});});setTimeout(function(){currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';currentLayer.style.visibility='';parentLayer.style.transition='';parentLayer.style.transform='';transitioning=false;},duration+50);updateBreadcrumb();}
+
+function goBackTo(targetIndex){if(transitioning)return;while(layerStack.length-1>targetIndex){if(layerStack.length<=1)break;goBack();return;}}
+
+function toggleSource(btn){btn.classList.toggle('open');btn.nextElementSibling.classList.toggle('open');}
+
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+</body>
+</html>

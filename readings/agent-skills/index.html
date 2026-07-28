@@ -1,0 +1,2634 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Agent Skills：用专业知识武装通用 Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #F0FDF4;
+  --bg-act2: #EEF2FF;
+  --bg-act3: #FEF2F2;
+  --bg-dark: #0F172A;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --dim: #94A3B8;
+  --accent: #15803D;
+  --accent2: #4F46E5;
+  --warm: #D97706;
+  --danger: #DC2626;
+  --neutral: #94A3B8;
+  --card-bg: #FFFFFF;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Noto Sans SC',sans-serif;color:var(--text);-webkit-font-smoothing:antialiased;}
+.reveal{opacity:0;transform:translateY(40px);transition:opacity 0.8s ease,transform 0.8s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-delay-1{transition-delay:0.15s;}
+.reveal-delay-2{transition-delay:0.3s;}
+.reveal-delay-3{transition-delay:0.45s;}
+.reveal-delay-4{transition-delay:0.6s;}
+.big-statement{font-family:'Noto Serif SC',serif;font-size:clamp(22px,5.5vw,32px);font-weight:700;line-height:1.5;margin-bottom:32px;}
+.body-text{font-size:16px;line-height:1.9;color:var(--text);margin-bottom:28px;}
+.body-text .hl{color:var(--accent);font-weight:500;}
+.body-text .hl2{color:var(--accent2);font-weight:500;}
+.body-text .hl-danger{color:var(--danger);font-weight:500;}
+.layer{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;visibility:hidden;opacity:0;will-change:transform,opacity;scroll-snap-type:y proximity;}
+.layer.active{visibility:visible;opacity:1;}
+.feed-section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;scroll-snap-align:start;}
+.feed-section.dark{background:var(--bg-dark);color:#F1F5F9;}
+.feed-section.dark .body-text{color:#94A3B8;}
+.feed-section.dark .big-statement{color:#F1F5F9;}
+.section-inner{max-width:600px;width:100%;}
+.breadcrumb{position:fixed;top:16px;left:16px;z-index:1000;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);padding:8px 14px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,0.1);font-size:13px;font-weight:500;}
+.breadcrumb span{color:var(--text-muted);cursor:pointer;transition:color 0.2s;}
+.breadcrumb span:hover{color:var(--accent);}
+.breadcrumb span.current{color:var(--text);cursor:default;}
+.breadcrumb .sep{color:#CBD5E1;margin:0 2px;cursor:default;}
+.back-btn{position:fixed;top:16px;left:16px;z-index:1001;width:38px;height:38px;border-radius:10px;border:none;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(0,0,0,0.1);font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--text);transition:all 0.2s;}
+.back-btn:hover{background:var(--accent);color:#fff;}
+.depth-dots{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;gap:8px;background:rgba(255,255,255,0.9);backdrop-filter:blur(8px);padding:8px 14px;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,0.1);}
+.dot{width:10px;height:10px;border-radius:50%;background:#CBD5E1;transition:all 0.3s;}
+.dot.active{background:var(--accent);box-shadow:0 0 8px rgba(21,128,61,0.5);transform:scale(1.2);}
+.drill-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:1.5px solid rgba(21,128,61,0.3);border-radius:10px;background:transparent;color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.25s;}
+.drill-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(21,128,61,0.3);}
+.dark .drill-btn{border-color:rgba(21,128,61,0.4);}
+.source-panel{margin-top:24px;border-radius:12px;overflow:hidden;border:1px solid rgba(21,128,61,0.15);background:rgba(21,128,61,0.03);}
+.dark .source-panel{border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);}
+.source-toggle{width:100%;padding:12px 16px;border:none;background:none;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);}
+.dark .source-toggle{color:#86EFAC;}
+.source-toggle:hover{background:rgba(21,128,61,0.06);}
+.source-toggle .arrow{transition:transform 0.3s;font-size:11px;}
+.source-toggle.open .arrow{transform:rotate(90deg);}
+.source-body{max-height:0;overflow:hidden;transition:max-height 0.4s ease;padding:0 16px;}
+.source-body.open{max-height:2000px;padding:0 16px 16px;overflow-y:auto;}
+.source-body p{font-size:13px;line-height:1.8;color:var(--text-muted);margin:0 0 12px 0;white-space:pre-wrap;}
+.dark .source-body p{color:#94A3B8;}
+.source-body .source-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--accent);margin-bottom:8px;display:block;}
+.dark .source-body .source-label{color:#86EFAC;}
+.anim-stage{width:100%;display:flex;justify-content:center;margin:28px 0;min-height:180px;}
+.anim-stage>div{width:100%;}
+.hook-line{font-size:14px;color:var(--accent);font-weight:500;margin:16px 0;line-height:1.7;}
+.dark .hook-line{color:#86EFAC;}
+
+/* === S1 Animation === */
+
+.s1_stage {
+  width: 340px;
+  margin: 0 auto;
+  padding: 30px 0 20px;
+  font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+  color: #1E293B;
+}
+
+/* ── Section labels ── */
+.s1_section_label {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748B;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+  opacity: 0;
+}
+
+.s1_stage.visible .s1_label_old {
+  animation: s1_pop 0.3s ease-out 0.4s forwards;
+}
+
+.s1_stage.visible .s1_label_new {
+  animation: s1_pop 0.3s ease-out 2.6s forwards;
+}
+
+/* ── Old: specialized agents ── */
+.s1_old {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  min-height: 90px;
+}
+
+.s1_agent_old {
+  width: 72px;
+  text-align: center;
+  opacity: 0;
+  transform: scale(0.7);
+}
+
+.s1_agent_old_icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 4px;
+  border-radius: 50%;
+  background: #4F46E5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #fff;
+  position: relative;
+}
+
+.s1_agent_old_label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4F46E5;
+}
+
+/* cross-out line */
+.s1_agent_old_icon::after {
+  content: "";
+  position: absolute;
+  width: 56px;
+  height: 3px;
+  background: #dc2626;
+  border-radius: 2px;
+  transform: rotate(-45deg);
+  opacity: 0;
+}
+
+/* Pop in each agent, then fade, with explicit per-child timing */
+.s1_stage.visible .s1_agent_old:nth-child(1) {
+  animation: s1_pop 0.4s ease-out 0.4s forwards, s1_fade 0.5s ease-out 2.2s forwards;
+}
+.s1_stage.visible .s1_agent_old:nth-child(2) {
+  animation: s1_pop 0.4s ease-out 0.6s forwards, s1_fade 0.5s ease-out 2.2s forwards;
+}
+.s1_stage.visible .s1_agent_old:nth-child(3) {
+  animation: s1_pop 0.4s ease-out 0.8s forwards, s1_fade 0.5s ease-out 2.2s forwards;
+}
+.s1_stage.visible .s1_agent_old:nth-child(4) {
+  animation: s1_pop 0.4s ease-out 1.0s forwards, s1_fade 0.5s ease-out 2.2s forwards;
+}
+
+@keyframes s1_pop {
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s1_fade {
+  to { opacity: 0.2; transform: scale(0.85); }
+}
+
+/* cross out */
+.s1_stage.visible .s1_agent_old:nth-child(1) .s1_agent_old_icon::after {
+  animation: s1_cross 0.3s ease-out 1.6s forwards;
+}
+.s1_stage.visible .s1_agent_old:nth-child(2) .s1_agent_old_icon::after {
+  animation: s1_cross 0.3s ease-out 1.7s forwards;
+}
+.s1_stage.visible .s1_agent_old:nth-child(3) .s1_agent_old_icon::after {
+  animation: s1_cross 0.3s ease-out 1.8s forwards;
+}
+.s1_stage.visible .s1_agent_old:nth-child(4) .s1_agent_old_icon::after {
+  animation: s1_cross 0.3s ease-out 1.9s forwards;
+}
+
+@keyframes s1_cross {
+  to { opacity: 1; }
+}
+
+/* ── Arrow ── */
+.s1_arrow {
+  text-align: center;
+  font-size: 28px;
+  color: #15803D;
+  margin: 8px 0;
+  opacity: 0;
+}
+
+.s1_stage.visible .s1_arrow {
+  animation: s1_pop 0.4s ease-out 2.5s forwards;
+}
+
+/* ── New: unified agent + skills ── */
+.s1_new {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.s1_core {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #15803D;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+  transform: scale(0.5);
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.s1_stage.visible .s1_core {
+  animation: s1_core_in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 2.8s forwards;
+}
+
+@keyframes s1_core_in {
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* skill orbit */
+.s1_orbit {
+  position: relative;
+  width: 280px;
+  height: 160px;
+  margin-top: -48px;
+  z-index: 1;
+}
+
+/* dashed orbit ring */
+.s1_orbit::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 30px;
+  right: 30px;
+  bottom: 10px;
+  border: 2px dashed #15803D;
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.s1_stage.visible .s1_orbit::before {
+  animation: s1_ring 0.5s ease-out 3.2s forwards;
+}
+
+@keyframes s1_ring {
+  to { opacity: 0.35; }
+}
+
+.s1_skill {
+  position: absolute;
+  padding: 6px 14px;
+  border-radius: 10px;
+  background: #4F46E5;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+.s1_skill:nth-child(1) { top: 0; left: 50%; transform: translateX(-50%) scale(0.6); }
+.s1_skill:nth-child(2) { top: 50%; right: 0; transform: translateY(-50%) scale(0.6); }
+.s1_skill:nth-child(3) { bottom: 0; left: 50%; transform: translateX(-50%) scale(0.6); }
+.s1_skill:nth-child(4) { top: 50%; left: 0; transform: translateY(-50%) scale(0.6); }
+
+.s1_stage.visible .s1_skill:nth-child(1) {
+  animation: s1_sk_top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 3.4s forwards;
+}
+.s1_stage.visible .s1_skill:nth-child(2) {
+  animation: s1_sk_right 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 3.8s forwards;
+}
+.s1_stage.visible .s1_skill:nth-child(3) {
+  animation: s1_sk_bottom 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 4.2s forwards;
+}
+.s1_stage.visible .s1_skill:nth-child(4) {
+  animation: s1_sk_left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 4.6s forwards;
+}
+
+@keyframes s1_sk_top {
+  to { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+@keyframes s1_sk_right {
+  to { opacity: 1; transform: translateY(-50%) scale(1); }
+}
+@keyframes s1_sk_bottom {
+  to { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+@keyframes s1_sk_left {
+  to { opacity: 1; transform: translateY(-50%) scale(1); }
+}
+
+/* === S2 Animation === */
+
+/* ── S2: 代码即接口 ── */
+.s2_stage {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  height: 340px;
+  margin: 0 auto;
+  background: #0F172A;
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: 'Noto Sans SC', sans-serif;
+}
+
+/* ── 共用标签样式 ── */
+.s2_label {
+  position: absolute;
+  background: rgba(79,70,229,0.15);
+  border: 1.5px solid #4F46E5;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 12px; font-weight: 600; color: #4F46E5;
+  white-space: nowrap;
+  opacity: 0; transform: scale(0);
+}
+
+/* ── 共用箭头线样式 ── */
+.s2_line {
+  position: absolute;
+  background: #15803D;
+  opacity: 0; transform: scale(0);
+}
+
+/* ── 中心盒子 ── */
+.s2_center {
+  position: absolute;
+  width: 92px; height: 38px;
+  left: 50%; top: 140px;
+  margin-left: -46px;
+  background: #15803D;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #fff;
+  opacity: 0; transform: scale(0);
+  z-index: 10;
+}
+
+/* ── 上: API 调用 ── */
+/* 标签居中, 在顶部 */
+.s2_label_up {
+  left: 50%; top: 28px;
+  transform: translate(-50%, 0) scale(0);
+}
+/* 竖线: 从标签底部到中心盒子顶部 */
+/* 标签底 ~58px, 中心盒子顶 140px, 线高 ~72px */
+.s2_line_up {
+  left: 50%; top: 60px;
+  margin-left: -1px;
+  width: 2px; height: 70px;
+  transform-origin: top center;
+}
+
+/* ── 右: 文件存储 ── */
+/* 中心盒子右边: 50%+46px. 标签在右侧 */
+.s2_label_right {
+  right: 14px; top: 152px;
+  transform: translate(0, -50%) scale(0);
+}
+/* 横线: 从中心盒子右边到标签左边 */
+/* 中心右边约 216px(50%+46), 标签左边约 ~248px(340-14-78), 线宽 ~32px */
+.s2_line_right {
+  left: 50%; top: 158px;
+  margin-left: 46px;
+  width: 32px; height: 2px;
+  transform-origin: left center;
+}
+
+/* ── 下: Python 分析 ── */
+.s2_label_down {
+  left: 50%; bottom: 62px;
+  transform: translate(-50%, 0) scale(0);
+}
+/* 竖线: 中心盒子底 178px 到标签顶 ~248px */
+.s2_line_down {
+  left: 50%; top: 186px;
+  margin-left: -1px;
+  width: 2px; height: 62px;
+  transform-origin: top center;
+}
+
+/* ── 左: 综合洞察 ── */
+.s2_label_left {
+  left: 14px; top: 152px;
+  transform: translate(0, -50%) scale(0);
+}
+/* 横线: 标签右边到中心盒子左边 */
+.s2_line_left {
+  right: 50%; top: 158px;
+  margin-right: 46px;
+  width: 32px; height: 2px;
+  transform-origin: right center;
+}
+
+/* ── 回流脉冲 ── */
+.s2_pulse {
+  position: absolute;
+  left: 50%; top: 159px;
+  width: 140px; height: 140px;
+  margin-left: -70px; margin-top: -70px;
+  border-radius: 50%;
+  border: 1.5px solid #15803D;
+  opacity: 0;
+  transform: scale(0.5);
+  pointer-events: none;
+}
+
+/* ── 底部脚手架 ── */
+.s2_scaffold {
+  position: absolute;
+  bottom: 12px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: 12px;
+  opacity: 0;
+}
+.s2_scaffold_item {
+  display: flex; align-items: center; justify-content: center;
+  padding: 4px 12px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.18);
+  font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.6);
+  white-space: nowrap;
+}
+
+/* ── Keyframes ── */
+@keyframes s2_popCenter {
+  from { opacity: 0; transform: scale(0); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes s2_popLabelH {
+  from { opacity: 0; transform: translate(0, -50%) scale(0); }
+  to   { opacity: 1; transform: translate(0, -50%) scale(1); }
+}
+@keyframes s2_popLabelUpV {
+  from { opacity: 0; transform: translate(-50%, 0) scale(0); }
+  to   { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+@keyframes s2_popLabelDownV {
+  from { opacity: 0; transform: translate(-50%, 0) scale(0); }
+  to   { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+@keyframes s2_growLine {
+  from { opacity: 0; transform: scale(0); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes s2_pulseOut {
+  0%   { opacity: 0; transform: scale(0.5); }
+  30%  { opacity: 0.5; }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+@keyframes s2_fadeUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ── Timeline: triggered by .visible ── */
+.s2_stage.visible .s2_center {
+  animation: s2_popCenter 0.5s 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+/* 上 */
+.s2_stage.visible .s2_line_up {
+  animation: s2_growLine 0.3s 0.9s ease-out forwards;
+}
+.s2_stage.visible .s2_label_up {
+  animation: s2_popLabelUpV 0.35s 1.2s ease-out forwards;
+}
+/* 右 */
+.s2_stage.visible .s2_line_right {
+  animation: s2_growLine 0.3s 1.6s ease-out forwards;
+}
+.s2_stage.visible .s2_label_right {
+  animation: s2_popLabelH 0.35s 1.9s ease-out forwards;
+}
+/* 下 */
+.s2_stage.visible .s2_line_down {
+  animation: s2_growLine 0.3s 2.3s ease-out forwards;
+}
+.s2_stage.visible .s2_label_down {
+  animation: s2_popLabelDownV 0.35s 2.6s ease-out forwards;
+}
+/* 左 */
+.s2_stage.visible .s2_line_left {
+  animation: s2_growLine 0.3s 3.0s ease-out forwards;
+}
+.s2_stage.visible .s2_label_left {
+  animation: s2_popLabelH 0.35s 3.3s ease-out forwards;
+}
+/* 脉冲 + 脚手架 */
+.s2_stage.visible .s2_pulse {
+  animation: s2_pulseOut 1.2s 3.8s ease-out forwards;
+}
+.s2_stage.visible .s2_scaffold {
+  animation: s2_fadeUp 0.5s 4.6s ease-out forwards;
+}
+
+/* === S3 Animation === */
+
+.s3_stage {
+  background: #EEF2FF;
+  border-radius: 16px;
+  padding: 32px 20px 28px;
+  max-width: 340px;
+  margin: 0 auto;
+  font-family: -apple-system, "Noto Sans SC", sans-serif;
+  overflow: hidden;
+}
+
+.s3_cards {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.s3_card {
+  flex: 1;
+  max-width: 145px;
+  border-radius: 12px;
+  padding: 18px 10px 14px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: none;
+}
+
+.s3_card--genius {
+  background: #4F46E5;
+  color: #fff;
+}
+
+.s3_card--expert {
+  background: #15803D;
+  color: #fff;
+}
+
+.s3_icon {
+  font-size: 32px;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.s3_name {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.s3_label {
+  font-size: 11px;
+  opacity: 0.85;
+  background: rgba(255,255,255,0.18);
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.s3_traits {
+  font-size: 11px;
+  opacity: 0.8;
+  line-height: 1.6;
+}
+
+.s3_bridge {
+  position: relative;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.s3_bridge_line {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: 3px;
+  width: 0;
+  background: linear-gradient(90deg, #4F46E5, #15803D);
+  border-radius: 2px;
+  transition: none;
+}
+
+.s3_bridge_tag {
+  position: relative;
+  z-index: 1;
+  background: #fff;
+  color: #4F46E5;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 14px;
+  border-radius: 20px;
+  border: 2px solid #4F46E5;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: none;
+}
+
+/* Animations triggered by .visible */
+
+.s3_stage.visible .s3_card--genius {
+  animation: s3_cardIn 0.5s 0.1s ease both;
+}
+
+.s3_stage.visible .s3_card--expert {
+  animation: s3_cardIn 0.5s 0.35s ease both;
+}
+
+.s3_stage.visible .s3_bridge_line {
+  animation: s3_lineGrow 0.4s 0.7s ease both;
+}
+
+.s3_stage.visible .s3_bridge_tag {
+  animation: s3_tagPop 0.35s 1.0s ease both;
+}
+
+@keyframes s3_cardIn {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes s3_lineGrow {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 80%;
+  }
+}
+
+@keyframes s3_tagPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* === S4 Animation === */
+
+.s4_stage{position:relative;width:340px;min-height:480px;background:#0F172A;border-radius:16px;padding:28px 24px;font-family:system-ui,-apple-system,sans-serif;overflow:hidden;color:#fff}
+.s4_cards{display:flex;flex-direction:column;gap:12px;margin-bottom:20px}
+.s4_card{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;opacity:0;transform:translateY(24px);transition:none}
+.s4_stage.visible .s4_card{animation:s4_cardIn 0.5s ease-out forwards}
+.s4_stage.visible .s4_card:nth-child(1){animation-delay:0.1s}
+.s4_stage.visible .s4_card:nth-child(2){animation-delay:0.35s}
+.s4_stage.visible .s4_card:nth-child(3){animation-delay:0.6s}
+@keyframes s4_cardIn{0%{opacity:0;transform:translateY(24px)}100%{opacity:1;transform:translateY(0)}}
+.s4_card--foundation{background:rgba(21,128,61,0.15);border:1px solid rgba(21,128,61,0.4)}
+.s4_card--partner{background:rgba(79,70,229,0.15);border:1px solid rgba(79,70,229,0.4)}
+.s4_card--enterprise{background:rgba(21,128,61,0.15);border:1px solid rgba(21,128,61,0.4)}
+.s4_icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
+.s4_card--foundation .s4_icon{background:rgba(21,128,61,0.3);color:#4ade80}
+.s4_card--partner .s4_icon{background:rgba(79,70,229,0.3);color:#a5b4fc}
+.s4_card--enterprise .s4_icon{background:rgba(21,128,61,0.3);color:#4ade80}
+.s4_info{display:flex;flex-direction:column;gap:2px}
+.s4_label{font-size:14px;font-weight:700;letter-spacing:0.02em}
+.s4_card--foundation .s4_label{color:#4ade80}
+.s4_card--partner .s4_label{color:#a5b4fc}
+.s4_card--enterprise .s4_label{color:#4ade80}
+.s4_desc{font-size:11.5px;color:rgba(255,255,255,0.5);line-height:1.4}
+.s4_timeline{display:flex;align-items:center;gap:10px;margin:18px 0 20px;opacity:0}
+.s4_stage.visible .s4_timeline{animation:s4_fadeIn 0.4s ease-out 0.9s forwards}
+.s4_tl_dot{width:8px;height:8px;border-radius:50%;background:#4F46E5;flex-shrink:0}
+.s4_tl_line{flex:1;height:2px;background:linear-gradient(90deg,#4F46E5,#15803D);transform:scaleX(0);transform-origin:left}
+.s4_stage.visible .s4_tl_line{animation:s4_drawLine 0.6s ease-out 1.1s forwards}
+@keyframes s4_drawLine{0%{transform:scaleX(0)}100%{transform:scaleX(1)}}
+.s4_tl_start,.s4_tl_end{font-size:11px;color:rgba(255,255,255,0.55);white-space:nowrap;flex-shrink:0}
+@keyframes s4_fadeIn{0%{opacity:0}100%{opacity:1}}
+.s4_badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#15803D,#4F46E5);padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;color:#fff;opacity:0;transform:scale(0.6);margin:0 auto;width:fit-content}
+.s4_badge_wrap{text-align:center}
+.s4_stage.visible .s4_badge{animation:s4_pop 0.4s cubic-bezier(0.34,1.56,0.64,1) 1.6s forwards}
+@keyframes s4_pop{0%{opacity:0;transform:scale(0.6)}100%{opacity:1;transform:scale(1)}}
+.s4_badge_icon{font-size:15px}
+
+/* === S5 Animation === */
+
+.s5_stage {
+  width: 100%;
+  padding: 56px 28px 64px;
+  background: #F0FDF4;
+  overflow: hidden;
+}
+
+.s5_title {
+  font-family: 'Noto Serif SC', serif;
+  font-size: clamp(18px, 4vw, 26px);
+  font-weight: 700;
+  color: #1a3a1a;
+  text-align: center;
+  margin-bottom: 6px;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.s5_subtitle {
+  font-size: 13px;
+  color: #6B7280;
+  text-align: center;
+  margin-bottom: 40px;
+  letter-spacing: 0.5px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.6s ease 0.2s, transform 0.6s ease 0.2s;
+}
+
+.s5_stage.visible .s5_title,
+.s5_stage.visible .s5_subtitle {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* === LAYER STACK === */
+.s5_stack {
+  position: relative;
+  max-width: 380px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.s5_layer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 8px;
+  opacity: 0;
+  transform: translateY(24px) scale(0.95);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.s5_layer_num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.s5_layer_body {
+  flex: 1;
+  min-width: 0;
+}
+
+.s5_layer_name {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.s5_layer_role {
+  font-size: 11px;
+  line-height: 1.4;
+  opacity: 0.7;
+}
+
+/* Layer colors */
+.s5_l1 { background: rgba(21, 128, 61, 0.10); }
+.s5_l1 .s5_layer_num { background: #15803D; }
+.s5_l1 .s5_layer_name { color: #15803D; }
+.s5_l1 .s5_layer_role { color: #15803D; }
+
+.s5_l2 { background: rgba(79, 70, 229, 0.08); }
+.s5_l2 .s5_layer_num { background: #4F46E5; }
+.s5_l2 .s5_layer_name { color: #4F46E5; }
+.s5_l2 .s5_layer_role { color: #4F46E5; }
+
+.s5_l3 { background: rgba(21, 128, 61, 0.10); }
+.s5_l3 .s5_layer_num { background: #15803D; }
+.s5_l3 .s5_layer_name { color: #15803D; }
+.s5_l3 .s5_layer_role { color: #15803D; }
+
+.s5_l4 { background: rgba(79, 70, 229, 0.08); }
+.s5_l4 .s5_layer_num { background: #4F46E5; }
+.s5_l4 .s5_layer_name { color: #4F46E5; }
+.s5_l4 .s5_layer_role { color: #4F46E5; }
+
+/* Connector dots between layers */
+.s5_conn {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.s5_conn_dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #94A3B8;
+}
+
+/* Stagger layer appearance: bottom to top */
+.s5_stage.visible .s5_l1 { opacity: 1; transform: translateY(0) scale(1); transition-delay: 0.2s; }
+.s5_stage.visible .s5_c1 { opacity: 1; transition-delay: 0.5s; }
+.s5_stage.visible .s5_l2 { opacity: 1; transform: translateY(0) scale(1); transition-delay: 0.7s; }
+.s5_stage.visible .s5_c2 { opacity: 1; transition-delay: 1.0s; }
+.s5_stage.visible .s5_l3 { opacity: 1; transform: translateY(0) scale(1); transition-delay: 1.2s; }
+.s5_stage.visible .s5_c3 { opacity: 1; transition-delay: 1.5s; }
+.s5_stage.visible .s5_l4 { opacity: 1; transform: translateY(0) scale(1); transition-delay: 1.7s; }
+
+/* === SKILL PLUG-IN CARD === */
+.s5_plugin_wrap {
+  position: relative;
+  max-width: 380px;
+  margin: 0 auto;
+  height: 56px;
+  margin-top: 4px;
+}
+
+.s5_plugin {
+  position: absolute;
+  right: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #15803D;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(21, 128, 61, 0.3);
+  opacity: 0;
+  transform: translateX(60px);
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.s5_plugin_icon {
+  width: 20px;
+  height: 20px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.s5_stage.visible .s5_plugin {
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: 2.4s;
+}
+
+/* Glow pulse on the Skills layer after plugin arrives */
+@keyframes s5_enhance {
+  0%, 100% { box-shadow: inset 0 0 0 0 rgba(21, 128, 61, 0); }
+  50% { box-shadow: inset 0 0 20px 2px rgba(21, 128, 61, 0.15); }
+}
+
+.s5_stage.visible .s5_l3_glow {
+  animation: s5_enhance 1.2s ease-in-out 2;
+  animation-delay: 2.8s;
+}
+
+/* Plugin label */
+.s5_plugin_label {
+  font-size: 11px;
+  color: #6B7280;
+  text-align: center;
+  max-width: 380px;
+  margin: 8px auto 0;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.s5_stage.visible .s5_plugin_label {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 2.8s;
+}
+
+/* === S6 Animation === */
+
+.s6_stage {
+  background: #0F172A;
+  border-radius: 16px;
+  padding: 28px 16px 24px;
+  max-width: 340px;
+  margin: 0 auto;
+  font-family: -apple-system, "Noto Sans SC", sans-serif;
+  overflow: hidden;
+}
+
+/* --- Hub area: skill center + platforms around --- */
+.s6_hub {
+  position: relative;
+  width: 280px;
+  height: 220px;
+  margin: 0 auto;
+}
+
+/* Center skill file icon */
+.s6_skill {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.3);
+  width: 52px;
+  height: 60px;
+  background: #15803D;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: none;
+  z-index: 3;
+}
+
+.s6_skill_ear {
+  position: absolute;
+  top: -6px;
+  right: 5px;
+  width: 14px;
+  height: 9px;
+  background: #15803D;
+  border-radius: 2px 2px 0 0;
+}
+
+.s6_skill_txt {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Platform circles */
+.s6_plat {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #4F46E5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+  transform: scale(0.3);
+  transition: none;
+  z-index: 3;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.s6_plat--1 { top: 4px; left: 50%; margin-left: -25px; }
+.s6_plat--2 { bottom: 4px; left: 16px; }
+.s6_plat--3 { bottom: 4px; right: 16px; }
+
+/* Connector lines via SVG */
+.s6_lines {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.s6_line {
+  stroke: #15803D;
+  stroke-width: 2;
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  transition: none;
+}
+
+/* Community nodes */
+.s6_comm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  padding: 0 30px;
+  margin-top: 16px;
+  min-height: 32px;
+}
+
+.s6_dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  opacity: 0;
+  transform: scale(0);
+  transition: none;
+}
+
+.s6_dot--g { background: #15803D; }
+.s6_dot--p { background: #4F46E5; }
+
+.s6_label {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 11px;
+  margin-top: 8px;
+  opacity: 0;
+  transition: none;
+}
+
+/* === Animations on .visible === */
+
+.s6_stage.visible .s6_skill {
+  animation: s6_skillPop 0.5s 0.1s ease both;
+}
+
+.s6_stage.visible .s6_plat--1 {
+  animation: s6_pop 0.4s 0.55s ease both;
+}
+.s6_stage.visible .s6_plat--2 {
+  animation: s6_pop 0.4s 0.7s ease both;
+}
+.s6_stage.visible .s6_plat--3 {
+  animation: s6_pop 0.4s 0.85s ease both;
+}
+
+.s6_stage.visible .s6_line--1 {
+  animation: s6_draw 0.4s 1.05s ease both;
+}
+.s6_stage.visible .s6_line--2 {
+  animation: s6_draw 0.4s 1.2s ease both;
+}
+.s6_stage.visible .s6_line--3 {
+  animation: s6_draw 0.4s 1.35s ease both;
+}
+
+.s6_stage.visible .s6_dot:nth-child(1)  { animation: s6_nodePop 0.25s 1.6s ease both; }
+.s6_stage.visible .s6_dot:nth-child(2)  { animation: s6_nodePop 0.25s 1.68s ease both; }
+.s6_stage.visible .s6_dot:nth-child(3)  { animation: s6_nodePop 0.25s 1.76s ease both; }
+.s6_stage.visible .s6_dot:nth-child(4)  { animation: s6_nodePop 0.25s 1.84s ease both; }
+.s6_stage.visible .s6_dot:nth-child(5)  { animation: s6_nodePop 0.25s 1.92s ease both; }
+.s6_stage.visible .s6_dot:nth-child(6)  { animation: s6_nodePop 0.25s 2.0s ease both; }
+.s6_stage.visible .s6_dot:nth-child(7)  { animation: s6_nodePop 0.25s 2.08s ease both; }
+.s6_stage.visible .s6_dot:nth-child(8)  { animation: s6_nodePop 0.25s 2.16s ease both; }
+.s6_stage.visible .s6_dot:nth-child(9)  { animation: s6_nodePop 0.25s 2.24s ease both; }
+.s6_stage.visible .s6_dot:nth-child(10) { animation: s6_nodePop 0.25s 2.32s ease both; }
+.s6_stage.visible .s6_dot:nth-child(11) { animation: s6_nodePop 0.25s 2.4s ease both; }
+.s6_stage.visible .s6_dot:nth-child(12) { animation: s6_nodePop 0.25s 2.48s ease both; }
+
+.s6_stage.visible .s6_label {
+  animation: s6_fadeIn 0.4s 2.55s ease both;
+}
+
+@keyframes s6_skillPop {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+  70%  { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes s6_pop {
+  0%   { opacity: 0; transform: scale(0.3); }
+  70%  { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s6_draw {
+  0%   { stroke-dashoffset: 120; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes s6_nodePop {
+  0%   { opacity: 0; transform: scale(0); }
+  60%  { opacity: 1; transform: scale(1.4); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s6_fadeIn {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* === A1 Animation === */
+
+.a1_stage {
+  width: 340px;
+  min-height: 340px;
+  background: #F0FDF4;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px 20px;
+  font-family: "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---- tier cards container ---- */
+.a1_tiers {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  flex: 1;
+}
+
+/* ---- shared card style ---- */
+.a1_card {
+  border-radius: 8px;
+  overflow: hidden;
+  opacity: 0;
+  transform: scaleY(0);
+  transform-origin: top center;
+  transition: none;
+  font-size: 13px;
+  line-height: 1.5;
+  position: relative;
+}
+
+.a1_card_label {
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+.a1_card_tokens {
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+/* tier 1 */
+.a1_t1 {
+  background: #15803D;
+  color: #fff;
+  padding: 8px 12px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* tier 2 */
+.a1_t2 {
+  background: #4F46E5;
+  color: #fff;
+  padding: 12px 14px;
+  height: 80px;
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.a1_t2_detail {
+  font-size: 10px;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+/* tier 3 */
+.a1_t3 {
+  background: linear-gradient(135deg, #4F46E5 0%, #15803D 100%);
+  color: #fff;
+  padding: 14px 14px;
+  height: 130px;
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.a1_t3_files {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.a1_t3_file {
+  background: rgba(255,255,255,0.15);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 9px;
+}
+
+/* ---- context bar ---- */
+.a1_bar_wrap {
+  width: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 260px;
+}
+
+.a1_bar_label {
+  font-size: 9px;
+  color: #15803D;
+  font-weight: 600;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  letter-spacing: 0.08em;
+}
+
+.a1_bar_track {
+  width: 14px;
+  flex: 1;
+  background: #E5E7EB;
+  border-radius: 7px;
+  position: relative;
+  overflow: hidden;
+}
+
+.a1_bar_fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: #15803D;
+  border-radius: 7px;
+  height: 0%;
+  transition: none;
+}
+
+.a1_bar_pct {
+  font-size: 9px;
+  color: #15803D;
+  font-weight: 700;
+  opacity: 0;
+  transition: none;
+}
+
+/* ---- title ---- */
+.a1_title {
+  position: absolute;
+  top: 8px;
+  left: 20px;
+  font-size: 11px;
+  color: #15803D;
+  font-weight: 700;
+  opacity: 0.6;
+}
+
+/* ======== ANIMATIONS (triggered by .visible) ======== */
+
+/* tier 1: appear at 0.3s */
+.a1_stage.visible .a1_t1 {
+  animation: a1_popIn 0.5s ease 0.3s both;
+}
+
+/* tier 2: appear at 1.2s */
+.a1_stage.visible .a1_t2 {
+  animation: a1_popIn 0.5s ease 1.2s both;
+}
+
+/* tier 3: appear at 2.2s */
+.a1_stage.visible .a1_t3 {
+  animation: a1_popIn 0.6s ease 2.2s both;
+}
+
+/* context bar fill keyframes */
+.a1_stage.visible .a1_bar_fill {
+  animation: a1_barGrow 3.0s ease 0.3s both;
+}
+
+.a1_stage.visible .a1_bar_pct {
+  animation: a1_fadeIn 0.3s ease 0.5s both;
+}
+
+/* connector lines between tiers */
+.a1_connector {
+  width: 2px;
+  height: 6px;
+  background: transparent;
+  margin: 0 auto;
+  transition: none;
+}
+
+.a1_stage.visible .a1_c1 {
+  animation: a1_connectorShow 0.2s ease 1.1s both;
+}
+
+.a1_stage.visible .a1_c2 {
+  animation: a1_connectorShow 0.2s ease 2.1s both;
+}
+
+/* ---- keyframes ---- */
+
+@keyframes a1_popIn {
+  0% {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+  60% {
+    opacity: 1;
+    transform: scaleY(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes a1_barGrow {
+  0% { height: 0%; }
+  15% { height: 3%; }
+  40% { height: 3%; }
+  55% { height: 12%; }
+  72% { height: 12%; }
+  100% { height: 38%; }
+}
+
+@keyframes a1_fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes a1_connectorShow {
+  0% { background: transparent; }
+  100% { background: rgba(21, 128, 61, 0.3); }
+}
+
+/* === A2 Animation === */
+
+/* === A2: Skills 自带脚本 === */
+.a2_stage {
+  position: relative;
+  width: 340px;
+  height: 340px;
+  background: #EEF2FF;
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: "PingFang SC", "Noto Sans SC", sans-serif;
+}
+
+/* --- File tree (left) --- */
+.a2_tree {
+  position: absolute;
+  left: 20px;
+  top: 40px;
+  opacity: 0;
+}
+.a2_stage.visible .a2_tree {
+  animation: a2_fadeUp 0.5s 0.2s both;
+}
+.a2_file {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1E293B;
+}
+.a2_icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.a2_icon--md { background: #4F46E5; }
+.a2_icon--py { background: #15803D; }
+
+/* --- Claude agent (right) --- */
+.a2_agent {
+  position: absolute;
+  right: 20px;
+  top: 38px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4F46E5, #15803D);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+  box-shadow: 0 2px 8px rgba(79,70,229,0.3);
+}
+.a2_stage.visible .a2_agent {
+  animation: a2_fadeUp 0.4s 0.3s both;
+}
+
+/* --- Arrows --- */
+.a2_arrows {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.a2_arrow {
+  position: absolute;
+  height: 2px;
+  background: #4F46E5;
+  transform-origin: left center;
+  opacity: 0;
+}
+.a2_arrow--md {
+  left: 130px;
+  top: 50px;
+  width: 130px;
+}
+.a2_arrow--py {
+  left: 146px;
+  top: 72px;
+  width: 114px;
+  background: #15803D;
+}
+.a2_stage.visible .a2_arrow--md {
+  animation: a2_drawLine 0.6s 0.7s both;
+}
+.a2_stage.visible .a2_arrow--py {
+  animation: a2_drawLine 0.6s 0.9s both;
+}
+
+/* Arrow labels */
+.a2_label {
+  position: absolute;
+  font-size: 9px;
+  font-weight: 600;
+  opacity: 0;
+  white-space: nowrap;
+}
+.a2_label--md {
+  left: 155px;
+  top: 34px;
+  color: #4F46E5;
+}
+.a2_label--py {
+  left: 160px;
+  top: 76px;
+  color: #15803D;
+}
+.a2_stage.visible .a2_label--md {
+  animation: a2_fadeUp 0.3s 1.1s both;
+}
+.a2_stage.visible .a2_label--py {
+  animation: a2_fadeUp 0.3s 1.2s both;
+}
+
+/* Arrow tips */
+.a2_arrow::after {
+  content: "";
+  position: absolute;
+  right: -1px;
+  top: -4px;
+  border: 5px solid transparent;
+  border-left-color: inherit;
+}
+.a2_arrow--md::after { border-left-color: #4F46E5; }
+.a2_arrow--py::after { border-left-color: #15803D; }
+
+/* --- Divider --- */
+.a2_divider {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  top: 115px;
+  height: 1px;
+  background: #C7D2FE;
+  opacity: 0;
+}
+.a2_stage.visible .a2_divider {
+  animation: a2_fadeUp 0.3s 1.3s both;
+}
+
+/* --- Before / After slides --- */
+.a2_slides {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  top: 128px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+.a2_slide {
+  width: 140px;
+  height: 170px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 10px 8px;
+  opacity: 0;
+  position: relative;
+}
+.a2_slide--before {
+  background: #fff;
+  border: 1.5px dashed #CBD5E1;
+}
+.a2_slide--after {
+  background: linear-gradient(180deg, #15803D 0%, #15803D 36px, #fff 36px);
+  border: 1.5px solid #15803D;
+}
+.a2_stage.visible .a2_slide--before {
+  animation: a2_fadeUp 0.4s 1.5s both;
+}
+.a2_stage.visible .a2_slide--after {
+  animation: a2_fadeUp 0.4s 2.2s both;
+}
+
+.a2_slide_tag {
+  position: absolute;
+  top: -10px;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 4px;
+}
+.a2_slide--before .a2_slide_tag {
+  background: #E2E8F0;
+  color: #64748B;
+}
+.a2_slide--after .a2_slide_tag {
+  background: #15803D;
+  color: #fff;
+}
+
+/* Slide content placeholders */
+.a2_bar {
+  width: 80%;
+  height: 6px;
+  border-radius: 3px;
+  background: #E2E8F0;
+  margin-top: 8px;
+}
+.a2_slide--after .a2_bar_header {
+  width: 60%;
+  height: 8px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.8);
+  margin-top: 10px;
+}
+.a2_slide--after .a2_bar {
+  background: #BBF7D0;
+}
+.a2_bar--short { width: 55%; }
+.a2_bar--med { width: 70%; }
+
+/* Brand stripe on styled slide */
+.a2_brand_stripe {
+  width: 100%;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.a2_brand_logo {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #15803D;
+}
+
+/* Transform arrow between slides */
+.a2_transform {
+  position: absolute;
+  left: 50%;
+  top: 205px;
+  transform: translateX(-50%);
+  font-size: 18px;
+  color: #4F46E5;
+  opacity: 0;
+}
+.a2_stage.visible .a2_transform {
+  animation: a2_fadeUp 0.3s 1.9s both;
+}
+
+/* Section title */
+.a2_title {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #4F46E5;
+  opacity: 0;
+}
+.a2_stage.visible .a2_title {
+  animation: a2_fadeUp 0.4s 2.5s both;
+}
+
+/* === Keyframes === */
+@keyframes a2_fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes a2_drawLine {
+  from { opacity: 1; clip-path: inset(0 100% 0 0); }
+  to   { opacity: 1; clip-path: inset(0 0 0 0); }
+}
+
+/* === A3 Animation === */
+
+.a3_stage {
+  width: 340px;
+  min-height: 340px;
+  background: #F0FDF4;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 20px 20px;
+  gap: 12px;
+  font-family: -apple-system, "Noto Sans SC", sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+.a3_card {
+  width: 100%;
+  background: #fff;
+  border-radius: 12px;
+  border-left: 4px solid #15803D;
+  padding: 14px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(24px) scale(0.95);
+  box-shadow: 0 2px 8px rgba(21, 128, 61, 0.1);
+}
+
+.a3_card_header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.a3_icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #15803D;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.a3_icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.a3_card_title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #15803D;
+  letter-spacing: 0.5px;
+}
+
+.a3_tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-left: 42px;
+}
+
+.a3_tag {
+  font-size: 11px;
+  color: #4F46E5;
+  background: rgba(79, 70, 229, 0.08);
+  border: 1px solid rgba(79, 70, 229, 0.2);
+  border-radius: 10px;
+  padding: 2px 10px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0.7);
+}
+
+.a3_banner {
+  width: 100%;
+  margin-top: 4px;
+  background: linear-gradient(135deg, #15803D, #4F46E5);
+  border-radius: 10px;
+  padding: 10px 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 1px;
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+/* Animations */
+.a3_stage.visible .a3_card:nth-child(1) {
+  animation: a3_popIn 0.45s 0.1s ease-out forwards;
+}
+.a3_stage.visible .a3_card:nth-child(2) {
+  animation: a3_popIn 0.45s 0.4s ease-out forwards;
+}
+.a3_stage.visible .a3_card:nth-child(3) {
+  animation: a3_popIn 0.45s 0.7s ease-out forwards;
+}
+
+.a3_stage.visible .a3_card:nth-child(1) .a3_tag:nth-child(1) { animation: a3_tagIn 0.3s 0.4s ease-out forwards; }
+.a3_stage.visible .a3_card:nth-child(1) .a3_tag:nth-child(2) { animation: a3_tagIn 0.3s 0.5s ease-out forwards; }
+.a3_stage.visible .a3_card:nth-child(1) .a3_tag:nth-child(3) { animation: a3_tagIn 0.3s 0.6s ease-out forwards; }
+
+.a3_stage.visible .a3_card:nth-child(2) .a3_tag:nth-child(1) { animation: a3_tagIn 0.3s 0.7s ease-out forwards; }
+.a3_stage.visible .a3_card:nth-child(2) .a3_tag:nth-child(2) { animation: a3_tagIn 0.3s 0.8s ease-out forwards; }
+.a3_stage.visible .a3_card:nth-child(2) .a3_tag:nth-child(3) { animation: a3_tagIn 0.3s 0.9s ease-out forwards; }
+
+.a3_stage.visible .a3_card:nth-child(3) .a3_tag:nth-child(1) { animation: a3_tagIn 0.3s 1.0s ease-out forwards; }
+.a3_stage.visible .a3_card:nth-child(3) .a3_tag:nth-child(2) { animation: a3_tagIn 0.3s 1.1s ease-out forwards; }
+.a3_stage.visible .a3_card:nth-child(3) .a3_tag:nth-child(3) { animation: a3_tagIn 0.3s 1.2s ease-out forwards; }
+
+.a3_stage.visible .a3_banner {
+  animation: a3_bannerIn 0.5s 1.4s ease-out forwards;
+}
+
+@keyframes a3_popIn {
+  0% { opacity: 0; transform: translateY(24px) scale(0.95); }
+  60% { opacity: 1; transform: translateY(-4px) scale(1.02); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes a3_tagIn {
+  0% { opacity: 0; transform: scale(0.7); }
+  60% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes a3_bannerIn {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* === A4 Animation === */
+
+.a4_stage {
+  width: 340px;
+  min-height: 340px;
+  background: #EEF2FF;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px;
+  font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+  overflow: hidden;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.a4_cards {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 28px;
+}
+
+.a4_card {
+  width: 90px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px 8px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(21, 128, 61, 0.12);
+  border: 1.5px solid transparent;
+  opacity: 0;
+  transform: translateY(24px) scale(0.9);
+  transition: none;
+}
+
+.a4_stage.visible .a4_card {
+  animation: a4_cardIn 0.5s ease-out forwards;
+}
+
+.a4_stage.visible .a4_card:nth-child(1) { animation-delay: 0.2s; }
+.a4_stage.visible .a4_card:nth-child(2) { animation-delay: 0.55s; }
+.a4_stage.visible .a4_card:nth-child(3) { animation-delay: 0.9s; }
+
+@keyframes a4_cardIn {
+  0% { opacity: 0; transform: translateY(24px) scale(0.9); }
+  70% { opacity: 1; transform: translateY(-4px) scale(1.03); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.a4_stage.visible .a4_card:nth-child(1) { border-color: #15803D; }
+.a4_stage.visible .a4_card:nth-child(2) { border-color: #4F46E5; }
+.a4_stage.visible .a4_card:nth-child(3) { border-color: #15803D; }
+
+.a4_icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.a4_icon svg {
+  width: 36px;
+  height: 36px;
+}
+
+.a4_label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1e293b;
+  text-align: center;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+/* Connector dots between cards and formula */
+.a4_connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 16px;
+  opacity: 0;
+}
+
+.a4_stage.visible .a4_connector {
+  animation: a4_fadeIn 0.4s ease-out 1.4s forwards;
+}
+
+.a4_dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #15803D;
+}
+
+@keyframes a4_fadeIn {
+  to { opacity: 1; }
+}
+
+/* Formula section */
+.a4_formula {
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px 16px;
+  width: calc(100% - 8px);
+  box-shadow: 0 2px 12px rgba(79, 70, 229, 0.1);
+  border: 1.5px solid #4F46E5;
+  opacity: 0;
+  transform: translateY(16px);
+  box-sizing: border-box;
+}
+
+.a4_stage.visible .a4_formula {
+  animation: a4_formulaIn 0.6s ease-out 1.6s forwards;
+}
+
+@keyframes a4_formulaIn {
+  0% { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.a4_formula_left {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.a4_formula_tag {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.a4_stage.visible .a4_formula_tag {
+  animation: a4_tagPop 0.35s ease-out forwards;
+}
+
+.a4_stage.visible .a4_formula_tag:nth-child(1) { animation-delay: 1.9s; }
+.a4_stage.visible .a4_formula_tag:nth-child(2) { animation-delay: 2.1s; }
+.a4_stage.visible .a4_formula_tag:nth-child(3) { animation-delay: 2.3s; }
+.a4_stage.visible .a4_formula_tag:nth-child(4) { animation-delay: 2.5s; }
+.a4_stage.visible .a4_formula_tag:nth-child(5) { animation-delay: 2.7s; }
+
+@keyframes a4_tagPop {
+  0% { opacity: 0; transform: scale(0.8); }
+  60% { transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.a4_tag_green {
+  background: #dcfce7;
+  color: #15803D;
+}
+
+.a4_tag_indigo {
+  background: #e0e7ff;
+  color: #4F46E5;
+}
+
+.a4_tag_plus {
+  background: none;
+  color: #64748b;
+  padding: 3px 2px;
+  font-size: 13px;
+}
+
+.a4_formula_result {
+  text-align: center;
+  opacity: 0;
+}
+
+.a4_stage.visible .a4_formula_result {
+  animation: a4_resultIn 0.5s ease-out 2.9s forwards;
+}
+
+@keyframes a4_resultIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.a4_gt {
+  font-size: 18px;
+  font-weight: 700;
+  color: #15803D;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.a4_vs_text {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #4F46E5;
+}
+
+/* Pulse glow on cards after formula appears */
+.a4_stage.visible .a4_card {
+  animation: a4_cardIn 0.5s ease-out forwards, a4_glow 2s ease-in-out 3.2s infinite;
+}
+
+@keyframes a4_glow {
+  0%, 100% { box-shadow: 0 2px 8px rgba(21, 128, 61, 0.12); }
+  50% { box-shadow: 0 2px 16px rgba(21, 128, 61, 0.28); }
+}
+
+</style>
+
+<meta name="description" content="过去一年里 MCP 成了 agent 连接外部世界的标准，Claude Code 证明了代码是 agent 做几乎所有数字工作的通用接口。但在实际部署中，Anthropic 反复撞上同一个缺口： agent 有智能和能力，但没有专业知识 。这促使他们创建了 Agent Skills——将领域专业知识打包成有组织的文件集合，让 agent 能按需访问和应用。这">
+<link rel="canonical" href="https://chendi.me/readings/agent-skills/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">&#8592;</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ Layer 0: 概览 ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <p class="reveal" style="font-size:12px;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent);font-weight:600;margin-bottom:16px;">Anthropic Blog · 2026.01.22</p>
+      <h2 class="big-statement reveal reveal-delay-1">别再造<span style="color:var(--accent)">专用 Agent</span>了<br>给通用 Agent 装上 Skills</h2>
+      <p class="body-text reveal reveal-delay-2">过去一年里 MCP 成了 agent 连接外部世界的标准，Claude Code 证明了代码是 agent 做几乎所有数字工作的通用接口。但在实际部署中，Anthropic 反复撞上同一个缺口：<span class="hl2">agent 有智能和能力，但没有专业知识</span>。这促使他们创建了 Agent Skills——将领域专业知识打包成有组织的文件集合，让 agent 能按需访问和应用。这篇文章解释了 Anthropic 为什么<span class="hl">停止构建专用 agent，转而构建 skills</span>，以及这种转变如何改变了他们对扩展 agent 能力的思考方式。</p>
+      <div class="anim-stage reveal reveal-delay-3" id="s1-anim"><div class="s1_stage">
+  <div class="s1_section_label s1_label_old">Before: 专用 Agent</div>
+  <div class="s1_old">
+    <div class="s1_agent_old">
+      <div class="s1_agent_old_icon">&#x1F4BB;</div>
+      <div class="s1_agent_old_label">编码</div>
+    </div>
+    <div class="s1_agent_old">
+      <div class="s1_agent_old_icon">&#x1F4B0;</div>
+      <div class="s1_agent_old_label">金融</div>
+    </div>
+    <div class="s1_agent_old">
+      <div class="s1_agent_old_icon">&#x1F4E3;</div>
+      <div class="s1_agent_old_label">营销</div>
+    </div>
+    <div class="s1_agent_old">
+      <div class="s1_agent_old_icon">&#x1F50D;</div>
+      <div class="s1_agent_old_label">研究</div>
+    </div>
+  </div>
+
+  <div class="s1_arrow">&#x2B07;</div>
+
+  <div class="s1_section_label s1_label_new">After: 通用 Agent + Skills</div>
+  <div class="s1_new">
+    <div class="s1_core">通用<br>Agent</div>
+    <div class="s1_orbit">
+      <div class="s1_skill">编码 Skill</div>
+      <div class="s1_skill">金融 Skill</div>
+      <div class="s1_skill">营销 Skill</div>
+      <div class="s1_skill">研究 Skill</div>
+    </div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>A lot has changed in the past year. MCP became the standard for agent connectivity. Claude Code proved code is a universal interface for agents.</p>
+          <p>But as we've built and deployed these agents, we keep running into the same gap: agents have intelligence and capabilities, but not always the expertise to effectively tackle real work. This led us to create Agent Skills.</p>
+          <p>In this post, we'll explain why we stopped building specialized agents and started building skills instead.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">代码即接口：<br><span style="color:#86EFAC">一个 Agent 做所有事</span></h2>
+      <p class="body-text reveal reveal-delay-1">Anthropic 最初以为不同领域的 agent 会长得很不一样——编码 agent、研究 agent、金融 agent、营销 agent，每个都需要自己的工具和脚手架。整个行业最初也拥抱了这种「领域专用 agent」的模式。但实践中他们发现，<span class="hl">代码不只是一个用例，而是 agent 做几乎所有数字工作的接口</span>。以 Claude Code 生成财务报告为例：它能调用 API 做研究、把数据存在文件系统、用 Python 分析数据、综合洞察——所有这些都通过代码发生。整个脚手架变得极其简单：bash 终端 + 文件系统 + 代码解释器就够了。Claude Code 是一个编码 agent，但更准确地说，<span class="hl2">它是一个恰好通过代码工作的通用 agent</span>。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s2-anim"><div class="s2_stage">
+  <!-- 中心 -->
+  <div class="s2_center">Claude Code</div>
+
+  <!-- 上: API 调用 -->
+  <div class="s2_line s2_line_up"></div>
+  <div class="s2_label s2_label_up">API 调用</div>
+
+  <!-- 右: 文件存储 -->
+  <div class="s2_line s2_line_right"></div>
+  <div class="s2_label s2_label_right">文件存储</div>
+
+  <!-- 下: Python 分析 -->
+  <div class="s2_line s2_line_down"></div>
+  <div class="s2_label s2_label_down">Python 分析</div>
+
+  <!-- 左: 综合洞察 -->
+  <div class="s2_line s2_line_left"></div>
+  <div class="s2_label s2_label_left">综合洞察</div>
+
+  <!-- 回流脉冲 -->
+  <div class="s2_pulse"></div>
+
+  <!-- 脚手架 -->
+  <div class="s2_scaffold">
+    <div class="s2_scaffold_item">bash</div>
+    <div class="s2_scaffold_item">文件</div>
+    <div class="s2_scaffold_item">解释器</div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>We used to think agents in different domains would look very different. A coding agent, a research agent, one for finance, one for marketing—each seemed to need its own tools and scaffolding.</p>
+          <p>We came to see code less as just a use case and more as an interface for agents to do almost any digital work. Claude Code is a coding agent, but also a general-purpose agent that happens to work through code.</p>
+          <p>The scaffolding becomes as simple as bash terminal + file system + code interpreter.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background:var(--bg-act2)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">数学天才 vs 税务专家：<br><span style="color:var(--accent2)">专业知识的缺口</span></h2>
+      <p class="body-text reveal reveal-delay-1">谁更适合帮你报税：一个从第一性原理推导的数学天才，还是一个报过上千份税表的税务专家？多数人会选后者——不是因为他们更聪明，而是因为他们有<span class="hl2">积累的专业经验</span>：知道哪些抵扣项常被遗漏、哪些情况会触发审计、怎样在合法范围内最大化退税。今天的 agent 就像那个数学天才：<span class="hl">推理能力卓越，但缺乏老练专业人士的积累</span>。它们有适当引导就能做出惊人的事情，但常常缺少关键的行业知识、最佳实践、组织流程和经验法则。Skills 通过<span class="hl2">将领域专业知识打包成 agent 可以渐进式访问和应用的格式</span>来弥合这个缺口。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s3-anim"><div class="s3_stage visible">
+  <div class="s3_cards">
+    <div class="s3_card s3_card--genius">
+      <div class="s3_icon">&#129504;</div>
+      <div class="s3_name">数学天才</div>
+      <div class="s3_label">第一性原理</div>
+      <div class="s3_traits">推理强 / 缺知识</div>
+    </div>
+    <div class="s3_card s3_card--expert">
+      <div class="s3_icon">&#128203;</div>
+      <div class="s3_name">税务专家</div>
+      <div class="s3_label">积累经验</div>
+      <div class="s3_traits">流程熟 / 有技巧</div>
+    </div>
+  </div>
+  <div class="s3_bridge">
+    <div class="s3_bridge_line"></div>
+    <div class="s3_bridge_tag">Skills</div>
+  </div>
+</div></div>
+      <p class="hook-line reveal reveal-delay-3">Skills 的文件结构和渐进式加载是怎么设计的？</p>
+      <button class="drill-btn reveal reveal-delay-4" onclick="drillDown('layer-skills',this)">深入 Skills 详解 ↓</button>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">三类 Skills 生态：<br><span style="color:#86EFAC">基础 · 合作 · 企业</span></h2>
+      <p class="body-text reveal reveal-delay-1">Skills 生态由三类构成。<span class="hl">基础 Skills</span> 提供每个人都需要的核心能力：文档处理、电子表格、演示文稿等，编码了文档生成和操作的最佳实践。<span class="hl2">合作伙伴 Skills</span> 是第三方公司构建的——K-Dense、Browserbase、Notion 等正在创建 Skills 来让它们的服务对 agent 可访问，把领域专业知识与服务 API 集成。<span class="hl">企业 Skills</span> 是组织自建的专有 Skills，编码了内部流程、合规要求和机构知识。几个新兴趋势正在塑造这个生态：早期 Skills 只是简单的文档引用，现在已经演化为<span class="hl2">协调数据检索、复杂计算和格式化输出的多步骤工作流</span>；Skills 创建正在从工程师扩展到产品经理、分析师和领域专家——用 skill-creator 工具，30 分钟就能创建并测试第一个 Skill。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s4-anim"><div class="s4_stage">
+  <div class="s4_cards">
+    <div class="s4_card s4_card--foundation">
+      <div class="s4_icon">&#128196;</div>
+      <div class="s4_info">
+        <div class="s4_label">基础 Skills</div>
+        <div class="s4_desc">文档、表格、演示文稿 — 核心能力</div>
+      </div>
+    </div>
+    <div class="s4_card s4_card--partner">
+      <div class="s4_icon">&#128268;</div>
+      <div class="s4_info">
+        <div class="s4_label">合作伙伴 Skills</div>
+        <div class="s4_desc">K-Dense, Browserbase, Notion 等集成</div>
+      </div>
+    </div>
+    <div class="s4_card s4_card--enterprise">
+      <div class="s4_icon">&#127970;</div>
+      <div class="s4_info">
+        <div class="s4_label">企业 Skills</div>
+        <div class="s4_desc">内部专属工作流、合规审查</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="s4_timeline">
+    <div class="s4_tl_start">文档引用</div>
+    <div class="s4_tl_dot"></div>
+    <div class="s4_tl_line"></div>
+    <div class="s4_tl_dot"></div>
+    <div class="s4_tl_end">多步工作流</div>
+  </div>
+
+  <div class="s4_badge_wrap">
+    <div class="s4_badge">
+      <span class="s4_badge_icon">&#9889;</span>
+      <span>30分钟创建</span>
+    </div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>Foundational skills provide core capabilities everyone needs: working with documents, spreadsheets, presentations.</p>
+          <p>As skills standardize how agents interact with specialized capabilities, companies are building skills to make their services agent-accessible. K-Dense, Browserbase, Notion, and many others are creating skills.</p>
+          <p>Organizations build proprietary skills encoding their internal processes and domain expertise.</p>
+          <p>Skill creation is expanding beyond engineers to product managers, analysts, and domain experts. They can create and test their first skill in under 30 minutes.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">完整架构：<br><span style="color:var(--accent)">四层分离</span>的 Agent 系统</h2>
+      <p class="body-text reveal reveal-delay-1">把所有部分放在一起，新兴的 agent 架构由四层组成，每层有清晰的职责。<span class="hl">推理循环</span>（Reasoning Loop）负责思考和决策。<span class="hl2">运行时环境</span>（Runtime）负责执行代码和操作。<span class="hl">MCP 服务器</span>负责连接外部系统——数据库、API、第三方服务。<span class="hl2">Skills</span> 负责引导和提供专业知识。这种分离让系统可理解，并让每个组件独立演进。当你给这个架构添加一个 Skill 时，效果是即时的——比如前端设计 Skill 立即提升了 Claude 的前端能力，在需要时激活排版、色彩理论和动画的专业指导，不需要时完全不占用上下文窗口。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s5-anim"><!-- ===== S5: 四层分离的 Agent 架构 ===== -->
+<div class="s5_stage reveal" id="s5_stage">
+  <div class="s5_title">四层分离的 Agent 架构</div>
+  <div class="s5_subtitle">每一层职责清晰，独立演进</div>
+
+  <div class="s5_stack">
+    <!-- Layer 4 (top): Reasoning Loop -->
+    <div class="s5_layer s5_l4">
+      <div class="s5_layer_num">4</div>
+      <div class="s5_layer_body">
+        <div class="s5_layer_name">推理循环</div>
+        <div class="s5_layer_role">思考 &amp; 决策</div>
+      </div>
+    </div>
+
+    <div class="s5_conn s5_c3">
+      <span class="s5_conn_dot"></span>
+      <span class="s5_conn_dot"></span>
+      <span class="s5_conn_dot"></span>
+    </div>
+
+    <!-- Layer 3: Skills -->
+    <div class="s5_layer s5_l3 s5_l3_glow">
+      <div class="s5_layer_num">3</div>
+      <div class="s5_layer_body">
+        <div class="s5_layer_name">Skills</div>
+        <div class="s5_layer_role">提供领域专业知识</div>
+      </div>
+    </div>
+
+    <div class="s5_conn s5_c2">
+      <span class="s5_conn_dot"></span>
+      <span class="s5_conn_dot"></span>
+      <span class="s5_conn_dot"></span>
+    </div>
+
+    <!-- Layer 2: MCP Servers -->
+    <div class="s5_layer s5_l2">
+      <div class="s5_layer_num">2</div>
+      <div class="s5_layer_body">
+        <div class="s5_layer_name">MCP 服务器</div>
+        <div class="s5_layer_role">连接外部系统</div>
+      </div>
+    </div>
+
+    <div class="s5_conn s5_c1">
+      <span class="s5_conn_dot"></span>
+      <span class="s5_conn_dot"></span>
+      <span class="s5_conn_dot"></span>
+    </div>
+
+    <!-- Layer 1 (bottom): Runtime -->
+    <div class="s5_layer s5_l1">
+      <div class="s5_layer_num">1</div>
+      <div class="s5_layer_body">
+        <div class="s5_layer_name">运行时</div>
+        <div class="s5_layer_role">执行代码</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skill plug-in card -->
+  <div class="s5_plugin_wrap">
+    <div class="s5_plugin">
+      <div class="s5_plugin_icon">+</div>
+      <span>前端设计</span>
+    </div>
+  </div>
+  <div class="s5_plugin_label">添加一个 Skill，能力即刻增强</div>
+</div></div>
+      <p class="hook-line reveal reveal-delay-3">金融和医疗领域的实际部署是什么样的？</p>
+      <button class="drill-btn reveal reveal-delay-4" onclick="drillDown('layer-deploy',this)">深入垂直部署 ↓</button>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">开放标准：<br><span style="color:#86EFAC">跨平台可移植</span>的 Skills</h2>
+      <p class="body-text reveal reveal-delay-1">为了实现这个愿景，Anthropic 正在把 Agent Skills 作为<span class="hl">开放标准</span>发布。就像 MCP 一样，他们相信 Skills 应该跨工具和平台可移植——同一个 Skill 无论在 Claude 还是其他 AI 平台上都应该能用。Anthropic 一直在和社区协作完善格式规范。他们设想的未来是：当有人首次使用 AI agent 时，agent<span class="hl2">已经知道你和你的团队关心什么</span>，因为 Skills 捕获并传递了那些专业知识。随着生态增长，社区中某人构建的 Skill 可以让你的 agent 更有用，反之亦然。真正的价值来自<span class="hl">集体知识库</span>：捕获专业知识、跨组织传递、不断精炼——正如 Anthropic 所说，「Skill 建设者不只是工具制造者，他们是知识的策展人」。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s6-anim"><div class="s6_stage visible">
+  <div class="s6_hub">
+    <div class="s6_skill">
+      <div class="s6_skill_ear"></div>
+      <div class="s6_skill_txt">SKILL<br>.md</div>
+    </div>
+
+    <div class="s6_plat s6_plat--1">Claude</div>
+    <div class="s6_plat s6_plat--2">平台A</div>
+    <div class="s6_plat s6_plat--3">平台B</div>
+
+    <svg class="s6_lines" viewBox="0 0 280 220" fill="none">
+      <line class="s6_line s6_line--1" x1="140" y1="82" x2="140" y2="54" />
+      <line class="s6_line s6_line--2" x1="122" y1="118" x2="41" y2="166" />
+      <line class="s6_line s6_line--3" x1="158" y1="118" x2="239" y2="166" />
+    </svg>
+  </div>
+
+  <div class="s6_comm">
+    <div class="s6_dot s6_dot--g"></div>
+    <div class="s6_dot s6_dot--p"></div>
+    <div class="s6_dot s6_dot--g"></div>
+    <div class="s6_dot s6_dot--p"></div>
+    <div class="s6_dot s6_dot--g"></div>
+    <div class="s6_dot s6_dot--p"></div>
+    <div class="s6_dot s6_dot--g"></div>
+    <div class="s6_dot s6_dot--p"></div>
+    <div class="s6_dot s6_dot--g"></div>
+    <div class="s6_dot s6_dot--p"></div>
+    <div class="s6_dot s6_dot--g"></div>
+    <div class="s6_dot s6_dot--p"></div>
+  </div>
+  <div class="s6_label">社区共建知识库</div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>To enable this vision, we're publishing Agent Skills as an open standard. Like MCP, we believe skills should be portable across tools and platforms. The same skill should work whether you're using Claude or other AI platforms.</p>
+          <p>When someone starts using an AI agent for the first time, it should already know what you and your team care about because skills capture and transfer that expertise.</p>
+          <p>We're converging on an architecture for general agents, and skills provide a paradigm for shipping and sharing new capabilities.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ Layer 1: Skills 详解 ═══ -->
+<div class="layer" id="layer-skills" data-depth="1">
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">渐进式加载：<br><span style="color:var(--accent)">50 → 500 → 2000+</span> tokens</h2>
+      <p class="body-text reveal reveal-delay-1">Skills 的核心设计是<span class="hl">渐进式披露</span>（Progressive Disclosure），解决了一个关键矛盾：agent 可能装备数百个 Skills，但上下文窗口是有限的。解决方案是三层加载。第一层<span class="hl2">元数据</span>：运行时只展示 YAML frontmatter 中的 name 和 description，约 50 个 token。模型据此判断是否需要这个 Skill。第二层<span class="hl">SKILL.md 全文</span>：如果 Claude 判断需要，它读取完整的 SKILL.md 文件，约 500 个 token——包含工作流步骤、最佳实践、关键约束。第三层<span class="hl2">参考材料</span>：如果需要更多细节，Skill 可以包含 references/ 目录中的补充文档，2000+ token，只在明确需要时加载。这意味着你可以给 agent 装备数百个 Skills 而不会淹没它的上下文——元数据用 50 token，完整文档 500 token，参考文件 2000+ token，都是按需加载。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a1-anim"><div class="a1_stage visible">
+  <div class="a1_title">渐进式加载</div>
+
+  <div class="a1_tiers">
+    <div class="a1_card a1_t1">
+      <span class="a1_card_label">Tier 1 · 元数据</span>
+      <span class="a1_card_tokens">~50 tok</span>
+    </div>
+
+    <div class="a1_connector a1_c1"></div>
+
+    <div class="a1_card a1_t2">
+      <span class="a1_card_label">Tier 2 · SKILL.md</span>
+      <span class="a1_card_tokens">~500 tok</span>
+      <span class="a1_t2_detail">工作流 + 最佳实践 + 触发条件</span>
+    </div>
+
+    <div class="a1_connector a1_c2"></div>
+
+    <div class="a1_card a1_t3">
+      <span class="a1_card_label">Tier 3 · references/ 参考文件</span>
+      <span class="a1_card_tokens">2000+ tok</span>
+      <div class="a1_t3_files">
+        <span class="a1_t3_file">api.md</span>
+        <span class="a1_t3_file">examples.md</span>
+        <span class="a1_t3_file">schema.md</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="a1_bar_wrap">
+    <span class="a1_bar_label">上下文窗口</span>
+    <div class="a1_bar_track">
+      <div class="a1_bar_fill"></div>
+    </div>
+    <span class="a1_bar_pct">~3%</span>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>Skills can contain extensive information. To protect the context window and make skills composable, they use progressive disclosure: at runtime, only the metadata (name and description from the YAML frontmatter) is shown to the model.</p>
+          <p>This three-tier approach means you can equip an agent with hundreds of skills without overwhelming its context window—metadata uses ~50 tokens, full SKILL.md files ~500 tokens, and reference files 2,000+ tokens and only when specifically needed.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background:var(--bg-act2)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">Skills 自带脚本：<br><span style="color:var(--accent2)">代码即工具</span></h2>
+      <p class="body-text reveal reveal-delay-1">传统的工具有几个问题：有些说明文档写得很糟糕，模型不总能修改或扩展它们，而且经常膨胀上下文窗口。代码则相反——<span class="hl2">自文档化、可修改、不需要在上下文中常驻</span>。Anthropic 用一个真实案例说明了这一点：他们发现 Claude 反复写同样的脚本来给幻灯片应用 Anthropic 品牌样式，于是让 Claude 把这个脚本保存为给自己用的工具。结果是一个 apply_template.py 脚本（用 python-pptx 处理幻灯片）加上一个 SKILL.md 文档（记录品牌颜色、字体、布局规范）。Skill 的说明文档告诉 Claude 用 <span class="hl">./apply_template.py</span> 脚本来就地更新 pptx 文件。这是 Skills 的一个强大模式：<span class="hl2">把可复用的代码封装成 agent 可以自主调用的工具</span>，同时保持 SKILL.md 作为何时以及如何使用这些工具的指南。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a2-anim"><div class="a2_stage visible">
+  <!-- File tree -->
+  <div class="a2_tree">
+    <div class="a2_file"><span class="a2_icon a2_icon--md">M</span>SKILL.md</div>
+    <div class="a2_file"><span class="a2_icon a2_icon--py">P</span>apply_template.py</div>
+  </div>
+
+  <!-- Claude agent -->
+  <div class="a2_agent">Claude</div>
+
+  <!-- Arrows -->
+  <div class="a2_arrows">
+    <div class="a2_arrow a2_arrow--md"></div>
+    <div class="a2_arrow a2_arrow--py"></div>
+    <span class="a2_label a2_label--md">何时使用</span>
+    <span class="a2_label a2_label--py">如何执行</span>
+  </div>
+
+  <!-- Divider -->
+  <div class="a2_divider"></div>
+
+  <!-- Before / After -->
+  <div class="a2_slides">
+    <div class="a2_slide a2_slide--before">
+      <span class="a2_slide_tag">Before</span>
+      <div class="a2_bar" style="margin-top:18px"></div>
+      <div class="a2_bar a2_bar--short"></div>
+      <div class="a2_bar a2_bar--med"></div>
+      <div class="a2_bar"></div>
+      <div class="a2_bar a2_bar--short"></div>
+      <div class="a2_bar a2_bar--med"></div>
+    </div>
+
+    <div class="a2_transform">&#x27A1;</div>
+
+    <div class="a2_slide a2_slide--after">
+      <span class="a2_slide_tag">After</span>
+      <div class="a2_brand_stripe"><span class="a2_brand_logo">A</span></div>
+      <div class="a2_bar_header"></div>
+      <div class="a2_bar"></div>
+      <div class="a2_bar a2_bar--short"></div>
+      <div class="a2_bar a2_bar--med"></div>
+      <div class="a2_bar"></div>
+      <div class="a2_bar a2_bar--short"></div>
+    </div>
+  </div>
+
+  <!-- Title -->
+  <div class="a2_title">代码即工具 -- SKILL.md 是使用说明</div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>Traditional tools have problems: some have poorly written instructions, the model can't always modify or extend them, and they often bloat the context window. Code, on the other hand, is self-documenting, modifiable, and doesn't need to be in context.</p>
+          <p>Here's a real example: we kept seeing Claude write the same script to apply Anthropic styling to slides. So we asked Claude to save it as a tool for itself.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ═══ Layer 1: 垂直部署 ═══ -->
+<div class="layer" id="layer-deploy" data-depth="1">
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">金融服务：<br><span style="color:var(--accent)">DCF · 可比分析 · 盈利解读</span></h2>
+      <p class="body-text reveal reveal-delay-1">在金融服务领域，Anthropic 在 Skills 发布后立即增强了 Claude 的金融能力。这些 Skills 让 Claude 对金融专业人士更有用，覆盖了三个核心场景：<span class="hl">DCF 模型</span>（现金流折现估值，编码了标准假设、敏感性分析流程和行业惯例）、<span class="hl2">可比公司分析</span>（Comparable Company Analysis，编码了筛选同业、调整倍数、处理异常值的专业知识）、以及<span class="hl">盈利分析</span>（Earnings Analysis，编码了解读财报、识别关键指标变化、对比市场预期的方法论）。这些 Skills 的威力在于：它们不只是给 Claude 一个「做 DCF」的指令——而是<span class="hl2">把一个资深分析师积累多年的实操知识打包成 agent 可以按步骤执行的工作流</span>。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a3-anim"><div class="a3_stage visible">
+
+  <div class="a3_card">
+    <div class="a3_card_header">
+      <div class="a3_icon">
+        <svg viewBox="0 0 24 24"><path d="M3 20h18M6 16v4M10 12v8M14 8v12M18 4v16"/></svg>
+      </div>
+      <div class="a3_card_title">DCF 模型</div>
+    </div>
+    <div class="a3_tags">
+      <span class="a3_tag">现金流折现</span>
+      <span class="a3_tag">标准假设</span>
+      <span class="a3_tag">敏感性分析</span>
+    </div>
+  </div>
+
+  <div class="a3_card">
+    <div class="a3_card_header">
+      <div class="a3_icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1"/><rect x="14" y="4" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </div>
+      <div class="a3_card_title">可比分析</div>
+    </div>
+    <div class="a3_tags">
+      <span class="a3_tag">同业筛选</span>
+      <span class="a3_tag">倍数调整</span>
+      <span class="a3_tag">异常值处理</span>
+    </div>
+  </div>
+
+  <div class="a3_card">
+    <div class="a3_card_header">
+      <div class="a3_icon">
+        <svg viewBox="0 0 24 24"><path d="M3 20L8 10l4 6 4-10 5 14"/><circle cx="8" cy="10" r="1.5" fill="#fff"/><circle cx="12" cy="16" r="1.5" fill="#fff"/><circle cx="16" cy="6" r="1.5" fill="#fff"/></svg>
+      </div>
+      <div class="a3_card_title">盈利分析</div>
+    </div>
+    <div class="a3_tags">
+      <span class="a3_tag">解读财报</span>
+      <span class="a3_tag">关键指标变动</span>
+      <span class="a3_tag">市场预期对比</span>
+    </div>
+  </div>
+
+  <div class="a3_banner">资深分析师经验</div>
+
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>Just after launching skills, we enhanced Claude for the financial services sector with skills that make Claude more useful for finance professionals: DCF models, comparable company analysis, earnings analysis.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background:var(--bg-act2)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">医疗与生命科学：<br><span style="color:var(--accent2)">管线 · 临床 · FHIR</span></h2>
+      <p class="body-text reveal reveal-delay-1">在医疗和生命科学领域，Anthropic 增强了 Claude 对研究人员、临床医生和医疗开发者的能力，同样通过 Skills。核心场景包括：<span class="hl2">生物信息学管线</span>（Bioinformatics Pipelines，编码了基因组数据处理、序列比对、变异检测的标准工作流和质控步骤）、<span class="hl">临床试验协议</span>（Clinical Trial Protocols，编码了试验设计、终点选择、统计方法和合规要求的专业知识）、以及<span class="hl2">FHIR 开发</span>（Fast Healthcare Interoperability Resources，编码了医疗数据交换标准的实现模式和最佳实践）。这个模式的关键洞察是：通用 agent + MCP 连接器 + 垂直 Skills 的组合，比从零构建领域专用 agent 更高效——因为<span class="hl">推理能力是通用的，专业知识是可插拔的</span>。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a4-anim"><div class="a4_stage visible">
+  <div class="a4_cards">
+    <!-- Card 1: Bioinformatics -->
+    <div class="a4_card">
+      <div class="a4_icon">
+        <svg viewBox="0 0 36 36" fill="none">
+          <path d="M18 4 C18 4 12 10 12 18 C12 26 18 32 18 32" stroke="#15803D" stroke-width="2" stroke-linecap="round" fill="none"/>
+          <path d="M18 4 C18 4 24 10 24 18 C24 26 18 32 18 32" stroke="#15803D" stroke-width="2" stroke-linecap="round" fill="none"/>
+          <line x1="13" y1="10" x2="23" y2="10" stroke="#15803D" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="12.5" y1="14.5" x2="23.5" y2="14.5" stroke="#15803D" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="12" y1="18" x2="24" y2="18" stroke="#15803D" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="12.5" y1="21.5" x2="23.5" y2="21.5" stroke="#15803D" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="13" y1="26" x2="23" y2="26" stroke="#15803D" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="a4_label">生物信息学</div>
+    </div>
+    <!-- Card 2: Clinical Trials -->
+    <div class="a4_card">
+      <div class="a4_icon">
+        <svg viewBox="0 0 36 36" fill="none">
+          <path d="M14 6 L14 14 L9 28 C8.3 30 10 32 12 32 L24 32 C26 32 27.7 30 27 28 L22 14 L22 6" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <line x1="12" y1="6" x2="24" y2="6" stroke="#4F46E5" stroke-width="2" stroke-linecap="round"/>
+          <line x1="14" y1="18" x2="22" y2="18" stroke="#4F46E5" stroke-width="1.2" stroke-dasharray="2 2"/>
+          <circle cx="16" cy="24" r="1.5" fill="#4F46E5" opacity="0.6"/>
+          <circle cx="20" cy="22" r="1.5" fill="#4F46E5" opacity="0.8"/>
+          <circle cx="18" cy="26" r="1.2" fill="#4F46E5" opacity="0.5"/>
+        </svg>
+      </div>
+      <div class="a4_label">临床试验</div>
+    </div>
+    <!-- Card 3: FHIR Development -->
+    <div class="a4_card">
+      <div class="a4_icon">
+        <svg viewBox="0 0 36 36" fill="none">
+          <rect x="4" y="10" width="12" height="16" rx="2" stroke="#15803D" stroke-width="2" fill="none"/>
+          <rect x="20" y="10" width="12" height="16" rx="2" stroke="#15803D" stroke-width="2" fill="none"/>
+          <path d="M16 15 L20 15" stroke="#15803D" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M16 19 L20 19" stroke="#15803D" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M16 23 L20 23" stroke="#15803D" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M18 13 L18 15" stroke="#15803D" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M18 23 L18 25" stroke="#15803D" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="7" y1="15" x2="13" y2="15" stroke="#15803D" stroke-width="1" opacity="0.5"/>
+          <line x1="7" y1="18" x2="13" y2="18" stroke="#15803D" stroke-width="1" opacity="0.5"/>
+          <line x1="7" y1="21" x2="11" y2="21" stroke="#15803D" stroke-width="1" opacity="0.5"/>
+          <line x1="23" y1="15" x2="29" y2="15" stroke="#15803D" stroke-width="1" opacity="0.5"/>
+          <line x1="23" y1="18" x2="29" y2="18" stroke="#15803D" stroke-width="1" opacity="0.5"/>
+          <line x1="23" y1="21" x2="27" y2="21" stroke="#15803D" stroke-width="1" opacity="0.5"/>
+        </svg>
+      </div>
+      <div class="a4_label">FHIR 开发</div>
+    </div>
+  </div>
+
+  <div class="a4_connector">
+    <div class="a4_dot"></div>
+    <div class="a4_dot"></div>
+    <div class="a4_dot"></div>
+  </div>
+
+  <div class="a4_formula">
+    <div class="a4_formula_left">
+      <span class="a4_formula_tag a4_tag_green">通用Agent</span>
+      <span class="a4_formula_tag a4_tag_plus">+</span>
+      <span class="a4_formula_tag a4_tag_indigo">MCP</span>
+      <span class="a4_formula_tag a4_tag_plus">+</span>
+      <span class="a4_formula_tag a4_tag_green">Skills</span>
+    </div>
+    <div class="a4_formula_result">
+      <span class="a4_gt">&gt;</span>
+      <span class="a4_vs_text">从零构建专用Agent</span>
+    </div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>We've also enhanced our healthcare and life sciences offerings with skills that make Claude more useful for researchers, clinicians, and healthcare developers: bioinformatics pipelines, clinical trial protocols, FHIR development.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+var layerStack=['layer-overview'];
+var transitioning=false;
+var layerNames={'layer-overview':'概览','layer-skills':'Skills 详解','layer-deploy':'垂直部署'};
+var observers=new Map();
+function setupObserver(layerId){if(observers.has(layerId))return;var layer=document.getElementById(layerId);var reveals=layer.querySelectorAll('.reveal, [class*="_stage"]');var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.15,root:layer});reveals.forEach(function(el){obs.observe(el);});observers.set(layerId,obs);}
+function resetReveals(layerId){var layer=document.getElementById(layerId);layer.querySelectorAll('.reveal').forEach(function(el){el.classList.remove('visible');});layer.querySelectorAll('[class*="_stage"]').forEach(function(el){el.classList.remove('visible');});}
+function activateReveals(layerId){resetReveals(layerId);if(observers.has(layerId)){observers.get(layerId).disconnect();observers.delete(layerId);}requestAnimationFrame(function(){setupObserver(layerId);});}
+function updateBreadcrumb(){var bc=document.getElementById('breadcrumb');bc.innerHTML='';layerStack.forEach(function(id,i){if(i>0){var sep=document.createElement('span');sep.className='sep';sep.textContent='>';bc.appendChild(sep);}var span=document.createElement('span');span.textContent=layerNames[id]||id;if(i===layerStack.length-1){span.className='current';}else{span.addEventListener('click',function(){goBackTo(i);});}bc.appendChild(span);});var backBtn=document.getElementById('backBtn');backBtn.style.display=layerStack.length>1?'flex':'none';bc.style.left=layerStack.length>1?'60px':'16px';var dots=document.getElementById('depthDots');var depth=layerStack.length-1;dots.querySelectorAll('.dot').forEach(function(d,i){d.classList.toggle('active',i===depth);});}
+function drillDown(targetId,btnEl){if(transitioning)return;transitioning=true;var currentId=layerStack[layerStack.length-1];var currentLayer=document.getElementById(currentId);var targetLayer=document.getElementById(targetId);targetLayer.scrollTop=0;resetReveals(targetId);targetLayer.style.visibility='visible';var duration=600;currentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';currentLayer.style.transformOrigin='center center';currentLayer.style.transform='scale(1.3)';currentLayer.style.opacity='0';targetLayer.classList.add('active');targetLayer.style.opacity='0';targetLayer.style.transform='scale(0.85)';targetLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){targetLayer.style.opacity='1';targetLayer.style.transform='scale(1)';});});setTimeout(function(){currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';targetLayer.style.transition='';targetLayer.style.transform='';activateReveals(targetId);transitioning=false;},duration+50);layerStack.push(targetId);updateBreadcrumb();}
+function goBack(){if(layerStack.length<=1||transitioning)return;transitioning=true;var currentId=layerStack.pop();var parentId=layerStack[layerStack.length-1];var currentLayer=document.getElementById(currentId);var parentLayer=document.getElementById(parentId);var duration=600;currentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';currentLayer.style.transform='scale(0.85)';currentLayer.style.opacity='0';parentLayer.classList.add('active');parentLayer.style.transform='scale(1.3)';parentLayer.style.opacity='0';parentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){parentLayer.style.transform='scale(1)';parentLayer.style.opacity='1';});});setTimeout(function(){currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';currentLayer.style.visibility='';parentLayer.style.transition='';parentLayer.style.transform='';transitioning=false;},duration+50);updateBreadcrumb();}
+function goBackTo(targetIndex){if(transitioning)return;while(layerStack.length-1>targetIndex){if(layerStack.length<=1)break;goBack();return;}}
+function toggleSource(btn){btn.classList.toggle('open');btn.nextElementSibling.classList.toggle('open');}
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+</body>
+</html>

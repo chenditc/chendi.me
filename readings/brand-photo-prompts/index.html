@@ -1,0 +1,1794 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AI 品牌摄影 Prompt 指南</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&family=Noto+Sans+SC:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+/* === Variables === */
+:root {
+  --bg-act1: #FFFBF0; --bg-act2: #F0FDF4; --bg-act3: #1A1A2E;
+  --bg-close: #0F172A;
+  --text: #1E293B; --text-muted: #64748B; --dim: #94A3B8;
+  --accent: #059669; --accent2: #D97706;
+  --warm: #F59E0B; --danger: #DC2626;
+  --card-bg: #FFFFFF;
+  --neutral: #94A3B8;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; overflow: hidden; height: 100%; font-family: 'Noto Sans SC', -apple-system, sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; }
+
+/* === Core Framework === */
+.content-width { max-width: 640px; margin: 0 auto; padding: 0 28px; }
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.15s; }
+.reveal-delay-2 { transition-delay: 0.3s; }
+.reveal-delay-3 { transition-delay: 0.45s; }
+.reveal-delay-4 { transition-delay: 0.6s; }
+
+/* === Typography === */
+.big-statement { font-family: 'Noto Serif SC', serif; font-size: clamp(22px, 5.5vw, 32px); font-weight: 700; line-height: 1.5; margin-bottom: 32px; }
+.body-text { font-size: 16px; line-height: 1.9; color: var(--text); margin-bottom: 28px; }
+.body-text .hl { color: var(--accent); font-weight: 500; }
+.body-text .hl-danger { color: var(--danger); font-weight: 500; }
+.body-text .hl-warm { color: var(--accent2); font-weight: 500; }
+
+/* === Image Styles === */
+.article-img { width: 100%; border-radius: 12px; margin: 20px 0; display: block; }
+.article-img-caption { font-size: 13px; color: var(--dim); text-align: center; margin: -12px 0 24px; font-style: italic; }
+.img-pair { display: flex; gap: 12px; margin: 20px 0; }
+.img-pair img { flex: 1; min-width: 0; border-radius: 12px; object-fit: cover; }
+.img-pair-caption { font-size: 13px; color: var(--dim); text-align: center; margin: -12px 0 24px; }
+
+/* === Spatial Canvas === */
+.space { display: flex; width: 200%; height: 100%; transition: transform 0.55s cubic-bezier(0.32,0.72,0,1); will-change: transform; }
+.main-scroll { flex: 0 0 50%; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; transition: transform 0.55s cubic-bezier(0.32,0.72,0,1); transform-origin: right center; }
+.detail-scroll { flex: 0 0 50%; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; background: #FAFAF8; visibility: hidden; transition: visibility 0s 0.55s; }
+body.dd-active .space { transform: translateX(calc(-50% + 24px)); }
+body.dd-active .main-scroll { transform: scale(0.96); pointer-events: none; border-radius: 12px; overflow: hidden; }
+body.dd-active .detail-scroll { visibility: visible; transition: visibility 0s 0s; }
+
+/* === Deep-dive trigger === */
+.deep-dive-trigger { text-align: center; color: var(--accent); font-size: 14px; padding: 16px 0; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; }
+.deep-dive-trigger:hover { opacity: 1; }
+
+/* === DD animations === */
+.dd-anim { opacity: 0; animation-fill-mode: forwards; animation-duration: 0.5s; }
+body.dd-active .dd-anim { animation-name: ddFadeIn; }
+.dd-slide { opacity: 0; transform: translateY(20px); animation-fill-mode: forwards; animation-duration: 0.5s; }
+body.dd-active .dd-slide { animation-name: ddSlideUp; }
+.dd-pop { opacity: 0; transform: scale(0.7); animation-fill-mode: forwards; animation-duration: 0.4s; }
+body.dd-active .dd-pop { animation-name: ddPop; }
+.dd-d1 { animation-delay: 0.3s !important; }
+.dd-d2 { animation-delay: 0.6s !important; }
+.dd-d3 { animation-delay: 0.9s !important; }
+@keyframes ddFadeIn { to { opacity: 1; } }
+@keyframes ddSlideUp { to { opacity: 1; transform: translateY(0); } }
+@keyframes ddPop { to { opacity: 1; transform: scale(1); } }
+
+/* === Detail panel === */
+.detail-header { padding: 16px 20px; font-size: 14px; color: var(--accent); cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.06); position: sticky; top: 0; background: #FAFAF8; z-index: 10; }
+.detail-body { padding: 20px; }
+.detail-body h4 { font-size: 18px; font-weight: 700; margin: 24px 0 12px; color: var(--text); }
+.detail-body h4:first-child { margin-top: 0; }
+.detail-body p { font-size: 15px; line-height: 1.8; color: var(--text-muted); margin: 0 0 16px; }
+.detail-body img { width: 100%; border-radius: 10px; margin: 12px 0; }
+
+/* === Hero === */
+.hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 60px 28px 80px; background: var(--bg-act1); position: relative; overflow: hidden; }
+.hero-bg { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-size: cover; background-position: center; opacity: 0.15; filter: blur(2px); }
+.hero-label { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 20px; position: relative; z-index: 1; }
+.hero-title { font-family: 'Noto Serif SC', serif; font-size: clamp(28px, 7vw, 48px); font-weight: 700; line-height: 1.3; margin-bottom: 20px; position: relative; z-index: 1; }
+.hero-sub { font-size: 16px; color: var(--text-muted); max-width: 480px; line-height: 1.7; position: relative; z-index: 1; }
+.hero-img { width: 280px; max-width: 70%; border-radius: 16px; margin-top: 32px; position: relative; z-index: 1; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+
+/* === Section layout === */
+.section { padding: 80px 0; }
+.section-dark { background: var(--bg-close); color: #F1F5F9; }
+.section-dark .body-text { color: #CBD5E1; }
+.section-dark .big-statement { color: #F1F5F9; }
+.section-dark .deep-dive-trigger { color: var(--warm); }
+.section-label { font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+.section-dark .section-label { color: var(--warm); }
+
+/* === Act transitions === */
+.act-transition { padding: 48px 28px; text-align: center; }
+.act-label { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--dim); }
+.act-title { font-family: 'Noto Serif SC', serif; font-size: clamp(20px, 5vw, 28px); font-weight: 700; margin-top: 8px; }
+
+/* === Takeaway === */
+.takeaway { padding: 80px 28px; text-align: center; background: var(--bg-close); }
+.takeaway-quote { font-family: 'Noto Serif SC', serif; font-size: clamp(20px, 5vw, 28px); font-weight: 700; color: #F1F5F9; line-height: 1.5; max-width: 560px; margin: 0 auto 24px; }
+.takeaway-attr { font-size: 13px; color: var(--dim); }
+
+/* === Source Horizon === */
+.source-horizon { position: fixed; bottom: 0; left: 0; right: 0; height: 32px; z-index: 200; background: transparent; transition: height 0.35s cubic-bezier(0.32,0.72,0,1), background 0.35s ease; overflow: hidden; cursor: pointer; padding-bottom: env(safe-area-inset-bottom, 0); }
+.source-horizon.expanded { height: 72px; background: rgba(15,23,42,0.95); backdrop-filter: blur(8px); }
+.horizon-track { position: absolute; bottom: 0; left: 8px; right: 8px; height: 3px; }
+.source-horizon.expanded .horizon-track { bottom: auto; top: 8px; height: 4px; }
+.horizon-seg { position: absolute; top: 0; height: 100%; border-radius: 2px; }
+.horizon-seg.covered { background: var(--accent); }
+.horizon-seg.covered.deep-dive { background: var(--accent); }
+.horizon-seg.gap { background: transparent; }
+.horizon-detail { position: absolute; top: 16px; left: 8px; right: 8px; bottom: 4px; opacity: 0; transition: opacity 0.25s ease 0.1s; pointer-events: none; }
+.source-horizon.expanded .horizon-detail { opacity: 1; pointer-events: auto; }
+.horizon-marker { position: absolute; top: 0; transform: translateX(-50%); text-align: center; }
+.marker-tick { width: 2px; height: 10px; background: rgba(255,255,255,0.5); margin: 0 auto 4px; border-radius: 1px; }
+.marker-tick.active { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+.marker-label { font-size: 9px; color: rgba(255,255,255,0.7); white-space: nowrap; font-family: 'Noto Sans SC', sans-serif; }
+.horizon-gap-zone { position: absolute; top: 0; height: 14px; cursor: help; }
+.horizon-gap-zone .gap-pattern { width: 100%; height: 100%; background: repeating-linear-gradient(-45deg, transparent, transparent 2px, rgba(251,146,60,0.35) 2px, rgba(251,146,60,0.35) 4px); border-radius: 2px; }
+.horizon-gap-zone .gap-tooltip { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: #1E293B; color: #F8FAFC; font-size: 11px; padding: 4px 10px; border-radius: 6px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.horizon-gap-zone:hover .gap-tooltip { opacity: 1; }
+.horizon-pct { position: absolute; right: 0; top: 2px; font-size: 11px; font-weight: 600; color: var(--accent); font-family: 'Noto Sans SC', sans-serif; }
+@keyframes markerPulse { 0%,100% { box-shadow: 0 0 4px var(--accent2); } 50% { box-shadow: 0 0 10px var(--accent2); } }
+.marker-tick.active { animation: markerPulse 2s ease-in-out infinite; }
+
+/* === Inline gap === */
+.coverage-gap-inline { display: flex; align-items: center; gap: 12px; padding: 8px 28px; max-width: 640px; margin: 0 auto; }
+.coverage-gap-inline .gap-line { flex: 1; height: 1px; background: var(--dim); opacity: 0.25; }
+.coverage-gap-inline .gap-text { font-size: 12px; font-style: italic; color: var(--dim); white-space: nowrap; opacity: 0.5; }
+
+/* === Coverage Footnote === */
+.coverage-map { margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.06); }
+.coverage-map-title { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--dim); margin-bottom: 14px; }
+.coverage-bars { display: flex; flex-direction: column; gap: 6px; }
+.cbar-row { display: flex; align-items: center; gap: 10px; height: 28px; cursor: pointer; border-radius: 6px; padding: 4px 6px; margin: 0 -6px; transition: background 0.15s; }
+.cbar-row:hover { background: rgba(0,0,0,0.03); }
+.cbar-label { width: 120px; flex-shrink: 0; font-size: 12px; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cbar-track { flex: 1; height: 12px; background: rgba(0,0,0,0.03); border-radius: 6px; overflow: hidden; position: relative; }
+.cbar-fill { height: 100%; border-radius: 6px; transform-origin: left; }
+.cbar-fill.included { background: var(--accent); }
+.cbar-fill.deep-dive-bar { background: repeating-linear-gradient(-45deg, var(--accent2), var(--accent2) 3px, rgba(217,119,6,0.5) 3px, rgba(217,119,6,0.5) 6px); }
+.cbar-fill.compressed-bar { background: var(--dim); opacity: 0.4; }
+.cbar-row.included .cbar-label { color: var(--text); }
+.cbar-row.deep-dive .cbar-label { color: var(--accent2); }
+.cbar-row.compressed .cbar-label { color: var(--dim); text-decoration: line-through; }
+.cbar-excerpt { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.22,1,0.36,1); margin: 0 0 0 130px; }
+.cbar-excerpt.open { max-height: 300px; }
+.cbar-excerpt-inner { font-size: 13px; line-height: 1.7; color: var(--text-muted); padding: 8px 12px; margin: 4px 0 8px; background: rgba(0,0,0,0.02); border-radius: 8px; border-left: 3px solid var(--accent); }
+.cbar-row.compressed + .cbar-excerpt .cbar-excerpt-inner { border-left-color: var(--dim); }
+.cbar-row.deep-dive + .cbar-excerpt .cbar-excerpt-inner { border-left-color: var(--accent2); }
+.cbar-expand-hint { font-size: 10px; color: var(--dim); opacity: 0.6; margin-left: 4px; }
+.coverage-omitted { margin-top: 14px; font-size: 13px; color: var(--text-muted); line-height: 1.7; }
+.coverage-omitted strong { color: var(--text); font-weight: 500; }
+.omit-reason { display: inline-block; font-size: 11px; background: rgba(0,0,0,0.04); padding: 1px 8px; border-radius: 4px; color: var(--dim); margin-left: 4px; }
+
+/* === Footer === */
+.footer { padding: 40px 28px; text-align: center; background: var(--bg-close); }
+.footer-text { font-size: 12px; color: var(--dim); }
+
+@media (max-width: 420px) {
+  .hero-title { font-size: 28px; }
+  .img-pair { flex-direction: column; }
+}
+.anim-stage > div{ width:100%; }
+</style>
+
+<meta name="description" content="AI 品牌摄影 Prompt 指南">
+<link rel="canonical" href="https://chendi.me/readings/brand-photo-prompts/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+<div class="space" id="space">
+<div class="main-scroll" id="mainScroll">
+
+<!-- ====== HERO ====== -->
+<div class="hero reveal">
+  <div class="hero-bg" id="heroBg"></div>
+  <div class="hero-label">AI 品牌摄影</div>
+  <div class="hero-title">别再搜索关键词。<br>开始导演你的拍摄。</div>
+  <div class="hero-sub">如何撰写 AI 图像 prompt，让品牌摄影从「库存照片」跃升为「编辑级大片」。</div>
+  <img class="hero-img" id="heroImg" alt="Two models in editorial old money apparel">
+</div>
+
+<!-- ====== ACT I ====== -->
+<div class="act-transition reveal" style="background: var(--bg-act1);">
+  <div class="act-label">第一幕</div>
+  <div class="act-title">问题与框架</div>
+</div>
+
+<!-- ====== S1: The Trap of Generic Prompts ====== -->
+<div class="section" style="background: var(--bg-act1);">
+  <div class="content-width">
+    <div class="section-label reveal">Section 01</div>
+    <div class="big-statement reveal reveal-delay-1">库存思维只能产出库存照片。</div>
+    <div class="body-text reveal reveal-delay-2">当品牌主在生成器里输入「a nice photo of a shirt on a model」，得到的必然是千篇一律的库存图。指令平庸，结果就平庸。想要编辑级、高时尚感的成片，你必须停止像搜索引擎用户那样思考，转而像<span class="hl">创意总监在给团队下 brief</span> 那样指挥。</div>
+    <div id="s1-anim" class="reveal reveal-delay-3">
+<style>
+/* === S1 Stage: The Trap of Generic Prompts === */
+.s1_stage {
+  position: relative;
+  width: 100%;
+  height: 340px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* --- Left side: Generic --- */
+.s1_generic_circle {
+  position: absolute;
+  top: 60px; left: 40px;
+  width: 80px; height: 80px;
+  border-radius: 12px;
+  background: var(--neutral, #94A3B8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0;
+  transform: scale(0);
+  filter: blur(1px);
+}
+
+.s1_arrow_left {
+  position: absolute;
+  top: 96px; left: 128px;
+  width: 0; height: 2px;
+  background: var(--neutral, #94A3B8);
+  opacity: 0;
+}
+
+.s1_arrow_left_head {
+  position: absolute;
+  top: 90px; left: 188px;
+  width: 0; height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 8px solid var(--neutral, #94A3B8);
+  opacity: 0;
+}
+
+.s1_result_dim {
+  position: absolute;
+  top: 45px; left: 205px;
+  width: 100px; height: 110px;
+  border-radius: 10px;
+  border: 2px dashed #CBD5E1;
+  background: #F1F5F9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.s1_result_dim_label {
+  font-size: 12px;
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+.s1_result_dim_icon {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: #CBD5E1;
+  opacity: 0.5;
+}
+
+/* --- Right side: Director --- */
+.s1_director_circle {
+  position: absolute;
+  top: 190px; left: 40px;
+  width: 80px; height: 80px;
+  border-radius: 12px;
+  background: var(--accent, #059669);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.s1_arrow_right {
+  position: absolute;
+  top: 226px; left: 128px;
+  width: 0; height: 2px;
+  background: var(--accent, #059669);
+  opacity: 0;
+}
+
+.s1_arrow_right_head {
+  position: absolute;
+  top: 220px; left: 188px;
+  width: 0; height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 8px solid var(--accent, #059669);
+  opacity: 0;
+}
+
+.s1_result_glow {
+  position: absolute;
+  top: 175px; left: 205px;
+  width: 100px; height: 110px;
+  border-radius: 10px;
+  border: 2px solid var(--accent, #059669);
+  background: #ECFDF5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  opacity: 0;
+  transform: scale(0);
+  box-shadow: 0 0 24px rgba(5, 150, 105, 0.25);
+}
+
+.s1_result_glow_label {
+  font-size: 12px;
+  color: var(--accent, #059669);
+  font-weight: 600;
+}
+
+.s1_result_glow_icon {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--accent, #059669);
+  opacity: 0.8;
+}
+
+/* --- Labels --- */
+.s1_vs_label {
+  position: absolute;
+  top: 148px; left: 62px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent2, #D97706);
+  opacity: 0;
+}
+
+.s1_caption_top {
+  position: absolute;
+  top: 12px; left: 20px;
+  font-size: 11px;
+  color: #94A3B8;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0;
+}
+
+.s1_caption_bottom {
+  position: absolute;
+  top: 302px; left: 20px;
+  font-size: 11px;
+  color: #94A3B8;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0;
+}
+
+.s1_tag_generic {
+  position: absolute;
+  top: 155px; left: 230px;
+  font-size: 10px;
+  color: #94A3B8;
+  font-weight: 500;
+  opacity: 0;
+  text-align: center;
+  width: 50px;
+}
+
+.s1_tag_editorial {
+  position: absolute;
+  top: 285px; left: 230px;
+  font-size: 10px;
+  color: var(--accent, #059669);
+  font-weight: 600;
+  opacity: 0;
+  text-align: center;
+  width: 50px;
+}
+
+/* === Keyframes === */
+@keyframes s1_scaleIn {
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s1_fadeIn {
+  to { opacity: 1; }
+}
+
+@keyframes s1_drawRight {
+  to { width: 52px; opacity: 1; }
+}
+
+@keyframes s1_vsAppear {
+  0% { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* === Animation triggered by .visible === */
+.s1_stage.visible .s1_caption_top {
+  animation: s1_fadeIn 0.4s 0.2s ease forwards;
+}
+
+.s1_stage.visible .s1_generic_circle {
+  animation: s1_scaleIn 0.4s 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.s1_stage.visible .s1_arrow_left {
+  animation: s1_drawRight 0.4s 1.1s ease forwards;
+}
+
+.s1_stage.visible .s1_arrow_left_head {
+  animation: s1_fadeIn 0.2s 1.5s ease forwards;
+}
+
+.s1_stage.visible .s1_result_dim {
+  animation: s1_scaleIn 0.4s 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.s1_stage.visible .s1_tag_generic {
+  animation: s1_fadeIn 0.3s 2.2s ease forwards;
+}
+
+.s1_stage.visible .s1_vs_label {
+  animation: s1_vsAppear 0.3s 2.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.s1_stage.visible .s1_caption_bottom {
+  animation: s1_fadeIn 0.4s 2.8s ease forwards;
+}
+
+.s1_stage.visible .s1_director_circle {
+  animation: s1_scaleIn 0.4s 3.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.s1_stage.visible .s1_arrow_right {
+  animation: s1_drawRight 0.4s 3.8s ease forwards;
+}
+
+.s1_stage.visible .s1_arrow_right_head {
+  animation: s1_fadeIn 0.2s 4.2s ease forwards;
+}
+
+.s1_stage.visible .s1_result_glow {
+  animation: s1_scaleIn 0.4s 4.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.s1_stage.visible .s1_tag_editorial {
+  animation: s1_fadeIn 0.3s 4.9s ease forwards;
+}
+</style>
+
+<div class="s1_stage">
+  <div class="s1_caption_top">Generic prompt</div>
+  <div class="s1_generic_circle">Stock Thought</div>
+  <div class="s1_arrow_left"></div>
+  <div class="s1_arrow_left_head"></div>
+  <div class="s1_result_dim">
+    <div class="s1_result_dim_icon"></div>
+    <div class="s1_result_dim_label">Stock Photo</div>
+  </div>
+  <div class="s1_tag_generic">Generic</div>
+
+  <div class="s1_vs_label">VS</div>
+
+  <div class="s1_caption_bottom">Director-level prompt</div>
+  <div class="s1_director_circle">Creative Brief</div>
+  <div class="s1_arrow_right"></div>
+  <div class="s1_arrow_right_head"></div>
+  <div class="s1_result_glow">
+    <div class="s1_result_glow_icon"></div>
+    <div class="s1_result_glow_label">Editorial Shot</div>
+  </div>
+  <div class="s1_tag_editorial">Editorial</div>
+</div>
+    </div>
+    <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(1)">深入了解：为什么通用 prompt 必然失败 +</div>
+  </div>
+</div>
+
+<!-- ====== S2: Four-Layer Architecture ====== -->
+<div class="section" style="background: var(--bg-act1);">
+  <div class="content-width">
+    <div class="section-label reveal">Section 02</div>
+    <div class="big-statement reveal reveal-delay-1">四层架构，零默认值。</div>
+    <div class="body-text reveal reveal-delay-2">一条成功的 prompt 不给 AI 任何「自由发挥」的空间。你漏掉的每一个细节，AI 都会用它的默认审美来填补——光滑到失真的塑料质感。你的 prompt 需要四个独立层次：<span class="hl">Subject & Wardrobe</span>（主体与服装）、<span class="hl-warm">Environment & Setting</span>（环境与场景）、<span class="hl">Camera & Film Stock</span>（相机与胶片）、<span class="hl-warm">Lighting</span>（灯光）。</div>
+    <div id="s2-anim" class="reveal reveal-delay-3">
+<style>
+/* === S2: Four-Layer Prompt Architecture === */
+.s2_stage {
+  position: relative;
+  width: 340px;
+  max-width: 90vw;
+  height: 336px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 16px;
+}
+
+.s2_layer {
+  width: 280px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  margin-top: 16px;
+  opacity: 0;
+  transform: translateY(30px);
+  letter-spacing: 0.5px;
+}
+
+.s2_layer:first-child {
+  margin-top: 0;
+}
+
+.s2_layer--lighting {
+  background: var(--accent2, #D97706);
+}
+.s2_layer--camera {
+  background: var(--accent, #059669);
+}
+.s2_layer--environment {
+  background: var(--accent2, #D97706);
+}
+.s2_layer--subject {
+  background: var(--accent, #059669);
+}
+
+.s2_label {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: #94A3B8;
+  font-weight: 500;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+@keyframes s2_layerIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s2_labelIn {
+  to { opacity: 1; }
+}
+
+.s2_stage.visible .s2_layer:nth-child(5) {
+  animation: s2_layerIn 0.5s 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.s2_stage.visible .s2_layer:nth-child(4) {
+  animation: s2_layerIn 0.5s 1.0s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.s2_stage.visible .s2_layer:nth-child(3) {
+  animation: s2_layerIn 0.5s 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.s2_stage.visible .s2_layer:nth-child(2) {
+  animation: s2_layerIn 0.5s 2.0s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.s2_stage.visible .s2_label {
+  animation: s2_labelIn 0.4s 2.8s ease forwards;
+}
+</style>
+
+<div class="s2_stage">
+  <span class="s2_label">从地基到封顶</span>
+  <div class="s2_layer s2_layer--lighting">第四层：Lighting 灯光</div>
+  <div class="s2_layer s2_layer--camera">第三层：Camera & Film Stock</div>
+  <div class="s2_layer s2_layer--environment">第二层：Environment & Setting</div>
+  <div class="s2_layer s2_layer--subject">第一层：Subject & Wardrobe</div>
+</div>
+    </div>
+    <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(2)">深入了解：四层 Prompt 架构 +</div>
+  </div>
+</div>
+
+<!-- ====== ACT II ====== -->
+<div class="act-transition reveal" style="background: var(--bg-act2);">
+  <div class="act-label">第二幕</div>
+  <div class="act-title">六种必备机位</div>
+</div>
+
+<!-- ====== S3: Wide & Three-Quarter ====== -->
+<div class="section" style="background: var(--bg-act2);">
+  <div class="content-width">
+    <div class="section-label reveal">Section 03</div>
+    <div class="big-statement reveal reveal-delay-1">从头到脚的叙事，到大腿中部的亲密感。</div>
+    <div class="body-text reveal reveal-delay-2"><span class="hl">Wide shot</span>（全景镜头）构建品牌所处的世界，展示从头到脚的完整造型，并留出充足的负空间用于文字叠加。<span class="hl-warm">Three-quarter shot</span>（3/4 镜头）从大腿中部取景向上，是电商和社媒的「主力机位」，拉近观众与服装细节的距离而不失场景感。</div>
+    <div id="s3-anim" class="reveal reveal-delay-3">
+<style>
+.s3_stage {
+  position: relative;
+  width: 340px;
+  max-width: 90vw;
+  height: 340px;
+  margin: 0 auto;
+}
+
+/* Left frame: Wide Shot */
+.s3_frame_wide {
+  position: absolute;
+  top: 40px;
+  left: 30px;
+  width: 80px;
+  height: 160px;
+  border: 2.5px solid var(--accent);
+  border-radius: 8px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.s3_person_small {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.7;
+}
+
+.s3_label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+
+/* Right frame: Three-Quarter Shot */
+.s3_frame_tq {
+  position: absolute;
+  top: 40px;
+  right: 30px;
+  width: 120px;
+  height: 160px;
+  border: 2.5px solid var(--accent2);
+  border-radius: 8px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.s3_person_large {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent2);
+  opacity: 0.7;
+}
+
+.s3_label_tq {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent2);
+  letter-spacing: 1px;
+}
+
+/* Arrow connecting the two frames */
+.s3_arrow_line {
+  position: absolute;
+  top: 120px;
+  left: 112px;
+  width: 0;
+  height: 2px;
+  background: var(--neutral);
+  border-radius: 1px;
+}
+
+.s3_arrow_head {
+  position: absolute;
+  top: 116px;
+  left: 156px;
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 8px solid var(--neutral);
+  opacity: 0;
+}
+
+/* Caption below */
+.s3_caption {
+  position: absolute;
+  bottom: 40px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--neutral);
+  opacity: 0;
+  transform: translateY(10px);
+}
+.s3_caption em {
+  font-style: normal;
+  font-weight: 600;
+}
+.s3_caption .s3_hl_wide {
+  color: var(--accent);
+}
+.s3_caption .s3_hl_tq {
+  color: var(--accent2);
+}
+
+/* Environment dots around left frame */
+.s3_env_dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+}
+.s3_env_dot:nth-child(1) { top: 48px; left: 22px; }
+.s3_env_dot:nth-child(2) { top: 80px; left: 16px; }
+.s3_env_dot:nth-child(3) { top: 140px; left: 20px; }
+.s3_env_dot:nth-child(4) { top: 170px; left: 50px; }
+.s3_env_dot:nth-child(5) { top: 50px; left: 90px; }
+
+/* Keyframes */
+@keyframes s3_frameIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s3_arrowDraw {
+  to { width: 46px; }
+}
+@keyframes s3_fadeIn {
+  to { opacity: 1; }
+}
+@keyframes s3_captionIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s3_dotIn {
+  to { opacity: 0.35; }
+}
+
+/* Animation sequence triggered by .visible */
+.s3_stage.visible .s3_frame_wide {
+  animation: s3_frameIn 0.5s 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s3_stage.visible .s3_env_dot:nth-child(1) { animation: s3_dotIn 0.3s 0.7s ease forwards; }
+.s3_stage.visible .s3_env_dot:nth-child(2) { animation: s3_dotIn 0.3s 0.9s ease forwards; }
+.s3_stage.visible .s3_env_dot:nth-child(3) { animation: s3_dotIn 0.3s 1.1s ease forwards; }
+.s3_stage.visible .s3_env_dot:nth-child(4) { animation: s3_dotIn 0.3s 1.3s ease forwards; }
+.s3_stage.visible .s3_env_dot:nth-child(5) { animation: s3_dotIn 0.3s 1.5s ease forwards; }
+
+.s3_stage.visible .s3_arrow_line {
+  animation: s3_arrowDraw 0.5s 1.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.s3_stage.visible .s3_arrow_head {
+  animation: s3_fadeIn 0.2s 2.2s ease forwards;
+}
+
+.s3_stage.visible .s3_frame_tq {
+  animation: s3_frameIn 0.5s 2.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.s3_stage.visible .s3_caption {
+  animation: s3_captionIn 0.4s 3.4s ease forwards;
+}
+</style>
+
+<div class="s3_stage">
+  <!-- Environment dots around wide frame -->
+  <div class="s3_env_dot"></div>
+  <div class="s3_env_dot"></div>
+  <div class="s3_env_dot"></div>
+  <div class="s3_env_dot"></div>
+  <div class="s3_env_dot"></div>
+
+  <!-- Left: Wide Shot frame -->
+  <div class="s3_frame_wide">
+    <div class="s3_person_small"></div>
+    <span class="s3_label">Wide</span>
+  </div>
+
+  <!-- Arrow -->
+  <div class="s3_arrow_line"></div>
+  <div class="s3_arrow_head"></div>
+
+  <!-- Right: Three-Quarter frame -->
+  <div class="s3_frame_tq">
+    <div class="s3_person_large"></div>
+    <span class="s3_label_tq">3/4</span>
+  </div>
+
+  <!-- Caption -->
+  <div class="s3_caption"><em class="s3_hl_wide">全景</em> 展示世界观 &rarr; <em class="s3_hl_tq">3/4</em> 拉近细节</div>
+</div>
+    </div>
+    <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(3)">深入了解：Wide & Three-Quarter Prompt 模板 +</div>
+  </div>
+</div>
+
+<!-- ====== S4: Side Profile & Close-Up ====== -->
+<div class="section" style="background: var(--bg-act2);">
+  <div class="content-width">
+    <div class="section-label reveal">Section 04</div>
+    <div class="big-statement reveal reveal-delay-1">剪影揭示结构，特写贩卖质感。</div>
+    <div class="body-text reveal reveal-delay-2"><span class="hl">Side profile</span>（侧面照）改变观者视角，以正面照无法呈现的方式展现服装的「剪影」与「结构」。<span class="hl-warm">Close-up</span>（特写）完全聚焦细节：亚麻的织法、翻领的缝线、配饰的五金件。如果顾客无法「隔屏触摸面料」，高端服饰就很难卖出溢价。</div>
+    <div id="s4-anim" class="reveal reveal-delay-3">
+<style>
+.s4_stage {
+  position: relative;
+  width: 340px;
+  max-width: 90vw;
+  height: 340px;
+  margin: 0 auto;
+}
+
+/* Half-circle for Profile (left-facing silhouette) */
+.s4_profile {
+  position: absolute;
+  top: 30px;
+  left: 90px;
+  width: 40px;
+  height: 80px;
+  border-radius: 80px 0 0 80px;
+  background: var(--accent, #059669);
+  opacity: 0;
+  transform: scale(0);
+}
+.s4_profile_label {
+  position: absolute;
+  top: 52px;
+  left: 142px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent, #059669);
+  opacity: 0;
+}
+
+/* Dashed connector line */
+.s4_connector {
+  position: absolute;
+  top: 120px;
+  left: 109px;
+  width: 2px;
+  height: 0;
+  border-left: 2px dashed var(--neutral, #94A3B8);
+}
+
+/* Magnifier for Close-up */
+.s4_magnifier {
+  position: absolute;
+  top: 200px;
+  left: 74px;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 3px dashed var(--accent2, #D97706);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0);
+}
+.s4_magnifier_handle {
+  position: absolute;
+  bottom: -16px;
+  right: -12px;
+  width: 4px;
+  height: 22px;
+  background: var(--accent2, #D97706);
+  border-radius: 2px;
+  transform: rotate(-45deg);
+  transform-origin: top center;
+}
+.s4_fabric {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  background: var(--accent2, #D97706);
+  opacity: 0.7;
+}
+.s4_fabric_inner {
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 3px,
+    rgba(255,255,255,0.4) 3px,
+    rgba(255,255,255,0.4) 5px
+  );
+  border-radius: 4px;
+}
+.s4_closeup_label {
+  position: absolute;
+  top: 224px;
+  left: 158px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent2, #D97706);
+  opacity: 0;
+}
+
+/* Complementary label */
+.s4_complement {
+  position: absolute;
+  top: 298px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--neutral, #94A3B8);
+  opacity: 0;
+}
+
+/* Keyframes */
+@keyframes s4_scaleIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s4_fadeIn {
+  to { opacity: 1; }
+}
+@keyframes s4_drawDown {
+  to { height: 72px; }
+}
+
+/* Sequence triggered by .visible */
+.s4_stage.visible .s4_profile {
+  animation: s4_scaleIn 0.5s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s4_stage.visible .s4_profile_label {
+  animation: s4_fadeIn 0.4s 0.7s ease forwards;
+}
+.s4_stage.visible .s4_connector {
+  animation: s4_drawDown 0.6s 1.2s ease-out forwards;
+}
+.s4_stage.visible .s4_magnifier {
+  animation: s4_scaleIn 0.5s 2.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s4_stage.visible .s4_closeup_label {
+  animation: s4_fadeIn 0.4s 2.4s ease forwards;
+}
+.s4_stage.visible .s4_complement {
+  animation: s4_fadeIn 0.5s 3.0s ease forwards;
+}
+</style>
+
+<div class="s4_stage">
+  <!-- Profile: left-facing half circle -->
+  <div class="s4_profile"></div>
+  <div class="s4_profile_label">Profile</div>
+
+  <!-- Dashed connector -->
+  <div class="s4_connector"></div>
+
+  <!-- Close-up: magnifier with fabric swatch -->
+  <div class="s4_magnifier">
+    <div class="s4_fabric"><div class="s4_fabric_inner"></div></div>
+    <div class="s4_magnifier_handle"></div>
+  </div>
+  <div class="s4_closeup_label">Close-up</div>
+
+  <!-- Complementary label -->
+  <div class="s4_complement">- - - 互补 - - -</div>
+</div>
+    </div>
+    <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(4)">深入了解：Profile & Close-Up Prompt 模板 +</div>
+  </div>
+</div>
+
+<!-- ====== S5: Back Angle & Duo ====== -->
+<div class="section" style="background: var(--bg-act2);">
+  <div class="content-width">
+    <div class="section-label reveal">Section 05</div>
+    <div class="big-statement reveal reveal-delay-1">无人预料的角度，展示系列感的动态。</div>
+    <div class="body-text reveal reveal-delay-2"><span class="hl">Back angle</span>（背面角度）揭示正面镜头完全看不到的垂坠感和轮廓线，为画面增添电影感纵深。<span class="hl-warm">Duo shot</span>（双人镜头）让多个模特在同一环境中互动，展示你的系列中不同单品如何搭配，以及同一美学在不同体型和肤色上的呈现。</div>
+    <div id="s5-anim" class="reveal reveal-delay-3">
+<style>
+.s5_stage {
+  position: relative;
+  width: 340px;
+  max-width: 90vw;
+  height: 340px;
+  margin: 24px auto;
+}
+
+/* Left: Back figure */
+.s5_back {
+  position: absolute;
+  top: 60px; left: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: scale(0);
+}
+.s5_back_circle {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  border: 2.5px solid var(--accent);
+  background: #fff;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* Vertical line inside circle = back silhouette */
+.s5_back_circle::after {
+  content: "";
+  display: block;
+  width: 2.5px;
+  height: 28px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+.s5_back_label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* Arrow in middle */
+.s5_arrow {
+  position: absolute;
+  top: 88px; left: 120px;
+  width: 0;
+  height: 2px;
+  background: var(--neutral);
+  opacity: 0;
+}
+.s5_arrow_head {
+  position: absolute;
+  top: 82px; left: 220px;
+  width: 0; height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 8px solid var(--neutral);
+  opacity: 0;
+}
+
+/* Right: Duo figures */
+.s5_duo {
+  position: absolute;
+  top: 50px; right: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: scale(0);
+}
+.s5_duo_circles {
+  display: flex;
+  gap: 10px;
+}
+.s5_duo_circle {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: 2.5px solid var(--accent2);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent2);
+}
+.s5_duo_label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent2);
+}
+
+/* Bottom caption */
+.s5_caption {
+  position: absolute;
+  bottom: 30px; left: 0; right: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--neutral);
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* === Keyframes === */
+@keyframes s5_scaleIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s5_arrowGrow {
+  to { width: 100px; opacity: 1; }
+}
+@keyframes s5_fadeIn {
+  to { opacity: 1; }
+}
+@keyframes s5_captionIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === Triggered by .visible === */
+.s5_stage.visible .s5_back {
+  animation: s5_scaleIn 0.5s 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s5_stage.visible .s5_arrow {
+  animation: s5_arrowGrow 0.5s 1.2s ease-out forwards;
+}
+.s5_stage.visible .s5_arrow_head {
+  animation: s5_fadeIn 0.3s 1.7s ease forwards;
+}
+.s5_stage.visible .s5_duo {
+  animation: s5_scaleIn 0.5s 2.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s5_stage.visible .s5_caption {
+  animation: s5_captionIn 0.4s 3.0s ease forwards;
+}
+</style>
+
+<div class="s5_stage">
+  <!-- Left: Back Angle -->
+  <div class="s5_back">
+    <div class="s5_back_circle"></div>
+    <span class="s5_back_label">Back</span>
+  </div>
+
+  <!-- Arrow -->
+  <div class="s5_arrow"></div>
+  <div class="s5_arrow_head"></div>
+
+  <!-- Right: Duo Shot -->
+  <div class="s5_duo">
+    <div class="s5_duo_circles">
+      <div class="s5_duo_circle">A</div>
+      <div class="s5_duo_circle">B</div>
+    </div>
+    <span class="s5_duo_label">Duo</span>
+  </div>
+
+  <!-- Caption -->
+  <div class="s5_caption">一个转身 + 一组搭档，让画面活起来</div>
+</div>
+    </div>
+    <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(5)">深入了解：Back Angle & Duo Prompt 模板 +</div>
+  </div>
+</div>
+
+<!-- ====== ACT III ====== -->
+<div class="act-transition reveal" style="background: var(--bg-act3); color: #F1F5F9;">
+  <div class="act-label" style="color: var(--warm);">第三幕</div>
+  <div class="act-title">一致性的纪律</div>
+</div>
+
+<!-- ====== S6: Consistency ====== -->
+<div class="section section-dark">
+  <div class="content-width">
+    <div class="section-label reveal">Section 06</div>
+    <div class="big-statement reveal reveal-delay-1">做出一张好图很容易，十张统一才叫纪律。</div>
+    <div class="body-text reveal reveal-delay-2">让十张图看起来像同一本杂志的同一组大片，你必须锁死参数。在每条 prompt 中使用<span class="hl">完全相同的人物外貌描述</span>。锁定你的相机、胶片和灯光描述词。你一旦漏掉 film stock 的引用，AI 就会瞬间退回到它的默认渲染——干净、油亮、一看就是 AI，整个「连续拍摄」的幻觉立刻崩塌。</div>
+    <div id="s6-anim" class="reveal reveal-delay-3">
+<style>
+  .s6_stage {
+    position: relative;
+    width: 340px;
+    max-width: 90vw;
+    height: 340px;
+    margin: 0 auto;
+  }
+
+  /* Three boxes in triangle layout */
+  .s6_box {
+    position: absolute;
+    width: 90px;
+    height: 40px;
+    border-radius: 8px;
+    border: 2px solid var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: #F1F5F9;
+    background: transparent;
+    opacity: 0;
+    transform: scale(0);
+  }
+  .s6_box--model {
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    border-color: var(--accent);
+  }
+  .s6_box--camera {
+    top: 200px;
+    left: 30px;
+    border-color: var(--accent2);
+  }
+  .s6_box--light {
+    top: 200px;
+    right: 30px;
+    left: auto;
+    border-color: var(--accent);
+  }
+
+  /* Lock circle in center */
+  .s6_lock {
+    position: absolute;
+    top: 120px;
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2.5px solid var(--accent2);
+    background: rgba(217, 119, 6, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent2);
+    opacity: 0;
+  }
+
+  /* SVG arrows */
+  .s6_arrows {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  .s6_arrows path {
+    fill: none;
+    stroke: #94A3B8;
+    stroke-width: 2.5;
+    stroke-dasharray: 200;
+    stroke-dashoffset: 200;
+    opacity: 0.8;
+  }
+  .s6_arrows polygon {
+    fill: #CBD5E1;
+    opacity: 0;
+  }
+
+  /* Narration */
+  .s6_narration {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 13px;
+    color: #94A3B8;
+    min-height: 36px;
+  }
+  .s6_narr {
+    position: absolute;
+    left: 0;
+    right: 0;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .s6_narr.s6_show { opacity: 1; }
+
+  /* === KEYFRAMES === */
+  @keyframes s6_boxIn_center {
+    to { opacity: 1; transform: translateX(-50%) scale(1); }
+  }
+  @keyframes s6_boxIn {
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes s6_drawPath {
+    to { stroke-dashoffset: 0; }
+  }
+  @keyframes s6_arrowHeadIn {
+    to { opacity: 0.9; }
+  }
+  @keyframes s6_lockIn {
+    to { opacity: 1; transform: translateX(-50%) scale(1); }
+  }
+  @keyframes s6_lockPulse {
+    0% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.4); }
+    50% { box-shadow: 0 0 0 14px rgba(217, 119, 6, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0); }
+  }
+
+  /* === TRIGGERED ANIMATIONS === */
+  .s6_stage.visible .s6_box--model {
+    animation: s6_boxIn_center 0.5s 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  .s6_stage.visible .s6_box--camera {
+    animation: s6_boxIn 0.5s 1.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  .s6_stage.visible .s6_box--light {
+    animation: s6_boxIn 0.5s 1.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  /* Arrows draw after boxes appear */
+  .s6_stage.visible .s6_arrow_mc {
+    animation: s6_drawPath 0.6s 2.2s ease-out forwards;
+  }
+  .s6_stage.visible .s6_arrow_cl {
+    animation: s6_drawPath 0.6s 2.8s ease-out forwards;
+  }
+  .s6_stage.visible .s6_arrow_lm {
+    animation: s6_drawPath 0.6s 3.4s ease-out forwards;
+  }
+  .s6_stage.visible .s6_arrowhead_mc {
+    animation: s6_arrowHeadIn 0.3s 2.7s ease forwards;
+  }
+  .s6_stage.visible .s6_arrowhead_cl {
+    animation: s6_arrowHeadIn 0.3s 3.3s ease forwards;
+  }
+  .s6_stage.visible .s6_arrowhead_lm {
+    animation: s6_arrowHeadIn 0.3s 3.8s ease forwards;
+  }
+
+  /* Lock appears last */
+  .s6_stage.visible .s6_lock {
+    animation: s6_lockIn 0.5s 4.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+               s6_lockPulse 1.2s 4.8s ease-out 2;
+  }
+</style>
+
+<div class="s6_stage" id="s6_stage">
+  <!-- Three parameter boxes in triangle -->
+  <div class="s6_box s6_box--model">Model</div>
+  <div class="s6_box s6_box--camera">Camera</div>
+  <div class="s6_box s6_box--light">Light</div>
+
+  <!-- SVG arrows forming the cycle -->
+  <svg class="s6_arrows" viewBox="0 0 340 300">
+    <!-- Model (170,50) -> Camera (75,220): left side -->
+    <path class="s6_arrow_mc" d="M 145,70 C 120,120 80,160 85,195" />
+    <polygon class="s6_arrowhead_mc" points="79,192 85,202 91,192" />
+
+    <!-- Camera (75,220) -> Light (265,220): bottom -->
+    <path class="s6_arrow_cl" d="M 125,225 C 160,245 200,245 240,225" />
+    <polygon class="s6_arrowhead_cl" points="236,231 246,225 236,219" />
+
+    <!-- Light (265,220) -> Model (170,50): right side -->
+    <path class="s6_arrow_lm" d="M 255,195 C 260,160 220,120 195,70" />
+    <polygon class="s6_arrowhead_lm" points="189,73 195,63 201,73" />
+  </svg>
+
+  <!-- Center Lock -->
+  <div class="s6_lock">Lock</div>
+
+  <!-- Narration -->
+  <div class="s6_narration">
+    <div class="s6_narr" data-start="0" data-end="900">锁定人物描述</div>
+    <div class="s6_narr" data-start="900" data-end="1500">锁定相机与胶片</div>
+    <div class="s6_narr" data-start="1500" data-end="2200">锁定灯光参数</div>
+    <div class="s6_narr" data-start="2200" data-end="4200">三参数，形成闭环</div>
+    <div class="s6_narr" data-start="4200" data-end="9999">一致性是纪律，不是运气</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var stage = document.getElementById("s6_stage");
+  if (!stage) return;
+  var narrs = stage.querySelectorAll(".s6_narr");
+  var timers = [];
+
+  function s6Play() {
+    narrs.forEach(function(n) {
+      var start = parseInt(n.dataset.start);
+      var end = parseInt(n.dataset.end);
+      timers.push(setTimeout(function() { n.classList.add("s6_show"); }, start + 400));
+      if (end < 9999) {
+        timers.push(setTimeout(function() { n.classList.remove("s6_show"); }, end + 400));
+      }
+    });
+  }
+
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      if (stage.classList.contains("visible")) {
+        s6Play();
+      }
+    });
+  });
+  observer.observe(stage, { attributes: true, attributeFilter: ["class"] });
+
+  if (stage.classList.contains("visible")) {
+    s6Play();
+  }
+})();
+</script>
+    </div>
+    <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(6)" style="color: var(--warm);">深入了解：一致性法则 +</div>
+  </div>
+</div>
+
+<!-- ====== TAKEAWAY ====== -->
+<div class="takeaway">
+  <div class="takeaway-quote reveal">"AI 给了你一间世界级影棚、地球上任何一个外景地、以及无限的器材。你只需要提供愿景和词汇，让它们变为现实。"</div>
+  <div class="takeaway-attr reveal reveal-delay-1">Manus Blog</div>
+</div>
+
+<!-- ====== FOOTER ====== -->
+<div class="footer">
+  <div class="footer-text">Visual narrative generated from manus.im/blog/prompts-for-brands</div>
+</div>
+
+</div><!-- /.main-scroll -->
+
+<div class="detail-scroll" id="detailScroll">
+  <div class="detail-header" id="detailBack">&larr; 返回</div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+</div><!-- /.space -->
+
+<!-- Source Horizon -->
+<div class="source-horizon" id="sourceHorizon">
+  <div class="horizon-track" id="horizonTrack"></div>
+  <div class="horizon-detail" id="horizonDetail"></div>
+</div>
+
+<script>
+/* === Image URLs === */
+var imgURLs = {
+  img0: "https://files.manuscdn.com/assets/dashboard/materials/2026/04/09/dcd2ef6a5a086b0429e998fc03444b3f11f02041b22f24efc55e915bf9be66c0.webp",
+  img1: "https://private-us-east-1.manuscdn.com/sessionFile/9U5RQR2SmxfDNsvHMIR40D/sandbox/ojjIQfp5kirt3X5yHy5haF-images_1775700076941_na1fn_L2hvbWUvdWJ1bnR1L2Jsb2dfaW1hZ2VzL2hlcm8.png?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvOVU1UlFSMlNteGZETnN2SE1JUjQwRC9zYW5kYm94L29qaklRZnA1a2lydDNYNXlIeTVoYUYtaW1hZ2VzXzE3NzU3MDAwNzY5NDFfbmExZm5fTDJodmJXVXZkV0oxYm5SMUwySnNiMmRmYVcxaFoyVnpMMmhsY204LnBuZyIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc5ODc2MTYwMH19fV19&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=vw8Wsgcips0t~hNKsBImX-Y5zAks8HS4871jWMcBzcRQuJpEUu9HfCMOU9jvhRPrlNCTIfNucxavku8lAFDeUiSM4zPljdoWsB2uKfN3629Zd4wl2KXUlm96rTLIBZyZoSZVlUhfMz-ZHtiM7l1aSxUToxO-ckOlF6XjYOZCIEjqnb9O20SwtDgeHx2Arvx6eLZhcRa5dLtZZ-F1icR64bns3xmtdRh67oICgZ8ldY7egQxWgvAxgQRB7U~SjtwbqOgfekXIu1Wkvg0TnS8~JoFPYax0TpG0DHtgrRYB6VXYphYM~EBWgOICLR67kmtq0AK8l3M9ORCIQG5DtWrLPA__",
+  img2: "https://private-us-east-1.manuscdn.com/sessionFile/9U5RQR2SmxfDNsvHMIR40D/sandbox/ojjIQfp5kirt3X5yHy5haF-images_1775700076941_na1fn_L2hvbWUvdWJ1bnR1L2Jsb2dfaW1hZ2VzL3dpZGVfc2hvdA.png?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvOVU1UlFSMlNteGZETnN2SE1JUjQwRC9zYW5kYm94L29qaklRZnA1a2lydDNYNXlIeTVoYUYtaW1hZ2VzXzE3NzU3MDAwNzY5NDFfbmExZm5fTDJodmJXVXZkV0oxYm5SMUwySnNiMmRmYVcxaFoyVnpMM2RwWkdWZmMyaHZkQS5wbmciLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3OTg3NjE2MDB9fX1dfQ__&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=MA3F6iI8kaSMIRXlhL6H42wp1m56cNC93MtKDapOfctLPMnSEgZZ05l~~IfjfnyabOHdImMaBfIUpUBsZ0rxVujOgUPSw9YF7Ydthl~DMimWtiFQutBTc22~Ld2TXdpSp7CXj3xmKZQEYtHhOY-CNKPDi-aS8lcjYS2mFDlKLZf9zjMRMenzQrGmQd0ARExeqEbsyJK4rwWrSLrmTKgtr~UohY8uwGTSu-EuP72mdF34i~Nj0YN02f~HEt5jXWy0TMVwOXlzOZQVKnnX8G48paeqXkfhWyNvIawz3YofdzTqArU-4RCnrlkMvnyjWiR-sg~UAQ5JsC0WHgwjCEw-Nw__",
+  img3: "https://private-us-east-1.manuscdn.com/sessionFile/9U5RQR2SmxfDNsvHMIR40D/sandbox/ojjIQfp5kirt3X5yHy5haF-images_1775700076941_na1fn_L2hvbWUvdWJ1bnR1L2Jsb2dfaW1hZ2VzL3RocmVlX3F1YXJ0ZXJfc2hvdA.png?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvOVU1UlFSMlNteGZETnN2SE1JUjQwRC9zYW5kYm94L29qaklRZnA1a2lydDNYNXlIeTVoYUYtaW1hZ2VzXzE3NzU3MDAwNzY5NDFfbmExZm5fTDJodmJXVXZkV0oxYm5SMUwySnNiMmRmYVcxaFoyVnpMM1JvY21WbFgzRjFZWEowWlhKZmMyaHZkQS5wbmciLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3OTg3NjE2MDB9fX1dfQ__&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=uxefncQOPMGEzc4azkUb~tcaeCAa6tMJ6W9tPgkwIdDCFlqzZ~8Q75WP~VOTGg~SwFJmDPHL-9tnEOdwbDHu-5PCCcX06T~~B9R412h-UdtqaV2xvy8XrMVP9~2D8aSU3Qowmk5mpce5z0GJjiWKTjlVhKTwFMCigTwhXrKfc2L1PYfIADLDO4EgIWpAW7hZoYQgwA~mh3~WjHJy1j5ffEev7kPrJHOh0SeD2Mb9KO1HpMSUek7yycM7GWBfXEQR-R5-MIq4Sv35~RjjVvsUMUUAcjUYaqXDYtKsWgv6v9fm1En-ZaCY4byaaAoYewUopYCEHnUVBqkIZwCrbWCAhg__",
+  img4: "https://private-us-east-1.manuscdn.com/sessionFile/9U5RQR2SmxfDNsvHMIR40D/sandbox/ojjIQfp5kirt3X5yHy5haF-images_1775700076941_na1fn_L2hvbWUvdWJ1bnR1L2Jsb2dfaW1hZ2VzL3NpZGVfcHJvZmlsZQ.png?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvOVU1UlFSMlNteGZETnN2SE1JUjQwRC9zYW5kYm94L29qaklRZnA1a2lydDNYNXlIeTVoYUYtaW1hZ2VzXzE3NzU3MDAwNzY5NDFfbmExZm5fTDJodmJXVXZkV0oxYm5SMUwySnNiMmRmYVcxaFoyVnpMM05wWkdWZmNISnZabWxzWlEucG5nIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzk4NzYxNjAwfX19XX0_&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=sg4C7LNQEjH7EsyiDKEzVGxHPNw9VnLIk3u8zfZ5QrkNPx6Eimi3xWkbY8XvDKqj~MOmi3bkQbkvrbHrorOzA6HBLURyjJR8ehvBovjBrUQr8JHhUiaC9k~2nAJOp503G5ii3hzBswDrEhzKfKxRCIvo9omoAQuUOBW3yOIoYk17tofUx99yTo1ZTuX7wxyO21x9g88jVHjZgyNXp8vn-PER3Byes2uK1gwH3hxCUKtIcbK2kGgvBU~Baso2zULqB0~O2DU8iCPaW1z8EeQvkMUYwmp8wFJ0FTH6pKEW7GeAJYdZrjNq8jJrwlkus5AxUYiD-GsZBhiQtowHw1ojJQ__",
+  img5: "https://private-us-east-1.manuscdn.com/sessionFile/9U5RQR2SmxfDNsvHMIR40D/sandbox/ojjIQfp5kirt3X5yHy5haF-images_1775700076941_na1fn_L2hvbWUvdWJ1bnR1L2Jsb2dfaW1hZ2VzL2Nsb3NlX3Vw.png?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvOVU1UlFSMlNteGZETnN2SE1JUjQwRC9zYW5kYm94L29qaklRZnA1a2lydDNYNXlIeTVoYUYtaW1hZ2VzXzE3NzU3MDAwNzY5NDFfbmExZm5fTDJodmJXVXZkV0oxYm5SMUwySnNiMmRmYVcxaFoyVnpMMk5zYjNObFgzVncucG5nIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzk4NzYxNjAwfX19XX0_&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=iF6dnyFzpXHCnZpcailbctvpd5gYUw048MgvzLfMHeVXgYDTkRNbVtMwmzzfmxc6V743pvJmqNKBHFITqa89sj2XdgA~DEj-z203tzmP6r5qfXJY1Etib~MK4-KJ43xfzvI5ayNiNZTR6-7xwKiB5dCfRS-mdPMO5r3xwXNE1VA~85hNyTiUCK-Xkh2CZGKdQH~EVXbOV-kR7E5kb7TjO0F0jJSSP5i06F8UmxQqx5vkyq0Fm3j2OKfCOXdd300lPqoW~gZZDvW5igFp~QCiUvAzZpQg~jYGyN4RHbt2-oKqzB53HQNoMulaN1p5r4Q8Oy~e8CIn7CE~7ieer3~QDQ__",
+  img6: "https://private-us-east-1.manuscdn.com/sessionFile/9U5RQR2SmxfDNsvHMIR40D/sandbox/ojjIQfp5kirt3X5yHy5haF-images_1775700076941_na1fn_L2hvbWUvdWJ1bnR1L2Jsb2dfaW1hZ2VzL2JhY2tfYW5nbGU.png?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvOVU1UlFSMlNteGZETnN2SE1JUjQwRC9zYW5kYm94L29qaklRZnA1a2lydDNYNXlIeTVoYUYtaW1hZ2VzXzE3NzU3MDAwNzY5NDFfbmExZm5fTDJodmJXVXZkV0oxYm5SMUwySnNiMmRmYVcxaFoyVnpMMkpoWTJ0ZllXNW5iR1UucG5nIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzk4NzYxNjAwfX19XX0_&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=UmiOFnAXj1nMNsO9iCsXey~IfP3xMw7HZw4N0hKhBDkverLhIxxEm9DtKBLTNDTLi3oiKLK-mzmj0zoJuv4pI1AJaijV9yxXjg5I~Q29n01tMgpkmUwNaU8xog~3qfHxcm1nKTOXF7Q4T9ABEjM7dJiUPhCZvkzHbipdIGRWAlJvbvOitZv7loG2ugYLqu3qtJqGe8ZBCNON4PZ~aX5D3RBRUiBhRi0mtQdUJIKSkB-Gx42j0ifm6-IaZ4hmRfeJ551BsT6gDsaYJ0WjuZdj3n1ru9RByE0Mv9T9W2ubsuZ-zBkCQyIydLxM309y8Ib71BdEEGE~BPeRHif5CjsgKQ__",
+  img7: "https://private-us-east-1.manuscdn.com/sessionFile/9U5RQR2SmxfDNsvHMIR40D/sandbox/ojjIQfp5kirt3X5yHy5haF-images_1775700076941_na1fn_L2hvbWUvdWJ1bnR1L2Jsb2dfaW1hZ2VzL2R1b19zaG90.png?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvOVU1UlFSMlNteGZETnN2SE1JUjQwRC9zYW5kYm94L29qaklRZnA1a2lydDNYNXlIeTVoYUYtaW1hZ2VzXzE3NzU3MDAwNzY5NDFfbmExZm5fTDJodmJXVXZkV0oxYm5SMUwySnNiMmRmYVcxaFoyVnpMMlIxYjE5emFHOTAucG5nIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzk4NzYxNjAwfX19XX0_&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=L2dXZBnGUf4P7e5YYMVlS088LWQSWmhWmV~4AH7UJ0nJhT9QoLYW1DKpJjujGOAzS76~h74Fz4GWck0KpttoDf7Ez2TEOInjZvRIXl-mFgYxsbabipckOfBTpcyxaYAznjhmS3eWJkra8ddKLtRJx2~BD7bfz3q3lg9aphONzeM-485c6Iu1xrkeo8kC8blPCZdvIRixb-ng-Z7IkZ9Uvv-CUCsRcLkFlQE~RWLW1RsWMcaAV1i1riI~AI5PuvG2mgy~8omVPVIbAKlwvsChWb~3zvMPC1EHXQjWu22gitftbfANymBoBCwlfKwAIyPTzkqL4g49wmF2nO-phGzddg__"
+};
+
+/* === Set hero images === */
+document.getElementById('heroBg').style.backgroundImage = 'url(' + imgURLs.img0 + ')';
+document.getElementById('heroImg').src = imgURLs.img1;
+
+/* === Coverage Data === */
+var coverageData = {
+  sourceType: "text",
+  totalLength: 7679,
+  segments: [
+    { start: 0, end: 983, section: 1, reason: null },
+    { start: 984, end: 2571, section: 2, reason: null },
+    { start: 2572, end: 3441, section: 3, reason: null },
+    { start: 3444, end: 4086, section: 3, reason: null },
+    { start: 4087, end: 4686, section: 4, reason: null },
+    { start: 4687, end: 5336, section: 4, reason: null },
+    { start: 5337, end: 5951, section: 5, reason: null },
+    { start: 5952, end: 6643, section: 5, reason: null },
+    { start: 6644, end: 7679, section: 6, reason: null }
+  ]
+};
+
+/* === Topic Data === */
+var topicData = {
+  1: [
+    { name: "通用 prompt 陷阱", status: "included", ddHeading: "库存思维的本质",
+      excerpt: "When a brand owner types \u201ca nice photo of a shirt on a model\u201d into a generator, the result is inevitably generic. It looks like stock photography because the instruction was a stock thought. To get editorial, high-fashion results that actually sell a product, you have to stop thinking like a software engineer typing a query and start thinking like a creative director briefing a team. You need to specify the camera, the lighting, the model, and the environment." },
+    { name: "创意总监思维", status: "included", ddHeading: "像创意总监一样思考",
+      excerpt: "To get editorial, high-fashion results that actually sell a product, you have to stop thinking like a software engineer typing a query and start thinking like a creative director briefing a team. You need to specify the camera, the lighting, the model, and the environment." },
+    { name: "全文实例均为 AI 生成", status: "included", ddHeading: "每张图都是 AI 生成的",
+      excerpt: "This guide breaks down the anatomy of a production-ready prompt and provides copy-paste examples you can adapt for your own brand\u2019s next campaign. Every image in this article was generated with AI using the exact prompts shown below." },
+    { name: "技术与用法的鸿沟", status: "deep-dive", ddHeading: "库存思维的本质",
+      excerpt: "The shift in brand photography is undeniable. AI image generation has moved past conceptual art and novelty renders\u2014it is now a practical, scalable tool for building lookbooks, campaigns, and product catalogs. But while the technology has advanced, the way most people use it has not." }
+  ],
+  2: [
+    { name: "Subject & Wardrobe", status: "included", ddHeading: "第一层：Subject & Wardrobe",
+      excerpt: "First, define the subject and wardrobe with obsessive precision. Do not just ask for a \u201csuit.\u201d Ask for a \u201cnavy unstructured linen blazer, white crew tee, and cream linen trousers.\u201d The more specific you are about the fabric weave, the cut, and the styling, the more realistic the drape and texture will appear in the final image." },
+    { name: "Environment & Setting", status: "included", ddHeading: "第二层：Environment & Setting",
+      excerpt: "Second, establish the environment and setting. The background provides context and grounds the subject in reality. \u201cA beach\u201d is vague. \u201cA weathered stone jetty with the calm grey-blue Mediterranean sea behind him\u201d gives the AI specific textures (weathered stone, calm water) and a color palette (grey-blue) to work with." },
+    { name: "Camera & Film Stock", status: "included", ddHeading: "第三层：Camera & Film Stock",
+      excerpt: "Third, specify the camera and film stock. This is the secret to avoiding the dreaded \u201cAI look.\u201d By requesting a specific film stock and focal length, you force the generator to mimic the grain, color science, and depth of field of real photography. \u201cShot on Kodak Portra 400 film, 50mm lens\u201d immediately shifts the output from digital rendering to editorial photography." },
+    { name: "Lighting 灯光方向", status: "included", ddHeading: "第四层：Lighting",
+      excerpt: "Finally, dictate the lighting. Lighting sets the mood and defines the shape of the garments. \u201cStrong directional afternoon light\u201d or \u201cwarm rim lighting from behind\u201d tells the AI exactly where to place highlights and shadows, adding three-dimensional depth to the clothing." },
+    { name: "默认审美陷阱", status: "deep-dive", ddHeading: "第一层：Subject & Wardrobe",
+      excerpt: "A successful prompt leaves nothing to chance. If you omit a detail, the AI will fill in the blank with its default aesthetic, which is usually a hyper-smooth, artificial gloss. To counteract that, your prompt needs four distinct layers of instruction." }
+  ],
+  3: [
+    { name: "Wide shot 用途", status: "included", ddHeading: "Wide Shot 全景镜头",
+      excerpt: "The wide shot establishes the world your brand lives in. It shows the full outfit from head to toe while providing enough negative space for text overlays or website banners." },
+    { name: "Wide shot prompt 模板", status: "deep-dive", ddHeading: "Wide Shot 全景镜头",
+      excerpt: "Full body high fashion editorial shot. A young man with short dark curly hair wearing a navy unstructured linen blazer, white crew tee, cream linen trousers. Standing on a weathered stone jetty with calm grey-blue Mediterranean sea behind him. Weight on one leg, intense expression. Shot on Kodak Portra 400, 50mm lens, muted desaturated color grading, strong directional afternoon light." },
+    { name: "Three-quarter 用途", status: "included", ddHeading: "Three-Quarter Shot 3/4镜头",
+      excerpt: "Framed from the mid-thigh up, the three-quarter shot is the bread and butter of e-commerce and social media. It brings the viewer closer to the fit and styling of the garments without losing the context of the location." },
+    { name: "Three-quarter prompt 模板", status: "deep-dive", ddHeading: "Three-Quarter Shot 3/4镜头",
+      excerpt: "Mid-thigh up high fashion editorial portrait. Young man with tousled brown hair wearing a cream linen blazer and tan trousers. Standing on a stone terrace overlooking the sea, hand in pocket, intense stare into camera. Shot on Kodak Portra 400 film, 85mm lens, shallow depth of field. Muted filmic color grading, dramatic directional side lighting, crisp shadows." }
+  ],
+  4: [
+    { name: "Side profile 用途", status: "included", ddHeading: "Side Profile 侧面照",
+      excerpt: "The side profile adds variety to your lookbook without requiring a new location or wardrobe change. It shifts the viewer\u2019s perspective and highlights the silhouette and structure of the garment in a way that front-facing shots cannot." },
+    { name: "Side profile prompt 模板", status: "deep-dive", ddHeading: "Side Profile 侧面照",
+      excerpt: "High fashion editorial side profile portrait. Young man with tousled brown hair wearing a cream cable-knit sweater over a white collared shirt. Shot against a weathered, peeling stucco wall. Stoic expression, looking away from camera. Shot on Kodak Portra 400 film, 85mm lens. Muted filmic color grading, soft diffused natural light." },
+    { name: "Close-up 用途", status: "included", ddHeading: "Close-Up 特写",
+      excerpt: "You cannot sell premium apparel if the customer cannot feel the fabric through the screen. The close-up shot focuses entirely on the details: the weave of the linen, the stitching on the lapel, or the hardware on an accessory." },
+    { name: "Close-up prompt 模板", status: "deep-dive", ddHeading: "Close-Up 特写",
+      excerpt: "Extreme close-up high fashion editorial detail shot. Tight crop on a man\u2019s face and chest. Wearing a cream linen blazer over a white linen shirt with the top buttons undone. Razor sharp focus on the blazer lapel, fabric weave, and facial features. Intense stare. Shot on Kodak Portra 400, 120mm macro lens. Dramatic shadow play, hard directional light, muted filmic colors." }
+  ],
+  5: [
+    { name: "Back angle 用途", status: "included", ddHeading: "Back Angle 背面角度",
+      excerpt: "The back angle reveals the drape and silhouette of a garment that front-facing shots miss entirely. It adds cinematic depth to a campaign and works particularly well for outerwear, jackets, and anything with interesting back detailing." },
+    { name: "Back angle prompt 模板", status: "deep-dive", ddHeading: "Back Angle 背面角度",
+      excerpt: "High fashion editorial back angle shot. Young man with tousled brown hair walking away down limestone steps toward the sea. Wearing a cream linen blazer and tan trousers. Glancing back over his shoulder. Strong rim lighting from behind, warm afternoon sun. Shot on Kodak Portra 400 film, 50mm lens. Muted filmic color grading, long dramatic shadows." },
+    { name: "Duo shot 用途", status: "included", ddHeading: "Duo Shot 双人镜头",
+      excerpt: "A campaign feels more dynamic when it features multiple subjects interacting within the same environment. It shows how different pieces in your collection work together and how the aesthetic translates across different body types and skin tones." },
+    { name: "Duo shot prompt 模板", status: "deep-dive", ddHeading: "Duo Shot 双人镜头",
+      excerpt: "High fashion editorial duo shot. Two male models on rustic stone steps. Model 1 (sitting): tousled brown hair, cream cable-knit sweater, tan trousers, looking left. Model 2 (standing): short dark hair, navy linen blazer, white tee, cream trousers, looking right. Both have intense, stoic expressions. Shot on Kodak Portra 400 film, 50mm lens. Muted filmic color grading, directional afternoon sunlight." }
+  ],
+  6: [
+    { name: "模特一致性", status: "included", ddHeading: "锁定你的模特",
+      excerpt: "To keep your model consistent across different angles, use the exact same physical description in every prompt (\u201cyoung man with tousled brown hair\u201d). In advanced AI tools, you can use features like character references or seed locking to ensure the face remains identical." },
+    { name: "美学统一性", status: "included", ddHeading: "锁定你的美学",
+      excerpt: "To keep the aesthetic cohesive, lock in your camera, film stock, and lighting descriptors. If your hero shot uses \u201cKodak Portra 400, muted filmic color grading, directional afternoon sunlight,\u201d you must include that exact phrasing in your detail shots and wide angles. The moment you drop the film stock reference, the AI will revert to its default, glossy style, breaking the illusion of a single, continuous photoshoot." },
+    { name: "默认回退风险", status: "included", ddHeading: "锁定你的美学",
+      excerpt: "The moment you drop the film stock reference, the AI will revert to its default, glossy style, breaking the illusion of a single, continuous photoshoot." },
+    { name: "愿景 + 词汇", status: "deep-dive", ddHeading: "终极思考",
+      excerpt: "AI gives you access to a world-class studio, any location on earth, and unlimited gear. You just have to provide the vision and the vocabulary to bring it to life." }
+  ]
+};
+
+/* === Deep Dive Data (placeholder) === */
+var deepDiveData = {};
+deepDiveData[1] = {
+  title: "通用 Prompt 的陷阱",
+  sections: [
+    {
+      heading: "库存思维的本质",
+      body: "当你输入一条模糊的指令，比如「a nice photo of a shirt on a model」，AI 没有任何创意约束可以依靠。它只能退回到统计意义上「最平均」的解读——而那恰恰就是库存摄影的样子。输出之所以平庸，是因为输入本身就平庸。"
+    },
+    {
+      heading: "像创意总监一样思考",
+      body: "编辑级的成果需要编辑级的 brief。创意总监不会说「make it look good」——他们会指定机位角度、灯光方案、模特姿态和环境场景。每一个参数都在缩小 AI 的无限可能空间，将其收敛为一帧有意图的画面。"
+    },
+    {
+      heading: "每张图都是 AI 生成的",
+      body: "专业级 prompt 的结构类似一份拍摄 brief：指定相机（如 Hasselblad H6D）、镜头焦距、灯光组合（softbox、rim light）、模特的人口特征与表情、以及拍摄环境。你添加的每一个具体细节，都在替换一个 AI 本来要自己猜的默认值。\n\n本文中的每一张图片都是用 AI 生成的，使用的正是文中展示的那些 prompt。"
+    }
+  ],
+  originalText: "The shift in brand photography is undeniable. AI image generation has moved past conceptual art and novelty renders -- it is now a practical, scalable tool for building lookbooks, campaigns, and product catalogs. But while the technology has advanced, the way most people use it has not.\n\nWhen a brand owner types\u300Ca nice photo of a shirt on a model\u300Dinto a generator, the result is inevitably generic. It looks like stock photography because the instruction was a stock thought. To get editorial, high-fashion results that actually sell a product, you have to stop thinking like a software engineer typing a query and start thinking like a creative director briefing a team. You need to specify the camera, the lighting, the model, and the environment.\n\nThis guide breaks down the anatomy of a production-ready prompt and provides copy-paste examples you can adapt for your own brand's next campaign. Every image in this article was generated with AI using the exact prompts shown below."
+};
+deepDiveData[2] = {
+  title: "四层 Prompt 架构",
+  sections: [
+    {
+      heading: "第一层：Subject & Wardrobe",
+      body: "每条 prompt 的地基是对主体和服装近乎偏执的精确描述。说「suit」远远不够。你需要说「navy unstructured linen blazer, white crew tee, and cream linen trousers」——精确到面料织法、剪裁和搭配方式。你越具体，布料的垂坠感和纹理就越真实。缺了这份精确度，AI 就会默认输出看起来像塑料的通用服装。"
+    },
+    {
+      heading: "第二层：Environment & Setting",
+      body: "背景将主体锚定在现实中，并提供必不可少的语境。一句模糊的「a beach」让 AI 无从下手。而「a weathered stone jetty with the calm grey-blue Mediterranean sea behind him」提供了具体的材质（风化的石头、平静的海面）和色彩方案（灰蓝色），把整个画面锚定在一个可信的场景中。"
+    },
+    {
+      heading: "第三层：Camera & Film Stock",
+      body: "这是对抗「AI 味」的秘密武器。当你指定一种胶片和焦距——比如「Shot on Kodak Portra 400 film, 50mm lens」——你就强制生成器去模拟真实摄影的特质：颗粒感、色彩科学和景深。仅此一条指令，就能把输出从数字渲染拉向编辑级摄影。"
+    },
+    {
+      heading: "第四层：Lighting",
+      body: "灯光是将扁平的 AI 渲染和三维照片区分开的关键。它设定情绪，定义服装的形状。像「strong directional afternoon light」或「warm rim lighting from behind」这样的指令，告诉 AI 精确地在哪里放置高光和阴影。如果不明确灯光方向，AI 就会默认使用均匀的平光——把所有表面都拍平。"
+    }
+  ]
+};
+deepDiveData[3] = {
+  title: "Wide & Three-Quarter Shot",
+  sections: [
+    {
+      heading: "Wide Shot 全景镜头",
+      body: "<p>Wide shot（全景镜头）展示模特从头到脚的完整造型，同时纳入环境背景。它建立品牌的「世界观」，并提供充足的负空间用于文字叠加或网站 banner。</p><p>关键要素：全身入镜、环境叙事、负空间留白。</p><p><strong>Prompt 模板：</strong></p><code>Full body high fashion editorial shot. A young man with short dark curly hair wearing a navy unstructured linen blazer, white crew tee, cream linen trousers. Standing on a weathered stone jetty with calm grey-blue Mediterranean sea behind him. Weight on one leg, intense expression. Shot on Kodak Portra 400, 50mm lens, muted desaturated color grading, strong directional afternoon light.</code><img src=\"" + imgURLs.img2 + "\" style=\"width:100%;border-radius:10px;margin:12px 0\" alt=\"Wide shot 示例\">"
+    },
+    {
+      heading: "Three-Quarter Shot 3/4镜头",
+      body: "<p>Three-quarter shot（3/4 镜头）从大腿中部取景向上，是电商和社媒的「主力镜头」。它拉近观众与服装细节的距离，同时保留场景的环境感。</p><p>关键要素：中大腿以上取景、85mm 浅景深、侧光塑造立体感。</p><p><strong>Prompt 模板：</strong></p><code>Mid-thigh up high fashion editorial portrait. Young man with tousled brown hair wearing a cream linen blazer and tan trousers. Standing on a stone terrace overlooking the sea, hand in pocket, intense stare into camera. Shot on Kodak Portra 400 film, 85mm lens, shallow depth of field. Muted filmic color grading, dramatic directional side lighting, crisp shadows.</code><img src=\"" + imgURLs.img3 + "\" style=\"width:100%;border-radius:10px;margin:12px 0\" alt=\"Three-quarter shot 示例\">"
+    }
+  ]
+};
+deepDiveData[4] = {
+  title: "Side Profile & Close-Up",
+  sections: [
+    {
+      heading: "Side Profile 侧面照",
+      body: "侧面照让你的 lookbook 在不更换场景和服装的前提下增加多样性。它改变了观者的视角，以正面照无法呈现的方式展现服装的「剪影」与「结构」。侧面朝向可以凸显肩线、领口轮廓和面料垂坠感，一张即可传达整套造型的建筑感。<br><br><strong>Prompt 模板：</strong><br><code>High fashion editorial side profile portrait. Young man with tousled brown hair wearing a cream cable-knit sweater over a white collared shirt. Shot against a weathered, peeling stucco wall. Stoic expression, looking away from camera. Shot on Kodak Portra 400 film, 85mm lens. Muted filmic color grading, soft diffused natural light.</code><br><img src=\"" + imgURLs.img4 + "\" style=\"width:100%;border-radius:10px;margin:12px 0\" alt=\"Side profile 示例\">"
+    },
+    {
+      heading: "Close-Up 特写",
+      body: "如果顾客无法「隔屏触摸面料」，高端服饰就很难卖出溢价。Close-up 完全聚焦细节：亚麻的织法、翻领的缝线、配饰的五金件。它把画面压到极致近距，让质感自己说话。<br><br><strong>Prompt 模板：</strong><br><code>Extreme close-up high fashion editorial detail shot. Tight crop on a man's face and chest. Wearing a cream linen blazer over a white linen shirt with the top buttons undone. Razor sharp focus on the blazer lapel, fabric weave, and facial features. Intense stare. Shot on Kodak Portra 400, 120mm macro lens. Dramatic shadow play, hard directional light, muted filmic colors.</code><br><img src=\"" + imgURLs.img5 + "\" style=\"width:100%;border-radius:10px;margin:12px 0\" alt=\"Close-up 示例\">"
+    }
+  ]
+};
+deepDiveData[5] = {
+  title: "Back Angle & Duo Shot",
+  sections: [
+    {
+      heading: "Back Angle 背面角度",
+      body: "背面角度能揭示正面镜头完全看不到的垂坠感和轮廓线。它给画面增添电影感，尤其适合外套、夹克以及任何背部有设计细节的单品。\n\nPrompt 模板：\n「High fashion editorial back angle shot. [主体描述] walking away [场景]. Wearing [服装]. Glancing back over shoulder. Strong rim lighting from behind, warm afternoon sun. Shot on Kodak Portra 400 film, 50mm lens. Muted filmic color grading, long dramatic shadows.」\n\n要点：「walking away」确立背对镜头的方向，「glancing back」加入一丝互动感，「rim lighting from behind」强化轮廓。\n\n<img src=\"" + imgURLs.img6 + "\" style=\"width:100%;border-radius:10px;margin:12px 0\" alt=\"Back angle 示例\">"
+    },
+    {
+      heading: "Duo Shot 双人镜头",
+      body: "当画面中出现多个人物在同一环境中互动时，整个广告系列会更有动态感。它展示了你的系列中不同单品如何搭配，以及同一美学在不同体型和肤色上的呈现。\n\nPrompt 模板：\n「High fashion editorial duo shot. Two models [场景]. Model 1 ([位置]): [外貌], [服装], [动作]. Model 2 ([位置]): [外貌], [服装], [动作]. Both have intense, stoic expressions. Shot on Kodak Portra 400 film, 50mm lens. Muted filmic color grading, directional afternoon sunlight.」\n\n要点：分别描述每个模特的位置、外貌和服装，确保两人在画面中形成对比又和谐。「stoic expressions」保持高级感。\n\n<img src=\"" + imgURLs.img7 + "\" style=\"width:100%;border-radius:10px;margin:12px 0\" alt=\"Duo shot 示例\">"
+    }
+  ]
+};
+deepDiveData[6] = {
+  title: "一致性的纪律",
+  sections: [
+    {
+      heading: "锁定你的模特",
+      body: "做出一张好图很容易，做出十张像同一本杂志同一组大片的图才叫纪律。关键是在每一条 prompt 中使用完全相同的人物外貌描述。如果你的主视觉写了「young man with tousled brown hair」，这个短语必须原封不动地出现在你的细节照、全景照和特写照中。高级 AI 工具提供 character reference 或 seed locking 功能来保持面部特征一致，但根基永远是文本层面的一致性。你一旦改写或省略某个细节，AI 就会把它当成一个全新的角色。"
+    },
+    {
+      heading: "锁定你的美学",
+      body: "模特一致性只是战斗的一半。另一半是美学统一：相机、胶片和灯光。如果你的主视觉用了「Kodak Portra 400, muted filmic color grading, directional afternoon sunlight」，你必须把这段完全相同的描述复制到后续每一条 prompt 中。这些描述词是风格锚点。你一旦漏掉 film stock 的引用，AI 就会瞬间退回到它的默认渲染——干净、油亮、一看就是数字的。就这么一个遗漏，就能打破「连续拍摄」的幻觉。把你的美学参数当成一个锁定的配置文件：除非你有意转场，否则一个字都不改。"
+    },
+    {
+      heading: "终极思考",
+      body: "AI 给了你一间世界级影棚、地球上任何一个外景地、以及无限的器材。唯一的约束是你的愿景和词汇。一致性不是工具强加的限制，而是你施加给自己的纪律。三参数锁定（Model + Camera + Light）是保证整组拍摄视觉连贯性的最简框架。"
+    }
+  ]
+};
+
+/* === Deep Dive Navigation === */
+var ddCurrentN = null;
+
+function findBodyByHeading(n, heading) {
+  var dd = deepDiveData[n];
+  if (!dd || !dd.sections) return '';
+  for (var i = 0; i < dd.sections.length; i++) {
+    if (dd.sections[i].heading === heading) {
+      return dd.sections[i].body.replace(/<[^>]+>/g, '');
+    }
+  }
+  return '';
+}
+
+function buildCoverageMap(n) {
+  if (!topicData[n]) return '';
+  var topics = topicData[n];
+  var html = '<div class="coverage-map"><div class="coverage-map-title">话题覆盖</div><div class="coverage-bars">';
+  topics.forEach(function(t, i) {
+    var cls = t.status;
+    var pct = t.status === 'included' ? '100' : (t.status === 'deep-dive' ? '70' : '30');
+    var fillCls = t.status === 'included' ? 'included' : (t.status === 'deep-dive' ? 'deep-dive-bar' : 'compressed-bar');
+    html += '<div class="cbar-row ' + cls + '" onclick="this.nextElementSibling.classList.toggle(\'open\')">';
+    html += '<div class="cbar-label">' + t.name + '<span class="cbar-expand-hint">\u25B6</span></div>';
+    html += '<div class="cbar-track"><div class="cbar-fill ' + fillCls + '" style="width:' + pct + '%"></div></div>';
+    html += '</div>';
+    var excerpt = t.excerpt || findBodyByHeading(n, t.ddHeading) || '';
+    html += '<div class="cbar-excerpt"><div class="cbar-excerpt-inner">' + excerpt + '</div></div>';
+  });
+  html += '</div></div>';
+  return html;
+}
+
+function toggleDeepDive(n) {
+  if (document.body.classList.contains('dd-active') && ddCurrentN === n) { closeDeepDive(); return; }
+  ddCurrentN = n;
+  var body = document.getElementById('detailBody');
+  if (deepDiveData[n]) {
+    var d = deepDiveData[n];
+    var html = '<h4>' + d.title + '</h4>';
+    d.sections.forEach(function(s) {
+      if (s.heading) html += '<h4>' + s.heading + '</h4>';
+      if (s.diagram) html += s.diagram;
+      html += s.body.split('\n\n').map(function(p) { return '<p>' + p + '</p>'; }).join('');
+    });
+    if (d.originalText) html += '<div class="original-text"><p><strong>原文：</strong> ' + d.originalText + '</p></div>';
+    html += buildCoverageMap(n);
+    body.innerHTML = html;
+  }
+  document.getElementById('detailScroll').scrollTop = 0;
+  document.body.classList.add('dd-active');
+}
+function closeDeepDive() {
+  document.body.classList.remove('dd-active');
+  document.getElementById('space').style.transform = '';
+  document.getElementById('mainScroll').style.transform = '';
+  ddCurrentN = null;
+}
+
+document.getElementById('detailBack').addEventListener('click', closeDeepDive);
+document.getElementById('mainScroll').addEventListener('click', function(e) {
+  if (document.body.classList.contains('dd-active') && !e.target.closest('.deep-dive-trigger')) closeDeepDive();
+});
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && document.body.classList.contains('dd-active')) closeDeepDive(); });
+
+/* === Scroll Reveal === */
+var mainScrollRoot = document.getElementById('mainScroll');
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+}, { threshold: 0.15, root: mainScrollRoot });
+document.querySelectorAll('.reveal, [class*=\"_stage\"]').forEach(function(el) { observer.observe(el); });
+document.querySelectorAll('.s1_stage, .s2_stage, .s3_stage, .s4_stage, .s5_stage, .s6_stage').forEach(function(el) { observer.observe(el); });
+
+/* === Source Horizon === */
+(function() {
+  if (typeof coverageData === 'undefined') return;
+  var horizon = document.getElementById('sourceHorizon');
+  var track = document.getElementById('horizonTrack');
+  var detail = document.getElementById('horizonDetail');
+  if (!horizon || !track || !coverageData.segments) return;
+  function toNum(v) {
+    if (typeof v === 'number') return v;
+    var parts = String(v).split(':').map(Number);
+    return parts.length === 3 ? parts[0]*3600+parts[1]*60+parts[2] : parts.length === 2 ? parts[0]*60+parts[1] : parts[0];
+  }
+  var total = toNum(coverageData.totalLength);
+  var coveredLen = 0;
+  coverageData.segments.forEach(function(seg) {
+    var s = toNum(seg.start), e = toNum(seg.end);
+    var leftPct = (s / total * 100).toFixed(2) + '%';
+    var widthPct = ((e - s) / total * 100).toFixed(2) + '%';
+    var div = document.createElement('div');
+    div.className = 'horizon-seg ' + (seg.section ? (seg.deepDive ? 'covered deep-dive' : 'covered') : 'gap');
+    div.style.left = leftPct; div.style.width = widthPct;
+    track.appendChild(div);
+    if (seg.section) coveredLen += (e - s);
+    if (!seg.section && seg.reason) {
+      var gz = document.createElement('div');
+      gz.className = 'horizon-gap-zone';
+      gz.style.left = leftPct; gz.style.width = widthPct;
+      gz.innerHTML = '<div class="gap-pattern"></div><div class="gap-tooltip">' + seg.reason + ' (' + seg.start + '-' + seg.end + ')</div>';
+      detail.appendChild(gz);
+    }
+    if (seg.section && !seg.deepDive) {
+      var mk = document.createElement('div');
+      mk.className = 'horizon-marker';
+      mk.style.left = ((s + (e-s)/2) / total * 100).toFixed(2) + '%';
+      mk.innerHTML = '<div class="marker-tick"></div><div class="marker-label">S' + seg.section + '</div>';
+      mk.addEventListener('click', function(ev) {
+        ev.stopPropagation();
+        var target = document.getElementById('s' + seg.section + '-anim');
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+      detail.appendChild(mk);
+    }
+  });
+  var pct = document.createElement('div');
+  pct.className = 'horizon-pct';
+  pct.textContent = Math.round(coveredLen / total * 100) + '%';
+  detail.appendChild(pct);
+  horizon.addEventListener('click', function() { horizon.classList.toggle('expanded'); });
+  var collapseTimer;
+  mainScrollRoot.addEventListener('scroll', function() {
+    clearTimeout(collapseTimer);
+    var markers = detail.querySelectorAll('.marker-tick');
+    markers.forEach(function(m) { m.classList.remove('active'); });
+    var scrollTop = mainScrollRoot.scrollTop;
+    var closest = null, closestDist = Infinity;
+    coverageData.segments.forEach(function(seg) {
+      if (!seg.section || seg.deepDive) return;
+      var el = document.getElementById('s' + seg.section + '-anim');
+      if (!el) return;
+      var dist = Math.abs(el.offsetTop - scrollTop - window.innerHeight/2);
+      if (dist < closestDist) { closestDist = dist; closest = seg.section; }
+    });
+    if (closest) {
+      detail.querySelectorAll('.horizon-marker').forEach(function(mk) {
+        if (mk.querySelector('.marker-label').textContent === 'S' + closest)
+          mk.querySelector('.marker-tick').classList.add('active');
+      });
+    }
+    collapseTimer = setTimeout(function() { horizon.classList.remove('expanded'); }, 2000);
+  });
+})();
+</script>
+</body>
+</html>

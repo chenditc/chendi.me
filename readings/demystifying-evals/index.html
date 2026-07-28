@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>拆解 AI Agent 评测</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #EFF6FF; --bg-act2: #F5F3FF; --bg-act3: #EFF6FF;
+  --bg-dark: #0F172A; --bg-close: #1E293B;
+  --text: #1E293B; --text-muted: #64748B; --dim: #94A3B8;
+  --accent: #3B82F6; --accent2: #8B5CF6;
+  --warm: #F59E0B; --danger: #EF4444;
+  --neutral: #94A3B8;
+  --card-bg: #FFFFFF;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Noto Sans SC', -apple-system, sans-serif; color: var(--text); }
+
+.layer {
+  position: fixed; inset: 0; overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  visibility: hidden; opacity: 0;
+  will-change: transform, opacity;
+  scroll-snap-type: y proximity;
+}
+.layer.active { visibility: visible; opacity: 1; }
+
+.feed-section {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 80px 24px; scroll-snap-align: start;
+}
+.feed-section.dark { background: var(--bg-dark); color: #F1F5F9; }
+.feed-section.dark .body-text { color: #94A3B8; }
+.feed-section.dark .big-statement { color: #F1F5F9; }
+.feed-section.purple { background: var(--bg-act2); }
+.section-inner { max-width: 600px; width: 100%; }
+
+.big-statement { font-family: 'Noto Serif SC', serif; font-size: clamp(22px, 5.5vw, 32px); font-weight: 700; line-height: 1.5; margin-bottom: 32px; }
+.body-text { font-size: 16px; line-height: 1.9; color: var(--text); margin-bottom: 28px; }
+.body-text .hl { color: var(--accent); font-weight: 500; }
+.body-text .hl2 { color: var(--accent2); font-weight: 500; }
+.body-text .hl-danger { color: var(--danger); font-weight: 500; }
+.body-text .hl-warm { color: var(--warm); font-weight: 500; }
+
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-d1 { transition-delay: 0.15s; }
+.reveal-d2 { transition-delay: 0.3s; }
+.reveal-d3 { transition-delay: 0.45s; }
+.reveal-d4 { transition-delay: 0.6s; }
+
+.breadcrumb {
+  position: fixed; top: 16px; left: 16px; z-index: 1000;
+  display: flex; align-items: center; gap: 4px;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+  padding: 8px 14px; border-radius: 10px; box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+  font-size: 13px; font-weight: 500;
+}
+.breadcrumb span { color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
+.breadcrumb span:hover { color: var(--accent); }
+.breadcrumb span.current { color: var(--text); cursor: default; }
+.breadcrumb .sep { color: #CBD5E1; margin: 0 2px; cursor: default; }
+
+.back-btn {
+  position: fixed; top: 16px; left: 16px; z-index: 1001;
+  width: 38px; height: 38px; border-radius: 10px; border: none;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  font-size: 18px; cursor: pointer; display: none; align-items: center; justify-content: center;
+  color: var(--text); transition: all 0.2s;
+}
+.back-btn:hover { background: var(--accent); color: #fff; }
+
+.depth-dots {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1000;
+  display: flex; gap: 8px; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px);
+  padding: 8px 14px; border-radius: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #CBD5E1; transition: all 0.3s; }
+.dot.active { background: var(--accent); box-shadow: 0 0 8px rgba(59,130,246,0.5); transform: scale(1.2); }
+
+.drill-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border: 1.5px solid rgba(59,130,246,0.3); border-radius: 10px;
+  background: transparent; color: var(--accent); font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.25s; position: relative; z-index: 10;
+}
+.drill-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+.dark .drill-btn { border-color: rgba(59,130,246,0.4); }
+
+.source-panel {
+  margin-top: 24px; border-radius: 12px; overflow: hidden;
+  border: 1px solid rgba(59,130,246,0.15); background: rgba(59,130,246,0.03);
+}
+.dark .source-panel { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
+.source-toggle {
+  width: 100%; padding: 12px 16px; border: none; background: none;
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 600; color: var(--accent);
+}
+.dark .source-toggle { color: #818CF8; }
+.source-toggle:hover { background: rgba(59,130,246,0.06); }
+.source-toggle .arrow { transition: transform 0.3s; font-size: 11px; }
+.source-toggle.open .arrow { transform: rotate(90deg); }
+.source-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; padding: 0 16px; }
+.source-body.open { max-height: 2000px; padding: 0 16px 16px; overflow-y: auto; }
+.source-body p { font-size: 13px; line-height: 1.8; color: var(--text-muted); margin: 0 0 12px; white-space: pre-wrap; }
+.dark .source-body p { color: #94A3B8; }
+.source-body .source-label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--accent); margin-bottom: 8px; display: block;
+}
+
+.anim-stage { pointer-events: none; margin: 24px 0; min-height: 80px; }
+.anim-stage > div{ width:100%; }
+.hook-line { font-size: 15px; color: var(--accent); font-weight: 500; margin: 16px 0 8px; line-height: 1.6; }
+.dark .hook-line { color: #818CF8; }
+.section-tag { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+.dark .section-tag { color: #818CF8; }
+
+/* S1 — 救火循环 vs Eval 循环 */
+.s1_stage {
+  position: relative;
+  width: 340px;
+  height: 300px;
+  margin: 0 auto;
+  background: #EFF6FF;
+  overflow: hidden;
+  font-family: -apple-system, 'Helvetica Neue', 'PingFang SC', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* === 通用节点样式 === */
+.s1_node {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* 3字节点稍大 */
+.s1_node3 {
+  width: 64px;
+  height: 64px;
+  font-size: 13px;
+}
+
+/* === 红色循环 === */
+.s1_fire_label {
+  position: absolute;
+  top: 6px;
+  left: 170px;
+  transform: translateX(-50%);
+  font-size: 14px;
+  font-weight: 700;
+  color: #EF4444;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+/*
+  红色三角: 中心(170, 72)
+  顶: (170, 28) -> left=142, top=0
+  左下: (96, 90) -> left=64, top=62
+  右下: (244, 90) -> left=212, top=62
+*/
+.s1_rn1 { top: 24px; left: 142px; border: 2.5px solid #EF4444; color: #EF4444; background: #fff; }
+.s1_rn2 { top: 68px; left: 52px; border: 2.5px solid #EF4444; color: #EF4444; background: #fff; }
+.s1_rn3 { top: 68px; left: 224px; border: 2.5px solid #EF4444; color: #EF4444; background: #fff; }
+
+.s1_red_arrows {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 340px;
+  height: 140px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* === 转换箭头 === */
+.s1_transform {
+  position: absolute;
+  top: 132px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 28px;
+  opacity: 0;
+}
+
+/* === 蓝色循环 === */
+.s1_eval_label {
+  position: absolute;
+  top: 164px;
+  left: 170px;
+  transform: translateX(-50%);
+  font-size: 14px;
+  font-weight: 700;
+  color: #3B82F6;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+/*
+  蓝色三角: 中心(170, 232)
+  顶: (170, 188) -> left=142, top=160 (但3字用64px)
+  左下: (96, 250) -> left=64, top=222 (3字64px -> left=64, top=218)
+  右下: (244, 250) -> left=212, top=222
+*/
+.s1_bn1 { top: 182px; left: 142px; border: 2.5px solid #3B82F6; color: #3B82F6; background: #fff; }
+.s1_bn2 { top: 228px; left: 40px; border: 2.5px solid #3B82F6; color: #3B82F6; background: #fff; }
+.s1_bn3 { top: 228px; left: 236px; border: 2.5px solid #3B82F6; color: #3B82F6; background: #fff; }
+
+.s1_blue_arrows {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 340px;
+  height: 300px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* === 动画关键帧 === */
+@keyframes s1_fadeIn {
+  to { opacity: 1; }
+}
+@keyframes s1_nodeIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s1_slideDown {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* === 触发序列 === */
+.s1_stage.visible .s1_fire_label {
+  animation: s1_slideDown 0.4s 0.3s ease forwards;
+}
+.s1_stage.visible .s1_rn1 {
+  animation: s1_nodeIn 0.35s 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s1_stage.visible .s1_rn2 {
+  animation: s1_nodeIn 0.35s 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s1_stage.visible .s1_rn3 {
+  animation: s1_nodeIn 0.35s 1.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s1_stage.visible .s1_red_arrows {
+  animation: s1_fadeIn 0.4s 2.0s ease forwards;
+}
+.s1_stage.visible .s1_transform {
+  animation: s1_fadeIn 0.4s 2.8s ease forwards;
+}
+.s1_stage.visible .s1_eval_label {
+  animation: s1_slideDown 0.4s 3.2s ease forwards;
+}
+.s1_stage.visible .s1_bn1 {
+  animation: s1_nodeIn 0.35s 3.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s1_stage.visible .s1_bn2 {
+  animation: s1_nodeIn 0.35s 4.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s1_stage.visible .s1_bn3 {
+  animation: s1_nodeIn 0.35s 4.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s1_stage.visible .s1_blue_arrows {
+  animation: s1_fadeIn 0.4s 4.8s ease forwards;
+}
+
+
+.s2_stage {
+  width: 340px;
+  height: 260px;
+  background: #0F172A;
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 16px;
+  box-sizing: border-box;
+}
+
+.s2_grid {
+  display: grid;
+  grid-template-columns: repeat(3, 96px);
+  grid-template-rows: repeat(2, 96px);
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.s2_cell {
+  width: 96px;
+  height: 96px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.s2_cell--blue {
+  background: #3B82F6;
+}
+
+.s2_cell--purple {
+  background: #8B5CF6;
+}
+
+.s2_cell .s2_zh {
+  font-size: 18px;
+  font-weight: 700;
+  color: #F8FAFC;
+  letter-spacing: 2px;
+  line-height: 1.2;
+}
+
+.s2_cell .s2_en {
+  font-size: 11px;
+  color: rgba(248, 250, 252, 0.7);
+  margin-top: 4px;
+  font-weight: 400;
+}
+
+.s2_border {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 316px;
+  height: 218px;
+  transform: translate(-50%, calc(-50% - 8px));
+  border: 2px dashed #94A3B8;
+  border-radius: 14px;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  z-index: 0;
+}
+
+.s2_border_label {
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  color: #94A3B8;
+  white-space: nowrap;
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+
+/* Animation delays triggered by .visible */
+.s2_stage.visible .s2_cell:nth-child(1) {
+  opacity: 1; transform: scale(1); transition-delay: 0.4s;
+}
+.s2_stage.visible .s2_cell:nth-child(2) {
+  opacity: 1; transform: scale(1); transition-delay: 0.9s;
+}
+.s2_stage.visible .s2_cell:nth-child(3) {
+  opacity: 1; transform: scale(1); transition-delay: 1.4s;
+}
+.s2_stage.visible .s2_cell:nth-child(4) {
+  opacity: 1; transform: scale(1); transition-delay: 1.9s;
+}
+.s2_stage.visible .s2_cell:nth-child(5) {
+  opacity: 1; transform: scale(1); transition-delay: 2.4s;
+}
+.s2_stage.visible .s2_cell:nth-child(6) {
+  opacity: 1; transform: scale(1); transition-delay: 2.9s;
+}
+
+.s2_stage.visible .s2_border {
+  opacity: 1;
+  transition-delay: 3.6s;
+}
+
+
+.s3_stage {
+  width: 340px;
+  height: 240px;
+  background: #F5F3FF;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.s3_cols {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  padding: 24px 16px 0;
+  gap: 8px;
+}
+
+.s3_col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.s3_stage.visible .s3_col:nth-child(1) { opacity: 1; transform: translateY(0); transition-delay: 0.3s; }
+.s3_stage.visible .s3_col:nth-child(2) { opacity: 1; transform: translateY(0); transition-delay: 0.8s; }
+.s3_stage.visible .s3_col:nth-child(3) { opacity: 1; transform: translateY(0); transition-delay: 1.3s; }
+
+.s3_box {
+  width: 72px;
+  height: 48px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.s3_box--code { background: #3B82F6; }
+.s3_box--model { background: #8B5CF6; }
+.s3_box--human { background: #94A3B8; }
+
+.s3_label {
+  font-size: 10px;
+  color: #64748B;
+  text-align: center;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.s3_bottom {
+  position: absolute;
+  bottom: 28px;
+  left: 32px;
+  right: 32px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  transition-delay: 2s;
+}
+
+.s3_stage.visible .s3_bottom { opacity: 1; }
+
+.s3_line {
+  height: 2px;
+  background: linear-gradient(90deg, #3B82F6, #8B5CF6, #94A3B8);
+  border-radius: 1px;
+}
+
+.s3_combo {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  margin-top: 6px;
+}
+
+
+.s4_stage .s4_box {
+  opacity: 0;
+  transform: scale(0.3);
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.34,1.56,0.64,1);
+}
+.s4_stage.visible .s4_b1 { opacity:1; transform:scale(1); transition-delay:0.2s; }
+.s4_stage.visible .s4_b2 { opacity:1; transform:scale(1); transition-delay:0.5s; }
+.s4_stage.visible .s4_b3 { opacity:1; transform:scale(1); transition-delay:0.8s; }
+.s4_stage.visible .s4_b4 { opacity:1; transform:scale(1); transition-delay:1.1s; }
+
+
+.s5_stage.visible .s5_top {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+.s5_stage.visible .s5_divider {
+  opacity: 1 !important;
+}
+.s5_stage.visible .s5_bottom {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+
+
+    .s6_stage * { box-sizing: border-box; }
+    /* Left vertical line with label */
+    .s6_vline {
+      position:absolute; left:32px; top:38px; width:2px; height:200px;
+      background:#94A3B8; opacity:0;
+      transition: opacity 0.6s ease;
+    }
+    .s6_vlabel {
+      position:absolute; left:10px; top:120px;
+      color:#94A3B8; font-size:11px; writing-mode:vertical-lr;
+      transform:rotate(180deg); letter-spacing:1px;
+      opacity:0; transition: opacity 0.6s ease;
+    }
+    .s6_stage.visible .s6_vline,
+    .s6_stage.visible .s6_vlabel { opacity:1; transition-delay:0.2s; }
+
+    /* Phase boxes */
+    .s6_box {
+      position:absolute; left:64px; width:160px; height:52px;
+      border-radius:8px; display:flex; align-items:center; justify-content:center;
+      color:#fff; font-size:16px; font-weight:700; letter-spacing:1px;
+      opacity:0; transform:translateY(18px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .s6_box.b1 { top:28px; background:#3B82F6; }
+    .s6_box.b2 { top:114px; background:#8B5CF6; }
+    .s6_box.b3 { top:200px; background:#94A3B8; color:#0F172A; }
+
+    .s6_stage.visible .s6_box.b1 { opacity:1; transform:translateY(0); transition-delay:0.5s; }
+    .s6_stage.visible .s6_box.b2 { opacity:1; transform:translateY(0); transition-delay:1.2s; }
+    .s6_stage.visible .s6_box.b3 { opacity:1; transform:translateY(0); transition-delay:1.9s; }
+
+    /* Step labels */
+    .s6_step {
+      position:absolute; left:234px; color:#94A3B8; font-size:12px;
+      opacity:0; transition: opacity 0.4s ease;
+    }
+    .s6_step.st1 { top:46px; }
+    .s6_step.st2 { top:132px; }
+    .s6_step.st3 { top:218px; }
+
+    .s6_stage.visible .s6_step.st1 { opacity:1; transition-delay:0.7s; }
+    .s6_stage.visible .s6_step.st2 { opacity:1; transition-delay:1.4s; }
+    .s6_stage.visible .s6_step.st3 { opacity:1; transition-delay:2.1s; }
+
+    /* Arrows between boxes */
+    .s6_arrow {
+      position:absolute; left:136px; color:#94A3B8; font-size:20px;
+      opacity:0; transition: opacity 0.4s ease;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .s6_arrow.a1 { top:82px; }
+    .s6_arrow.a2 { top:168px; }
+
+    .s6_stage.visible .s6_arrow.a1 { opacity:1; transition-delay:1.0s; }
+    .s6_stage.visible .s6_arrow.a2 { opacity:1; transition-delay:1.7s; }
+  
+
+    .s7_stage .s7_card {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      height: 64px;
+      background: #fff;
+      border-radius: 8px;
+      border-left: 4px solid #EF4444;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      opacity: 0;
+      transform: translateX(-40px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .s7_stage.visible .s7_c1 { opacity:1; transform:translateX(0); transition-delay:0.3s; }
+    .s7_stage.visible .s7_c2 { opacity:1; transform:translateX(0); transition-delay:0.7s; }
+    .s7_stage.visible .s7_c3 { opacity:1; transform:translateX(0); transition-delay:1.1s; }
+    .s7_card .s7_label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #EF4444;
+      white-space: nowrap;
+      min-width: 72px;
+    }
+    .s7_card .s7_detail {
+      font-size: 12px;
+      color: #64748B;
+      margin-left: 12px;
+    }
+    .s7_card .s7_detail span {
+      font-weight: 700;
+      color: #3B82F6;
+    }
+  
+
+    .s8_stage { opacity:1; }
+    .s8_layer {
+      position:absolute;
+      left:30px;
+      width:220px;
+      height:28px;
+      border-radius:6px;
+      opacity:0;
+      transform:translateX(-40px);
+    }
+    .s8_stage.visible .s8_layer {
+      animation:s8_slideIn 0.5s ease forwards;
+    }
+    .s8_stage.visible .s8_l1 { animation-delay:0.2s; }
+    .s8_stage.visible .s8_l2 { animation-delay:0.4s; }
+    .s8_stage.visible .s8_l3 { animation-delay:0.6s; }
+    .s8_stage.visible .s8_l4 { animation-delay:0.8s; }
+    .s8_stage.visible .s8_l5 { animation-delay:1.0s; }
+    .s8_stage.visible .s8_l6 { animation-delay:1.2s; }
+    @keyframes s8_slideIn {
+      to { opacity:1; transform:translateX(0); }
+    }
+    .s8_hole {
+      position:absolute;
+      width:18px;
+      height:18px;
+      border-radius:50%;
+      background:#94A3B8;
+      top:5px;
+      opacity:0.5;
+    }
+    .s8_label {
+      position:absolute;
+      right:20px;
+      color:#CBD5E1;
+      font-size:12px;
+      line-height:28px;
+      opacity:0;
+    }
+    .s8_stage.visible .s8_label {
+      animation:s8_fadeIn 0.4s ease forwards;
+    }
+    .s8_stage.visible .s8_lb1 { animation-delay:0.3s; }
+    .s8_stage.visible .s8_lb2 { animation-delay:0.5s; }
+    .s8_stage.visible .s8_lb3 { animation-delay:0.7s; }
+    .s8_stage.visible .s8_lb4 { animation-delay:0.9s; }
+    .s8_stage.visible .s8_lb5 { animation-delay:1.1s; }
+    .s8_stage.visible .s8_lb6 { animation-delay:1.3s; }
+    @keyframes s8_fadeIn {
+      to { opacity:1; }
+    }
+    .s8_redline {
+      position:absolute;
+      left:100px;
+      top:16px;
+      width:3px;
+      height:0;
+      background:#EF4444;
+      border-radius:2px;
+      opacity:0;
+    }
+    .s8_stage.visible .s8_redline {
+      animation:s8_lineGrow 1.2s ease forwards 1.6s;
+    }
+    @keyframes s8_lineGrow {
+      0%   { opacity:1; height:0; }
+      40%  { opacity:1; height:68px; }
+      45%  { opacity:1; height:68px; }
+      100% { opacity:1; height:68px; }
+    }
+    .s8_blocked {
+      position:absolute;
+      left:93px;
+      top:82px;
+      width:17px;
+      height:17px;
+      border-radius:50%;
+      background:rgba(239,68,68,0.3);
+      border:2px solid #EF4444;
+      opacity:0;
+    }
+    .s8_stage.visible .s8_blocked {
+      animation:s8_blockedPop 0.4s ease forwards 2.8s;
+    }
+    @keyframes s8_blockedPop {
+      0%   { opacity:0; transform:scale(0.5); }
+      60%  { opacity:1; transform:scale(1.3); }
+      100% { opacity:1; transform:scale(1.0); }
+    }
+    .s8_title {
+      position:absolute;
+      top:6px;
+      left:0;
+      width:100%;
+      text-align:center;
+      color:#E2E8F0;
+      font-size:11px;
+      font-weight:600;
+      letter-spacing:0.5px;
+      opacity:0;
+    }
+    .s8_stage.visible .s8_title {
+      animation:s8_fadeIn 0.5s ease forwards 0.1s;
+    }
+  
+
+    .s9_stage { opacity:1; }
+    .s9_box {
+      position:absolute;
+      height:32px;
+      border-radius:6px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:13px;
+      font-weight:600;
+      color:#fff;
+      opacity:0;
+      transform:translateY(12px);
+    }
+    .s9_circle {
+      position:absolute;
+      width:48px;
+      height:48px;
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:18px;
+      font-weight:700;
+      color:#fff;
+      opacity:0;
+      transform:scale(0.6);
+    }
+    .s9_arrow {
+      position:absolute;
+      color:#94A3B8;
+      font-size:16px;
+      font-weight:700;
+      opacity:0;
+    }
+    .s9_sub {
+      position:absolute;
+      font-size:11px;
+      color:#64748B;
+      text-align:center;
+      opacity:0;
+    }
+    .s9_header {
+      position:absolute;
+      font-size:12px;
+      font-weight:700;
+      opacity:0;
+    }
+    .s9_fork {
+      position:absolute;
+      opacity:0;
+    }
+    /* Left column (blue) */
+    .s9_stage.visible .s9_lh  { animation:s9_pop 0.4s ease forwards 0.2s; }
+    .s9_stage.visible .s9_lb1 { animation:s9_up 0.4s ease forwards 0.4s; }
+    .s9_stage.visible .s9_la1 { animation:s9_fade 0.3s ease forwards 0.7s; }
+    .s9_stage.visible .s9_lb2 { animation:s9_up 0.4s ease forwards 0.9s; }
+    .s9_stage.visible .s9_la2 { animation:s9_fade 0.3s ease forwards 1.2s; }
+    .s9_stage.visible .s9_lc1 { animation:s9_scale 0.4s ease forwards 1.4s; }
+    .s9_stage.visible .s9_ls  { animation:s9_fade 0.4s ease forwards 1.7s; }
+    /* Right column (purple) */
+    .s9_stage.visible .s9_rh  { animation:s9_pop 0.4s ease forwards 2.2s; }
+    .s9_stage.visible .s9_rb1 { animation:s9_up 0.4s ease forwards 2.4s; }
+    .s9_stage.visible .s9_fk  { animation:s9_fade 0.3s ease forwards 2.7s; }
+    .s9_stage.visible .s9_rb2 { animation:s9_up 0.4s ease forwards 3.0s; }
+    .s9_stage.visible .s9_rb3 { animation:s9_up 0.4s ease forwards 3.2s; }
+    .s9_stage.visible .s9_rb4 { animation:s9_up 0.4s ease forwards 3.4s; }
+    .s9_stage.visible .s9_rs  { animation:s9_fade 0.4s ease forwards 3.7s; }
+
+    @keyframes s9_up   { to { opacity:1; transform:translateY(0); } }
+    @keyframes s9_fade { to { opacity:1; } }
+    @keyframes s9_scale{ to { opacity:1; transform:scale(1); } }
+    @keyframes s9_pop  {
+      0%   { opacity:0; transform:scale(0.7); }
+      70%  { opacity:1; transform:scale(1.1); }
+      100% { opacity:1; transform:scale(1); }
+    }
+  
+
+.s10_stage *{box-sizing:border-box;margin:0;padding:0}
+/* Upper group - Conversation */
+.s10_upper{position:absolute;top:16px;left:0;width:100%;opacity:0;transform:translateY(12px);transition:opacity .5s .2s,transform .5s .2s}
+.s10_stage.visible .s10_upper{opacity:1;transform:translateY(0)}
+.s10_label{position:absolute;top:0;left:50%;transform:translateX(-50%);color:#94A3B8;font-size:11px;letter-spacing:1px;font-weight:600}
+.s10_box{display:inline-flex;align-items:center;justify-content:center;border-radius:6px;font-size:13px;font-weight:600;padding:6px 14px;white-space:nowrap}
+.s10_purple{background:rgba(139,92,246,.18);border:1.5px solid #8B5CF6;color:#C4B5FD}
+.s10_blue{background:rgba(59,130,246,.18);border:1.5px solid #3B82F6;color:#93C5FD}
+.s10_gray{background:rgba(148,163,184,.15);border:1.5px solid #94A3B8;color:#CBD5E1}
+/* Conversation row */
+.s10_conv_row{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:22px;padding:0 20px}
+.s10_arrow_bi{color:#94A3B8;font-size:18px;letter-spacing:-2px}
+/* Tags row */
+.s10_tags{display:flex;justify-content:center;gap:8px;margin-top:12px}
+.s10_tag{font-size:10px;color:#CBD5E1;background:rgba(148,163,184,.1);border:1px solid rgba(148,163,184,.25);border-radius:10px;padding:2px 10px}
+
+/* Lower group - Operation */
+.s10_lower{position:absolute;top:152px;left:0;width:100%;opacity:0;transform:translateY(12px);transition:opacity .5s .7s,transform .5s .7s}
+.s10_stage.visible .s10_lower{opacity:1;transform:translateY(0)}
+.s10_op_row{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:22px;padding:0 16px}
+.s10_arrow_r{color:#94A3B8;font-size:16px}
+.s10_note{text-align:center;margin-top:12px;font-size:10px;color:#94A3B8;font-style:italic;padding:0 20px}
+
+/* Divider */
+.s10_div{position:absolute;top:144px;left:30px;right:30px;height:1px;background:rgba(148,163,184,.15)}
+
+
+    .s11_stage { font-family: system-ui, -apple-system, sans-serif; }
+    .s11_row { position:absolute; left:40px; display:flex; align-items:center; gap:12px; opacity:0; transform:translateY(18px); transition: opacity 0.5s ease, transform 0.5s ease; }
+    .s11_stage.visible .s11_r0 { opacity:1; transform:translateY(0); transition-delay:0.3s; }
+    .s11_stage.visible .s11_r1 { opacity:1; transform:translateY(0); transition-delay:0.8s; }
+    .s11_stage.visible .s11_r2 { opacity:1; transform:translateY(0); transition-delay:1.3s; }
+    .s11_stage.visible .s11_r3 { opacity:1; transform:translateY(0); transition-delay:1.8s; }
+    .s11_box { display:flex; align-items:center; justify-content:center; height:40px; border-radius:6px; font-size:13px; font-weight:600; color:#fff; white-space:nowrap; flex-shrink:0; }
+    .s11_box.blue { background:#3B82F6; }
+    .s11_box.purple { background:#8B5CF6; }
+    .s11_label { font-size:12px; color:#64748B; font-weight:500; white-space:nowrap; }
+    .s11_line { position:absolute; left:68px; top:42px; width:3px; height:0; background:linear-gradient(180deg,#3B82F6,#8B5CF6); border-radius:2px; transition: height 1.2s ease 0.5s; }
+    .s11_stage.visible .s11_line { height:188px; }
+    .s11_step_num { position:absolute; left:12px; font-size:11px; color:#94A3B8; font-weight:700; }
+  
+
+    .s12_stage .s12_line{position:absolute;top:90px;left:20px;width:300px;height:2px;background:#94A3B8;transform:scaleX(0);transform-origin:left center;transition:transform 1s ease;}
+    .s12_stage.visible .s12_line{transform:scaleX(1);}
+    .s12_stage .s12_node{position:absolute;top:90px;display:flex;flex-direction:column;align-items:center;opacity:0;transform:translateY(8px);transition:opacity 0.5s ease,transform 0.5s ease;}
+    .s12_stage.visible .s12_node{opacity:1;transform:translateY(0);}
+    .s12_stage .s12_dot{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;margin-top:-24px;}
+    .s12_stage .s12_sub{font-size:10px;color:#94A3B8;margin-top:6px;white-space:nowrap;}
+    .s12_stage .s12_n1{left:14px;transition-delay:0s;}
+    .s12_stage .s12_n2{left:80px;transition-delay:0s;}
+    .s12_stage .s12_n3{left:146px;transition-delay:0s;}
+    .s12_stage .s12_n4{left:212px;transition-delay:0s;}
+    .s12_stage .s12_n5{left:278px;transition-delay:0s;}
+    .s12_stage.visible .s12_n1{transition-delay:0.8s;}
+    .s12_stage.visible .s12_n2{transition-delay:1.4s;}
+    .s12_stage.visible .s12_n3{transition-delay:2.0s;}
+    .s12_stage.visible .s12_n4{transition-delay:2.6s;}
+    .s12_stage.visible .s12_n5{transition-delay:3.2s;}
+    .s12_stage .s12_title{position:absolute;top:16px;left:0;width:100%;text-align:center;font-size:13px;font-weight:600;color:#E2E8F0;opacity:0;transition:opacity 0.6s ease;}
+    .s12_stage.visible .s12_title{opacity:1;}
+  
+</style>
+
+<meta name="description" content="一个没有 eval 的团队是什么状态？用户投诉了才知道出了问题，修了一个 bug 又引出三个新 bug，上线新功能不知道会不会把旧功能搞坏。Anthropic 把这叫做 「救火循环」 ——团队被困在一个永远在灭火、永远不知道下一把火在哪里的死循环里。 Eval（评测） 就是打破这个循环的方法：它让你在代码推送之前就能看到问题，让你用数据而不是直觉来判断「到底">
+<link rel="canonical" href="https://chendi.me/readings/demystifying-evals/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">←</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ Layer 0: 概览 ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+<!-- S1: Hero -->
+<section class="feed-section" style="background: var(--bg-act1);">
+<div class="section-inner">
+  <div class="section-tag reveal">ANTHROPIC ENGINEERING · AI AGENT EVALS</div>
+  <h2 class="big-statement reveal reveal-d1">没有 Eval 的团队，永远在救火</h2>
+  <p class="body-text reveal reveal-d2">一个没有 eval 的团队是什么状态？用户投诉了才知道出了问题，修了一个 bug 又引出三个新 bug，上线新功能不知道会不会把旧功能搞坏。Anthropic 把这叫做<span class="hl-danger">「救火循环」</span>——团队被困在一个永远在灭火、永远不知道下一把火在哪里的死循环里。<span class="hl">Eval（评测）</span>就是打破这个循环的方法：它让你在代码推送之前就能看到问题，让你用数据而不是直觉来判断「到底变好了还是变差了」。Claude Code 的开发历程就是一个典型例子——从靠手动测试和用户反馈起步，逐步加入针对简洁性、文件操作、不必要复杂度等维度的评测，最终实现了在规模化开发中持续改进。</p>
+  <div class="anim-stage reveal reveal-d3" id="s1-anim"><div class="s1_stage">
+  <!-- 红色循环标签 -->
+  <div class="s1_fire_label">救火循环</div>
+
+  <!-- 红色节点: 投诉(170,52), 修bug(80,96), 新bug(260,96) — 圆心坐标 -->
+  <div class="s1_node s1_rn1">投诉</div>
+  <div class="s1_node s1_node3 s1_rn2">修bug</div>
+  <div class="s1_node s1_node3 s1_rn3">新bug</div>
+
+  <!-- 红色箭头 SVG: 节点圆心 rn1=(170,52), rn2=(84,100), rn3=(256,100), r=28/32 -->
+  <svg class="s1_red_arrows" viewBox="0 0 340 140" fill="none">
+    <defs>
+      <marker id="s1ra" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <path d="M0,0 L8,3 L0,6" fill="#EF4444"/>
+      </marker>
+    </defs>
+    <!-- 投诉(170,52) → 修bug(84,100): 左下弧 -->
+    <path d="M150,66 Q118,72 104,86" stroke="#EF4444" stroke-width="2" fill="none" marker-end="url(#s1ra)"/>
+    <!-- 修bug(84,100) → 新bug(256,100): 底部弧 -->
+    <path d="M116,116 Q170,138 240,116" stroke="#EF4444" stroke-width="2" fill="none" marker-end="url(#s1ra)"/>
+    <!-- 新bug(256,100) → 投诉(170,52): 右上弧 -->
+    <path d="M242,86 Q228,72 194,66" stroke="#EF4444" stroke-width="2" fill="none" marker-end="url(#s1ra)"/>
+  </svg>
+
+  <!-- 转换箭头 -->
+  <svg class="s1_transform" viewBox="0 0 40 28" fill="none">
+    <path d="M20,2 L20,20" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M12,16 L20,24 L28,16" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </svg>
+
+  <!-- 蓝色循环标签 -->
+  <div class="s1_eval_label">改进循环</div>
+
+  <!-- 蓝色节点: 写Eval(170,210), 跑测试(72,260), 改进(268,260) — 圆心坐标 -->
+  <div class="s1_node s1_node3 s1_bn1">写Eval</div>
+  <div class="s1_node s1_node3 s1_bn2">跑测试</div>
+  <div class="s1_node s1_bn3">改进</div>
+
+  <!-- 蓝色箭头 SVG: bn1=(170,214), bn2=(72,260), bn3=(268,260), r=28/32 -->
+  <svg class="s1_blue_arrows" viewBox="0 0 340 300" fill="none">
+    <defs>
+      <marker id="s1ba" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <path d="M0,0 L8,3 L0,6" fill="#3B82F6"/>
+      </marker>
+    </defs>
+    <!-- 写Eval(170,214) → 跑测试(72,260): 左下弧 -->
+    <path d="M150,228 Q114,234 94,248" stroke="#3B82F6" stroke-width="2" fill="none" marker-end="url(#s1ba)"/>
+    <!-- 跑测试(72,260) → 改进(268,260): 底部弧 -->
+    <path d="M106,274 Q170,292 250,274" stroke="#3B82F6" stroke-width="2" fill="none" marker-end="url(#s1ba)"/>
+    <!-- 改进(268,260) → 写Eval(170,214): 右上弧 -->
+    <path d="M254,248 Q236,234 198,228" stroke="#3B82F6" stroke-width="2" fill="none" marker-end="url(#s1ba)"/>
+  </svg>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Introduction</span><p>Effective evaluations enable teams to deploy AI agents with greater confidence. Without them, organizations become trapped in reactive cycles—discovering issues only after production deployment, where one fix frequently cascades into additional problems. Evaluations make performance issues and behavioral shifts apparent before impacting end users, and their value multiplies throughout an agent's lifecycle.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S2: Eval 的积木 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <div class="section-tag reveal">ACT I · 基础概念</div>
+  <h2 class="big-statement reveal reveal-d1">Eval 的六块积木</h2>
+  <p class="body-text reveal reveal-d2">一次 eval 就像一场考试，由六个基本组件构成。<span class="hl">Task</span>（题目）——一道有明确输入和判定标准的题目。<span class="hl2">Trial</span>（作答）——每次执行就是一次作答，因为 LLM 有随机性，所以同一题要考多次才有统计意义。<span class="hl">Grader</span>（阅卷官）——判定答案好不好的逻辑，一道题可以有多个 Grader 从不同维度评分。<span class="hl2">Transcript</span>（答卷）——完整的作答记录，包括工具调用、推理过程和中间结果。<span class="hl">Outcome</span>（最终状态）——考完后环境的实际变化，区分「Agent 说它做了什么」和「它实际改变了什么」。<span class="hl2">Harness</span>（考场）——管理整个考试流程的基础设施。理解这六个概念，是设计好 eval 的前提。</p>
+  <div class="anim-stage reveal reveal-d3" id="s2-anim"><div class="s2_stage">
+  <div class="s2_grid">
+    <div class="s2_cell s2_cell--blue">
+      <span class="s2_zh">题目</span>
+      <span class="s2_en">Task</span>
+    </div>
+    <div class="s2_cell s2_cell--purple">
+      <span class="s2_zh">作答</span>
+      <span class="s2_en">Trial</span>
+    </div>
+    <div class="s2_cell s2_cell--blue">
+      <span class="s2_zh">阅卷官</span>
+      <span class="s2_en">Grader</span>
+    </div>
+    <div class="s2_cell s2_cell--purple">
+      <span class="s2_zh">答卷</span>
+      <span class="s2_en">Transcript</span>
+    </div>
+    <div class="s2_cell s2_cell--blue">
+      <span class="s2_zh">终态</span>
+      <span class="s2_en">Outcome</span>
+    </div>
+    <div class="s2_cell s2_cell--purple">
+      <span class="s2_zh">考场</span>
+      <span class="s2_en">Harness</span>
+    </div>
+  </div>
+  <div class="s2_border">
+    <span class="s2_border_label">一次 Eval</span>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Essential Definitions</span><p>Task (problem/test case): A single examination with specified inputs and success conditions. Trial: Each execution attempt; multiple trials run due to model output variability. Grader: Logic assessing agent performance dimensions; tasks contain multiple graders with various assertions. Transcript (trace/trajectory): Complete trial record—outputs, tool usage, reasoning, intermediate findings, interactions. Outcome: Final environmental state after trial completion; distinguishes stated results from actual system changes. Evaluation harness: Infrastructure managing end-to-end evaluation.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S3: 三种裁判 -->
+<section class="feed-section purple">
+<div class="section-inner">
+  <div class="section-tag reveal">ACT II · 评分方法</div>
+  <h2 class="big-statement reveal reveal-d1">三种裁判，各有所长</h2>
+  <p class="body-text reveal reveal-d2">Eval 有三种判分方式，各有优劣。<span class="hl">Code-based Grader</span>（代码评分）是最快最便宜的——字符串匹配、单元测试、静态分析，结果确定且可复现，但对开放式任务无能为力。<span class="hl2">Model-based Grader</span>（模型评分）用 LLM 来打分——可以评价文风、逻辑性、是否有同理心，灵活且能处理主观任务，但结果不确定、成本更高、需要和人类校准。<span class="hl-warm">Human Grader</span>（人工评分）是最高质量的判断——专家评审、众包评测，但贵、慢、难以规模化。实践中通常组合使用：先用代码评分做基础判定，再用模型评分补充主观维度，定期用人工评分来校准模型评分的标准。</p>
+  <div class="anim-stage reveal reveal-d3" id="s3-anim"><div class="s3_stage">
+  <div class="s3_cols">
+    <div class="s3_col">
+      <div class="s3_box s3_box--code">代码</div>
+      <div class="s3_label">快 · 确定 · 客观</div>
+    </div>
+    <div class="s3_col">
+      <div class="s3_box s3_box--model">模型</div>
+      <div class="s3_label">灵活 · 主观 · 贵</div>
+    </div>
+    <div class="s3_col">
+      <div class="s3_box s3_box--human">人工</div>
+      <div class="s3_label">最准 · 最慢 · 最贵</div>
+    </div>
+  </div>
+  <div class="s3_bottom">
+    <div class="s3_line"></div>
+    <div class="s3_combo">组合使用</div>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Types of Graders</span><p>Code-Based Graders: String matching, binary success/failure tests, code analysis, outcome verification. Strengths: Speed, cost-effectiveness, objectivity, reproducibility. Weaknesses: Sensitivity to acceptable variations, limited sophistication.
+
+Model-Based Graders: Criteria-based scoring, linguistic assertions, comparative evaluation. Strengths: Flexibility, scalability, nuance capture. Weaknesses: Non-deterministic results, expense, human calibration requirements.
+
+Human Graders: Expert evaluation, crowdsourced assessment. Strengths: Highest-quality judgments. Weaknesses: Expense, duration, specialist access requirements.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S4: 四类 Agent (drill) -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <div class="section-tag reveal">ACT III · 分类评测</div>
+  <h2 class="big-statement reveal reveal-d1">四类 Agent，四种考法</h2>
+  <p class="body-text reveal reveal-d2">不同类型的 Agent 需要截然不同的评测策略。<span class="hl">Coding Agent</span> 最幸运——代码能不能跑、测试过不过，天然适合确定性评分，SWE-bench 一年内把前沿模型从 40% 推到了 80% 以上。<span class="hl2">Conversational Agent</span> 最有挑战——不仅要判断工单有没有关闭，还要评价交互质量：有没有共情？有没有在 10 轮内解决？<span class="hl">Research Agent</span> 最主观——「全面、有据、准确」在市场分析和学术报告中标准完全不同。<span class="hl2">Computer Use Agent</span> 最接近人——用截图和点击操作软件，需要真实或隔离环境来验证任务是否真的完成了。</p>
+  <div class="anim-stage reveal reveal-d3" id="s4-anim"><div class="s4_stage" style="width:340px;height:260px;background:#0F172A;border-radius:12px;position:relative;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:12px;padding:16px;box-sizing:border-box;">
+  <div class="s4_box s4_b1" style="background:rgba(59,130,246,0.15);border:2px solid #3B82F6;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+    <span style="color:#3B82F6;font-size:22px;font-weight:700;font-family:sans-serif;">编码</span>
+    <span style="color:#94A3B8;font-size:12px;margin-top:4px;font-family:sans-serif;">确定性</span>
+  </div>
+  <div class="s4_box s4_b2" style="background:rgba(139,92,246,0.15);border:2px solid #8B5CF6;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+    <span style="color:#8B5CF6;font-size:22px;font-weight:700;font-family:sans-serif;">对话</span>
+    <span style="color:#94A3B8;font-size:12px;margin-top:4px;font-family:sans-serif;">交互质量</span>
+  </div>
+  <div class="s4_box s4_b3" style="background:rgba(148,163,184,0.15);border:2px solid #94A3B8;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+    <span style="color:#94A3B8;font-size:22px;font-weight:700;font-family:sans-serif;">研究</span>
+    <span style="color:#94A3B8;font-size:12px;margin-top:4px;font-family:sans-serif;">主观性</span>
+  </div>
+  <div class="s4_box s4_b4" style="background:rgba(148,163,184,0.10);border:2px solid #64748B;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+    <span style="color:#64748B;font-size:22px;font-weight:700;font-family:sans-serif;">操作</span>
+    <span style="color:#94A3B8;font-size:12px;margin-top:4px;font-family:sans-serif;">真实环境</span>
+  </div>
+</div></div>
+  <p class="hook-line reveal reveal-d4">每类 Agent 的评测具体怎么设计？</p>
+  <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-agents', this)">深入四类评测 ↓</button>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">How to Evaluate AI Agents</span><p>Contemporary deployments feature numerous agent categories: coding specialists, research specialists, computer-interface agents, and dialogue-focused agents. Though deployed across sectors, comparable techniques evaluate each category.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S5: 非确定性 -->
+<section class="feed-section" style="background: var(--bg-act1);">
+<div class="section-inner">
+  <div class="section-tag reveal">ACT III · 统计学</div>
+  <h2 class="big-statement reveal reveal-d1">同一道题，十次八个答案</h2>
+  <p class="body-text reveal reveal-d2">AI Agent 每次运行结果都不一样——同一道题可能跑 10 次对 7 次。怎么衡量这种不确定性？两个核心指标。<span class="hl">pass@k</span>——k 次尝试中<span class="hl">至少成功一次</span>的概率。k 越大概率越高，适合「只要有一次能跑通就行」的场景，比如生成多个方案选最好的。<span class="hl2">pass^k</span>——k 次<span class="hl2">全部成功</span>的概率。k 越大概率越低，适合需要一致可靠性的客户场景。比如单次成功率 75%：三次中至少成功一次的概率高达 98%，但三次全成功只有 42%。选哪个指标，取决于你的场景需要「一次成功」还是「次次可靠」。</p>
+  <div class="anim-stage reveal reveal-d3" id="s5-anim"><div class="s5_stage" style="width:340px;height:280px;background:#EFF6FF;border-radius:12px;position:relative;overflow:hidden;font-family:system-ui,sans-serif;">
+  <!-- pass@k section (top half) -->
+  <div class="s5_top" style="position:absolute;top:20px;left:0;width:100%;opacity:0;transform:translateY(12px);transition:opacity 0.6s ease,transform 0.6s ease;">
+    <!-- Label -->
+    <div style="text-align:center;font-size:20px;font-weight:700;color:#3B82F6;letter-spacing:0.5px;">pass@k</div>
+    <!-- Trials row -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px;">
+      <!-- 3 circles: 2 solid blue, 1 gray dashed -->
+      <div style="width:48px;height:48px;border-radius:50%;background:#3B82F6;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;">OK</div>
+      <div style="width:48px;height:48px;border-radius:50%;background:#3B82F6;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;">OK</div>
+      <div style="width:48px;height:48px;border-radius:50%;border:2.5px dashed #94A3B8;background:transparent;display:flex;align-items:center;justify-content:center;color:#94A3B8;font-size:14px;font-weight:700;box-sizing:border-box;">fail</div>
+    </div>
+    <!-- Result -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;">
+      <span style="font-size:14px;color:#64748B;">至少1次 ✓</span>
+      <span style="font-size:13px;color:#94A3B8;">→</span>
+      <span style="font-size:22px;font-weight:800;color:#3B82F6;">98%</span>
+    </div>
+  </div>
+
+  <!-- Divider -->
+  <div class="s5_divider" style="position:absolute;top:140px;left:40px;right:40px;height:1px;background:#CBD5E1;opacity:0;transition:opacity 0.4s ease 0.5s;"></div>
+
+  <!-- pass^k section (bottom half) -->
+  <div class="s5_bottom" style="position:absolute;top:150px;left:0;width:100%;opacity:0;transform:translateY(12px);transition:opacity 0.6s ease 0.8s,transform 0.6s ease 0.8s;">
+    <!-- Label -->
+    <div style="text-align:center;font-size:20px;font-weight:700;color:#8B5CF6;letter-spacing:0.5px;">pass^k</div>
+    <!-- Trials row -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px;">
+      <div style="width:48px;height:48px;border-radius:50%;background:#8B5CF6;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;">OK</div>
+      <div style="width:48px;height:48px;border-radius:50%;background:#8B5CF6;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;">OK</div>
+      <div style="width:48px;height:48px;border-radius:50%;background:#8B5CF6;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;">OK</div>
+    </div>
+    <!-- Result -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;">
+      <span style="font-size:14px;color:#64748B;">全部成功</span>
+      <span style="font-size:13px;color:#94A3B8;">→</span>
+      <span style="font-size:22px;font-weight:800;color:#8B5CF6;">42%</span>
+    </div>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Non-Determinism</span><p>pass@k: Probability that agents generate minimum one correct solution within k attempts. Increasing k elevates pass@k. 50% pass@1 indicates half the tasks succeed initially.
+
+pass^k: Probability that all k trials succeed. Increasing k reduces pass^k since consistency across more attempts demands higher standards. With 75% per-trial success across three trials: (0.75)^3 ≈ 42%.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S6: 路线图 (drill) -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <div class="section-tag reveal">ACT IV · 实践</div>
+  <h2 class="big-statement reveal reveal-d1">从零到强：8 步路线图</h2>
+  <p class="body-text reveal reveal-d2">从零开始建 eval 不需要几百道题——<span class="hl">20-50 道</span>从真实失败中提取的题就够起步了。文章给出了 8 步路线图，分三个阶段。第一阶段<span class="hl">收集题目</span>（Step 0-3）：从手工测试用例转化、写清楚规格说明、构建正反平衡的题集。第二阶段<span class="hl2">搭建基础设施</span>（Step 4-5）：干净可复现的测试环境 + 聪明的评分逻辑。第三阶段<span class="hl">持续维护</span>（Step 6-8）：读 transcript 理解失败、关注饱和信号、社区贡献。每个阶段都有具体可操作的方法论。</p>
+  <div class="anim-stage reveal reveal-d3" id="s6-anim"><div class="s6_stage" style="width:340px;height:280px;position:relative;margin:0 auto;background:#0F172A;overflow:hidden;font-family:sans-serif;">
+  
+
+  <!-- Left annotation line -->
+  <div class="s6_vline"></div>
+  <div class="s6_vlabel">20-50 题起步</div>
+
+  <!-- Phase 1: Collect -->
+  <div class="s6_box b1">收集题目</div>
+  <div class="s6_step st1">Step 0-3</div>
+
+  <!-- Arrow down -->
+  <div class="s6_arrow a1">▼</div>
+
+  <!-- Phase 2: Build -->
+  <div class="s6_box b2">搭建考场</div>
+  <div class="s6_step st2">Step 4-5</div>
+
+  <!-- Arrow down -->
+  <div class="s6_arrow a2">▼</div>
+
+  <!-- Phase 3: Maintain -->
+  <div class="s6_box b3">持续维护</div>
+  <div class="s6_step st3">Step 6-8</div>
+</div></div>
+  <p class="hook-line reveal reveal-d4">每一步具体怎么做？</p>
+  <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-roadmap', this)">深入路线图 ↓</button>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">From Zero to Strong Evals</span><p>Teams frequently delay because hundreds of tasks seem necessary. Actually, 20-50 basic tasks drawn from genuine failures provide excellent foundations. Early development typically shows obvious effects from modifications, allowing smaller samples.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S7: 陷阱 -->
+<section class="feed-section" style="background: var(--bg-act1);">
+<div class="section-inner">
+  <div class="section-tag reveal">ACT IV · 避坑</div>
+  <h2 class="big-statement reveal reveal-d1">聪明反被聪明误：Eval 的经典陷阱</h2>
+  <p class="body-text reveal reveal-d2">评测设计中有很多经典坑。<span class="hl-danger">评分太严格</span>——Opus 4.5 在 CORE-Bench 上最初只得了 42%，后来研究者发现是评分逻辑有问题：把「96.12」判为不等于「96.124991…」。修正评分方式和放宽框架约束后，成绩飙升到 <span class="hl">95%</span>。<span class="hl-danger">规格不明确</span>——Terminal-Bench 有些题没指定文件路径，但阅卷时假设了特定路径，Agent 明明做对了却被判错。<span class="hl-danger">单向评测</span>——Claude.ai 的搜索评测发现，如果只测「应该搜索」的场景，Agent 就倾向于什么都搜索，所以必须同时测「<span class="hl2">不该搜索</span>」的情况才能得到平衡的行为。还有一个容易被忽视的陷阱：<span class="hl-danger">饱和</span>——当评测分数接近 100% 时，它就从改进工具变成了回归检测工具。</p>
+  <div class="anim-stage reveal reveal-d3" id="s7-anim"><div class="s7_stage" style="width:340px;height:280px;background:#EFF6FF;border-radius:12px;position:relative;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;">
+  
+  <div class="s7_card s7_c1" style="top:28px;">
+    <div class="s7_label">评分太严</div>
+    <div class="s7_detail"><span>42%</span> → <span>95%</span> 修正后</div>
+  </div>
+  <div class="s7_card s7_c2" style="top:108px;">
+    <div class="s7_label">规格不清</div>
+    <div class="s7_detail"><span style="color:#22C55E;">✓</span> → <span style="color:#EF4444;">✗</span> 正确被判错</div>
+  </div>
+  <div class="s7_card s7_c3" style="top:188px;">
+    <div class="s7_label">单向评测</div>
+    <div class="s7_detail">只测正面 → <span style="color:#8B5CF6;">行为失衡</span></div>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Step 5 + Step 7</span><p>Opus 4.5 initially scored 42% on CORE-Bench until researchers discovered multiple problems: rigid grading penalizing "96.12" vs. "96.124991…", ambiguous specifications, stochastic tasks resisting exact reproduction. After corrections and less-constrained frameworks, performance reached 95%.
+
+Terminal-Bench investigations revealed tasks requesting script composition without filepath specification, yet grading presumed particular locations, causing agent failure despite competent execution.
+
+Claude.ai's search evaluation required preventing inappropriate searches while preserving research capability—requiring dual evaluation: circumstances warranting search and relying on knowledge.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S8: 瑞士奶酪 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <div class="section-tag reveal">ACT V · 全局</div>
+  <h2 class="big-statement reveal reveal-d1">瑞士奶酪：每层都有洞，叠起来才安全</h2>
+  <p class="body-text reveal reveal-d2">Eval 不是唯一的质量保障——它是多层防线中的一层。就像安全工程中的<span class="hl">「瑞士奶酪模型」</span>：每一层防线都有漏洞，但多层叠加起来，一层漏掉的问题会被下一层拦住。文章列出了六种方法：<span class="hl">自动 eval</span>（开发阶段，每次提交都跑，快但可能脱离真实使用）、<span class="hl2">生产监控</span>（上线后，真实规模但只能事后发现问题）、A/B 测试（严格对比但耗时长）、用户反馈（真实但稀疏且偏向严重问题）、人工审查 transcript（高质量但不可规模化）、系统性人工评估（最权威但最贵最慢）。最强的团队把这些方法组合使用：自动 eval 加速迭代，生产监控保持接地气，定期人工评审校准标准。</p>
+  <div class="anim-stage reveal reveal-d3" id="s8-anim"><div class="s8_stage" style="width:340px;height:300px;background:#0F172A;border-radius:12px;position:relative;overflow:hidden;font-family:sans-serif;">
+  
+
+  <div class="s8_title">SWISS CHEESE MODEL</div>
+
+  <!-- Layer 1: 自动eval — hole at 70px -->
+  <div class="s8_layer s8_l1" style="top:30px;background:#3B82F6;">
+    <div class="s8_hole" style="left:63px;"></div>
+  </div>
+  <div class="s8_label s8_lb1" style="top:30px;">自动eval</div>
+
+  <!-- Layer 2: 监控 — hole at 150px (different position, blocks red line) -->
+  <div class="s8_layer s8_l2" style="top:72px;background:#4F6EF6;">
+    <div class="s8_hole" style="left:145px;"></div>
+  </div>
+  <div class="s8_label s8_lb2" style="top:72px;">监控</div>
+
+  <!-- Layer 3: A/B — holes at 40px, 180px -->
+  <div class="s8_layer s8_l3" style="top:114px;background:#6359E6;">
+    <div class="s8_hole" style="left:35px;"></div>
+    <div class="s8_hole" style="left:175px;"></div>
+  </div>
+  <div class="s8_label s8_lb3" style="top:114px;">A/B</div>
+
+  <!-- Layer 4: 反馈 — hole at 100px -->
+  <div class="s8_layer s8_l4" style="top:156px;background:#7548D6;">
+    <div class="s8_hole" style="left:95px;"></div>
+  </div>
+  <div class="s8_label s8_lb4" style="top:156px;">反馈</div>
+
+  <!-- Layer 5: 审查 — holes at 60px, 160px -->
+  <div class="s8_layer s8_l5" style="top:198px;background:#8540C6;">
+    <div class="s8_hole" style="left:55px;"></div>
+    <div class="s8_hole" style="left:155px;"></div>
+  </div>
+  <div class="s8_label s8_lb5" style="top:198px;">审查</div>
+
+  <!-- Layer 6: 评估 — hole at 130px -->
+  <div class="s8_layer s8_l6" style="top:240px;background:#8B5CF6;">
+    <div class="s8_hole" style="left:125px;"></div>
+  </div>
+  <div class="s8_label s8_lb6" style="top:240px;">评估</div>
+
+  <!-- Red line penetrating through hole in layer 1, blocked by layer 2 -->
+  <div class="s8_redline"></div>
+
+  <!-- Blocked indicator -->
+  <div class="s8_blocked"></div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Evaluations Within Comprehensive Agent Understanding</span><p>Resembling safety engineering's Swiss Cheese Model, individual evaluation approaches miss certain failures; combined methods catch failures slipping past others. Highest-performing teams integrate techniques: automated evaluations facilitate rapid iteration, production monitoring grounds reality, recurring human evaluation calibrates standards.</p></div>
+  </div>
+</div>
+</section>
+
+</div><!-- /layer-overview -->
+
+<!-- ═══ Layer 1: 四类 Agent 详解 ═══ -->
+<div class="layer" id="layer-agents" data-depth="1">
+
+<!-- S9: Coding + Research -->
+<section class="feed-section" style="background: var(--bg-act1);">
+<div class="section-inner">
+  <div class="section-tag reveal">四类评测 · 确定性与主观性</div>
+  <h2 class="big-statement reveal reveal-d1">Coding Agent：代码跑得过就是硬道理</h2>
+  <p class="body-text reveal reveal-d2"><span class="hl">Coding Agent</span> 的评测天然适合确定性方法——代码能不能编译、测试过不过、静态分析有没有安全漏洞，这些都能用代码评分直接判定。SWE-bench Verified 的做法是：给 Agent 一个 GitHub issue，让它修复代码，然后跑测试——修好了 failing test 同时没搞坏其他 test 就算通过。除了结果判定，transcript 评分也很有价值：检查 Agent 有没有先读代码再改、有没有跑测试、代码风格如何。<span class="hl2">Research Agent</span> 则完全不同——「全面」和「准确」是主观的。BrowseComp 测试的是 Agent 能否在海量网页中找到特定信息（容易验证但难以完成），而实际的研究评测需要组合多种 grader：groundedness check（引用是否支持结论）、coverage check（关键事实是否都涵盖）、source quality check（来源是否权威）。</p>
+  <div class="anim-stage reveal reveal-d3" id="s9-anim"><div class="s9_stage" style="width:340px;height:260px;background:#EFF6FF;border-radius:12px;position:relative;overflow:hidden;font-family:sans-serif;">
+  
+
+  <!-- ===== LEFT COLUMN: Coding (blue) ===== -->
+  <!-- center of left column = 85px -->
+  <div class="s9_header s9_lh" style="left:38px;top:14px;color:#3B82F6;">编码评测</div>
+  <div class="s9_box s9_lb1" style="left:10px;top:44px;width:64px;background:#3B82F6;">代码</div>
+  <div class="s9_arrow s9_la1" style="left:78px;top:48px;">→</div>
+  <div class="s9_box s9_lb2" style="left:94px;top:44px;width:64px;background:#3B82F6;">测试</div>
+  <div class="s9_arrow s9_la2" style="left:120px;top:82px;">↓</div>
+  <div class="s9_circle s9_lc1" style="left:102px;top:100px;background:#3B82F6;">✓✗</div>
+  <div class="s9_sub s9_ls" style="left:0;top:158px;width:170px;">确定性判分</div>
+
+  <!-- Divider -->
+  <div style="position:absolute;left:170px;top:10px;width:1px;height:240px;background:#CBD5E1;opacity:0.4;"></div>
+
+  <!-- ===== RIGHT COLUMN: Research (purple) ===== -->
+  <!-- center of right column = 255px -->
+  <div class="s9_header s9_rh" style="left:218px;top:14px;color:#8B5CF6;">研究评测</div>
+  <div class="s9_box s9_rb1" style="left:223px;top:44px;width:64px;background:#8B5CF6;">输出</div>
+
+  <!-- Fork lines: SVG tree from 输出 bottom to 3 boxes -->
+  <svg class="s9_fork s9_fk" style="position:absolute;left:180px;top:76px;width:150px;height:34px;">
+    <!-- center stem -->
+    <line x1="75" y1="0" x2="75" y2="30" stroke="#8B5CF6" stroke-width="2"/>
+    <!-- left branch -->
+    <line x1="75" y1="0" x2="20" y2="30" stroke="#8B5CF6" stroke-width="2"/>
+    <!-- right branch -->
+    <line x1="75" y1="0" x2="130" y2="30" stroke="#8B5CF6" stroke-width="2"/>
+  </svg>
+
+  <!-- 引用 (center=200, left=172) -->
+  <div class="s9_box s9_rb2" style="left:172px;top:108px;width:56px;background:#8B5CF6;font-size:12px;">引用</div>
+  <!-- 覆盖 (center=255, left=227) -->
+  <div class="s9_box s9_rb3" style="left:227px;top:108px;width:56px;background:#8B5CF6;font-size:12px;">覆盖</div>
+  <!-- 来源 (center=310, left=282) -->
+  <div class="s9_box s9_rb4" style="left:282px;top:108px;width:56px;background:#8B5CF6;font-size:12px;">来源</div>
+
+  <div class="s9_sub s9_rs" style="left:170px;top:152px;width:170px;">多维度评估</div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Coding + Research Agents</span><p>SWE-bench Verified provides agents GitHub issues from prevalent Python repositories, grading via test suite execution; solutions succeed only when fixing failing tests without breaking existing ones. LLMs advanced from 40% to >80% on this benchmark within one year.
+
+Research evaluations confront particular obstacles: experts frequently disagree on synthesis comprehensiveness, ground truth shifts continuously alongside reference content updates, and extended open-ended outputs create error opportunities.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S10: Conversational + Computer Use -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <div class="section-tag reveal">四类评测 · 交互与界面</div>
+  <h2 class="big-statement reveal reveal-d1">对话 Agent 和 Computer Use：评的不只是结果</h2>
+  <p class="body-text reveal reveal-d2"><span class="hl">Conversational Agent</span> 的特殊之处在于——交互质量本身就是评测对象。工单关了不够，还得问：Agent 有没有共情？有没有在合理轮数内解决？有没有正确调用工具？tau-Bench 的做法是用一个 LLM 模拟客户（比如愤怒的退货用户），另一个 LLM 作为 Agent 处理，然后从状态验证（工单是否 resolved）、transcript 约束（是否在 10 轮内完成）和 LLM rubric（沟通质量评分）三个维度综合判分。<span class="hl2">Computer Use Agent</span> 面临独特挑战——它通过截图和点击操作软件，不走 API。WebArena 通过 URL 和页面状态验证导航任务，同时检查后端数据库确认操作真正执行了（比如订单确实下了，而不仅仅是显示了确认页面）。Claude for Chrome 的开发团队甚至用 eval 来决定具体实现方式——发现维基百科摘要用 DOM 文本提取更快，而亚马逊购物用截图更好。</p>
+  <div class="anim-stage reveal reveal-d3" id="s10-anim"><div class="s10_stage" style="width:340px;height:300px;background:#0F172A;border-radius:12px;position:relative;overflow:hidden;font-family:sans-serif;">
+
+
+<!-- Upper: Conversation Agent -->
+<div class="s10_upper">
+  <div class="s10_label">CONVERSATION AGENT</div>
+  <div class="s10_conv_row">
+    <div class="s10_box s10_purple">用户LLM</div>
+    <span class="s10_arrow_bi">&larr;&rarr;</span>
+    <div class="s10_box s10_blue">Agent</div>
+  </div>
+  <div class="s10_tags">
+    <span class="s10_tag">状态 &#10003;</span>
+    <span class="s10_tag">轮数 &le;10</span>
+    <span class="s10_tag">质量评分</span>
+  </div>
+</div>
+
+<div class="s10_div"></div>
+
+<!-- Lower: Computer Use Agent -->
+<div class="s10_lower">
+  <div class="s10_label">COMPUTER USE AGENT</div>
+  <div class="s10_op_row">
+    <div class="s10_box s10_gray">截图</div>
+    <span class="s10_arrow_r">&rarr;</span>
+    <div class="s10_box s10_blue">Agent</div>
+    <span class="s10_arrow_r">&rarr;</span>
+    <div class="s10_box s10_purple">后端</div>
+  </div>
+  <div class="s10_note">前端确认 &ne; 真正执行</div>
+</div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Conversational + Computer Use</span><p>Unlike other evaluations, conversational agents frequently employ secondary LLMs simulating users. tau-Bench and tau2-Bench simulate multi-turn interactions across retail support and aviation booking.
+
+WebArena tests browser assignments using location and state verification for navigation confirmation, supplemented by backend checks for outcome-modifying tasks (confirming placed orders, not merely displayed confirmation pages).</p></div>
+  </div>
+</div>
+</section>
+
+</div><!-- /layer-agents -->
+
+<!-- ═══ Layer 1: 路线图详解 ═══ -->
+<div class="layer" id="layer-roadmap" data-depth="1">
+
+<!-- S11: Steps 0-3 -->
+<section class="feed-section purple">
+<div class="section-inner">
+  <div class="section-tag reveal">路线图 · 收集与设计</div>
+  <h2 class="big-statement reveal reveal-d1">Step 0-3：先有题，再有考场</h2>
+  <p class="body-text reveal reveal-d2"><span class="hl">Step 0: 尽早开始</span>——不要等到有几百道题才开始，20-50 道从真实失败中提取的题就够了。早期改动效果明显，小样本就能看出差异。<span class="hl2">Step 1: 利用现有的手工验证</span>——把你发版前手动检查的行为、用户常做的操作转化成测试用例。查 issue tracker 和客服记录，把用户报告的 bug 变成题目。<span class="hl">Step 2: 写清楚规格</span>——关键标准是：让一个独立的领域专家来做这道题，他能不能得出和你一样的判定？如果不能，说明规格还不够清楚。同时要做参考实现——已知能通过所有 grader 的标准答案。<span class="hl2">Step 3: 正反兼顾</span>——如果只测「该搜索时搜索」，Agent 就会什么都搜索。必须同时测「不该做什么」，才能得到平衡的行为。</p>
+  <div class="anim-stage reveal reveal-d3" id="s11-anim"><div class="s11_stage" style="width:340px;height:280px;background:#F5F3FF;position:relative;overflow:hidden;border-radius:12px;">
+  
+  <!-- Vertical connecting line -->
+  <div class="s11_line"></div>
+  <!-- Step 0 -->
+  <div class="s11_row s11_r0" style="top:24px;">
+    <span class="s11_step_num" style="top:12px;">0</span>
+    <div class="s11_box blue" style="width:80px;padding:0 10px;">尽早开始</div>
+    <span class="s11_label">20-50 题</span>
+  </div>
+  <!-- Step 1 -->
+  <div class="s11_row s11_r1" style="top:84px;">
+    <span class="s11_step_num" style="top:12px;">1</span>
+    <div class="s11_box purple" style="width:80px;padding:0 10px;">转化手工</div>
+    <span class="s11_label">bug → 题目</span>
+  </div>
+  <!-- Step 2 -->
+  <div class="s11_row s11_r2" style="top:144px;">
+    <span class="s11_step_num" style="top:12px;">2</span>
+    <div class="s11_box blue" style="width:80px;padding:0 10px;">写清规格</div>
+    <span class="s11_label">参考答案</span>
+  </div>
+  <!-- Step 3 -->
+  <div class="s11_row s11_r3" style="top:204px;">
+    <span class="s11_step_num" style="top:12px;">3</span>
+    <div class="s11_box purple" style="width:80px;padding:0 10px;">正反兼顾</div>
+    <span class="s11_label">该做 + 不该做</span>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Steps 0-3</span><p>Teams frequently delay because hundreds of tasks seem necessary. Actually, 20-50 basic tasks drawn from genuine failures provide excellent foundations.
+
+Begin with current development verification—behaviors confirmed pre-release and common user tasks.
+
+Competent specifications ensure independent expert evaluation reaches identical verdicts.
+
+Evaluate both occurrence and non-occurrence scenarios. One-directional evaluation produces one-directional optimization.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S12: Steps 4-8 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <div class="section-tag reveal">路线图 · 基础设施与维护</div>
+  <h2 class="big-statement reveal reveal-d1">Step 4-8：搭考场、看答卷、防饱和</h2>
+  <p class="body-text reveal reveal-d2"><span class="hl">Step 4: 干净环境</span>——每次 trial 必须从零开始，不能有上次运行的残留。Anthropic 发现 Claude 会去读上一次运行的 git 记录，这会导致虚假的成功。<span class="hl2">Step 5: 聪明评分</span>——能用确定性方法就用确定性方法，LLM 评分只在必要时补充。关键原则是「评结果不评过程」——不要要求 Agent 按特定步骤做事，因为前沿模型经常发现你没想到的合理路径。给部分分而不是全有全无。<span class="hl">Step 6: 读 transcript</span>——不读 transcript 就不知道分数是否可信。失败要看是真的做错了还是被误判了，成功要看是不是靠了不该靠的捷径。<span class="hl2">Step 7: 关注饱和</span>——当分数接近 100%，eval 的作用从「推动改进」变成「防止退步」。<span class="hl">Step 8: 持续维护</span>——eval 需要有人负责，就像单元测试一样。离产品最近的人（PM、客服、销售）最懂什么是「成功」。</p>
+  <div class="anim-stage reveal reveal-d3" id="s12-anim"><div class="s12_stage" style="width:340px;height:220px;background:#0F172A;border-radius:12px;position:relative;overflow:hidden;font-family:sans-serif;">
+  
+  <div class="s12_title">Step 4-8: 基础设施与维护</div>
+  <div class="s12_line"></div>
+  <div class="s12_node s12_n1">
+    <div class="s12_dot" style="background:#3B82F6;">环境</div>
+    <div class="s12_sub">从零开始</div>
+  </div>
+  <div class="s12_node s12_n2">
+    <div class="s12_dot" style="background:#8B5CF6;">评分</div>
+    <div class="s12_sub">评结果</div>
+  </div>
+  <div class="s12_node s12_n3">
+    <div class="s12_dot" style="background:#3B82F6;">审卷</div>
+    <div class="s12_sub">读transcript</div>
+  </div>
+  <div class="s12_node s12_n4">
+    <div class="s12_dot" style="background:#8B5CF6;">饱和</div>
+    <div class="s12_sub">100%->回归</div>
+  </div>
+  <div class="s12_node s12_n5">
+    <div class="s12_dot" style="background:#94A3B8;">维护</div>
+    <div class="s12_sub">持续投入</div>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Steps 4-8</span><p>Each trial begins fresh. Leftover artifacts, stored data, resource exhaustion cause correlated failures from infrastructure rather than agent capability.
+
+Inflexible step-sequence grading often proves excessive, generating brittle tests when agents regularly discover unanticipated valid approaches. Rather than penalizing creativity, prioritize output grading over process grading.
+
+Score quality remains unknown without reading numerous trial transcripts. Anthropic invested in transcript visualization infrastructure and regularly reviews them.
+
+Reaching 100% converts improvement tracking into regression monitoring.</p></div>
+  </div>
+</div>
+</section>
+
+</div><!-- /layer-roadmap -->
+
+<script>
+var layerStack = ['layer-overview'];
+var transitioning = false;
+var observers = new Map();
+var layerNames = {
+  'layer-overview': '概览',
+  'layer-agents': '四类评测',
+  'layer-roadmap': '路线图'
+};
+
+function setupObserver(layerId) {
+  if (observers.has(layerId)) return;
+  var layer = document.getElementById(layerId);
+  var reveals = layer.querySelectorAll('.reveal, [class*=\"_stage\"]');
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        var stage = e.target.querySelector('[class*="_stage"]');
+        if (stage) stage.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.15, root: layer });
+  reveals.forEach(function(el) { obs.observe(el); });
+  observers.set(layerId, obs);
+}
+
+function resetReveals(layerId) {
+  var layer = document.getElementById(layerId);
+  layer.querySelectorAll('.reveal').forEach(function(el) { el.classList.remove('visible'); });
+  layer.querySelectorAll('[class*="_stage"]').forEach(function(el) { el.classList.remove('visible'); });
+}
+
+function activateReveals(layerId) {
+  resetReveals(layerId);
+  if (observers.has(layerId)) { observers.get(layerId).disconnect(); observers.delete(layerId); }
+  requestAnimationFrame(function() { setupObserver(layerId); });
+}
+
+function updateBreadcrumb() {
+  var bc = document.getElementById('breadcrumb');
+  bc.innerHTML = '';
+  layerStack.forEach(function(id, i) {
+    if (i > 0) { var sep = document.createElement('span'); sep.className = 'sep'; sep.textContent = '>'; bc.appendChild(sep); }
+    var span = document.createElement('span');
+    span.textContent = layerNames[id] || id;
+    if (i === layerStack.length - 1) { span.className = 'current'; }
+    else { span.addEventListener('click', function() { goBackTo(i); }); }
+    bc.appendChild(span);
+  });
+  var backBtn = document.getElementById('backBtn');
+  backBtn.style.display = layerStack.length > 1 ? 'flex' : 'none';
+  bc.style.left = layerStack.length > 1 ? '60px' : '16px';
+  var dots = document.getElementById('depthDots');
+  var depth = layerStack.length - 1;
+  dots.querySelectorAll('.dot').forEach(function(d, i) { d.classList.toggle('active', i === depth); });
+}
+
+function drillDown(targetId, btnEl) {
+  if (transitioning) return;
+  transitioning = true;
+  var currentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var targetLayer = document.getElementById(targetId);
+  targetLayer.scrollTop = 0;
+  resetReveals(targetId);
+  targetLayer.style.visibility = 'visible';
+  var duration = 600;
+  currentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  currentLayer.style.transformOrigin = 'center center';
+  currentLayer.style.transform = 'scale(1.3)';
+  currentLayer.style.opacity = '0';
+  targetLayer.classList.add('active');
+  targetLayer.style.opacity = '0';
+  targetLayer.style.transform = 'scale(0.85)';
+  targetLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  requestAnimationFrame(function() { requestAnimationFrame(function() {
+    targetLayer.style.opacity = '1'; targetLayer.style.transform = 'scale(1)';
+  }); });
+  setTimeout(function() {
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition = ''; currentLayer.style.transform = ''; currentLayer.style.opacity = '';
+    targetLayer.style.transition = ''; targetLayer.style.transform = '';
+    activateReveals(targetId);
+    transitioning = false;
+  }, duration + 50);
+  layerStack.push(targetId);
+  updateBreadcrumb();
+}
+
+function goBack() {
+  if (layerStack.length <= 1 || transitioning) return;
+  transitioning = true;
+  var currentId = layerStack.pop();
+  var parentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var parentLayer = document.getElementById(parentId);
+  var duration = 600;
+  currentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  currentLayer.style.transform = 'scale(0.85)'; currentLayer.style.opacity = '0';
+  parentLayer.classList.add('active');
+  parentLayer.style.transform = 'scale(1.3)'; parentLayer.style.opacity = '0';
+  parentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  requestAnimationFrame(function() { requestAnimationFrame(function() {
+    parentLayer.style.transform = 'scale(1)'; parentLayer.style.opacity = '1';
+  }); });
+  setTimeout(function() {
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition = ''; currentLayer.style.transform = '';
+    currentLayer.style.opacity = ''; currentLayer.style.visibility = '';
+    parentLayer.style.transition = ''; parentLayer.style.transform = '';
+    transitioning = false;
+  }, duration + 50);
+  updateBreadcrumb();
+}
+
+function goBackTo(targetIndex) {
+  if (transitioning) return;
+  while (layerStack.length - 1 > targetIndex) { if (layerStack.length <= 1) break; goBack(); return; }
+}
+
+function toggleSource(btn) { btn.classList.toggle('open'); btn.nextElementSibling.classList.toggle('open'); }
+
+function scaleStages() {
+  document.querySelectorAll('.anim-stage').forEach(function(container) {
+    var stage = container.querySelector('[class*="_stage"], [class*="_wrap"], [class*="_container"]');
+    if (!stage) return;
+    var containerW = container.clientWidth - 48;
+    var cssW = getComputedStyle(stage).width;
+    if (cssW && parseInt(cssW) <= containerW) return;
+    var stageW = stage.scrollWidth || stage.offsetWidth;
+    var stageH = stage.scrollHeight || stage.offsetHeight;
+    if (stageW > containerW && stageW > 100) {
+      var scale = containerW / stageW;
+      stage.style.transform = 'scale(' + scale + ')';
+      stage.style.transformOrigin = 'top left';
+      stage.style.width = stageW + 'px';
+      container.style.height = (stageH * scale + 64) + 'px';
+    }
+  });
+}
+
+setupObserver('layer-overview');
+updateBreadcrumb();
+window.addEventListener('load', function() { setTimeout(scaleStages, 500); });
+</script>
+</body>
+</html>

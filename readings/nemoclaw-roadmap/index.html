@@ -1,0 +1,1921 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NemoClaw 路线图 —— 给 AI 智能体套上安全壳</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #F7FEE7; --bg-act2: #F5F3FF; --bg-act3: #ECFDF5;
+  --bg-dark: #0F172A;
+  --text: #1E293B; --text-muted: #64748B; --dim: #94A3B8;
+  --accent: #76B900; --accent2: #7C3AED;
+  --warm: #F59E0B; --danger: #EF4444;
+  --neutral: #94A3B8;
+  --card-bg: #FFFFFF;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Noto Sans SC', sans-serif; }
+
+.layer {
+  position: fixed; inset: 0; overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  visibility: hidden; opacity: 0;
+  will-change: transform, opacity;
+  scroll-snap-type: y proximity;
+}
+.layer.active { visibility: visible; opacity: 1; }
+
+.feed-section {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 80px 24px; scroll-snap-align: start;
+}
+.feed-section.dark { background: var(--bg-dark); color: #F1F5F9; }
+.feed-section.dark .body-text { color: #94A3B8; }
+.feed-section.dark .big-statement { color: #F1F5F9; }
+.feed-section.dark .drill-btn { border-color: rgba(118,185,0,0.4); }
+.section-inner { max-width: 600px; width: 100%; }
+
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-d1 { transition-delay: 0.15s; }
+.reveal-d2 { transition-delay: 0.3s; }
+.reveal-d3 { transition-delay: 0.45s; }
+.reveal-d4 { transition-delay: 0.6s; }
+
+.big-statement { font-family: 'Noto Serif SC', serif; font-size: clamp(22px, 5.5vw, 32px); font-weight: 700; line-height: 1.5; margin-bottom: 32px; color: var(--text); }
+.body-text { font-size: 16px; line-height: 1.9; color: var(--text); margin-bottom: 28px; }
+.body-text .hl { color: var(--accent); font-weight: 500; }
+.body-text .hl2 { color: var(--accent2); font-weight: 500; }
+.body-text .hl-danger { color: var(--danger); font-weight: 500; }
+
+.hook-line { font-size: 15px; color: var(--accent); font-weight: 500; margin: 20px 0 16px; line-height: 1.7; }
+.dark .hook-line { color: #A3E635; }
+
+.anim-stage { margin: 32px 0; }
+.anim-stage > div{ width:100%; }
+
+.breadcrumb {
+  position: fixed; top: 16px; left: 16px; z-index: 1000;
+  display: flex; align-items: center; gap: 4px;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+  padding: 8px 14px; border-radius: 10px; box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+  font-size: 13px; font-weight: 500;
+}
+.breadcrumb span { color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
+.breadcrumb span:hover { color: var(--accent); }
+.breadcrumb span.current { color: var(--text); cursor: default; }
+.breadcrumb .sep { color: #CBD5E1; margin: 0 2px; cursor: default; }
+
+.back-btn {
+  position: fixed; top: 16px; left: 16px; z-index: 1001;
+  width: 38px; height: 38px; border-radius: 10px; border: none;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  font-size: 18px; cursor: pointer; display: none; align-items: center; justify-content: center;
+  color: var(--text); transition: all 0.2s;
+}
+.back-btn:hover { background: var(--accent); color: #fff; }
+
+.depth-dots {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1000;
+  display: flex; gap: 8px; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px);
+  padding: 8px 14px; border-radius: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #CBD5E1; transition: all 0.3s; }
+.dot.active { background: var(--accent); box-shadow: 0 0 8px rgba(118,185,0,0.5); transform: scale(1.2); }
+
+.drill-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border: 1.5px solid rgba(118,185,0,0.3); border-radius: 10px;
+  background: transparent; color: var(--accent); font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.25s;
+}
+.drill-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(118,185,0,0.3); }
+
+.source-panel {
+  margin-top: 24px; border-radius: 12px; overflow: hidden;
+  border: 1px solid rgba(118,185,0,0.15); background: rgba(118,185,0,0.03);
+}
+.dark .source-panel { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
+.source-toggle {
+  width: 100%; padding: 12px 16px; border: none; background: none;
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 600; color: var(--accent);
+}
+.dark .source-toggle { color: #A3E635; }
+.source-toggle:hover { background: rgba(118,185,0,0.06); }
+.source-toggle .arrow { transition: transform 0.3s; font-size: 11px; }
+.source-toggle.open .arrow { transform: rotate(90deg); }
+.source-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; padding: 0 16px; }
+.source-body.open { max-height: 2000px; padding: 0 16px 16px; overflow-y: auto; }
+.source-body p { font-size: 13px; line-height: 1.8; color: var(--text-muted); margin: 0 0 12px; white-space: pre-wrap; }
+.dark .source-body p { color: #94A3B8; }
+.source-body .source-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 8px; display: block; }
+.dark .source-body .source-label { color: #A3E635; }
+
+.act-label { font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; }
+.dark .act-label { color: #A3E635; }
+
+/* === S1 Animation === */
+
+    .s1_stage { --s1-accent: #76B900; --s1-accent2: #7C3AED; --s1-neutral: #94A3B8; }
+
+    /* Agent core circle */
+    .s1_agent {
+      position: absolute;
+      width: 96px; height: 96px;
+      border-radius: 50%;
+      background: var(--s1-accent2);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 18px; font-weight: 700;
+      opacity: 0;
+      z-index: 3;
+    }
+    .s1_stage.visible .s1_agent {
+      animation: s1_fadeScale 0.5s ease forwards;
+      animation-delay: 0s;
+    }
+
+    /* Safety policy ring */
+    .s1_safety {
+      position: absolute;
+      width: 168px; height: 168px;
+      border-radius: 50%;
+      border: 3px dashed var(--s1-accent);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0;
+      z-index: 2;
+    }
+    .s1_safety_label {
+      position: absolute;
+      top: -2px; left: 50%;
+      transform: translateX(-50%);
+      background: #F7FEE7;
+      padding: 0 6px;
+      color: var(--s1-accent);
+      font-size: 13px; font-weight: 600;
+      white-space: nowrap;
+    }
+    .s1_stage.visible .s1_safety {
+      animation: s1_fadeScale 0.5s ease forwards;
+      animation-delay: 0.5s;
+    }
+
+    /* User control ring */
+    .s1_control {
+      position: absolute;
+      width: 232px; height: 232px;
+      border-radius: 50%;
+      border: 3px solid var(--s1-neutral);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0;
+      z-index: 1;
+    }
+    .s1_control_label {
+      position: absolute;
+      top: -2px; left: 50%;
+      transform: translateX(-50%);
+      background: #F7FEE7;
+      padding: 0 6px;
+      color: var(--s1-neutral);
+      font-size: 13px; font-weight: 600;
+      white-space: nowrap;
+    }
+    .s1_stage.visible .s1_control {
+      animation: s1_fadeScale 0.5s ease forwards;
+      animation-delay: 1.0s;
+    }
+
+    /* Bottom label */
+    .s1_title {
+      position: absolute;
+      bottom: 4px;
+      color: var(--s1-accent);
+      font-size: 20px; font-weight: 700;
+      letter-spacing: 2px;
+      opacity: 0;
+    }
+    .s1_stage.visible .s1_title {
+      animation: s1_fadeUp 0.5s ease forwards;
+      animation-delay: 1.5s;
+    }
+
+    @keyframes s1_fadeScale {
+      0%   { opacity: 0; transform: scale(0.5); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    @keyframes s1_fadeUp {
+      0%   { opacity: 0; transform: translateY(10px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+  
+/* === S2 Animation === */
+
+.s2_stage {
+  width: 310px;
+  height: 250px;
+  margin: 0 auto;
+  position: relative;
+  overflow: visible;
+}
+
+/* Pillar boxes — 4+ chars so rounded rectangles */
+.s2_box {
+  position: absolute;
+  height: 44px;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  top: 30px;
+}
+
+.s2_box_secure {
+  width: 90px;
+  left: 0px;
+  background: #76B900;
+}
+
+.s2_box_cross {
+  width: 110px;
+  left: 100px;
+  background: #76B900;
+}
+
+.s2_box_hermes {
+  width: 90px;
+  left: 220px;
+  background: #7C3AED;
+  box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.5);
+}
+
+/* Fade-in animation */
+@keyframes s2_fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Pulse for Hermes */
+@keyframes s2_pulse {
+  0% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.5); }
+  50% { box-shadow: 0 0 0 10px rgba(124, 58, 237, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); }
+}
+
+.s2_stage.visible .s2_box_secure {
+  animation: s2_fadeIn 0.5s ease forwards;
+  animation-delay: 0s;
+}
+
+.s2_stage.visible .s2_box_cross {
+  animation: s2_fadeIn 0.5s ease forwards;
+  animation-delay: 0.5s;
+}
+
+.s2_stage.visible .s2_box_hermes {
+  animation: s2_fadeIn 0.5s ease forwards, s2_pulse 1.2s ease 1.2s 2;
+  animation-fill-mode: forwards, none;
+}
+
+/* Connection lines + bottom label */
+.s2_svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 310px;
+  height: 250px;
+  z-index: 0;
+}
+
+.s2_line {
+  stroke: #94A3B8;
+  stroke-width: 2;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+}
+
+.s2_stage.visible .s2_line1 {
+  animation: s2_drawLine 0.6s ease forwards;
+  animation-delay: 1.6s;
+}
+.s2_stage.visible .s2_line2 {
+  animation: s2_drawLine 0.6s ease forwards;
+  animation-delay: 1.8s;
+}
+.s2_stage.visible .s2_line3 {
+  animation: s2_drawLine 0.6s ease forwards;
+  animation-delay: 2.0s;
+}
+
+@keyframes s2_drawLine {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Bottom label */
+.s2_label {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: #F1F5F9;
+  border: 2px solid #94A3B8;
+  border-radius: 20px;
+  padding: 6px 24px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #334155;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+.s2_stage.visible .s2_label {
+  animation: s2_fadeIn 0.5s ease forwards;
+  animation-delay: 2.4s;
+}
+
+/* === S3 Animation === */
+
+.s3_stage {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Vertical stand base */
+.s3_base {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 36px;
+  background: #94A3B8;
+  border-radius: 2px;
+  opacity: 0;
+}
+
+/* Triangle pivot on top of stand */
+.s3_pivot {
+  position: absolute;
+  bottom: 74px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 14px solid transparent;
+  border-right: 14px solid transparent;
+  border-bottom: 18px solid #94A3B8;
+  opacity: 0;
+  z-index: 2;
+}
+
+/* Beam wrapper — rotates around center */
+.s3_beam_wrap {
+  position: absolute;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%) rotate(0deg);
+  transform-origin: center center;
+  width: 280px;
+  height: 4px;
+  opacity: 0;
+  z-index: 1;
+}
+
+.s3_beam_bar {
+  width: 100%;
+  height: 4px;
+  background: #94A3B8;
+  border-radius: 2px;
+}
+
+/* Pans hanging from beam ends */
+.s3_left_pan, .s3_right_pan {
+  position: absolute;
+  top: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.s3_left_pan { left: 8px; }
+.s3_right_pan { right: 8px; }
+
+.s3_rope {
+  width: 2px;
+  height: 20px;
+  background: #64748B;
+}
+
+/* Boxes: 2-char = min 48px width */
+.s3_box {
+  width: 64px;
+  height: 40px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.s3_box_safe {
+  background: rgba(118, 185, 0, 0.15);
+  border: 2px solid #76B900;
+  color: #76B900;
+}
+
+.s3_box_exp {
+  background: rgba(124, 58, 237, 0.15);
+  border: 2px solid #7C3AED;
+  color: #7C3AED;
+}
+
+/* Jensen label above beam center */
+.s3_label {
+  position: absolute;
+  bottom: 102px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  color: #94A3B8;
+  letter-spacing: 0.08em;
+  opacity: 0;
+  z-index: 3;
+}
+
+/* ── Animations ── */
+
+/* Step 1: pivot + base + beam appear */
+.s3_stage.visible .s3_base {
+  animation: s3_fadeIn 0.5s 0.4s ease both;
+}
+
+.s3_stage.visible .s3_pivot {
+  animation: s3_fadeIn 0.5s 0.4s ease both;
+}
+
+.s3_stage.visible .s3_beam_wrap {
+  animation: s3_fadeIn 0.5s 0.4s ease both, s3_tiltLeft 0.5s 1.2s ease both, s3_tiltLevel 0.5s 2.2s ease both;
+}
+
+/* Step 2: left box appears, beam tilts left */
+.s3_stage.visible .s3_box_safe {
+  animation: s3_popIn 0.4s 1.0s ease both;
+}
+
+/* Step 3: right box appears, beam levels */
+.s3_stage.visible .s3_box_exp {
+  animation: s3_popIn 0.4s 2.0s ease both;
+}
+
+/* Step 4: Jensen label */
+.s3_stage.visible .s3_label {
+  animation: s3_fadeIn 0.5s 3.0s ease both;
+}
+
+@keyframes s3_fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes s3_popIn {
+  from { opacity: 0; transform: scale(0.5); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s3_tiltLeft {
+  from { transform: translateX(-50%) rotate(0deg); }
+  to   { transform: translateX(-50%) rotate(-10deg); }
+}
+
+@keyframes s3_tiltLevel {
+  from { transform: translateX(-50%) rotate(-10deg); }
+  to   { transform: translateX(-50%) rotate(-2deg); }
+}
+
+/* === S4 Animation === */
+
+    .s4_stage { --s4-accent: #76B900; --s4-accent2: #7C3AED; --s4-neutral: #94A3B8; }
+
+    /* Dev box */
+    .s4_dev {
+      position: absolute;
+      left: 24px; top: 50%; transform: translateY(-50%);
+      width: 110px; height: 110px;
+      border: 3px solid var(--s4-accent);
+      border-radius: 12px;
+      background: rgba(118, 185, 0, 0.08);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 10px;
+      opacity: 0;
+    }
+    .s4_dev_label {
+      font-size: 16px; font-weight: 700;
+      color: var(--s4-accent);
+    }
+    .s4_dev_inner {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: var(--s4-accent);
+      color: #fff; font-size: 14px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .s4_stage.visible .s4_dev {
+      animation: s4_fadeScale 0.5s ease forwards;
+      animation-delay: 0.4s;
+    }
+
+    /* Deploy box */
+    .s4_deploy {
+      position: absolute;
+      right: 24px; top: 50%; transform: translateY(-50%);
+      width: 110px; height: 110px;
+      border: 3px solid var(--s4-accent2);
+      border-radius: 12px;
+      background: rgba(124, 58, 237, 0.06);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 10px;
+      opacity: 0;
+    }
+    .s4_deploy_label {
+      font-size: 16px; font-weight: 700;
+      color: var(--s4-accent2);
+    }
+    .s4_deploy_inner {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      border: 3px solid var(--s4-accent2);
+      background: rgba(124, 58, 237, 0.10);
+      color: var(--s4-accent2); font-size: 14px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .s4_stage.visible .s4_deploy {
+      animation: s4_fadeScale 0.5s ease forwards;
+      animation-delay: 1.0s;
+    }
+
+    /* Arrow between boxes */
+    .s4_arrow {
+      position: absolute;
+      left: 140px; top: 50%; transform: translateY(-50%);
+      width: 110px; height: 2px;
+      opacity: 0;
+    }
+    .s4_arrow_line {
+      width: 100%; height: 2px;
+      background: linear-gradient(90deg, var(--s4-accent), var(--s4-accent2));
+    }
+    .s4_arrow_head {
+      position: absolute;
+      right: -2px; top: -5px;
+      width: 0; height: 0;
+      border-left: 10px solid var(--s4-accent2);
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+    }
+    .s4_stage.visible .s4_arrow {
+      animation: s4_fadeIn 0.5s ease forwards;
+      animation-delay: 1.8s;
+    }
+
+    /* Tags around deploy box */
+    .s4_tag {
+      position: absolute;
+      padding: 3px 10px;
+      border-radius: 10px;
+      background: var(--s4-neutral);
+      color: #fff; font-size: 12px; font-weight: 600;
+      white-space: nowrap;
+      opacity: 0;
+    }
+    .s4_tag_strategy {
+      right: 18px; top: 44px;
+    }
+    .s4_tag_boundary {
+      right: 10px; bottom: 44px;
+    }
+    .s4_tag_audit {
+      right: 80px; bottom: 28px;
+    }
+    .s4_stage.visible .s4_tag_strategy {
+      animation: s4_fadeIn 0.4s ease forwards;
+      animation-delay: 2.6s;
+    }
+    .s4_stage.visible .s4_tag_boundary {
+      animation: s4_fadeIn 0.4s ease forwards;
+      animation-delay: 2.9s;
+    }
+    .s4_stage.visible .s4_tag_audit {
+      animation: s4_fadeIn 0.4s ease forwards;
+      animation-delay: 3.2s;
+    }
+
+    @keyframes s4_fadeScale {
+      0%   { opacity: 0; transform: translateY(-50%) scale(0.5); }
+      100% { opacity: 1; transform: translateY(-50%) scale(1); }
+    }
+    @keyframes s4_fadeIn {
+      0%   { opacity: 0; }
+      100% { opacity: 1; }
+    }
+  
+/* === S5 Animation === */
+
+.s5_stage {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  overflow: hidden;
+}
+
+.s5_row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.s5_result_row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.s5_box {
+  min-width: 100px;
+  height: 44px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 0 16px;
+  opacity: 0;
+  transform: scale(0.7);
+}
+
+.s5_box_openclaw {
+  background: rgba(124, 58, 237, 0.10);
+  border: 2px solid #7C3AED;
+  color: #7C3AED;
+}
+
+.s5_box_safety {
+  background: rgba(118, 185, 0, 0.10);
+  border: 2px solid #76B900;
+  color: #76B900;
+}
+
+.s5_box_nemoclaw {
+  background: #76B900;
+  border: 2px solid #76B900;
+  color: #fff;
+  font-size: 16px;
+  min-width: 120px;
+}
+
+.s5_plus {
+  font-size: 32px;
+  font-weight: 700;
+  color: #76B900;
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.s5_equals {
+  font-size: 32px;
+  font-weight: 700;
+  color: #94A3B8;
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+/* ── Animations ── */
+
+.s5_stage.visible .s5_box_openclaw {
+  animation: s5_popIn 0.5s 0.4s ease both;
+}
+
+.s5_stage.visible .s5_plus {
+  animation: s5_popIn 0.4s 1.0s ease both;
+}
+
+.s5_stage.visible .s5_box_safety {
+  animation: s5_popIn 0.5s 1.6s ease both;
+}
+
+.s5_stage.visible .s5_equals {
+  animation: s5_popIn 0.4s 2.4s ease both;
+}
+
+.s5_stage.visible .s5_box_nemoclaw {
+  animation: s5_popIn 0.5s 3.0s ease both, s5_glow 2s 3.5s ease-in-out infinite;
+}
+
+@keyframes s5_popIn {
+  from { opacity: 0; transform: scale(0.5); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s5_glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(118, 185, 0, 0.3); }
+  50%      { box-shadow: 0 0 24px rgba(118, 185, 0, 0.6); }
+}
+
+/* === S6 Animation === */
+
+/* S6 — 用例的极限是你的想象力 */
+.s6_stage {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Center circle: Claw */
+.s6_center {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #0F172A;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0);
+  z-index: 2;
+}
+
+/* Boxes for 4-char labels */
+.s6_box {
+  position: absolute;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 2px solid var(--accent2);
+  color: #F1F5F9;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0);
+  z-index: 2;
+}
+
+/* Position boxes around center */
+.s6_box--tl { top: 40px; left: calc(50% - 120px); }
+.s6_box--tr { top: 40px; left: calc(50% + 40px); }
+.s6_box--bl { top: 200px; left: calc(50% - 120px); }
+.s6_box--br { top: 200px; left: calc(50% + 40px); }
+
+/* SVG lines */
+.s6_lines {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+.s6_line {
+  stroke: var(--accent2);
+  stroke-width: 1.5;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  opacity: 0.6;
+}
+
+/* Bottom label */
+.s6_label {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--neutral);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  opacity: 0;
+}
+
+/* Animations */
+@keyframes s6_pop {
+  0% { opacity: 0; transform: scale(0); }
+  70% { transform: scale(1.15); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes s6_line_draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes s6_fade_up {
+  0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Triggered states */
+.s6_stage.visible .s6_center {
+  animation: s6_pop 0.5s ease-out 0.4s forwards;
+}
+.s6_stage.visible .s6_box--tl {
+  animation: s6_pop 0.4s ease-out 1.0s forwards;
+}
+.s6_stage.visible .s6_box--tr {
+  animation: s6_pop 0.4s ease-out 1.3s forwards;
+}
+.s6_stage.visible .s6_box--bl {
+  animation: s6_pop 0.4s ease-out 1.6s forwards;
+}
+.s6_stage.visible .s6_box--br {
+  animation: s6_pop 0.4s ease-out 1.9s forwards;
+}
+.s6_stage.visible .s6_line:nth-child(1) {
+  animation: s6_line_draw 0.5s ease-out 2.4s forwards;
+}
+.s6_stage.visible .s6_line:nth-child(2) {
+  animation: s6_line_draw 0.5s ease-out 2.7s forwards;
+}
+.s6_stage.visible .s6_line:nth-child(3) {
+  animation: s6_line_draw 0.5s ease-out 3.0s forwards;
+}
+.s6_stage.visible .s6_line:nth-child(4) {
+  animation: s6_line_draw 0.5s ease-out 3.3s forwards;
+}
+.s6_stage.visible .s6_label {
+  animation: s6_fade_up 0.6s ease-out 4.0s forwards;
+}
+
+/* === S7 Animation === */
+
+.s7_stage {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  overflow: hidden;
+}
+
+.s7_row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.s7_circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.s7_circle_a {
+  background: rgba(118, 185, 0, 0.12);
+  border: 2.5px solid #76B900;
+  color: #76B900;
+}
+
+.s7_circle_b {
+  background: rgba(124, 58, 237, 0.12);
+  border: 2.5px solid #7C3AED;
+  color: #7C3AED;
+}
+
+.s7_middle {
+  position: relative;
+  width: 120px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.s7_human {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: rgba(148, 163, 184, 0.12);
+  border: 2.5px solid #94A3B8;
+  color: #94A3B8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  opacity: 0;
+  transform: scale(0.5);
+  position: absolute;
+  z-index: 2;
+}
+
+.s7_arrow_direct {
+  opacity: 0;
+  transform: scaleX(0);
+  position: absolute;
+  z-index: 1;
+}
+
+.s7_label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #76B900;
+  letter-spacing: 0.05em;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* ── Animations ── */
+
+.s7_stage.visible .s7_circle_a {
+  animation: s7_popIn 0.5s 0.4s ease both;
+}
+
+.s7_stage.visible .s7_circle_b {
+  animation: s7_popIn 0.5s 0.8s ease both;
+}
+
+.s7_stage.visible .s7_human {
+  animation: s7_popIn 0.5s 1.4s ease both, s7_strikeOut 0.6s 2.8s ease both;
+}
+
+.s7_stage.visible .s7_arrow_direct {
+  animation: s7_arrowIn 0.6s 3.6s ease both;
+}
+
+.s7_stage.visible .s7_label {
+  animation: s7_fadeUp 0.5s 4.2s ease both;
+}
+
+@keyframes s7_popIn {
+  from { opacity: 0; transform: scale(0.5); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s7_strikeOut {
+  0%   { opacity: 1; transform: scale(1); }
+  40%  { opacity: 0.6; transform: scale(0.9); }
+  100% { opacity: 0; transform: scale(0.3) rotate(15deg); }
+}
+
+@keyframes s7_arrowIn {
+  from { opacity: 0; transform: scaleX(0); }
+  to   { opacity: 1; transform: scaleX(1); }
+}
+
+@keyframes s7_fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* === S8 Animation === */
+
+.s8_stage {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.s8_box {
+  position: absolute;
+  min-width: 80px;
+  height: 44px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 0 18px;
+  opacity: 0;
+  transform: scale(0.7);
+}
+
+.s8_community {
+  left: calc(50% - 130px);
+  top: 90px;
+  background: rgba(124, 58, 237, 0.10);
+  border: 2px solid #7C3AED;
+  color: #7C3AED;
+}
+
+.s8_roadmap {
+  right: calc(50% - 130px);
+  top: 90px;
+  background: rgba(118, 185, 0, 0.10);
+  border: 2px solid #76B900;
+  color: #76B900;
+}
+
+.s8_arrow {
+  position: absolute;
+  width: 160px;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+}
+
+.s8_arrow_top {
+  top: 48px;
+}
+
+.s8_arrow_bottom {
+  top: 140px;
+}
+
+.s8_arrow_svg {
+  width: 100%;
+  height: 40px;
+}
+
+.s8_label {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.s8_label_issue {
+  top: 2px;
+  color: #7C3AED;
+}
+
+.s8_label_func {
+  bottom: 2px;
+  color: #76B900;
+}
+
+.s8_badge {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.7);
+  font-size: 14px;
+  font-weight: 600;
+  color: #94A3B8;
+  background: rgba(148, 163, 184, 0.10);
+  border: 2px solid #94A3B8;
+  border-radius: 8px;
+  padding: 4px 16px;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+/* ── Animations ── */
+
+.s8_stage.visible .s8_community {
+  animation: s8_popIn 0.5s 0.4s ease both;
+}
+
+.s8_stage.visible .s8_roadmap {
+  animation: s8_popIn 0.5s 1.0s ease both;
+}
+
+.s8_stage.visible .s8_arrow_top {
+  animation: s8_fadeIn 0.6s 1.8s ease both;
+}
+
+.s8_stage.visible .s8_arrow_bottom {
+  animation: s8_fadeIn 0.6s 2.6s ease both;
+}
+
+.s8_stage.visible .s8_badge {
+  animation: s8_popIn 0.5s 3.6s ease both, s8_pulse 2.5s 4.1s ease-in-out infinite;
+}
+
+@keyframes s8_popIn {
+  from { opacity: 0; transform: scale(0.7); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* badge needs translateX preserved */
+.s8_stage.visible .s8_badge {
+  animation: s8_badgeIn 0.5s 3.6s ease both, s8_pulse 2.5s 4.1s ease-in-out infinite;
+}
+
+@keyframes s8_badgeIn {
+  from { opacity: 0; transform: translateX(-50%) scale(0.7); }
+  to   { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+@keyframes s8_fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes s8_pulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(148, 163, 184, 0.2); }
+  50%      { box-shadow: 0 0 18px rgba(148, 163, 184, 0.5); }
+}
+
+/* === A1 Animation === */
+
+/* === A1 Stage === */
+.a1_stage {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  height: 260px;
+  margin: 0 auto;
+}
+
+/* Step 1: Isolation container */
+.a1_container {
+  position: absolute;
+  top: 20px;
+  left: 30px;
+  width: 240px;
+  height: 200px;
+  border: 2.5px dashed var(--accent, #76B900);
+  border-radius: 14px;
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.a1_stage.visible .a1_container {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 0.4s;
+}
+
+.a1_container_label {
+  position: absolute;
+  top: -13px;
+  left: 16px;
+  background: #F7FEE7;
+  padding: 0 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent, #76B900);
+  letter-spacing: 1px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.a1_stage.visible .a1_container_label {
+  opacity: 1;
+  transition-delay: 0.7s;
+}
+
+/* Step 2: Agent circle */
+.a1_agent {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  background: var(--accent2, #7C3AED);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.a1_stage.visible .a1_agent {
+  transform: translate(-50%, -50%) scale(1);
+  transition-delay: 1.2s;
+}
+
+/* Step 3: Action labels around agent */
+.a1_action {
+  position: absolute;
+  padding: 4px 10px;
+  border: 1.5px solid var(--accent, #76B900);
+  border-radius: 6px;
+  background: rgba(118, 185, 0, 0.08);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent, #76B900);
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.a1_action_learn {
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.7);
+}
+.a1_stage.visible .a1_action_learn {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+  transition-delay: 2.0s;
+}
+
+.a1_action_evolve {
+  bottom: 28px;
+  left: 28px;
+  transform: scale(0.7);
+}
+.a1_stage.visible .a1_action_evolve {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 2.3s;
+}
+
+.a1_action_build {
+  bottom: 28px;
+  right: 28px;
+  transform: scale(0.7);
+}
+.a1_stage.visible .a1_action_build {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 2.6s;
+}
+
+/* Step 4: Production network label outside */
+.a1_prod {
+  position: absolute;
+  top: 50%;
+  right: -8px;
+  transform: translateY(-50%);
+  padding: 5px 12px;
+  border: 1.5px solid var(--neutral, #94A3B8);
+  border-radius: 6px;
+  background: rgba(148, 163, 184, 0.08);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--neutral, #94A3B8);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.a1_stage.visible .a1_prod {
+  opacity: 1;
+  transition-delay: 3.2s;
+}
+
+/* Subtle idle pulse on agent */
+@keyframes a1_pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.25); }
+  50% { box-shadow: 0 0 0 10px rgba(124, 58, 237, 0); }
+}
+.a1_stage.visible .a1_agent {
+  animation: a1_pulse 2.5s ease-in-out 2s infinite;
+}
+
+/* === A2 Animation === */
+
+.a2_stage {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  overflow: hidden;
+}
+
+/* Shared keyframes */
+@keyframes a2_fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes a2_fadeInScale {
+  from { opacity: 0; transform: scale(0.7); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes a2_shrinkBorder {
+  0%   { opacity: 1; border-color: #76B900; border-style: dashed; padding: 32px 48px; }
+  40%  { opacity: 1; border-color: #EF4444; border-style: solid; padding: 32px 48px; }
+  100% { opacity: 1; border-color: #EF4444; border-style: solid; padding: 16px 28px; }
+}
+@keyframes a2_lockAppear {
+  from { opacity: 0; transform: translateY(6px) scale(0.8); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* All generic animated elements hidden until .visible */
+.a2_stage .a2_el {
+  opacity: 0;
+}
+.a2_stage.visible .a2_el {
+  animation: a2_fadeIn 0.5s ease both;
+}
+
+/* Step 1: Open boundary rectangle + agent circle */
+.a2_boundary_wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.a2_boundary {
+  opacity: 0;
+  border: 2px dashed #76B900;
+  border-radius: 10px;
+  padding: 32px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.a2_agent {
+  opacity: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent2, #7C3AED);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+
+/* Step 1: fade in boundary, then agent */
+.a2_stage.visible .a2_boundary {
+  animation: a2_fadeInScale 0.5s ease both;
+  animation-delay: 0.4s;
+}
+.a2_stage.visible .a2_agent {
+  animation: a2_fadeInScale 0.4s ease both;
+  animation-delay: 0.7s;
+}
+
+/* Step 2: Shrink + turn red — applied by JS after step 1 finishes */
+.a2_boundary.a2_shrunk {
+  animation: a2_shrinkBorder 0.9s ease both !important;
+  animation-delay: 0s !important;
+}
+
+/* Step 3: Lock tags */
+.a2_locks {
+  position: absolute;
+  top: 160px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  width: 100%;
+  pointer-events: none;
+}
+.a2_lock_tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(148,163,184,0.10);
+  border: 1px solid var(--neutral, #94A3B8);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--neutral, #94A3B8);
+  white-space: nowrap;
+}
+.a2_lock_svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+.a2_stage.visible .a2_lock_net {
+  animation: a2_lockAppear 0.4s ease both;
+  animation-delay: 2.6s;
+}
+.a2_stage.visible .a2_lock_tool {
+  animation: a2_lockAppear 0.4s ease both;
+  animation-delay: 2.9s;
+}
+.a2_stage.visible .a2_lock_data {
+  animation: a2_lockAppear 0.4s ease both;
+  animation-delay: 3.2s;
+}
+
+/* Step 4: Bottom label */
+.a2_status {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent, #76B900);
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+}
+.a2_stage.visible .a2_status {
+  animation: a2_fadeIn 0.5s ease both;
+  animation-delay: 3.8s;
+}
+
+/* Top label */
+.a2_open_label {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #76B900;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.a2_stage.visible .a2_open_label {
+  animation: a2_fadeIn 0.4s ease both;
+  animation-delay: 0.9s;
+}
+
+</style>
+
+<meta name="description" content="NemoClaw 是 NVIDIA 推出的开源参考架构——它不是又一个 AI 智能体，而是 智能体运行的安全壳 。产品经理 Chris Murphy 在直播中解释：NemoClaw 在 OpenClaw 智能体之上加了一层开放式安全运行时，提供安全策略、网络访问控制和沙箱隔离。用户可以精确控制智能体能访问什么、能触碰什么。它支持本地推理（用 Nemotron">
+<link rel="canonical" href="https://chendi.me/readings/nemoclaw-roadmap/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">&#8592;</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ 概览层 ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+  <!-- S1: Hero -->
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <div class="act-label reveal">ACT I &mdash; 架构</div>
+      <h2 class="big-statement reveal reveal-d1">给 AI 智能体<br>套上安全壳</h2>
+      <p class="body-text reveal reveal-d2">NemoClaw 是 NVIDIA 推出的开源参考架构——它不是又一个 AI 智能体，而是<span class="hl">智能体运行的安全壳</span>。产品经理 Chris Murphy 在直播中解释：NemoClaw 在 OpenClaw 智能体之上加了一层开放式安全运行时，提供安全策略、网络访问控制和沙箱隔离。用户可以精确控制智能体能访问什么、能触碰什么。它支持本地推理（用 Nemotron 模型），也支持 OpenAI 和 Claude 等 API 端点。关键定位是：<span class="hl2">NemoClaw 不是要做最终产品</span>，而是让合作伙伴和开发者在它之上构建产品。完全 Apache 2 开源，不仅公开源代码，还积极接受社区贡献。</p>
+      <div class="anim-stage reveal reveal-d3" id="s1-anim">
+        <div class="s1_stage" style="
+  width: 100%; height: 280px; position: relative;
+  display: flex; align-items: center; justify-content: center;
+">
+  <!-- Step 3: User control outer ring -->
+  <div class="s1_control">
+    <span class="s1_control_label">用户控制</span>
+  </div>
+
+  <!-- Step 2: Safety policy ring -->
+  <div class="s1_safety">
+    <span class="s1_safety_label">安全策略</span>
+  </div>
+
+  <!-- Step 1: Agent core -->
+  <div class="s1_agent">智能体</div>
+
+  <!-- Step 4: Title -->
+  <div class="s1_title">NemoClaw</div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">直播原文</span><p>NemoClaw is an open reference that provides how to run an agent, for example OpenClaw, inside of an open shell, secure agent runtime that has security policies and things the user can control as far as what the agent can access on the network.</p><p>We're not trying to provide the end product. That's why it's an open-source thing. You can take it, use it for what you want, or if you're a partner, you could build on it and make a product.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S2: Core Experience -->
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">路线图第一章：<br>把地基打牢</h2>
+      <p class="body-text reveal reveal-d1">4-5 月的主题是<span class="hl">核心体验加固</span>。团队在三个方面发力：第一，安全加固——持续运行安全扫描和评估工具，确保运行时的安全边界坚不可摧。第二，跨平台安装体验——虽然 NemoClaw 理论上能在任何 Linux 上运行，但团队在特定平台上做端到端测试验证。第三，也是最大的惊喜：<span class="hl2">NemoClaw 不再只支持 OpenClaw</span>。团队正在加入 Hermes 作为第二种智能体类型。Murphy 解释说，通过支持至少两种智能体，他们确保架构不会被锁死在某个角落，为未来支持更多智能体类型和框架打下基础。</p>
+      <div class="anim-stage reveal reveal-d2" id="s2-anim">
+        <div class="s2_stage">
+<svg class="s2_svg">
+  <line class="s2_line s2_line1" x1="45" y1="74" x2="155" y2="168"/>
+  <line class="s2_line s2_line2" x1="155" y1="74" x2="155" y2="168"/>
+  <line class="s2_line s2_line3" x1="265" y1="74" x2="155" y2="168"/>
+</svg>
+
+<div class="s2_box s2_box_secure">安全加固</div>
+<div class="s2_box s2_box_cross">跨平台安装</div>
+<div class="s2_box s2_box_hermes">+ Hermes</div>
+<div class="s2_label">核心体验</div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">直播原文</span><p>This is probably the biggest surprise on the road map — we're adding an additional agent type. We're going to add Hermes as an agent that you can run with NemoClaw inside the shell.</p><p>The great thing about adding at least one more is we're making sure we're not architecting ourselves into any corners, so that we are developing this in a way that is flexible for other agent types and harnesses as well.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S3: Delightful UX -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="act-label reveal">ACT II &mdash; 体验</div>
+      <h2 class="big-statement reveal reveal-d1">Jensen 的要求：<br>令人愉悦的体验</h2>
+      <p class="body-text reveal reveal-d2">6-7 月的主题直接来自 NVIDIA CEO 黄仁勋的要求：<span class="hl2">「令人愉悦的用户体验」</span>。Murphy 坦言目前仍处于 alpha 阶段，安装和使用体验还有很多摩擦。这个阶段要解决的核心矛盾是：<span class="hl">极其灵活强大的技术</span>和<span class="hl">合理的安全约束</span>之间的张力。具体包括：扩展消息服务和提供商集成、本地推理性能优化、多 GPU 支持、多智能体工作流、以及更好的安全策略预设——让用户不再觉得「给智能体套了个钢笼」。Murphy 强调 NVIDIA 还在大量投入上游 OpenClaw 社区的安全改进工作，因为依赖关系意味着上游进展直接影响 NemoClaw 的体验。</p>
+      <div class="anim-stage reveal reveal-d3" id="s3-anim">
+        <div class="s3_stage">
+  <div class="s3_base"></div>
+  <div class="s3_pivot"></div>
+  <div class="s3_beam_wrap">
+    <div class="s3_beam_bar"></div>
+    <div class="s3_left_pan">
+      <div class="s3_rope"></div>
+      <div class="s3_box s3_box_safe">安全</div>
+    </div>
+    <div class="s3_right_pan">
+      <div class="s3_rope"></div>
+      <div class="s3_box s3_box_exp">体验</div>
+    </div>
+  </div>
+  <div class="s3_label">Jensen</div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">直播原文</span><p>The delightful user experience was actually one of the things that Jensen asked us to deliver. That is a requirement straight from our CEO.</p><p>It needs to cover the install experience, the experience running with local inference and your models, the ability to make your agent useful and customizable even though you're inside of this open shell security runtime.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S4: Enterprise -->
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">企业级扩展：<br>安全与能力的博弈</h2>
+      <p class="body-text reveal reveal-d1">8-9 月的主题是企业级扩展。Murphy 透露团队内部也在亲身经历这个挑战——把 NemoClaw 接入 NVIDIA 自己的企业数据。最大的难题是：<span class="hl2">如何让安全部门签字批准一个自主进化的智能体</span>？因为智能体能做的事情几乎是无限的，传统的安全审批流程根本无法覆盖。团队发现了一个关键区分：<span class="hl">开发阶段</span>和<span class="hl">部署阶段</span>需要完全不同的安全模型。开发时可以在隔离环境中放开所有能力让智能体自我进化；但部署实际用例时，必须用安全策略严格限制它只能做你需要它做的事。</p>
+      <div class="anim-stage reveal reveal-d2" id="s4-anim">
+        <div class="s4_stage" style="
+  width: 100%; height: 280px; position: relative;
+  display: flex; align-items: center; justify-content: center;
+">
+  <!-- Step 1: Dev box with "自由" circle -->
+  <div class="s4_dev">
+    <div class="s4_dev_label">开发</div>
+    <div class="s4_dev_inner">自由</div>
+  </div>
+
+  <!-- Step 2: Deploy box with "锁定" circle -->
+  <div class="s4_deploy">
+    <div class="s4_deploy_label">部署</div>
+    <div class="s4_deploy_inner">锁定</div>
+  </div>
+
+  <!-- Step 3: Arrow from dev to deploy -->
+  <div class="s4_arrow">
+    <div class="s4_arrow_line"></div>
+    <div class="s4_arrow_head"></div>
+  </div>
+
+  <!-- Step 4: Tags around deploy box -->
+  <div class="s4_tag s4_tag_strategy">策略</div>
+  <div class="s4_tag s4_tag_boundary">边界</div>
+  <div class="s4_tag s4_tag_audit">审计</div>
+</div>
+      </div>
+      <p class="hook-line reveal reveal-d3">从开放开发到锁定部署——安全架构如何平衡两个阶段 ↓</p>
+      <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-security', this)">深入了解安全架构 ↓</button>
+    </div>
+  </section>
+
+  <!-- S5: NemoClaw + OpenClaw -->
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">不是「对比」，<br>是「加法」</h2>
+      <p class="body-text reveal reveal-d1">直播中被问得最多的问题是「NemoClaw vs OpenClaw」。Murphy 的回答很直接：<span class="hl-danger">这个问题本身就问错了</span>。NemoClaw 和 OpenClaw 不是竞争关系，而是<span class="hl">叠加关系</span>。OpenClaw 是智能体本身，NemoClaw 在上面加了安全层、策略层、安装工具和版本验证。同样的逻辑也适用于 Claude Code 和 Codex 的对比——NemoClaw 可以和这些工具配合使用。每种智能体都有自己擅长的场景。OpenClaw 的优势在于智能体记忆和随时间学习的能力，这是一些用户选择它而非 Codex 或 Claude Code 的原因。<span class="hl2">NVIDIA 的目标不是选赢家，而是赋能整个生态</span>。</p>
+      <div class="anim-stage reveal reveal-d2" id="s5-anim">
+        <div class="s5_stage">
+  <div class="s5_row">
+    <div class="s5_box s5_box_openclaw">OpenClaw</div>
+    <div class="s5_plus">+</div>
+    <div class="s5_box s5_box_safety">安全层</div>
+  </div>
+  <div class="s5_result_row">
+    <div class="s5_equals">=</div>
+    <div class="s5_box s5_box_nemoclaw">NemoClaw</div>
+  </div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">直播原文</span><p>It's not NemoClaw versus OpenClaw. You can run NemoClaw with OpenClaw. So you're adding the securities and the policy layers. It's not a versus, it's a plus.</p><p>At NVIDIA, we're not trying to pick winners. We're trying to enable an ecosystem. Each agent is going to have its niches that it's better tuned for, architected for.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S6: Use Cases -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="act-label reveal">ACT III &mdash; 想象</div>
+      <h2 class="big-statement reveal reveal-d1">用例的极限<br>是你的想象力</h2>
+      <p class="body-text reveal reveal-d2">Murphy 的团队自己就在用 NemoClaw 监控社区——一个机器人每天自动扫描论坛、GitHub Issues 和 Discord，把摘要推送到 Slack 频道，报告社区热点和痛点。同事 Shashank 用它做<span class="hl">食材管理</span>：了解冰箱里还有什么、缺什么、能做什么菜。主持人在出差墨西哥和韩国期间，用 Claw 继续推进<span class="hl2">工具调用模型的研究</span>和旅行规划。路线图聚焦的第一个用例是「个人助手」：在家里的 DGX Spark 上 24 小时运行，你在女儿的足球比赛现场也能通过消息 app 给家里的智能体发任务，回到家结果就在那里。一个合作伙伴甚至在<span class="hl">给朋友们「送」智能体</span>当礼物。</p>
+      <div class="anim-stage reveal reveal-d3" id="s6-anim">
+        <div class="s6_stage">
+  <div class="s6_center">Claw</div>
+
+  <div class="s6_box s6_box--tl">社区监控</div>
+  <div class="s6_box s6_box--tr">食材管理</div>
+  <div class="s6_box s6_box--bl">旅行规划</div>
+  <div class="s6_box s6_box--br">个人助手</div>
+
+  <svg class="s6_lines" viewBox="0 0 390 300" preserveAspectRatio="xMidYMid meet">
+    <line class="s6_line" x1="195" y1="150" x2="110" y2="55" />
+    <line class="s6_line" x1="195" y1="150" x2="280" y2="55" />
+    <line class="s6_line" x1="195" y1="150" x2="110" y2="215" />
+    <line class="s6_line" x1="195" y1="150" x2="280" y2="215" />
+  </svg>
+
+  <div class="s6_label">想象力 = 极限</div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">直播原文</span><p>We actually built NemoClaw where we use it to monitor the communities and the forums and the repos. There's a Slack channel where I can go look and see all the highlights of what's happening in the community.</p><p>I met with a partner the other day that told me one of the things they're doing for their friends is gifting them agents. I was like, well, that's an interesting idea. I've never thought about gifting somebody an agent, but apparently that's a thing now.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S7: Multi-Agent -->
+  <section class="feed-section" style="background: var(--bg-act3);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">最期待的功能：<br>让智能体互相对话</h2>
+      <p class="body-text reveal reveal-d1">被问到路线图中最期待什么，Murphy 毫不犹豫地说：<span class="hl2">多智能体工作流</span>。不是「我的智能体变多了」，而是「我的智能体能和你的智能体对话」。他举了一个真实的例子：他的上司让自己的智能体生成了一份关于 NemoClaw 某个问题的报告，然后 Murphy 不得不让自己的智能体去分析这份报告——<span class="hl">指出哪些地方信息不全</span>。如果两个智能体能直接沟通，Murphy 就不需要做中间人。他期待的未来是：<span class="hl2">个人助手从孤立的个体变成能在团队中协作的存在</span>——你构建的技能和注入的信息可以和队友、家人甚至朋友的智能体共享。</p>
+      <div class="anim-stage reveal reveal-d2" id="s7-anim">
+        <div class="s7_stage">
+  <div class="s7_row">
+    <div class="s7_circle s7_circle_a">A的AI</div>
+    <div class="s7_middle">
+      <div class="s7_human">人</div>
+      <div class="s7_arrow_direct">
+        <svg width="120" height="32" viewBox="0 0 120 32">
+          <defs>
+            <marker id="s7_arrowL" markerWidth="8" markerHeight="8" refX="1" refY="4" orient="auto">
+              <path d="M8,0 L0,4 L8,8" fill="none" stroke="#76B900" stroke-width="2"/>
+            </marker>
+            <marker id="s7_arrowR" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8" fill="none" stroke="#76B900" stroke-width="2"/>
+            </marker>
+          </defs>
+          <line x1="10" y1="12" x2="110" y2="12" stroke="#76B900" stroke-width="2.5" marker-start="url(#s7_arrowL)" marker-end="url(#s7_arrowR)"/>
+          <line x1="10" y1="20" x2="110" y2="20" stroke="#76B900" stroke-width="2.5" marker-start="url(#s7_arrowL)" marker-end="url(#s7_arrowR)"/>
+        </svg>
+      </div>
+    </div>
+    <div class="s7_circle s7_circle_b">B的AI</div>
+  </div>
+  <div class="s7_label">直接协作</div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">直播原文</span><p>My boss sent me a report that his agent had created about some issue with NemoClaw. Then I had to ask my agent to go and take that report and tell him why his was wrong. It would be great if his agent could have just talked to my agent and I didn't have to be in the middle of that.</p><p>When these personal assistants go from being siloed personal assistants to ones that can work in teams together and collaborate.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S8: Open Source Power -->
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <div class="act-label reveal">尾声</div>
+      <h2 class="big-statement reveal reveal-d1">社区的力量：<br>路线图由你们书写</h2>
+      <p class="body-text reveal reveal-d2">Murphy 对社区参与的呼吁非常具体：<span class="hl">最有效的贡献不是提交代码，而是提交定义清晰的 GitHub Issue</span>。他直言：「我们有智能体帮我们写代码了，但如果你能精确描述你想要什么、定义好功能规格，那就是最快的推进方式。」路线图本身也是工具——让社区了解团队的焦点在哪里，这样反馈就能精准地落在正在开发的功能上。这不是展示性的开源，而是真正的<span class="hl2">双向对话</span>：路线图根据社区反馈随时调整，Murphy 坦言在智能体领域「路线图一直在变，因为一切都变得太快了」。整个直播本身就是证明——产品经理在线接受任何问题，<span class="hl">每个问题都被认真对待</span>。</p>
+      <div class="anim-stage reveal reveal-d3" id="s8-anim">
+        <div class="s8_stage">
+  <div class="s8_box s8_community">社区</div>
+  <div class="s8_box s8_roadmap">路线图</div>
+  <div class="s8_arrow s8_arrow_top">
+    <svg class="s8_arrow_svg" viewBox="0 0 200 40" preserveAspectRatio="none">
+      <defs>
+        <marker id="s8_head_top" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6" fill="#7C3AED"/>
+        </marker>
+      </defs>
+      <path d="M10,30 Q100,0 190,30" fill="none" stroke="#7C3AED" stroke-width="2" marker-end="url(#s8_head_top)"/>
+    </svg>
+    <span class="s8_label s8_label_issue">Issue</span>
+  </div>
+  <div class="s8_arrow s8_arrow_bottom">
+    <svg class="s8_arrow_svg" viewBox="0 0 200 40" preserveAspectRatio="none">
+      <defs>
+        <marker id="s8_head_bot" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto">
+          <path d="M8,0 L0,3 L8,6" fill="#76B900"/>
+        </marker>
+      </defs>
+      <path d="M10,10 Q100,40 190,10" fill="none" stroke="#76B900" stroke-width="2" marker-start="url(#s8_head_bot)"/>
+    </svg>
+    <span class="s8_label s8_label_func">功能</span>
+  </div>
+  <div class="s8_badge">双向对话</div>
+</div>
+      </div>
+      <p class="body-text reveal reveal-d4" style="font-size:14px; color: var(--dim); text-align: center; margin-top: 40px;">基于 Nemotron Labs 直播「Scaling NemoClaw: Roadmap, OpenClaw Collaboration, and Real-World Integration」制作</p>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ 安全架构深入层 ═══ -->
+<div class="layer" id="layer-security" data-depth="1">
+
+  <!-- A1: Dev Phase -->
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">开发阶段：<br>放开所有限制</h2>
+      <p class="body-text reveal reveal-d1">Murphy 描述了企业部署的第一阶段：<span class="hl">在隔离环境中放开智能体的全部能力</span>。你可以在一个独立的虚拟机或离线设备上运行智能体，让它自由地自我进化、学习新技能、构建能力。这个阶段不需要安全部门的签字——因为智能体被物理隔离了，不接触生产网络和敏感数据。这就像一个沙盒训练场：智能体在这里变得强大，积累技能和知识。NVIDIA 内部也是这么做的——先在隔离环境中验证智能体的能力，确认它能完成预期任务，然后才进入下一阶段。</p>
+      <div class="anim-stage reveal reveal-d2" id="a1-anim">
+        <div class="a1_stage">
+  <!-- Step 1: Isolation container -->
+  <div class="a1_container">
+    <span class="a1_container_label">隔离环境</span>
+    <!-- Step 2: Agent -->
+    <div class="a1_agent">智能体</div>
+    <!-- Step 3: Action labels -->
+    <div class="a1_action a1_action_learn">学习</div>
+    <div class="a1_action a1_action_evolve">进化</div>
+    <div class="a1_action a1_action_build">构建</div>
+  </div>
+  <!-- Step 4: Production network (outside, isolated) -->
+  <div class="a1_prod">生产网络</div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">直播原文</span><p>You can develop in an isolated VM or on a separate device off the network and you have all the open capabilities of the agent to self-evolve and learn and build skills and really be super powerful.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- A2: Deploy Phase -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">部署阶段：<br>精确锁定边界</h2>
+      <p class="body-text reveal reveal-d1">第二阶段是<span class="hl2">将训练好的智能体部署到真实环境</span>。此时安全策略变得至关重要。Murphy 指出核心挑战：自主进化的智能体理论上能做的事情是无限的，但安全部门需要签字确认风险可控。解决方案是<span class="hl">从「能做任何事」收缩到「只能做你需要它做的事」</span>。NemoClaw 的安全策略层让用户可以精确控制：哪些网络可以访问、哪些工具可以使用、哪些数据可以触碰。这不仅仅是企业的需求——即使是个人和家庭场景，你可能也想让孩子能使用某些功能但不能使用其他功能。<span class="hl2">多租户后端</span>也在路线图上，支持不同用户以不同权限使用同一个智能体。</p>
+      <div class="anim-stage reveal reveal-d2" id="a2-anim">
+        <div class="a2_stage">
+  <!-- Top label -->
+  <div class="a2_el a2_open_label">能做任何事 →</div>
+
+  <!-- Step 1 & 2: Boundary + Agent -->
+  <div class="a2_boundary_wrap">
+    <div class="a2_boundary" id="a2_boundary">
+      <div class="a2_agent" id="a2_agent">智能体</div>
+    </div>
+  </div>
+
+  <!-- Step 3: Lock tags -->
+  <div class="a2_locks" id="a2_locks">
+    <div class="a2_el a2_lock_tag a2_lock_net">
+      <svg class="a2_lock_svg" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      网络
+    </div>
+    <div class="a2_el a2_lock_tag a2_lock_tool">
+      <svg class="a2_lock_svg" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      工具
+    </div>
+    <div class="a2_el a2_lock_tag a2_lock_data">
+      <svg class="a2_lock_svg" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      数据
+    </div>
+  </div>
+
+  <!-- Step 4: Status -->
+  <div class="a2_el a2_status">&#10003; 安全策略生效</div>
+</div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">直播原文</span><p>When you go to deploy an actual use case, you might need to lock it down and really use those security policies and different guard-railing around it to ensure that your use case is limited to what you want it to be able to access and what you want it to be able to do.</p><p>How do you get a security department to sign off on the infinite amount of things that an agent could do? That's difficult. That's one of the biggest challenges.</p></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+var layerStack = ['layer-overview'];
+var transitioning = false;
+var layerNames = { 'layer-overview': '概览', 'layer-security': '安全架构' };
+var observers = new Map();
+
+function setupObserver(layerId) {
+  if (observers.has(layerId)) return;
+  var layer = document.getElementById(layerId);
+  var reveals = layer.querySelectorAll('.reveal, [class*=\"_stage\"]');
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        var stage = e.target.querySelector('[class*="_stage"]');
+        if (stage) stage.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.15, root: layer });
+  reveals.forEach(function(el) { obs.observe(el); });
+  observers.set(layerId, obs);
+}
+function resetReveals(layerId) {
+  var layer = document.getElementById(layerId);
+  layer.querySelectorAll('.reveal').forEach(function(el) { el.classList.remove('visible'); });
+  layer.querySelectorAll('[class*="_stage"]').forEach(function(el) { el.classList.remove('visible'); });
+}
+function activateReveals(layerId) {
+  resetReveals(layerId);
+  if (observers.has(layerId)) { observers.get(layerId).disconnect(); observers.delete(layerId); }
+  requestAnimationFrame(function() { setupObserver(layerId); });
+}
+function updateBreadcrumb() {
+  var bc = document.getElementById('breadcrumb');
+  bc.innerHTML = '';
+  layerStack.forEach(function(id, i) {
+    if (i > 0) { var sep = document.createElement('span'); sep.className = 'sep'; sep.textContent = '>'; bc.appendChild(sep); }
+    var span = document.createElement('span');
+    span.textContent = layerNames[id] || id;
+    if (i === layerStack.length - 1) { span.className = 'current'; }
+    else { (function(idx) { span.addEventListener('click', function() { goBackTo(idx); }); })(i); }
+    bc.appendChild(span);
+  });
+  document.getElementById('backBtn').style.display = layerStack.length > 1 ? 'flex' : 'none';
+  bc.style.left = layerStack.length > 1 ? '60px' : '16px';
+  var dots = document.getElementById('depthDots');
+  var depth = layerStack.length - 1;
+  dots.querySelectorAll('.dot').forEach(function(d, i) { d.classList.toggle('active', i === depth); });
+}
+function drillDown(targetId, btnEl) {
+  if (transitioning) return; transitioning = true;
+  var currentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var targetLayer = document.getElementById(targetId);
+  targetLayer.scrollTop = 0; resetReveals(targetId); targetLayer.style.visibility = 'visible';
+  var d = 600;
+  currentLayer.style.transition = 'transform '+d+'ms ease-out, opacity '+d+'ms ease-out';
+  currentLayer.style.transformOrigin = 'center center';
+  currentLayer.style.transform = 'scale(1.3)'; currentLayer.style.opacity = '0';
+  targetLayer.classList.add('active'); targetLayer.style.opacity = '0'; targetLayer.style.transform = 'scale(0.85)';
+  targetLayer.style.transition = 'transform '+d+'ms ease-out, opacity '+d+'ms ease-out';
+  requestAnimationFrame(function() { requestAnimationFrame(function() { targetLayer.style.opacity = '1'; targetLayer.style.transform = 'scale(1)'; }); });
+  setTimeout(function() {
+    currentLayer.classList.remove('active'); currentLayer.style.transition = ''; currentLayer.style.transform = ''; currentLayer.style.opacity = '';
+    targetLayer.style.transition = ''; targetLayer.style.transform = '';
+    activateReveals(targetId); transitioning = false;
+  }, d + 50);
+  layerStack.push(targetId); updateBreadcrumb();
+}
+function goBack() {
+  if (layerStack.length <= 1 || transitioning) return; transitioning = true;
+  var currentId = layerStack.pop(); var parentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId); var parentLayer = document.getElementById(parentId);
+  var d = 600;
+  currentLayer.style.transition = 'transform '+d+'ms ease-out, opacity '+d+'ms ease-out';
+  currentLayer.style.transform = 'scale(0.85)'; currentLayer.style.opacity = '0';
+  parentLayer.classList.add('active'); parentLayer.style.transform = 'scale(1.3)'; parentLayer.style.opacity = '0';
+  parentLayer.style.transition = 'transform '+d+'ms ease-out, opacity '+d+'ms ease-out';
+  requestAnimationFrame(function() { requestAnimationFrame(function() { parentLayer.style.transform = 'scale(1)'; parentLayer.style.opacity = '1'; }); });
+  setTimeout(function() {
+    currentLayer.classList.remove('active'); currentLayer.style.transition = ''; currentLayer.style.transform = ''; currentLayer.style.opacity = ''; currentLayer.style.visibility = '';
+    parentLayer.style.transition = ''; parentLayer.style.transform = ''; transitioning = false;
+  }, d + 50);
+  updateBreadcrumb();
+}
+function goBackTo(ti) { if (transitioning) return; while (layerStack.length - 1 > ti) { if (layerStack.length <= 1) break; goBack(); return; } }
+function toggleSource(btn) { btn.classList.toggle('open'); btn.nextElementSibling.classList.toggle('open'); }
+setupObserver('layer-overview'); updateBreadcrumb();
+</script>
+
+</body>
+</html>

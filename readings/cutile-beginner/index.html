@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>cuTile 入门：先弄懂 thread 和 tile</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --paper: #F7F3EC;
+  --mint: #E7F3EE;
+  --blue: #EAF1F8;
+  --dark: #111827;
+  --text: #20262D;
+  --muted: #66727D;
+  --line: #C8D2DA;
+  --accent: #087E8B;
+  --orange: #D97706;
+  --green: #15803D;
+  --red: #B45309;
+  --card: #FFFFFF;
+}
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Noto Sans SC", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; }
+.layer {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  visibility: hidden;
+  opacity: 0;
+  scroll-snap-type: y proximity;
+}
+.layer.active { visibility: visible; opacity: 1; }
+.layer.transitioning { transition: transform 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.38s ease; }
+.feed-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 82px 24px;
+  scroll-snap-align: start;
+  background: var(--paper);
+}
+.feed-section.mint { background: var(--mint); }
+.feed-section.blue { background: var(--blue); }
+.feed-section.dark { background: var(--dark); color: #F8FAFC; }
+.section-inner { width: min(100%, 640px); max-width: 640px; }
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.kicker::before { content: ""; width: 24px; height: 2px; background: currentColor; border-radius: 2px; }
+.dark .kicker { color: #5EEAD4; }
+.big-statement {
+  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-size: clamp(25px, 5.5vw, 38px);
+  line-height: 1.45;
+  font-weight: 800;
+  margin-bottom: 26px;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+.body-text {
+  font-size: 16px;
+  line-height: 1.95;
+  color: var(--text);
+  margin-bottom: 26px;
+  overflow-wrap: anywhere;
+}
+.dark .body-text { color: #B7C1CB; }
+.hl { color: var(--accent); font-weight: 800; }
+.hl2 { color: var(--orange); font-weight: 800; }
+.dark .hl { color: #5EEAD4; }
+.dark .hl2 { color: #FDBA74; }
+code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(8,126,139,0.09);
+  color: var(--accent);
+  font-size: 0.92em;
+}
+.dark code { background: rgba(94,234,212,0.12); color: #5EEAD4; }
+.reveal { opacity: 0; transform: translateY(38px); transition: opacity 0.75s ease, transform 0.75s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.d1 { transition-delay: 0.12s; }
+.d2 { transition-delay: 0.24s; }
+.d3 { transition-delay: 0.36s; }
+.d4 { transition-delay: 0.48s; }
+
+.breadcrumb {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 1000;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.92);
+  box-shadow: 0 2px 16px rgba(17,24,39,0.12);
+  backdrop-filter: blur(12px);
+  font-size: 13px;
+  font-weight: 700;
+}
+.breadcrumb span { color: var(--muted); cursor: pointer; }
+.breadcrumb span.current { color: var(--text); cursor: default; }
+.breadcrumb .sep { color: #CBD5E1; cursor: default; }
+.back-btn {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 1001;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.92);
+  box-shadow: 0 2px 14px rgba(17,24,39,0.12);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+}
+.depth-dots {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.9);
+  box-shadow: 0 2px 12px rgba(17,24,39,0.12);
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #CBD5E1; transition: all 0.25s; }
+.dot.active { background: var(--accent); transform: scale(1.2); box-shadow: 0 0 8px rgba(8,126,139,0.45); }
+.drill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border: 1.5px solid rgba(8,126,139,0.35);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.drill-btn:hover { background: var(--accent); color: #fff; }
+.dark .drill-btn { color: #5EEAD4; border-color: rgba(94,234,212,0.4); }
+
+.source-panel {
+  margin-top: 24px;
+  border: 1px solid rgba(8,126,139,0.16);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.48);
+}
+.dark .source-panel { border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); }
+.source-toggle {
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+}
+.dark .source-toggle { color: #5EEAD4; }
+.source-toggle .arrow { font-size: 11px; transition: transform 0.25s; }
+.source-toggle.open .arrow { transform: rotate(90deg); }
+.source-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; padding: 0 16px; }
+.source-body.open { max-height: 2000px; padding: 0 16px 16px; overflow-y: auto; }
+.source-body p { font-size: 13px; line-height: 1.8; color: var(--muted); margin-bottom: 10px; }
+.dark .source-body p { color: #AAB6C2; }
+.source-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.dark .source-label { color: #5EEAD4; }
+.refs {
+  margin-top: 18px;
+  padding-left: 18px;
+}
+.refs li { font-size: 14px; line-height: 1.75; margin-bottom: 8px; }
+.refs a { color: #5EEAD4; text-underline-offset: 3px; }
+
+.anim-stage {
+  width: 100%;
+  min-height: 248px;
+  margin: 28px 0;
+  display: flex;
+  justify-content: center;
+}
+.visual {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  min-height: 248px;
+  margin: 0 auto;
+}
+.grid {
+  position: absolute;
+  display: grid;
+  gap: 4px;
+  opacity: 0;
+}
+.cell {
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid rgba(8,126,139,0.35);
+  border-radius: 4px;
+  background: rgba(255,255,255,0.7);
+}
+.cell.on { background: #F3B562; border-color: var(--orange); }
+.dark .cell { background: rgba(255,255,255,0.08); }
+.dot-worker {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: scale(0);
+  opacity: 0;
+}
+.box {
+  position: absolute;
+  border: 2px solid var(--accent);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.52);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.94);
+}
+.dark .box { background: rgba(255,255,255,0.06); }
+.pill {
+  position: absolute;
+  min-width: 80px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 20px;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  background: rgba(255,255,255,0.72);
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0);
+}
+.line {
+  position: absolute;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+.vline {
+  position: absolute;
+  width: 3px;
+  height: 0;
+  background: var(--accent);
+  border-radius: 2px;
+  opacity: 0;
+}
+.caption {
+  position: absolute;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(10px);
+}
+.dark .caption { color: #AAB6C2; }
+
+.big-table .grid { left: 50%; top: 24px; margin-left: -102px; grid-template-columns: repeat(6, 28px); }
+.big-table .box.slice { left: 50%; top: 88px; margin-left: -36px; width: 72px; height: 72px; border-color: var(--orange); color: var(--orange); }
+.big-table .caption { left: 0; right: 0; top: 188px; }
+.big-table.visible .grid { animation: fadeIn 0.35s 0.2s forwards; }
+.big-table.visible .slice { animation: popBox 0.35s 0.75s forwards; }
+.big-table.visible .caption { animation: fadeUp 0.35s 1.25s forwards; }
+
+.thread-scene .dot-worker:nth-child(1) { left: 58px; top: 44px; }
+.thread-scene .dot-worker:nth-child(2) { left: 112px; top: 82px; }
+.thread-scene .dot-worker:nth-child(3) { left: 190px; top: 54px; }
+.thread-scene .dot-worker:nth-child(4) { left: 270px; top: 92px; }
+.thread-scene .dot-worker:nth-child(5) { left: 320px; top: 44px; }
+.thread-scene .caption { left: 0; right: 0; top: 158px; }
+.thread-scene.visible .dot-worker { animation: scaleIn 0.32s forwards; }
+.thread-scene.visible .dot-worker:nth-child(1) { animation-delay: 0.18s; }
+.thread-scene.visible .dot-worker:nth-child(2) { animation-delay: 0.5s; }
+.thread-scene.visible .dot-worker:nth-child(3) { animation-delay: 0.82s; }
+.thread-scene.visible .dot-worker:nth-child(4) { animation-delay: 1.14s; }
+.thread-scene.visible .dot-worker:nth-child(5) { animation-delay: 1.46s; }
+.thread-scene.visible .caption { animation: fadeUp 0.35s 1.95s forwards; }
+
+.block-scene .box.block { left: 50%; top: 42px; margin-left: -118px; width: 236px; height: 118px; }
+.block-scene .dot-worker { background: var(--orange); }
+.block-scene .dot-worker:nth-child(2) { left: 125px; top: 72px; }
+.block-scene .dot-worker:nth-child(3) { left: 170px; top: 72px; }
+.block-scene .dot-worker:nth-child(4) { left: 215px; top: 72px; }
+.block-scene .dot-worker:nth-child(5) { left: 260px; top: 72px; }
+.block-scene .caption { left: 0; right: 0; top: 188px; }
+.block-scene.visible .block { animation: popBox 0.34s 0.2s forwards; }
+.block-scene.visible .dot-worker { animation: scaleIn 0.3s forwards; }
+.block-scene.visible .dot-worker:nth-child(2) { animation-delay: 0.75s; }
+.block-scene.visible .dot-worker:nth-child(3) { animation-delay: 1.05s; }
+.block-scene.visible .dot-worker:nth-child(4) { animation-delay: 1.35s; }
+.block-scene.visible .dot-worker:nth-child(5) { animation-delay: 1.65s; }
+.block-scene.visible .caption { animation: fadeUp 0.35s 2.05s forwards; }
+
+.tile-scene .grid { left: 50%; top: 20px; margin-left: -102px; grid-template-columns: repeat(6, 28px); }
+.tile-scene .box.tile { left: 50%; top: 70px; margin-left: -52px; width: 104px; height: 104px; border-color: var(--green); color: var(--green); }
+.tile-scene .caption { left: 0; right: 0; top: 202px; }
+.tile-scene.visible .grid { animation: fadeIn 0.35s 0.2s forwards; }
+.tile-scene.visible .tile { animation: popBox 0.35s 0.78s forwards; }
+.tile-scene.visible .caption { animation: fadeUp 0.35s 1.25s forwards; }
+
+.mapping .box.block { left: 28px; top: 68px; width: 120px; height: 88px; }
+.mapping .box.tile { right: 28px; top: 68px; width: 120px; height: 88px; border-color: var(--green); color: var(--green); }
+.mapping .line { left: 164px; top: 112px; width: 100px; }
+.mapping .caption { left: 0; right: 0; top: 190px; }
+.mapping.visible .block { animation: popBox 0.34s 0.2s forwards; }
+.mapping.visible .line { animation: stretchX 0.32s 0.75s forwards; }
+.mapping.visible .tile { animation: popBox 0.34s 1.18s forwards; }
+.mapping.visible .caption { animation: fadeUp 0.34s 1.65s forwards; }
+
+.why-tile .pill.mem { left: 50%; top: 24px; transform: translateX(-50%) scale(0); }
+.why-tile .vline { left: 50%; top: 66px; }
+.why-tile .pill.core { left: 50%; top: 112px; transform: translateX(-50%) scale(0); border-color: var(--orange); color: var(--orange); }
+.why-tile .pill.fast { left: 50%; top: 188px; transform: translateX(-50%) scale(0); border-color: var(--green); color: var(--green); }
+.why-tile.visible .mem { animation: scaleCentered 0.34s 0.2s forwards; }
+.why-tile.visible .vline { animation: drawDown 0.3s 0.7s forwards; --h: 38px; }
+.why-tile.visible .core { animation: scaleCentered 0.34s 1.1s forwards; }
+.why-tile.visible .fast { animation: scaleCentered 0.34s 1.62s forwards; }
+
+.cutile-flow .pill.load { left: 12px; top: 70px; }
+.cutile-flow .pill.math { left: 50%; top: 70px; transform: translateX(-50%) scale(0); border-color: var(--orange); color: var(--orange); }
+.cutile-flow .pill.store { right: 12px; top: 70px; border-color: var(--green); color: var(--green); }
+.cutile-flow .line.l1 { left: 106px; top: 88px; width: 75px; }
+.cutile-flow .line.l2 { right: 106px; top: 88px; width: 75px; }
+.cutile-flow .caption { left: 0; right: 0; top: 154px; }
+.cutile-flow.visible .load { animation: scaleIn 0.34s 0.2s forwards; }
+.cutile-flow.visible .l1 { animation: stretchX 0.28s 0.66s forwards; }
+.cutile-flow.visible .math { animation: scaleCentered 0.34s 1.0s forwards; }
+.cutile-flow.visible .l2 { animation: stretchX 0.28s 1.42s forwards; }
+.cutile-flow.visible .store { animation: scaleIn 0.34s 1.75s forwards; }
+.cutile-flow.visible .caption { animation: fadeUp 0.34s 2.18s forwards; }
+
+.path .pill.p1 { left: 50%; top: 18px; transform: translateX(-50%) scale(0); }
+.path .pill.p2 { left: 50%; top: 78px; transform: translateX(-50%) scale(0); border-color: var(--orange); color: var(--orange); }
+.path .pill.p3 { left: 50%; top: 138px; transform: translateX(-50%) scale(0); border-color: var(--green); color: var(--green); }
+.path .pill.p4 { left: 50%; top: 198px; transform: translateX(-50%) scale(0); border-color: #5EEAD4; color: #5EEAD4; background: rgba(255,255,255,0.06); }
+.path.visible .p1 { animation: scaleCentered 0.32s 0.2s forwards; }
+.path.visible .p2 { animation: scaleCentered 0.32s 0.68s forwards; }
+.path.visible .p3 { animation: scaleCentered 0.32s 1.16s forwards; }
+.path.visible .p4 { animation: scaleCentered 0.32s 1.64s forwards; }
+
+.vector .grid.a { left: 0; top: 42px; grid-template-columns: repeat(8, 28px); }
+.vector .grid.b { left: 0; top: 92px; grid-template-columns: repeat(8, 28px); }
+.vector .box.thread { right: 8px; top: 42px; width: 98px; height: 78px; }
+.vector .caption { left: 0; right: 0; top: 164px; }
+.vector.visible .a { animation: fadeIn 0.34s 0.2s forwards; }
+.vector.visible .b { animation: fadeIn 0.34s 0.55s forwards; }
+.vector.visible .thread { animation: popBox 0.34s 1.0s forwards; }
+.vector.visible .caption { animation: fadeUp 0.34s 1.5s forwards; }
+
+.vector-tile .grid.a { left: 50%; top: 34px; margin-left: -116px; grid-template-columns: repeat(8, 28px); }
+.vector-tile .box.tile { left: 50%; top: 28px; margin-left: -118px; width: 124px; height: 40px; border-color: var(--green); color: var(--green); }
+.vector-tile .box.block { left: 50%; top: 110px; margin-left: -72px; width: 144px; height: 60px; }
+.vector-tile .caption { left: 0; right: 0; top: 196px; }
+.vector-tile.visible .a { animation: fadeIn 0.34s 0.2s forwards; }
+.vector-tile.visible .tile { animation: popBox 0.34s 0.75s forwards; }
+.vector-tile.visible .block { animation: popBox 0.34s 1.22s forwards; }
+.vector-tile.visible .caption { animation: fadeUp 0.34s 1.7s forwards; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes scaleIn { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
+@keyframes scaleCentered { from { opacity: 0; transform: translateX(-50%) scale(0); } to { opacity: 1; transform: translateX(-50%) scale(1); } }
+@keyframes popBox { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
+@keyframes stretchX { from { opacity: 1; transform: scaleX(0); } to { opacity: 1; transform: scaleX(1); } }
+@keyframes drawDown { from { opacity: 1; height: 0; } to { opacity: 1; height: var(--h); } }
+
+@media (max-width: 560px) {
+  .feed-section { padding: 78px 20px; justify-content: flex-start; align-items: center; }
+  .section-inner { width: min(calc(100vw - 40px), 350px); max-width: 350px; margin-left: 0; margin-right: auto; }
+  .big-statement { font-size: clamp(23px, 6.3vw, 29px); line-height: 1.5; }
+  .body-text { font-size: 15.5px; }
+  .visual { max-width: 330px; }
+  .thread-scene .dot-worker:nth-child(5) { left: 282px; }
+  .mapping .box.block { left: 0; width: 110px; }
+  .mapping .box.tile { right: 0; width: 110px; }
+  .mapping .line { left: 120px; width: 86px; }
+  .cutile-flow .pill.load { left: 0; }
+  .cutile-flow .pill.store { right: 0; }
+  .cutile-flow .line.l1 { left: 82px; width: 62px; }
+  .cutile-flow .line.l2 { right: 82px; width: 62px; }
+  .vector .grid.a, .vector .grid.b { grid-template-columns: repeat(6, 28px); }
+  .vector .box.thread { right: 0; width: 86px; }
+}
+</style>
+
+<meta name="description" content="GPU 编程的起点不是神秘语法，而是一个朴素问题：数据太多了，一个人从头算到尾太慢，所以要把表格切开，让很多小工位同时干活。">
+<link rel="canonical" href="https://chendi.me/readings/cutile-beginner/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+<div class="breadcrumb" id="breadcrumb"><span class="current">零基础版</span></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">←</button>
+<div class="depth-dots"><div class="dot active"></div><div class="dot"></div></div>
+
+<div class="layer active" id="overview" data-title="零基础版">
+  <section class="feed-section">
+    <div class="section-inner">
+      <div class="kicker reveal">Act 1 / 先看问题</div>
+      <h1 class="big-statement reveal d1">先别管 CUDA。想象你有一张大表格，要非常快地算完。</h1>
+      <p class="body-text reveal d2">GPU 编程的起点不是神秘语法，而是一个朴素问题：数据太多了，一个人从头算到尾太慢，所以要把表格切开，让很多小工位同时干活。</p>
+      <div class="anim-stage reveal d3">
+        <div class="visual big-table">
+          <div class="grid">
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+            <div class="cell"></div><div class="cell on"></div><div class="cell on"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+            <div class="cell"></div><div class="cell on"></div><div class="cell on"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+          </div>
+          <div class="box slice">切一块</div>
+          <div class="caption">大数据先切小块，才方便并行</div>
+        </div>
+      </div>
+      <div class="source-panel reveal d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">本文原稿</span>
+          <p>先别管 CUDA。想象你有一张大表格，要非常快地算完。GPU 编程的起点不是神秘语法，而是一个朴素问题：数据太多了，一个人从头算到尾太慢，所以要把表格切开，让很多小工位同时干活。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section mint">
+    <div class="section-inner">
+      <div class="kicker reveal">Act 1 / Thread</div>
+      <h2 class="big-statement reveal d1">thread 可以先理解成一个很小的执行工位。</h2>
+      <p class="body-text reveal d2">一个 <span class="hl">thread</span> 不是一块数据，而是一个正在执行指令的小单位。你可以把它想成“这个小工位负责算某个位置的数”。GPU 厉害的地方，是能同时摆出非常多这样的小工位。</p>
+      <div class="anim-stage reveal d3">
+        <div class="visual thread-scene">
+          <div class="dot-worker">T</div><div class="dot-worker">T</div><div class="dot-worker">T</div><div class="dot-worker">T</div><div class="dot-worker">T</div>
+          <div class="caption">thread 是干活的执行单位</div>
+        </div>
+      </div>
+      <div class="source-panel reveal d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">本文原稿</span>
+          <p>thread 可以先理解成一个很小的执行工位。一个 thread 不是一块数据，而是一个正在执行指令的小单位。你可以把它想成“这个小工位负责算某个位置的数”。GPU 厉害的地方，是能同时摆出非常多这样的小工位。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section blue">
+    <div class="section-inner">
+      <div class="kicker reveal">Act 1 / Block</div>
+      <h2 class="big-statement reveal d1">很多 thread 会被放进一个 block，像一个小组。</h2>
+      <p class="body-text reveal d2">CUDA 里常见的层级是 grid、block、thread。你现在只要记住：<span class="hl2">block 是一组 thread</span>。这个小组通常一起负责数据里的某个区域，也更容易共享一些临时信息。</p>
+      <div class="anim-stage reveal d3">
+        <div class="visual block-scene">
+          <div class="box block">一个 block</div>
+          <div class="dot-worker">T</div><div class="dot-worker">T</div><div class="dot-worker">T</div><div class="dot-worker">T</div>
+          <div class="caption">block 是 thread 的小组</div>
+        </div>
+      </div>
+      <div class="source-panel reveal d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">本文原稿</span>
+          <p>很多 thread 会被放进一个 block，像一个小组。CUDA 里常见的层级是 grid、block、thread。你现在只要记住：block 是一组 thread。这个小组通常一起负责数据里的某个区域，也更容易共享一些临时信息。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section">
+    <div class="section-inner">
+      <div class="kicker reveal">Act 2 / Tile</div>
+      <h2 class="big-statement reveal d1">tile 不是工位。tile 是从数据里切出来的一块。</h2>
+      <p class="body-text reveal d2">这就是最容易混的地方：<span class="hl">thread 是执行单位</span>，<span class="hl2">tile 是数据单位</span>。如果原始数据是一张很大的表格，那么 tile 就是表格里的一个小矩形区域。</p>
+      <div class="anim-stage reveal d3">
+        <div class="visual tile-scene">
+          <div class="grid">
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+            <div class="cell"></div><div class="cell on"></div><div class="cell on"></div><div class="cell on"></div><div class="cell"></div><div class="cell"></div>
+            <div class="cell"></div><div class="cell on"></div><div class="cell on"></div><div class="cell on"></div><div class="cell"></div><div class="cell"></div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+          </div>
+          <div class="box tile">一个 tile</div>
+          <div class="caption">tile 是一块数据，不是一个 thread</div>
+        </div>
+      </div>
+      <button class="drill-btn reveal d4" onclick="drillDown('example')">看一个加法例子 ↓</button>
+    </div>
+  </section>
+
+  <section class="feed-section mint">
+    <div class="section-inner">
+      <div class="kicker reveal">Act 2 / 对应关系</div>
+      <h2 class="big-statement reveal d1">常见的思路是：一个 block 负责一个 tile。</h2>
+      <p class="body-text reveal d2">这句话不是硬规则，但很适合入门。你可以先把它记成：一个 thread 是小工位，一个 block 是小组，一个 tile 是这组人要处理的数据块。</p>
+      <div class="anim-stage reveal d3">
+        <div class="visual mapping">
+          <div class="box block">block<br>一组 thread</div>
+          <div class="line"></div>
+          <div class="box tile">tile<br>一块数据</div>
+          <div class="caption">执行小组和数据小块建立对应</div>
+        </div>
+      </div>
+      <div class="source-panel reveal d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">本文原稿</span>
+          <p>常见的思路是：一个 block 负责一个 tile。这句话不是硬规则，但很适合入门。你可以先把它记成：一个 thread 是小工位，一个 block 是小组，一个 tile 是这组人要处理的数据块。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="kicker reveal">Act 3 / 为什么要 tile</div>
+      <h2 class="big-statement reveal d1">tile 的价值，是让数据搬运和专用硬件都更顺手。</h2>
+      <p class="body-text reveal d2">GPU 不只是“人多”。它也很在意数据怎么从内存搬到计算单元。按 tile 搬、按 tile 算，往往更容易复用数据，也更接近 Tensor Core 这类硬件喜欢的工作方式。</p>
+      <div class="anim-stage reveal d3">
+        <div class="visual why-tile">
+          <div class="pill mem">成块搬数据</div>
+          <div class="vline"></div>
+          <div class="pill core">成块做矩阵运算</div>
+          <div class="pill fast">更接近硬件效率</div>
+        </div>
+      </div>
+      <div class="source-panel reveal d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">本文原稿</span>
+          <p>tile 的价值，是让数据搬运和专用硬件都更顺手。GPU 不只是“人多”。它也很在意数据怎么从内存搬到计算单元。按 tile 搬、按 tile 算，往往更容易复用数据，也更接近 Tensor Core 这类硬件喜欢的工作方式。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section blue">
+    <div class="section-inner">
+      <div class="kicker reveal">Act 3 / cuTile</div>
+      <h2 class="big-statement reveal d1">cuTile 就是让你更多地描述“这一块数据怎么流动、怎么算”。</h2>
+      <p class="body-text reveal d2">传统 CUDA 更常见的入门方式，是先安排 thread 的编号和索引。cuTile 把表达层级抬高：你先写 <code>ct.load()</code> 取一块 tile，再对这块 tile 做计算，最后 <code>ct.store()</code> 写回。</p>
+      <div class="anim-stage reveal d3">
+        <div class="visual cutile-flow">
+          <div class="pill load">load tile</div>
+          <div class="line l1"></div>
+          <div class="pill math">compute</div>
+          <div class="line l2"></div>
+          <div class="pill store">store tile</div>
+          <div class="caption">cuTile 先让你看见 tile 级数据流</div>
+        </div>
+      </div>
+      <div class="source-panel reveal d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">本文原稿</span>
+          <p>cuTile 就是让你更多地描述“这一块数据怎么流动、怎么算”。传统 CUDA 更常见的入门方式，是先安排 thread 的编号和索引。cuTile 把表达层级抬高：你先写 ct.load() 取一块 tile，再对这块 tile 做计算，最后 ct.store() 写回。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="kicker reveal">Close / 学习顺序</div>
+      <h2 class="big-statement reveal d1">你现在只需要记住四句话。</h2>
+      <p class="body-text reveal d2">thread 是小工位。block 是小组。tile 是数据块。cuTile 是让你优先用数据块来描述 GPU kernel 的方式。等这四句话稳了，再去看 CUDA 语法和矩阵乘法，就不会一上来迷路。</p>
+      <div class="anim-stage reveal d3">
+        <div class="visual path">
+          <div class="pill p1">thread = 小工位</div>
+          <div class="pill p2">block = 小组</div>
+          <div class="pill p3">tile = 数据块</div>
+          <div class="pill p4">cuTile = 操作数据块</div>
+        </div>
+      </div>
+      <ul class="refs reveal d4">
+        <li><a href="https://developer.nvidia.com/cuda/tile" target="_blank" rel="noopener">NVIDIA CUDA Tile 官方入口</a></li>
+        <li><a href="https://docs.nvidia.com/cuda/cutile-python/" target="_blank" rel="noopener">cuTile Python 文档</a></li>
+        <li><a href="https://docs.nvidia.com/cuda/cutile-python/quickstart.html" target="_blank" rel="noopener">cuTile Python Quickstart</a></li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<div class="layer" id="example" data-title="加法例子">
+  <section class="feed-section">
+    <div class="section-inner">
+      <div class="kicker reveal">Example / 传统视角</div>
+      <h2 class="big-statement reveal d1">如果只是做数组加法，一个 thread 可以负责一个位置。</h2>
+      <p class="body-text reveal d2">比如 A 和 B 两排数字相加。传统 CUDA 入门常会说：第 0 个 thread 算第 0 个位置，第 1 个 thread 算第 1 个位置。这个视角的主角是 thread。</p>
+      <div class="anim-stage reveal d3">
+        <div class="visual vector">
+          <div class="grid a">
+            <div class="cell on"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+          </div>
+          <div class="grid b">
+            <div class="cell on"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+          </div>
+          <div class="box thread">thread 0<br>算位置 0</div>
+          <div class="caption">主角是“哪个 thread 算哪个元素”</div>
+        </div>
+      </div>
+      <div class="source-panel reveal d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">本文原稿</span>
+          <p>如果只是做数组加法，一个 thread 可以负责一个位置。比如 A 和 B 两排数字相加。传统 CUDA 入门常会说：第 0 个 thread 算第 0 个位置，第 1 个 thread 算第 1 个位置。这个视角的主角是 thread。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section mint">
+    <div class="section-inner">
+      <div class="kicker reveal">Example / tile 视角</div>
+      <h2 class="big-statement reveal d1">换成 tile 视角，你先说“这一段数据一起处理”。</h2>
+      <p class="body-text reveal d2">tile 视角不会否认 thread 的存在。底层仍然有 thread 在干活。区别是，你写程序时先把一段数据当成一个整体，再描述这个整体要被加载、计算和写回。</p>
+      <div class="anim-stage reveal d3">
+        <div class="visual vector-tile">
+          <div class="grid a">
+            <div class="cell on"></div><div class="cell on"></div><div class="cell on"></div><div class="cell on"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+          </div>
+          <div class="box tile">一个 tile</div>
+          <div class="box block">一个 block<br>处理这块</div>
+          <div class="caption">主角变成“这一块数据怎么处理”</div>
+        </div>
+      </div>
+      <div class="source-panel reveal d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">本文原稿</span>
+          <p>换成 tile 视角，你先说“这一段数据一起处理”。tile 视角不会否认 thread 的存在。底层仍然有 thread 在干活。区别是，你写程序时先把一段数据当成一个整体，再描述这个整体要被加载、计算和写回。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+var stack = ["overview"];
+var titles = { overview: "零基础版", example: "加法例子" };
+var coverageData = {
+  sourceType: "text",
+  totalLength: "约1300字自写教学稿",
+  segments: [
+    { start: 0, end: 150, section: 1, reason: null },
+    { start: 150, end: 320, section: 2, reason: null },
+    { start: 320, end: 500, section: 3, reason: null },
+    { start: 500, end: 680, section: 4, reason: null },
+    { start: 680, end: 850, section: 5, reason: null },
+    { start: 850, end: 1020, section: 6, reason: null },
+    { start: 1020, end: 1190, section: 7, reason: null },
+    { start: 1190, end: 1300, section: 8, reason: null },
+    { start: 1300, end: 1600, section: 4, reason: null, deepDive: true }
+  ]
+};
+var topicData = {
+  1: [{ name: "大表格", status: "included", excerpt: "想象你有一张大表格，要非常快地算完。" }],
+  2: [{ name: "thread", status: "included", excerpt: "thread 可以先理解成一个很小的执行工位。" }],
+  3: [{ name: "block", status: "included", excerpt: "很多 thread 会被放进一个 block，像一个小组。" }],
+  4: [{ name: "tile", status: "included", excerpt: "tile 不是工位。tile 是从数据里切出来的一块。" }],
+  5: [{ name: "block 对 tile", status: "included", excerpt: "常见的思路是：一个 block 负责一个 tile。" }],
+  6: [{ name: "硬件效率", status: "included", excerpt: "tile 的价值，是让数据搬运和专用硬件都更顺手。" }],
+  7: [{ name: "cuTile", status: "included", excerpt: "cuTile 就是让你更多地描述“这一块数据怎么流动、怎么算”。" }],
+  8: [{ name: "四句话", status: "included", excerpt: "thread 是小工位。block 是小组。tile 是数据块。cuTile 是让你优先用数据块来描述 GPU kernel 的方式。" }]
+};
+function activeLayer() { return document.getElementById(stack[stack.length - 1]); }
+function drillDown(id) {
+  var current = activeLayer();
+  var target = document.getElementById(id);
+  if (!target) return;
+  stack.push(id);
+  current.classList.add("transitioning");
+  target.classList.add("transitioning", "active");
+  target.style.transform = "scale(1.06)";
+  target.style.opacity = "0";
+  requestAnimationFrame(function() {
+    current.style.transform = "scale(0.94)";
+    current.style.opacity = "0";
+    target.style.transform = "scale(1)";
+    target.style.opacity = "1";
+  });
+  setTimeout(function() {
+    current.classList.remove("active", "transitioning");
+    target.classList.remove("transitioning");
+    current.style.transform = "";
+    current.style.opacity = "";
+    target.style.transform = "";
+    target.style.opacity = "";
+    target.scrollTop = 0;
+    updateNav();
+    observeActive();
+  }, 420);
+}
+function goBack() {
+  if (stack.length <= 1) return;
+  var current = activeLayer();
+  stack.pop();
+  var target = activeLayer();
+  current.classList.add("transitioning");
+  target.classList.add("transitioning", "active");
+  target.style.transform = "scale(0.94)";
+  target.style.opacity = "0";
+  requestAnimationFrame(function() {
+    current.style.transform = "scale(1.06)";
+    current.style.opacity = "0";
+    target.style.transform = "scale(1)";
+    target.style.opacity = "1";
+  });
+  setTimeout(function() {
+    current.classList.remove("active", "transitioning");
+    target.classList.remove("transitioning");
+    current.style.transform = "";
+    current.style.opacity = "";
+    target.style.transform = "";
+    target.style.opacity = "";
+    updateNav();
+    observeActive();
+  }, 420);
+}
+function updateNav() {
+  var bc = document.getElementById("breadcrumb");
+  var back = document.getElementById("backBtn");
+  bc.innerHTML = "";
+  stack.forEach(function(id, i) {
+    var s = document.createElement("span");
+    s.textContent = titles[id] || id;
+    if (i === stack.length - 1) s.className = "current";
+    else s.onclick = function() {
+      while (stack.length > i + 1) stack.pop();
+      document.querySelectorAll(".layer").forEach(function(layer) { layer.classList.remove("active"); });
+      document.getElementById(id).classList.add("active");
+      updateNav();
+      observeActive();
+    };
+    bc.appendChild(s);
+    if (i < stack.length - 1) {
+      var sep = document.createElement("span");
+      sep.className = "sep";
+      sep.textContent = "/";
+      bc.appendChild(sep);
+    }
+  });
+  bc.style.display = stack.length > 1 ? "none" : "flex";
+  back.style.display = stack.length > 1 ? "flex" : "none";
+  document.querySelectorAll(".dot").forEach(function(dot, i) { dot.classList.toggle("active", i === stack.length - 1); });
+}
+function toggleSource(btn) {
+  btn.classList.toggle("open");
+  btn.parentElement.querySelector(".source-body").classList.toggle("open");
+}
+var observer;
+function observeActive() {
+  if (observer) observer.disconnect();
+  var root = activeLayer();
+  observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("visible");
+        var visual = entry.target.querySelector(".visual");
+        if (visual) visual.classList.add("visible");
+      }
+    });
+  }, { root: root, threshold: 0.18 });
+  root.querySelectorAll(".reveal").forEach(function(el) { observer.observe(el); });
+  root.querySelectorAll(".feed-section").forEach(function(section) {
+    var rect = section.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      section.querySelectorAll(".reveal").forEach(function(el) { el.classList.add("visible"); });
+      var visual = section.querySelector(".visual");
+      if (visual) visual.classList.add("visible");
+    }
+  });
+}
+document.addEventListener("DOMContentLoaded", function() {
+  updateNav();
+  observeActive();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,2024 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Self-Evolving Agents — 让 Agent 自己学会进化</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-act1: #FFF1F2;
+  --bg-act2: #F0FDFA;
+  --bg-act3: #FFF7ED;
+  --bg-dark: #0F172A;
+  --bg-close: #1C1917;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --dim: #94A3B8;
+  --accent: #E11D48;
+  --accent2: #14B8A6;
+  --warm: #D97706;
+  --danger: #DC2626;
+  --neutral: #94A3B8;
+  --card-bg: #FFFFFF;
+}
+
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: -apple-system, 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; background: var(--bg-act1); }
+
+.content-width { max-width: 640px; margin: 0 auto; padding: 0 28px; }
+.big-statement { font-family: 'Noto Serif SC', serif; font-size: clamp(22px, 5.5vw, 32px); font-weight: 700; line-height: 1.5; margin-bottom: 32px; }
+.body-text { font-size: 16px; line-height: 1.9; color: var(--text); margin-bottom: 28px; }
+.body-text .hl { color: var(--accent); font-weight: 500; }
+.body-text .hl2 { color: var(--accent2); font-weight: 500; }
+.body-text .hl-warn { color: var(--warm); font-weight: 500; }
+.body-text .hl-danger { color: var(--danger); font-weight: 500; }
+.hook-line { font-size: 15px; color: var(--accent); font-weight: 600; margin-top: 12px; }
+
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-d1 { transition-delay: 0.15s; }
+.reveal-d2 { transition-delay: 0.3s; }
+.reveal-d3 { transition-delay: 0.45s; }
+.reveal-d4 { transition-delay: 0.6s; }
+
+.layer { position: fixed; inset: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; visibility: hidden; opacity: 0; will-change: transform, opacity; scroll-snap-type: y proximity; }
+.layer.active { visibility: visible; opacity: 1; }
+
+.feed-section { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 80px 24px; scroll-snap-align: start; }
+.feed-section.dark { background: var(--bg-dark); color: #F1F5F9; }
+.feed-section.dark .body-text { color: #94A3B8; }
+.feed-section.dark .big-statement { color: #F1F5F9; }
+.feed-section.dark .hook-line { color: #5EEAD4; }
+.section-inner { max-width: 600px; width: 100%; }
+
+.act-divider { min-height: 40vh; display: flex; align-items: center; justify-content: center; padding: 40px 24px; background: var(--bg-close); color: #E2E8F0; scroll-snap-align: start; }
+.act-divider .act-label { font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--dim); margin-bottom: 12px; }
+.act-divider .act-title { font-family: 'Noto Serif SC', serif; font-size: clamp(20px, 5vw, 28px); font-weight: 700; }
+
+.breadcrumb { position: fixed; top: 16px; left: 16px; z-index: 1000; display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.92); backdrop-filter: blur(12px); padding: 8px 14px; border-radius: 10px; box-shadow: 0 2px 16px rgba(0,0,0,0.1); font-size: 13px; font-weight: 500; }
+.breadcrumb span { color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
+.breadcrumb span:hover { color: var(--accent); }
+.breadcrumb span.current { color: var(--text); cursor: default; }
+.breadcrumb .sep { color: #CBD5E1; margin: 0 2px; cursor: default; }
+
+.back-btn { position: fixed; top: 16px; left: 16px; z-index: 1001; width: 38px; height: 38px; border-radius: 10px; border: none; background: rgba(255,255,255,0.92); backdrop-filter: blur(12px); box-shadow: 0 2px 12px rgba(0,0,0,0.1); font-size: 18px; cursor: pointer; display: none; align-items: center; justify-content: center; color: var(--text); transition: all 0.2s; }
+.back-btn:hover { background: var(--accent); color: #fff; }
+
+.depth-dots { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1000; display: flex; gap: 8px; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px); padding: 8px 14px; border-radius: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #CBD5E1; transition: all 0.3s; }
+.dot.active { background: var(--accent); box-shadow: 0 0 8px rgba(225,29,72,0.5); transform: scale(1.2); }
+
+.drill-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border: 1.5px solid rgba(225,29,72,0.3); border-radius: 10px; background: transparent; color: var(--accent); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.25s; }
+.drill-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(225,29,72,0.3); }
+.dark .drill-btn { border-color: rgba(94,234,212,0.4); color: #5EEAD4; }
+.dark .drill-btn:hover { background: var(--accent2); color: #fff; border-color: var(--accent2); }
+
+.source-panel { margin-top: 24px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(225,29,72,0.15); background: rgba(225,29,72,0.03); }
+.dark .source-panel { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
+.source-toggle { width: 100%; padding: 12px 16px; border: none; background: none; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--accent); }
+.dark .source-toggle { color: #5EEAD4; }
+.source-toggle:hover { background: rgba(225,29,72,0.06); }
+.source-toggle .arrow { transition: transform 0.3s; font-size: 11px; }
+.source-toggle.open .arrow { transform: rotate(90deg); }
+.source-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; padding: 0 16px; }
+.source-body.open { max-height: 2000px; padding: 0 16px 16px; overflow-y: auto; }
+.source-body p { font-size: 13px; line-height: 1.8; color: var(--text-muted); margin: 0 0 10px; white-space: pre-wrap; }
+.dark .source-body p { color: #94A3B8; }
+.source-body .source-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 8px; display: block; }
+.dark .source-body .source-label { color: #5EEAD4; }
+
+.anim-stage { width: 100%; display: flex; justify-content: center; margin: 28px 0; min-height: 180px; }
+.anim-stage > div { width: 100%; }
+
+
+/* === S1 Animation === */
+
+.s1_stage {
+  width: 100%;
+  position: relative;
+  padding: 40px 24px 48px;
+  overflow: hidden;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.s1_chart {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  height: 240px;
+}
+.s1_axis_x {
+  position: absolute;
+  bottom: 32px;
+  left: 40px;
+  right: 16px;
+  height: 2px;
+  background: #94A3B8;
+  opacity: 0;
+}
+.s1_axis_y {
+  position: absolute;
+  bottom: 32px;
+  left: 40px;
+  width: 2px;
+  height: 180px;
+  background: #94A3B8;
+  opacity: 0;
+}
+.s1_stage.visible .s1_axis_x,
+.s1_stage.visible .s1_axis_y {
+  animation: s1_fade_in 0.4s ease forwards;
+  animation-delay: 0s;
+}
+.s1_label_time {
+  position: absolute;
+  bottom: 10px;
+  right: 12px;
+  font-size: 11px;
+  color: #94A3B8;
+  letter-spacing: 0.08em;
+  opacity: 0;
+}
+.s1_label_cap {
+  position: absolute;
+  top: 8px;
+  left: 44px;
+  font-size: 11px;
+  color: #94A3B8;
+  letter-spacing: 0.08em;
+  opacity: 0;
+}
+.s1_stage.visible .s1_label_time {
+  animation: s1_fade_in 0.4s ease forwards;
+  animation-delay: 0.2s;
+}
+.s1_stage.visible .s1_label_cap {
+  animation: s1_fade_in 0.4s ease forwards;
+  animation-delay: 0.2s;
+}
+.s1_poc_line {
+  position: absolute;
+  bottom: 34px;
+  left: 42px;
+  width: 0;
+  height: 3px;
+  background: #14B8A6;
+  transform-origin: left center;
+  transform: rotate(-40deg) translateY(-60px);
+}
+.s1_stage.visible .s1_poc_line {
+  animation: s1_poc_grow 0.8s cubic-bezier(0.4,0,0.2,1) forwards;
+  animation-delay: 0.5s;
+}
+@keyframes s1_poc_grow {
+  0%  { width: 0; }
+  100% { width: 130px; }
+}
+.s1_poc_dot {
+  position: absolute;
+  bottom: 118px;
+  left: 138px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #14B8A6;
+  transform: translate(-50%, 50%);
+  opacity: 0;
+}
+.s1_stage.visible .s1_poc_dot {
+  animation: s1_fade_in 0.3s ease forwards;
+  animation-delay: 1.2s;
+}
+.s1_label_poc {
+  position: absolute;
+  bottom: 126px;
+  left: 52px;
+  font-size: 11px;
+  color: #14B8A6;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  opacity: 0;
+}
+.s1_stage.visible .s1_label_poc {
+  animation: s1_fade_in 0.4s ease forwards;
+  animation-delay: 1.2s;
+}
+.s1_plateau {
+  position: absolute;
+  bottom: 118px;
+  left: 138px;
+  width: 0;
+  height: 3px;
+  background: #94A3B8;
+}
+.s1_stage.visible .s1_plateau {
+  animation: s1_plateau_grow 0.7s ease forwards;
+  animation-delay: 1.5s;
+}
+@keyframes s1_plateau_grow {
+  0%  { width: 0; }
+  100% { width: 120px; }
+}
+.s1_label_plateau {
+  position: absolute;
+  bottom: 126px;
+  left: 200px;
+  font-size: 11px;
+  color: #94A3B8;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  opacity: 0;
+}
+.s1_stage.visible .s1_label_plateau {
+  animation: s1_fade_in 0.4s ease forwards;
+  animation-delay: 2.0s;
+}
+.s1_wall {
+  position: absolute;
+  bottom: 118px;
+  left: 42px;
+  right: 16px;
+  height: 2px;
+  background: repeating-linear-gradient(to right, #94A3B8 0px, #94A3B8 8px, transparent 8px, transparent 16px);
+  opacity: 0;
+}
+.s1_stage.visible .s1_wall {
+  animation: s1_wall_appear 0.5s ease forwards;
+  animation-delay: 1.5s;
+}
+@keyframes s1_wall_appear {
+  0%  { opacity: 0; }
+  100% { opacity: 0.5; }
+}
+.s1_label_wall {
+  position: absolute;
+  bottom: 124px;
+  right: 18px;
+  font-size: 10px;
+  color: #94A3B8;
+  letter-spacing: 0.08em;
+  opacity: 0;
+}
+.s1_stage.visible .s1_label_wall {
+  animation: s1_fade_in 0.4s ease forwards;
+  animation-delay: 2.0s;
+}
+.s1_loop_wrap {
+  position: absolute;
+  bottom: 90px;
+  left: 218px;
+  width: 56px;
+  height: 56px;
+  opacity: 0;
+}
+.s1_loop_ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-color: #E11D48;
+  border-right-color: #E11D48;
+  border-bottom-color: #E11D48;
+}
+.s1_loop_arrow {
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 9px solid #E11D48;
+}
+.s1_stage.visible .s1_loop_wrap {
+  animation: s1_loop_appear 0.4s ease forwards, s1_loop_pulse 1.4s ease-in-out 2.8s infinite;
+  animation-delay: 2.4s, 2.8s;
+}
+.s1_stage.visible .s1_loop_ring {
+  animation: s1_spin 1.2s linear 2.4s infinite;
+}
+@keyframes s1_loop_appear {
+  0%  { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes s1_spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes s1_loop_pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.12); }
+}
+.s1_label_loop {
+  position: absolute;
+  bottom: 70px;
+  left: 210px;
+  font-size: 11px;
+  color: #E11D48;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  opacity: 0;
+}
+.s1_stage.visible .s1_label_loop {
+  animation: s1_fade_in 0.4s ease forwards;
+  animation-delay: 2.8s;
+}
+.s1_break_line {
+  position: absolute;
+  bottom: 120px;
+  left: 258px;
+  width: 3px;
+  height: 0;
+  background: #E11D48;
+  transform-origin: bottom center;
+}
+.s1_stage.visible .s1_break_line {
+  animation: s1_break_grow 0.7s cubic-bezier(0.2,0.8,0.3,1) forwards;
+  animation-delay: 3.4s;
+}
+@keyframes s1_break_grow {
+  0%  { height: 0; opacity: 0; }
+  15% { opacity: 1; }
+  100% { height: 90px; }
+}
+.s1_break_arrow {
+  position: absolute;
+  bottom: 207px;
+  left: 251px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 11px solid #E11D48;
+  opacity: 0;
+}
+.s1_stage.visible .s1_break_arrow {
+  animation: s1_fade_in 0.3s ease forwards;
+  animation-delay: 4.0s;
+}
+.s1_label_break {
+  position: absolute;
+  bottom: 200px;
+  left: 270px;
+  font-size: 11px;
+  color: #E11D48;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  opacity: 0;
+}
+.s1_stage.visible .s1_label_break {
+  animation: s1_fade_in 0.4s ease forwards;
+  animation-delay: 4.0s;
+}
+.s1_crack {
+  position: absolute;
+  bottom: 114px;
+  left: 250px;
+  width: 20px;
+  height: 8px;
+  background: transparent;
+  border-top: 2px solid #E11D48;
+  opacity: 0;
+  clip-path: polygon(0% 0%, 40% 0%, 50% 100%, 60% 0%, 100% 0%, 100% 100%, 0% 100%);
+}
+.s1_stage.visible .s1_crack {
+  animation: s1_crack_appear 0.3s ease forwards;
+  animation-delay: 3.4s;
+}
+@keyframes s1_crack_appear {
+  0%  { opacity: 0; transform: scaleX(0); }
+  100% { opacity: 1; transform: scaleX(1); }
+}
+.s1_title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #2C2520;
+  letter-spacing: 0.04em;
+  text-align: center;
+  opacity: 0;
+  margin-bottom: 8px;
+}
+.s1_caption {
+  font-size: 12px;
+  color: #94A3B8;
+  text-align: center;
+  letter-spacing: 0.06em;
+  opacity: 0;
+  margin-bottom: 20px;
+}
+.s1_stage.visible .s1_title {
+  animation: s1_fade_in 0.6s ease forwards;
+  animation-delay: 0s;
+}
+.s1_stage.visible .s1_caption {
+  animation: s1_fade_in 0.6s ease forwards;
+  animation-delay: 0.2s;
+}
+@keyframes s1_fade_in {
+  0%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* === S2 Animation === */
+
+.s2_stage {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 0 48px;
+}
+.s2_stage .s2_doc,
+.s2_stage .s2_arrow1,
+.s2_stage .s2_fda_wrap,
+.s2_stage .s2_arrow2,
+.s2_stage .s2_patient,
+.s2_stage .s2_badge {
+  opacity: 0;
+}
+.s2_stage.visible .s2_doc         { animation: s2_fadeSlideIn 0.5s ease forwards; animation-delay: 0s; }
+.s2_stage.visible .s2_arrow1      { animation: s2_drawArrow 0.5s ease forwards;   animation-delay: 0.4s; }
+.s2_stage.visible .s2_fda_wrap    { animation: s2_fadeSlideIn 0.5s ease forwards; animation-delay: 0.9s; }
+.s2_stage.visible .s2_fda_circle  { animation: s2_pulse 2s ease-in-out infinite;  animation-delay: 1.4s; }
+.s2_stage.visible .s2_arrow2      { animation: s2_drawArrow 0.5s ease forwards;   animation-delay: 1.3s; }
+.s2_stage.visible .s2_patient     { animation: s2_fadeSlideIn 0.5s ease forwards; animation-delay: 1.8s; }
+.s2_stage.visible .s2_badge       { animation: s2_fadeBadge 0.6s ease forwards;   animation-delay: 2.2s; }
+.s2_pipeline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  flex-wrap: nowrap;
+  width: 100%;
+  max-width: 520px;
+  position: relative;
+}
+.s2_doc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.s2_doc_rect {
+  width: 44px;
+  height: 56px;
+  border: 2px solid #94A3B8;
+  border-radius: 3px;
+  background: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.s2_doc_rect::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  background: #94A3B8;
+  clip-path: polygon(100% 0, 0 0, 100% 100%);
+}
+.s2_doc_rect::after {
+  content: '';
+  position: absolute;
+  bottom: 10px;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  background: #94A3B8;
+  box-shadow: 0 -6px 0 #94A3B8, 0 -12px 0 #94A3B8;
+}
+.s2_label {
+  font-size: 12px;
+  font-family: 'Noto Sans SC', sans-serif;
+  color: #94A3B8;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.s2_arrow1,
+.s2_arrow2 {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: 60px;
+  position: relative;
+}
+.s2_arrow_line {
+  width: 100%;
+  height: 2px;
+  background: #94A3B8;
+  position: relative;
+  transform-origin: left center;
+}
+.s2_arrow_line::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 8px solid #94A3B8;
+}
+@keyframes s2_drawArrow {
+  0%   { opacity: 0; clip-path: inset(0 100% 0 0); }
+  1%   { opacity: 1; }
+  100% { opacity: 1; clip-path: inset(0 0% 0 0); }
+}
+.s2_fda_wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  position: relative;
+}
+.s2_fda_circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid #14B8A6;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-weight: 700;
+  color: #14B8A6;
+  letter-spacing: 0.5px;
+  position: relative;
+}
+@keyframes s2_pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.0); }
+  40% { box-shadow: 0 0 0 10px rgba(20, 184, 166, 0.18); }
+  70% { box-shadow: 0 0 0 18px rgba(20, 184, 166, 0.0); }
+}
+.s2_badge {
+  position: absolute;
+  top: -18px;
+  right: -40px;
+  background: #E11D48;
+  color: #fff;
+  font-size: 11px;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+}
+.s2_patient {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.s2_patient_circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid #E11D48;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+.s2_patient_circle::before {
+  content: '';
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #E11D48;
+  flex-shrink: 0;
+}
+.s2_patient_circle::after {
+  content: '';
+  width: 20px;
+  height: 10px;
+  border-radius: 10px 10px 0 0;
+  background: #E11D48;
+  flex-shrink: 0;
+}
+@keyframes s2_fadeSlideIn {
+  0%   { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes s2_fadeBadge {
+  0%   { opacity: 0; transform: scale(0.6) translateY(4px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* === S3 Animation === */
+
+.s3_stage {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  position: relative;
+}
+.s3_loop_wrap {
+  position: relative;
+  width: 320px;
+  height: 320px;
+  flex-shrink: 0;
+}
+.s3_node {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  text-align: center;
+  opacity: 0;
+  transform: scale(0.4);
+}
+.s3_node--neutral { background: #94A3B8; color: #fff; border: 2px solid #94A3B8; }
+.s3_node--teal { background: #14B8A6; color: #fff; border: 2px solid #14B8A6; }
+.s3_node--rose { background: #E11D48; color: #fff; border: 2px solid #E11D48; }
+.s3_node--top    { top: 0;    left: 50%; transform: translateX(-50%) scale(0.4); }
+.s3_node--right  { top: 50%;  right: 0;  transform: translateY(-50%) scale(0.4); }
+.s3_node--bottom { bottom: 0; left: 50%; transform: translateX(-50%) scale(0.4); }
+.s3_node--left   { top: 50%;  left: 0;   transform: translateY(-50%) scale(0.4); }
+.s3_arrows_svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.s3_arrow_path {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+}
+.s3_arrow_path--neutral { stroke: #94A3B8; }
+.s3_arrow_path--teal    { stroke: #14B8A6; }
+.s3_arrow_path--rose    { stroke: #E11D48; }
+.s3_arrowhead { opacity: 0; }
+.s3_arrowhead--neutral { fill: #94A3B8; }
+.s3_arrowhead--teal    { fill: #14B8A6; }
+.s3_arrowhead--rose    { fill: #E11D48; }
+.s3_center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2.5px solid #94A3B8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: #94A3B8;
+  letter-spacing: 0.03em;
+  opacity: 0;
+}
+@keyframes s3_nodeIn_top { 0% { opacity: 0; transform: translateX(-50%) scale(0.4); } 100% { opacity: 1; transform: translateX(-50%) scale(1); } }
+@keyframes s3_nodeIn_right { 0% { opacity: 0; transform: translateY(-50%) scale(0.4); } 100% { opacity: 1; transform: translateY(-50%) scale(1); } }
+@keyframes s3_nodeIn_bottom { 0% { opacity: 0; transform: translateX(-50%) scale(0.4); } 100% { opacity: 1; transform: translateX(-50%) scale(1); } }
+@keyframes s3_nodeIn_left { 0% { opacity: 0; transform: translateY(-50%) scale(0.4); } 100% { opacity: 1; transform: translateY(-50%) scale(1); } }
+@keyframes s3_arrowDraw { 0% { stroke-dashoffset: 200; } 100% { stroke-dashoffset: 0; } }
+@keyframes s3_headFade { 0% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes s3_centerIn { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0); } 60% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+@keyframes s3_pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(148,163,184,0.35); } 50% { box-shadow: 0 0 0 10px rgba(148,163,184,0); } }
+.s3_stage.visible .s3_node--top { animation: s3_nodeIn_top 0.5s cubic-bezier(0.34,1.56,0.64,1) 0s forwards; }
+.s3_stage.visible .s3_node--right { animation: s3_nodeIn_right 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.5s forwards; }
+.s3_stage.visible .s3_node--bottom { animation: s3_nodeIn_bottom 0.5s cubic-bezier(0.34,1.56,0.64,1) 1.0s forwards; }
+.s3_stage.visible .s3_node--left { animation: s3_nodeIn_left 0.5s cubic-bezier(0.34,1.56,0.64,1) 1.5s forwards; }
+.s3_stage.visible .s3_path_1 { animation: s3_arrowDraw 0.5s ease 2.0s forwards; }
+.s3_stage.visible .s3_head_1 { animation: s3_headFade 0.1s ease 2.45s forwards; }
+.s3_stage.visible .s3_path_2 { animation: s3_arrowDraw 0.5s ease 2.5s forwards; }
+.s3_stage.visible .s3_head_2 { animation: s3_headFade 0.1s ease 2.95s forwards; }
+.s3_stage.visible .s3_path_3 { animation: s3_arrowDraw 0.5s ease 3.0s forwards; }
+.s3_stage.visible .s3_head_3 { animation: s3_headFade 0.1s ease 3.45s forwards; }
+.s3_stage.visible .s3_path_4 { animation: s3_arrowDraw 0.5s ease 3.5s forwards; }
+.s3_stage.visible .s3_head_4 { animation: s3_headFade 0.1s ease 3.95s forwards; }
+.s3_stage.visible .s3_center { animation: s3_centerIn 0.6s cubic-bezier(0.34,1.56,0.64,1) 4.1s forwards, s3_pulse 1.8s ease-in-out 4.8s infinite; }
+
+/* === S4 Animation === */
+
+.s4_stage {
+  width: 100%;
+  padding: 40px 0 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.s4_card {
+  width: 100%;
+  max-width: 480px;
+  position: relative;
+  background: #fff;
+  border-radius: 10px;
+  padding: 18px 20px 16px;
+  margin-bottom: 10px;
+  opacity: 0;
+  transform: translateY(48px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  border-left: 5px solid #94A3B8;
+}
+.s4_card--teal { border-left-color: #14B8A6; }
+.s4_card--rose {
+  border-left-color: #E11D48;
+  padding: 22px 22px 20px;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(225,29,72,0.13);
+}
+.s4_score {
+  display: inline-block;
+  opacity: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #94A3B8;
+  background: #F1F5F9;
+  border-radius: 6px;
+  padding: 2px 10px;
+  margin-top: 8px;
+  transform: scale(0.7);
+}
+.s4_card--teal .s4_score { color: #14B8A6; background: #CCFBF1; }
+.s4_card--rose .s4_score { color: #E11D48; background: #FFE4E6; }
+.s4_label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  color: #94A3B8;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.s4_card--teal .s4_label { color: #14B8A6; }
+.s4_card--rose .s4_label { color: #E11D48; }
+.s4_name { font-size: 18px; font-weight: 700; color: #2C2520; line-height: 1.3; }
+.s4_card--rose .s4_name { font-size: 20px; }
+.s4_desc { font-size: 12px; color: #7A7068; margin-top: 4px; line-height: 1.5; }
+.s4_bar_wrap { margin-top: 10px; height: 4px; background: #F1F5F9; border-radius: 2px; overflow: hidden; width: 100%; }
+.s4_bar { height: 100%; width: 0%; border-radius: 2px; background: #94A3B8; }
+.s4_card--teal .s4_bar { background: #14B8A6; }
+.s4_card--rose .s4_bar { background: #E11D48; }
+.s4_connector { width: 3px; height: 10px; background: #E2E8F0; opacity: 0; margin: 0 auto -10px; }
+.s4_title_row { opacity: 0; }
+@keyframes s4_slideUp { from { opacity: 0; transform: translateY(48px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes s4_scorePop { 0% { opacity: 0; transform: scale(0.7); } 60% { transform: scale(1.12); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes s4_barGrow { from { width: 0%; } to { width: var(--s4-bar-w, 60%); } }
+@keyframes s4_connectorFade { from { opacity: 0; } to { opacity: 1; } }
+.s4_stage.visible .s4_title_row { animation: s4_slideUp 0.5s ease 0s forwards; }
+.s4_stage.visible .s4_connector { animation: s4_connectorFade 0.3s ease forwards; }
+.s4_stage.visible .s4_card:nth-child(2) { animation: s4_slideUp 0.55s cubic-bezier(0.22,1,0.36,1) 0.1s forwards; }
+.s4_stage.visible .s4_card:nth-child(2) .s4_score { animation: s4_scorePop 0.4s cubic-bezier(0.34,1.56,0.64,1) 0.75s forwards; }
+.s4_stage.visible .s4_card:nth-child(2) .s4_bar { animation: s4_barGrow 0.5s ease 0.75s forwards; }
+.s4_stage.visible .s4_connector:nth-child(3) { animation: s4_connectorFade 0.25s ease 0.7s forwards; }
+.s4_stage.visible .s4_card:nth-child(4) { animation: s4_slideUp 0.55s cubic-bezier(0.22,1,0.36,1) 0.5s forwards; }
+.s4_stage.visible .s4_card:nth-child(4) .s4_score { animation: s4_scorePop 0.4s cubic-bezier(0.34,1.56,0.64,1) 1.15s forwards; }
+.s4_stage.visible .s4_card:nth-child(4) .s4_bar { animation: s4_barGrow 0.5s ease 1.15s forwards; }
+.s4_stage.visible .s4_connector:nth-child(5) { animation: s4_connectorFade 0.25s ease 1.1s forwards; }
+.s4_stage.visible .s4_card:nth-child(6) { animation: s4_slideUp 0.55s cubic-bezier(0.22,1,0.36,1) 0.9s forwards; }
+.s4_stage.visible .s4_card:nth-child(6) .s4_score { animation: s4_scorePop 0.4s cubic-bezier(0.34,1.56,0.64,1) 1.55s forwards; }
+.s4_stage.visible .s4_card:nth-child(6) .s4_bar { animation: s4_barGrow 0.5s ease 1.55s forwards; }
+.s4_stage.visible .s4_connector:nth-child(7) { animation: s4_connectorFade 0.25s ease 1.5s forwards; }
+.s4_stage.visible .s4_card:nth-child(8) { animation: s4_slideUp 0.65s cubic-bezier(0.22,1,0.36,1) 1.3s forwards; }
+.s4_stage.visible .s4_card:nth-child(8) .s4_score { animation: s4_scorePop 0.45s cubic-bezier(0.34,1.56,0.64,1) 2.05s forwards; }
+.s4_stage.visible .s4_card:nth-child(8) .s4_bar { animation: s4_barGrow 0.6s ease 2.05s forwards; }
+
+/* === S5 Animation === */
+
+.s5_stage {
+  width: 100%;
+  padding: 40px 16px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.s5_chart_wrap {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  height: 260px;
+}
+.s5_axis {
+  position: absolute;
+  bottom: 40px;
+  left: 48px;
+  right: 16px;
+  height: 2px;
+  background: #E2E8F0;
+  opacity: 0;
+}
+.s5_stage.visible .s5_axis {
+  animation: s5_fadeIn 0.4s ease 0.3s forwards;
+}
+.s5_bar_group {
+  position: absolute;
+  bottom: 42px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+}
+.s5_bar {
+  border-radius: 4px 4px 0 0;
+  width: 56px;
+  height: 0;
+}
+.s5_bar_label {
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 8px;
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+}
+.s5_bar_tag {
+  font-size: 10px;
+  color: #64748B;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+/* v0 */
+.s5_g0 { left: 72px; }
+.s5_g0 .s5_bar { background: #94A3B8; }
+.s5_g0 .s5_bar_label { color: #94A3B8; }
+.s5_stage.visible .s5_g0 {
+  animation: s5_fadeIn 0.3s ease 0s forwards;
+}
+.s5_stage.visible .s5_g0 .s5_bar {
+  animation: s5_growBar 0.6s cubic-bezier(0.22,1,0.36,1) 0s forwards;
+  --s5-h: 56px;
+}
+/* v2 */
+.s5_g2 { left: 192px; }
+.s5_g2 .s5_bar { background: #14B8A6; }
+.s5_g2 .s5_bar_label { color: #14B8A6; }
+.s5_stage.visible .s5_g2 {
+  animation: s5_fadeIn 0.3s ease 0.4s forwards;
+}
+.s5_stage.visible .s5_g2 .s5_bar {
+  animation: s5_growBar 0.6s cubic-bezier(0.22,1,0.36,1) 0.4s forwards;
+  --s5-h: 108px;
+}
+/* v5 */
+.s5_g5 { left: 312px; }
+.s5_g5 .s5_bar { background: #E11D48; }
+.s5_g5 .s5_bar_label { color: #E11D48; }
+.s5_stage.visible .s5_g5 {
+  animation: s5_fadeIn 0.3s ease 0.8s forwards;
+}
+.s5_stage.visible .s5_g5 .s5_bar {
+  animation: s5_growBar 0.6s cubic-bezier(0.22,1,0.36,1) 0.8s forwards, s5_glow 2s ease-in-out 1.6s infinite;
+  --s5-h: 168px;
+}
+/* Score dots */
+.s5_score_svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+.s5_score_line {
+  fill: none;
+  stroke: #E11D48;
+  stroke-width: 2;
+  stroke-dasharray: 400;
+  stroke-dashoffset: 400;
+  stroke-linecap: round;
+}
+.s5_stage.visible .s5_score_line {
+  animation: s5_drawLine 0.8s ease 1.2s forwards;
+}
+.s5_score_dot {
+  fill: #fff;
+  stroke-width: 2;
+  opacity: 0;
+}
+.s5_score_dot--n { stroke: #94A3B8; }
+.s5_score_dot--t { stroke: #14B8A6; }
+.s5_score_dot--r { stroke: #E11D48; }
+.s5_stage.visible .s5_d0 { animation: s5_dotPop 0.3s ease 1.4s forwards; }
+.s5_stage.visible .s5_d2 { animation: s5_dotPop 0.3s ease 1.7s forwards; }
+.s5_stage.visible .s5_d5 { animation: s5_dotPop 0.3s ease 2.0s forwards; }
+.s5_score_text {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0;
+}
+.s5_score_text--n { fill: #94A3B8; }
+.s5_score_text--t { fill: #14B8A6; }
+.s5_score_text--r { fill: #E11D48; }
+.s5_stage.visible .s5_t0 { animation: s5_fadeIn 0.3s ease 1.5s forwards; }
+.s5_stage.visible .s5_t2 { animation: s5_fadeIn 0.3s ease 1.8s forwards; }
+.s5_stage.visible .s5_t5 { animation: s5_fadeIn 0.3s ease 2.1s forwards; }
+@keyframes s5_fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes s5_growBar { from { height: 0; } to { height: var(--s5-h); } }
+@keyframes s5_drawLine { to { stroke-dashoffset: 0; } }
+@keyframes s5_dotPop { 0% { opacity: 0; r: 0; } 100% { opacity: 1; r: 5; } }
+@keyframes s5_glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(225,29,72,0); }
+  50% { box-shadow: 0 -4px 20px 4px rgba(225,29,72,0.25); }
+}
+
+/* === S6 Animation === */
+
+@keyframes s6_labelFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes s6_barGrowLeft { from { height: 0%; } to { height: 85%; } }
+@keyframes s6_barGrowRight { from { height: 0%; } to { height: 72%; } }
+@keyframes s6_scoreFadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes s6_crownPop { 0% { opacity: 0; transform: translateX(-50%) scale(0.4); } 60% { opacity: 1; transform: translateX(-50%) scale(1.2); } 100% { opacity: 1; transform: translateX(-50%) scale(1); } }
+@keyframes s6_crownGlow { 0%, 100% { box-shadow: 0 0 6px 2px rgba(225,29,72,0.4); } 50% { box-shadow: 0 0 14px 5px rgba(225,29,72,0.75); } }
+.s6_stage {
+  width: 100%;
+  padding: 48px 28px 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.s6_title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #94A3B8;
+  text-transform: uppercase;
+  margin-bottom: 36px;
+  opacity: 0;
+}
+.s6_stage.visible .s6_title { opacity: 1; transition: opacity 0.5s ease; }
+.s6_arena {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 48px;
+  width: 100%;
+  max-width: 420px;
+  height: 260px;
+  position: relative;
+}
+.s6_arena::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #94A3B8;
+  opacity: 0.3;
+}
+.s6_col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  position: relative;
+  flex: 1;
+  max-width: 120px;
+}
+.s6_label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #94A3B8;
+  margin-bottom: 10px;
+  white-space: nowrap;
+  opacity: 0;
+}
+.s6_stage.visible .s6_col--left .s6_label { animation: s6_labelFadeIn 0.45s ease forwards; animation-delay: 0.2s; }
+.s6_stage.visible .s6_col--right .s6_label { animation: s6_labelFadeIn 0.45s ease forwards; animation-delay: 1.4s; }
+.s6_score {
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+  opacity: 0;
+  position: relative;
+  z-index: 2;
+}
+.s6_col--left .s6_score  { color: #E11D48; }
+.s6_col--right .s6_score { color: #14B8A6; }
+.s6_stage.visible .s6_col--left .s6_score { animation: s6_scoreFadeIn 0.4s ease forwards; animation-delay: 1.0s; }
+.s6_stage.visible .s6_col--right .s6_score { animation: s6_scoreFadeIn 0.4s ease forwards; animation-delay: 2.2s; }
+.s6_bar {
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  height: 0%;
+  position: relative;
+}
+.s6_col--left .s6_bar  { background: #E11D48; }
+.s6_col--right .s6_bar { background: #14B8A6; }
+.s6_stage.visible .s6_col--left .s6_bar { animation: s6_barGrowLeft 0.7s cubic-bezier(0.22,1,0.36,1) forwards; animation-delay: 0.6s; }
+.s6_stage.visible .s6_col--right .s6_bar { animation: s6_barGrowRight 0.7s cubic-bezier(0.22,1,0.36,1) forwards; animation-delay: 1.8s; }
+.s6_crown {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.4);
+  width: 18px;
+  height: 14px;
+  opacity: 0;
+  z-index: 3;
+}
+.s6_crown::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 3px solid transparent;
+  border-bottom: 10px solid #E11D48;
+}
+.s6_crown::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-left: 3px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 10px solid #E11D48;
+}
+.s6_crown-mid {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 14px solid #E11D48;
+}
+.s6_crown-base {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #E11D48;
+  border-radius: 1px;
+}
+.s6_stage.visible .s6_crown {
+  animation: s6_crownPop 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards, s6_crownGlow 1.8s ease-in-out 3.1s infinite;
+  animation-delay: 2.6s, 3.1s;
+}
+
+/* === S7 Animation === */
+
+.s7_stage {
+  position: relative;
+  width: 100%;
+  padding: 48px 16px 56px;
+  overflow: hidden;
+}
+.s7_canvas {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  height: 280px;
+  margin: 0 auto;
+}
+.s7_svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+.s7_line {
+  stroke: #94A3B8;
+  stroke-width: 1.5;
+  fill: none;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  opacity: 0;
+}
+.s7_node {
+  position: absolute;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.3);
+}
+.s7_lbl {
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  text-align: center;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+.s7_glow {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0;
+}
+.s7_score {
+  position: absolute;
+  font-size: 12px;
+  font-weight: 700;
+  color: #E11D48;
+  opacity: 0;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+}
+@keyframes s7_pop { 0% { opacity: 0; transform: scale(0.3); } 65% { opacity: 1; transform: scale(1.1); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes s7_draw { 0% { stroke-dashoffset: 100; opacity: 0.6; } 100% { stroke-dashoffset: 0; opacity: 0.6; } }
+@keyframes s7_dim { 0% { opacity: 1; } 100% { opacity: 0.13; } }
+@keyframes s7_glow_pulse { 0% { opacity: 0; box-shadow: 0 0 0 0 rgba(225,29,72,0.55); } 35% { opacity: 1; box-shadow: 0 0 0 10px rgba(225,29,72,0.28); } 75% { opacity: 1; box-shadow: 0 0 0 18px rgba(225,29,72,0.10); } 100% { opacity: 1; box-shadow: 0 0 0 22px rgba(225,29,72,0); } }
+@keyframes s7_score_in { 0% { opacity: 0; transform: translateY(7px); } 100% { opacity: 1; transform: translateY(0); } }
+.s7_stage.visible .s7_node--g0 { animation: s7_pop 0.55s ease-out 0s both; }
+.s7_stage.visible .s7_line--g0a { animation: s7_draw 0.45s ease-out 0.6s both; }
+.s7_stage.visible .s7_line--g0b { animation: s7_draw 0.45s ease-out 1.0s both; }
+.s7_stage.visible .s7_node--a { animation: s7_pop 0.5s ease-out 1.0s both; }
+.s7_stage.visible .s7_node--b { animation: s7_pop 0.5s ease-out 1.4s both, s7_dim 0.6s ease-in 2.0s forwards; }
+.s7_stage.visible .s7_line--aa1 { animation: s7_draw 0.45s ease-out 2.6s both; }
+.s7_stage.visible .s7_line--aa2 { animation: s7_draw 0.45s ease-out 3.0s both; }
+.s7_stage.visible .s7_node--a1 { animation: s7_pop 0.5s ease-out 3.0s both; }
+.s7_stage.visible .s7_node--a2 { animation: s7_pop 0.5s ease-out 3.4s both; }
+.s7_stage.visible .s7_glow--a1 { animation: s7_glow_pulse 1.4s ease-out 3.8s both; }
+.s7_stage.visible .s7_score--a1 { animation: s7_score_in 0.5s ease-out 4.2s both; }
+
+/* === S8 Animation === */
+
+.s8_stage {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 24px 0 48px;
+  overflow: visible;
+}
+.s8_svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.s8_origin {
+  fill: #2C2520;
+  opacity: 0;
+  transform-origin: 260px 40px;
+}
+.s8_stage.visible .s8_origin { animation: s8_pop 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.1s forwards; }
+.s8_line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+}
+.s8_line_left  { stroke: #D97706; }
+.s8_line_mid   { stroke: #14B8A6; }
+.s8_line_right { stroke: #E11D48; }
+.s8_stage.visible .s8_line_left  { animation: s8_draw 0.55s ease-out 0.5s forwards; }
+.s8_stage.visible .s8_line_mid   { animation: s8_draw 0.55s ease-out 0.9s forwards; }
+.s8_stage.visible .s8_line_right { animation: s8_draw 0.55s ease-out 1.3s forwards; }
+.s8_dot { opacity: 0; transform-box: fill-box; transform-origin: center; }
+.s8_dot_left  { fill: #D97706; }
+.s8_dot_mid   { fill: #14B8A6; }
+.s8_dot_right { fill: #E11D48; }
+.s8_stage.visible .s8_dot_left  { animation: s8_pop 0.3s cubic-bezier(0.34,1.56,0.64,1) 1.05s forwards, s8_pulse 0.6s ease-in-out 1.8s 2; }
+.s8_stage.visible .s8_dot_mid   { animation: s8_pop 0.3s cubic-bezier(0.34,1.56,0.64,1) 1.45s forwards, s8_pulse 0.6s ease-in-out 2.2s 2; }
+.s8_stage.visible .s8_dot_right { animation: s8_pop 0.3s cubic-bezier(0.34,1.56,0.64,1) 1.85s forwards, s8_pulse 0.6s ease-in-out 2.6s 2; }
+.s8_label { opacity: 0; font-family: 'Noto Sans SC', -apple-system, sans-serif; }
+.s8_label_name { font-size: 13px; font-weight: 700; letter-spacing: 0.5px; }
+.s8_label_desc { font-size: 11px; font-weight: 400; opacity: 0.82; }
+.s8_label_left  { fill: #D97706; }
+.s8_label_mid   { fill: #14B8A6; }
+.s8_label_right { fill: #E11D48; }
+.s8_stage.visible .s8_label_left  { animation: s8_fade_up 0.4s ease-out 1.2s forwards; }
+.s8_stage.visible .s8_label_mid   { animation: s8_fade_up 0.4s ease-out 1.6s forwards; }
+.s8_stage.visible .s8_label_right { animation: s8_fade_up 0.4s ease-out 2.0s forwards; }
+@keyframes s8_pop { 0% { opacity: 0; transform: scale(0); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes s8_draw { to { stroke-dashoffset: 0; } }
+@keyframes s8_pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.6; } }
+@keyframes s8_fade_up { 0% { opacity: 0; transform: translateY(6px); } 100% { opacity: 1; transform: translateY(0); } }
+
+/* === A1 Animation === */
+
+.a1_stage {
+  width: 100%;
+  padding: 32px 16px 40px;
+  font-family: 'Noto Sans SC', -apple-system, sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+.a1_grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  max-width: 560px;
+  margin: 0 auto;
+}
+.a1_tier_label {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #94A3B8;
+  opacity: 0;
+  margin-bottom: 2px;
+}
+.a1_divider_wrap {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  margin: 6px 0;
+  opacity: 0;
+}
+.a1_divider_line {
+  height: 1px;
+  background: #94A3B8;
+  width: 0%;
+  flex: 1;
+}
+.a1_card {
+  background: #FFFFFF;
+  border-radius: 6px;
+  padding: 18px 16px 14px;
+  position: relative;
+  opacity: 0;
+  transform: translateY(18px);
+  border-width: 2px;
+  border-style: solid;
+}
+.a1_card.a1_teal { border-color: #14B8A6; }
+.a1_card.a1_rose { border-color: #E11D48; }
+.a1_card.a1_rose_em { border-color: #E11D48; background: #FFF1F4; }
+.a1_card_name { font-size: 15px; font-weight: 600; color: #2C2520; line-height: 1.4; margin-bottom: 10px; }
+.a1_card_tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+.a1_card.a1_teal .a1_card_tag { background: #CCFBF1; color: #0F766E; }
+.a1_card.a1_rose .a1_card_tag, .a1_card.a1_rose_em .a1_card_tag { background: #FFE4E9; color: #BE123C; }
+@keyframes a1_card_in { 0% { opacity: 0; transform: translateY(18px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes a1_label_in { 0% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes a1_line_draw { 0% { width: 0%; opacity: 0; } 10% { opacity: 1; } 100% { width: 100%; opacity: 1; } }
+@keyframes a1_divider_wrap_in { 0% { opacity: 0; } 100% { opacity: 1; } }
+.a1_stage.visible .a1_card.a1_b1 { animation: a1_card_in 0.55s cubic-bezier(0.22,1,0.36,1) 0s forwards; }
+.a1_stage.visible .a1_card.a1_b2 { animation: a1_card_in 0.55s cubic-bezier(0.22,1,0.36,1) 0.45s forwards; }
+.a1_stage.visible .a1_label_rules { animation: a1_label_in 0.4s ease 0.6s forwards; }
+.a1_stage.visible .a1_divider_wrap { animation: a1_divider_wrap_in 0.1s ease 1.0s forwards; }
+.a1_stage.visible .a1_divider_line { animation: a1_line_draw 0.5s ease 1.0s forwards; }
+.a1_stage.visible .a1_card.a1_t1 { animation: a1_card_in 0.55s cubic-bezier(0.22,1,0.36,1) 1.5s forwards; }
+.a1_stage.visible .a1_card.a1_t2 { animation: a1_card_in 0.55s cubic-bezier(0.22,1,0.36,1) 1.95s forwards; }
+.a1_stage.visible .a1_label_semantic { animation: a1_label_in 0.4s ease 2.1s forwards; }
+
+/* === A2 Animation === */
+
+@keyframes a2_fadeSlideDown { from { opacity: 0; transform: translateY(-18px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes a2_boxAppear { from { opacity: 0; transform: scaleY(0.4); } to { opacity: 1; transform: scaleY(1); } }
+@keyframes a2_boxGrow { from { opacity: 0; transform: scaleY(0.3); max-height: 48px; } to { opacity: 1; transform: scaleY(1); max-height: 220px; } }
+@keyframes a2_scorePop { 0% { opacity: 0; transform: scale(0.6) translateY(8px); } 70% { transform: scale(1.12) translateY(-2px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes a2_arrowRise { from { opacity: 0; transform: translateY(20px) scaleY(0.5); } to { opacity: 1; transform: translateY(0) scaleY(1); } }
+.a2_stage {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 28px 20px 36px;
+  font-family: 'Noto Sans SC', -apple-system, sans-serif;
+}
+.a2_grid {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  align-items: flex-start;
+}
+.a2_col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.a2_header {
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 6px 8px;
+  border-radius: 6px 6px 0 0;
+  margin-bottom: 10px;
+  opacity: 0;
+}
+.a2_header--warm { color: #D97706; background: #FEF3C7; border-bottom: 2px solid #D97706; }
+.a2_header--teal { color: #14B8A6; background: #CCFBF1; border-bottom: 2px solid #14B8A6; }
+.a2_header--rose { color: #E11D48; background: #FFE4E6; border-bottom: 2px solid #E11D48; }
+.a2_label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  color: #9A9188;
+}
+.a2_box {
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: #3A3530;
+  opacity: 0;
+  transform-origin: top center;
+  overflow: hidden;
+}
+.a2_box--before { background: #F0EBE3; border: 1px solid #D8D0C4; margin-bottom: 8px; min-height: 52px; }
+.a2_col--warm .a2_box--after { border: 1.5px solid #D97706; background: #FFFBEB; }
+.a2_col--teal .a2_box--after { border: 1.5px solid #14B8A6; background: #F0FDFB; }
+.a2_col--rose .a2_box--after { border: 1.5px solid #E11D48; background: #FFF1F3; }
+.a2_arrow { text-align: center; font-size: 1rem; line-height: 1; margin: 2px 0 6px; color: #C4B8AC; opacity: 0; }
+.a2_score { margin-top: 14px; text-align: center; opacity: 0; }
+.a2_score__num { font-size: 1.5rem; font-weight: 700; display: block; line-height: 1; }
+.a2_score__label { font-size: 0.6rem; letter-spacing: 0.07em; text-transform: uppercase; color: #9A9188; margin-top: 2px; display: block; }
+.a2_col--warm .a2_score__num { color: #D97706; }
+.a2_col--teal .a2_score__num { color: #14B8A6; }
+.a2_col--rose .a2_score__num { color: #E11D48; }
+.a2_rise { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 10px; opacity: 0; }
+.a2_rise__bar { width: 4px; border-radius: 2px; background: #E11D48; }
+.a2_rise__tip { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 9px solid #E11D48; }
+.a2_stage.visible .a2_header--warm { animation: a2_fadeSlideDown 0.5s ease forwards; animation-delay: 0.1s; }
+.a2_stage.visible .a2_header--teal { animation: a2_fadeSlideDown 0.5s ease forwards; animation-delay: 0.5s; }
+.a2_stage.visible .a2_header--rose { animation: a2_fadeSlideDown 0.5s ease forwards; animation-delay: 0.9s; }
+.a2_stage.visible .a2_col--warm .a2_box--before { animation: a2_boxAppear 0.4s ease forwards; animation-delay: 0.7s; }
+.a2_stage.visible .a2_col--teal .a2_box--before { animation: a2_boxAppear 0.4s ease forwards; animation-delay: 1.1s; }
+.a2_stage.visible .a2_col--rose .a2_box--before { animation: a2_boxAppear 0.4s ease forwards; animation-delay: 1.5s; }
+.a2_stage.visible .a2_col--warm .a2_arrow { animation: a2_fadeSlideDown 0.3s ease forwards; animation-delay: 1.2s; }
+.a2_stage.visible .a2_col--teal .a2_arrow { animation: a2_fadeSlideDown 0.3s ease forwards; animation-delay: 1.6s; }
+.a2_stage.visible .a2_col--rose .a2_arrow { animation: a2_fadeSlideDown 0.3s ease forwards; animation-delay: 2.0s; }
+.a2_stage.visible .a2_col--warm .a2_box--after { animation: a2_boxGrow 0.55s cubic-bezier(0.22,1,0.36,1) forwards; animation-delay: 1.5s; }
+.a2_stage.visible .a2_col--teal .a2_box--after { animation: a2_boxGrow 0.55s cubic-bezier(0.22,1,0.36,1) forwards; animation-delay: 1.9s; }
+.a2_stage.visible .a2_col--rose .a2_box--after { animation: a2_boxGrow 0.65s cubic-bezier(0.22,1,0.36,1) forwards; animation-delay: 2.3s; }
+.a2_stage.visible .a2_col--warm .a2_score { animation: a2_scorePop 0.45s ease forwards; animation-delay: 2.2s; }
+.a2_stage.visible .a2_col--teal .a2_score { animation: a2_scorePop 0.45s ease forwards; animation-delay: 2.6s; }
+.a2_stage.visible .a2_col--rose .a2_score { animation: a2_scorePop 0.45s ease forwards; animation-delay: 3.0s; }
+.a2_stage.visible .a2_rise { animation: a2_arrowRise 0.5s ease forwards; animation-delay: 3.4s; }
+
+</style>
+
+<meta name="description" content="OpenAI Cookbook · Self-Evolving Agents">
+<link rel="canonical" href="https://chendi.me/readings/self-evolving-agents/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">&#8592;</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ Layer 0: 概览 ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+  <!-- S1: Hero — Agent 的高原效应 -->
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <p class="body-text reveal" style="font-size:13px; letter-spacing:0.1em; text-transform:uppercase; color:var(--dim); margin-bottom:16px;">OpenAI Cookbook · Self-Evolving Agents</p>
+      <h2 class="big-statement reveal reveal-d1">Agent 做完 POC 之后<br>就卡住了</h2>
+      <p class="body-text reveal reveal-d2">Agentic 系统常常在 POC 阶段之后就陷入高原效应，因为它们依赖人类来诊断边缘情况和纠正失败。这篇 cookbook 介绍了一个<span class="hl">可重复的再训练循环</span>：捕获问题、从反馈中学习、将改进推回生产工作流。核心洞察是：与其让人类逐条修正 Agent 的输出，不如构建一个<span class="hl2">自进化系统</span>——让 Agent 通过评估分数和结构化反馈，自动迭代优化自己的 prompt。</p>
+      <div class="anim-stage reveal reveal-d3"><div class="s1_stage">
+  <div class="s1_title">Agent 的高原效应</div>
+  <div class="s1_caption">POC 跑通之后，能力就卡住了</div>
+  <div class="s1_chart">
+    <div class="s1_axis_y"></div>
+    <div class="s1_axis_x"></div>
+    <div class="s1_label_cap">能力</div>
+    <div class="s1_label_time">时间</div>
+    <div class="s1_wall"></div>
+    <div class="s1_label_wall">天花板</div>
+    <div class="s1_poc_line"></div>
+    <div class="s1_poc_dot"></div>
+    <div class="s1_label_poc">POC 阶段</div>
+    <div class="s1_plateau"></div>
+    <div class="s1_label_plateau">高原期</div>
+    <div class="s1_loop_wrap">
+      <div class="s1_loop_ring"></div>
+      <div class="s1_loop_arrow"></div>
+    </div>
+    <div class="s1_label_loop">反馈循环</div>
+    <div class="s1_crack"></div>
+    <div class="s1_break_line"></div>
+    <div class="s1_break_arrow"></div>
+    <div class="s1_label_break">突破</div>
+  </div>
+</div></div>
+      <p class="hook-line reveal reveal-d4">制药文档审批直接影响救命速度——这是测试这个循环的完美场景</p>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">原文</span>
+          <p>Agentic systems often reach a plateau after proof-of-concept because they depend on humans to diagnose edge cases and correct failures. This cookbook introduces a repeatable retraining loop that captures those issues, learns from the feedback, and promotes improvements back into production-like workflows. We ground the approach in a regulated healthcare documentation task, but the patterns generalize to any domain that demands accuracy, auditability, and rapid iteration.</p>
+          <p>What You Will Learn:
+- Diagnose why an autonomous agent falls short of production readiness and instrument it with measurable feedback signals.
+- Compare three prompt-optimization strategies—from quick manual iteration to fully automated loops—and understand when to reach for each.
+- Assemble a self-healing workflow that combines human review, LLM-as-judge evals, and iterative prompt refinement.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S2: 制药文档 -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">制药文档<br>准确度直接影响救命速度</h2>
+      <p class="body-text reveal reveal-d1">这个 cookbook 选择了一个<span class="hl">真实场景</span>：为制药公司起草监管文档。这些组织必须向 FDA 等监管机构提交大量文档以获得新药批准，而这些提交的准确性和速度直接影响救命治疗到达患者的速度。监管文档起草是一个高度复杂、迭代密集且对精度要求极高的过程，需要深厚的科学、医学和合规专业知识。尽管有 Agent 系统辅助，人类专家仍然需要确保事实准确性和监管合规性——关键挑战在于设计一个<span class="hl2">反馈循环</span>，让 Agent 系统能够迭代学习，逐步将人类的工作从逐条修正转向高层级监督。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s2_stage">
+  <div class="s2_pipeline">
+    <div class="s2_doc">
+      <div class="s2_doc_rect"></div>
+      <span class="s2_label">文档</span>
+    </div>
+    <div class="s2_arrow1">
+      <div class="s2_arrow_line"></div>
+    </div>
+    <div class="s2_fda_wrap">
+      <div class="s2_fda_circle">FDA</div>
+      <span class="s2_label">审核</span>
+      <div class="s2_badge">99.2%</div>
+    </div>
+    <div class="s2_arrow2">
+      <div class="s2_arrow_line"></div>
+    </div>
+    <div class="s2_patient">
+      <div class="s2_patient_circle"></div>
+      <span class="s2_label">患者</span>
+    </div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">原文</span>
+          <p>For this cookbook, we focus on a real-world use case: drafting regulatory documents for pharmaceutical companies. These organizations must prepare and submit extensive documentation to regulatory authorities (e.g., the U.S. Food and Drug Administration) to obtain approval for new drugs. The accuracy and speed of these submissions are critical, as they directly impact how quickly life-saving treatments can reach patients.</p>
+          <p>Regulatory document drafting is a highly complex, iterative, and precision-driven process that requires deep scientific, medical, and compliance expertise. Despite the availability of advanced authoring tools, it remains labor-intensive and prone to human error. Agentic systems offer substantial leverage by assisting with research synthesis, content generation, and document structuring, yet human experts are still needed to ensure factual accuracy and regulatory compliance.</p>
+          <p>The key challenge is to design a feedback loop that enables these agentic systems to learn iteratively and refine model behavior over time. Such a system can gradually shift human effort from detailed correction to high-level oversight, improving efficiency while maintaining the rigorous standards required for regulatory submissions.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S3: 自进化循环 -->
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">自进化循环<br>反馈 → 评估 → 更新</h2>
+      <p class="body-text reveal reveal-d1">自进化循环由四个步骤组成。首先，<span class="hl">Baseline Agent</span> 产出初始结果（比如一段文档摘要）。然后，人类评审者或 <span class="hl2">LLM-as-Judge</span> 对输出进行评估，收集定量和定性反馈。接着，基于反馈生成新的 prompt 并通过 <span class="hl">Evals</span> 测试，多个 grader 打分汇总成一个综合评分。循环持续直到评分超过目标阈值（如 0.8）或达到最大重试次数。一旦改进版本达标，它就替换原来的 baseline Agent，成为下一轮迭代的起点。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s3_stage">
+  <div class="s3_loop_wrap">
+    <div class="s3_node s3_node--neutral s3_node--top"><span>Baseline</span></div>
+    <div class="s3_node s3_node--teal s3_node--right"><span>反馈</span></div>
+    <div class="s3_node s3_node--rose s3_node--bottom"><span>评估</span></div>
+    <div class="s3_node s3_node--teal s3_node--left"><span>更新</span></div>
+    <svg class="s3_arrows_svg" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+      <path class="s3_arrow_path s3_arrow_path--neutral s3_path_1" d="M 195 65 Q 255 65 255 125" />
+      <polygon class="s3_arrowhead s3_arrowhead--neutral s3_head_1" points="248,130 262,120 265,135" />
+      <path class="s3_arrow_path s3_arrow_path--teal s3_path_2" d="M 255 195 Q 255 255 195 255" />
+      <polygon class="s3_arrowhead s3_arrowhead--teal s3_head_2" points="190,248 200,262 185,265" />
+      <path class="s3_arrow_path s3_arrow_path--rose s3_path_3" d="M 125 255 Q 65 255 65 195" />
+      <polygon class="s3_arrowhead s3_arrowhead--rose s3_head_3" points="72,190 58,200 55,185" />
+      <path class="s3_arrow_path s3_arrow_path--teal s3_path_4" d="M 65 125 Q 65 65 125 65" />
+      <polygon class="s3_arrowhead s3_arrowhead--teal s3_head_4" points="120,58 130,72 145,65" />
+    </svg>
+    <div class="s3_center">LOOP</div>
+  </div>
+</div></div>
+      <p class="hook-line reveal reveal-d3">四个 Grader 分别守护哪些维度？</p>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">原文</span>
+          <p>The process consists of the following steps:
+1. Baseline Agent — The process begins with a baseline agent. In this notebook, we use a deliberately simple example (an agent that summarizes sections of a document) to illustrate the iterative improvement loop.
+2. Human Feedback (or LLM-as-judge) — The baseline agent's outputs are then evaluated either by human reviewers and/or by an automated LLM-as-judge system. This step gathers both quantitative and qualitative feedback.
+3. Evals and Aggregated Score — Based on the collected feedback, new prompts are generated and tested through evaluations (Evals). These tests measure performance against predefined criteria, and the outcomes are combined into an aggregated score. The loop continues until the score exceeds a target threshold (e.g., 0.8) or the maximum number of retries is reached.
+4. Updated Baseline Agent — Once an improved version achieves the target performance, it replaces the original baseline agent. This updated agent becomes the foundation for the next iteration.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 幕间 -->
+  <div class="act-divider">
+    <div style="text-align:center;">
+      <p class="act-label reveal">Act II</p>
+      <p class="act-title reveal reveal-d1">自动化进化</p>
+    </div>
+  </div>
+
+  <!-- S4: 四个 Grader -->
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">四个 Grader<br>四道防线</h2>
+      <p class="body-text reveal reveal-d1">评估系统由四个互补的 grader 构成，平衡确定性检查与语义判断。<span class="hl">Chemical Name Grader</span>（阈值 0.8）强制保留原文中所有化学名称——这些是制药文档中不能丢失的关键实体。<span class="hl2">Summarization Length Grader</span>（阈值 0.85）控制摘要长度在目标 100 词附近，防止冗长掩盖内容问题。<span class="hl-warn">Cosine Similarity</span>（阈值 0.85）确保摘要语义锚定在原文上，而非漂移。最后，<span class="hl">LLM-as-Judge</span>（阈值 0.85）用 rubric 评分捕获确定性指标遗漏的细微质量信号。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s4_stage">
+  <div class="s4_title_row" style="width:100%;max-width:500px;text-align:center;margin-bottom:20px;">
+    <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">四道防线</div>
+    <div style="font-size:22px;font-weight:700;color:#2C2520;line-height:1.3;">四个 Grader，层层把关</div>
+  </div>
+  <div class="s4_card">
+    <div class="s4_label">Grader 1 &mdash; 规则层</div>
+    <div class="s4_name">化学名</div>
+    <div class="s4_desc">检查答案是否包含正确的 IUPAC 化学名称</div>
+    <div class="s4_bar_wrap"><div class="s4_bar" style="--s4-bar-w:55%;"></div></div>
+    <div><span class="s4_score">PASS / FAIL</span></div>
+  </div>
+  <div class="s4_connector"></div>
+  <div class="s4_card">
+    <div class="s4_label">Grader 2 &mdash; 规则层</div>
+    <div class="s4_name">长度</div>
+    <div class="s4_desc">回答字数是否落在合理区间</div>
+    <div class="s4_bar_wrap"><div class="s4_bar" style="--s4-bar-w:48%;"></div></div>
+    <div><span class="s4_score">PASS / FAIL</span></div>
+  </div>
+  <div class="s4_connector"></div>
+  <div class="s4_card s4_card--teal">
+    <div class="s4_label">Grader 3 &mdash; 向量层</div>
+    <div class="s4_name">余弦相似度</div>
+    <div class="s4_desc">语义向量比较，捕捉规则层漏过的同义表达</div>
+    <div class="s4_bar_wrap"><div class="s4_bar" style="--s4-bar-w:72%;"></div></div>
+    <div><span class="s4_score">0.0 &ndash; 1.0</span></div>
+  </div>
+  <div class="s4_connector"></div>
+  <div class="s4_card s4_card--rose">
+    <div class="s4_label">Grader 4 &mdash; 语义层 &mdash; 最终裁判</div>
+    <div class="s4_name">LLM Judge</div>
+    <div class="s4_desc">独立 LLM 阅读完整回答，给出带推理链的评分</div>
+    <div class="s4_bar_wrap"><div class="s4_bar" style="--s4-bar-w:88%;"></div></div>
+    <div><span class="s4_score">1 &ndash; 5 分</span></div>
+  </div>
+</div></div>
+      <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-graders', this)">每个 Grader 具体怎么工作？ &#8595;</button>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">原文</span>
+          <p>To evaluate the baseline summarization agent, we use four complementary graders that balance deterministic checks with semantic judgment.
+
+| Grader | Type | Pass threshold | What it checks | Why |
+|---|---|---:|---|---|
+| Chemical string name | python | 0.8 | If any exact chemical names in the section appear in the summary. | Forces preservation of critical domain entities. |
+| Summarization length | python | 0.85 | Inverse deviation from an expected 100-word length. | Keeps summaries concise and comparable. |
+| Cosine similarity | text_similarity | 0.85 | Cosine similarity between section and summary texts. | Ensures the summary stays anchored to the source. |
+| LLM-as-judge | score_model | 0.85 | A rubric-driven score from a model acting as an evaluator. | Captures nuanced quality signals that rule-based metrics miss. |</p>
+          <p>The two Python graders catch domain fidelity and length discipline early, which stabilizes optimization before semantic tuning. Text similarity guards against superficial rephrasing that strays from the source. The LLM judge provides a holistic failsafe when edge cases slip past deterministic checks.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S5: 从 Summarize 到精密指令 -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">从「Summarize」<br>到精密指令</h2>
+      <p class="body-text reveal reveal-d1">自进化循环的运行轨迹令人印象深刻。Agent 从一句朴素的 prompt 起步——「You are a summarization assistant. Given a section of text, produce a summary.」在 5 个 section 的迭代中，prompt 经历了 5 个版本的进化。v0 在第一个 section（7.1）上评分 0.805，未通过 lenient 阈值；经过 metaprompt agent 的两次优化到 v2，分数提升到 0.762 并通过。到最后一个 section（3.2.P.2.3），prompt v5 的 aggregate 得分达到 <span class="hl2">9.630</span>，平均 0.802/section。最终的 prompt 从一句话膨胀成了一份详细的<span class="hl">技术摘要规范</span>，明确要求保留化学名称、定量数值、法规引用、层级结构。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s5_stage">
+  <div class="s5_chart_wrap">
+    <div class="s5_axis"></div>
+    <div class="s5_bar_group s5_g0">
+      <div class="s5_bar"></div>
+      <div class="s5_bar_label">v0</div>
+      <div class="s5_bar_tag">Summarize</div>
+    </div>
+    <div class="s5_bar_group s5_g2">
+      <div class="s5_bar"></div>
+      <div class="s5_bar_label">v2</div>
+      <div class="s5_bar_tag"></div>
+    </div>
+    <div class="s5_bar_group s5_g5">
+      <div class="s5_bar"></div>
+      <div class="s5_bar_label">v5</div>
+      <div class="s5_bar_tag">精密指令</div>
+    </div>
+    <svg class="s5_score_svg" viewBox="0 0 480 260" preserveAspectRatio="xMidYMid meet">
+      <polyline class="s5_score_line" points="100,188 220,136 340,76" />
+      <circle class="s5_score_dot s5_score_dot--n s5_d0" cx="100" cy="188" r="0" />
+      <circle class="s5_score_dot s5_score_dot--t s5_d2" cx="220" cy="136" r="0" />
+      <circle class="s5_score_dot s5_score_dot--r s5_d5" cx="340" cy="76" r="0" />
+      <text class="s5_score_text s5_score_text--n s5_t0" x="100" y="178" text-anchor="middle">0.52</text>
+      <text class="s5_score_text s5_score_text--t s5_t2" x="220" y="126" text-anchor="middle">0.71</text>
+      <text class="s5_score_text s5_score_text--r s5_t5" x="340" y="66" text-anchor="middle">0.85</text>
+    </svg>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">原文</span>
+          <p>[Section 7.1] Using prompt v0
+  Attempt 1: evaluating summary...
+	Scores — avg=0.805, total=3.218, lenient_passed=False
+	Failed eval. Improving prompt...
+	Prompt improved → v1
+  Attempt 2: evaluating summary...
+	Scores — avg=0.720, total=2.881, lenient_passed=False
+	Failed eval. Improving prompt...
+	Prompt improved → v2
+  Attempt 3: evaluating summary...
+	Scores — avg=0.762, total=3.048, lenient_passed=True
+	Passed with prompt v2</p>
+          <p>[Section 7.2] Using prompt v2
+  Attempt 1: evaluating summary...
+	Scores — avg=0.612, total=2.450, lenient_passed=False
+	Failed eval. Improving prompt...
+	Prompt improved → v3
+  Attempt 2: evaluating summary...
+	Scores — avg=0.915, total=3.660, lenient_passed=True
+	Passed with prompt v3</p>
+          <p>Completed optimization loop.
+Final prompt version: v5
+Best lenient prompt: v5 (avg=0.750)
+Aggregate best prompt: v5 (total=9.630, avg/section=0.802)</p>
+          <p>Inspecting the output shows that the self evolving prompt worked. There are a few takeaways to account for:
+1. The optimization is not always successful, so being able to roll back the prompt version is important
+2. The fidelity of the information from the graders is crucially important to ensuring a quality optimization</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S6: 模型对决 -->
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">模型对决<br>gpt-5 vs gpt-5-mini</h2>
+      <p class="body-text reveal reveal-d1">在 prompt 进化之外，cookbook 进一步展示了<span class="hl2">模型版本选择</span>的自动化。核心思路是：优化 prompt 之后，用同一份优化后的 prompt 在多个候选模型上分别生成输出，再用 grader 打分选出最佳组合。在测试中，gpt-5 和 gpt-5-mini 在同一 section（3.2.P.2.2）上的表现差异明显——gpt-5 得分 0.353，gpt-5-mini 得分 0.467，但两者都未通过。这意味着<span class="hl">模型选择和 prompt 优化是正交的两个维度</span>，最佳生产配置需要同时搜索两个空间。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s6_stage">
+  <div class="s6_title">模型对决</div>
+  <div class="s6_arena">
+    <div class="s6_col s6_col--left">
+      <div class="s6_score">0.85</div>
+      <div class="s6_label">gpt-5</div>
+      <div class="s6_bar">
+        <div class="s6_crown">
+          <span class="s6_crown-mid"></span>
+          <span class="s6_crown-base"></span>
+        </div>
+      </div>
+    </div>
+    <div class="s6_col s6_col--right">
+      <div class="s6_score">0.72</div>
+      <div class="s6_label">gpt-5-mini</div>
+      <div class="s6_bar"></div>
+    </div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">原文</span>
+          <p>Taking this concept further, we can also use evals to test different model parameter candidates such as the model version, verbosity, and reasoning.</p>
+          <p>The compare_model_candidates function is an example of how to:
+1. Optimize the prompt
+2. Generate candidate outputs from the optimized prompt using two or more different models
+3. Use evals to grade the candidate outputs and select the best candidate</p>
+          <p>[Section 3.2.P.2.2] Using prompt v2
+	Attempt 1: evaluating summary...
+	Failed eval. Improving prompt...
+Candidate average — gpt-5: 0.3533 (passed=False)
+Candidate average — gpt-5-mini: 0.4670 (passed=False)
+No passing models. Best candidate (model=gpt-5-mini, avg=0.4670) did not pass. Prompt not updated.</p>
+          <p>NOTE: Production testing of model versions should be limited to versions within the same family version (e.g. gpt-5, gpt-5-mini, gpt-5-nano). It is recommended to conduct cross family version selection pre-production deployment.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 幕间 -->
+  <div class="act-divider">
+    <div style="text-align:center;">
+      <p class="act-label reveal">Act III</p>
+      <p class="act-title reveal reveal-d1">更好的进化</p>
+    </div>
+  </div>
+
+  <!-- S7: GEPA -->
+  <section class="feed-section" style="background: var(--bg-act3);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">GEPA<br>遗传进化式优化</h2>
+      <p class="body-text reveal reveal-d1">前面的 metaprompt 方法虽然有效，但探索空间受限于一个固定的元提示。<span class="hl">GEPA（Genetic-Pareto）</span>提供了一种更动态的方法：它采样 Agent 的运行轨迹，用自然语言反思输出质量，提出 prompt 修订方案，然后通过迭代反馈循环进化整个系统。GEPA 在训练集上优化、在验证集上评估，因此产生的 prompt 更具<span class="hl2">泛化能力</span>。在测试中，GEPA 经过 3 轮迭代将验证集最佳分数从 0.218 提升到 0.235，产出的 prompt 明确要求 45-70 词的单段落格式、精确保留化学名称的每个变体、以及详细的自检清单。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s7_stage">
+  <div class="s7_canvas">
+    <svg class="s7_svg" viewBox="0 0 320 280" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <line class="s7_line s7_line--g0a" x1="160" y1="62" x2="96" y2="130"/>
+      <line class="s7_line s7_line--g0b" x1="160" y1="62" x2="224" y2="130"/>
+      <line class="s7_line s7_line--aa1" x1="96" y1="168" x2="72" y2="222"/>
+      <line class="s7_line s7_line--aa2" x1="96" y1="168" x2="152" y2="222"/>
+    </svg>
+    <div class="s7_node s7_node--g0" style="width:44px;height:44px;top:18px;left:138px;background:#94A3B8;">
+      <span class="s7_lbl">Gen 0</span>
+    </div>
+    <div class="s7_node s7_node--a" style="width:40px;height:40px;top:130px;left:76px;background:#14B8A6;">
+      <span class="s7_lbl">A</span>
+    </div>
+    <div class="s7_node s7_node--b" style="width:40px;height:40px;top:130px;left:204px;background:#14B8A6;">
+      <span class="s7_lbl">B</span>
+    </div>
+    <div class="s7_node s7_node--a1" style="width:40px;height:40px;top:222px;left:52px;background:#E11D48;">
+      <span class="s7_lbl">A1</span>
+    </div>
+    <div class="s7_glow s7_glow--a1" style="width:40px;height:40px;top:222px;left:52px;"></div>
+    <div class="s7_node s7_node--a2" style="width:40px;height:40px;top:222px;left:132px;background:#E11D48;">
+      <span class="s7_lbl">A2</span>
+    </div>
+    <div class="s7_score s7_score--a1" style="top:234px;left:98px;">0.92</div>
+  </div>
+</div></div>
+      <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-prompts', this)">三种方法产出的 Prompt 对比 &#8595;</button>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">原文</span>
+          <p>We've demonstrated that the self-evolving loop works and that a prompt can be improved autonomously using Evals. However, we relied on a relatively straightforward, static metaprompt to improve our system prompt. In this section, we explore a more dynamic and reflexive method by using Genetic-Pareto (GEPA) — a framework that samples agent trajectories, reflects on them in natural language, proposes prompt revisions, and evolves the system through iterative feedback loops.</p>
+          <p>Now that the adapter is ready, we can run GEPA using the same starting prompt and model as in the earlier self-evolving loop for comparison. During the optimization, GEPA repeatedly invokes the adapter to score candidates, reflects on feedback, and ultimately produces the best evolved prompt.</p>
+          <p>Iteration 0: Base program full valset score: 0.2183466466681351
+Iteration 3: Full valset pareto front score: 0.2351562471843881
+Iteration 3: Best valset aggregate score so far: 0.2351562471843881</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S8: 三条路 -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">三条路<br>各有所长</h2>
+      <p class="body-text reveal reveal-d1">三种 prompt 优化策略各有适用场景。<span class="hl">OpenAI Platform Optimizer</span> 通过人工反馈和「Optimize」按钮快速迭代，适合早期探索和少量数据——速度快但不可自动化。<span class="hl2">Static Metaprompt</span> 自进化循环用四个 grader 实现全自动探索和迭代改进，无需人工干预——但探索空间受限于单一元提示，且逐 section 评估容易过拟合。<span class="hl-warn">GEPA</span> 提供最系统化的搜索过程，反思式更新由定量分数和文本反馈共同驱动，训练/验证分离确保泛化——但耗时最长。实践中，可以从快速迭代开始，逐步过渡到反思式优化。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s8_stage">
+  <svg class="s8_svg" viewBox="0 0 520 280" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <line class="s8_line s8_line_left"  x1="260" y1="50" x2="80"  y2="220" />
+    <line class="s8_line s8_line_mid"   x1="260" y1="50" x2="260" y2="220" />
+    <line class="s8_line s8_line_right" x1="260" y1="50" x2="440" y2="220" />
+    <circle class="s8_origin" cx="260" cy="50" r="7" />
+    <circle class="s8_dot s8_dot_left"  cx="80"  cy="220" r="8" />
+    <circle class="s8_dot s8_dot_mid"   cx="260" cy="220" r="8" />
+    <circle class="s8_dot s8_dot_right" cx="440" cy="220" r="8" />
+    <text class="s8_label s8_label_left" text-anchor="middle" x="80" y="248">
+      <tspan class="s8_label_name" x="80" dy="0">Platform UI</tspan>
+      <tspan class="s8_label_desc" x="80" dy="18">速度快</tspan>
+    </text>
+    <text class="s8_label s8_label_mid" text-anchor="middle" x="260" y="248">
+      <tspan class="s8_label_name" x="260" dy="0">Metaprompt</tspan>
+      <tspan class="s8_label_desc" x="260" dy="18">可控</tspan>
+    </text>
+    <text class="s8_label s8_label_right" text-anchor="middle" x="440" y="248">
+      <tspan class="s8_label_name" x="440" dy="0">GEPA</tspan>
+      <tspan class="s8_label_desc" x="440" dy="18">自动化</tspan>
+    </text>
+  </svg>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">原文</span>
+          <p>In this cookbook, we explored three distinct approaches to prompt optimization:
+
+- OpenAI Platform Optimizer: using the Optimize button with a dataset containing manually entered human feedback (thumbs up/down and textual comments), we quickly produced a strong prompt with minimal configuration. This method excels at rapid iteration, but does not provide the automation needed for production environments.
+
+- Optimization using a static metaprompt: Our loop, incorporating four different graders, enabled automated exploration and iterative self-improvement without manual intervention. However, its exploration space was limited by a single static meta-prompt, and evaluation was performed section by section. Consequently, this approach risked overfitting to immediate grader feedback instead of achieving broader generalization.
+
+- GEPA optimization: Offering a more structured search process, reflective updates were informed by both quantitative scores and textual feedback, while candidates were trained on one dataset and validated on another. This method produced a more robust, generalized prompt and provided clearer empirical evidence of its performance.</p>
+          <p>Depending on your use case, you may prioritize speed (OpenAI optimizer), lightweight automation (static metaprompt), or systematic generalization (GEPA). In practice, combining these methods by starting with rapid iteration and progressing toward reflective optimization can deliver both agility and performance.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ Layer 1: Grader 详解 ═══ -->
+<div class="layer" id="layer-graders" data-depth="1">
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">四个 Grader 的分工</h2>
+      <p class="body-text reveal reveal-d1">四个 grader 的设计遵循一个精巧的分层策略。前两个是<span class="hl">确定性的 Python grader</span>——Chemical Name Grader 遍历一个包含 80+ 化学名称的主列表，检查原文中出现的每个化学名是否也出现在摘要中（精确字符串匹配，得分 = 命中数/总数）。Word Length Deviation Grader 计算摘要字数与目标 100 词的相对偏差，20% 容忍带内满分，超出后线性衰减。这两个确定性 grader 在优化早期就能稳定域保真度和长度纪律。</p>
+      <p class="body-text reveal reveal-d2">后两个是<span class="hl2">语义层面的 grader</span>。Cosine Similarity 计算摘要与原文的余弦相似度，防止表面改写偏离原意。LLM-as-Judge 用一个详细的 rubric 让 gpt-4.1 打分（0-1），评估摘要是否「全面、忠实、技术准确，没有重要细节遗漏和重大误述」。这种分层设计意味着：<span class="hl">先用便宜的确定性检查排除明显问题，再用昂贵的语义检查捕获微妙质量信号</span>。</p>
+      <div class="anim-stage reveal reveal-d3"><div class="a1_stage">
+  <div class="a1_grid">
+    <div class="a1_card a1_teal a1_b1">
+      <div class="a1_card_name">化学名检查</div>
+      <span class="a1_card_tag">确定性</span>
+    </div>
+    <div class="a1_card a1_teal a1_b2">
+      <div class="a1_card_name">长度检查</div>
+      <span class="a1_card_tag">确定性</span>
+    </div>
+    <div class="a1_tier_label a1_label_rules">规则层</div>
+    <div class="a1_divider_wrap">
+      <div class="a1_divider_line"></div>
+    </div>
+    <div class="a1_tier_label a1_label_semantic">理解层</div>
+    <div class="a1_card a1_rose a1_t1">
+      <div class="a1_card_name">余弦相似度</div>
+      <span class="a1_card_tag">语义</span>
+    </div>
+    <div class="a1_card a1_rose_em a1_t2">
+      <div class="a1_card_name">LLM Judge</div>
+      <span class="a1_card_tag">语义</span>
+    </div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">原文</span>
+          <p>Chemical string name (python, 0.8): If any exact chemical names in the section appear in the summary. Forces preservation of critical domain entities so summaries don't omit chemically meaningful terms.</p>
+          <p>Summarization length (python, 0.85): Inverse deviation from an expected 100-word length. Keeps summaries concise and comparable, reducing verbosity that can mask poor content.</p>
+          <p>Cosine similarity (text_similarity, 0.85): Cosine similarity between section and summary texts. Ensures the summary stays anchored to the source content rather than drifting semantically.</p>
+          <p>LLM-as-judge (score_model, 0.85): A rubric-driven score from a model acting as an evaluator. Captures nuanced quality signals that rule-based metrics miss, improving overall robustness.</p>
+          <p>The two Python graders catch domain fidelity and length discipline early, which stabilizes optimization before semantic tuning. Text similarity guards against superficial rephrasing that strays from the source. The LLM judge provides a holistic failsafe when edge cases slip past deterministic checks.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ═══ Layer 1: Prompt 进化对比 ═══ -->
+<div class="layer" id="layer-prompts" data-depth="1">
+  <section class="feed-section" style="background: var(--bg-act3);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">Prompt 进化对比<br>从一句话到一页纸</h2>
+      <p class="body-text reveal reveal-d1">三种方法从同一个起点出发——「You are a summarization assistant. Given a section of text, produce a summary.」——但产出了风格迥异的最终 prompt。<span class="hl">Platform Optimizer</span> 强调输出格式：不加标题、用编号列表、每个子 section 单独摘要、保留技术术语。<span class="hl2">Static Metaprompt</span> 走向另一个极端：7 条详细规则，要求「逐字保留所有化学名、数量、法规引用」，禁止「释义、合并、重排」。<span class="hl-warn">GEPA</span> 产出了最精细的版本：明确 45-70 词限制、单段落格式、6 级内容优先级排序、以及一份「自检清单」要求模型在输出前验证化学名完整性和字数合规。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="a2_stage">
+  <div class="a2_grid">
+    <div class="a2_col a2_col--warm">
+      <div class="a2_header a2_header--warm">Platform UI</div>
+      <div class="a2_label">Before</div>
+      <div class="a2_box a2_box--before">Summarize this<br>document.</div>
+      <div class="a2_arrow">&#x2193;</div>
+      <div class="a2_label">After</div>
+      <div class="a2_box a2_box--after">Summarize this document.<br>Focus on key findings.<br>Use bullet points.</div>
+      <div class="a2_score">
+        <span class="a2_score__num">0.71</span>
+        <span class="a2_score__label">DSPy score</span>
+      </div>
+    </div>
+    <div class="a2_col a2_col--teal">
+      <div class="a2_header a2_header--teal">Metaprompt</div>
+      <div class="a2_label">Before</div>
+      <div class="a2_box a2_box--before">Summarize this<br>document.</div>
+      <div class="a2_arrow">&#x2193;</div>
+      <div class="a2_label">After</div>
+      <div class="a2_box a2_box--after">You are a precise analyst.<br>Read the document below.<br>Extract the 3 core insights.<br>Format as structured bullets.<br>Cite evidence for each claim.</div>
+      <div class="a2_score">
+        <span class="a2_score__num">0.85</span>
+        <span class="a2_score__label">DSPy score</span>
+      </div>
+    </div>
+    <div class="a2_col a2_col--rose">
+      <div class="a2_header a2_header--rose">GEPA</div>
+      <div class="a2_label">Before</div>
+      <div class="a2_box a2_box--before">Summarize this<br>document.</div>
+      <div class="a2_arrow">&#x2193;</div>
+      <div class="a2_label">After</div>
+      <div class="a2_box a2_box--after">You are an expert analyst<br>with deep domain knowledge.<br>Analyze the document with<br>chain-of-thought reasoning.<br>Surface latent assumptions.<br>Identify causal structure.<br>Rank findings by impact.<br>Output: JSON + narrative.</div>
+      <div class="a2_score">
+        <span class="a2_score__num">0.92</span>
+        <span class="a2_score__label">DSPy score</span>
+      </div>
+      <div class="a2_rise">
+        <div class="a2_rise__tip"></div>
+        <div class="a2_rise__bar" style="height:10px;"></div>
+        <div class="a2_rise__bar" style="height:7px;opacity:0.65;"></div>
+        <div class="a2_rise__bar" style="height:4px;opacity:0.35;"></div>
+      </div>
+    </div>
+  </div>
+</div></div>
+      <p class="body-text reveal reveal-d3">这三种 prompt 的演化轨迹反映了它们各自的优化策略。Platform Optimizer 受人类反馈驱动，关注可读性和格式。Static Metaprompt 被 grader 反馈推向极致的保真度，几乎变成「全文复述」。GEPA 则在保真度和简洁性之间找到了平衡——它的训练/验证分离机制天然防止过拟合，产出的 prompt 既保留关键信息又控制长度。</p>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">原文</span>
+          <p>Initial prompt: You are a summarization assistant. Given a section of text, produce a summary.</p>
+          <p>OpenAI Platform Optimizer: You are a summarization assistant. Task: Summarize the provided text concisely and accurately. Output requirements: Output only the summary. Do not add titles, labels, prefaces, or commentary. Preserve the document's structure. If multiple sections/subsections appear, summarize each one. Use a numbered list for sections/subsections. Under each, use short dash bullets for key points. Retain exact technical terms/notation from the source.</p>
+          <p>Static metaprompt: You are a technical summarization assistant for scientific and regulatory documentation. Your task is to generate a concise, comprehensive, and fully detailed summary. Capture every explicit fact, technical value, specification, quantity, measurement, regulatory reference, entity, process, site, and contextual detail verbatim from the source text. Do not omit or generalize any explicit information.</p>
+          <p>GEPA optimizer: You are a domain-aware summarization assistant for technical pharmaceutical texts. Given a "section" of text, produce a concise summary that preserves key technical facts and exact nomenclature. Write 1-3 sentences totaling about 45-70 words (never exceed 90 words). Self-check before finalizing: Have you included every chemical name exactly as written? Is the summary within 45-70 words and a single paragraph?</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+var layerStack = ['layer-overview'];
+var transitioning = false;
+var layerNames = {
+  'layer-overview': '概览',
+  'layer-graders': 'Grader 详解',
+  'layer-prompts': 'Prompt 对比'
+};
+var observers = new Map();
+
+function setupObserver(layerId) {
+  if (observers.has(layerId)) return;
+  var layer = document.getElementById(layerId);
+  var reveals = layer.querySelectorAll('.reveal, [class*="_stage"]');
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.15, root: layer });
+  reveals.forEach(function(el) { obs.observe(el); });
+  observers.set(layerId, obs);
+}
+function resetReveals(layerId) {
+  var layer = document.getElementById(layerId);
+  layer.querySelectorAll('.reveal').forEach(function(el) { el.classList.remove('visible'); });
+  layer.querySelectorAll('[class*="_stage"]').forEach(function(el) { el.classList.remove('visible'); });
+}
+function activateReveals(layerId) {
+  resetReveals(layerId);
+  if (observers.has(layerId)) { observers.get(layerId).disconnect(); observers.delete(layerId); }
+  requestAnimationFrame(function() { setupObserver(layerId); });
+}
+function updateBreadcrumb() {
+  var bc = document.getElementById('breadcrumb');
+  bc.innerHTML = '';
+  layerStack.forEach(function(id, i) {
+    if (i > 0) { var sep = document.createElement('span'); sep.className = 'sep'; sep.textContent = '>'; bc.appendChild(sep); }
+    var span = document.createElement('span');
+    span.textContent = layerNames[id] || id;
+    if (i === layerStack.length - 1) { span.className = 'current'; }
+    else { span.addEventListener('click', function() { goBackTo(i); }); }
+    bc.appendChild(span);
+  });
+  var backBtn = document.getElementById('backBtn');
+  backBtn.style.display = layerStack.length > 1 ? 'flex' : 'none';
+  bc.style.left = layerStack.length > 1 ? '60px' : '16px';
+  var dots = document.getElementById('depthDots');
+  var depth = layerStack.length - 1;
+  dots.querySelectorAll('.dot').forEach(function(d, i) { d.classList.toggle('active', i === depth); });
+}
+function drillDown(targetId, btnEl) {
+  if (transitioning) return; transitioning = true;
+  var currentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var targetLayer = document.getElementById(targetId);
+  targetLayer.scrollTop = 0; resetReveals(targetId); targetLayer.style.visibility = 'visible';
+  var duration = 600;
+  currentLayer.style.transition = 'transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  currentLayer.style.transformOrigin = 'center center';
+  currentLayer.style.transform = 'scale(1.3)'; currentLayer.style.opacity = '0';
+  targetLayer.classList.add('active'); targetLayer.style.opacity = '0'; targetLayer.style.transform = 'scale(0.85)';
+  targetLayer.style.transition = 'transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  requestAnimationFrame(function() { requestAnimationFrame(function() { targetLayer.style.opacity = '1'; targetLayer.style.transform = 'scale(1)'; }); });
+  setTimeout(function() {
+    currentLayer.classList.remove('active'); currentLayer.style.transition=''; currentLayer.style.transform=''; currentLayer.style.opacity='';
+    targetLayer.style.transition=''; targetLayer.style.transform=''; activateReveals(targetId); transitioning = false;
+  }, duration + 50);
+  layerStack.push(targetId); updateBreadcrumb();
+}
+function goBack() {
+  if (layerStack.length <= 1 || transitioning) return; transitioning = true;
+  var currentId = layerStack.pop(); var parentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId); var parentLayer = document.getElementById(parentId);
+  var duration = 600;
+  currentLayer.style.transition = 'transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  currentLayer.style.transform = 'scale(0.85)'; currentLayer.style.opacity = '0';
+  parentLayer.classList.add('active'); parentLayer.style.transform = 'scale(1.3)'; parentLayer.style.opacity = '0';
+  parentLayer.style.transition = 'transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  requestAnimationFrame(function() { requestAnimationFrame(function() { parentLayer.style.transform = 'scale(1)'; parentLayer.style.opacity = '1'; }); });
+  setTimeout(function() {
+    currentLayer.classList.remove('active'); currentLayer.style.transition=''; currentLayer.style.transform=''; currentLayer.style.opacity=''; currentLayer.style.visibility='';
+    parentLayer.style.transition=''; parentLayer.style.transform=''; transitioning = false;
+  }, duration + 50);
+  updateBreadcrumb();
+}
+function goBackTo(targetIndex) { if (transitioning) return; while (layerStack.length - 1 > targetIndex) { if (layerStack.length <= 1) break; goBack(); return; } }
+function toggleSource(btn) { btn.classList.toggle('open'); btn.nextElementSibling.classList.toggle('open'); }
+setupObserver('layer-overview'); updateBreadcrumb();
+</script>
+</body>
+</html>

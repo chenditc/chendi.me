@@ -1,0 +1,3758 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>vLLM x Mooncake：Agentic 推理的分布式 KV Cache</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #F0FDFA;
+  --bg-act2: #FDF2F8;
+  --bg-act3: #ECFDF5;
+  --bg-dark: #0F172A;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --dim: #94A3B8;
+  --accent: #0F766E;
+  --accent2: #BE185D;
+  --warm: #D97706;
+  --danger: #DC2626;
+  --neutral: #94A3B8;
+  --card-bg: #FFFFFF;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Noto Sans SC',sans-serif;color:var(--text);-webkit-font-smoothing:antialiased;}
+.reveal{opacity:0;transform:translateY(40px);transition:opacity 0.8s ease,transform 0.8s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-delay-1{transition-delay:0.15s;}
+.reveal-delay-2{transition-delay:0.3s;}
+.reveal-delay-3{transition-delay:0.45s;}
+.reveal-delay-4{transition-delay:0.6s;}
+.big-statement{font-family:'Noto Serif SC',serif;font-size:clamp(22px,5.5vw,32px);font-weight:700;line-height:1.5;margin-bottom:32px;}
+.body-text{font-size:16px;line-height:1.9;color:var(--text);margin-bottom:28px;}
+.body-text .hl{color:var(--accent);font-weight:500;}
+.body-text .hl2{color:var(--accent2);font-weight:500;}
+.body-text .hl-danger{color:var(--danger);font-weight:500;}
+.layer{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;visibility:hidden;opacity:0;will-change:transform,opacity;scroll-snap-type:y proximity;}
+.layer.active{visibility:visible;opacity:1;}
+.feed-section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;scroll-snap-align:start;}
+.feed-section.dark{background:var(--bg-dark);color:#F1F5F9;}
+.feed-section.dark .body-text{color:#94A3B8;}
+.feed-section.dark .big-statement{color:#F1F5F9;}
+.section-inner{max-width:600px;width:100%;}
+.breadcrumb{position:fixed;top:16px;left:16px;z-index:1000;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);padding:8px 14px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,0.1);font-size:13px;font-weight:500;}
+.breadcrumb span{color:var(--text-muted);cursor:pointer;transition:color 0.2s;}
+.breadcrumb span:hover{color:var(--accent);}
+.breadcrumb span.current{color:var(--text);cursor:default;}
+.breadcrumb .sep{color:#CBD5E1;margin:0 2px;cursor:default;}
+.back-btn{position:fixed;top:16px;left:16px;z-index:1001;width:38px;height:38px;border-radius:10px;border:none;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(0,0,0,0.1);font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--text);transition:all 0.2s;}
+.back-btn:hover{background:var(--accent);color:#fff;}
+.depth-dots{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;gap:8px;background:rgba(255,255,255,0.9);backdrop-filter:blur(8px);padding:8px 14px;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,0.1);}
+.dot{width:10px;height:10px;border-radius:50%;background:#CBD5E1;transition:all 0.3s;}
+.dot.active{background:var(--accent);box-shadow:0 0 8px rgba(15,118,110,0.5);transform:scale(1.2);}
+.drill-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:1.5px solid rgba(15,118,110,0.3);border-radius:10px;background:transparent;color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.25s;}
+.drill-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(15,118,110,0.3);}
+.dark .drill-btn{border-color:rgba(15,118,110,0.4);}
+.source-panel{margin-top:24px;border-radius:12px;overflow:hidden;border:1px solid rgba(15,118,110,0.15);background:rgba(15,118,110,0.03);}
+.dark .source-panel{border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);}
+.source-toggle{width:100%;padding:12px 16px;border:none;background:none;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);}
+.dark .source-toggle{color:#5EEAD4;}
+.source-toggle:hover{background:rgba(15,118,110,0.06);}
+.source-toggle .arrow{transition:transform 0.3s;font-size:11px;}
+.source-toggle.open .arrow{transform:rotate(90deg);}
+.source-body{max-height:0;overflow:hidden;transition:max-height 0.4s ease;padding:0 16px;}
+.source-body.open{max-height:2000px;padding:0 16px 16px;overflow-y:auto;}
+.source-body p{font-size:13px;line-height:1.8;color:var(--text-muted);margin:0 0 12px 0;white-space:pre-wrap;}
+.dark .source-body p{color:#94A3B8;}
+.source-body .source-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--accent);margin-bottom:8px;display:block;}
+.dark .source-body .source-label{color:#5EEAD4;}
+.anim-stage{width:100%;display:flex;justify-content:center;margin:28px 0;min-height:180px;}
+.anim-stage>div{width:100%;}
+.hook-line{font-size:14px;color:var(--accent);font-weight:500;margin:16px 0;line-height:1.7;}
+.dark .hook-line{color:#5EEAD4;}
+
+/* === S1 Animation === */
+
+.s1_stage {
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto;
+  padding: 24px 0;
+  font-family: -apple-system, "Noto Sans SC", sans-serif;
+  color: #1E293B;
+}
+
+/* === Title === */
+.s1_title {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  opacity: 0;
+}
+.s1_stage.visible .s1_title {
+  animation: s1_fadeIn 0.6s ease forwards;
+}
+
+/* === Ratio display === */
+.s1_ratio_row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 24px;
+  opacity: 0;
+}
+.s1_stage.visible .s1_ratio_row {
+  animation: s1_fadeIn 0.5s 0.4s ease forwards;
+}
+.s1_ratio_big {
+  font-size: 56px;
+  font-weight: 800;
+  color: #0F766E;
+  line-height: 1;
+}
+.s1_ratio_sep {
+  font-size: 32px;
+  font-weight: 300;
+  color: #94A3B8;
+  margin: 0 2px;
+}
+.s1_ratio_small {
+  font-size: 56px;
+  font-weight: 800;
+  color: #BE185D;
+  line-height: 1;
+}
+.s1_ratio_label {
+  font-size: 13px;
+  color: #64748B;
+  align-self: center;
+  margin-left: 4px;
+}
+
+/* === Bar section === */
+.s1_bar_section {
+  margin-bottom: 20px;
+}
+.s1_bar_label_row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #64748B;
+  margin-bottom: 6px;
+  opacity: 0;
+}
+.s1_stage.visible .s1_bar_label_row {
+  animation: s1_fadeIn 0.4s 0.8s ease forwards;
+}
+
+/* === Main proportion bar === */
+.s1_bar_track {
+  width: 100%;
+  height: 40px;
+  background: #E2E8F0;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  opacity: 0;
+}
+.s1_stage.visible .s1_bar_track {
+  animation: s1_fadeIn 0.3s 0.8s ease forwards;
+}
+
+.s1_bar_input {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 0%;
+  background: #0F766E;
+  border-radius: 8px 0 0 8px;
+  display: flex;
+  align-items: center;
+  padding-left: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+}
+.s1_stage.visible .s1_bar_input {
+  animation: s1_fillInput 1.2s 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.s1_bar_output {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 0%;
+  background: #BE185D;
+  border-radius: 0 8px 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.s1_stage.visible .s1_bar_output {
+  animation: s1_fillOutput 0.4s 2.4s ease forwards;
+}
+.s1_bar_output_dot {
+  width: 6px;
+  height: 6px;
+  background: #fff;
+  border-radius: 50%;
+  opacity: 0;
+}
+.s1_stage.visible .s1_bar_output_dot {
+  animation: s1_fadeIn 0.3s 2.6s ease forwards;
+}
+
+/* === Cache overlay === */
+.s1_cache_section {
+  margin-top: 16px;
+  opacity: 0;
+}
+.s1_stage.visible .s1_cache_section {
+  animation: s1_fadeIn 0.4s 2.8s ease forwards;
+}
+.s1_cache_label {
+  font-size: 12px;
+  color: #64748B;
+  margin-bottom: 6px;
+}
+.s1_cache_track {
+  width: 100%;
+  height: 32px;
+  background: #E2E8F0;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+.s1_cache_fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #0F766E 0%, #14B8A6 100%);
+  border-radius: 6px 0 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.s1_stage.visible .s1_cache_fill {
+  animation: s1_fillCache 1.4s 3.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.s1_cache_stripes {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 4px,
+    rgba(255,255,255,0.12) 4px,
+    rgba(255,255,255,0.12) 8px
+  );
+  opacity: 0;
+}
+.s1_stage.visible .s1_cache_stripes {
+  animation: s1_fadeIn 0.5s 4.2s ease forwards, s1_stripeMove 3s 4.2s linear infinite;
+}
+
+.s1_cache_pct {
+  position: relative;
+  z-index: 1;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+}
+.s1_stage.visible .s1_cache_pct {
+  animation: s1_fadeIn 0.4s 4.2s ease forwards;
+}
+
+.s1_cache_miss {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  color: #94A3B8;
+  opacity: 0;
+}
+.s1_stage.visible .s1_cache_miss {
+  animation: s1_fadeIn 0.4s 4.6s ease forwards;
+}
+
+/* === Insight text === */
+.s1_insight {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 13px;
+  color: #0F766E;
+  font-weight: 500;
+  opacity: 0;
+  line-height: 1.6;
+}
+.s1_stage.visible .s1_insight {
+  animation: s1_fadeIn 0.6s 5.0s ease forwards;
+}
+.s1_insight_highlight {
+  color: #BE185D;
+  font-weight: 700;
+}
+
+/* === Turn counter === */
+.s1_turns {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  margin-bottom: 16px;
+  opacity: 0;
+  flex-wrap: wrap;
+  max-width: 280px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.s1_stage.visible .s1_turns {
+  animation: s1_fadeIn 0.5s 0.6s ease forwards;
+}
+.s1_turn_dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: #0F766E;
+  opacity: 0.15;
+}
+.s1_stage.visible .s1_turn_dot {
+  animation: s1_dotLight 0.08s ease forwards;
+  animation-fill-mode: forwards;
+}
+.s1_turn_dot:nth-child(-n+5) { animation-delay: 1.0s; }
+.s1_turn_dot:nth-child(n+6):nth-child(-n+10) { animation-delay: 1.15s; }
+.s1_turn_dot:nth-child(n+11):nth-child(-n+15) { animation-delay: 1.3s; }
+.s1_turn_dot:nth-child(n+16):nth-child(-n+20) { animation-delay: 1.45s; }
+.s1_turn_dot:nth-child(n+21):nth-child(-n+25) { animation-delay: 1.6s; }
+.s1_turn_dot:nth-child(n+26):nth-child(-n+30) { animation-delay: 1.75s; }
+.s1_stage:not(.visible) .s1_turn_dot { animation: none; opacity: 0.15; }
+
+.s1_turn_label {
+  font-size: 11px;
+  color: #64748B;
+  width: 100%;
+  text-align: center;
+  margin-top: 4px;
+}
+
+/* === Keyframes === */
+@keyframes s1_fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s1_fillInput {
+  from { width: 0%; }
+  to { width: 99.24%; }
+}
+
+@keyframes s1_fillOutput {
+  from { width: 0%; }
+  to { width: 0.76%; }
+}
+
+@keyframes s1_fillCache {
+  from { width: 0%; }
+  to { width: 94.2%; }
+}
+
+@keyframes s1_dotLight {
+  from { opacity: 0.15; }
+  to { opacity: 0.85; background: #0F766E; }
+}
+
+@keyframes s1_stripeMove {
+  from { background-position: 0 0; }
+  to { background-position: 40px 0; }
+}
+
+/* === S2 Animation === */
+
+.s2_stage {
+  padding: 32px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  align-items: center;
+  max-width: 340px;
+  margin: 0 auto;
+}
+
+/* === Card shared === */
+.s2_card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 24px 20px;
+  width: 100%;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.s2_stage.visible .s2_card1 {
+  animation: s2_fadeUp 0.6s ease forwards;
+  animation-delay: 0.2s;
+}
+.s2_stage.visible .s2_card2 {
+  animation: s2_fadeUp 0.6s ease forwards;
+  animation-delay: 2.8s;
+}
+
+@keyframes s2_fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === Card titles === */
+.s2_title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #DC2626;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.s2_badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #DC2626;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ========== CARD 1: Memory bar ========== */
+.s2_mem_label {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 6px;
+}
+.s2_mem_track {
+  width: 100%;
+  height: 32px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.s2_mem_fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 8px;
+  background: #0F766E;
+  position: relative;
+}
+.s2_stage.visible .s2_mem_fill {
+  animation: s2_fillBar 1.8s ease-in forwards;
+  animation-delay: 0.8s;
+}
+@keyframes s2_fillBar {
+  0%   { width: 0%; background: #0F766E; }
+  60%  { width: 75%; background: #0F766E; }
+  80%  { width: 95%; background: #BE185D; }
+  100% { width: 110%; background: #DC2626; }
+}
+
+.s2_mem_text {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  margin-top: 6px;
+  text-align: right;
+}
+.s2_mem_text span {
+  color: #DC2626;
+  font-weight: 700;
+  opacity: 0;
+}
+.s2_stage.visible .s2_mem_text span {
+  animation: s2_popIn 0.3s ease forwards;
+  animation-delay: 2.4s;
+}
+
+/* Overflow sparks */
+.s2_overflow {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  width: 24px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  opacity: 0;
+}
+.s2_stage.visible .s2_overflow {
+  animation: s2_popIn 0.3s ease forwards;
+  animation-delay: 2.2s;
+}
+@keyframes s2_popIn {
+  to { opacity: 1; }
+}
+.s2_spark {
+  width: 6px;
+  height: 6px;
+  background: #DC2626;
+  border-radius: 50%;
+}
+.s2_stage.visible .s2_spark {
+  animation: s2_sparkPulse 0.4s ease-in-out infinite alternate;
+}
+.s2_spark:nth-child(2) { animation-delay: 0.15s; }
+.s2_spark:nth-child(3) { animation-delay: 0.3s; }
+@keyframes s2_sparkPulse {
+  0%   { opacity: 0.4; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1.3); }
+}
+
+/* Evict tag */
+.s2_evict {
+  margin-top: 12px;
+  display: inline-block;
+  background: rgba(220,38,38,0.15);
+  color: #DC2626;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 6px;
+  opacity: 0;
+}
+.s2_stage.visible .s2_evict {
+  animation: s2_popIn 0.4s ease forwards;
+  animation-delay: 2.5s;
+}
+
+/* ========== CARD 2: Cache miss ========== */
+.s2_servers {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  position: relative;
+}
+.s2_server {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.s2_server_icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: rgba(15,118,110,0.2);
+  border: 2px solid #0F766E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+.s2_server_label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+}
+.s2_server_cache {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(15,118,110,0.15);
+  color: #0F766E;
+}
+.s2_server_b .s2_server_cache {
+  background: rgba(220,38,38,0.12);
+  color: #DC2626;
+}
+
+/* Arrow between servers */
+.s2_arrow_area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  position: relative;
+}
+.s2_arrow_line {
+  width: 60%;
+  height: 2px;
+  background: rgba(255,255,255,0.15);
+  position: relative;
+}
+.s2_arrow_dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #BE185D;
+  position: absolute;
+  top: -4px;
+  left: 0;
+  opacity: 0;
+}
+.s2_stage.visible .s2_arrow_dot {
+  animation: s2_dotBounce 1.2s ease-in-out forwards;
+  animation-delay: 3.6s;
+}
+@keyframes s2_dotBounce {
+  0%   { left: 0%; opacity: 1; }
+  45%  { left: 85%; opacity: 1; }
+  55%  { left: 85%; opacity: 1; }
+  100% { left: 85%; opacity: 0; }
+}
+
+.s2_arrow_label {
+  font-size: 10px;
+  color: rgba(255,255,255,0.35);
+}
+
+/* Big red X */
+.s2_miss_x {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translate(0, -50%) scale(0);
+  font-size: 36px;
+  font-weight: 900;
+  color: #DC2626;
+  line-height: 1;
+  text-shadow: 0 0 16px rgba(220,38,38,0.5);
+}
+.s2_stage.visible .s2_miss_x {
+  animation: s2_xPop 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  animation-delay: 4.6s;
+}
+@keyframes s2_xPop {
+  to { transform: translate(0, -50%) scale(1); }
+}
+
+/* Miss label */
+.s2_miss_tag {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #DC2626;
+  opacity: 0;
+}
+.s2_stage.visible .s2_miss_tag {
+  animation: s2_popIn 0.4s ease forwards;
+  animation-delay: 5.0s;
+}
+
+/* Recompute bar */
+.s2_recompute {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+}
+.s2_stage.visible .s2_recompute {
+  animation: s2_popIn 0.5s ease forwards;
+  animation-delay: 5.4s;
+}
+.s2_recompute_label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  white-space: nowrap;
+}
+.s2_recompute_bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.s2_recompute_fill {
+  height: 100%;
+  width: 0%;
+  background: #DC2626;
+  border-radius: 3px;
+}
+.s2_stage.visible .s2_recompute_fill {
+  animation: s2_recomputeGrow 2s ease-in-out forwards;
+  animation-delay: 5.6s;
+}
+@keyframes s2_recomputeGrow {
+  0%   { width: 0%; }
+  100% { width: 100%; }
+}
+.s2_recompute_time {
+  font-size: 11px;
+  color: #DC2626;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* === S3 Animation === */
+
+.s3_stage {
+  position: relative;
+  width: 340px;
+  height: 320px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* Master node */
+.s3_master {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 48px;
+  background: #BE185D;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  opacity: 0;
+  z-index: 2;
+}
+
+.s3_stage.visible .s3_master {
+  animation: s3_fadeIn 0.5s ease forwards;
+  animation-delay: 0.4s;
+}
+
+/* Metadata lines from master to clients */
+.s3_meta_line {
+  position: absolute;
+  width: 2px;
+  background: #BE185D;
+  transform-origin: top center;
+  transform: scaleY(0);
+  opacity: 0.6;
+  z-index: 0;
+}
+
+.s3_meta_line_1 {
+  top: 68px;
+  left: 80px;
+  height: 82px;
+  transform: scaleY(0) rotate(16deg);
+  transform-origin: top center;
+}
+
+.s3_meta_line_2 {
+  top: 68px;
+  left: 170px;
+  height: 72px;
+  transform: scaleY(0);
+  transform-origin: top center;
+}
+
+.s3_meta_line_3 {
+  top: 68px;
+  left: 260px;
+  height: 82px;
+  transform: scaleY(0) rotate(-16deg);
+  transform-origin: top center;
+}
+
+.s3_stage.visible .s3_meta_line_1 {
+  animation: s3_drawLine1 0.5s ease forwards;
+  animation-delay: 2.4s;
+}
+.s3_stage.visible .s3_meta_line_2 {
+  animation: s3_drawLine2 0.5s ease forwards;
+  animation-delay: 2.8s;
+}
+.s3_stage.visible .s3_meta_line_3 {
+  animation: s3_drawLine3 0.5s ease forwards;
+  animation-delay: 3.2s;
+}
+
+/* GPU client nodes */
+.s3_client {
+  position: absolute;
+  top: 150px;
+  width: 80px;
+  height: 64px;
+  background: #0F766E;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0;
+  z-index: 2;
+}
+
+.s3_client_label {
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+.s3_client_1 { left: 20px; }
+.s3_client_2 { left: 130px; }
+.s3_client_3 { left: 240px; }
+
+.s3_stage.visible .s3_client_1 {
+  animation: s3_fadeUp 0.5s ease forwards;
+  animation-delay: 0.8s;
+}
+.s3_stage.visible .s3_client_2 {
+  animation: s3_fadeUp 0.5s ease forwards;
+  animation-delay: 1.2s;
+}
+.s3_stage.visible .s3_client_3 {
+  animation: s3_fadeUp 0.5s ease forwards;
+  animation-delay: 1.6s;
+}
+
+/* RDMA connections between clients */
+.s3_rdma {
+  position: absolute;
+  height: 2px;
+  background: #0F766E;
+  opacity: 0;
+  z-index: 1;
+}
+
+.s3_rdma_12 {
+  top: 190px;
+  left: 100px;
+  width: 30px;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.s3_rdma_23 {
+  top: 190px;
+  left: 210px;
+  width: 30px;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.s3_rdma_13 {
+  top: 218px;
+  left: 60px;
+  width: 220px;
+  height: 0;
+  border: none;
+  background: none;
+  border-bottom: 2px dashed #0F766E;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.s3_stage.visible .s3_rdma_12 {
+  animation: s3_drawH 0.4s ease forwards;
+  animation-delay: 2.0s;
+}
+.s3_stage.visible .s3_rdma_23 {
+  animation: s3_drawH 0.4s ease forwards;
+  animation-delay: 2.0s;
+}
+.s3_stage.visible .s3_rdma_13 {
+  animation: s3_drawH 0.5s ease forwards;
+  animation-delay: 2.4s;
+}
+
+/* RDMA label */
+.s3_rdma_label {
+  position: absolute;
+  top: 228px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #0F766E;
+  font-weight: 600;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+.s3_stage.visible .s3_rdma_label {
+  animation: s3_fadeIn 0.4s ease forwards;
+  animation-delay: 2.8s;
+}
+
+/* Metadata label */
+.s3_meta_label {
+  position: absolute;
+  top: 98px;
+  right: 20px;
+  font-size: 10px;
+  color: #BE185D;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+.s3_stage.visible .s3_meta_label {
+  animation: s3_fadeIn 0.4s ease forwards;
+  animation-delay: 3.2s;
+}
+
+/* Pool border that appears at the end */
+.s3_pool_border {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  bottom: 30px;
+  border: 2px dashed #1E293B;
+  border-radius: 16px;
+  opacity: 0;
+}
+
+.s3_pool_label {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  color: #1E293B;
+  font-weight: 700;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+.s3_stage.visible .s3_pool_border {
+  animation: s3_fadeIn 0.6s ease forwards;
+  animation-delay: 3.6s;
+}
+
+.s3_stage.visible .s3_pool_label {
+  animation: s3_fadeIn 0.5s ease forwards;
+  animation-delay: 4.0s;
+}
+
+/* Keyframes */
+@keyframes s3_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes s3_fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s3_drawLine1 {
+  from { opacity: 0.6; transform: scaleY(0) rotate(16deg); }
+  to { opacity: 0.6; transform: scaleY(1) rotate(16deg); }
+}
+
+@keyframes s3_drawLine2 {
+  from { opacity: 0.6; transform: scaleY(0); }
+  to { opacity: 0.6; transform: scaleY(1); }
+}
+
+@keyframes s3_drawLine3 {
+  from { opacity: 0.6; transform: scaleY(0) rotate(-16deg); }
+  to { opacity: 0.6; transform: scaleY(1) rotate(-16deg); }
+}
+
+@keyframes s3_drawH {
+  from { opacity: 0.7; transform: scaleX(0); }
+  to { opacity: 0.7; transform: scaleX(1); }
+}
+
+/* === S4 Animation === */
+
+.s4_stage {
+  width: 340px;
+  min-height: 420px;
+  background: #0F172A;
+  border-radius: 16px;
+  padding: 24px 18px;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #e2e8f0;
+  position: relative;
+  overflow: hidden;
+}
+
+.s4_title {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0F766E;
+  margin-bottom: 20px;
+  opacity: 0;
+}
+.s4_stage.visible .s4_title {
+  animation: s4_fadeIn 0.5s 0.2s both;
+}
+
+/* --- Row shared --- */
+.s4_row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1.5px solid transparent;
+  position: relative;
+  opacity: 0;
+}
+
+/* Row 1: cudaMemcpyAsync */
+.s4_row_1 { background: rgba(220,38,38,0.08); }
+.s4_stage.visible .s4_row_1 {
+  animation: s4_fadeIn 0.5s 0.4s both;
+}
+
+/* Row 2: GPU Kernel */
+.s4_row_2 { background: rgba(220,38,38,0.05); }
+.s4_stage.visible .s4_row_2 {
+  animation: s4_fadeIn 0.5s 0.8s both;
+}
+
+/* Row 3: GPUDirect RDMA */
+.s4_row_3 { background: rgba(15,118,110,0.1); }
+.s4_stage.visible .s4_row_3 {
+  animation: s4_fadeIn 0.5s 1.2s both;
+}
+
+/* --- Labels on left --- */
+.s4_label {
+  min-width: 80px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+
+/* --- Path line area --- */
+.s4_path {
+  flex: 1;
+  height: 32px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.s4_path_line {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 3px;
+  border-radius: 2px;
+  transform: translateY(-50%);
+  width: 0;
+}
+
+/* Row 1 path: slow red dashed */
+.s4_row_1 .s4_path_line {
+  background: repeating-linear-gradient(90deg, #DC2626 0, #DC2626 6px, transparent 6px, transparent 10px);
+  height: 3px;
+}
+.s4_stage.visible .s4_row_1 .s4_path_line {
+  animation: s4_pathGrow 1.0s 0.8s both;
+}
+
+/* Row 2 path: orange jagged */
+.s4_row_2 .s4_path_line {
+  background: repeating-linear-gradient(90deg, #DC2626 0, #DC2626 4px, transparent 4px, transparent 7px);
+}
+.s4_stage.visible .s4_row_2 .s4_path_line {
+  animation: s4_pathGrow 0.8s 1.2s both;
+}
+
+/* Row 3 path: clean teal solid */
+.s4_row_3 .s4_path_line {
+  background: #0F766E;
+  height: 4px;
+  box-shadow: 0 0 8px rgba(15,118,110,0.6);
+}
+.s4_stage.visible .s4_row_3 .s4_path_line {
+  animation: s4_pathGrow 0.6s 1.6s both;
+}
+
+/* --- Status icon --- */
+.s4_status {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+  opacity: 0;
+}
+
+.s4_status_fail {
+  background: rgba(220,38,38,0.2);
+  color: #DC2626;
+  border: 1.5px solid #DC2626;
+}
+.s4_stage.visible .s4_row_1 .s4_status_fail {
+  animation: s4_fadeIn 0.3s 1.6s both;
+}
+.s4_stage.visible .s4_row_2 .s4_status_fail {
+  animation: s4_fadeIn 0.3s 1.8s both;
+}
+
+.s4_status_pass {
+  background: rgba(15,118,110,0.2);
+  color: #0F766E;
+  border: 1.5px solid #0F766E;
+}
+.s4_stage.visible .s4_row_3 .s4_status_pass {
+  animation: s4_popIn 0.4s 2.0s both;
+}
+
+/* --- Strikethrough overlay for rejected rows --- */
+.s4_strike {
+  position: absolute;
+  left: 0; top: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+.s4_strike::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  width: 0;
+  height: 2px;
+  background: #DC2626;
+  transform: translateY(-50%);
+}
+.s4_stage.visible .s4_row_1 .s4_strike {
+  animation: s4_fadeIn 0.2s 2.2s both;
+}
+.s4_stage.visible .s4_row_1 .s4_strike::after {
+  animation: s4_strikeGrow 0.5s 2.2s both;
+}
+.s4_stage.visible .s4_row_2 .s4_strike {
+  animation: s4_fadeIn 0.2s 2.6s both;
+}
+.s4_stage.visible .s4_row_2 .s4_strike::after {
+  animation: s4_strikeGrow 0.5s 2.6s both;
+}
+
+/* --- Winner glow --- */
+.s4_stage.visible .s4_row_3 {
+  animation: s4_fadeIn 0.5s 1.2s both, s4_winGlow 0.6s 3.0s both;
+}
+
+/* --- Desc nodes in path --- */
+.s4_node {
+  position: relative;
+  z-index: 1;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 9px;
+  white-space: nowrap;
+  margin-left: auto;
+}
+.s4_row_1 .s4_node { background: rgba(220,38,38,0.15); color: #fca5a5; }
+.s4_row_2 .s4_node { background: rgba(220,38,38,0.12); color: #fca5a5; }
+.s4_row_3 .s4_node { background: rgba(15,118,110,0.2); color: #5eead4; }
+
+/* --- Bottom summary --- */
+.s4_summary {
+  text-align: center;
+  margin-top: 12px;
+  opacity: 0;
+}
+.s4_stage.visible .s4_summary {
+  animation: s4_fadeIn 0.5s 3.4s both;
+}
+.s4_summary_line1 {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0F766E;
+  margin-bottom: 4px;
+}
+.s4_summary_line2 {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+/* --- Detail boxes below rows --- */
+.s4_detail {
+  font-size: 10px;
+  color: #94a3b8;
+  padding: 0 12px 4px 12px;
+  margin-top: -10px;
+  margin-bottom: 12px;
+  opacity: 0;
+}
+.s4_stage.visible .s4_detail_1 {
+  animation: s4_fadeIn 0.4s 1.6s both;
+}
+.s4_stage.visible .s4_detail_2 {
+  animation: s4_fadeIn 0.4s 2.0s both;
+}
+.s4_stage.visible .s4_detail_3 {
+  animation: s4_fadeIn 0.4s 2.4s both;
+}
+
+/* --- Diagram: GPU/NIC/CPU blocks --- */
+.s4_diagram {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  opacity: 0;
+}
+.s4_stage.visible .s4_diagram {
+  animation: s4_fadeIn 0.5s 0.2s both;
+}
+.s4_chip {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+.s4_chip_gpu {
+  background: rgba(15,118,110,0.2);
+  color: #5eead4;
+  border: 1px solid rgba(15,118,110,0.4);
+}
+.s4_chip_nic {
+  background: rgba(15,118,110,0.15);
+  color: #0F766E;
+  border: 1px solid rgba(15,118,110,0.3);
+  font-size: 10px;
+}
+.s4_chip_cpu {
+  background: rgba(148,163,184,0.15);
+  color: #94a3b8;
+  border: 1px solid rgba(148,163,184,0.3);
+}
+.s4_arrow_between {
+  display: flex;
+  align-items: center;
+  color: #475569;
+  font-size: 16px;
+}
+
+/* ====== Keyframes ====== */
+@keyframes s4_fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s4_pathGrow {
+  from { width: 0; }
+  to { width: calc(100% - 4px); }
+}
+
+@keyframes s4_strikeGrow {
+  from { width: 0; }
+  to { width: calc(100% - 16px); }
+}
+
+@keyframes s4_popIn {
+  0% { opacity: 0; transform: scale(0.3); }
+  60% { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s4_winGlow {
+  from { border-color: transparent; box-shadow: none; }
+  to { border-color: #0F766E; box-shadow: 0 0 16px rgba(15,118,110,0.3); }
+}
+
+/* === S5 Animation === */
+
+.s5_stage {
+  width: 340px;
+  background: #F0FDFA;
+  border-radius: 16px;
+  padding: 28px 24px 24px;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  box-sizing: border-box;
+}
+
+.s5_title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0F766E;
+  text-align: center;
+  margin-bottom: 22px;
+  opacity: 0;
+}
+.s5_stage.visible .s5_title {
+  animation: s5_fadeIn 0.5s ease forwards;
+  animation-delay: 0.2s;
+}
+
+.s5_metric {
+  margin-bottom: 16px;
+}
+
+.s5_metric_label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+}
+.s5_stage.visible .s5_metric_label {
+  animation: s5_fadeIn 0.4s ease forwards;
+}
+.s5_stage.visible .s5_row1 .s5_metric_label { animation-delay: 0.4s; }
+.s5_stage.visible .s5_row2 .s5_metric_label { animation-delay: 0.8s; }
+.s5_stage.visible .s5_row3 .s5_metric_label { animation-delay: 1.2s; }
+
+.s5_multiplier {
+  font-size: 12px;
+  font-weight: 700;
+  color: #BE185D;
+  background: rgba(190, 24, 93, 0.1);
+  padding: 1px 7px;
+  border-radius: 10px;
+}
+
+.s5_bar_track {
+  background: #E2E8F0;
+  border-radius: 6px;
+  height: 22px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.s5_bar_fill {
+  height: 100%;
+  border-radius: 6px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  width: 0;
+}
+
+.s5_bar_before {
+  background: #94A3B8;
+}
+.s5_bar_after {
+  background: #0F766E;
+}
+
+.s5_stage.visible .s5_row1 .s5_bar_before {
+  animation: s5_growBar 0.6s ease forwards;
+  animation-delay: 0.6s;
+}
+.s5_stage.visible .s5_row1 .s5_bar_after {
+  animation: s5_growBarFull 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: 0.8s;
+}
+
+.s5_stage.visible .s5_row2 .s5_bar_before {
+  animation: s5_growBar 0.6s ease forwards;
+  animation-delay: 1.0s;
+}
+.s5_stage.visible .s5_row2 .s5_bar_after {
+  animation: s5_growBarFull 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: 1.2s;
+}
+
+.s5_stage.visible .s5_row3 .s5_bar_before {
+  animation: s5_growBar 0.6s ease forwards;
+  animation-delay: 1.4s;
+}
+.s5_stage.visible .s5_row3 .s5_bar_after {
+  animation: s5_growBarFull 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: 1.6s;
+}
+
+.s5_bar_label_row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #64748B;
+  padding: 0 2px;
+  opacity: 0;
+}
+.s5_stage.visible .s5_row1 .s5_bar_label_row {
+  animation: s5_fadeIn 0.3s ease forwards;
+  animation-delay: 0.6s;
+}
+.s5_stage.visible .s5_row2 .s5_bar_label_row {
+  animation: s5_fadeIn 0.3s ease forwards;
+  animation-delay: 1.0s;
+}
+.s5_stage.visible .s5_row3 .s5_bar_label_row {
+  animation: s5_fadeIn 0.3s ease forwards;
+  animation-delay: 1.4s;
+}
+
+.s5_cache_badge {
+  margin-top: 20px;
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.08), rgba(190, 24, 93, 0.08));
+  border: 1.5px solid rgba(15, 118, 110, 0.2);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  opacity: 0;
+}
+.s5_stage.visible .s5_cache_badge {
+  animation: s5_popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: 2.0s;
+}
+
+.s5_cache_label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.s5_cache_before {
+  font-size: 18px;
+  font-weight: 700;
+  color: #94A3B8;
+}
+
+.s5_cache_arrow {
+  font-size: 16px;
+  color: #94A3B8;
+}
+
+.s5_cache_after {
+  font-size: 22px;
+  font-weight: 800;
+  color: #BE185D;
+}
+
+.s5_cache_unit {
+  font-size: 11px;
+  color: #64748B;
+  margin-left: -4px;
+}
+
+@keyframes s5_fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s5_growBar {
+  from { width: 0; }
+  to { width: 22%; }
+}
+
+@keyframes s5_growBarFull {
+  from { width: 0; }
+  to { width: 88%; }
+}
+
+@keyframes s5_popIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* === S6 Animation === */
+
+.s6_stage {
+  width: 340px;
+  min-height: 360px;
+  background: #0F172A;
+  border-radius: 16px;
+  padding: 24px 20px 20px;
+  position: relative;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, sans-serif;
+  box-sizing: border-box;
+}
+
+.s6_title {
+  color: #e2e8f0;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 18px;
+  opacity: 0;
+}
+.s6_stage.visible .s6_title {
+  animation: s6_fadeIn 0.5s 0.2s ease both;
+}
+
+.s6_chart {
+  position: relative;
+  width: 280px;
+  height: 200px;
+  margin: 0 auto 16px;
+}
+
+.s6_axis_y {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 20px;
+  width: 2px;
+  background: #94A3B8;
+  opacity: 0;
+}
+.s6_stage.visible .s6_axis_y {
+  animation: s6_fadeIn 0.4s 0.4s ease both;
+}
+
+.s6_axis_x {
+  position: absolute;
+  left: 0;
+  bottom: 20px;
+  right: 0;
+  height: 2px;
+  background: #94A3B8;
+  opacity: 0;
+}
+.s6_stage.visible .s6_axis_x {
+  animation: s6_fadeIn 0.4s 0.4s ease both;
+}
+
+.s6_ylabel {
+  position: absolute;
+  left: -2px;
+  top: -18px;
+  color: #94A3B8;
+  font-size: 11px;
+  opacity: 0;
+}
+.s6_stage.visible .s6_ylabel {
+  animation: s6_fadeIn 0.4s 0.6s ease both;
+}
+
+.s6_xlabel {
+  position: absolute;
+  right: -4px;
+  bottom: 2px;
+  color: #94A3B8;
+  font-size: 11px;
+  opacity: 0;
+}
+.s6_stage.visible .s6_xlabel {
+  animation: s6_fadeIn 0.4s 0.6s ease both;
+}
+
+/* X axis tick labels */
+.s6_xtick {
+  position: absolute;
+  bottom: 4px;
+  color: #94A3B8;
+  font-size: 10px;
+  transform: translateX(-50%);
+  opacity: 0;
+}
+.s6_stage.visible .s6_xtick {
+  animation: s6_fadeIn 0.3s ease both;
+}
+.s6_xtick:nth-child(1) { left: 44px; }
+.s6_xtick:nth-child(2) { left: 100px; }
+.s6_xtick:nth-child(3) { left: 156px; }
+.s6_xtick:nth-child(4) { left: 212px; }
+.s6_xtick:nth-child(5) { left: 268px; }
+
+.s6_stage.visible .s6_xtick:nth-child(1) { animation-delay: 0.8s; }
+.s6_stage.visible .s6_xtick:nth-child(2) { animation-delay: 1.2s; }
+.s6_stage.visible .s6_xtick:nth-child(3) { animation-delay: 1.6s; }
+.s6_stage.visible .s6_xtick:nth-child(4) { animation-delay: 2.0s; }
+.s6_stage.visible .s6_xtick:nth-child(5) { animation-delay: 2.4s; }
+
+/* Ideal dashed line (diagonal reference) */
+.s6_ideal_line {
+  position: absolute;
+  left: 44px;
+  bottom: 22px;
+  width: 224px;
+  height: 150px;
+  opacity: 0;
+}
+.s6_stage.visible .s6_ideal_line {
+  animation: s6_fadeIn 0.6s 0.6s ease both;
+}
+.s6_ideal_line svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Data dots */
+.s6_dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #0F766E;
+  border-radius: 50%;
+  transform: translate(-50%, 50%) scale(0);
+  box-shadow: 0 0 8px rgba(15, 118, 110, 0.6);
+}
+.s6_stage.visible .s6_dot {
+  animation: s6_popIn 0.4s ease both;
+}
+
+/* Dot positions: 5 points from (12,1x) to (60,5x) with slight sub-linear */
+.s6_dot:nth-child(1) { left: 44px; bottom: 52px; }
+.s6_dot:nth-child(2) { left: 100px; bottom: 82px; }
+.s6_dot:nth-child(3) { left: 156px; bottom: 110px; }
+.s6_dot:nth-child(4) { left: 212px; bottom: 138px; }
+.s6_dot:nth-child(5) { left: 268px; bottom: 162px; }
+
+.s6_stage.visible .s6_dot:nth-child(1) { animation-delay: 0.8s; }
+.s6_stage.visible .s6_dot:nth-child(2) { animation-delay: 1.2s; }
+.s6_stage.visible .s6_dot:nth-child(3) { animation-delay: 1.6s; }
+.s6_stage.visible .s6_dot:nth-child(4) { animation-delay: 2.0s; }
+.s6_stage.visible .s6_dot:nth-child(5) { animation-delay: 2.4s; }
+
+/* Connecting line segments between dots */
+.s6_line_seg {
+  position: absolute;
+  bottom: 22px;
+  left: 0;
+  width: 100%;
+  height: 160px;
+  opacity: 0;
+}
+.s6_line_seg svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.s6_line_seg svg polyline {
+  stroke: #0F766E;
+  stroke-width: 2.5;
+  fill: none;
+  stroke-dasharray: 300;
+  stroke-dashoffset: 300;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.s6_stage.visible .s6_line_seg {
+  animation: s6_fadeIn 0.1s 0.8s ease both;
+}
+.s6_stage.visible .s6_line_seg svg polyline {
+  animation: s6_drawLine 2.0s 0.8s ease both;
+}
+
+/* Cache hit badge */
+.s6_badge {
+  position: absolute;
+  top: 48px;
+  right: 20px;
+  background: rgba(15, 118, 110, 0.15);
+  border: 1.5px solid #0F766E;
+  border-radius: 10px;
+  padding: 6px 12px;
+  color: #0F766E;
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0;
+  transform: scale(0.8);
+}
+.s6_stage.visible .s6_badge {
+  animation: s6_badgeIn 0.5s 2.8s ease both;
+}
+
+/* Bottom info row */
+.s6_info_row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.s6_info_item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #94A3B8;
+  font-size: 11px;
+  opacity: 0;
+}
+.s6_stage.visible .s6_info_item:nth-child(1) {
+  animation: s6_fadeIn 0.4s 3.2s ease both;
+}
+.s6_stage.visible .s6_info_item:nth-child(2) {
+  animation: s6_fadeIn 0.4s 3.6s ease both;
+}
+
+.s6_info_swatch {
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+}
+.s6_info_swatch_solid {
+  background: #0F766E;
+}
+.s6_info_swatch_dashed {
+  background: repeating-linear-gradient(90deg, #94A3B8 0px, #94A3B8 4px, transparent 4px, transparent 8px);
+}
+
+/* Future directions chips */
+.s6_futures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.s6_chip {
+  background: rgba(190, 24, 93, 0.12);
+  border: 1px solid rgba(190, 24, 93, 0.35);
+  border-radius: 12px;
+  padding: 3px 10px;
+  color: #BE185D;
+  font-size: 11px;
+  opacity: 0;
+}
+.s6_stage.visible .s6_chip:nth-child(1) { animation: s6_fadeIn 0.3s 4.0s ease both; }
+.s6_stage.visible .s6_chip:nth-child(2) { animation: s6_fadeIn 0.3s 4.4s ease both; }
+.s6_stage.visible .s6_chip:nth-child(3) { animation: s6_fadeIn 0.3s 4.8s ease both; }
+
+@keyframes s6_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes s6_popIn {
+  0% { transform: translate(-50%, 50%) scale(0); }
+  60% { transform: translate(-50%, 50%) scale(1.3); }
+  100% { transform: translate(-50%, 50%) scale(1); }
+}
+
+@keyframes s6_drawLine {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes s6_badgeIn {
+  0% { opacity: 0; transform: scale(0.8); }
+  60% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* === A1 Animation === */
+
+.a1_stage {
+  width: 340px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  background: #F0FDFA;
+  border-radius: 12px;
+  font-family: -apple-system, "Noto Sans SC", sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+.a1_title {
+  font-size: 14px;
+  color: #0F766E;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.a1_subtitle {
+  font-size: 12px;
+  color: #94A3B8;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.a1_bar_wrap {
+  position: relative;
+  width: 100%;
+  height: 54px;
+  background: #CCF5F0;
+  border-radius: 8px;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+
+.a1_block {
+  height: 46px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  flex-shrink: 0;
+  margin-right: 3px;
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left center;
+  position: relative;
+}
+
+.a1_block_s1 {
+  width: 68px;
+  background: #0F766E;
+}
+
+.a1_block_s2 {
+  width: 72px;
+  background: #0F766E;
+}
+
+.a1_block_s3 {
+  width: 64px;
+  background: #0F766E;
+}
+
+.a1_block_s4 {
+  width: 76px;
+  background: #0F766E;
+}
+
+.a1_block_s5 {
+  width: 60px;
+  background: #0F766E;
+}
+
+/* Size label under each block */
+.a1_size {
+  font-size: 10px;
+  color: #94A3B8;
+  position: absolute;
+  bottom: -16px;
+  white-space: nowrap;
+}
+
+.a1_overflow_badge {
+  position: absolute;
+  right: 4px;
+  top: -28px;
+  background: #DC2626;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+/* Eviction X mark */
+.a1_evict_x {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  font-size: 28px;
+  font-weight: 700;
+  color: #DC2626;
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Recompute label */
+.a1_recompute {
+  position: absolute;
+  bottom: -40px;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+}
+
+.a1_recompute_icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #DC2626;
+  color: #fff;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.a1_recompute_text {
+  font-size: 12px;
+  color: #DC2626;
+  font-weight: 600;
+}
+
+/* Bottom annotation */
+.a1_anno {
+  margin-top: 52px;
+  text-align: center;
+  font-size: 12px;
+  color: #94A3B8;
+  opacity: 0;
+  line-height: 1.6;
+}
+
+/* Capacity meter on right side */
+.a1_meter_wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.a1_meter_label {
+  font-size: 11px;
+  color: #94A3B8;
+}
+
+.a1_meter_val {
+  font-size: 11px;
+  color: #0F766E;
+  font-weight: 600;
+  opacity: 0;
+}
+
+/* ---- Animations on .visible ---- */
+
+.a1_stage.visible .a1_block_s1 {
+  animation: a1_blockin 0.5s ease-out 0.4s forwards;
+}
+.a1_stage.visible .a1_block_s2 {
+  animation: a1_blockin 0.5s ease-out 0.8s forwards;
+}
+.a1_stage.visible .a1_block_s3 {
+  animation: a1_blockin 0.5s ease-out 1.2s forwards;
+}
+.a1_stage.visible .a1_block_s4 {
+  animation: a1_blockin 0.5s ease-out 1.6s forwards;
+}
+.a1_stage.visible .a1_block_s5 {
+  animation: a1_blockin 0.5s ease-out 2.0s forwards;
+}
+
+.a1_stage.visible .a1_meter_val {
+  animation: a1_fadein 0.3s ease-out 0.4s forwards;
+}
+
+.a1_stage.visible .a1_overflow_badge {
+  animation: a1_fadein 0.4s ease-out 2.4s forwards;
+}
+
+.a1_stage.visible .a1_evict_x {
+  animation: a1_xmark 0.5s ease-out 2.8s forwards;
+}
+
+.a1_stage.visible .a1_block_s1.a1_evictable {
+  animation: a1_blockin 0.5s ease-out 0.4s forwards, a1_evict 0.6s ease-in 3.0s forwards;
+}
+
+.a1_stage.visible .a1_recompute {
+  animation: a1_fadein 0.4s ease-out 3.6s forwards;
+}
+
+.a1_stage.visible .a1_anno {
+  animation: a1_fadein 0.5s ease-out 4.0s forwards;
+}
+
+@keyframes a1_blockin {
+  0% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes a1_fadein {
+  0% { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes a1_xmark {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0) rotate(-45deg);
+  }
+  60% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.3) rotate(0deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes a1_evict {
+  0% {
+    opacity: 1;
+    transform: scaleX(1);
+    background: #0F766E;
+  }
+  40% {
+    opacity: 0.7;
+    background: #DC2626;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(0.3);
+    background: #DC2626;
+  }
+}
+
+
+/* === A2 Animation === */
+
+/* ── A2: Cross-Instance Cache Miss ── */
+.a2_stage {
+  position: relative;
+  width: 340px;
+  height: 400px;
+  margin: 0 auto;
+  font-family: 'Noto Sans SC', sans-serif;
+}
+
+/* User circle: 2 chars -> 48px min */
+.a2_user {
+  position: absolute;
+  top: 8px;
+  left: 146px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #0F766E;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* Instance boxes */
+.a2_inst_a {
+  position: absolute;
+  top: 155px;
+  left: 16px;
+  width: 130px;
+  height: 64px;
+  border-radius: 12px;
+  border: 2.5px solid #0F766E;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0F766E;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.a2_inst_b {
+  position: absolute;
+  top: 155px;
+  left: 194px;
+  width: 130px;
+  height: 64px;
+  border-radius: 12px;
+  border: 2.5px solid #0F766E;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0F766E;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.a2_inst_sub {
+  font-size: 11px;
+  font-weight: 400;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+/* SVG for arrows */
+.a2_svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 340px;
+  height: 400px;
+  pointer-events: none;
+}
+
+/* Arrow line: user(170,56) -> instA center(81,187), edge at ~(108,155) */
+.a2_arrow1_line {
+  stroke: #0F766E;
+  stroke-width: 2.5;
+  fill: none;
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  marker-end: url(#a2_arrowhead1);
+}
+
+/* Arrow line: user(170,56) -> instB center(259,187), edge at ~(232,155) */
+.a2_arrow2_line {
+  stroke: #BE185D;
+  stroke-width: 2.5;
+  fill: none;
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  marker-end: url(#a2_arrowhead2);
+}
+
+/* Turn labels */
+.a2_turn1 {
+  position: absolute;
+  top: 95px;
+  left: 40px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0F766E;
+  opacity: 0;
+  transform: translateY(8px);
+}
+.a2_turn2 {
+  position: absolute;
+  top: 95px;
+  left: 250px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #BE185D;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* Cache built label on Instance A */
+.a2_cache_ok {
+  position: absolute;
+  top: 226px;
+  left: 16px;
+  width: 130px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0F766E;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* Miss label on Instance B */
+.a2_miss {
+  position: absolute;
+  top: 226px;
+  left: 214px;
+  width: 90px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 800;
+  color: #DC2626;
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* Cost label */
+.a2_cost {
+  position: absolute;
+  top: 280px;
+  left: 50px;
+  width: 240px;
+  text-align: center;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(220, 38, 38, 0.08);
+  border: 2px dashed #DC2626;
+  font-size: 14px;
+  font-weight: 700;
+  color: #DC2626;
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+/* Conclusion label */
+.a2_conclusion {
+  position: absolute;
+  top: 345px;
+  left: 20px;
+  width: 300px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0F766E;
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+/* Load Balancer label */
+.a2_lb {
+  position: absolute;
+  top: 130px;
+  left: 110px;
+  width: 120px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748B;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* ── Keyframes ── */
+@keyframes a2_scaleIn {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes a2_fadeSlideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes a2_drawArrow {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes a2_missPop {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes a2_costReveal {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes a2_dimOut {
+  to { opacity: 0.3; }
+}
+
+@keyframes a2_strokeDim {
+  to { stroke-opacity: 0.25; }
+}
+
+/* ── Trigger on .visible ── */
+.a2_stage.visible .a2_user {
+  animation: a2_scaleIn 0.4s 0.4s both;
+}
+.a2_stage.visible .a2_inst_a {
+  animation: a2_scaleIn 0.4s 0.8s both;
+}
+.a2_stage.visible .a2_inst_b {
+  animation: a2_scaleIn 0.4s 1.2s both;
+}
+.a2_stage.visible .a2_lb {
+  animation: a2_fadeSlideUp 0.3s 1.6s both;
+}
+/* Turn 1: arrow to A */
+.a2_stage.visible .a2_arrow1_line {
+  animation: a2_drawArrow 0.4s 2.0s both;
+}
+.a2_stage.visible .a2_turn1 {
+  animation: a2_fadeSlideUp 0.3s 2.4s both;
+}
+.a2_stage.visible .a2_cache_ok {
+  animation: a2_fadeSlideUp 0.3s 2.8s both;
+}
+/* Turn 2: redirect to B, dim A */
+.a2_stage.visible .a2_arrow2_line {
+  animation: a2_drawArrow 0.4s 3.2s both;
+}
+.a2_stage.visible .a2_turn2 {
+  animation: a2_fadeSlideUp 0.3s 3.6s both;
+}
+.a2_stage.visible .a2_inst_a {
+  animation: a2_scaleIn 0.4s 0.8s both, a2_dimOut 0.3s 3.6s both;
+}
+.a2_stage.visible .a2_arrow1_line {
+  animation: a2_drawArrow 0.4s 2.0s both, a2_strokeDim 0.3s 3.6s both;
+}
+.a2_stage.visible .a2_cache_ok {
+  animation: a2_fadeSlideUp 0.3s 2.8s both, a2_dimOut 0.3s 3.6s both;
+}
+.a2_stage.visible .a2_turn1 {
+  animation: a2_fadeSlideUp 0.3s 2.4s both, a2_dimOut 0.3s 3.6s both;
+}
+/* Miss + Cost */
+.a2_stage.visible .a2_miss {
+  animation: a2_missPop 0.4s 4.0s both;
+}
+.a2_stage.visible .a2_cost {
+  animation: a2_costReveal 0.4s 4.4s both;
+}
+.a2_stage.visible .a2_conclusion {
+  animation: a2_fadeSlideUp 0.4s 4.8s both;
+}
+
+/* === A3 Animation === */
+
+.a3_stage {
+  width: 340px;
+  min-height: 420px;
+  background: #F0FDFA;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  padding: 18px 14px 14px;
+  box-sizing: border-box;
+}
+
+/* --- Old paths (crossed out) --- */
+.a3_old_paths {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  opacity: 0;
+}
+.a3_stage.visible .a3_old_paths {
+  animation: a3_fade_in 0.5s 0.4s ease both;
+}
+.a3_old_row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(15, 118, 110, 0.06);
+  border-radius: 8px;
+  position: relative;
+}
+.a3_old_label {
+  font-size: 12px;
+  color: #888;
+  white-space: nowrap;
+}
+.a3_old_desc {
+  font-size: 11px;
+  color: #aaa;
+}
+.a3_strikethrough {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: 50%;
+  height: 2px;
+  background: #BE185D;
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.a3_stage.visible .a3_old_row:nth-child(1) .a3_strikethrough {
+  animation: a3_strike 0.4s 1.0s ease both;
+}
+.a3_stage.visible .a3_old_row:nth-child(2) .a3_strikethrough {
+  animation: a3_strike 0.4s 1.4s ease both;
+}
+
+/* --- Main diagram area --- */
+.a3_diagram {
+  position: relative;
+  height: 260px;
+  margin-top: 4px;
+}
+
+/* GPU HBM box */
+.a3_gpu {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 90px;
+  height: 64px;
+  background: #0F766E;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  opacity: 0;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.3);
+}
+.a3_stage.visible .a3_gpu {
+  animation: a3_fade_in 0.5s 0.4s ease both;
+}
+
+/* CPU Memory box */
+.a3_cpu {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 90px;
+  height: 64px;
+  background: #0F766E;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.3);
+}
+.a3_stage.visible .a3_cpu {
+  animation: a3_fade_in 0.5s 0.8s ease both;
+}
+
+/* RNIC circle (3 chars => 64px) */
+.a3_rnic {
+  position: absolute;
+  left: 50%;
+  bottom: 40px;
+  transform: translateX(-50%);
+  width: 64px;
+  height: 64px;
+  background: #BE185D;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0;
+  box-shadow: 0 2px 10px rgba(190, 24, 93, 0.35);
+}
+.a3_stage.visible .a3_rnic {
+  animation: a3_fade_in 0.5s 1.2s ease both;
+}
+
+/* --- RDMA Paths (SVG-like with borders) --- */
+.a3_path_left {
+  position: absolute;
+  left: 45px;
+  top: 64px;
+  width: 2px;
+  height: 0;
+  background: #BE185D;
+  transform-origin: top;
+}
+.a3_stage.visible .a3_path_left {
+  animation: a3_grow_left_v 0.5s 1.8s ease both;
+}
+
+.a3_path_left_h {
+  position: absolute;
+  left: 45px;
+  top: 164px;
+  width: 0;
+  height: 2px;
+  background: #BE185D;
+  transform-origin: left;
+}
+.a3_stage.visible .a3_path_left_h {
+  animation: a3_grow_left_h 0.4s 2.3s ease both;
+}
+
+.a3_path_right {
+  position: absolute;
+  right: 45px;
+  top: 64px;
+  width: 2px;
+  height: 0;
+  background: #BE185D;
+  transform-origin: top;
+}
+.a3_stage.visible .a3_path_right {
+  animation: a3_grow_right_v 0.5s 1.8s ease both;
+}
+
+.a3_path_right_h {
+  position: absolute;
+  right: 45px;
+  top: 164px;
+  width: 0;
+  height: 2px;
+  background: #BE185D;
+  transform-origin: right;
+}
+.a3_stage.visible .a3_path_right_h {
+  animation: a3_grow_right_h 0.4s 2.3s ease both;
+}
+
+/* --- Flowing data blocks --- */
+.a3_data_block {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #BE185D;
+  border-radius: 3px;
+  opacity: 0;
+}
+
+.a3_db1 {
+  left: 40px;
+  top: 64px;
+}
+.a3_stage.visible .a3_db1 {
+  animation: a3_flow_down_left 1.6s 2.8s ease-in-out infinite;
+}
+
+.a3_db2 {
+  left: 40px;
+  top: 64px;
+}
+.a3_stage.visible .a3_db2 {
+  animation: a3_flow_down_left 1.6s 3.4s ease-in-out infinite;
+}
+
+.a3_db3 {
+  right: 50px;
+  top: 64px;
+}
+.a3_stage.visible .a3_db3 {
+  animation: a3_flow_down_right 1.6s 3.0s ease-in-out infinite;
+}
+
+.a3_db4 {
+  right: 50px;
+  top: 64px;
+}
+.a3_stage.visible .a3_db4 {
+  animation: a3_flow_down_right 1.6s 3.6s ease-in-out infinite;
+}
+
+/* --- Labels --- */
+.a3_label_zero {
+  position: absolute;
+  left: 50%;
+  top: 90px;
+  transform: translateX(-50%);
+  background: #BE185D;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 3px 12px;
+  border-radius: 10px;
+  white-space: nowrap;
+  opacity: 0;
+}
+.a3_stage.visible .a3_label_zero {
+  animation: a3_fade_in 0.4s 2.8s ease both, a3_pulse_label 2s 3.2s ease-in-out infinite;
+}
+
+.a3_label_nosm {
+  position: absolute;
+  left: 50%;
+  top: 120px;
+  transform: translateX(-50%);
+  background: #0F766E;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 10px;
+  white-space: nowrap;
+  opacity: 0;
+}
+.a3_stage.visible .a3_label_nosm {
+  animation: a3_fade_in 0.4s 3.2s ease both;
+}
+
+/* --- Bottom caption --- */
+.a3_caption {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 11px;
+  color: #0F766E;
+  opacity: 0;
+}
+.a3_stage.visible .a3_caption {
+  animation: a3_fade_in 0.4s 3.6s ease both;
+}
+
+/* --- Path pulse overlay --- */
+.a3_path_left_pulse, .a3_path_right_pulse,
+.a3_path_left_h_pulse, .a3_path_right_h_pulse {
+  opacity: 0;
+}
+.a3_path_left_pulse {
+  position: absolute;
+  left: 44px;
+  top: 64px;
+  width: 4px;
+  height: 100px;
+  background: rgba(190, 24, 93, 0.3);
+  border-radius: 2px;
+}
+.a3_stage.visible .a3_path_left_pulse {
+  animation: a3_fade_in 0.1s 2.8s ease both, a3_pulse_path 2s 2.8s ease-in-out infinite;
+}
+.a3_path_right_pulse {
+  position: absolute;
+  right: 44px;
+  top: 64px;
+  width: 4px;
+  height: 100px;
+  background: rgba(190, 24, 93, 0.3);
+  border-radius: 2px;
+}
+.a3_stage.visible .a3_path_right_pulse {
+  animation: a3_fade_in 0.1s 2.8s ease both, a3_pulse_path 2s 2.8s ease-in-out infinite;
+}
+
+/* ========== Keyframes ========== */
+@keyframes a3_fade_in {
+  from { opacity: 0; transform: translateY(8px) translateX(var(--tx, 0)); }
+  to   { opacity: 1; transform: translateY(0) translateX(var(--tx, 0)); }
+}
+
+/* fix fade_in for centered elements */
+.a3_label_zero, .a3_label_nosm, .a3_rnic {
+  --tx: -50%;
+}
+
+@keyframes a3_strike {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@keyframes a3_grow_left_v {
+  from { height: 0; }
+  to   { height: 100px; }
+}
+@keyframes a3_grow_left_h {
+  from { width: 0; }
+  to   { width: 112px; }
+}
+@keyframes a3_grow_right_v {
+  from { height: 0; }
+  to   { height: 100px; }
+}
+@keyframes a3_grow_right_h {
+  from { width: 0; }
+  to   { width: 112px; }
+}
+
+@keyframes a3_flow_down_left {
+  0%   { opacity: 0; top: 64px; left: 40px; }
+  10%  { opacity: 0.9; }
+  50%  { top: 158px; left: 40px; }
+  90%  { opacity: 0.9; top: 158px; left: 148px; }
+  100% { opacity: 0; top: 158px; left: 148px; }
+}
+
+@keyframes a3_flow_down_right {
+  0%   { opacity: 0; top: 64px; right: 50px; }
+  10%  { opacity: 0.9; }
+  50%  { top: 158px; right: 50px; }
+  90%  { opacity: 0.9; top: 158px; right: 158px; }
+  100% { opacity: 0; top: 158px; right: 158px; }
+}
+
+@keyframes a3_pulse_label {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(190, 24, 93, 0.4); }
+  50%      { box-shadow: 0 0 0 8px rgba(190, 24, 93, 0); }
+}
+
+@keyframes a3_pulse_path {
+  0%, 100% { opacity: 0.2; }
+  50%      { opacity: 0.6; }
+}
+
+/* === A4 Animation === */
+
+.a4_stage {
+  width: 340px;
+  min-height: 400px;
+  background: #FDF2F8;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, sans-serif;
+  padding: 20px 10px 20px 10px;
+}
+
+/* --- Nodes --- */
+.a4_prefill, .a4_decode {
+  position: absolute;
+  width: 100px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  z-index: 4;
+}
+.a4_prefill {
+  background: #0F766E;
+  top: 30px;
+  left: 20px;
+}
+.a4_decode {
+  background: #BE185D;
+  top: 30px;
+  right: 20px;
+}
+
+.a4_pool {
+  position: absolute;
+  width: 140px;
+  height: 50px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0F766E, #0E6B63);
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  line-height: 1.3;
+  z-index: 4;
+}
+
+/* --- Connector Labels --- */
+.a4_conn_label {
+  position: absolute;
+  font-size: 10px;
+  font-weight: 600;
+  color: #0F766E;
+  z-index: 5;
+  white-space: nowrap;
+}
+.a4_pd_label {
+  top: 85px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.a4_store_label_l {
+  top: 210px;
+  left: 32px;
+  transform: rotate(-55deg);
+  transform-origin: center;
+}
+.a4_store_label_r {
+  top: 210px;
+  right: 32px;
+  transform: rotate(55deg);
+  transform-origin: center;
+}
+
+/* --- Connector Lines --- */
+.a4_line_pd {
+  position: absolute;
+  top: 54px;
+  left: 120px;
+  width: 80px;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, #0F766E 0, #0F766E 6px, transparent 6px, transparent 10px);
+  z-index: 2;
+}
+.a4_line_store_l {
+  position: absolute;
+  top: 78px;
+  left: 68px;
+  width: 2px;
+  height: 200px;
+  z-index: 2;
+  transform: rotate(25deg);
+  transform-origin: top center;
+  background: repeating-linear-gradient(180deg, #BE185D 0, #BE185D 6px, transparent 6px, transparent 10px);
+}
+.a4_line_store_r {
+  position: absolute;
+  top: 78px;
+  right: 68px;
+  width: 2px;
+  height: 200px;
+  z-index: 2;
+  transform: rotate(-25deg);
+  transform-origin: top center;
+  background: repeating-linear-gradient(180deg, #BE185D 0, #BE185D 6px, transparent 6px, transparent 10px);
+}
+
+/* --- Connector Channels (visual pipes) --- */
+.a4_pipe_h {
+  position: absolute;
+  top: 46px;
+  left: 118px;
+  width: 84px;
+  height: 18px;
+  border: 2px solid #0F766E;
+  border-radius: 9px;
+  background: rgba(15,118,110,0.06);
+  z-index: 1;
+}
+.a4_pipe_vl {
+  position: absolute;
+  top: 76px;
+  left: 56px;
+  width: 18px;
+  height: 230px;
+  border: 2px solid #BE185D;
+  border-radius: 9px;
+  background: rgba(190,24,93,0.06);
+  z-index: 1;
+  transform: rotate(22deg);
+  transform-origin: top center;
+}
+.a4_pipe_vr {
+  position: absolute;
+  top: 76px;
+  right: 56px;
+  width: 18px;
+  height: 230px;
+  border: 2px solid #BE185D;
+  border-radius: 9px;
+  background: rgba(190,24,93,0.06);
+  z-index: 1;
+  transform: rotate(-22deg);
+  transform-origin: top center;
+}
+
+/* --- MultiConnector wrapper indicator --- */
+.a4_multi_wrap {
+  position: absolute;
+  top: 100px;
+  left: 12px;
+  right: 12px;
+  height: 210px;
+  border: 2px dashed #0F766E;
+  border-radius: 14px;
+  z-index: 0;
+  opacity: 0;
+}
+.a4_multi_label {
+  position: absolute;
+  top: 106px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 700;
+  color: #0F766E;
+  z-index: 1;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+/* --- KV Block tokens --- */
+.a4_kv {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  font-size: 8px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  opacity: 0;
+}
+.a4_kv_teal { background: #0F766E; }
+.a4_kv_pink { background: #BE185D; }
+
+/* Phase 1: KV from Prefill -> Decode via PD connector */
+.a4_kv_pd1 { top: 49px; left: 115px; }
+.a4_kv_pd2 { top: 49px; left: 115px; }
+
+/* Phase 1: KV from Prefill -> Pool via Store connector */
+.a4_kv_sl1 { top: 72px; left: 60px; }
+.a4_kv_sl2 { top: 72px; left: 60px; }
+
+/* Phase 2: Decode -> Pool write-back */
+.a4_kv_wr1 { top: 72px; right: 60px; }
+.a4_kv_wr2 { top: 72px; right: 60px; }
+
+/* Phase 3: Cache hit recovery from pool */
+.a4_kv_rec1 { bottom: 78px; left: 60px; }
+.a4_kv_rec2 { bottom: 78px; left: 60px; }
+
+/* --- Title --- */
+.a4_title {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0F766E;
+  margin-bottom: 6px;
+  opacity: 0;
+}
+
+/* --- Phase annotations --- */
+.a4_phase {
+  position: absolute;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 8px;
+  z-index: 12;
+  opacity: 0;
+  white-space: nowrap;
+}
+.a4_phase1 {
+  top: 130px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15,118,110,0.15);
+  color: #0F766E;
+}
+.a4_phase2 {
+  top: 175px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(190,24,93,0.15);
+  color: #BE185D;
+}
+.a4_phase3 {
+  top: 220px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15,118,110,0.15);
+  color: #0F766E;
+}
+
+/* ===================== ANIMATIONS ===================== */
+
+/* Trigger: only animate when .visible is applied */
+.a4_stage.visible .a4_title {
+  animation: a4_fadeIn 0.5s 0.2s ease both;
+}
+.a4_stage.visible .a4_prefill {
+  animation: a4_fadeIn 0.4s 0.4s ease both;
+}
+.a4_stage.visible .a4_decode {
+  animation: a4_fadeIn 0.4s 0.8s ease both;
+}
+.a4_stage.visible .a4_pool {
+  animation: a4_fadeIn 0.4s 1.2s ease both;
+}
+.a4_stage.visible .a4_pipe_h {
+  animation: a4_fadeIn 0.4s 1.6s ease both;
+}
+.a4_stage.visible .a4_pipe_vl {
+  animation: a4_fadeIn 0.4s 2.0s ease both;
+}
+.a4_stage.visible .a4_pipe_vr {
+  animation: a4_fadeIn 0.4s 2.0s ease both;
+}
+.a4_stage.visible .a4_pd_label {
+  animation: a4_fadeIn 0.3s 1.6s ease both;
+}
+.a4_stage.visible .a4_store_label_l {
+  animation: a4_fadeIn 0.3s 2.0s ease both;
+}
+.a4_stage.visible .a4_store_label_r {
+  animation: a4_fadeIn 0.3s 2.0s ease both;
+}
+.a4_stage.visible .a4_multi_wrap {
+  animation: a4_fadeIn 0.5s 2.4s ease both;
+}
+.a4_stage.visible .a4_multi_label {
+  animation: a4_fadeIn 0.4s 2.4s ease both;
+}
+
+/* Phase labels */
+.a4_stage.visible .a4_phase1 {
+  animation: a4_fadeIn 0.3s 2.8s ease both, a4_fadeOut 0.3s 5.6s ease both;
+}
+.a4_stage.visible .a4_phase2 {
+  animation: a4_fadeIn 0.3s 6.0s ease both, a4_fadeOut 0.3s 8.8s ease both;
+}
+.a4_stage.visible .a4_phase3 {
+  animation: a4_fadeIn 0.3s 9.2s ease both, a4_fadeOut 0.3s 12.0s ease both;
+}
+
+/* Phase 1: Prefill sends KV to Decode (PD connector) */
+.a4_stage.visible .a4_kv_pd1 {
+  animation: a4_fadeIn 0.1s 3.0s ease both, a4_movePD 1.2s 3.0s ease-in-out both;
+}
+.a4_stage.visible .a4_kv_pd2 {
+  animation: a4_fadeIn 0.1s 3.4s ease both, a4_movePD 1.2s 3.4s ease-in-out both;
+}
+
+/* Phase 1: Prefill sends KV to Pool (Store connector left) */
+.a4_stage.visible .a4_kv_sl1 {
+  animation: a4_fadeIn 0.1s 3.2s ease both, a4_moveStoreDown 1.6s 3.2s ease-in-out both;
+}
+.a4_stage.visible .a4_kv_sl2 {
+  animation: a4_fadeIn 0.1s 3.6s ease both, a4_moveStoreDown 1.6s 3.6s ease-in-out both;
+}
+
+/* Phase 2: Decode writes back to Pool (Store connector right) */
+.a4_stage.visible .a4_kv_wr1 {
+  animation: a4_fadeIn 0.1s 6.4s ease both, a4_moveDecodeToPool 1.6s 6.4s ease-in-out both;
+}
+.a4_stage.visible .a4_kv_wr2 {
+  animation: a4_fadeIn 0.1s 6.8s ease both, a4_moveDecodeToPool 1.6s 6.8s ease-in-out both;
+}
+
+/* Phase 3: Cache hit recovery from Pool to Prefill */
+.a4_stage.visible .a4_kv_rec1 {
+  animation: a4_fadeIn 0.1s 9.6s ease both, a4_moveRecovery 1.6s 9.6s ease-in-out both;
+}
+.a4_stage.visible .a4_kv_rec2 {
+  animation: a4_fadeIn 0.1s 10.0s ease both, a4_moveRecovery 1.6s 10.0s ease-in-out both;
+}
+
+/* --- Glow pulse on active connector --- */
+.a4_stage.visible .a4_pipe_h {
+  animation: a4_fadeIn 0.4s 1.6s ease both, a4_glowTeal 1.5s 3.0s ease-in-out 2;
+}
+.a4_stage.visible .a4_pipe_vl {
+  animation: a4_fadeIn 0.4s 2.0s ease both, a4_glowPink 1.5s 3.0s ease-in-out 2, a4_glowTeal 1.5s 9.4s ease-in-out 2;
+}
+.a4_stage.visible .a4_pipe_vr {
+  animation: a4_fadeIn 0.4s 2.0s ease both, a4_glowPink 1.5s 6.2s ease-in-out 2;
+}
+
+@keyframes a4_fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes a4_fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* PD connector: move right ~84px */
+@keyframes a4_movePD {
+  0%   { opacity: 1; transform: translateX(0); }
+  90%  { opacity: 1; transform: translateX(78px); }
+  100% { opacity: 0; transform: translateX(84px); }
+}
+
+/* Store connector left: move down ~210px with slight right drift matching angle */
+@keyframes a4_moveStoreDown {
+  0%   { opacity: 1; transform: translate(0, 0); }
+  90%  { opacity: 1; transform: translate(80px, 200px); }
+  100% { opacity: 0; transform: translate(88px, 218px); }
+}
+
+/* Decode write-back: move down right connector to pool */
+@keyframes a4_moveDecodeToPool {
+  0%   { opacity: 1; transform: translate(0, 0); }
+  90%  { opacity: 1; transform: translate(-80px, 200px); }
+  100% { opacity: 0; transform: translate(-88px, 218px); }
+}
+
+/* Recovery: Pool up to Prefill (left connector, upward) */
+@keyframes a4_moveRecovery {
+  0%   { opacity: 1; transform: translate(0, 0); }
+  90%  { opacity: 1; transform: translate(-80px, -200px); }
+  100% { opacity: 0; transform: translate(-88px, -218px); }
+}
+
+@keyframes a4_glowTeal {
+  0%, 100% { box-shadow: 0 0 4px rgba(15,118,110,0.2); }
+  50%      { box-shadow: 0 0 14px rgba(15,118,110,0.6); }
+}
+@keyframes a4_glowPink {
+  0%, 100% { box-shadow: 0 0 4px rgba(190,24,93,0.2); }
+  50%      { box-shadow: 0 0 14px rgba(190,24,93,0.6); }
+}
+
+</style>
+
+<meta name="description" content="随着 Claude Code、OpenClaw 等 LLM agent 的兴起，推理工作负载正在发生根本性变化。Agent 的执行模式是长周期的多轮循环——交替进行推理步骤（处理上下文、产生中间思考）和行动步骤（调用工具、接收外部输出）。vLLM 团队分析了 Codex 在 SWE-bench Pro 上的 610 条 trace 后发现了一个惊人的模式：到">
+<link rel="canonical" href="https://chendi.me/readings/mooncake-store/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">&#8592;</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ Layer 0: 概览 ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <p class="reveal" style="font-size:12px;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent);font-weight:600;margin-bottom:16px;">vLLM Blog · 2026.05.06</p>
+      <h2 class="big-statement reveal reveal-delay-1">Agentic 推理的秘密：<br><span style="color:var(--accent)">94%</span> 的 token 都是重复的</h2>
+      <p class="body-text reveal reveal-delay-2">随着 Claude Code、OpenClaw 等 LLM agent 的兴起，推理工作负载正在发生根本性变化。Agent 的执行模式是长周期的多轮循环——交替进行推理步骤（处理上下文、产生中间思考）和行动步骤（调用工具、接收外部输出）。vLLM 团队分析了 Codex 在 SWE-bench Pro 上的 610 条 trace 后发现了一个惊人的模式：到第 30 轮时，上下文长度增长到约 80K token，但<span class="hl">每轮只新增几百到几千个 token</span>，其余全是模型已经见过的前缀。整个数据集的平均输入输出比是 <span class="hl2">131:1</span>。Cache 命中率高达 <span class="hl">94.2%</span>。如果能缓存这些前缀，那么缓存部分的 prefill 基本免费——每轮的真实计算成本只有新增的那一小部分 delta。</p>
+      <div class="anim-stage reveal reveal-delay-3" id="s1-anim"><div class="s1_stage">
+  <div class="s1_title">Agentic推理 输入输出比</div>
+
+  <div class="s1_turns">
+    <div class="s1_turn_dot"></div><div class="s1_turn_dot"></div><div class="s1_turn_dot"></div><div class="s1_turn_dot"></div><div class="s1_turn_dot"></div>
+    <div class="s1_turn_dot"></div><div class="s1_turn_dot"></div><div class="s1_turn_dot"></div><div class="s1_turn_dot"></div><div class="s1_turn_dot"></div>
+    <div class="s1_turn_dot"></div><div class="s1_turn_dot"></div><div class="s1_turn_dot"></div><div class="s1_turn_dot"></div><div class="s1_turn_dot"></div>
+    <div class="s1_turn_dot"></div><div class="s1_turn_dot"></div><div class="s1_turn_dot"></div><div class="s1_turn_dot"></div><div class="s1_turn_dot"></div>
+    <div class="s1_turn_dot"></div><div class="s1_turn_dot"></div><div class="s1_turn_dot"></div><div class="s1_turn_dot"></div><div class="s1_turn_dot"></div>
+    <div class="s1_turn_dot"></div><div class="s1_turn_dot"></div><div class="s1_turn_dot"></div><div class="s1_turn_dot"></div><div class="s1_turn_dot"></div>
+    <div class="s1_turn_label">30轮对话 / ~80K tokens</div>
+  </div>
+
+  <div class="s1_ratio_row">
+    <span class="s1_ratio_big">131</span>
+    <span class="s1_ratio_sep">:</span>
+    <span class="s1_ratio_small">1</span>
+    <span class="s1_ratio_label">输入/输出</span>
+  </div>
+
+  <div class="s1_bar_section">
+    <div class="s1_bar_label_row">
+      <span>输入 tokens</span>
+      <span>输出</span>
+    </div>
+    <div class="s1_bar_track">
+      <div class="s1_bar_input">~80K tokens</div>
+      <div class="s1_bar_output">
+        <div class="s1_bar_output_dot"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="s1_cache_section">
+    <div class="s1_cache_label">KV Cache 命中率</div>
+    <div class="s1_cache_track">
+      <div class="s1_cache_fill">
+        <div class="s1_cache_stripes"></div>
+        <span class="s1_cache_pct">94.2% 可复用</span>
+      </div>
+      <span class="s1_cache_miss">5.8% 新计算</span>
+    </div>
+  </div>
+
+  <div class="s1_insight">
+    几乎全部 tokens 都是<span class="s1_insight_highlight">可复用前缀</span><br>
+    分布式 KV Cache 可跳过 prefill
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>The pattern is striking: by turn 30, context length grows to roughly 80K tokens, and the longest contexts can grow beyond 180K tokens. Yet each turn typically introduces only a few hundred to a few thousand new tokens. The rest is prefix that the model has already seen. Across the dataset, the average input-to-output token ratio is roughly 131:1.</p>
+          <p>If we can cache those prefixes, prefill for the cached portion becomes essentially free. The true per-turn cost is only the new delta.</p>
+          <p>Across the Codex/SWE-bench Pro dataset, comprising 610 traces with a median of 33 turns per trace, we observe: 94.2% cache hit rate, 131:1 input-to-output ratio, Average context growth of roughly 2,242 tokens per turn, Median context growth from 12K to 80K tokens per trace.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">本地 KV Cache <span style="color:#FCA5A5">撑不住</span><br>Agentic 工作负载</h2>
+      <p class="body-text reveal reveal-delay-1">虽然 94% 的 token 理论上可以缓存，但本地 KV cache 卸载到 CPU DRAM 或磁盘面临两大致命瓶颈。第一个是<span class="hl-danger">容量饱和与驱逐</span>：一个 100K token 的上下文占用 GB 级存储（比如 Kimi-2.5 FP8 KV cache 约 3.8 GB），繁忙实例上的多个长会话会迅速撑满本地容量并触发驱逐。第二个是<span class="hl-danger">跨实例 Cache Miss</span>：为了负载均衡，路由器不总是把同一会话的下一轮调度到同一个 vLLM 实例，如果会话被迁移到另一个实例，那个实例从未见过这个前缀，必须<span class="hl">从头重算</span>。结论：我们不能再把推理服务视为一组孤立的 vLLM 副本——agent 工作负载需要一个分布式 KV cache 池。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s2-anim"><div class="s2_stage">
+
+  <!-- Card 1: Capacity saturation -->
+  <div class="s2_card s2_card1">
+    <div class="s2_title">
+      <span class="s2_badge">1</span>
+      容量饱和
+    </div>
+    <div class="s2_mem_label">GPU 显存占用 (100K token = ~3.8 GB)</div>
+    <div class="s2_mem_track">
+      <div class="s2_mem_fill">
+        <div class="s2_overflow">
+          <div class="s2_spark"></div>
+          <div class="s2_spark"></div>
+          <div class="s2_spark"></div>
+        </div>
+      </div>
+    </div>
+    <div class="s2_mem_text">
+      <span>OOM!</span>
+    </div>
+    <div class="s2_evict">Cache 被驱逐 — 下次请求重算</div>
+  </div>
+
+  <!-- Card 2: Cross-instance miss -->
+  <div class="s2_card s2_card2">
+    <div class="s2_title">
+      <span class="s2_badge">2</span>
+      跨实例缓存未命中
+    </div>
+    <div class="s2_servers">
+      <div class="s2_server s2_server_a">
+        <div class="s2_server_icon">A</div>
+        <div class="s2_server_label">实例 A</div>
+        <div class="s2_server_cache">有缓存</div>
+      </div>
+      <div class="s2_arrow_area">
+        <div class="s2_arrow_line">
+          <div class="s2_arrow_dot"></div>
+        </div>
+        <div class="s2_arrow_label">负载均衡</div>
+      </div>
+      <div class="s2_server s2_server_b">
+        <div class="s2_server_icon">B</div>
+        <div class="s2_server_label">实例 B</div>
+        <div class="s2_server_cache">无缓存</div>
+      </div>
+      <div class="s2_miss_x">X</div>
+    </div>
+    <div class="s2_miss_tag">Prefix Cache Miss — 从零重算</div>
+    <div class="s2_recompute">
+      <div class="s2_recompute_label">重算中...</div>
+      <div class="s2_recompute_bar">
+        <div class="s2_recompute_fill"></div>
+      </div>
+      <div class="s2_recompute_time">+8.2s</div>
+    </div>
+  </div>
+
+</div></div>
+      <p class="hook-line reveal reveal-delay-3">容量驱逐和跨实例 miss 的细节是怎样的？</p>
+      <button class="drill-btn reveal reveal-delay-4" onclick="drillDown('layer-bottleneck',this)">深入瓶颈分析 ↓</button>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background:var(--bg-act2)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">Mooncake Store：<br><span style="color:var(--accent2)">跨节点共享</span>的 KV Cache 池</h2>
+      <p class="body-text reveal reveal-delay-1">Mooncake 是一个开源的高性能 KV cache 传输和分布式存储库。vLLM 已经通过 MooncakeConnector 集成了 Mooncake 的传输引擎用于 prefill-decode 解耦。现在更进一步：用 <span class="hl">Mooncake Store</span> 构建分布式 KV cache 池。架构分两部分：<span class="hl2">Master 服务器</span>在集群范围运行，管理元数据（KV block 哈希、大小等）、监控客户端健康、提供服务发现和死节点清理；<span class="hl">Client</span> 运行在 GPU 节点上，管理本地 CPU/DRAM/SSD 资源，客户端之间通过 RDMA 传输 KV cache，共同组成分布式池。vLLM 的集成插入现有的 KVConnector 接口——调度器侧查询 master 获取匹配的 KV block 来指导调度决策，工作者侧在每个 GPU worker 中嵌入 Mooncake client 并启动后台线程做数据搬运。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s3-anim"><div class="s3_stage">
+  <div class="s3_pool_border"></div>
+  <div class="s3_master">Master</div>
+  <div class="s3_meta_line s3_meta_line_1"></div>
+  <div class="s3_meta_line s3_meta_line_2"></div>
+  <div class="s3_meta_line s3_meta_line_3"></div>
+  <div class="s3_client s3_client_1">Client<span class="s3_client_label">GPU-0</span></div>
+  <div class="s3_client s3_client_2">Client<span class="s3_client_label">GPU-1</span></div>
+  <div class="s3_client s3_client_3">Client<span class="s3_client_label">GPU-2</span></div>
+  <div class="s3_rdma s3_rdma_12"></div>
+  <div class="s3_rdma s3_rdma_23"></div>
+  <div class="s3_rdma s3_rdma_13"></div>
+  <div class="s3_rdma_label">RDMA</div>
+  <div class="s3_meta_label">元数据</div>
+  <div class="s3_pool_label">Mooncake 分布式 KV Cache 池</div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>Mooncake is an open-source, high-performance library for KV cache transfer and distributed storage. vLLM has already adopted Mooncake for prefill-decode (PD) disaggregation via the MooncakeConnector, using Mooncake's transfer engine to move KV caches between GPUs. Now, we take that integration one step further by building a distributed KV cache pool with Mooncake Store.</p>
+          <p>At a high level, Mooncake Store offers a master server and a set of clients. The master server runs cluster-wide and manages metadata, including KV block hashes, sizes, etc. It also monitors client health and availability, providing service discovery and dead-node cleanup.</p>
+          <p>Mooncake clients run on GPU nodes where they manage local CPU/DRAM/SSD resources. Clients connect to one another through RDMA for KV cache transfer. Together, they form a distributed KV cache pool.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">零拷贝 + 全异步：<br><span style="color:#5EEAD4">不占 GPU 算力</span>的 KV 传输</h2>
+      <p class="body-text reveal reveal-delay-1">KV cache 传输的关键设计挑战是不能干扰 GPU 上的推理计算。传统方法要么用 cudaMemcpyAsync（GPU 拷贝引擎，小块传输效率低），要么用 GPU kernel（用 SM 拷贝数据，会干扰其他 kernel）。vLLM + Mooncake 采用第三条路：<span class="hl">GPUDirect RDMA</span>——用 RDMA 网卡直接在 GPU HBM 和 CPU 内存之间搬运 KV block，<span class="hl2">不需要中转缓冲区，不消耗 SM</span>。Mooncake Transfer Engine 还支持多网卡池化和拓扑感知路径选择，聚合利用所有 RNIC 的带宽。所有 RDMA 操作都在专用后台 I/O 线程上运行，从 vLLM 视角看传输路径是完全异步的，不会阻塞主 CPU 路径。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s4-anim"><div class="s4_stage">
+
+  <div class="s4_title">GPU-CPU 数据搬运: 三条路径</div>
+
+  <div class="s4_diagram">
+    <div class="s4_chip s4_chip_gpu">GPU HBM</div>
+    <div class="s4_arrow_between">--></div>
+    <div class="s4_chip s4_chip_nic">RDMA NIC</div>
+    <div class="s4_arrow_between">--></div>
+    <div class="s4_chip s4_chip_cpu">CPU Mem</div>
+  </div>
+
+  <!-- Row 1: cudaMemcpyAsync -->
+  <div class="s4_row s4_row_1">
+    <div class="s4_label" style="color:#fca5a5;">cudaMemcpy<br>Async</div>
+    <div class="s4_path">
+      <div class="s4_path_line"></div>
+      <div class="s4_node">Copy Engine 阻塞</div>
+    </div>
+    <div class="s4_status s4_status_fail">X</div>
+    <div class="s4_strike"></div>
+  </div>
+  <div class="s4_detail s4_detail_1">GPU 拷贝引擎搬运, 小块效率低, 带宽浪费</div>
+
+  <!-- Row 2: GPU Kernel Copy -->
+  <div class="s4_row s4_row_2">
+    <div class="s4_label" style="color:#fca5a5;">GPU Kernel<br>Copy</div>
+    <div class="s4_path">
+      <div class="s4_path_line"></div>
+      <div class="s4_node">SM 被占用</div>
+    </div>
+    <div class="s4_status s4_status_fail">X</div>
+    <div class="s4_strike"></div>
+  </div>
+  <div class="s4_detail s4_detail_2">用计算单元搬数据, 抢占推理算力</div>
+
+  <!-- Row 3: GPUDirect RDMA -->
+  <div class="s4_row s4_row_3">
+    <div class="s4_label" style="color:#5eead4;">GPUDirect<br>RDMA</div>
+    <div class="s4_path">
+      <div class="s4_path_line"></div>
+      <div class="s4_node">零拷贝直通</div>
+    </div>
+    <div class="s4_status s4_status_pass">&#10003;</div>
+  </div>
+  <div class="s4_detail s4_detail_3">NIC 直读 GPU 显存, 不经 CPU, 不占 SM</div>
+
+  <div class="s4_summary">
+    <div class="s4_summary_line1">Mooncake: 多网卡池化 + 全异步 I/O</div>
+    <div class="s4_summary_line2">后台线程搬运, 推理主路径零干扰</div>
+  </div>
+
+</div></div>
+      <p class="hook-line reveal reveal-delay-3">GPUDirect RDMA 和 MultiConnector 的技术细节是什么？</p>
+      <button class="drill-btn reveal reveal-delay-4" onclick="drillDown('layer-design',this)">深入设计细节 ↓</button>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal"><span style="color:var(--accent)">3.8x</span> 吞吐 · <span style="color:var(--accent2)">46x</span> TTFT · <span style="color:var(--accent)">8.6x</span> 延迟</h2>
+      <p class="body-text reveal reveal-delay-1">在真实的 Codex agentic trace 上测试（1P1D 配置，12 个 GB200 GPU，Kimi-2.5 NVFP4 模型），分布式 KV cache 池把 vLLM 的吞吐提升了 <span class="hl">3.8 倍</span>，P50 TTFT（首 token 延迟）降低了 <span class="hl2">46 倍</span>，端到端延迟降低了 <span class="hl">8.6 倍</span>。这些巨大收益的驱动力是 cache 命中率的戏剧性提升：从 1.7%（只缓存 system prompt）飙升到 <span class="hl">92.2%</span>（几乎整个前缀都被缓存）。这意味着在 agentic 场景下，绝大部分 prefill 计算被完全跳过了——模型只需要处理每轮新增的那一小段 delta。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s5-anim"><div class="s5_stage">
+  <div class="s5_title">Codex 真实负载性能对比</div>
+
+  <div class="s5_metric s5_row1">
+    <div class="s5_metric_label">
+      吞吐量
+      <span class="s5_multiplier">3.8x</span>
+    </div>
+    <div class="s5_bar_track">
+      <div class="s5_bar_fill s5_bar_before" style="z-index:1;">Before</div>
+      <div class="s5_bar_fill s5_bar_after">After</div>
+    </div>
+    <div class="s5_bar_label_row">
+      <span>baseline</span>
+      <span>+Mooncake Store</span>
+    </div>
+  </div>
+
+  <div class="s5_metric s5_row2">
+    <div class="s5_metric_label">
+      TTFT (P50)
+      <span class="s5_multiplier">46x</span>
+    </div>
+    <div class="s5_bar_track">
+      <div class="s5_bar_fill s5_bar_before" style="z-index:1;">Before</div>
+      <div class="s5_bar_fill s5_bar_after">After</div>
+    </div>
+    <div class="s5_bar_label_row">
+      <span>baseline</span>
+      <span>+Mooncake Store</span>
+    </div>
+  </div>
+
+  <div class="s5_metric s5_row3">
+    <div class="s5_metric_label">
+      端到端延迟
+      <span class="s5_multiplier">8.6x</span>
+    </div>
+    <div class="s5_bar_track">
+      <div class="s5_bar_fill s5_bar_before" style="z-index:1;">Before</div>
+      <div class="s5_bar_fill s5_bar_after">After</div>
+    </div>
+    <div class="s5_bar_label_row">
+      <span>baseline</span>
+      <span>+Mooncake Store</span>
+    </div>
+  </div>
+
+  <div class="s5_cache_badge">
+    <span class="s5_cache_label">Cache Hit</span>
+    <span class="s5_cache_before">1.7%</span>
+    <span class="s5_cache_arrow">&rarr;</span>
+    <span class="s5_cache_after">92.2%</span>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>The distributed KV cache pool improves vLLM throughput by 3.8x and reduces P50 TTFT and E2E latency by 46x and 8.6x, respectively. These gains are driven by a dramatic increase in cache hit rate: from 1.7%, where only the system prompt is cached, to 92.2%, where nearly the entire prefix is cached.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">从 12 到 60 GPU，<br><span style="color:#5EEAD4">近乎线性扩展</span></h2>
+      <p class="body-text reveal reveal-delay-1">为了测试扩展性，团队使用 round-robin 路由——故意把请求分散到不同节点上，让跨节点 KV cache 搬运成为常态。没有分布式 KV cache 池的话，这种路由模式会导致大量 cache miss 和严重的吞吐退化。但有了 Mooncake Store，<span class="hl">vLLM 在所有规模下都保持 95% 以上的 cache 命中率</span>，从 12 GPU 到 60 GPU <span class="hl2">近乎线性扩展</span>。这证明分布式 KV cache 池在集群增长时不仅维持了高 cache 命中率，还保持了高效的数据通路。未来方向包括：扩展到 NVMe SSD 和分布式文件系统、支持混合注意力架构的 KV cache 卸载、cache 感知路由、以及利用多节点 NVLink 实现多路径 KV cache 加载。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s6-anim"><div class="s6_stage">
+  <div class="s6_title">GPU 线性扩展: 12 -> 60</div>
+
+  <div class="s6_chart">
+    <!-- Y axis -->
+    <div class="s6_axis_y">
+      <div class="s6_ylabel">吞吐量</div>
+    </div>
+    <!-- X axis -->
+    <div class="s6_axis_x">
+      <div class="s6_xlabel">GPU</div>
+    </div>
+
+    <!-- Ideal linear reference (dashed) -->
+    <div class="s6_ideal_line">
+      <svg viewBox="0 0 224 150" preserveAspectRatio="none">
+        <line x1="0" y1="150" x2="224" y2="0" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.5"/>
+      </svg>
+    </div>
+
+    <!-- Connecting line (actual throughput) -->
+    <div class="s6_line_seg">
+      <svg viewBox="0 0 280 160" preserveAspectRatio="none">
+        <polyline points="44,130 100,100 156,72 212,44 268,20"/>
+      </svg>
+    </div>
+
+    <!-- Data dots -->
+    <div class="s6_dot"></div>
+    <div class="s6_dot"></div>
+    <div class="s6_dot"></div>
+    <div class="s6_dot"></div>
+    <div class="s6_dot"></div>
+
+    <!-- X axis tick labels -->
+    <div class="s6_xtick">12</div>
+    <div class="s6_xtick">24</div>
+    <div class="s6_xtick">36</div>
+    <div class="s6_xtick">48</div>
+    <div class="s6_xtick">60</div>
+  </div>
+
+  <!-- Cache hit badge -->
+  <div class="s6_badge">95%+ 命中率</div>
+
+  <!-- Legend -->
+  <div class="s6_info_row">
+    <div class="s6_info_item">
+      <div class="s6_info_swatch s6_info_swatch_solid"></div>
+      <span>实际吞吐</span>
+    </div>
+    <div class="s6_info_item">
+      <div class="s6_info_swatch s6_info_swatch_dashed"></div>
+      <span>理想线性</span>
+    </div>
+  </div>
+
+  <!-- Future directions -->
+  <div class="s6_futures">
+    <div class="s6_chip">NVMe SSD</div>
+    <div class="s6_chip">Cache 感知路由</div>
+    <div class="s6_chip">多节点 NVLink</div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>To stress-test the datapath under cross-node traffic, we used round-robin routing. As a result, requests could be scheduled on different nodes across turns and often needed to fetch KV caches from a previous node.</p>
+          <p>Without a distributed KV cache pool, this routing pattern would cause massive cache misses and severe throughput degradation. With Mooncake Store, vLLM consistently achieves a cache hit rate above 95%, and the system scales nearly linearly to 60 GPUs.</p>
+          <p>This result shows that the distributed KV cache pool substantially improves cache hit rate while maintaining an efficient datapath as the cluster grows.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ Layer 1: 瓶颈分析 ═══ -->
+<div class="layer" id="layer-bottleneck" data-depth="1">
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">100K token = <span style="color:var(--danger)">3.8 GB</span><br>本地内存根本装不下</h2>
+      <p class="body-text reveal reveal-delay-1">容量饱和是本地 KV cache 的第一个致命问题。以 Kimi-2.5 的 FP8 KV cache 为例，<span class="hl-danger">一个 100K token 的上下文就占用约 3.8 GB 存储</span>。在繁忙的实例上，同时服务多个长会话时，这些大型前缀缓存会迅速撑满本地 CPU DRAM 或磁盘容量。一旦容量满了，旧的缓存就会被驱逐——而被驱逐的恰恰可能是当前活跃会话的前缀。下一轮到来时，系统不得不从头重新计算整个前缀，浪费大量 prefill 计算。<span class="hl">这本质上是一个存储容量和会话数量之间的矛盾</span>：agent 会话越长、并发越多，本地容量就越不够用。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a1-anim"><div class="a1_stage">
+  <div class="a1_title">单实例 KV Cache 容量饱和</div>
+  <div class="a1_subtitle">100K token 上下文 = ~3.8 GB (FP8)</div>
+
+  <div class="a1_meter_wrap">
+    <span class="a1_meter_label">CPU DRAM / Disk</span>
+    <span class="a1_meter_val">0 / 16 GB</span>
+  </div>
+
+  <div style="position:relative;">
+    <div class="a1_bar_wrap">
+      <div class="a1_block a1_block_s1 a1_evictable" style="position:relative;">
+        会话1
+        <span class="a1_size">3.8G</span>
+        <span class="a1_evict_x">X</span>
+      </div>
+      <div class="a1_block a1_block_s2">
+        会话2
+        <span class="a1_size">3.2G</span>
+      </div>
+      <div class="a1_block a1_block_s3">
+        会话3
+        <span class="a1_size">2.9G</span>
+      </div>
+      <div class="a1_block a1_block_s4">
+        会话4
+        <span class="a1_size">3.6G</span>
+      </div>
+      <div class="a1_block a1_block_s5">
+        会话5
+        <span class="a1_size">3.1G</span>
+      </div>
+      <span class="a1_overflow_badge">容量溢出!</span>
+    </div>
+
+    <div class="a1_recompute">
+      <span class="a1_recompute_icon">!</span>
+      <span class="a1_recompute_text">会话1 被驱逐 -- 下轮需重算全部前缀</span>
+    </div>
+  </div>
+
+  <div class="a1_anno">
+    长上下文会话越多, 驱逐越频繁<br>被驱逐的 prefix 必须从头重算
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>Limited capacity and eviction. A 100K-token context can occupy GBs of storage (e.g., ~3.8 GB for Kimi-2.5 FP8 KV caches). On a busy instance serving many long-running sessions, these large prefix caches can quickly saturate local capacity and trigger eviction.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background:var(--bg-act2)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">换了节点？<br>前缀<span style="color:var(--accent2)">全部重算</span></h2>
+      <p class="body-text reveal reveal-delay-1">跨实例 Cache Miss 是第二个致命问题。为了负载均衡，路由器不总是把同一个会话的下一轮调度到同一个 vLLM 实例。当会话被迁移到另一个实例时，<span class="hl2">那个实例从未见过这个会话的前缀</span>，必须从头重新计算——即使前一个实例的本地缓存里还完整保存着这个前缀。在 agentic 场景下，一个 80K token 的前缀被强制重算的代价是巨大的，而这种情况在集群规模增长时会越来越频繁。这就是为什么团队得出结论：<span class="hl">推理服务不能再是一组孤立的副本</span>，agent 工作负载需要实例之间能共享 KV cache。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a2-anim"><div class="a2_stage">
+  <!-- User -->
+  <div class="a2_user">用户</div>
+
+  <!-- SVG arrows -->
+  <svg class="a2_svg" viewBox="0 0 340 400">
+    <defs>
+      <marker id="a2_arrowhead1" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#0F766E"/>
+      </marker>
+      <marker id="a2_arrowhead2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#BE185D"/>
+      </marker>
+    </defs>
+    <!-- Arrow 1: user bottom(170,56) -> instA top-center(81,155) -->
+    <line class="a2_arrow1_line" x1="160" y1="60" x2="85" y2="152"/>
+    <!-- Arrow 2: user bottom(170,56) -> instB top-center(259,155) -->
+    <line class="a2_arrow2_line" x1="180" y1="60" x2="255" y2="152"/>
+  </svg>
+
+  <!-- Load Balancer label -->
+  <div class="a2_lb">Load Balancer</div>
+
+  <!-- Turn labels -->
+  <div class="a2_turn1">Turn 1</div>
+  <div class="a2_turn2">Turn 2</div>
+
+  <!-- Instance A -->
+  <div class="a2_inst_a">
+    Instance A
+    <span class="a2_inst_sub">cache 已建立</span>
+  </div>
+
+  <!-- Instance B -->
+  <div class="a2_inst_b">
+    Instance B
+    <span class="a2_inst_sub">cache 为空</span>
+  </div>
+
+  <!-- Cache OK on A -->
+  <div class="a2_cache_ok">80K 前缀已缓存</div>
+
+  <!-- Miss on B -->
+  <div class="a2_miss">Miss!</div>
+
+  <!-- Cost label -->
+  <div class="a2_cost">从头重算 80K tokens</div>
+
+  <!-- Conclusion -->
+  <div class="a2_conclusion">结论: 实例之间需要共享 KV Cache</div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>Cross-instance misses. To balance load, the router may not always schedule the next turn of a session on the same vLLM instance. If the session is migrated to a different instance, that instance has never seen the prefix and must recompute it from scratch.</p>
+          <p>Takeaway: we can no longer treat an inference service as a set of isolated vLLM replicas. For agentic workloads, instances need to share a distributed KV cache pool that provides both larger aggregate capacity and cross-instance cache hits.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ═══ Layer 1: 设计细节 ═══ -->
+<div class="layer" id="layer-design" data-depth="1">
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">GPUDirect RDMA：<br><span style="color:var(--accent)">不用 SM，不用中转</span></h2>
+      <p class="body-text reveal reveal-delay-1">传统 GPU-CPU 数据传输有两种方式：cudaMemcpyAsync（用 GPU 拷贝引擎，但对很多小块传输效率低）和 GPU kernel 拷贝（用 SM，能处理大量小块但会干扰其他 kernel）。vLLM + Mooncake 选择了第三条路：<span class="hl">GPUDirect RDMA</span>——用 RDMA 网卡直接在 GPU HBM 和 CPU 内存之间搬运 KV block。GPU 的 KV cache 内存被注册为 RDMA buffer，实现 GPUDirect RDMA 读写，<span class="hl2">不需要中转缓冲区，不消耗任何 SM</span>。Mooncake Transfer Engine 还通过多网卡池化（multi-NIC pooling）和拓扑感知路径选择来聚合利用节点上所有 RNIC 的网络带宽。这意味着 KV cache 传输完全在「推理计算路径之外」进行，不会对模型推理造成任何干扰。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a3-anim"><div class="a3_stage">
+  <!-- Old paths crossed out -->
+  <div class="a3_old_paths">
+    <div class="a3_old_row">
+      <span class="a3_old_label">cudaMemcpyAsync</span>
+      <span class="a3_old_desc">Copy Engine / 小块低效</span>
+      <div class="a3_strikethrough"></div>
+    </div>
+    <div class="a3_old_row">
+      <span class="a3_old_label">GPU Kernel</span>
+      <span class="a3_old_desc">占用 SM / 干扰推理</span>
+      <div class="a3_strikethrough"></div>
+    </div>
+  </div>
+
+  <!-- Main diagram -->
+  <div class="a3_diagram">
+    <!-- Nodes -->
+    <div class="a3_gpu">GPU HBM</div>
+    <div class="a3_cpu">CPU Mem</div>
+    <div class="a3_rnic">NIC</div>
+
+    <!-- Vertical paths -->
+    <div class="a3_path_left"></div>
+    <div class="a3_path_right"></div>
+
+    <!-- Horizontal paths to RNIC -->
+    <div class="a3_path_left_h"></div>
+    <div class="a3_path_right_h"></div>
+
+    <!-- Pulse overlays -->
+    <div class="a3_path_left_pulse"></div>
+    <div class="a3_path_right_pulse"></div>
+
+    <!-- Flowing data blocks -->
+    <div class="a3_data_block a3_db1"></div>
+    <div class="a3_data_block a3_db2"></div>
+    <div class="a3_data_block a3_db3"></div>
+    <div class="a3_data_block a3_db4"></div>
+
+    <!-- Labels -->
+    <div class="a3_label_zero">零拷贝</div>
+    <div class="a3_label_nosm">不占 SM</div>
+
+    <!-- Caption -->
+    <div class="a3_caption">Mooncake Transfer Engine: 多网卡聚合 + 拓扑感知选路</div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>We take a third approach: using the RDMA NIC and GPUDirect RDMA to move KV blocks directly between GPU HBM and CPU memory. This path requires no staging buffer and does not consume SMs. It also performs well for large numbers of small KV block transfers.</p>
+          <p>Thanks to the Mooncake Transfer Engine, the transfer path can also leverage multiple RNICs on a node through multi-NIC pooling and topology-aware path selection. This allows KV transfers to aggregate and better utilize available network bandwidth across NICs.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background:var(--bg-act2)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">MultiConnector：<br><span style="color:var(--accent2)">PD 解耦 + 分布式池</span>一起用</h2>
+      <p class="body-text reveal reveal-delay-1">通过 MultiConnector 接口，vLLM 可以同时启用 PD（prefill-decode）解耦和分布式 KV cache 池。MultiConnector 是一个包装器，把多个子 connector 串联起来，每个独立运行。在 <span class="hl">prefill 侧</span>：prefill 实例为 PD connector 准备 KV block，同时通过 store connector 把它们存入分布式池。对于 cache 命中，vLLM 查询所有 connector 并从 Mooncake Store 恢复匹配的前缀。在 <span class="hl2">decode 侧</span>：decode 实例写入分布式池的 KV block 立即对 prefill 实例可见。因为 vLLM 把每个请求同时调度到 prefill 和 decode 实例，prefill 实例从池中加载前缀 KV block 后通过 PD connector 转发给 decode。团队正在开发从 prefill 实例和分布式池的多路径同时加载，以最大化可用网络带宽。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a4-anim"><div class="a4_stage">
+  <div class="a4_title">MultiConnector PD + 分布式池</div>
+
+  <!-- Main nodes -->
+  <div class="a4_prefill">Prefill 实例</div>
+  <div class="a4_decode">Decode 实例</div>
+  <div class="a4_pool">分布式池<br>Mooncake Store</div>
+
+  <!-- Connector pipes -->
+  <div class="a4_pipe_h"></div>
+  <div class="a4_pipe_vl"></div>
+  <div class="a4_pipe_vr"></div>
+
+  <!-- Connector labels -->
+  <div class="a4_conn_label a4_pd_label">PD Connector</div>
+  <div class="a4_conn_label a4_store_label_l">Store Conn.</div>
+  <div class="a4_conn_label a4_store_label_r">Store Conn.</div>
+
+  <!-- MultiConnector wrapper -->
+  <div class="a4_multi_wrap"></div>
+  <div class="a4_multi_label">MultiConnector</div>
+
+  <!-- Phase annotations -->
+  <div class="a4_phase a4_phase1">1: Prefill 同时写入两路</div>
+  <div class="a4_phase a4_phase2">2: Decode 写回分布式池</div>
+  <div class="a4_phase a4_phase3">3: 缓存命中从池恢复</div>
+
+  <!-- KV blocks: Phase 1 PD path -->
+  <div class="a4_kv a4_kv_teal a4_kv_pd1">KV</div>
+  <div class="a4_kv a4_kv_teal a4_kv_pd2">KV</div>
+
+  <!-- KV blocks: Phase 1 Store path (left) -->
+  <div class="a4_kv a4_kv_pink a4_kv_sl1">KV</div>
+  <div class="a4_kv a4_kv_pink a4_kv_sl2">KV</div>
+
+  <!-- KV blocks: Phase 2 Decode write-back (right) -->
+  <div class="a4_kv a4_kv_pink a4_kv_wr1">KV</div>
+  <div class="a4_kv a4_kv_pink a4_kv_wr2">KV</div>
+
+  <!-- KV blocks: Phase 3 Cache recovery (left, upward) -->
+  <div class="a4_kv a4_kv_teal a4_kv_rec1">KV</div>
+  <div class="a4_kv a4_kv_teal a4_kv_rec2">KV</div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>The integration also naturally extends to PD disaggregation through the MultiConnector interface. MultiConnector is a wrapper that chains multiple sub-connectors together. Each connector operates independently and does not rely on the others.</p>
+          <p>Prefill: The prefill instance prepares KV blocks for the PD connector and also stores them in the distributed KV cache pool through the store connector. For cache hits, vLLM queries all connectors and can recover matching prefixes from the Mooncake Store connector.</p>
+          <p>Decode: When the decode instance writes KV blocks into the distributed pool, they immediately become visible to prefill instances.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+var layerStack=['layer-overview'];
+var transitioning=false;
+var layerNames={'layer-overview':'概览','layer-bottleneck':'瓶颈分析','layer-design':'设计细节'};
+var observers=new Map();
+function setupObserver(layerId){if(observers.has(layerId))return;var layer=document.getElementById(layerId);var reveals=layer.querySelectorAll('.reveal, [class*="_stage"]');var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.15,root:layer});reveals.forEach(function(el){obs.observe(el);});observers.set(layerId,obs);}
+function resetReveals(layerId){var layer=document.getElementById(layerId);layer.querySelectorAll('.reveal').forEach(function(el){el.classList.remove('visible');});layer.querySelectorAll('[class*="_stage"]').forEach(function(el){el.classList.remove('visible');});}
+function activateReveals(layerId){resetReveals(layerId);if(observers.has(layerId)){observers.get(layerId).disconnect();observers.delete(layerId);}requestAnimationFrame(function(){setupObserver(layerId);});}
+function updateBreadcrumb(){var bc=document.getElementById('breadcrumb');bc.innerHTML='';layerStack.forEach(function(id,i){if(i>0){var sep=document.createElement('span');sep.className='sep';sep.textContent='>';bc.appendChild(sep);}var span=document.createElement('span');span.textContent=layerNames[id]||id;if(i===layerStack.length-1){span.className='current';}else{span.addEventListener('click',function(){goBackTo(i);});}bc.appendChild(span);});var backBtn=document.getElementById('backBtn');backBtn.style.display=layerStack.length>1?'flex':'none';bc.style.left=layerStack.length>1?'60px':'16px';var dots=document.getElementById('depthDots');var depth=layerStack.length-1;dots.querySelectorAll('.dot').forEach(function(d,i){d.classList.toggle('active',i===depth);});}
+function drillDown(targetId,btnEl){if(transitioning)return;transitioning=true;var currentId=layerStack[layerStack.length-1];var currentLayer=document.getElementById(currentId);var targetLayer=document.getElementById(targetId);targetLayer.scrollTop=0;resetReveals(targetId);targetLayer.style.visibility='visible';var duration=600;currentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';currentLayer.style.transformOrigin='center center';currentLayer.style.transform='scale(1.3)';currentLayer.style.opacity='0';targetLayer.classList.add('active');targetLayer.style.opacity='0';targetLayer.style.transform='scale(0.85)';targetLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){targetLayer.style.opacity='1';targetLayer.style.transform='scale(1)';});});setTimeout(function(){currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';targetLayer.style.transition='';targetLayer.style.transform='';activateReveals(targetId);transitioning=false;},duration+50);layerStack.push(targetId);updateBreadcrumb();}
+function goBack(){if(layerStack.length<=1||transitioning)return;transitioning=true;var currentId=layerStack.pop();var parentId=layerStack[layerStack.length-1];var currentLayer=document.getElementById(currentId);var parentLayer=document.getElementById(parentId);var duration=600;currentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';currentLayer.style.transform='scale(0.85)';currentLayer.style.opacity='0';parentLayer.classList.add('active');parentLayer.style.transform='scale(1.3)';parentLayer.style.opacity='0';parentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){parentLayer.style.transform='scale(1)';parentLayer.style.opacity='1';});});setTimeout(function(){currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';currentLayer.style.visibility='';parentLayer.style.transition='';parentLayer.style.transform='';transitioning=false;},duration+50);updateBreadcrumb();}
+function goBackTo(targetIndex){if(transitioning)return;while(layerStack.length-1>targetIndex){if(layerStack.length<=1)break;goBack();return;}}
+function toggleSource(btn){btn.classList.toggle('open');btn.nextElementSibling.classList.toggle('open');}
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+</body>
+</html>

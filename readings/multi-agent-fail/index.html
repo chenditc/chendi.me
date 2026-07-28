@@ -1,0 +1,2246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Multi-agent 工作流为什么总是失败</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #EEF2FF; --bg-act2: #FFF1F2; --bg-act3: #FFFBEB;
+  --bg-close: #0F172A;
+  --text: #1E293B; --text-muted: #64748B; --dim: #94A3B8;
+  --accent: #6366F1; --accent2: #F43F5E;
+  --warm: #F59E0B; --danger: #F43F5E;
+  --card-bg: #FFFFFF; --neutral: #94A3B8;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Noto Sans SC',sans-serif;color:var(--text);-webkit-font-smoothing:antialiased;}
+.layer{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;visibility:hidden;opacity:0;will-change:transform,opacity;scroll-snap-type:y proximity;}
+.layer.active{visibility:visible;opacity:1;}
+.feed-section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;scroll-snap-align:start;}
+.feed-section.dark{background:var(--bg-close);color:#F1F5F9;}
+.feed-section.dark .body-text{color:#94A3B8;}
+.feed-section.dark .big-statement{color:#F1F5F9;}
+.section-inner{max-width:600px;width:100%;}
+.reveal{opacity:0;transform:translateY(40px);transition:opacity 0.8s ease,transform 0.8s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-d1{transition-delay:0.15s;}.reveal-d2{transition-delay:0.3s;}.reveal-d3{transition-delay:0.45s;}.reveal-d4{transition-delay:0.6s;}
+.big-statement{font-family:'Noto Serif SC',serif;font-size:clamp(22px,5.5vw,32px);font-weight:700;line-height:1.5;margin-bottom:32px;}
+.body-text{font-size:16px;line-height:1.9;color:var(--text);margin-bottom:28px;}
+.body-text .hl{color:var(--accent);font-weight:500;}
+.body-text .hl2{color:var(--accent2);font-weight:500;}
+.anim-stage{width:100%;display:flex;justify-content:center;margin:28px 0;min-height:180px;}
+.anim-stage > div{width:100%;}
+.hook-line{font-size:15px;color:var(--accent);font-weight:600;margin-top:20px;padding:14px 0;border-top:1px solid rgba(99,102,241,0.2);}
+.dark .hook-line{color:#A5B4FC;border-top-color:rgba(165,180,252,0.2);}
+.act-divider{min-height:30vh;display:flex;align-items:center;justify-content:center;padding:40px 24px;scroll-snap-align:start;}
+.act-divider .act-label{font-family:'Noto Serif SC',serif;font-size:clamp(18px,4vw,24px);font-weight:700;color:var(--dim);letter-spacing:2px;}
+.breadcrumb{position:fixed;top:16px;left:16px;z-index:1000;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);padding:8px 14px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,0.1);font-size:13px;font-weight:500;}
+.breadcrumb span{color:var(--text-muted);cursor:pointer;transition:color 0.2s;}
+.breadcrumb span:hover{color:var(--accent);}
+.breadcrumb span.current{color:var(--text);cursor:default;}
+.breadcrumb .sep{color:#CBD5E1;margin:0 2px;cursor:default;}
+.back-btn{position:fixed;top:16px;left:16px;z-index:1001;width:38px;height:38px;border-radius:10px;border:none;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(0,0,0,0.1);font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--text);transition:all 0.2s;}
+.back-btn:hover{background:var(--accent);color:#fff;}
+.depth-dots{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;gap:8px;background:rgba(255,255,255,0.9);backdrop-filter:blur(8px);padding:8px 14px;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,0.1);}
+.dot{width:10px;height:10px;border-radius:50%;background:#CBD5E1;transition:all 0.3s;}
+.dot.active{background:var(--accent);box-shadow:0 0 8px rgba(99,102,241,0.5);transform:scale(1.2);}
+.drill-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:1.5px solid rgba(99,102,241,0.3);border-radius:10px;background:transparent;color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.25s;}
+.drill-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(99,102,241,0.3);}
+.dark .drill-btn{border-color:rgba(165,180,252,0.4);color:#A5B4FC;}
+.dark .drill-btn:hover{background:#6366F1;color:#fff;border-color:#6366F1;}
+.source-panel{margin-top:24px;border-radius:12px;overflow:hidden;border:1px solid rgba(99,102,241,0.15);background:rgba(99,102,241,0.03);}
+.dark .source-panel{border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);}
+.source-toggle{width:100%;padding:12px 16px;border:none;background:none;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);}
+.dark .source-toggle{color:#A5B4FC;}
+.source-toggle:hover{background:rgba(99,102,241,0.06);}
+.source-toggle .arrow{transition:transform 0.3s;font-size:11px;}
+.source-toggle.open .arrow{transform:rotate(90deg);}
+.source-body{max-height:0;overflow:hidden;transition:max-height 0.4s ease;padding:0 16px;}
+.source-body.open{max-height:2000px;padding:0 16px 16px;overflow-y:auto;}
+.source-body p{font-size:13px;line-height:1.8;color:var(--text-muted);margin:0 0 12px 0;white-space:pre-wrap;}
+.dark .source-body p{color:#94A3B8;}
+.source-body .source-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--accent);margin-bottom:8px;display:block;}
+.dark .source-body .source-label{color:#A5B4FC;}
+
+/* === S1 Animation === */
+
+.s1_stage {
+  position: relative;
+  width: 340px;
+  height: 300px;
+  margin: 0 auto;
+  font-family: sans-serif;
+  color: #F1F5F9;
+  overflow: hidden;
+}
+
+/* Agents row */
+.s1_agent {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid #94A3B8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #F1F5F9;
+  opacity: 0;
+  top: 20px;
+  background: transparent;
+}
+.s1_agent_a { left: 40px; }
+.s1_agent_b { left: 148px; }
+.s1_agent_c { left: 256px; }
+
+/* Cards */
+.s1_card {
+  position: absolute;
+  width: 80px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: #F1F5F9;
+  opacity: 0;
+}
+.s1_card_issue {
+  background: #6366F1;
+  top: 140px;
+  left: 22px;
+}
+.s1_card_issue_closed {
+  background: #F43F5E;
+  top: 140px;
+  left: 22px;
+  text-decoration: line-through;
+}
+.s1_card_pr {
+  background: #6366F1;
+  top: 140px;
+  left: 238px;
+}
+
+/* Arrows (SVG lines) */
+.s1_arrows {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 340px;
+  height: 300px;
+  pointer-events: none;
+}
+.s1_arrow_a, .s1_arrow_b, .s1_arrow_c {
+  stroke-dasharray: 80;
+  stroke-dashoffset: 80;
+  fill: none;
+  stroke-width: 2;
+}
+.s1_arrow_a { stroke: #94A3B8; }
+.s1_arrow_b { stroke: #F43F5E; }
+.s1_arrow_c { stroke: #94A3B8; }
+
+/* Arrowheads */
+.s1_arrowhead_a { fill: #94A3B8; opacity: 0; }
+.s1_arrowhead_b { fill: #F43F5E; opacity: 0; }
+.s1_arrowhead_c { fill: #94A3B8; opacity: 0; }
+
+/* Red X on PR */
+.s1_fail_x {
+  position: absolute;
+  top: 132px;
+  left: 298px;
+  font-size: 20px;
+  font-weight: 800;
+  color: #F43F5E;
+  opacity: 0;
+  line-height: 1;
+}
+
+/* Fail label on PR */
+.s1_fail_label {
+  position: absolute;
+  top: 176px;
+  left: 226px;
+  font-size: 10px;
+  color: #F43F5E;
+  opacity: 0;
+  white-space: nowrap;
+  text-align: center;
+  width: 104px;
+}
+
+/* Warning badge */
+.s1_warning {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(244, 63, 94, 0.15);
+  border: 1px solid #F43F5E;
+  border-radius: 6px;
+  padding: 4px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #F43F5E;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+/* Animations triggered by .visible */
+.s1_stage.visible .s1_agent {
+  animation: s1_fadeIn 0.4s ease forwards;
+}
+.s1_agent_a { animation-delay: 0s !important; }
+.s1_agent_b { animation-delay: 0.15s !important; }
+.s1_agent_c { animation-delay: 0.3s !important; }
+
+/* Step 2: A opens issue */
+.s1_stage.visible .s1_arrow_a {
+  animation: s1_drawLine 0.5s ease forwards;
+  animation-delay: 0.8s;
+}
+.s1_stage.visible .s1_arrowhead_a {
+  animation: s1_fadeIn 0.2s ease forwards;
+  animation-delay: 1.1s;
+}
+.s1_stage.visible .s1_card_issue {
+  animation: s1_fadeIn 0.4s ease forwards;
+  animation-delay: 1.2s;
+}
+
+/* Step 3: B closes issue - card turns red with strikethrough */
+.s1_stage.visible .s1_arrow_b {
+  animation: s1_drawLine 0.5s ease forwards;
+  animation-delay: 2.0s;
+}
+.s1_stage.visible .s1_arrowhead_b {
+  animation: s1_fadeIn 0.2s ease forwards;
+  animation-delay: 2.3s;
+}
+.s1_stage.visible .s1_card_issue_closed {
+  animation: s1_fadeIn 0.3s ease forwards;
+  animation-delay: 2.5s;
+}
+
+/* Step 4: C ships PR */
+.s1_stage.visible .s1_arrow_c {
+  animation: s1_drawLine 0.5s ease forwards;
+  animation-delay: 3.2s;
+}
+.s1_stage.visible .s1_arrowhead_c {
+  animation: s1_fadeIn 0.2s ease forwards;
+  animation-delay: 3.5s;
+}
+.s1_stage.visible .s1_card_pr {
+  animation: s1_fadeIn 0.4s ease forwards;
+  animation-delay: 3.6s;
+}
+
+/* Step 5: Red X on PR */
+.s1_stage.visible .s1_fail_x {
+  animation: s1_popIn 0.3s ease forwards;
+  animation-delay: 4.2s;
+}
+.s1_stage.visible .s1_fail_label {
+  animation: s1_fadeIn 0.4s ease forwards;
+  animation-delay: 4.4s;
+}
+
+/* Step 6: Warning badge */
+.s1_stage.visible .s1_warning {
+  animation: s1_fadeIn 0.5s ease forwards;
+  animation-delay: 5.0s;
+}
+
+@keyframes s1_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes s1_drawLine {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes s1_popIn {
+  0% { opacity: 0; transform: scale(0.3); }
+  60% { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* === S2 Animation === */
+
+.s2_stage {
+  position: relative;
+  width: 340px;
+  height: 180px;
+  margin: 0 auto;
+}
+
+/* Use-case cards */
+.s2_card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 32px;
+  border-radius: 8px;
+  background: #FFFFFF;
+  border: 1.5px solid #94A3B8;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  position: absolute;
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+/* Card positions: 2x2 grid, centered in 340px width */
+.s2_card1 { left: 36px; top: 0; }
+.s2_card2 { left: 184px; top: 0; }
+.s2_card3 { left: 36px; top: 48px; }
+.s2_card4 { left: 184px; top: 48px; }
+
+/* Failure-surface badges */
+.s2_badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 28px;
+  border-radius: 6px;
+  background: #FFF1F2;
+  border: 1.5px solid #F43F5E;
+  font-size: 12px;
+  font-weight: 600;
+  color: #F43F5E;
+  position: absolute;
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+/* Badge positions: 4 in a row, fitted within 340px */
+/* Total width: 4*80 + 3*8 = 344, offset from left: -2px to center */
+.s2_badge1 { left: -2px; top: 120px; }
+.s2_badge2 { left: 86px; top: 120px; }
+.s2_badge3 { left: 174px; top: 120px; }
+.s2_badge4 { left: 262px; top: 120px; }
+
+/* Separator line between cards and badges */
+.s2_sep {
+  position: absolute;
+  top: 96px;
+  left: 36px;
+  width: 268px;
+  height: 1px;
+  background: #CBD5E1;
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+/* Label */
+.s2_label_use {
+  position: absolute;
+  top: -22px;
+  left: 36px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94A3B8;
+  letter-spacing: 0.05em;
+  opacity: 0;
+}
+
+.s2_label_fail {
+  position: absolute;
+  top: 98px;
+  left: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #F43F5E;
+  letter-spacing: 0.05em;
+  opacity: 0;
+}
+
+/* Connections: dashed lines from cards to badges */
+.s2_conn {
+  position: absolute;
+  width: 1px;
+  height: 0;
+  border-left: 1px dashed #E2E8F0;
+  opacity: 0;
+}
+
+.s2_conn1 { left: 96px; top: 80px; }
+.s2_conn2 { left: 244px; top: 80px; }
+
+/* Animation keyframes */
+@keyframes s2_fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s2_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes s2_drawLine {
+  from { transform: scaleX(0); opacity: 0; }
+  to { transform: scaleX(1); opacity: 1; }
+}
+
+@keyframes s2_growDown {
+  from { height: 0; opacity: 0; }
+  to { height: 24px; opacity: 0.5; }
+}
+
+/* Cards appear sequentially */
+.s2_stage.visible .s2_card1 { animation: s2_fadeSlideUp 0.4s 0.3s ease forwards; }
+.s2_stage.visible .s2_card2 { animation: s2_fadeSlideUp 0.4s 0.7s ease forwards; }
+.s2_stage.visible .s2_card3 { animation: s2_fadeSlideUp 0.4s 1.1s ease forwards; }
+.s2_stage.visible .s2_card4 { animation: s2_fadeSlideUp 0.4s 1.5s ease forwards; }
+
+/* Separator line draws after cards */
+.s2_stage.visible .s2_sep { animation: s2_drawLine 0.4s 2.1s ease forwards; }
+
+/* Connections grow */
+.s2_stage.visible .s2_conn1 { animation: s2_growDown 0.3s 2.3s ease forwards; }
+.s2_stage.visible .s2_conn2 { animation: s2_growDown 0.3s 2.3s ease forwards; }
+
+/* Badges appear sequentially after separator */
+.s2_stage.visible .s2_badge1 { animation: s2_fadeSlideUp 0.4s 2.7s ease forwards; }
+.s2_stage.visible .s2_badge2 { animation: s2_fadeSlideUp 0.4s 3.1s ease forwards; }
+.s2_stage.visible .s2_badge3 { animation: s2_fadeSlideUp 0.4s 3.5s ease forwards; }
+.s2_stage.visible .s2_badge4 { animation: s2_fadeSlideUp 0.4s 3.9s ease forwards; }
+
+/* Labels */
+.s2_stage.visible .s2_label_use { animation: s2_fadeIn 0.3s 0.1s ease forwards; }
+.s2_stage.visible .s2_label_fail { animation: s2_fadeIn 0.3s 2.5s ease forwards; }
+
+/* === S3 Animation === */
+
+/* ── S3: Typed Schemas ── */
+.s3_stage {
+  position: relative;
+  width: 340px;
+  max-width: 100%;
+  height: 250px;
+  margin: 0 auto;
+  font-family: -apple-system, 'Helvetica Neue', 'PingFang SC', sans-serif;
+}
+
+/* ── LEFT: Before (free JSON blob) ── */
+.s3_before {
+  position: absolute;
+  top: 16px; left: 0;
+  width: 130px; height: 160px;
+  opacity: 0;
+}
+
+.s3_blob {
+  width: 130px; height: 120px;
+  border: 2.5px dashed #F43F5E;
+  border-radius: 24px 16px 28px 12px;
+  background: rgba(244, 63, 94, 0.06);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 4px;
+  position: relative;
+}
+
+.s3_blob_label {
+  position: absolute;
+  top: -12px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px; font-weight: 600;
+  color: #F43F5E;
+  background: #FFF1F2;
+  padding: 0 6px;
+  white-space: nowrap;
+}
+
+.s3_field_bad {
+  font-size: 12px; font-weight: 500;
+  color: #94A3B8;
+  letter-spacing: 0.5px;
+}
+.s3_field_bad:nth-child(2) { transform: rotate(-3deg); }
+.s3_field_bad:nth-child(3) { transform: rotate(2deg); }
+.s3_field_bad:nth-child(4) { transform: rotate(-1deg); }
+
+.s3_x_mark {
+  margin-top: 10px;
+  font-size: 22px; font-weight: 700;
+  color: #F43F5E;
+  text-align: center;
+  opacity: 0;
+}
+
+/* ── RIGHT: After (typed schema) ── */
+.s3_after {
+  position: absolute;
+  top: 16px; left: 210px;
+  width: 130px; height: 160px;
+  opacity: 0;
+}
+
+.s3_schema {
+  width: 130px; height: 120px;
+  border: 2.5px solid #6366F1;
+  border-radius: 12px;
+  background: rgba(99, 102, 241, 0.04);
+  display: flex; flex-direction: column;
+  align-items: flex-start; justify-content: center;
+  padding: 12px 14px;
+  gap: 6px;
+  position: relative;
+}
+
+.s3_schema_label {
+  position: absolute;
+  top: -12px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px; font-weight: 600;
+  color: #6366F1;
+  background: #FFF1F2;
+  padding: 0 6px;
+  white-space: nowrap;
+}
+
+.s3_field_good {
+  font-size: 11px; font-weight: 500;
+  color: #334155;
+  font-family: 'SF Mono', 'Menlo', monospace;
+  letter-spacing: 0.3px;
+}
+
+.s3_check_mark {
+  margin-top: 10px;
+  font-size: 22px; font-weight: 700;
+  color: #6366F1;
+  text-align: center;
+  opacity: 0;
+}
+
+/* ── CENTER: Arrow + label ── */
+.s3_arrow_group {
+  position: absolute;
+  top: 60px; left: 134px;
+  width: 72px; height: 30px;
+  opacity: 0;
+}
+
+.s3_arrow_line {
+  position: absolute;
+  top: 14px; left: 12px;
+  width: 40px; height: 2px;
+  background: #94A3B8;
+}
+
+.s3_arrow_head {
+  position: absolute;
+  top: 8px; left: 50px;
+  width: 0; height: 0;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-left: 10px solid #94A3B8;
+}
+
+.s3_arrow_label {
+  position: absolute;
+  top: -8px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px; font-weight: 600;
+  color: #94A3B8;
+  white-space: nowrap;
+}
+
+/* ── GLOW effect on right ── */
+.s3_glow {
+  position: absolute;
+  top: 16px; left: 210px;
+  width: 130px; height: 120px;
+  border-radius: 12px;
+  box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── DIM effect on left ── */
+
+/* ── KEYFRAMES ── */
+@keyframes s3_fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s3_dimOut {
+  to { opacity: 0.35; }
+}
+
+@keyframes s3_markIn {
+  from { opacity: 0; transform: scale(0.3); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s3_arrowIn {
+  from { opacity: 0; transform: translateX(-6px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes s3_glowPulse {
+  0% { opacity: 0; box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+  40% { opacity: 1; box-shadow: 0 0 20px 4px rgba(99, 102, 241, 0.25); }
+  100% { opacity: 0.6; box-shadow: 0 0 12px 2px rgba(99, 102, 241, 0.15); }
+}
+
+/* ── TIMELINE: triggered by .visible ── */
+.s3_stage.visible .s3_before {
+  animation: s3_fadeIn 0.4s 0.3s ease forwards;
+}
+
+.s3_stage.visible .s3_x_mark {
+  animation: s3_markIn 0.3s 0.8s ease forwards;
+}
+
+.s3_stage.visible .s3_before_dim {
+  animation: s3_dimOut 0.4s 1.0s ease forwards;
+}
+
+.s3_stage.visible .s3_arrow_group {
+  animation: s3_arrowIn 0.3s 1.2s ease forwards;
+}
+
+.s3_stage.visible .s3_after {
+  animation: s3_fadeIn 0.4s 1.4s ease forwards;
+}
+
+.s3_stage.visible .s3_check_mark {
+  animation: s3_markIn 0.3s 1.9s ease forwards;
+}
+
+.s3_stage.visible .s3_glow {
+  animation: s3_glowPulse 0.8s 2.1s ease forwards;
+}
+
+/* === S4 Animation === */
+
+/* === S4: Action Schemas === */
+.s4_stage {
+  position: relative;
+  width: 340px;
+  max-width: 90vw;
+  height: 380px;
+  margin: 0 auto;
+  font-family: -apple-system, 'Helvetica Neue', 'PingFang SC', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Top label */
+.s4_label {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #94A3B8;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 20px;
+  border-radius: 8px;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+/* Arrow down from label to cards */
+.s4_arrow {
+  position: absolute;
+  top: 44px;
+  left: 50%;
+  width: 2px;
+  height: 0;
+  background: #94A3B8;
+  transform: translateX(-50%);
+  border-radius: 1px;
+}
+
+.s4_arrow_head {
+  position: absolute;
+  top: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid #94A3B8;
+  opacity: 0;
+}
+
+/* Card container */
+.s4_cards {
+  position: absolute;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Individual action card */
+.s4_card {
+  width: 200px;
+  height: 36px;
+  border: 2px solid #6366F1;
+  border-radius: 8px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6366F1;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.4s ease, background 0.4s ease, color 0.4s ease, border-color 0.4s ease, transform 0.4s ease;
+}
+
+.s4_card_neutral {
+  border-color: #94A3B8;
+  color: #94A3B8;
+}
+
+/* Highlighted state */
+.s4_card_highlight {
+  background: #6366F1 !important;
+  color: #fff !important;
+  border-color: #6366F1 !important;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+}
+
+/* Dimmed state */
+.s4_card_dim {
+  opacity: 0.3 !important;
+  transform: scale(0.95) !important;
+}
+
+/* Checkmark badge */
+.s4_badge {
+  position: absolute;
+  top: 290px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #6366F1;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 16px;
+  border-radius: 20px;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+.s4_check {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #6366F1;
+  font-weight: 800;
+}
+
+/* === Keyframes === */
+@keyframes s4_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes s4_drawDown {
+  from { height: 0; }
+  to { height: 40px; }
+}
+
+@keyframes s4_fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s4_badgeIn {
+  from { opacity: 0; transform: translateX(-50%) scale(0.7); }
+  to { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+/* === Timeline triggered by .visible === */
+.s4_stage.visible .s4_label {
+  animation: s4_fadeIn 0.4s 0.3s forwards;
+}
+
+.s4_stage.visible .s4_arrow {
+  animation: s4_drawDown 0.3s 0.9s forwards;
+}
+
+.s4_stage.visible .s4_arrow_head {
+  animation: s4_fadeIn 0.2s 1.2s forwards;
+}
+
+/* Cards appear one by one with fadeSlideUp */
+.s4_stage.visible .s4_card:nth-child(1) {
+  animation: s4_fadeSlideUp 0.4s 1.5s forwards;
+}
+.s4_stage.visible .s4_card:nth-child(2) {
+  animation: s4_fadeSlideUp 0.4s 1.9s forwards;
+}
+.s4_stage.visible .s4_card:nth-child(3) {
+  animation: s4_fadeSlideUp 0.4s 2.3s forwards;
+}
+.s4_stage.visible .s4_card:nth-child(4) {
+  animation: s4_fadeSlideUp 0.4s 2.7s forwards;
+}
+
+/* Step 4: highlight "assign", dim others at 3.5s */
+.s4_stage.visible .s4_card:nth-child(1) {
+  animation: s4_fadeSlideUp 0.4s 1.5s forwards, s4_dimOut 0.4s 3.5s forwards;
+}
+.s4_stage.visible .s4_card:nth-child(2) {
+  animation: s4_fadeSlideUp 0.4s 1.9s forwards, s4_activate 0.4s 3.5s forwards;
+}
+.s4_stage.visible .s4_card:nth-child(3) {
+  animation: s4_fadeSlideUp 0.4s 2.3s forwards, s4_dimOut 0.4s 3.5s forwards;
+}
+.s4_stage.visible .s4_card:nth-child(4) {
+  animation: s4_fadeSlideUp 0.4s 2.7s forwards, s4_dimOut 0.4s 3.5s forwards;
+}
+
+@keyframes s4_activate {
+  to {
+    background: #6366F1;
+    color: #fff;
+    border-color: #6366F1;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+  }
+}
+
+@keyframes s4_dimOut {
+  to {
+    opacity: 0.3;
+    transform: scale(0.95);
+  }
+}
+
+/* Step 5: badge appears */
+.s4_stage.visible .s4_badge {
+  animation: s4_badgeIn 0.4s 4.2s forwards;
+}
+
+/* === S5 Animation === */
+
+.s5_stage {
+  position: relative;
+  width: 340px;
+  height: 320px;
+  margin: 0 auto;
+  font-family: 'Noto Sans SC', sans-serif;
+}
+
+/* Agent circle */
+.s5_agent {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2.5px solid #94A3B8;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #94A3B8;
+  top: 4px;
+  left: 146px;
+  opacity: 0;
+}
+
+/* MCP gate rect */
+.s5_mcp {
+  position: absolute;
+  width: 120px;
+  height: 40px;
+  border-radius: 6px;
+  background: #6366F1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  top: 92px;
+  left: 110px;
+  opacity: 0;
+}
+
+/* Check badges */
+.s5_check {
+  position: absolute;
+  height: 22px;
+  border-radius: 11px;
+  border: 1.5px solid #6366F1;
+  background: rgba(99, 102, 241, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: #6366F1;
+  padding: 0 10px;
+  white-space: nowrap;
+  opacity: 0;
+}
+.s5_check_input {
+  top: 140px;
+  left: 38px;
+}
+.s5_check_output {
+  top: 140px;
+  right: 38px;
+}
+
+/* Tool execution rounded rect */
+.s5_tool {
+  position: absolute;
+  width: 108px;
+  height: 36px;
+  border-radius: 10px;
+  border: 2px solid #6366F1;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6366F1;
+  top: 200px;
+  left: 116px;
+  opacity: 0;
+}
+
+/* Red intercept badge */
+.s5_block {
+  position: absolute;
+  top: 94px;
+  left: 248px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+}
+.s5_block_x {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #F43F5E;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.s5_block_label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #F43F5E;
+}
+
+/* Final badge */
+.s5_badge {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #6366F1;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 18px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+/* SVG arrows */
+.s5_arrows {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 340px;
+  height: 320px;
+  pointer-events: none;
+}
+.s5_arrow1, .s5_arrow2 {
+  stroke: #94A3B8;
+  stroke-width: 2;
+  fill: none;
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+}
+.s5_arrowhead1, .s5_arrowhead2 {
+  fill: #94A3B8;
+  opacity: 0;
+}
+
+/* ── Animations triggered by .visible ── */
+
+/* Step 1: Agent appears */
+.s5_stage.visible .s5_agent {
+  animation: s5_scaleIn 0.4s 0.3s ease forwards;
+}
+
+/* Step 2: Arrow from Agent to MCP */
+.s5_stage.visible .s5_arrow1 {
+  animation: s5_drawLine 0.3s 0.9s ease forwards;
+}
+.s5_stage.visible .s5_arrowhead1 {
+  animation: s5_fadeIn 0.2s 1.1s ease forwards;
+}
+
+/* Step 3: MCP gate appears */
+.s5_stage.visible .s5_mcp {
+  animation: s5_scaleIn 0.4s 1.4s ease forwards;
+}
+
+/* Step 4: Check badges appear */
+.s5_stage.visible .s5_check_input {
+  animation: s5_fadeSlideUp 0.4s 2.0s ease forwards;
+}
+.s5_stage.visible .s5_check_output {
+  animation: s5_fadeSlideUp 0.4s 2.4s ease forwards;
+}
+
+/* Step 5: Arrow from MCP to tool */
+.s5_stage.visible .s5_arrow2 {
+  animation: s5_drawLine 0.3s 3.0s ease forwards;
+}
+.s5_stage.visible .s5_arrowhead2 {
+  animation: s5_fadeIn 0.2s 3.2s ease forwards;
+}
+
+/* Step 6: Tool execution appears */
+.s5_stage.visible .s5_tool {
+  animation: s5_scaleIn 0.4s 3.4s ease forwards;
+}
+
+/* Step 7: Red intercept badge */
+.s5_stage.visible .s5_block {
+  animation: s5_popIn 0.4s 4.0s ease forwards;
+}
+
+/* Step 8: Final badge */
+.s5_stage.visible .s5_badge {
+  animation: s5_fadeSlideUp 0.5s 4.6s ease forwards;
+}
+
+@keyframes s5_scaleIn {
+  from { opacity: 0; transform: scale(0); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s5_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes s5_drawLine {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes s5_fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s5_popIn {
+  0% { opacity: 0; transform: scale(0.3); }
+  60% { opacity: 1; transform: scale(1.15); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* === S6 Animation === */
+
+.s6_stage { padding: 32px 0 24px; }
+.s6_list { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.s6_pill {
+  width: 260px; height: 36px; border-radius: 10px;
+  background: #1E293B; display: flex; align-items: center;
+  padding: 0 14px; gap: 10px;
+  font-size: 14px; font-weight: 500; color: #F1F5F9;
+  opacity: 0; transform: translateY(18px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s6_pill--glow {
+  box-shadow: none;
+  transition: opacity 0.5s ease, transform 0.5s ease, box-shadow 0.6s ease;
+}
+.s6_dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.s6_dot--indigo { background: #6366F1; }
+.s6_dot--rose { background: #F43F5E; }
+.s6_dot--neutral { background: #94A3B8; }
+.s6_final {
+  margin-top: 20px; width: 280px; height: 42px; border-radius: 10px;
+  background: #6366F1; display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700; color: #FFFFFF;
+  opacity: 0; transform: translateY(18px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+/* Sequential entrance delays */
+.s6_stage.visible .s6_pill:nth-child(1) { opacity: 1; transform: translateY(0); transition-delay: 0.0s; }
+.s6_stage.visible .s6_pill:nth-child(2) { opacity: 1; transform: translateY(0); transition-delay: 0.18s; }
+.s6_stage.visible .s6_pill:nth-child(3) { opacity: 1; transform: translateY(0); transition-delay: 0.36s; }
+.s6_stage.visible .s6_pill:nth-child(4) { opacity: 1; transform: translateY(0); transition-delay: 0.54s; }
+.s6_stage.visible .s6_pill:nth-child(5) { opacity: 1; transform: translateY(0); transition-delay: 0.72s; }
+.s6_stage.visible .s6_pill:nth-child(6) { opacity: 1; transform: translateY(0); transition-delay: 0.90s; }
+
+/* Glow on the last pill */
+@keyframes s6_glow_pulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(99,102,241,0.4), 0 0 24px rgba(99,102,241,0.15); }
+  50% { box-shadow: 0 0 20px rgba(99,102,241,0.6), 0 0 40px rgba(99,102,241,0.25); }
+}
+.s6_stage.visible .s6_pill--glow {
+  box-shadow: 0 0 12px rgba(99,102,241,0.4), 0 0 24px rgba(99,102,241,0.15);
+  animation: s6_glow_pulse 2s ease-in-out infinite 1.6s;
+}
+
+/* Final badge */
+.s6_stage.visible .s6_final { opacity: 1; transform: translateY(0); transition-delay: 1.3s; }
+
+/* === A1 Animation === */
+
+/* ── A1: Schema 验证流程 ── */
+.a1_stage {
+  position: relative;
+  width: 340px;
+  max-width: 100%;
+  height: 300px;
+  margin: 0 auto;
+  font-family: -apple-system, 'Helvetica Neue', 'PingFang SC', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Elements ── */
+
+/* Step 1: Agent 输出 — top center */
+.a1_agent {
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 96px; height: 36px;
+  border-radius: 8px;
+  background: #94A3B8;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+}
+
+/* Step 2: Arrow down from agent to schema */
+.a1_arrow1 {
+  position: absolute;
+  top: 36px; left: 50%;
+  width: 2px; height: 0;
+  background: #94A3B8;
+  transform: translateX(-50%);
+  border-radius: 1px;
+}
+.a1_arrow1_head {
+  position: absolute;
+  top: 60px; left: 50%;
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid #94A3B8;
+  opacity: 0;
+}
+
+/* Step 3: Schema 校验 — diamond-like rect */
+.a1_schema {
+  position: absolute;
+  top: 70px; left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 96px; height: 40px;
+  border-radius: 6px;
+  border: 2.5px solid #6366F1;
+  background: rgba(99, 102, 241, 0.08);
+  color: #6366F1;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+}
+
+/* Step 4a: RIGHT branch — pass */
+.a1_arrow_pass {
+  position: absolute;
+  top: 82px; left: calc(50% + 48px);
+  width: 0; height: 2px;
+  background: #10B981;
+  border-radius: 1px;
+}
+.a1_arrow_pass_head {
+  position: absolute;
+  top: 78px; left: calc(50% + 88px);
+  width: 0; height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 7px solid #10B981;
+  opacity: 0;
+}
+
+.a1_pass_label {
+  position: absolute;
+  top: 72px; left: calc(50% + 98px);
+  font-size: 12px;
+  font-weight: 600;
+  color: #10B981;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(4px);
+}
+
+.a1_continue {
+  position: absolute;
+  top: 92px; left: calc(50% + 98px);
+  width: 80px; height: 28px;
+  border-radius: 6px;
+  border: 2px solid #6366F1;
+  background: transparent;
+  color: #6366F1;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+/* Step 4b: DOWN branch — fail */
+.a1_arrow_fail {
+  position: absolute;
+  top: 110px; left: 50%;
+  width: 2px; height: 0;
+  background: #F43F5E;
+  transform: translateX(-50%);
+  border-radius: 1px;
+}
+.a1_arrow_fail_head {
+  position: absolute;
+  top: 138px; left: 50%;
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid #F43F5E;
+  opacity: 0;
+}
+
+.a1_fail_label {
+  position: absolute;
+  top: 118px; left: calc(50% + 8px);
+  font-size: 12px;
+  font-weight: 600;
+  color: #F43F5E;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+/* Step 5: Three sequential options — retry, repair, escalate */
+.a1_options {
+  position: absolute;
+  top: 152px; left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  flex-direction: column;
+  align-items: center;
+}
+
+.a1_retry {
+  width: 72px; height: 30px;
+  border-radius: 15px;
+  background: #6366F1;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.a1_repair {
+  width: 72px; height: 30px;
+  border-radius: 15px;
+  background: #F59E0B;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.a1_escalate {
+  width: 72px; height: 30px;
+  border-radius: 15px;
+  background: #F43F5E;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* Step 6: Retry arrow back up to Agent */
+.a1_retry_arrow {
+  position: absolute;
+  top: 18px; left: calc(50% - 72px);
+  width: 0; height: 0;
+  opacity: 0;
+}
+.a1_retry_arrow svg {
+  width: 56px;
+  height: 148px;
+  overflow: visible;
+}
+.a1_retry_path {
+  fill: none;
+  stroke: #6366F1;
+  stroke-width: 1.5;
+  stroke-dasharray: 260;
+  stroke-dashoffset: 260;
+}
+.a1_retry_arrowhead {
+  fill: #6366F1;
+  opacity: 0;
+}
+
+/* ── Keyframes ── */
+@keyframes a1_scaleIn {
+  to { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+@keyframes a1_scaleInNoTx {
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes a1_drawDown24 {
+  to { height: 24px; }
+}
+@keyframes a1_drawDown28 {
+  to { height: 28px; }
+}
+@keyframes a1_drawRight40 {
+  to { width: 40px; }
+}
+@keyframes a1_fadeIn {
+  to { opacity: 1; }
+}
+@keyframes a1_fadeSlide {
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes a1_continueFade {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes a1_strokeDraw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* ── Triggered sequence ── */
+.a1_stage.visible .a1_agent {
+  animation: a1_scaleIn 0.4s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.a1_stage.visible .a1_arrow1 {
+  animation: a1_drawDown24 0.3s 0.9s ease-out forwards;
+}
+.a1_stage.visible .a1_arrow1_head {
+  animation: a1_fadeIn 0.15s 1.15s ease forwards;
+}
+.a1_stage.visible .a1_schema {
+  animation: a1_scaleIn 0.4s 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Pass branch */
+.a1_stage.visible .a1_arrow_pass {
+  animation: a1_drawRight40 0.3s 2.0s ease-out forwards;
+}
+.a1_stage.visible .a1_arrow_pass_head {
+  animation: a1_fadeIn 0.15s 2.25s ease forwards;
+}
+.a1_stage.visible .a1_pass_label {
+  animation: a1_fadeSlide 0.3s 2.4s ease forwards;
+}
+.a1_stage.visible .a1_continue {
+  animation: a1_continueFade 0.3s 2.7s ease forwards;
+}
+
+/* Fail branch */
+.a1_stage.visible .a1_arrow_fail {
+  animation: a1_drawDown28 0.3s 3.2s ease-out forwards;
+}
+.a1_stage.visible .a1_arrow_fail_head {
+  animation: a1_fadeIn 0.15s 3.45s ease forwards;
+}
+.a1_stage.visible .a1_fail_label {
+  animation: a1_fadeIn 0.3s 3.5s ease forwards;
+}
+
+/* Three options appear sequentially */
+.a1_stage.visible .a1_retry {
+  animation: a1_scaleInNoTx 0.35s 3.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.a1_stage.visible .a1_repair {
+  animation: a1_scaleInNoTx 0.35s 4.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.a1_stage.visible .a1_escalate {
+  animation: a1_scaleInNoTx 0.35s 4.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Retry arrow back to agent */
+.a1_stage.visible .a1_retry_arrow {
+  animation: a1_fadeIn 0.1s 5.3s ease forwards;
+}
+.a1_stage.visible .a1_retry_path {
+  animation: a1_strokeDraw 0.6s 5.4s ease forwards;
+}
+.a1_stage.visible .a1_retry_arrowhead {
+  animation: a1_fadeIn 0.2s 5.9s ease forwards;
+}
+
+/* === A2 Animation === */
+
+/* === A2: MCP 工具调用校验机制 === */
+.a2_stage {
+  position: relative;
+  width: 340px;
+  height: 350px;
+  margin: 0 auto;
+}
+
+/* --- Colors --- */
+.a2_stage {
+  --accent: #6366F1;
+  --accent2: #F43F5E;
+  --neutral: #94A3B8;
+}
+
+/* --- Agent circle (top) --- */
+.a2_agent {
+  position: absolute;
+  top: 0; left: 42%;
+  transform: translateX(-50%) scale(0);
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--neutral);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600; color: #fff;
+  opacity: 0;
+}
+
+/* --- Arrows (vertical lines + heads) --- */
+.a2_arrow1, .a2_arrow2, .a2_arrow3, .a2_arrow4, .a2_arrow5 {
+  position: absolute;
+  left: 42%; transform: translateX(-50%);
+  width: 2px; height: 0;
+  background: var(--neutral);
+  border-radius: 1px;
+}
+.a2_arrow1 { top: 48px; }
+.a2_arrow2 { top: 102px; }
+.a2_arrow3 { top: 162px; }
+.a2_arrow4 { top: 222px; }
+.a2_arrow5 { top: 282px; }
+
+.a2_arrowhead1, .a2_arrowhead2, .a2_arrowhead3, .a2_arrowhead4, .a2_arrowhead5 {
+  position: absolute;
+  left: 42%; transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  opacity: 0;
+}
+.a2_arrowhead1 { top: 62px; border-top: 7px solid var(--neutral); }
+.a2_arrowhead2 { top: 116px; border-top: 7px solid var(--accent); }
+.a2_arrowhead3 { top: 176px; border-top: 7px solid var(--accent); }
+.a2_arrowhead4 { top: 236px; border-top: 7px solid var(--accent); }
+.a2_arrowhead5 { top: 296px; border-top: 7px solid var(--accent); }
+
+/* --- Rounded rect: 调用参数 --- */
+.a2_params {
+  position: absolute;
+  top: 70px; left: 42%;
+  transform: translateX(-50%) scale(0);
+  width: 140px; height: 32px;
+  border-radius: 8px;
+  border: 2px solid var(--neutral);
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 500; color: var(--neutral);
+  opacity: 0;
+}
+
+/* --- Gate rect: input_schema --- */
+.a2_input_gate {
+  position: absolute;
+  top: 124px; left: 42%;
+  transform: translateX(-50%) scale(0);
+  width: 140px; height: 36px;
+  border-radius: 6px;
+  border: 3px solid var(--accent);
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px;
+  font-size: 12px; font-weight: 600; color: var(--accent);
+  opacity: 0;
+}
+.a2_input_check {
+  color: #22C55E;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* --- Rounded rect filled: create_issue (tool) --- */
+.a2_tool {
+  position: absolute;
+  top: 184px; left: 42%;
+  transform: translateX(-50%) scale(0);
+  width: 140px; height: 32px;
+  border-radius: 8px;
+  background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600; color: #fff;
+  opacity: 0;
+}
+
+/* --- Gate rect: output_schema --- */
+.a2_output_gate {
+  position: absolute;
+  top: 244px; left: 42%;
+  transform: translateX(-50%) scale(0);
+  width: 140px; height: 36px;
+  border-radius: 6px;
+  border: 3px solid var(--accent);
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px;
+  font-size: 12px; font-weight: 600; color: var(--accent);
+  opacity: 0;
+}
+.a2_output_check {
+  color: #22C55E;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* --- Result circle (bottom) --- */
+.a2_result {
+  position: absolute;
+  top: 304px; left: 42%;
+  transform: translateX(-50%) scale(0);
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600; color: #fff;
+  opacity: 0;
+}
+
+/* --- Rejection branch (right of input_schema) --- */
+.a2_reject_branch {
+  position: absolute;
+  top: 135px; left: calc(42% + 82px);
+  display: flex; align-items: center; gap: 6px;
+  opacity: 0;
+  transform: translateX(8px);
+}
+.a2_reject_x {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--accent2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: #fff;
+}
+.a2_reject_label {
+  font-size: 11px;
+  color: var(--accent2);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.a2_reject_arrow {
+  position: absolute;
+  top: 142px; left: calc(42% + 70px);
+  width: 0; height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 6px solid var(--accent2);
+  opacity: 0;
+}
+.a2_reject_line {
+  position: absolute;
+  top: 143px; left: calc(42% + 58px);
+  width: 0; height: 2px;
+  background: var(--accent2);
+  border-radius: 1px;
+}
+
+/* === KEYFRAMES === */
+@keyframes a2_scaleIn {
+  from { transform: translateX(-50%) scale(0); opacity: 0; }
+  to { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+@keyframes a2_drawDown {
+  from { height: 0; }
+  to { height: 14px; }
+}
+@keyframes a2_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes a2_slideInRight {
+  from { opacity: 0; transform: translateX(8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes a2_drawRight {
+  from { width: 0; }
+  to { width: 12px; }
+}
+
+/* === TIMELINE (triggered by .visible) === */
+.a2_stage.visible .a2_agent {
+  animation: a2_scaleIn 0.4s 0.3s forwards;
+}
+.a2_stage.visible .a2_arrow1 {
+  animation: a2_drawDown 0.25s 0.8s forwards;
+}
+.a2_stage.visible .a2_arrowhead1 {
+  animation: a2_fadeIn 0.15s 1.05s forwards;
+}
+.a2_stage.visible .a2_params {
+  animation: a2_scaleIn 0.4s 1.2s forwards;
+}
+.a2_stage.visible .a2_arrow2 {
+  animation: a2_drawDown 0.25s 1.7s forwards;
+}
+.a2_stage.visible .a2_arrowhead2 {
+  animation: a2_fadeIn 0.15s 1.95s forwards;
+}
+.a2_stage.visible .a2_input_gate {
+  animation: a2_scaleIn 0.4s 2.1s forwards;
+}
+/* Rejection branch appears alongside input_schema */
+.a2_stage.visible .a2_reject_line {
+  animation: a2_drawRight 0.2s 2.6s forwards;
+}
+.a2_stage.visible .a2_reject_arrow {
+  animation: a2_fadeIn 0.15s 2.8s forwards;
+}
+.a2_stage.visible .a2_reject_branch {
+  animation: a2_slideInRight 0.4s 2.9s forwards;
+}
+.a2_stage.visible .a2_arrow3 {
+  animation: a2_drawDown 0.25s 3.4s forwards;
+}
+.a2_stage.visible .a2_arrowhead3 {
+  animation: a2_fadeIn 0.15s 3.65s forwards;
+}
+.a2_stage.visible .a2_tool {
+  animation: a2_scaleIn 0.4s 3.8s forwards;
+}
+.a2_stage.visible .a2_arrow4 {
+  animation: a2_drawDown 0.25s 4.3s forwards;
+}
+.a2_stage.visible .a2_arrowhead4 {
+  animation: a2_fadeIn 0.15s 4.55s forwards;
+}
+.a2_stage.visible .a2_output_gate {
+  animation: a2_scaleIn 0.4s 4.7s forwards;
+}
+.a2_stage.visible .a2_arrow5 {
+  animation: a2_drawDown 0.25s 5.2s forwards;
+}
+.a2_stage.visible .a2_arrowhead5 {
+  animation: a2_fadeIn 0.15s 5.45s forwards;
+}
+.a2_stage.visible .a2_result {
+  animation: a2_scaleIn 0.4s 5.6s forwards;
+}
+
+</style>
+
+<meta name="description" content="如果你搭建过 multi-agent 工作流，大概率见过这种诡异的失败方式：系统跑完了，agent 们也确实采取了行动，但某个地方悄悄出了问题——一个 agent 关掉了另一个 agent 刚打开的 issue，或者提交了一个会让下游检查失败的变更。之所以会这样，是因为当多个 agent 开始处理相关任务——分类 issue、提交变更、运行检查、开 PR——">
+<link rel="canonical" href="https://chendi.me/readings/multi-agent-fail/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<div class="breadcrumb" id="breadcrumb"></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">&#8592;</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div><div class="dot"></div></div>
+
+<!-- ======== LAYER: OVERVIEW ======== -->
+<div class="layer active" id="layer-overview">
+
+  <!-- S1: Agent 工作流以诡异的方式崩溃 -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <p class="big-statement reveal">你的 multi-agent 工作流跑完了，每个 agent 都在行动——但结果是<span style="color:#FCA5A5;">一团糟</span></p>
+      <p class="body-text reveal reveal-d1">如果你搭建过 multi-agent 工作流，大概率见过这种诡异的失败方式：系统跑完了，agent 们也确实采取了行动，但某个地方悄悄出了问题——一个 agent 关掉了另一个 agent 刚打开的 issue，或者提交了一个会让下游检查失败的变更。之所以会这样，是因为当多个 agent 开始处理相关任务——分类 issue、提交变更、运行检查、开 PR——它们就开始对状态、顺序和验证做出<span class="hl2">隐式假设</span>。如果你不提供明确的指令、数据格式和接口，事情就不会按你计划的走。GitHub 团队在构建 Copilot、内部自动化和 multi-agent 编排的过程中发现，multi-agent 系统的行为更像<span class="hl">分布式系统</span>，而不是聊天界面。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s1_stage">
+  <!-- Agents -->
+  <div class="s1_agent s1_agent_a">A</div>
+  <div class="s1_agent s1_agent_b">B</div>
+  <div class="s1_agent s1_agent_c">C</div>
+
+  <!-- Issue card (indigo, then red overlay appears) -->
+  <div class="s1_card s1_card_issue">Issue #1</div>
+  <div class="s1_card s1_card_issue_closed">Issue #1</div>
+
+  <!-- PR card -->
+  <div class="s1_card s1_card_pr">PR #2</div>
+
+  <!-- Fail X on PR -->
+  <div class="s1_fail_x">X</div>
+  <div class="s1_fail_label">下游检查失败</div>
+
+  <!-- Warning badge -->
+  <div class="s1_warning">隐式假设</div>
+
+  <!-- Arrows SVG -->
+  <svg class="s1_arrows" viewBox="0 0 340 300">
+    <!-- A -> Issue#1 -->
+    <line class="s1_arrow_a" x1="62" y1="66" x2="62" y2="134" />
+    <polygon class="s1_arrowhead_a" points="56,132 62,140 68,132" />
+
+    <!-- B -> Issue#1 (diagonal) -->
+    <line class="s1_arrow_b" x1="170" y1="66" x2="82" y2="134" />
+    <polygon class="s1_arrowhead_b" points="76,130 82,140 88,132" />
+
+    <!-- C -> PR#2 -->
+    <line class="s1_arrow_c" x1="278" y1="66" x2="278" y2="134" />
+    <polygon class="s1_arrowhead_c" points="272,132 278,140 284,132" />
+  </svg>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>If you've built a multi-agent workflow, you've probably seen it fail in a way that's hard to explain.</p>
+<p>The system completes, and agents take actions. But somewhere along the way, something subtle goes wrong. You might see an agent close an issue that another agent just opened, or ship a change that fails a downstream check it didn't know existed.</p>
+<p>That's because the moment agents begin handling related tasks—triaging issues, proposing changes, running checks, and opening pull requests—they start making implicit assumptions about state, ordering, and validation. Without providing explicit instructions, data formats, and interfaces, things won't go the way you planned.</p>
+<p>Through our work on agentic experiences at GitHub across GitHub Copilot, internal automations, and emerging multi-agent orchestration patterns, we've seen multi-agent systems behave much less like chat interfaces and much more like distributed systems.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S2: 不是聊天流，是分布式系统 -->
+  <section class="feed-section" style="background:var(--bg-act1);">
+    <div class="section-inner">
+      <p class="big-statement reveal">单个 agent 不够用时，团队引入多个 agent——同时也引入了<span style="color:var(--accent2);">新的失败面</span></p>
+      <p class="body-text reveal reveal-d1">团队之所以使用 multi-agent 工作流，是因为单个 agent 无法可靠地端到端解决问题。但引入多个 agent 也同时引入了新的失败面：共享状态、顺序假设、隐式交接和非确定性行为。开发者通常把 multi-agent 用在代码库维护和依赖更新、自动化代码质量检查和重构、基于 spec 的功能实现、以及 issue 和 PR 分类这些场景上。但这些场景只有在<span class="hl">每一步都显式且受约束</span>的情况下才能可靠运行。文章接下来介绍了三个让 agent 系统变可靠的工程模式。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s2_stage">
+  <span class="s2_label_use">USE CASES</span>
+
+  <div class="s2_card s2_card1">代码库维护</div>
+  <div class="s2_card s2_card2">质量检查</div>
+  <div class="s2_card s2_card3">Spec 实现</div>
+  <div class="s2_card s2_card4">Issue 分类</div>
+
+  <div class="s2_sep"></div>
+
+  <div class="s2_conn s2_conn1"></div>
+  <div class="s2_conn s2_conn2"></div>
+
+  <span class="s2_label_fail">FAILURE SURFACES</span>
+
+  <div class="s2_badge s2_badge1">共享状态</div>
+  <div class="s2_badge s2_badge2">顺序假设</div>
+  <div class="s2_badge s2_badge3">隐式交接</div>
+  <div class="s2_badge s2_badge4">非确定性</div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>Teams reach for multi-agent workflows when a single agent isn't enough to reliably solve a problem end to end. But introducing multiple agents also introduces new failure surfaces: shared state, ordering assumptions, implicit handoffs, and non-deterministic behavior.</p>
+<p>We see developers use multi-agent workflows for things like:
+
+Codebase maintenance and dependency updates
+Automated code quality checks and refactors
+Spec-driven feature implementation
+Issue and pull request triage</p>
+<p>These scenarios only work reliably when every step is explicit and constrained.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Act Divider -->
+  <div class="act-divider" style="background:var(--bg-act1);"><div class="act-label reveal">ACT II · 三个工程模式</div></div>
+
+  <!-- S3: 模式一 Typed Schemas -->
+  <section class="feed-section" style="background:var(--bg-act2);">
+    <div class="section-inner">
+      <p class="big-statement reveal">自然语言是混乱的。<span style="color:var(--accent);">Typed Schema</span> 让数据传递变可靠</p>
+      <p class="body-text reveal reveal-d1">Multi-agent 工作流经常在早期就失败，原因是 agent 之间交换的是混乱的自然语言或不一致的 JSON——字段名变了、数据类型不匹配、格式漂移，而且没有任何机制来强制一致性。这就好比软件开发中尽早建立契约（contract）能帮助团队协作而不互相踩脚一样，类型化接口和严格的 schema 在每个边界上都添加了结构。Agent 传递的是机器可检查的数据，无效消息会快速失败，下游步骤不需要猜测 payload 的含义。大多数团队从定义期望 agent 返回的数据形状开始——比如一个 TypeScript 类型声明。这样一来，调试就从「检查日志然后猜」变成了「这个 payload 违反了 schema X」。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s3_stage">
+  <!-- LEFT: Before -->
+  <div class="s3_before s3_before_dim">
+    <div class="s3_blob">
+      <span class="s3_blob_label">自由JSON</span>
+      <span class="s3_field_bad">name?</span>
+      <span class="s3_field_bad">email??</span>
+      <span class="s3_field_bad">type???</span>
+    </div>
+    <div class="s3_x_mark">&#x2716;</div>
+  </div>
+
+  <!-- CENTER: Arrow -->
+  <div class="s3_arrow_group">
+    <div class="s3_arrow_line"></div>
+    <div class="s3_arrow_head"></div>
+    <span class="s3_arrow_label">验证</span>
+  </div>
+
+  <!-- RIGHT: After -->
+  <div class="s3_after">
+    <div class="s3_schema">
+      <span class="s3_schema_label">Typed Schema</span>
+      <span class="s3_field_good">id: number</span>
+      <span class="s3_field_good">email: string</span>
+      <span class="s3_field_good">plan: enum</span>
+    </div>
+    <div class="s3_check_mark">&#x2714;</div>
+  </div>
+
+  <!-- GLOW overlay on right -->
+  <div class="s3_glow"></div>
+</div></div>
+      <p class="hook-line reveal reveal-d3">当 schema 被违反时，该重试、修复还是上报？</p>
+      <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-schema',this)">深入：Schema 验证流程 &#8594;</button>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>Multi-agent workflows often fail early because agents exchange messy language or inconsistent JSON. Field names change, data types don't match, formatting shifts, and nothing enforces consistency.</p>
+<p>Just like establishing contracts early in development helps teams collaborate without stepping on each other, typed interfaces and strict schemas add structure at every boundary. Agents pass machine-checkable data, invalid messages fail fast, and downstream steps don't have to guess what a payload means.</p>
+<p>Most teams start by defining the data shape they expect agents to return:
+
+type UserProfile = {
+  id: number;
+  email: string;
+  plan: "free" | "pro" | "enterprise";
+};</p>
+<p>This changes debugging from "inspect logs and guess" to "this payload violated schema X." Treat schema violations like contract failures: retry, repair, or escalate before bad state propagates.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S4: 模式二 Action Schemas -->
+  <section class="feed-section" style="background:var(--bg-act2);">
+    <div class="section-inner">
+      <p class="big-statement reveal">模糊的意图让 agent 崩溃。<span style="color:var(--accent);">Action Schema</span> 让意图变明确</p>
+      <p class="body-text reveal reveal-d1">即使有了类型化数据，multi-agent 工作流仍然会失败，因为 LLM 不会遵循隐含的意图——它们只遵循明确的指令。「分析这个 issue 并帮团队采取行动」听起来很清楚，但不同的 agent 可能会关闭、分配、升级或什么都不做——每种行为都合理，但没有一种是可自动化的。Action Schema 通过定义<span class="hl">允许的动作集合及其结构</span>来解决这个问题。不是每一步都需要结构，但结果必须始终解析为一个小的、明确的动作集合。有了 Action Schema，agent 必须返回恰好一个有效动作——任何其他输出都会验证失败并被重试或上报。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s4_stage">
+  <!-- Step 1: Top label -->
+  <div class="s4_label">分析 Issue</div>
+
+  <!-- Step 2: Arrow down -->
+  <div class="s4_arrow"></div>
+  <div class="s4_arrow_head"></div>
+
+  <!-- Step 3: Action cards -->
+  <div class="s4_cards">
+    <div class="s4_card">request-more-info</div>
+    <div class="s4_card">assign</div>
+    <div class="s4_card">close-as-duplicate</div>
+    <div class="s4_card s4_card_neutral">no-action</div>
+  </div>
+
+  <!-- Step 5: Checkmark badge -->
+  <div class="s4_badge">
+    <span class="s4_check">&#10003;</span>
+    恰好一个
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>Even with typed data, multi-agent workflows still fail because LLMs don't follow implied intent, only explicit instructions.</p>
+<p>"Analyze this issue and help the team take action" sounds clear. But different agents may close, assign, escalate, or do nothing—each reasonable, none automatable.</p>
+<p>Action schemas fix this by defining the exact set of allowed actions and their structure. Not every step needs structure, but the outcome must always resolve to a small, explicit set of actions.</p>
+<p>Here's what an action schema might look like:
+
+const ActionSchema = z.discriminatedUnion("type", [
+  { type: "request-more-info", missing: string[] },
+  { type: "assign", assignee: string },
+  { type: "close-as-duplicate", duplicateOf: number },
+  { type: "no-action" }
+]);</p>
+<p>With this in place, agents must return exactly one valid action. Anything else fails validation and is retried or escalated.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S5: 模式三 MCP -->
+  <section class="feed-section" style="background:var(--bg-act2);">
+    <div class="section-inner">
+      <p class="big-statement reveal">Schema 定义结构，Action Schema 定义意图。<span style="color:var(--accent);">MCP</span> 强制执行两者</p>
+      <p class="body-text reveal reveal-d1">类型化 schema、受约束的动作和结构化推理，只有在被一致地强制执行时才有效。如果没有执行机制，它们就只是约定，而不是保证。Model Context Protocol（MCP）就是把这些模式变成契约的执行层。MCP 为每个工具和资源定义了明确的输入和输出 schema，在执行前就进行校验。有了 MCP，agent 就不能凭空发明字段、省略必需输入、或在接口间漂移。验证发生在执行之前，从而防止坏状态到达生产系统。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s5_stage">
+  <!-- Agent circle -->
+  <div class="s5_agent">Agent</div>
+
+  <!-- MCP gate -->
+  <div class="s5_mcp">MCP</div>
+
+  <!-- Check badges -->
+  <div class="s5_check s5_check_input">input_schema &#10003;</div>
+  <div class="s5_check s5_check_output">output_schema &#10003;</div>
+
+  <!-- Tool execution -->
+  <div class="s5_tool">工具执行</div>
+
+  <!-- Red intercept badge -->
+  <div class="s5_block">
+    <div class="s5_block_x">X</div>
+    <div class="s5_block_label">拦截</div>
+  </div>
+
+  <!-- Final badge -->
+  <div class="s5_badge">约定 → 契约</div>
+
+  <!-- SVG arrows -->
+  <svg class="s5_arrows" viewBox="0 0 340 320">
+    <!-- Arrow 1: Agent bottom (170, 52) to MCP top (170, 92) -->
+    <line class="s5_arrow1" x1="170" y1="54" x2="170" y2="88" />
+    <polygon class="s5_arrowhead1" points="164,86 170,94 176,86" />
+
+    <!-- Arrow 2: MCP bottom (170, 132) to Tool top (170, 200) -->
+    <line class="s5_arrow2" x1="170" y1="134" x2="170" y2="196" />
+    <polygon class="s5_arrowhead2" points="164,194 170,202 176,194" />
+  </svg>
+</div></div>
+      <p class="hook-line reveal reveal-d3">MCP 是如何在工具调用时拦截不合规请求的？</p>
+      <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-mcp',this)">深入：MCP 执行机制 &#8594;</button>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>Typed schemas, constrained actions, and structured reasoning only work if they're consistently enforced. Without enforcement, they're conventions, not guarantees.</p>
+<p>Model Context Protocol (MCP) is the enforcement layer that turns these patterns into contracts.</p>
+<p>MCP defines explicit input and output schemas for every tool and resource, validating calls before execution.</p>
+<p>With MCP, agents can't invent fields, omit required inputs, or drift across interfaces. Validation happens before execution, which prevents bad state from ever reaching production systems.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Act Divider -->
+  <div class="act-divider" style="background:var(--bg-act2);"><div class="act-label reveal">ACT III · 设计原则</div></div>
+
+  <!-- S6: 设计原则 + 结尾 -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <p class="big-statement reveal">把 agent 当<span style="color:#A5B4FC;">代码</span>来对待，而不是聊天界面</p>
+      <p class="body-text reveal reveal-d1">基于 GitHub 构建和运维 agentic 系统的经验，文章总结了让 multi-agent 工作流在规模化时可靠运行的设计原则：首先是<span class="hl">设计时先考虑失败</span>——因为 agent 会失败，就像分布式系统中的节点会失败一样；然后是<span class="hl">验证每个 agent 边界</span>——每次数据交接都需要校验；接着是<span class="hl">在添加更多 agent 之前先约束动作</span>——问题通常不是 agent 不够多，而是约束不够强；还要<span class="hl">记录中间状态</span>、<span class="hl">预期重试和部分失败</span>。最后也是最核心的一条：把 agent 当作分布式系统来对待，而不是聊天流。当你加上 typed schema、受约束的 action 和 MCP 强制执行的结构化接口时，agent 就开始像可靠的系统组件一样运行了。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="s6_stage">
+  <div class="s6_list">
+    <div class="s6_pill"><span class="s6_dot s6_dot--indigo"></span>先为失败而设计</div>
+    <div class="s6_pill"><span class="s6_dot s6_dot--indigo"></span>验证每个边界</div>
+    <div class="s6_pill"><span class="s6_dot s6_dot--rose"></span>先约束动作再加 agent</div>
+    <div class="s6_pill"><span class="s6_dot s6_dot--neutral"></span>记录中间状态</div>
+    <div class="s6_pill"><span class="s6_dot s6_dot--neutral"></span>预期重试和部分失败</div>
+    <div class="s6_pill s6_pill--glow"><span class="s6_dot s6_dot--indigo"></span>当分布式系统对待</div>
+  </div>
+  <div style="display:flex;justify-content:center;">
+    <div class="s6_final">Agent = 代码，非聊天</div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>Based on our experience building and operating agentic systems at GitHub, these principles help make multi-agent workflows reliable at scale:
+
+Design for failure first
+Validate every agent boundary
+Constrain actions before adding more agents
+Log intermediate state
+Expect retries and partial failures
+Treat agents like distributed systems, not chat flows</p>
+<p>Multi-agent systems work when structure is explicit. When you add typed schemas, constrained actions, and structured interfaces enforced by MCP, agents start behaving like reliable system components.</p>
+<p>The shift is simple but powerful: treat agents like code, not chat interfaces.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ======== LAYER: SCHEMA (A1 drill from S3) ======== -->
+<div class="layer" id="layer-schema">
+  <section class="feed-section" style="background:var(--bg-act2);">
+    <div class="section-inner">
+      <p class="big-statement reveal">Schema 违规 = 契约失败：<span style="color:var(--accent2);">重试</span>、<span style="color:var(--warm);">修复</span>、或<span style="color:var(--accent);">上报</span></p>
+      <p class="body-text reveal reveal-d1">文章强调应该把 schema 违规当作契约失败来处理——在坏状态传播之前就要重试、修复或上报。具体来说，大多数团队从定义期望 agent 返回的数据形状开始，比如一个 TypeScript 类型声明，明确规定每个字段的名称、类型和允许的值域。当一个 agent 的输出不符合 schema 时，系统不应该继续执行，而应该立即触发验证失败。这把调试从「检查日志然后猜测哪里出了问题」变成了「这个 payload 违反了 schema X 的字段 Y」——精确且可追溯。这种模式之所以有效，是因为它在每个 agent 边界上都添加了结构，让 agent 传递的是机器可检查的数据，而不是自由格式的自然语言。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="a1_stage">
+  <!-- Step 1: Agent output -->
+  <div class="a1_agent">Agent 输出</div>
+
+  <!-- Step 2: Arrow down to Schema -->
+  <div class="a1_arrow1"></div>
+  <div class="a1_arrow1_head"></div>
+
+  <!-- Step 3: Schema validation box -->
+  <div class="a1_schema">Schema 校验</div>
+
+  <!-- Step 4a: Pass branch (right) -->
+  <div class="a1_arrow_pass"></div>
+  <div class="a1_arrow_pass_head"></div>
+  <div class="a1_pass_label">通过 &#10003;</div>
+  <div class="a1_continue">继续执行</div>
+
+  <!-- Step 4b: Fail branch (down) -->
+  <div class="a1_arrow_fail"></div>
+  <div class="a1_arrow_fail_head"></div>
+  <div class="a1_fail_label">失败 &#10007;</div>
+
+  <!-- Step 5: Three sequential options -->
+  <div class="a1_options">
+    <div class="a1_retry">重试</div>
+    <div class="a1_repair">修复</div>
+    <div class="a1_escalate">上报</div>
+  </div>
+
+  <!-- Step 6: Retry curved arrow back to Agent -->
+  <div class="a1_retry_arrow">
+    <svg viewBox="0 0 56 148">
+      <path class="a1_retry_path" d="M56,148 C56,148 56,80 56,40 Q56,0 28,0 L8,0" />
+      <polygon class="a1_retry_arrowhead" points="12,5 2,0 12,-5" />
+    </svg>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>Just like establishing contracts early in development helps teams collaborate without stepping on each other, typed interfaces and strict schemas add structure at every boundary. Agents pass machine-checkable data, invalid messages fail fast, and downstream steps don't have to guess what a payload means.</p>
+<p>Most teams start by defining the data shape they expect agents to return:
+
+type UserProfile = {
+  id: number;
+  email: string;
+  plan: "free" | "pro" | "enterprise";
+};</p>
+<p>This changes debugging from "inspect logs and guess" to "this payload violated schema X." Treat schema violations like contract failures: retry, repair, or escalate before bad state propagates.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ======== LAYER: MCP (A2 drill from S5) ======== -->
+<div class="layer" id="layer-mcp">
+  <section class="feed-section" style="background:var(--bg-act2);">
+    <div class="section-inner">
+      <p class="big-statement reveal">MCP：在<span style="color:var(--accent);">执行前</span>校验每一次工具调用的输入和输出</p>
+      <p class="body-text reveal reveal-d1">MCP 为每个工具定义了明确的 input_schema 和 output_schema。当 agent 要调用一个工具时，MCP 会在执行前校验调用参数是否符合 input_schema——如果 agent 凭空发明了一个字段、省略了必需参数、或类型不匹配，调用会被拒绝，根本不会到达目标系统。同样地，工具返回的结果也会被 output_schema 校验。这样一来，schema 定义的是数据结构，action schema 定义的是允许的意图，而 MCP 在运行时强制执行两者。没有 MCP，schema 和 action schema 只是约定——开发者可以遵守也可以不遵守；有了 MCP，它们变成了编译时检查一样的硬性保证，坏状态永远不会到达生产系统。</p>
+      <div class="anim-stage reveal reveal-d2"><div class="a2_stage">
+  <!-- Step 1: Agent circle -->
+  <div class="a2_agent">Agent</div>
+
+  <!-- Arrow 1 -->
+  <div class="a2_arrow1"></div>
+  <div class="a2_arrowhead1"></div>
+
+  <!-- Step 2: 调用参数 -->
+  <div class="a2_params">调用参数</div>
+
+  <!-- Arrow 2 -->
+  <div class="a2_arrow2"></div>
+  <div class="a2_arrowhead2"></div>
+
+  <!-- Step 3: input_schema gate -->
+  <div class="a2_input_gate">
+    <span>input_schema</span>
+    <span class="a2_input_check">&#10003;</span>
+  </div>
+
+  <!-- Rejection branch (right of input gate) -->
+  <div class="a2_reject_line"></div>
+  <div class="a2_reject_arrow"></div>
+  <div class="a2_reject_branch">
+    <div class="a2_reject_x">&#10007;</div>
+    <span class="a2_reject_label">发明字段 → 拒绝</span>
+  </div>
+
+  <!-- Arrow 3 -->
+  <div class="a2_arrow3"></div>
+  <div class="a2_arrowhead3"></div>
+
+  <!-- Step 4: create_issue tool -->
+  <div class="a2_tool">create_issue</div>
+
+  <!-- Arrow 4 -->
+  <div class="a2_arrow4"></div>
+  <div class="a2_arrowhead4"></div>
+
+  <!-- Step 5: output_schema gate -->
+  <div class="a2_output_gate">
+    <span>output_schema</span>
+    <span class="a2_output_check">&#10003;</span>
+  </div>
+
+  <!-- Arrow 5 -->
+  <div class="a2_arrow5"></div>
+  <div class="a2_arrowhead5"></div>
+
+  <!-- Step 6: Result circle -->
+  <div class="a2_result">结果</div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>Model Context Protocol (MCP) is the enforcement layer that turns these patterns into contracts.</p>
+<p>MCP defines explicit input and output schemas for every tool and resource, validating calls before execution.
+
+{
+  "name": "create_issue",
+  "input_schema": { ... },
+  "output_schema": { ... }
+}</p>
+<p>With MCP, agents can't invent fields, omit required inputs, or drift across interfaces. Validation happens before execution, which prevents bad state from ever reaching production systems.</p>
+<p>The bottom line: Schemas define structure whereas action schemas define intent. MCP enforces both.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+var layerStack = ['layer-overview'];
+var transitioning = false;
+var layerNames = {
+  'layer-overview': '概览',
+  'layer-schema': 'Schema验证',
+  'layer-mcp': 'MCP机制'
+};
+var observers = new Map();
+
+function setupObserver(layerId) {
+  if (observers.has(layerId)) return;
+  var layer = document.getElementById(layerId);
+  var reveals = layer.querySelectorAll('.reveal, [class*="_stage"]');
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+  }, { threshold: 0.15, root: layer });
+  reveals.forEach(function(el) { obs.observe(el); });
+  observers.set(layerId, obs);
+}
+function resetReveals(layerId) {
+  var layer = document.getElementById(layerId);
+  layer.querySelectorAll('.reveal').forEach(function(el) { el.classList.remove('visible'); });
+  layer.querySelectorAll('[class*="_stage"]').forEach(function(el) { el.classList.remove('visible'); });
+}
+function activateReveals(layerId) {
+  resetReveals(layerId);
+  if (observers.has(layerId)) { observers.get(layerId).disconnect(); observers.delete(layerId); }
+  requestAnimationFrame(function() { setupObserver(layerId); });
+}
+function updateBreadcrumb() {
+  var bc = document.getElementById('breadcrumb');
+  bc.innerHTML = '';
+  layerStack.forEach(function(id, i) {
+    if (i > 0) { var sep = document.createElement('span'); sep.className = 'sep'; sep.textContent = '>'; bc.appendChild(sep); }
+    var span = document.createElement('span');
+    span.textContent = layerNames[id] || id;
+    if (i === layerStack.length - 1) { span.className = 'current'; }
+    else { span.addEventListener('click', function() { goBackTo(i); }); }
+    bc.appendChild(span);
+  });
+  var backBtn = document.getElementById('backBtn');
+  backBtn.style.display = layerStack.length > 1 ? 'flex' : 'none';
+  bc.style.left = layerStack.length > 1 ? '60px' : '16px';
+  var dots = document.getElementById('depthDots');
+  var depth = layerStack.length - 1;
+  dots.querySelectorAll('.dot').forEach(function(d, i) { d.classList.toggle('active', i === depth); });
+}
+function drillDown(targetId, btnEl) {
+  if (transitioning) return; transitioning = true;
+  var currentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var targetLayer = document.getElementById(targetId);
+  targetLayer.scrollTop = 0; resetReveals(targetId); targetLayer.style.visibility = 'visible';
+  var duration = 600;
+  currentLayer.style.transition = 'transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  currentLayer.style.transformOrigin = 'center center';
+  currentLayer.style.transform = 'scale(1.3)'; currentLayer.style.opacity = '0';
+  targetLayer.classList.add('active'); targetLayer.style.opacity = '0'; targetLayer.style.transform = 'scale(0.85)';
+  targetLayer.style.transition = 'transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  requestAnimationFrame(function() { requestAnimationFrame(function() { targetLayer.style.opacity = '1'; targetLayer.style.transform = 'scale(1)'; }); });
+  setTimeout(function() {
+    currentLayer.classList.remove('active'); currentLayer.style.transition=''; currentLayer.style.transform=''; currentLayer.style.opacity='';
+    targetLayer.style.transition=''; targetLayer.style.transform=''; activateReveals(targetId); transitioning = false;
+  }, duration + 50);
+  layerStack.push(targetId); updateBreadcrumb();
+}
+function goBack() {
+  if (layerStack.length <= 1 || transitioning) return; transitioning = true;
+  var currentId = layerStack.pop(); var parentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId); var parentLayer = document.getElementById(parentId);
+  var duration = 600;
+  currentLayer.style.transition = 'transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  currentLayer.style.transform = 'scale(0.85)'; currentLayer.style.opacity = '0';
+  parentLayer.classList.add('active'); parentLayer.style.transform = 'scale(1.3)'; parentLayer.style.opacity = '0';
+  parentLayer.style.transition = 'transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  requestAnimationFrame(function() { requestAnimationFrame(function() { parentLayer.style.transform = 'scale(1)'; parentLayer.style.opacity = '1'; }); });
+  setTimeout(function() {
+    currentLayer.classList.remove('active'); currentLayer.style.transition=''; currentLayer.style.transform=''; currentLayer.style.opacity=''; currentLayer.style.visibility='';
+    parentLayer.style.transition=''; parentLayer.style.transform=''; transitioning = false;
+  }, duration + 50);
+  updateBreadcrumb();
+}
+function goBackTo(targetIndex) { if (transitioning) return; while (layerStack.length - 1 > targetIndex) { if (layerStack.length <= 1) break; goBack(); return; } }
+function toggleSource(btn) { btn.classList.toggle('open'); btn.nextElementSibling.classList.toggle('open'); }
+setupObserver('layer-overview'); updateBreadcrumb();
+</script>
+</body>
+</html>

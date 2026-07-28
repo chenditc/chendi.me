@@ -1,0 +1,2378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Agent 验证的信任危机：当「正确」不再确定</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #F5F3FF;
+  --bg-act2: #F0FDF4;
+  --bg-act3: #FFF7ED;
+  --bg-dark: #0F172A;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --dim: #94A3B8;
+  --accent: #7C3AED;
+  --accent2: #16A34A;
+  --warm: #D97706;
+  --danger: #DC2626;
+  --neutral: #94A3B8;
+  --card-bg: #FFFFFF;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Noto Sans SC',sans-serif;color:var(--text);-webkit-font-smoothing:antialiased;}
+.content-width{max-width:640px;margin:0 auto;padding:0 28px;}
+.reveal{opacity:0;transform:translateY(40px);transition:opacity 0.8s ease,transform 0.8s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-delay-1{transition-delay:0.15s;}
+.reveal-delay-2{transition-delay:0.3s;}
+.reveal-delay-3{transition-delay:0.45s;}
+.reveal-delay-4{transition-delay:0.6s;}
+.big-statement{font-family:'Noto Serif SC',serif;font-size:clamp(22px,5.5vw,32px);font-weight:700;line-height:1.5;margin-bottom:32px;}
+.body-text{font-size:16px;line-height:1.9;color:var(--text);margin-bottom:28px;}
+.body-text .hl{color:var(--accent);font-weight:500;}
+.body-text .hl2{color:var(--accent2);font-weight:500;}
+.body-text .hl-danger{color:var(--danger);font-weight:500;}
+.layer{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;visibility:hidden;opacity:0;will-change:transform,opacity;scroll-snap-type:y proximity;}
+.layer.active{visibility:visible;opacity:1;}
+.feed-section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;scroll-snap-align:start;}
+.feed-section.dark{background:var(--bg-dark);color:#F1F5F9;}
+.feed-section.dark .body-text{color:#94A3B8;}
+.feed-section.dark .big-statement{color:#F1F5F9;}
+.section-inner{max-width:600px;width:100%;}
+.breadcrumb{position:fixed;top:16px;left:16px;z-index:1000;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);padding:8px 14px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,0.1);font-size:13px;font-weight:500;}
+.breadcrumb span{color:var(--text-muted);cursor:pointer;transition:color 0.2s;}
+.breadcrumb span:hover{color:var(--accent);}
+.breadcrumb span.current{color:var(--text);cursor:default;}
+.breadcrumb .sep{color:#CBD5E1;margin:0 2px;cursor:default;}
+.back-btn{position:fixed;top:16px;left:16px;z-index:1001;width:38px;height:38px;border-radius:10px;border:none;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(0,0,0,0.1);font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--text);transition:all 0.2s;}
+.back-btn:hover{background:var(--accent);color:#fff;}
+.depth-dots{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;gap:8px;background:rgba(255,255,255,0.9);backdrop-filter:blur(8px);padding:8px 14px;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,0.1);}
+.dot{width:10px;height:10px;border-radius:50%;background:#CBD5E1;transition:all 0.3s;}
+.dot.active{background:var(--accent);box-shadow:0 0 8px rgba(124,58,237,0.5);transform:scale(1.2);}
+.drill-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:1.5px solid rgba(124,58,237,0.3);border-radius:10px;background:transparent;color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.25s;}
+.drill-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(124,58,237,0.3);}
+.dark .drill-btn{border-color:rgba(124,58,237,0.4);}
+.source-panel{margin-top:24px;border-radius:12px;overflow:hidden;border:1px solid rgba(124,58,237,0.15);background:rgba(124,58,237,0.03);}
+.dark .source-panel{border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);}
+.source-toggle{width:100%;padding:12px 16px;border:none;background:none;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);}
+.dark .source-toggle{color:#A78BFA;}
+.source-toggle:hover{background:rgba(124,58,237,0.06);}
+.source-toggle .arrow{transition:transform 0.3s;font-size:11px;}
+.source-toggle.open .arrow{transform:rotate(90deg);}
+.source-body{max-height:0;overflow:hidden;transition:max-height 0.4s ease;padding:0 16px;}
+.source-body.open{max-height:2000px;padding:0 16px 16px;overflow-y:auto;}
+.source-body p{font-size:13px;line-height:1.8;color:var(--text-muted);margin:0 0 12px 0;white-space:pre-wrap;}
+.dark .source-body p{color:#94A3B8;}
+.source-body .source-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--accent);margin-bottom:8px;display:block;}
+.dark .source-body .source-label{color:#A78BFA;}
+.anim-stage{width:100%;display:flex;justify-content:center;margin:28px 0;min-height:180px;}
+.anim-stage>div{width:100%;}
+.hook-line{font-size:14px;color:var(--accent);font-weight:500;margin:16px 0;line-height:1.7;}
+.dark .hook-line{color:#A78BFA;}
+
+/* === S1 Animation === */
+
+.s1_stage {
+  position: relative;
+  width: 100%;
+  max-width: 350px;
+  margin: 0 auto;
+  min-height: 320px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s1_stage.visible {
+  opacity: 1;
+}
+
+/* Top row: Agent circle + "≠" + CI box */
+.s1_row_top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+/* Agent circle */
+.s1_agent {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: #16A34A;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.6);
+}
+.s1_stage.visible .s1_agent {
+  animation: s1_pop 0.5s 0.4s ease forwards;
+}
+.s1_agent_label {
+  color: #fff;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.s1_agent_sub {
+  color: rgba(255,255,255,0.85);
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* ≠ symbol */
+.s1_neq {
+  font-size: 56px;
+  font-weight: 700;
+  color: #94A3B8;
+  opacity: 0;
+}
+.s1_stage.visible .s1_neq {
+  animation: s1_fade_in 0.4s 1.2s ease forwards, s1_pulse 1.5s 1.6s ease infinite;
+}
+
+/* CI box */
+.s1_ci {
+  width: 96px;
+  height: 96px;
+  border-radius: 12px;
+  background: #DC2626;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.6);
+}
+.s1_stage.visible .s1_ci {
+  animation: s1_pop 0.5s 0.8s ease forwards;
+}
+.s1_ci_label {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.s1_ci_sub {
+  color: rgba(255,255,255,0.85);
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* Arrow down */
+.s1_arrow_down {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+  opacity: 0;
+}
+.s1_stage.visible .s1_arrow_down {
+  animation: s1_fade_in 0.4s 1.8s ease forwards;
+}
+.s1_arrow_line {
+  width: 3px;
+  height: 40px;
+  background: #7C3AED;
+}
+.s1_arrow_head {
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 14px solid #7C3AED;
+}
+
+/* Conflict label */
+.s1_conflict {
+  text-align: center;
+  color: #94A3B8;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  opacity: 0;
+}
+.s1_stage.visible .s1_conflict {
+  animation: s1_fade_in 0.4s 1.6s ease forwards;
+}
+
+/* Trust Layer box */
+.s1_trust {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 240px;
+  height: 56px;
+  margin: 0 auto;
+  border-radius: 12px;
+  background: #7C3AED;
+  opacity: 0;
+  transform: translateY(12px);
+}
+.s1_stage.visible .s1_trust {
+  animation: s1_slide_up 0.5s 2.4s ease forwards;
+}
+.s1_trust_label {
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+/* Keyframes */
+@keyframes s1_pop {
+  0% { opacity: 0; transform: scale(0.6); }
+  70% { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes s1_fade_in {
+  to { opacity: 1; }
+}
+@keyframes s1_pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.7; }
+}
+@keyframes s1_slide_up {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === S2 Animation === */
+
+.s2_stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  padding: 24px 16px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.s2_stage.visible {
+  opacity: 1;
+}
+.s2_grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  width: 100%;
+  max-width: 340px;
+}
+.s2_card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 72px;
+  border: 2px solid #7C3AED;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #E2E8F0;
+  opacity: 0;
+  transform: translateY(12px);
+  overflow: hidden;
+}
+.s2_stage.visible .s2_card:nth-child(1) {
+  animation: s2_fadeUp 0.5s 0.2s forwards;
+}
+.s2_stage.visible .s2_card:nth-child(2) {
+  animation: s2_fadeUp 0.5s 0.6s forwards;
+}
+.s2_stage.visible .s2_card:nth-child(3) {
+  animation: s2_fadeUp 0.5s 1.0s forwards;
+}
+.s2_stage.visible .s2_card:nth-child(4) {
+  animation: s2_fadeUp 0.5s 1.4s forwards;
+}
+@keyframes s2_fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Strike-through line */
+.s2_card::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  height: 3px;
+  background: #DC2626;
+  border-radius: 2px;
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.s2_stage.visible .s2_card:nth-child(1)::after {
+  animation: s2_strike 0.4s 2.0s forwards;
+}
+.s2_stage.visible .s2_card:nth-child(2)::after {
+  animation: s2_strike 0.4s 2.4s forwards;
+}
+.s2_stage.visible .s2_card:nth-child(3)::after {
+  animation: s2_strike 0.4s 2.8s forwards;
+}
+.s2_stage.visible .s2_card:nth-child(4)::after {
+  animation: s2_strike 0.4s 3.2s forwards;
+}
+@keyframes s2_strike {
+  to { transform: scaleX(1); }
+}
+
+/* Dim card text after strike */
+.s2_stage.visible .s2_card:nth-child(1) {
+  animation: s2_fadeUp 0.5s 0.2s forwards, s2_dim 0.3s 2.2s forwards;
+}
+.s2_stage.visible .s2_card:nth-child(2) {
+  animation: s2_fadeUp 0.5s 0.6s forwards, s2_dim 0.3s 2.6s forwards;
+}
+.s2_stage.visible .s2_card:nth-child(3) {
+  animation: s2_fadeUp 0.5s 1.0s forwards, s2_dim 0.3s 3.0s forwards;
+}
+.s2_stage.visible .s2_card:nth-child(4) {
+  animation: s2_fadeUp 0.5s 1.4s forwards, s2_dim 0.3s 3.4s forwards;
+}
+@keyframes s2_dim {
+  to { color: #475569; border-color: #475569; }
+}
+
+/* Bottom label */
+.s2_label {
+  display: inline-block;
+  padding: 8px 20px;
+  border: 2px solid #DC2626;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #DC2626;
+  opacity: 0;
+  transform: translateY(8px);
+}
+.s2_stage.visible .s2_label {
+  animation: s2_fadeUp 0.5s 4.0s forwards;
+}
+
+/* === S3 Animation === */
+
+.s3_stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 20px 16px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.s3_stage.visible {
+  opacity: 1;
+}
+
+/* Nodes */
+.s3_node {
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  font-weight: 700;
+  opacity: 0;
+  transform: scale(0.6);
+  position: relative;
+  z-index: 2;
+  line-height: 1;
+}
+
+/* Start node */
+.s3_start {
+  background: #7C3AED;
+  color: #fff;
+}
+
+/* Optional node - dashed border, gray */
+.s3_optional {
+  background: #fff;
+  border: 3px dashed #94A3B8;
+  color: #94A3B8;
+}
+
+/* Essential node - solid green */
+.s3_essential {
+  background: #16A34A;
+  color: #fff;
+}
+
+/* Annotations below nodes */
+.s3_anno {
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 4px;
+  opacity: 0;
+  text-align: center;
+}
+.s3_anno_optional { color: #94A3B8; }
+.s3_anno_essential { color: #16A34A; }
+
+/* Layout: graph structure */
+.s3_graph {
+  position: relative;
+  width: 310px;
+  height: 370px;
+}
+
+/* Position each node-group */
+.s3_group {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.s3_g_start {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.s3_g_loading {
+  top: 136px;
+  left: 2px;
+}
+.s3_g_result {
+  top: 260px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Lines (SVG) */
+.s3_lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+.s3_line {
+  fill: none;
+  stroke-width: 3;
+}
+.s3_line_optional {
+  stroke: #94A3B8;
+  stroke-dasharray: 8 6;
+  opacity: 0;
+}
+.s3_line_direct {
+  stroke: #16A34A;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+}
+.s3_line_to_result {
+  stroke: #94A3B8;
+  stroke-dasharray: 8 6;
+  opacity: 0;
+}
+
+/* Converge label */
+.s3_converge {
+  font-size: 14px;
+  font-weight: 600;
+  color: #7C3AED;
+  opacity: 0;
+  transform: translateY(6px);
+  margin-top: 8px;
+  padding: 6px 16px;
+  border: 2px solid #7C3AED;
+  border-radius: 8px;
+}
+
+/* Animations */
+.s3_stage.visible .s3_g_start .s3_node {
+  animation: s3_pop 0.5s 0.2s forwards;
+}
+.s3_stage.visible .s3_g_loading .s3_node {
+  animation: s3_pop 0.5s 1.4s forwards;
+}
+.s3_stage.visible .s3_g_result .s3_node {
+  animation: s3_pop 0.5s 2.6s forwards;
+}
+
+.s3_stage.visible .s3_g_start .s3_anno {
+  animation: s3_fadeIn 0.4s 0.5s forwards;
+}
+.s3_stage.visible .s3_g_loading .s3_anno {
+  animation: s3_fadeIn 0.4s 1.7s forwards;
+}
+.s3_stage.visible .s3_g_result .s3_anno {
+  animation: s3_fadeIn 0.4s 2.9s forwards;
+}
+
+/* Line animations */
+.s3_stage.visible .s3_line_optional {
+  animation: s3_fadeIn 0.5s 0.8s forwards;
+}
+.s3_stage.visible .s3_line_direct {
+  animation: s3_drawLine 0.8s 1.8s forwards;
+}
+.s3_stage.visible .s3_line_to_result {
+  animation: s3_fadeIn 0.5s 2.2s forwards;
+}
+
+/* Converge label */
+.s3_stage.visible .s3_converge {
+  animation: s3_fadeUp 0.5s 3.6s forwards;
+}
+
+@keyframes s3_pop {
+  0% { opacity: 0; transform: scale(0.6); }
+  70% { transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes s3_fadeIn {
+  to { opacity: 1; }
+}
+@keyframes s3_drawLine {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes s3_fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === S4 Animation === */
+
+.s4_stage {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  min-height: 300px;
+  padding: 24px 8px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.s4_stage.visible {
+  opacity: 1;
+}
+
+/* Flow row: three boxes + arrows */
+.s4_flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 36px;
+}
+
+/* Step boxes */
+.s4_box {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: 14px;
+  border: 2.5px solid #7C3AED;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  opacity: 0;
+  transform: scale(0.6);
+}
+.s4_box_label {
+  font-size: 15px;
+  font-weight: 700;
+  color: #E2E8F0;
+  letter-spacing: 0.5px;
+}
+
+/* Icons inside boxes */
+.s4_icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.s4_icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Arrow between boxes */
+.s4_arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  flex-shrink: 0;
+  opacity: 0;
+}
+.s4_arrow svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Step 1: Capture */
+.s4_stage.visible .s4_box--capture {
+  animation: s4_pop 0.5s 0.4s ease forwards;
+}
+.s4_stage.visible .s4_box--capture.s4_active {
+  animation: s4_pop 0.5s 0.4s ease forwards, s4_glow 0.6s 0.9s ease forwards;
+}
+
+/* Arrow 1 */
+.s4_stage.visible .s4_arrow--1 {
+  animation: s4_fadeIn 0.3s 1.4s ease forwards;
+}
+
+/* Step 2: Generalize */
+.s4_stage.visible .s4_box--generalize {
+  animation: s4_pop 0.5s 1.8s ease forwards;
+}
+.s4_stage.visible .s4_box--generalize.s4_active {
+  animation: s4_pop 0.5s 1.8s ease forwards, s4_glow 0.6s 2.3s ease forwards;
+}
+
+/* Arrow 2 */
+.s4_stage.visible .s4_arrow--2 {
+  animation: s4_fadeIn 0.3s 2.8s ease forwards;
+}
+
+/* Step 3: Extract */
+.s4_stage.visible .s4_box--extract {
+  animation: s4_pop 0.5s 3.2s ease forwards;
+}
+.s4_stage.visible .s4_box--extract.s4_active {
+  animation: s4_pop 0.5s 3.2s ease forwards, s4_glow 0.6s 3.7s ease forwards;
+}
+
+/* Bottom label */
+.s4_bottom {
+  text-align: center;
+  opacity: 0;
+  transform: translateY(10px);
+}
+.s4_stage.visible .s4_bottom {
+  animation: s4_slideUp 0.5s 4.4s ease forwards;
+}
+.s4_bottom_text {
+  display: inline-block;
+  padding: 8px 20px;
+  border: 2px solid #16A34A;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #16A34A;
+  letter-spacing: 1px;
+}
+
+/* Keyframes */
+@keyframes s4_pop {
+  0%   { opacity: 0; transform: scale(0.6); }
+  70%  { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes s4_fadeIn {
+  to { opacity: 1; }
+}
+@keyframes s4_glow {
+  0%   { border-color: #7C3AED; box-shadow: none; }
+  100% { border-color: #16A34A; box-shadow: 0 0 16px rgba(22,163,74,0.35); }
+}
+@keyframes s4_slideUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === S5 Animation === */
+
+.s5_stage {
+  max-width: 350px;
+  margin: 0 auto;
+  font-family: 'Noto Sans SC', sans-serif;
+  color: #1E293B;
+}
+
+/* Title */
+.s5_title {
+  text-align: center;
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  opacity: 0;
+  transform: translateY(12px);
+}
+.s5_stage.visible .s5_title {
+  animation: s5_fadeUp 0.5s ease forwards;
+}
+
+/* Bar comparison area */
+.s5_bars {
+  display: flex;
+  justify-content: center;
+  gap: 48px;
+  margin-bottom: 16px;
+  height: 110px;
+  align-items: flex-end;
+}
+.s5_bar_col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+}
+.s5_stage.visible .s5_bar_col:nth-child(1) {
+  animation: s5_fadeUp 0.5s 0.4s ease forwards;
+}
+.s5_stage.visible .s5_bar_col:nth-child(2) {
+  animation: s5_fadeUp 0.5s 0.8s ease forwards;
+}
+.s5_bar_val {
+  font-size: 15px;
+  font-weight: 700;
+}
+.s5_bar_track {
+  width: 56px;
+  height: 80px;
+  background: #E2E8F0;
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+.s5_bar_fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  border-radius: 6px;
+  transform: scaleY(0);
+  transform-origin: bottom;
+}
+.s5_bar_fill_struct {
+  background: #7C3AED;
+  height: 100%;
+}
+.s5_bar_fill_agent {
+  background: #DC2626;
+  height: 82.2%;
+}
+.s5_stage.visible .s5_bar_col:nth-child(1) .s5_bar_fill {
+  animation: s5_grow 0.8s 0.9s ease forwards;
+}
+.s5_stage.visible .s5_bar_col:nth-child(2) .s5_bar_fill {
+  animation: s5_grow 0.8s 1.3s ease forwards;
+}
+.s5_bar_label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+/* Metric table */
+.s5_table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 12px;
+}
+.s5_table th, .s5_table td {
+  padding: 3px 10px;
+  font-size: 13px;
+  text-align: center;
+}
+.s5_table th {
+  font-weight: 600;
+  color: #64748B;
+  border-bottom: 2px solid #CBD5E1;
+}
+.s5_table td {
+  border-bottom: 1px solid #E2E8F0;
+}
+.s5_table td:first-child {
+  text-align: left;
+  color: #475569;
+  font-weight: 600;
+}
+.s5_val_green {
+  color: #16A34A;
+  font-weight: 700;
+}
+.s5_val_red {
+  color: #DC2626;
+  font-weight: 700;
+}
+.s5_val_gray {
+  color: #94A3B8;
+  font-weight: 600;
+}
+.s5_tr {
+  opacity: 0;
+}
+.s5_stage.visible .s5_tr:nth-child(2) { animation: s5_fadeUp 0.4s 1.8s ease forwards; }
+.s5_stage.visible .s5_tr:nth-child(3) { animation: s5_fadeUp 0.4s 2.2s ease forwards; }
+.s5_stage.visible .s5_tr:nth-child(4) { animation: s5_fadeUp 0.4s 2.6s ease forwards; }
+.s5_stage.visible .s5_tr:nth-child(5) { animation: s5_fadeUp 0.4s 3.0s ease forwards; }
+
+/* Bottom highlight */
+.s5_highlight {
+  background: #FEF2F2;
+  border: 2px solid #DC2626;
+  border-radius: 8px;
+  padding: 8px 14px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1E293B;
+  opacity: 0;
+}
+.s5_stage.visible .s5_highlight {
+  animation: s5_fadeUp 0.5s 3.6s ease forwards;
+}
+.s5_highlight_label {
+  color: #64748B;
+  font-weight: 400;
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+.s5_highlight_nums {
+  font-size: 18px;
+}
+.s5_highlight_nums .s5_hl_v { color: #7C3AED; }
+.s5_highlight_nums .s5_hl_r { color: #DC2626; }
+
+/* Keyframes */
+@keyframes s5_fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes s5_grow {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+
+/* === S6 Animation === */
+
+.s6_stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 20px 10px 24px;
+  opacity: 1;
+}
+
+/* Row containers */
+.s6_row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Limitation boxes (top row) */
+.s6_limit_box {
+  width: 100px;
+  height: 52px;
+  border-radius: 8px;
+  background: #94A3B8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0F172A;
+  opacity: 0;
+  transform: translateY(-16px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  text-align: center;
+  line-height: 1.3;
+  padding: 4px 6px;
+  box-sizing: border-box;
+}
+
+.s6_stage.visible .s6_limit_box:nth-child(1) { opacity: 1; transform: translateY(0); transition-delay: 0.2s; }
+.s6_stage.visible .s6_limit_box:nth-child(2) { opacity: 1; transform: translateY(0); transition-delay: 0.6s; }
+.s6_stage.visible .s6_limit_box:nth-child(3) { opacity: 1; transform: translateY(0); transition-delay: 1.0s; }
+
+/* Row label */
+.s6_row_label {
+  font-size: 13px;
+  color: #94A3B8;
+  letter-spacing: 2px;
+  margin-top: 6px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s6_stage.visible .s6_row_label { opacity: 1; transition-delay: 1.2s; }
+
+/* Arrows */
+.s6_arrows {
+  display: flex;
+  justify-content: center;
+  gap: 100px;
+  margin: 10px 0;
+}
+
+.s6_arrow {
+  width: 2px;
+  height: 32px;
+  background: #475569;
+  position: relative;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s6_arrow::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid #475569;
+}
+
+.s6_stage.visible .s6_arrow:nth-child(1) { opacity: 1; transition-delay: 1.6s; }
+.s6_stage.visible .s6_arrow:nth-child(2) { opacity: 1; transition-delay: 1.8s; }
+.s6_stage.visible .s6_arrow:nth-child(3) { opacity: 1; transition-delay: 2.0s; }
+
+/* Future boxes (bottom row) */
+.s6_future_box {
+  width: 100px;
+  height: 52px;
+  border-radius: 8px;
+  background: #16A34A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  text-align: center;
+  line-height: 1.3;
+  padding: 4px 6px;
+  box-sizing: border-box;
+}
+
+.s6_stage.visible .s6_future_box:nth-child(1) { opacity: 1; transform: translateY(0); transition-delay: 2.4s; }
+.s6_stage.visible .s6_future_box:nth-child(2) { opacity: 1; transform: translateY(0); transition-delay: 2.8s; }
+.s6_stage.visible .s6_future_box:nth-child(3) { opacity: 1; transform: translateY(0); transition-delay: 3.2s; }
+
+/* Future row label */
+.s6_row_label_future {
+  font-size: 13px;
+  color: #16A34A;
+  letter-spacing: 2px;
+  margin-top: 6px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s6_stage.visible .s6_row_label_future { opacity: 1; transition-delay: 3.4s; }
+
+/* Bottom banner */
+.s6_banner {
+  margin-top: 20px;
+  padding: 10px 24px;
+  border-radius: 10px;
+  background: #7C3AED;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 1px;
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.s6_stage.visible .s6_banner { opacity: 1; transform: scale(1); transition-delay: 4.0s; }
+
+/* === A1 Animation === */
+
+.a1_stage {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.a1_stage.visible {
+  opacity: 1;
+}
+.a1_grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.a1_card {
+  position: relative;
+  background: #fff;
+  border: 2px solid #7C3AED;
+  border-radius: 10px;
+  padding: 16px 10px 14px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(12px);
+  overflow: hidden;
+}
+.a1_stage.visible .a1_card { animation: a1_fadeUp 0.4s ease forwards; }
+.a1_stage.visible .a1_card:nth-child(1) { animation-delay: 0s; }
+.a1_stage.visible .a1_card:nth-child(2) { animation-delay: 0.5s; }
+.a1_stage.visible .a1_card:nth-child(3) { animation-delay: 1.0s; }
+.a1_stage.visible .a1_card:nth-child(4) { animation-delay: 1.5s; }
+
+@keyframes a1_fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.a1_card_title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #7C3AED;
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+.a1_card_desc {
+  font-size: 12px;
+  font-weight: 400;
+  color: #94A3B8;
+  line-height: 1.4;
+}
+
+/* Red strike-through line */
+.a1_strike {
+  position: absolute;
+  top: 50%;
+  left: -4px;
+  right: -4px;
+  height: 3px;
+  background: #DC2626;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+.a1_stage.visible .a1_card:nth-child(1) .a1_strike { animation: a1_strikeIn 0.35s ease forwards; animation-delay: 0.4s; }
+.a1_stage.visible .a1_card:nth-child(2) .a1_strike { animation: a1_strikeIn 0.35s ease forwards; animation-delay: 0.9s; }
+.a1_stage.visible .a1_card:nth-child(3) .a1_strike { animation: a1_strikeIn 0.35s ease forwards; animation-delay: 1.4s; }
+.a1_stage.visible .a1_card:nth-child(4) .a1_strike { animation: a1_strikeIn 0.35s ease forwards; animation-delay: 1.9s; }
+
+@keyframes a1_strikeIn {
+  to { transform: scaleX(1); }
+}
+
+/* Bottom shared-assumption label */
+.a1_assumption {
+  text-align: center;
+  opacity: 0;
+  transform: translateY(8px);
+}
+.a1_stage.visible .a1_assumption {
+  animation: a1_fadeUp 0.5s ease forwards;
+  animation-delay: 2.4s;
+}
+.a1_assumption_inner {
+  display: inline-block;
+  background: #DC2626;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* === A2 Animation === */
+
+.a2_stage {
+  position: relative;
+  width: 310px;
+  margin: 0 auto;
+  padding: 10px 0 10px 0;
+}
+
+/* Vertical timeline line */
+.a2_timeline {
+  position: absolute;
+  left: 50px;
+  top: 52px;
+  bottom: 30px;
+  width: 3px;
+  background: #94A3B8;
+  opacity: 0;
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: opacity 0.4s, transform 0.8s ease-out;
+}
+.a2_stage.visible .a2_timeline {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+/* Each node on the timeline */
+.a2_node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-left: 0;
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+.a2_stage.visible .a2_node { opacity: 1; transform: translateY(0); }
+.a2_stage.visible .a2_n1 { transition-delay: 0.4s; }
+.a2_stage.visible .a2_n2 { transition-delay: 1.0s; }
+.a2_stage.visible .a2_n3 { transition-delay: 1.6s; }
+.a2_stage.visible .a2_n4 { transition-delay: 2.4s; }
+
+/* Circle marker */
+.a2_circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  z-index: 2;
+}
+.a2_circle.a2_green { background: #16A34A; }
+.a2_circle.a2_red { background: #DC2626; }
+
+/* Box marker (for longer text) */
+.a2_box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  flex-shrink: 0;
+  z-index: 2;
+  min-height: 44px;
+  min-width: 64px;
+  text-align: center;
+  line-height: 1.4;
+}
+.a2_box.a2_gray { background: #94A3B8; }
+.a2_box.a2_violet { background: #7C3AED; }
+
+/* Day label to the right */
+.a2_label {
+  margin-left: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #334155;
+  line-height: 1.5;
+}
+.a2_label span {
+  display: block;
+  font-size: 13px;
+  font-weight: 400;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+/* Title */
+.a2_title {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1E293B;
+  margin-bottom: 16px;
+  opacity: 0;
+  transition: opacity 0.5s ease-out;
+}
+.a2_stage.visible .a2_title { opacity: 1; }
+
+/* Connector arrow between nodes */
+.a2_arrow {
+  position: absolute;
+  left: 50px;
+  width: 11px;
+  text-align: center;
+  color: #94A3B8;
+  font-size: 16px;
+  z-index: 1;
+}
+
+/* Blink animation for the red circle */
+@keyframes a2_pulse_red {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+}
+.a2_stage.visible .a2_red {
+  animation: a2_pulse_red 1.5s ease-in-out 1.8s 2;
+}
+
+/* Conclusion emphasis */
+@keyframes a2_glow_violet {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(124, 58, 237, 0); }
+}
+.a2_stage.visible .a2_violet {
+  animation: a2_glow_violet 1.5s ease-in-out 3.0s 2;
+}
+
+/* === A3 Animation === */
+
+.a3_stage {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.a3_stage.visible {
+  opacity: 1;
+}
+
+/* Step container */
+.a3_step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 20px;
+  opacity: 0;
+  transform: translateY(12px);
+}
+.a3_stage.visible .a3_step:nth-child(1) { animation: a3_fadeUp 0.4s ease forwards; animation-delay: 0s; }
+.a3_stage.visible .a3_step:nth-child(2) { animation: a3_fadeUp 0.4s ease forwards; animation-delay: 1.8s; }
+.a3_stage.visible .a3_step:nth-child(3) { animation: a3_fadeUp 0.4s ease forwards; animation-delay: 3.6s; }
+
+@keyframes a3_fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Step number circle */
+.a3_num {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #7C3AED;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+/* Step visual area */
+.a3_visual {
+  flex: 1;
+  min-width: 0;
+}
+
+.a3_label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #7C3AED;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+/* ========== Step 1: Capture ========== */
+.a3_traces {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.a3_trace {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+}
+.a3_stage.visible .a3_trace:nth-child(1) { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 0.5s; }
+.a3_stage.visible .a3_trace:nth-child(2) { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 0.8s; }
+.a3_stage.visible .a3_trace:nth-child(3) { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 1.1s; }
+
+.a3_dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #94A3B8;
+  flex-shrink: 0;
+}
+.a3_line {
+  flex: 1;
+  height: 2px;
+  background: #94A3B8;
+}
+.a3_dot_end {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #94A3B8;
+  flex-shrink: 0;
+}
+
+.a3_arrow_down {
+  display: flex;
+  justify-content: center;
+  margin: 4px 0;
+  opacity: 0;
+}
+.a3_stage.visible .a3_s1_arrow { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 1.4s; }
+.a3_stage.visible .a3_s2_arrow { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 3.2s; }
+
+.a3_arrow_sym {
+  font-size: 16px;
+  color: #94A3B8;
+  line-height: 1;
+}
+
+.a3_box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 18px;
+  border: 2px solid #7C3AED;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  color: #7C3AED;
+  opacity: 0;
+}
+.a3_stage.visible .a3_pta_box { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 1.6s; }
+
+/* ========== Step 2: Generalize ========== */
+.a3_merge_row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.a3_small_box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border: 2px solid #94A3B8;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  color: #94A3B8;
+  opacity: 0;
+}
+.a3_stage.visible .a3_merge_row > :nth-child(1) { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 2.2s; }
+.a3_stage.visible .a3_merge_row > :nth-child(2) { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 2.4s; }
+.a3_stage.visible .a3_merge_row > :nth-child(3) { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 2.6s; }
+.a3_stage.visible .a3_merge_row > :nth-child(4) { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 2.8s; }
+.a3_stage.visible .a3_merge_row > :nth-child(5) { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 3.0s; }
+
+.a3_merge_sym {
+  font-size: 14px;
+  color: #94A3B8;
+  font-weight: 700;
+  opacity: 0;
+}
+
+.a3_unified_box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 18px;
+  border: 2px solid #16A34A;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  color: #16A34A;
+  opacity: 0;
+}
+.a3_stage.visible .a3_unified_box { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 3.4s; }
+
+/* ========== Step 3: Extract ========== */
+.a3_graph {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.a3_node {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0;
+  flex-shrink: 0;
+}
+.a3_node_core {
+  background: #7C3AED;
+  color: #fff;
+  border: 2px solid #7C3AED;
+}
+.a3_node_opt {
+  background: #E2E8F0;
+  color: #94A3B8;
+  border: 2px solid #CBD5E1;
+}
+
+.a3_edge {
+  width: 16px;
+  height: 2px;
+  background: #94A3B8;
+  opacity: 0;
+  flex-shrink: 0;
+}
+
+.a3_stage.visible .a3_graph_item:nth-child(1) { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 4.0s; }
+.a3_stage.visible .a3_graph_item:nth-child(2) { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 4.1s; }
+.a3_stage.visible .a3_graph_item:nth-child(3) { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 4.2s; }
+.a3_stage.visible .a3_graph_item:nth-child(4) { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 4.3s; }
+.a3_stage.visible .a3_graph_item:nth-child(5) { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 4.4s; }
+.a3_stage.visible .a3_graph_item:nth-child(6) { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 4.5s; }
+.a3_stage.visible .a3_graph_item:nth-child(7) { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 4.6s; }
+.a3_stage.visible .a3_graph_item:nth-child(8) { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 4.7s; }
+.a3_stage.visible .a3_graph_item:nth-child(9) { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 4.8s; }
+
+/* Fade out optional nodes */
+.a3_stage.visible .a3_node_opt.a3_graph_item:nth-child(3) {
+  animation: a3_fadeUp 0.3s ease forwards 4.2s, a3_fadeOut 0.4s ease forwards 5.2s;
+}
+.a3_stage.visible .a3_node_opt.a3_graph_item:nth-child(7) {
+  animation: a3_fadeUp 0.3s ease forwards 4.6s, a3_fadeOut 0.4s ease forwards 5.4s;
+}
+.a3_stage.visible .a3_edge.a3_graph_item:nth-child(2) {
+  animation: a3_fadeUp 0.3s ease forwards 4.1s, a3_dimEdge 0.4s ease forwards 5.2s;
+}
+.a3_stage.visible .a3_edge.a3_graph_item:nth-child(4) {
+  animation: a3_fadeUp 0.3s ease forwards 4.3s, a3_dimEdge 0.4s ease forwards 5.2s;
+}
+.a3_stage.visible .a3_edge.a3_graph_item:nth-child(6) {
+  animation: a3_fadeUp 0.3s ease forwards 4.5s, a3_dimEdge 0.4s ease forwards 5.4s;
+}
+.a3_stage.visible .a3_edge.a3_graph_item:nth-child(8) {
+  animation: a3_fadeUp 0.3s ease forwards 4.7s, a3_dimEdge 0.4s ease forwards 5.4s;
+}
+
+@keyframes a3_fadeOut {
+  to { opacity: 0.15; transform: scale(0.8); }
+}
+@keyframes a3_dimEdge {
+  to { opacity: 0.15; }
+}
+
+/* Skeleton label */
+.a3_skeleton_label {
+  text-align: center;
+  opacity: 0;
+}
+.a3_stage.visible .a3_skeleton_label {
+  animation: a3_fadeUp 0.4s ease forwards;
+  animation-delay: 5.6s;
+}
+.a3_skeleton_inner {
+  display: inline-block;
+  background: #7C3AED;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 6px;
+}
+
+/* Sub-labels for merge methods */
+.a3_sub_labels {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.a3_sub_label {
+  font-size: 10px;
+  color: #94A3B8;
+  background: #F1F5F9;
+  padding: 2px 8px;
+  border-radius: 4px;
+  opacity: 0;
+}
+.a3_stage.visible .a3_sub_label:nth-child(1) { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 2.0s; }
+.a3_stage.visible .a3_sub_label:nth-child(2) { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 2.3s; }
+.a3_stage.visible .a3_sub_label:nth-child(3) { animation: a3_fadeUp 0.3s ease forwards; animation-delay: 2.6s; }
+
+/* === A4 Animation === */
+
+/* === A4 Animation: Topological Subsequence Matching === */
+.a4_stage{position:relative;width:100%;max-width:360px;min-height:340px;margin:0 auto;font-family:'Noto Sans SC',system-ui,sans-serif}
+.a4_stage *{box-sizing:border-box}
+
+/* --- Reference row --- */
+.a4_ref_label{position:absolute;top:2px;left:50%;transform:translateX(-50%);font-size:13px;font-weight:700;color:#64748B;opacity:0;white-space:nowrap}
+.a4_ref{position:absolute;top:24px;width:52px;height:52px;border-radius:50%;background:#7C3AED;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:700;opacity:0}
+.a4_rA{left:56px}
+.a4_rB{left:154px}
+.a4_rC{left:252px}
+
+/* Reference arrows */
+.a4_ref_arrow{position:absolute;top:46px;height:2px;background:#7C3AED;opacity:0}
+.a4_ra1{left:108px;width:46px}
+.a4_ra2{left:206px;width:46px}
+.a4_ref_arrowhead{position:absolute;top:40px;width:0;height:0;border-top:6px solid transparent;border-bottom:6px solid transparent;border-left:8px solid #7C3AED;opacity:0}
+.a4_rah1{left:150px}
+.a4_rah2{left:248px}
+
+/* --- Pass row --- */
+.a4_pass_label{position:absolute;top:96px;left:8px;font-size:11px;font-weight:600;color:#64748B;opacity:0}
+.a4_pass{position:absolute;top:114px;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;opacity:0}
+.a4_pass_essential{background:#7C3AED;color:#fff}
+.a4_pass_noise{background:#E2E8F0;color:#94A3B8;border:2px solid #94A3B8}
+.a4_pA{left:22px}
+.a4_pX{left:72px}
+.a4_pB{left:122px}
+.a4_pY{left:172px}
+.a4_pC{left:222px}
+
+/* Pass arrows between nodes */
+.a4_pass_arrow{position:absolute;top:131px;height:2px;background:#CBD5E1;opacity:0}
+.a4_pa1{left:62px;width:10px}
+.a4_pa2{left:112px;width:10px}
+.a4_pa3{left:162px;width:10px}
+.a4_pa4{left:212px;width:10px}
+
+/* Match lines from pass essential nodes up to ref row */
+.a4_match{position:absolute;width:2px;opacity:0;transform-origin:top}
+.a4_match_ok{background:#16A34A}
+.a4_mA{left:41px;top:76px;height:38px}
+.a4_mB{left:141px;top:76px;height:38px}
+.a4_mC{left:241px;top:76px;height:38px}
+
+/* Pass badge */
+.a4_pass_badge{position:absolute;top:118px;left:274px;background:#16A34A;color:#fff;font-size:14px;font-weight:700;padding:5px 12px;border-radius:14px;white-space:nowrap;opacity:0}
+.a4_coverage_pass{position:absolute;top:142px;left:280px;font-size:11px;color:#16A34A;font-weight:600;opacity:0;white-space:nowrap}
+
+/* --- Fail row --- */
+.a4_fail_label{position:absolute;top:178px;left:8px;font-size:11px;font-weight:600;color:#64748B;opacity:0}
+.a4_fail{position:absolute;top:196px;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;opacity:0}
+.a4_fail_essential{background:#7C3AED;color:#fff}
+.a4_fail_noise{background:#E2E8F0;color:#94A3B8;border:2px solid #94A3B8}
+.a4_fA{left:26px}
+.a4_fX{left:76px}
+.a4_fY{left:186px}
+.a4_fC{left:240px}
+
+/* Fail arrows */
+.a4_fail_arrow{position:absolute;top:213px;height:2px;background:#CBD5E1;opacity:0}
+.a4_fa1{left:66px;width:10px}
+.a4_fa2{left:116px;width:70px}
+.a4_fa3{left:226px;width:14px}
+
+/* Green checkmarks below matched fail nodes */
+.a4_check{position:absolute;top:238px;font-size:16px;font-weight:700;color:#16A34A;opacity:0;text-align:center;width:40px}
+.a4_chkA{left:26px}
+.a4_chkC{left:240px}
+
+/* Missing B: dashed circle in the fail row gap + red label */
+.a4_missing_slot{position:absolute;top:196px;left:131px;width:40px;height:40px;border-radius:50%;border:3px dashed #DC2626;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#DC2626;opacity:0;background:rgba(220,38,38,0.06)}
+.a4_missing_tag{position:absolute;top:240px;left:116px;font-size:11px;font-weight:700;color:#DC2626;opacity:0;white-space:nowrap;text-align:center;width:70px}
+
+/* Fail badge */
+.a4_fail_badge{position:absolute;top:196px;left:278px;background:#DC2626;color:#fff;font-size:11px;font-weight:700;padding:5px 8px;border-radius:12px;white-space:nowrap;opacity:0;line-height:1.3;text-align:center}
+.a4_coverage_fail{position:absolute;top:230px;left:282px;font-size:11px;color:#DC2626;font-weight:600;opacity:0;white-space:nowrap}
+
+/* --- Summary badge --- */
+.a4_summary{position:absolute;top:278px;left:50%;transform:translateX(-50%);background:rgba(124,58,237,0.1);border:1px solid #7C3AED;border-radius:16px;padding:8px 16px;font-size:11px;color:#7C3AED;font-weight:600;opacity:0;text-align:center;white-space:nowrap}
+
+/* ---- Keyframes ---- */
+@keyframes a4_pop{0%{opacity:0;transform:scale(0.4)}60%{opacity:1;transform:scale(1.08)}100%{opacity:1;transform:scale(1)}}
+@keyframes a4_fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes a4_slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes a4_dashIn{from{opacity:0;transform:scale(0.6)}to{opacity:1;transform:scale(1)}}
+@keyframes a4_popBadge{0%{opacity:0;transform:scale(0.5)}70%{opacity:1;transform:scale(1.1)}100%{opacity:1;transform:scale(1)}}
+@keyframes a4_growDown{from{opacity:0;transform:scaleY(0)}to{opacity:1;transform:scaleY(1)}}
+
+/* ---- Animation triggers ---- */
+.a4_stage.visible .a4_ref_label{animation:a4_fadeIn .4s .2s both}
+
+.a4_stage.visible .a4_rA{animation:a4_pop .5s .4s both}
+.a4_stage.visible .a4_rB{animation:a4_pop .5s .7s both}
+.a4_stage.visible .a4_rC{animation:a4_pop .5s 1s both}
+
+.a4_stage.visible .a4_ra1{animation:a4_fadeIn .3s .9s both}
+.a4_stage.visible .a4_rah1{animation:a4_fadeIn .3s .9s both}
+.a4_stage.visible .a4_ra2{animation:a4_fadeIn .3s 1.2s both}
+.a4_stage.visible .a4_rah2{animation:a4_fadeIn .3s 1.2s both}
+
+.a4_stage.visible .a4_pass_label{animation:a4_fadeIn .3s 1.5s both}
+
+.a4_stage.visible .a4_pA{animation:a4_pop .4s 1.7s both}
+.a4_stage.visible .a4_pX{animation:a4_pop .4s 2.0s both}
+.a4_stage.visible .a4_pB{animation:a4_pop .4s 2.3s both}
+.a4_stage.visible .a4_pY{animation:a4_pop .4s 2.6s both}
+.a4_stage.visible .a4_pC{animation:a4_pop .4s 2.9s both}
+
+.a4_stage.visible .a4_pa1{animation:a4_fadeIn .2s 2.1s both}
+.a4_stage.visible .a4_pa2{animation:a4_fadeIn .2s 2.4s both}
+.a4_stage.visible .a4_pa3{animation:a4_fadeIn .2s 2.7s both}
+.a4_stage.visible .a4_pa4{animation:a4_fadeIn .2s 3.0s both}
+
+.a4_stage.visible .a4_mA{animation:a4_growDown .4s 3.2s both}
+.a4_stage.visible .a4_mB{animation:a4_growDown .4s 3.5s both}
+.a4_stage.visible .a4_mC{animation:a4_growDown .4s 3.8s both}
+
+.a4_stage.visible .a4_pass_badge{animation:a4_popBadge .4s 4.0s both}
+.a4_stage.visible .a4_coverage_pass{animation:a4_fadeIn .3s 4.2s both}
+
+.a4_stage.visible .a4_fail_label{animation:a4_fadeIn .3s 4.5s both}
+
+.a4_stage.visible .a4_fA{animation:a4_pop .4s 4.7s both}
+.a4_stage.visible .a4_fX{animation:a4_pop .4s 5.0s both}
+.a4_stage.visible .a4_fY{animation:a4_pop .4s 5.2s both}
+.a4_stage.visible .a4_fC{animation:a4_pop .4s 5.4s both}
+
+.a4_stage.visible .a4_fa1{animation:a4_fadeIn .2s 5.1s both}
+.a4_stage.visible .a4_fa2{animation:a4_fadeIn .2s 5.3s both}
+.a4_stage.visible .a4_fa3{animation:a4_fadeIn .2s 5.5s both}
+
+.a4_stage.visible .a4_chkA{animation:a4_popBadge .3s 5.6s both}
+.a4_stage.visible .a4_chkC{animation:a4_popBadge .3s 5.8s both}
+
+.a4_stage.visible .a4_missing_slot{animation:a4_dashIn .4s 6.0s both}
+.a4_stage.visible .a4_missing_tag{animation:a4_fadeIn .3s 6.2s both}
+
+.a4_stage.visible .a4_fail_badge{animation:a4_popBadge .4s 6.4s both}
+.a4_stage.visible .a4_coverage_fail{animation:a4_fadeIn .3s 6.6s both}
+
+.a4_stage.visible .a4_summary{animation:a4_slideUp .5s 6.8s both}
+
+</style>
+
+<meta name="description" content="现代软件测试建立在一个脆弱的假设上：正确的行为是可重复的。对确定性代码来说，这个假设基本成立。但对于 GitHub Copilot Coding Agent 这样的自主 agent，尤其是涉及 Computer Use（操作真实 UI、浏览器、IDE）时，这个假设几乎立刻崩塌。因为 agent 的执行路径天然是多样的——加载画面可能出现也可能不出现，时序会偏">
+<link rel="canonical" href="https://chendi.me/readings/agentic-validation/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">&#8592;</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ Layer 0: 概览 ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+  <!-- S1: Hero — Agent 验证的信任危机 -->
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <p class="reveal" style="font-size:12px;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent);font-weight:600;margin-bottom:16px;">GitHub Blog · 2026.05.06</p>
+      <h2 class="big-statement reveal reveal-delay-1">Agent 明明做对了，<br>测试却说它<span style="color:var(--danger)">失败了</span></h2>
+      <p class="body-text reveal reveal-delay-2">现代软件测试建立在一个脆弱的假设上：正确的行为是可重复的。对确定性代码来说，这个假设基本成立。但对于 GitHub Copilot Coding Agent 这样的自主 agent，尤其是涉及 Computer Use（操作真实 UI、浏览器、IDE）时，这个假设几乎立刻崩塌。因为 agent 的执行路径天然是多样的——加载画面可能出现也可能不出现，时序会偏移，多条不同的操作序列可能通向同一个结果。于是出现了一个荒诞的局面：<span class="hl-danger">agent 成功完成了任务，但 CI pipeline 报告失败</span>——这就是「假阴性」，它会阻断生产线。GitHub 团队提出了一个解决方案：用编译器理论中的 <span class="hl">Dominator Analysis</span> 构建一个独立的「<span class="hl2">Trust Layer</span>」——不再检查 agent 走了哪条路，而是验证它是否到达了所有必须到达的里程碑。</p>
+      <div class="anim-stage reveal reveal-delay-3" id="s1-anim"><div class="s1_stage">
+  <div class="s1_row_top">
+    <div class="s1_agent">
+      <span class="s1_agent_label">Agent</span>
+      <span class="s1_agent_sub">成功</span>
+    </div>
+    <div class="s1_neq">≠</div>
+    <div class="s1_ci">
+      <span class="s1_ci_label">CI 测试</span>
+      <span class="s1_ci_sub">失败</span>
+    </div>
+  </div>
+  <div class="s1_conflict">验证方法 ≠ 执行现实</div>
+  <div class="s1_arrow_down">
+    <div class="s1_arrow_line"></div>
+    <div class="s1_arrow_head"></div>
+  </div>
+  <div class="s1_trust">
+    <span class="s1_trust_label">Trust Layer</span>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>Modern software testing is built on a fragile assumption: correct behavior is repeatable. For deterministic code, that assumption mostly holds. But for autonomous agents like Github Copilot Coding Agent (aka Agent Mode), especially as we explore the frontiers of integrated "Computer Use," that assumption breaks down almost immediately.</p>
+          <p>As agents move beyond simple code suggestions to interacting with real environments like UIs, browsers, and IDEs, correctness becomes multi-path. Loading screens can appear or disappear, timing shifts, and multiple valid action sequences can lead to the same result. Unless our GitHub Actions workflows are robust enough to account for this variability, it's common for an agent to succeed at a task while the test still fails--a "false negative" that halts production.</p>
+          <p>This blog post explores how to move past brittle, step-by-step scripts and toward an independent "Trust Layer" for agentic validation. We will demonstrate a model that focuses on essential outcomes rather than rigid paths, providing a way to validate behavior that is explainable, lightweight, and ready for real-world CI pipelines.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S2: 传统测试全线崩塌 (drill) -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">四种传统测试方法，<br>在 Agent 面前<span style="color:#FCA5A5">全线崩塌</span></h2>
+      <p class="body-text reveal reveal-delay-1">传统测试工具在执行路径固定时运转良好，但当行为开始分支，它们就开始断裂——不是因为工程不好，而是因为它们假定存在一个稳定的序列。断言测试需要为每个检查点手写规则，无法处理有效的替代路径；录制回放对环境噪声极度敏感，渲染差异或时序变化就会触发假失败；视觉回归测试逐帧比较截图，却不理解执行流的语义含义；ML oracle 是黑盒，需要大量训练数据且无法解释判断依据。这四种方法虽然实现不同，但<span class="hl-danger">共享同一个结构性假设：正确性由是否遵循特定的可观测状态序列来定义</span>。对 agent 来说，这个假设本身就是错的。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s2-anim"><div class="s2_stage">
+  <div class="s2_grid">
+    <div class="s2_card">断言测试</div>
+    <div class="s2_card">录制回放</div>
+    <div class="s2_card">视觉回归</div>
+    <div class="s2_card">ML Oracle</div>
+  </div>
+  <div class="s2_label">共同假设：序列 = 正确</div>
+</div></div>
+      <p class="hook-line reveal reveal-delay-3">这四种方法具体怎么失败的？信任鸿沟有多深？</p>
+      <button class="drill-btn reveal reveal-delay-4" onclick="drillDown('layer-testing',this)">深入传统测试 ↓</button>
+    </div>
+  </section>
+
+  <!-- S3: Essential vs Optional -->
+  <section class="feed-section" style="background:var(--bg-act2)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">正确的执行不必<span style="color:var(--accent2)">长得一样</span>，<br>但必须<span style="color:var(--accent)">经过同样的里程碑</span></h2>
+      <p class="body-text reveal reveal-delay-1">要构建 Trust Layer，首先要重新定义「正确」。GitHub 团队把 agent 行为分成三类。<span class="hl">Essential states</span>（必要状态）是成功必须经过的里程碑——比如搜索结果页面必须出现。<span class="hl2">Optional variations</span>（可选变化）是环境导致的偶然状态——比如加载转圈可能出现也可能不出现。<span class="hl">Convergent paths</span>（汇聚路径）是不同的操作序列最终到达同一个结果——比如用快捷键和用菜单打开同一个功能。加载画面可能出现，也可能不出现，但搜索结果<span class="hl-danger">必须</span>出现——只有后者才决定正确性。这个区分来自编译器理论中的 Dominator Analysis：在控制流图中，如果从起点到 B 的每条路径都必须经过 A，那么 A「支配」B。应用到 agent 执行轨迹上，就能自动识别哪些状态是必须的、哪些是可选的、不同路径在哪里汇聚。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s3-anim"><div class="s3_stage">
+  <div class="s3_graph">
+    <svg class="s3_lines" viewBox="0 0 310 370">
+      <!-- Left path: start bottom-left -> loading top (dashed gray) -->
+      <path class="s3_line s3_line_optional" d="M120,95 C90,110 68,125 58,140" />
+      <!-- Left path: loading bottom -> result top-left (dashed gray) -->
+      <path class="s3_line s3_line_to_result" d="M72,238 C90,255 115,265 135,268" />
+      <!-- Right path: start bottom-right -> result top-right (solid green) -->
+      <path class="s3_line s3_line_direct" d="M190,95 C255,145 255,220 190,268" />
+    </svg>
+    <div class="s3_group s3_g_start">
+      <div class="s3_node s3_start">开始</div>
+    </div>
+    <div class="s3_group s3_g_loading">
+      <div class="s3_node s3_optional">加载</div>
+      <div class="s3_anno s3_anno_optional">可选</div>
+    </div>
+    <div class="s3_group s3_g_result">
+      <div class="s3_node s3_essential">结果</div>
+      <div class="s3_anno s3_anno_essential">必须</div>
+    </div>
+  </div>
+  <div class="s3_converge">两条路径汇聚 = 收敛</div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>To move past brittle tests and build the Trust Layer, we have to fundamentally change how we define "correct." In agentic systems, correct executions don't have to look identical. They do need to share a common logical structure.</p>
+          <p>We can classify agent behavior into three categories:</p>
+          <p>Essential states: Milestones that must occur for success to be real, such as reaching the "Search Results" screen.</p>
+          <p>Optional variations: Incidental states such as loading spinners or decorative UI changes that vary based on environment.</p>
+          <p>Convergent paths: Different sequences of steps (like using a hotkey vs. a menu) that ultimately rejoin at the same outcome.</p>
+          <p>A loading screen may appear or not. But search results must appear. Only one of these determines correctness.</p>
+          <p>The distinction between "must-have" and "incidental" behaviors is a concept rooted in compiler theory known as dominator relationships.</p>
+          <p>In a control-flow graph, a node A "dominates" node B if every path from the start to B must go through A.</p>
+          <p>By applying dominator analysis to agent execution traces, we can automatically identify: Which states are mandatory. Which states are optional. Where different paths converge.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S4: 图建模 + Dominator Analysis (drill) -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">不需要千条训练数据，<br><span style="color:#A78BFA">2-10 条成功轨迹</span>就够了</h2>
+      <p class="body-text reveal reveal-delay-1">GitHub 团队开发的验证算法只需要观察 2-10 条成功执行的 session，就能自动构建出一个「ground truth」模型。方法是三步走：第一步把执行轨迹转成 <span class="hl">Prefix Tree Acceptor</span>（前缀树接受器）——一种有向图，节点是可观测状态（如 UI 截图），边是动作（点击、按键、API 调用）。第二步用<span class="hl2">三层等价检测</span>把多条轨迹合并成统一图——先用视觉哈希和 SSIM 快速匹配近似状态，对模糊情况用多模态 LLM 判断语义等价性（忽略时间戳变化但标记缺失的 UI 控件），只在确定等价时才合并。第三步对合并后的图做 <span class="hl">Dominator Analysis</span>，提取出「必须经过的状态」作为验证骨架，自动过滤加载转圈这样的可选状态。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s4-anim"><div class="s4_stage">
+  <div class="s4_flow">
+    <!-- Step 1: Capture -->
+    <div class="s4_box s4_box--capture s4_active">
+      <div class="s4_icon">
+        <svg viewBox="0 0 36 36" fill="none">
+          <polyline points="6,28 12,18 18,22 24,10 30,14" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <circle cx="12" cy="18" r="2.5" fill="#94A3B8"/>
+          <circle cx="18" cy="22" r="2.5" fill="#94A3B8"/>
+          <circle cx="24" cy="10" r="2.5" fill="#94A3B8"/>
+        </svg>
+      </div>
+      <span class="s4_box_label">Capture</span>
+    </div>
+
+    <!-- Arrow 1 -->
+    <div class="s4_arrow s4_arrow--1">
+      <svg viewBox="0 0 24 24" fill="none">
+        <line x1="2" y1="12" x2="18" y2="12" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="14,7 20,12 14,17" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </div>
+
+    <!-- Step 2: Generalize -->
+    <div class="s4_box s4_box--generalize s4_active">
+      <div class="s4_icon">
+        <svg viewBox="0 0 36 36" fill="none">
+          <circle cx="12" cy="14" r="6" stroke="#94A3B8" stroke-width="2" fill="none"/>
+          <circle cx="24" cy="14" r="6" stroke="#94A3B8" stroke-width="2" fill="none"/>
+          <circle cx="18" cy="24" r="6" stroke="#7C3AED" stroke-width="2.5" fill="none"/>
+        </svg>
+      </div>
+      <span class="s4_box_label">Generalize</span>
+    </div>
+
+    <!-- Arrow 2 -->
+    <div class="s4_arrow s4_arrow--2">
+      <svg viewBox="0 0 24 24" fill="none">
+        <line x1="2" y1="12" x2="18" y2="12" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="14,7 20,12 14,17" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </div>
+
+    <!-- Step 3: Extract -->
+    <div class="s4_box s4_box--extract s4_active">
+      <div class="s4_icon">
+        <svg viewBox="0 0 36 36" fill="none">
+          <line x1="18" y1="4" x2="18" y2="18" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="18" y1="18" x2="8" y2="30" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/>
+          <line x1="18" y1="18" x2="28" y2="30" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="18" cy="4" r="3" fill="#7C3AED"/>
+          <circle cx="18" cy="18" r="3" fill="#16A34A"/>
+          <circle cx="8" cy="30" r="2.5" fill="#94A3B8"/>
+          <circle cx="28" cy="30" r="2.5" fill="#94A3B8"/>
+        </svg>
+      </div>
+      <span class="s4_box_label">Extract</span>
+    </div>
+  </div>
+
+  <div class="s4_bottom">
+    <span class="s4_bottom_text">2-10 条轨迹 → Ground Truth</span>
+  </div>
+</div></div>
+      <p class="hook-line reveal reveal-delay-3">三步流程和拓扑子序列匹配的细节是怎样的？</p>
+      <button class="drill-btn reveal reveal-delay-4" onclick="drillDown('layer-method',this)">深入方法论 ↓</button>
+    </div>
+  </section>
+
+  <!-- S5: 实验结果 100% vs 82% -->
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">结构验证 <span style="color:var(--accent2)">100%</span><br>Agent 自评 <span style="color:var(--danger)">82%</span></h2>
+      <p class="body-text reveal reveal-delay-1">在一个真实的 Copilot Agent VS Code 扩展测试集上，GitHub 团队对比了两种方法：让 agent 自己评估自己（CUA Self-Assessment）vs 用 Dominator Tree 做结构验证。结果是碾压级的：<span class="hl">Dominator Tree 在准确率、精确率、召回率和 F1 上全部达到 100%</span>，而 agent 自评只有 82.2% 准确率、60% 召回率、69.8% F1。最关键的差距在于识别「not a bug」场景——当测试失败是因为环境噪声而非真正的产品 bug 时，agent 自评<span class="hl-danger">完全无法识别（0% F1）</span>，而结构验证达到了 52.2% F1。这说明<span class="hl">agent 还不能可靠地给自己的作业打分</span>，必须用独立的外部结构作为「truth source」。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s5-anim"><div class="s5_stage">
+  <div class="s5_title">结构验证 vs Agent自评</div>
+
+  <div class="s5_bars">
+    <div class="s5_bar_col">
+      <div class="s5_bar_val" style="color:#7C3AED">100%</div>
+      <div class="s5_bar_track">
+        <div class="s5_bar_fill s5_bar_fill_struct"></div>
+      </div>
+      <div class="s5_bar_label">结构验证</div>
+    </div>
+    <div class="s5_bar_col">
+      <div class="s5_bar_val" style="color:#DC2626">82%</div>
+      <div class="s5_bar_track">
+        <div class="s5_bar_fill s5_bar_fill_agent"></div>
+      </div>
+      <div class="s5_bar_label">自评</div>
+    </div>
+  </div>
+
+  <table class="s5_table">
+    <tr>
+      <th></th>
+      <th style="color:#7C3AED">结构验证</th>
+      <th style="color:#DC2626">自评</th>
+    </tr>
+    <tr class="s5_tr">
+      <td>Accuracy</td>
+      <td class="s5_val_green">100%</td>
+      <td class="s5_val_red">82.2%</td>
+    </tr>
+    <tr class="s5_tr">
+      <td>Precision</td>
+      <td class="s5_val_green">100%</td>
+      <td class="s5_val_gray">--</td>
+    </tr>
+    <tr class="s5_tr">
+      <td>Recall</td>
+      <td class="s5_val_green">100%</td>
+      <td class="s5_val_red">60%</td>
+    </tr>
+    <tr class="s5_tr">
+      <td>F1</td>
+      <td class="s5_val_green">100%</td>
+      <td class="s5_val_red">69.8%</td>
+    </tr>
+  </table>
+
+  <div class="s5_highlight">
+    <div class="s5_highlight_label">Not a Bug 识别 F1</div>
+    <div class="s5_highlight_nums">
+      <span class="s5_hl_v">52.2%</span> vs <span class="s5_hl_r">0%</span>
+    </div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>In tests designed to differentiate successful executions from those failing due to product bugs or agent errors, the results were definitive:</p>
+          <p>CUA Self-Assessment: Accuracy 82.2%, Precision 83.3%, Recall 60.0%, F1-Score 69.8%</p>
+          <p>PTA (Dominator Tree): Accuracy 100%, Precision 100%, Recall 100%, F1-Score 100%</p>
+          <p>While the agent (CUA) frequently misreported failures as successes, often due to timing out or misinterpreting its own state, the Dominator Tree achieved perfect differentiation by focusing on whether essential milestones were actually reached.</p>
+          <p>The "Self-Verification" Gap: In our evaluation, the agent's internal self-assessment (CUA) was completely unable to identify "Not a Bug" scenarios (0% F1-score). This shows that agents cannot yet reliably grade their own homework in non-deterministic environments.</p>
+          <p>The Structural Advantage: By using state and action equivalence within the dominator model, our independent Trust Layer achieved a 52.2% F1-score in correctly identifying when a failure was an agent execution error rather than a product regression.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S6: 未来与意义 -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">不需要黑盒来审判黑盒，<br>需要开发者能<span style="color:#A78BFA">检查和信任</span>的结构保证</h2>
+      <p class="body-text reveal reveal-delay-1">当前框架还有局限：它「从成功中学习」，需要 2-10 条成功轨迹来构建模型，还不能从失败日志中学习；语义等价检测依赖多模态 LLM，引入了外部 API 依赖和延迟；当前实现验证事件顺序，但还不能标记某个状态持续太久（比如加载转圈超过 5 秒）。未来方向包括：加入时间约束和负面示例学习；把底层截图聚类成高层概念（如「启动序列」），同时整合 DOM 结构、可访问性树和网络流量等非视觉信号；以及实时在线学习——每次验证通过新的成功执行后，<span class="hl">重新计算 dominator 来持续改进对「必要状态」的理解</span>。这套框架的核心主张是：结合经典编译器理论和多模态 AI，<span class="hl2">从少量样本中学到可解释、鲁棒的成功定义</span>，让 agent 从实验 demo 升级为可信赖的生产基础设施。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s6-anim"><div class="s6_stage">
+  <!-- Top: limitations -->
+  <div class="s6_row">
+    <div class="s6_limit_box">需成功<br>轨迹</div>
+    <div class="s6_limit_box">LLM<br>依赖</div>
+    <div class="s6_limit_box">时间<br>盲区</div>
+  </div>
+  <div class="s6_row_label">当前局限</div>
+
+  <!-- Arrows -->
+  <div class="s6_arrows">
+    <div class="s6_arrow"></div>
+    <div class="s6_arrow"></div>
+    <div class="s6_arrow"></div>
+  </div>
+
+  <!-- Bottom: future directions -->
+  <div class="s6_row">
+    <div class="s6_future_box">时间<br>约束</div>
+    <div class="s6_future_box">层次<br>抽象</div>
+    <div class="s6_future_box">在线<br>学习</div>
+  </div>
+  <div class="s6_row_label_future">未来方向</div>
+
+  <!-- Banner -->
+  <div class="s6_banner">编译器理论 + 多模态 AI</div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>We don't need black-box models to judge other black-box models. We need structural guarantees developers can inspect, reason about, and trust.</p>
+          <p>By combining classic compiler theory (i.e., dominator analysis) with multimodal AI, we've demonstrated that it's possible to learn an explainable, robust definition of success from just a handful of examples. This framework for the Trust Layer provides:</p>
+          <p>Efficient learning: Automatic derivation of ground truth from passing examples.</p>
+          <p>Operational robustness: Secure handling of non-deterministic behavior and environmental noise.</p>
+          <p>Total transparency: Explainable results with clear reasoning that developers can act upon.</p>
+          <p>As we move forward, focusing on these practical, explainable paths will be essential to ensuring that the GitHub Copilot Coding Agent is not just powerful, but also a trustworthy component of the developer workflow.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /layer-overview -->
+
+<!-- ═══ Layer 1: 传统测试详解 ═══ -->
+<div class="layer" id="layer-testing" data-depth="1">
+
+  <!-- A1: 四种方法的结构性缺陷 -->
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">四种测试范式，<br>同一个<span style="color:var(--danger)">致命假设</span></h2>
+      <p class="body-text reveal reveal-delay-1"><span class="hl">断言测试</span>（Assertion-based）需要为每个检查点手工编写规则，工作量巨大，而且无法覆盖有效的替代执行路径。<span class="hl">录制回放</span>（Record-and-replay）把一次成功执行录下来作为标准，但对环境噪声极度敏感——渲染差异、时序波动都会触发假失败。<span class="hl">视觉回归</span>（Visual regression）逐帧比较截图，但它是孤立的像素比对，不理解执行流的语义——它能看出两张图不同，却不知道这个不同是否重要。<span class="hl">ML Oracle</span> 用机器学习模型做「黑盒裁判」，但需要成千上万的训练样本，而且当它判定一个行为不正确时，<span class="hl-danger">无法解释为什么</span>。这四种方法的共同结构性缺陷是：它们都假定正确性等于遵循一个特定的可观测状态序列。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a1-anim"><div class="a1_stage">
+  <div class="a1_grid">
+    <div class="a1_card">
+      <div class="a1_card_title">断言测试</div>
+      <div class="a1_card_desc">手写规则多<br>无法覆盖替代路径</div>
+      <div class="a1_strike"></div>
+    </div>
+    <div class="a1_card">
+      <div class="a1_card_title">录制回放</div>
+      <div class="a1_card_desc">对环境噪声敏感</div>
+      <div class="a1_strike"></div>
+    </div>
+    <div class="a1_card">
+      <div class="a1_card_title">视觉回归</div>
+      <div class="a1_card_desc">像素比对不懂语义</div>
+      <div class="a1_strike"></div>
+    </div>
+    <div class="a1_card">
+      <div class="a1_card_title">ML Oracle</div>
+      <div class="a1_card_desc">黑盒不可解释</div>
+      <div class="a1_strike"></div>
+    </div>
+  </div>
+  <div class="a1_assumption">
+    <div class="a1_assumption_inner">共同假设：正确性 = 遵循特定状态序列</div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>Traditional testing tools work well when execution paths are fixed. They struggle when behavior branches--the tools begin to fracture, not because they're poorly engineered, but because they assume a stable sequence.</p>
+          <p>Assertion-based testing: Requires manual, labor-intensive specifications for every check and fails to account for valid alternative execution paths.</p>
+          <p>Record-and-replay tools: Highly sensitive to environmental noise; minor rendering differences or timing variations often trigger false failures.</p>
+          <p>Visual regression testing: Compares screenshots in isolation without understanding the broader execution flow or semantic meaning.</p>
+          <p>ML oracles: These "black boxes" require thousands of training examples and offer no explainability when they flag a behavior as incorrect.</p>
+          <p>While these approaches differ in implementation, they share a common structural assumption: Correctness is defined by adherence to a particular sequence of observable states.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- A2: 信任鸿沟的三个症状 -->
+  <section class="feed-section" style="background:var(--bg-act2)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">信任鸿沟的<span style="color:var(--accent2)">三个症状</span></h2>
+      <p class="body-text reveal reveal-delay-1">在 agent 验证中反复出现三个痛点，共同构成了「信任鸿沟」。第一个是<span class="hl-danger">假阴性</span>——任务成功了，但测试运行器无法容忍执行路径的变化，于是报告失败。第二个是<span class="hl-danger">脆弱基础设施</span>——测试因为时序、渲染或环境噪声而失败，这些失败与正确性完全无关。第三个是<span class="hl-danger">合规陷阱</span>——结果可能是正确的，但因为 agent 的行为偏离了自动化测试的预期路径，一个回归就被误报。文章举了一个生动的例子：周二 CI 是绿的，周三测试挂了——代码没有任何变化。原因是 runner 上的轻微网络延迟导致加载画面多停了几秒。Agent 等待、适应并正确完成了任务，但 pipeline 还是报红——<span class="hl">不是因为任务失败了，而是因为执行路径不再匹配录制的脚本</span>。Agent 没有失败，验证才是失败的那个。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a2-anim"><div class="a2_stage">
+  <div class="a2_title">代码没变，红灯亮了</div>
+  <div class="a2_timeline"></div>
+
+  <div class="a2_node a2_n1">
+    <div class="a2_circle a2_green">通过</div>
+    <div class="a2_label">周二<span>CI 全绿，合入主干</span></div>
+  </div>
+
+  <div class="a2_node a2_n2">
+    <div class="a2_circle a2_red">失败</div>
+    <div class="a2_label">周三<span>同样代码，CI 报红</span></div>
+  </div>
+
+  <div class="a2_node a2_n3">
+    <div class="a2_box a2_gray">网络延迟 → 加载 +3s</div>
+    <div class="a2_label">原因<span>Agent 等待并正确完成</span></div>
+  </div>
+
+  <div class="a2_node a2_n4">
+    <div class="a2_box a2_violet">Agent 没失败<br/>验证失败了</div>
+    <div class="a2_label">结论<span>假阴性 · 脆弱基础设施</span></div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>This surfaces three recurring pain points that create a "trust gap" in agent-driven testing:</p>
+          <p>False negatives: The task succeeded, but the test runner could not tolerate variation.</p>
+          <p>Fragile infrastructure: Tests fail due to timing, rendering, or environmental noise unrelated to correctness.</p>
+          <p>The compliance trap: The outcome may be correct, but a regression is flagged because the agent's behavior diverges from what the automated test expected.</p>
+          <p>On Tuesday, the build is green. On Wednesday, the test fails--even though no code has changed. Here's what happened: A minor network lag on the hosted runner caused a loading screen to persist for a few extra seconds. The agent waited, adapted, and successfully completed the tasks correctly. But your CI pipeline still flagged the run as a failure--not because the task failed, but because the execution path no longer matched the recorded script or assertion timing.</p>
+          <p>The agent didn't fail. The validation did.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /layer-testing -->
+
+<!-- ═══ Layer 1: 方法论详解 ═══ -->
+<div class="layer" id="layer-method" data-depth="1">
+
+  <!-- A3: 三步构建 Master Graph -->
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">三步炼出<span style="color:var(--accent)">验证骨架</span></h2>
+      <p class="body-text reveal reveal-delay-1">整个算法分三步。<span class="hl">第一步 Capture</span>：收集 2-10 条成功执行的轨迹，把每条转成 PTA（前缀树接受器）——一种有向图，节点是可观测的 UI 状态，边是动作。<span class="hl2">第二步 Generalize</span>：用三层等价检测框架把多条轨迹合并成统一图。第一层用感知哈希和 SSIM 做快速视觉匹配；第二层对模糊情况用多模态 LLM 判断语义等价（忽略时间戳但标记缺失控件）；第三层是保守合并——只在模型确信等价时才合并节点，让图在执行路径真正分叉处自然分支。<span class="hl">第三步 Extract</span>：对合并后的图做 Dominator Analysis，识别出「必须经过的状态」（dominator 节点），自动过滤掉加载转圈这样的可选状态。最终产出一棵 dominator subtree，作为验证的 ground truth。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a3-anim"><div class="a3_stage">
+  <!-- Step 1: Capture -->
+  <div class="a3_step">
+    <div class="a3_num">1</div>
+    <div class="a3_visual">
+      <div class="a3_label">Capture -- 收集轨迹</div>
+      <div class="a3_traces">
+        <div class="a3_trace">
+          <div class="a3_dot"></div>
+          <div class="a3_line"></div>
+          <div class="a3_dot" style="background:#7C3AED"></div>
+          <div class="a3_line"></div>
+          <div class="a3_dot_end"></div>
+        </div>
+        <div class="a3_trace">
+          <div class="a3_dot"></div>
+          <div class="a3_line"></div>
+          <div class="a3_dot_end"></div>
+          <div class="a3_line"></div>
+          <div class="a3_dot" style="background:#7C3AED"></div>
+          <div class="a3_line"></div>
+          <div class="a3_dot_end"></div>
+        </div>
+        <div class="a3_trace">
+          <div class="a3_dot"></div>
+          <div class="a3_line"></div>
+          <div class="a3_dot_end"></div>
+          <div class="a3_line"></div>
+          <div class="a3_dot_end"></div>
+        </div>
+      </div>
+      <div class="a3_arrow_down a3_s1_arrow"><span class="a3_arrow_sym">▼</span></div>
+      <div style="text-align:center"><div class="a3_box a3_pta_box">PTA 有向图</div></div>
+    </div>
+  </div>
+
+  <!-- Step 2: Generalize -->
+  <div class="a3_step">
+    <div class="a3_num">2</div>
+    <div class="a3_visual">
+      <div class="a3_label">Generalize -- 等价合并</div>
+      <div class="a3_sub_labels">
+        <span class="a3_sub_label">视觉哈希</span>
+        <span class="a3_sub_label">LLM语义</span>
+        <span class="a3_sub_label">保守合并</span>
+      </div>
+      <div class="a3_merge_row">
+        <div class="a3_small_box">PTA-1</div>
+        <span class="a3_merge_sym">+</span>
+        <div class="a3_small_box">PTA-2</div>
+        <span class="a3_merge_sym">+</span>
+        <div class="a3_small_box">PTA-3</div>
+      </div>
+      <div class="a3_arrow_down a3_s2_arrow"><span class="a3_arrow_sym">▼</span></div>
+      <div style="text-align:center"><div class="a3_unified_box">统一图</div></div>
+    </div>
+  </div>
+
+  <!-- Step 3: Extract -->
+  <div class="a3_step">
+    <div class="a3_num">3</div>
+    <div class="a3_visual">
+      <div class="a3_label">Extract -- 骨架提取</div>
+      <div class="a3_graph">
+        <div class="a3_node a3_node_core a3_graph_item">登录</div>
+        <div class="a3_edge a3_graph_item"></div>
+        <div class="a3_node a3_node_opt a3_graph_item">弹窗</div>
+        <div class="a3_edge a3_graph_item"></div>
+        <div class="a3_node a3_node_core a3_graph_item">首页</div>
+        <div class="a3_edge a3_graph_item"></div>
+        <div class="a3_node a3_node_opt a3_graph_item">筛选</div>
+        <div class="a3_edge a3_graph_item"></div>
+        <div class="a3_node a3_node_core a3_graph_item">结果</div>
+      </div>
+      <div class="a3_skeleton_label">
+        <div class="a3_skeleton_inner">Dominator 骨架</div>
+      </div>
+    </div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>Capture (PTA Construction): We collected 2-10 successful execution traces and converted them into Prefix Tree Acceptors (PTAs), directed graphs where nodes represent observable UI states and edges represent actions.</p>
+          <p>Generalize (Semantic Merging): Our algorithm merged these traces into a unified graph. It employed a three-tiered equivalence detection framework--combining fast visual metrics with LLM semantic analysis--to decide if two states are logically equivalent, such as ignoring a timestamp change while flagging a missing UI control.</p>
+          <p>Extract the Skeleton (Dominator Analysis): We applied dominator analysis to the merged graph to identify "essential states," milestones every successful run must pass through--while automatically filtering out "optional" states like loading spinners.</p>
+          <p>This approach is uniquely powerful for developers because it requires no manual specification and no large-scale model training. Because the resulting model is a graph of actual execution states, the decisions are entirely explainable.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- A4: 拓扑子序列匹配 -->
+  <section class="feed-section" style="background:var(--bg-act2)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">验证 = <span style="color:var(--accent2)">拓扑子序列匹配</span><br>不要求完美，只要求<span style="color:var(--accent)">里程碑到位</span></h2>
+      <p class="body-text reveal reveal-delay-1">有了 dominator tree 作为 ground truth，验证新执行就变成了结构比较而非完美匹配。当新的执行轨迹到来时，算法提取它的状态序列，然后对照 dominator tree 做<span class="hl2">拓扑子序列匹配</span>。逻辑很简单：不要求新轨迹和参考完全相同，只要求 essential states 以正确的相对顺序出现。如果参考序列是 A-B-C，agent 实际走了 A-X-B-Y-C，测试照样通过——因为额外的 X 和 Y 被视为偶然噪声。<span class="hl-danger">只有当某个 essential state 被跳过，或者出现顺序错误时，才触发失败。</span>框架还输出覆盖率指标（匹配的 essential states / 参考模型的总 states），以及精确的失败原因——比如「Failed: State Search Results never reached after Search Dialog」。这让验证从黑盒变成了开发者能实际用来调试的诊断工具。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a4-anim"><div class="a4_stage">
+  <!-- Reference sequence -->
+  <div class="a4_ref_label">参考序列</div>
+  <div class="a4_ref a4_rA">A</div>
+  <div class="a4_ref_arrow a4_ra1"></div>
+  <div class="a4_ref_arrowhead a4_rah1"></div>
+  <div class="a4_ref a4_rB">B</div>
+  <div class="a4_ref_arrow a4_ra2"></div>
+  <div class="a4_ref_arrowhead a4_rah2"></div>
+  <div class="a4_ref a4_rC">C</div>
+
+  <!-- Pass case -->
+  <div class="a4_pass_label">通过案例</div>
+  <div class="a4_pass a4_pass_essential a4_pA">A</div>
+  <div class="a4_pass_arrow a4_pa1"></div>
+  <div class="a4_pass a4_pass_noise a4_pX">X</div>
+  <div class="a4_pass_arrow a4_pa2"></div>
+  <div class="a4_pass a4_pass_essential a4_pB">B</div>
+  <div class="a4_pass_arrow a4_pa3"></div>
+  <div class="a4_pass a4_pass_noise a4_pY">Y</div>
+  <div class="a4_pass_arrow a4_pa4"></div>
+  <div class="a4_pass a4_pass_essential a4_pC">C</div>
+
+  <!-- Match lines (pass) -->
+  <div class="a4_match a4_match_ok a4_mA"></div>
+  <div class="a4_match a4_match_ok a4_mB"></div>
+  <div class="a4_match a4_match_ok a4_mC"></div>
+
+  <!-- Pass badge -->
+  <div class="a4_pass_badge">PASS</div>
+  <div class="a4_coverage_pass">3/3</div>
+
+  <!-- Fail case -->
+  <div class="a4_fail_label">失败案例</div>
+  <div class="a4_fail a4_fail_essential a4_fA">A</div>
+  <div class="a4_fail_arrow a4_fa1"></div>
+  <div class="a4_fail a4_fail_noise a4_fX">X</div>
+  <div class="a4_fail_arrow a4_fa2"></div>
+  <div class="a4_fail a4_fail_noise a4_fY">Y</div>
+  <div class="a4_fail_arrow a4_fa3"></div>
+  <div class="a4_fail a4_fail_essential a4_fC">C</div>
+
+  <!-- Checkmarks under matched nodes -->
+  <div class="a4_check a4_chkA">&#10003;</div>
+  <div class="a4_check a4_chkC">&#10003;</div>
+
+  <!-- Missing B slot -->
+  <div class="a4_missing_slot">B</div>
+  <div class="a4_missing_tag">B 缺失</div>
+
+  <!-- Fail badge -->
+  <div class="a4_fail_badge">FAIL</div>
+  <div class="a4_coverage_fail">2/3</div>
+
+  <!-- Summary -->
+  <div class="a4_summary">覆盖率 = matched / total</div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>When a new execution trace arrives, our validation algorithm extracts its sequence of states and checks it against the dominator tree using topological subsequence matching.</p>
+          <p>The logic: We don't require the new trace to be identical to the reference; we only require that the essential states appear in the correct relative order.</p>
+          <p>Handling extras: If the reference sequence is A - B - C and the agent produces A - X - B - Y - C, the test still passes because the extra states (X, Y) are treated as incidental noise.</p>
+          <p>Detecting failure: A failure is triggered only if an essential state is skipped or if the states appear out of the required logical order.</p>
+          <p>Coverage: Calculated as the percentage of matched essential states relative to the total number of states in the reference model.</p>
+          <p>Failure reasoning: If a trace fails, our algorithm identifies exactly which state was missing (e.g., "Failed: State 'Search Results' never reached after 'Search Dialog'").</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /layer-method -->
+
+<script>
+var layerStack=['layer-overview'];
+var transitioning=false;
+var layerNames={'layer-overview':'概览','layer-testing':'传统测试','layer-method':'方法论'};
+var observers=new Map();
+
+function setupObserver(layerId){
+  if(observers.has(layerId))return;
+  var layer=document.getElementById(layerId);
+  var reveals=layer.querySelectorAll('.reveal, [class*="_stage"]');
+  var obs=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});
+  },{threshold:0.15,root:layer});
+  reveals.forEach(function(el){obs.observe(el);});
+  observers.set(layerId,obs);
+}
+
+function resetReveals(layerId){
+  var layer=document.getElementById(layerId);
+  layer.querySelectorAll('.reveal').forEach(function(el){el.classList.remove('visible');});
+  layer.querySelectorAll('[class*="_stage"]').forEach(function(el){el.classList.remove('visible');});
+}
+
+function activateReveals(layerId){
+  resetReveals(layerId);
+  if(observers.has(layerId)){observers.get(layerId).disconnect();observers.delete(layerId);}
+  requestAnimationFrame(function(){setupObserver(layerId);});
+}
+
+function updateBreadcrumb(){
+  var bc=document.getElementById('breadcrumb');
+  bc.innerHTML='';
+  layerStack.forEach(function(id,i){
+    if(i>0){var sep=document.createElement('span');sep.className='sep';sep.textContent='>';bc.appendChild(sep);}
+    var span=document.createElement('span');
+    span.textContent=layerNames[id]||id;
+    if(i===layerStack.length-1){span.className='current';}
+    else{span.addEventListener('click',function(){goBackTo(i);});}
+    bc.appendChild(span);
+  });
+  var backBtn=document.getElementById('backBtn');
+  backBtn.style.display=layerStack.length>1?'flex':'none';
+  bc.style.left=layerStack.length>1?'60px':'16px';
+  var dots=document.getElementById('depthDots');
+  var depth=layerStack.length-1;
+  dots.querySelectorAll('.dot').forEach(function(d,i){d.classList.toggle('active',i===depth);});
+}
+
+function drillDown(targetId,btnEl){
+  if(transitioning)return;
+  transitioning=true;
+  var currentId=layerStack[layerStack.length-1];
+  var currentLayer=document.getElementById(currentId);
+  var targetLayer=document.getElementById(targetId);
+  targetLayer.scrollTop=0;
+  resetReveals(targetId);
+  targetLayer.style.visibility='visible';
+  var duration=600;
+  currentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  currentLayer.style.transformOrigin='center center';
+  currentLayer.style.transform='scale(1.3)';
+  currentLayer.style.opacity='0';
+  targetLayer.classList.add('active');
+  targetLayer.style.opacity='0';
+  targetLayer.style.transform='scale(0.85)';
+  targetLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  requestAnimationFrame(function(){requestAnimationFrame(function(){
+    targetLayer.style.opacity='1';targetLayer.style.transform='scale(1)';
+  });});
+  setTimeout(function(){
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';
+    targetLayer.style.transition='';targetLayer.style.transform='';
+    activateReveals(targetId);
+    transitioning=false;
+  },duration+50);
+  layerStack.push(targetId);
+  updateBreadcrumb();
+}
+
+function goBack(){
+  if(layerStack.length<=1||transitioning)return;
+  transitioning=true;
+  var currentId=layerStack.pop();
+  var parentId=layerStack[layerStack.length-1];
+  var currentLayer=document.getElementById(currentId);
+  var parentLayer=document.getElementById(parentId);
+  var duration=600;
+  currentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  currentLayer.style.transform='scale(0.85)';
+  currentLayer.style.opacity='0';
+  parentLayer.classList.add('active');
+  parentLayer.style.transform='scale(1.3)';
+  parentLayer.style.opacity='0';
+  parentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  requestAnimationFrame(function(){requestAnimationFrame(function(){
+    parentLayer.style.transform='scale(1)';parentLayer.style.opacity='1';
+  });});
+  setTimeout(function(){
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition='';currentLayer.style.transform='';
+    currentLayer.style.opacity='';currentLayer.style.visibility='';
+    parentLayer.style.transition='';parentLayer.style.transform='';
+    transitioning=false;
+  },duration+50);
+  updateBreadcrumb();
+}
+
+function goBackTo(targetIndex){
+  if(transitioning)return;
+  while(layerStack.length-1>targetIndex){
+    if(layerStack.length<=1)break;
+    goBack();return;
+  }
+}
+
+function toggleSource(btn){btn.classList.toggle('open');btn.nextElementSibling.classList.toggle('open');}
+
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+</body>
+</html>

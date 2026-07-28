@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>cuTile：把 CUDA 思维从 thread 提到 tile</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-act1: #F7F4EE;
+  --bg-act2: #EAF4F1;
+  --bg-act3: #F3F0FA;
+  --bg-close: #101820;
+  --bg-dark: #101820;
+  --text: #1D252C;
+  --text-muted: #63707A;
+  --dim: #A8B0B7;
+  --accent: #087E8B;
+  --accent2: #D97706;
+  --warm: #F3B562;
+  --danger: #C2410C;
+  --green: #15803D;
+  --card-bg: #FFFFFF;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-act1);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Noto Sans SC", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button { font-family: inherit; }
+a { color: inherit; }
+
+.content-width { max-width: 640px; margin: 0 auto; padding: 0 28px; }
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.15s; }
+.reveal-delay-2 { transition-delay: 0.3s; }
+.reveal-delay-3 { transition-delay: 0.45s; }
+.reveal-delay-4 { transition-delay: 0.6s; }
+
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+.kicker::before {
+  content: "";
+  width: 22px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 999px;
+}
+.big-statement {
+  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-size: clamp(25px, 5.5vw, 38px);
+  font-weight: 800;
+  line-height: 1.45;
+  margin-bottom: 28px;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.body-text {
+  font-size: 16px;
+  line-height: 1.95;
+  color: var(--text);
+  margin-bottom: 28px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.body-text .hl { color: var(--accent); font-weight: 700; }
+.body-text .hl-warm { color: var(--accent2); font-weight: 700; }
+.body-text .hl-danger { color: var(--danger); font-weight: 700; }
+.body-text code {
+  font-size: 0.9em;
+  background: rgba(8,126,139,0.08);
+  color: var(--accent);
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+
+.layer {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  visibility: hidden;
+  opacity: 0;
+  will-change: transform, opacity;
+  scroll-snap-type: y proximity;
+}
+.layer.active { visibility: visible; opacity: 1; }
+.layer.transitioning {
+  transition-property: transform, opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.feed-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 84px 24px;
+  scroll-snap-align: start;
+  background: var(--bg-act1);
+}
+.feed-section.act2 { background: var(--bg-act2); }
+.feed-section.act3 { background: var(--bg-act3); }
+.feed-section.dark { background: var(--bg-dark); color: #F8FAFC; }
+.feed-section.dark .body-text { color: #B7C1CB; }
+.feed-section.dark .big-statement { color: #F8FAFC; }
+.feed-section.dark .kicker { color: #5EEAD4; }
+.feed-section.dark code { background: rgba(94,234,212,0.12); color: #5EEAD4; }
+.section-inner { max-width: 640px; width: 100%; }
+
+.breadcrumb {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(12px);
+  padding: 8px 14px;
+  border-radius: 10px;
+  box-shadow: 0 2px 16px rgba(16,24,32,0.1);
+  font-size: 13px;
+  font-weight: 600;
+}
+.breadcrumb span { color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
+.breadcrumb span:hover { color: var(--accent); }
+.breadcrumb span.current { color: var(--text); cursor: default; }
+.breadcrumb .sep { color: #CBD5E1; margin: 0 2px; cursor: default; }
+
+.back-btn {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 1001;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 2px 12px rgba(16,24,32,0.12);
+  font-size: 18px;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  transition: all 0.2s;
+}
+.back-btn:hover { background: var(--accent); color: #fff; }
+
+.depth-dots {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  gap: 8px;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(8px);
+  padding: 8px 14px;
+  border-radius: 20px;
+  box-shadow: 0 2px 12px rgba(16,24,32,0.12);
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #CBD5E1; transition: all 0.3s; }
+.dot.active { background: var(--accent); box-shadow: 0 0 8px rgba(8,126,139,0.45); transform: scale(1.2); }
+
+.drill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border: 1.5px solid rgba(8,126,139,0.35);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.drill-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(8,126,139,0.28);
+}
+.dark .drill-btn { color: #5EEAD4; border-color: rgba(94,234,212,0.45); }
+.dark .drill-btn:hover { background: #5EEAD4; color: #06252A; border-color: #5EEAD4; }
+
+.source-panel {
+  margin-top: 24px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(8,126,139,0.16);
+  background: rgba(255,255,255,0.44);
+}
+.dark .source-panel { border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); }
+.source-toggle {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.dark .source-toggle { color: #5EEAD4; }
+.source-toggle:hover { background: rgba(8,126,139,0.07); }
+.source-toggle .arrow { transition: transform 0.3s; font-size: 11px; }
+.source-toggle.open .arrow { transform: rotate(90deg); }
+.source-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+  padding: 0 16px;
+}
+.source-body.open { max-height: 2000px; padding: 0 16px 16px; overflow-y: auto; }
+.source-body p { font-size: 13px; line-height: 1.8; color: var(--text-muted); margin: 0 0 10px; white-space: pre-wrap; }
+.dark .source-body p { color: #AAB6C2; }
+.source-body .source-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  margin-bottom: 8px;
+  display: block;
+}
+.dark .source-body .source-label { color: #5EEAD4; }
+
+.anim-stage {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin: 30px 0;
+  min-height: 220px;
+}
+.anim-stage > div { width: 100%; }
+
+/* Visual primitives */
+.visual-frame {
+  position: relative;
+  min-height: 240px;
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+}
+.node {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background: #fff;
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 800;
+  transform: scale(0);
+  opacity: 0;
+}
+.dark .node { background: #162531; }
+.label {
+  position: absolute;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.45;
+  opacity: 0;
+  transform: translateY(10px);
+  text-align: center;
+}
+.dark .label { color: #AAB6C2; }
+.line {
+  position: absolute;
+  background: var(--accent);
+  border-radius: 2px;
+  transform-origin: left center;
+  opacity: 0;
+}
+.v-line {
+  position: absolute;
+  width: 2px;
+  height: 0;
+  background: var(--accent);
+  border-radius: 2px;
+}
+.arrow-head {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 9px solid var(--accent);
+  opacity: 0;
+}
+.tile-grid {
+  position: absolute;
+  display: grid;
+  gap: 4px;
+  opacity: 0;
+}
+.cell {
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid rgba(8,126,139,0.35);
+  background: rgba(255,255,255,0.75);
+  border-radius: 4px;
+}
+.cell.active { background: var(--warm); border-color: var(--accent2); }
+.dark .cell { background: rgba(255,255,255,0.08); }
+.pill {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 78px;
+  height: 38px;
+  padding: 0 14px;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  background: rgba(255,255,255,0.8);
+  border-radius: 19px;
+  font-size: 13px;
+  font-weight: 800;
+  opacity: 0;
+  transform: scale(0);
+}
+.dark .pill { background: rgba(255,255,255,0.06); }
+.tiny-note {
+  position: absolute;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  opacity: 0;
+}
+.dark .tiny-note { color: #AAB6C2; }
+
+/* S1 */
+.thought-shift .node.thread { left: 42px; top: 80px; }
+.thought-shift .node.tile { right: 42px; top: 80px; border-color: var(--accent2); color: var(--accent2); }
+.thought-shift .line.bridge { left: 130px; right: 130px; top: 113px; height: 3px; transform: scaleX(0); }
+.thought-shift .label.left { left: 8px; top: 158px; width: 134px; }
+.thought-shift .label.right { right: 8px; top: 158px; width: 134px; }
+.thought-shift.visible .thread { animation: scaleIn 0.42s 0.25s forwards; }
+.thought-shift.visible .bridge { animation: stretchX 0.36s 0.85s forwards; }
+.thought-shift.visible .tile { animation: scaleIn 0.42s 1.3s forwards; }
+.thought-shift.visible .left { animation: fadeSlideUp 0.42s 1.75s forwards; }
+.thought-shift.visible .right { animation: fadeSlideUp 0.42s 2.15s forwards; }
+
+/* S2 */
+.kernel-flow .pill.load { left: 8%; top: 78px; }
+.kernel-flow .pill.compute { left: 50%; top: 78px; transform: translateX(-50%) scale(0); }
+.kernel-flow .pill.store { right: 8%; top: 78px; }
+.kernel-flow .line.lc { left: 27%; top: 96px; width: 18%; height: 3px; transform: scaleX(0); }
+.kernel-flow .line.cs { left: 55%; top: 96px; width: 18%; height: 3px; transform: scaleX(0); }
+.kernel-flow .tile-grid.in { left: 10%; top: 150px; grid-template-columns: repeat(4, 28px); }
+.kernel-flow .tile-grid.out { right: 10%; top: 150px; grid-template-columns: repeat(4, 28px); }
+.kernel-flow .tiny-note { left: 33%; right: 33%; top: 152px; text-align: center; }
+.kernel-flow.visible .load { animation: scaleIn 0.36s 0.25s forwards; }
+.kernel-flow.visible .lc { animation: stretchX 0.28s 0.75s forwards; }
+.kernel-flow.visible .compute { animation: scaleInCentered 0.36s 1.12s forwards; }
+.kernel-flow.visible .cs { animation: stretchX 0.28s 1.55s forwards; }
+.kernel-flow.visible .store { animation: scaleIn 0.36s 1.9s forwards; }
+.kernel-flow.visible .in { animation: fadeIn 0.35s 2.35s forwards; }
+.kernel-flow.visible .tiny-note { animation: fadeSlideUp 0.35s 2.8s forwards; }
+.kernel-flow.visible .out { animation: fadeIn 0.35s 3.2s forwards; }
+
+/* S3 */
+.hardware-map .node.code { left: 50%; margin-left: -33px; top: 14px; }
+.hardware-map .v-line.one { left: 50%; top: 80px; }
+.hardware-map .node.ir { left: 50%; margin-left: -33px; top: 120px; border-color: var(--accent2); color: var(--accent2); }
+.hardware-map .v-line.two { left: 50%; top: 186px; }
+.hardware-map .pill.tc { left: 14%; top: 220px; }
+.hardware-map .pill.tma { right: 14%; top: 220px; border-color: var(--green); color: var(--green); }
+.hardware-map.visible .code { animation: scaleIn 0.38s 0.2s forwards; }
+.hardware-map.visible .one { animation: drawDown 0.32s 0.72s forwards; --target-h: 40px; }
+.hardware-map.visible .ir { animation: scaleIn 0.38s 1.15s forwards; }
+.hardware-map.visible .two { animation: drawDown 0.32s 1.62s forwards; --target-h: 34px; }
+.hardware-map.visible .tc { animation: scaleIn 0.38s 2.05s forwards; }
+.hardware-map.visible .tma { animation: scaleIn 0.38s 2.48s forwards; }
+
+/* S4 */
+.mma-visual .tile-grid.a { left: 9%; top: 44px; grid-template-columns: repeat(3, 28px); }
+.mma-visual .tile-grid.b { right: 9%; top: 44px; grid-template-columns: repeat(3, 28px); }
+.mma-visual .pill.mma { left: 50%; top: 94px; transform: translateX(-50%) scale(0); }
+.mma-visual .tile-grid.c { left: 50%; margin-left: -44px; top: 170px; grid-template-columns: repeat(3, 28px); }
+.mma-visual .v-line.down { left: 50%; top: 136px; }
+.mma-visual .label.a-label { left: 8%; top: 18px; width: 100px; }
+.mma-visual .label.b-label { right: 8%; top: 18px; width: 100px; }
+.mma-visual.visible .a-label { animation: fadeSlideUp 0.3s 0.15s forwards; }
+.mma-visual.visible .a { animation: fadeIn 0.35s 0.5s forwards; }
+.mma-visual.visible .b-label { animation: fadeSlideUp 0.3s 0.9s forwards; }
+.mma-visual.visible .b { animation: fadeIn 0.35s 1.25s forwards; }
+.mma-visual.visible .mma { animation: scaleInCentered 0.36s 1.78s forwards; }
+.mma-visual.visible .down { animation: drawDown 0.3s 2.25s forwards; --target-h: 34px; }
+.mma-visual.visible .c { animation: fadeIn 0.35s 2.65s forwards; }
+
+/* S5 */
+.ecosystem .node.cuda { left: 14px; top: 76px; }
+.ecosystem .node.triton { right: 14px; top: 76px; border-color: var(--accent2); color: var(--accent2); }
+.ecosystem .node.cutile { left: 50%; top: 76px; margin-left: -33px; border-color: var(--green); color: var(--green); }
+.ecosystem .label.cuda-l { left: 0; top: 150px; width: 100px; }
+.ecosystem .label.cutile-l { left: 50%; top: 150px; width: 122px; margin-left: -61px; }
+.ecosystem .label.triton-l { right: 0; top: 150px; width: 100px; }
+.ecosystem.visible .cuda { animation: scaleIn 0.35s 0.2s forwards; }
+.ecosystem.visible .cutile { animation: scaleIn 0.35s 0.7s forwards; }
+.ecosystem.visible .triton { animation: scaleIn 0.35s 1.2s forwards; }
+.ecosystem.visible .cuda-l { animation: fadeSlideUp 0.35s 1.65s forwards; }
+.ecosystem.visible .cutile-l { animation: fadeSlideUp 0.35s 2.05s forwards; }
+.ecosystem.visible .triton-l { animation: fadeSlideUp 0.35s 2.45s forwards; }
+
+/* S6 */
+.readiness .pill.p1 { left: 50%; top: 22px; transform: translateX(-50%) scale(0); }
+.readiness .pill.p2 { left: 50%; top: 82px; transform: translateX(-50%) scale(0); border-color: var(--accent2); color: var(--accent2); }
+.readiness .pill.p3 { left: 50%; top: 142px; transform: translateX(-50%) scale(0); border-color: var(--green); color: var(--green); }
+.readiness .pill.p4 { left: 50%; top: 202px; transform: translateX(-50%) scale(0); border-color: var(--danger); color: var(--danger); }
+.readiness.visible .p1 { animation: scaleInCentered 0.34s 0.2s forwards; }
+.readiness.visible .p2 { animation: scaleInCentered 0.34s 0.72s forwards; }
+.readiness.visible .p3 { animation: scaleInCentered 0.34s 1.24s forwards; }
+.readiness.visible .p4 { animation: scaleInCentered 0.34s 1.76s forwards; }
+
+/* S7 */
+.learning-path .node.n1 { left: 12%; top: 26px; }
+.learning-path .node.n2 { left: 50%; top: 88px; margin-left: -33px; border-color: var(--accent2); color: var(--accent2); }
+.learning-path .node.n3 { right: 12%; top: 150px; border-color: var(--green); color: var(--green); }
+.learning-path .v-line.v1 { left: 27%; top: 90px; transform: rotate(-38deg); transform-origin: top center; }
+.learning-path .v-line.v2 { right: 27%; top: 150px; transform: rotate(-38deg); transform-origin: top center; }
+.learning-path .label.l1 { left: 2%; top: 100px; width: 125px; }
+.learning-path .label.l2 { left: 50%; top: 164px; margin-left: -70px; width: 140px; }
+.learning-path .label.l3 { right: 2%; top: 224px; width: 130px; }
+.learning-path.visible .n1 { animation: scaleIn 0.34s 0.25s forwards; }
+.learning-path.visible .v1 { animation: drawDown 0.28s 0.76s forwards; --target-h: 72px; }
+.learning-path.visible .n2 { animation: scaleIn 0.34s 1.15s forwards; }
+.learning-path.visible .v2 { animation: drawDown 0.28s 1.62s forwards; --target-h: 72px; }
+.learning-path.visible .n3 { animation: scaleIn 0.34s 2.05s forwards; }
+.learning-path.visible .l1 { animation: fadeSlideUp 0.32s 2.45s forwards; }
+.learning-path.visible .l2 { animation: fadeSlideUp 0.32s 2.85s forwards; }
+.learning-path.visible .l3 { animation: fadeSlideUp 0.32s 3.25s forwards; }
+
+/* Deep layer */
+.partition .tile-grid.full { left: 50%; top: 26px; margin-left: -82px; grid-template-columns: repeat(5, 28px); }
+.partition .line.cut1 { left: 220px; top: 26px; width: 3px; height: 154px; background: var(--accent2); transform: scaleY(0); transform-origin: top; }
+.partition .line.cut2 { left: 50%; top: 88px; width: 166px; height: 3px; margin-left: -83px; background: var(--accent2); transform: scaleX(0); }
+.partition .label.out { left: 0; right: 0; top: 198px; }
+.partition.visible .full { animation: fadeIn 0.35s 0.2s forwards; }
+.partition.visible .cut1 { animation: stretchY 0.3s 0.75s forwards; }
+.partition.visible .cut2 { animation: stretchX 0.3s 1.22s forwards; }
+.partition.visible .out { animation: fadeSlideUp 0.35s 1.7s forwards; }
+
+.contract .pill.a { left: 8%; top: 56px; }
+.contract .pill.b { right: 8%; top: 56px; border-color: var(--accent2); color: var(--accent2); }
+.contract .node.core { left: 50%; top: 92px; margin-left: -33px; border-color: var(--green); color: var(--green); }
+.contract .pill.acc { left: 50%; top: 180px; transform: translateX(-50%) scale(0); border-color: var(--green); color: var(--green); }
+.contract .v-line.c1 { left: 50%; top: 158px; }
+.contract.visible .a { animation: scaleIn 0.34s 0.2s forwards; }
+.contract.visible .b { animation: scaleIn 0.34s 0.62s forwards; }
+.contract.visible .core { animation: scaleIn 0.34s 1.05s forwards; }
+.contract.visible .c1 { animation: drawDown 0.26s 1.48s forwards; --target-h: 24px; }
+.contract.visible .acc { animation: scaleInCentered 0.34s 1.86s forwards; }
+
+.guardrail .pill.g1 { left: 50%; top: 26px; transform: translateX(-50%) scale(0); }
+.guardrail .pill.g2 { left: 50%; top: 90px; transform: translateX(-50%) scale(0); border-color: var(--accent2); color: var(--accent2); }
+.guardrail .pill.g3 { left: 50%; top: 154px; transform: translateX(-50%) scale(0); border-color: var(--danger); color: var(--danger); }
+.guardrail.visible .g1 { animation: scaleInCentered 0.34s 0.2s forwards; }
+.guardrail.visible .g2 { animation: scaleInCentered 0.34s 0.72s forwards; }
+.guardrail.visible .g3 { animation: scaleInCentered 0.34s 1.24s forwards; }
+
+.reference-list {
+  margin-top: 22px;
+  padding-left: 18px;
+  color: inherit;
+}
+.reference-list li {
+  font-size: 14px;
+  line-height: 1.75;
+  margin-bottom: 8px;
+}
+.reference-list a { color: #5EEAD4; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+
+@keyframes scaleIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes scaleInCentered { from { transform: translateX(-50%) scale(0); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
+@keyframes drawDown { from { height: 0; opacity: 1; } to { height: var(--target-h); opacity: 1; } }
+@keyframes stretchX { from { transform: scaleX(0); opacity: 1; } to { transform: scaleX(1); opacity: 1; } }
+@keyframes stretchY { from { transform: scaleY(0); opacity: 1; } to { transform: scaleY(1); opacity: 1; } }
+@keyframes fadeSlideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+@media (max-width: 560px) {
+  .feed-section { padding: 78px 20px; align-items: flex-start; }
+  .section-inner { padding-top: 22px; width: min(calc(100vw - 40px), 350px); max-width: 350px; margin-left: 0; margin-right: auto; }
+  .big-statement { font-size: clamp(23px, 6.4vw, 29px); line-height: 1.5; }
+  .body-text { font-size: 15.5px; }
+  .anim-stage { min-height: 250px; }
+  .visual-frame { max-width: 330px; }
+  .thought-shift .node.thread { left: 16px; }
+  .thought-shift .node.tile { right: 16px; }
+  .thought-shift .line.bridge { left: 92px; right: 92px; }
+  .kernel-flow .pill.load { left: 0; }
+  .kernel-flow .pill.store { right: 0; }
+  .kernel-flow .tile-grid.in { left: 0; }
+  .kernel-flow .tile-grid.out { right: 0; }
+  .hardware-map .pill.tc { left: 1%; }
+  .hardware-map .pill.tma { right: 1%; }
+  .mma-visual .tile-grid.a { left: 0; }
+  .mma-visual .tile-grid.b { right: 0; }
+  .ecosystem .node.cuda { left: 0; }
+  .ecosystem .node.triton { right: 0; }
+  .breadcrumb { max-width: calc(100vw - 32px); overflow: hidden; }
+}
+</style>
+
+<meta name="description" content="传统 CUDA 让你先想 每个 thread 做什么 。cuTile 更像让你先想 每个 block 搬一块 tile、算一块 tile、写回一块 tile 。这不是少写几个索引而已，而是把 kernel 的表达方式从单个元素抬到了成块的数据操作。">
+<link rel="canonical" href="https://chendi.me/readings/cutile-intro/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+<div class="breadcrumb" id="breadcrumb">
+  <span class="current">cuTile 概览</span>
+</div>
+
+<button class="back-btn" id="backBtn" onclick="goBack()">←</button>
+
+<div class="depth-dots" id="depthDots">
+  <div class="dot active"></div>
+  <div class="dot"></div>
+</div>
+
+<div class="layer active" id="layer-overview" data-depth="0" data-title="cuTile 概览">
+  <section class="feed-section">
+    <div class="section-inner">
+      <div class="kicker reveal">Act 1 / 思维单位</div>
+      <h1 class="big-statement reveal reveal-delay-1">cuTile 的第一件事，<br>是把你的注意力<br>从 thread 移到 tile。</h1>
+      <p class="body-text reveal reveal-delay-2">传统 CUDA 让你先想 <span class="hl">每个 thread 做什么</span>。cuTile 更像让你先想 <span class="hl-warm">每个 block 搬一块 tile、算一块 tile、写回一块 tile</span>。这不是少写几个索引而已，而是把 kernel 的表达方式从单个元素抬到了成块的数据操作。</p>
+      <div class="anim-stage reveal reveal-delay-3">
+        <div class="visual-frame thought-shift">
+          <div class="node thread">线程</div>
+          <div class="line bridge"></div>
+          <div class="node tile">Tile</div>
+          <div class="label left">逐个元素<br>安排工作</div>
+          <div class="label right">整块数据<br>表达运算</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-delay-4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">本文原稿</span>
+          <p>cuTile 的第一件事，是把你的注意力从 thread 移到 tile。传统 CUDA 让你先想每个 thread 做什么；cuTile 更像让你先想每个 block 搬一块 tile、算一块 tile、写回一块 tile。</p>
+          <p>这不是少写几个索引而已，而是把 kernel 的表达方式从单个元素抬到了成块的数据操作。因为现代 GPU 的高性能越来越依赖成块搬运、成块矩阵乘累加和专用硬件，所以 tile 正好是更接近硬件效率的思维单位。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section act2">
+    <div class="section-inner">
+      <div class="kicker reveal">Act 1 / 基本动作</div>
+      <h2 class="big-statement reveal reveal-delay-1">一个 cuTile kernel，先看成三拍：load、compute、store。</h2>
+      <p class="body-text reveal reveal-delay-2">你用 <code>ct.load()</code> 从 global memory 取出一块 tile，用普通表达式或专门算子在 tile 上计算，再用 <code>ct.store()</code> 写回。读代码时先抓住这三拍，很多示例就不会显得神秘。</p>
+      <div class="anim-stage reveal reveal-delay-3">
+        <div class="visual-frame kernel-flow">
+          <div class="pill load">load</div>
+          <div class="line lc"></div>
+          <div class="pill compute">compute</div>
+          <div class="line cs"></div>
+          <div class="pill store">store</div>
+          <div class="tile-grid in">
+            <div class="cell active"></div><div class="cell active"></div><div class="cell active"></div><div class="cell active"></div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+          </div>
+          <div class="tiny-note">tile 在中间变成<br>可整体操作的值</div>
+          <div class="tile-grid out">
+            <div class="cell active"></div><div class="cell active"></div><div class="cell active"></div><div class="cell active"></div>
+            <div class="cell active"></div><div class="cell active"></div><div class="cell active"></div><div class="cell active"></div>
+          </div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-delay-4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">本文原稿</span>
+          <p>一个 cuTile kernel，先看成三拍：load、compute、store。你用 ct.load() 从 global memory 取出一块 tile，用普通表达式或专门算子在 tile 上计算，再用 ct.store() 写回。</p>
+          <p>这个三拍结构很适合学习。因为它让你先抓住数据流，而不是一开始就陷入 threadIdx、shared memory bank、同步点和边界索引。等三拍看顺了，再去理解 tile shape、block id 和更复杂的 memory movement，就会自然很多。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="kicker reveal">Act 2 / 硬件抽象</div>
+      <h2 class="big-statement reveal reveal-delay-1">cuTile 的野心，不是包装 CUDA，而是给 Tensor Core 时代一个更高层的入口。</h2>
+      <p class="body-text reveal reveal-delay-2">官方把 CUDA Tile 描述为面向 Tensor Core 可移植性的 tile-based 编程模型。你写的是 tile 级意图，系统再把它落到 CUDA Tile IR、Tensor Cores、Tensor Memory Accelerator 等底层能力上。</p>
+      <div class="anim-stage reveal reveal-delay-3">
+        <div class="visual-frame hardware-map">
+          <div class="node code">代码</div>
+          <div class="v-line one"></div>
+          <div class="node ir">IR</div>
+          <div class="v-line two"></div>
+          <div class="pill tc">Tensor Core</div>
+          <div class="pill tma">TMA</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-delay-4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">本文原稿</span>
+          <p>cuTile 的野心，不是包装 CUDA，而是给 Tensor Core 时代一个更高层的入口。官方把 CUDA Tile 描述为面向 Tensor Core 可移植性的 tile-based 编程模型。</p>
+          <p>这句话的重点在“可移植性”。因为不同 GPU 代际的 Tensor Core、数据搬运路径和内存层级会变化，所以只靠手写低层细节会让 kernel 很快变成针对某一代硬件的作品。cuTile 试图让你写 tile 级意图，系统再把它落到 CUDA Tile IR、Tensor Cores、Tensor Memory Accelerator 等底层能力上。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section act3">
+    <div class="section-inner">
+      <div class="kicker reveal">Act 2 / 代表场景</div>
+      <h2 class="big-statement reveal reveal-delay-1">矩阵乘法是 cuTile 最容易看懂的入口，因为它天然就是 tile 的故事。</h2>
+      <p class="body-text reveal reveal-delay-2">A 的一块 tile 和 B 的一块 tile 进入 <code>ct.mma()</code>，累加到 C 的输出 tile。你看到的不是一堆 thread 做乘加，而是一块数据和另一块数据发生关系。</p>
+      <div class="anim-stage reveal reveal-delay-3">
+        <div class="visual-frame mma-visual">
+          <div class="label a-label">A tile</div>
+          <div class="label b-label">B tile</div>
+          <div class="tile-grid a">
+            <div class="cell active"></div><div class="cell active"></div><div class="cell"></div>
+            <div class="cell active"></div><div class="cell active"></div><div class="cell"></div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div>
+          </div>
+          <div class="tile-grid b">
+            <div class="cell"></div><div class="cell active"></div><div class="cell active"></div>
+            <div class="cell"></div><div class="cell active"></div><div class="cell active"></div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div>
+          </div>
+          <div class="pill mma">ct.mma()</div>
+          <div class="v-line down"></div>
+          <div class="tile-grid c">
+            <div class="cell active"></div><div class="cell active"></div><div class="cell active"></div>
+            <div class="cell active"></div><div class="cell active"></div><div class="cell active"></div>
+            <div class="cell active"></div><div class="cell active"></div><div class="cell active"></div>
+          </div>
+        </div>
+      </div>
+      <button class="drill-btn reveal reveal-delay-4" onclick="drillDown('layer-mma', this)">深入矩阵乘法 ↓</button>
+    </div>
+  </section>
+
+  <section class="feed-section">
+    <div class="section-inner">
+      <div class="kicker reveal">Act 3 / 生态位置</div>
+      <h2 class="big-statement reveal reveal-delay-1">它不是 CUDA C++ 的替代品，也不是 Triton 的简单重名。</h2>
+      <p class="body-text reveal reveal-delay-2">CUDA C++ 给你最细控制，Triton 是机器学习内核里很常见的 Python DSL，CUTLASS 是专家级模板库。cuTile 更像 NVIDIA 在 CUDA 体系内给出的 tile-first 路线：保留 kernel 写作能力，但把表达层级抬高。</p>
+      <div class="anim-stage reveal reveal-delay-3">
+        <div class="visual-frame ecosystem">
+          <div class="node cuda">CUDA</div>
+          <div class="node cutile">cuTile</div>
+          <div class="node triton">Triton</div>
+          <div class="label cuda-l">最细控制</div>
+          <div class="label cutile-l">CUDA 体系内<br>tile-first</div>
+          <div class="label triton-l">ML kernel<br>Python DSL</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-delay-4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">本文原稿</span>
+          <p>cuTile 不是 CUDA C++ 的替代品，也不是 Triton 的简单重名。CUDA C++ 给你最细控制，Triton 是机器学习内核里很常见的 Python DSL，CUTLASS 是专家级模板库。</p>
+          <p>cuTile 更像 NVIDIA 在 CUDA 体系内给出的 tile-first 路线。它保留 kernel 写作能力，但把表达层级抬高。你仍然在写 GPU kernel，只是你优先描述 tile 级计算，而不是优先描述每个 thread 的索引。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section act2">
+    <div class="section-inner">
+      <div class="kicker reveal">Act 3 / 使用门槛</div>
+      <h2 class="big-statement reveal reveal-delay-1">学习 cuTile 前，先确认它还很新，而且环境要求并不轻。</h2>
+      <p class="body-text reveal reveal-delay-2">官方 quickstart 对 Python、driver、GPU compute capability 和 CUDA Toolkit 都有要求。它适合拿来学习新一代 CUDA tile 编程模型，也适合探索高性能 kernel；但如果你要的是稳定生产路径，仍然要把版本、硬件和团队熟悉度算进去。</p>
+      <div class="anim-stage reveal reveal-delay-3">
+        <div class="visual-frame readiness">
+          <div class="pill p1">Python 3.10-3.13</div>
+          <div class="pill p2">Driver R580+</div>
+          <div class="pill p3">CUDA Toolkit 13.1+</div>
+          <div class="pill p4">cc 8.x / 10 / 11 / 12</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-delay-4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">本文原稿</span>
+          <p>学习 cuTile 前，先确认它还很新，而且环境要求并不轻。官方 quickstart 对 Python、driver、GPU compute capability 和 CUDA Toolkit 都有要求。</p>
+          <p>截至 2026-05-08 我核对到的官方文档，cuTile Python 支持 Python 3.10 到 3.13，要求 R580 或更高驱动，GPU compute capability 覆盖 8.x、10.x、11.x 或 12.x。安装可以使用 cuda-tile 包；如果系统没有 CUDA Toolkit 13.1 或更高版本，可以安装带 tileiras extra 的包来获得相关组件。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="kicker reveal">Close / 学习路线</div>
+      <h2 class="big-statement reveal reveal-delay-1">最好的学习顺序：先看数据流，再看 mma，最后再谈性能。</h2>
+      <p class="body-text reveal reveal-delay-2">第一步只读懂 <code>ct.load()</code>、tile 表达式和 <code>ct.store()</code>。第二步用矩阵乘法理解 <code>ct.mma()</code>。第三步再追 shared memory、TMA、pipeline 和架构差异。这样学，cuTile 不会变成又一套陌生咒语。</p>
+      <div class="anim-stage reveal reveal-delay-3">
+        <div class="visual-frame learning-path">
+          <div class="node n1">流</div>
+          <div class="v-line v1"></div>
+          <div class="node n2">MMA</div>
+          <div class="v-line v2"></div>
+          <div class="node n3">性能</div>
+          <div class="label l1">load / compute / store</div>
+          <div class="label l2">矩阵乘累加</div>
+          <div class="label l3">memory 与架构</div>
+        </div>
+      </div>
+      <ul class="reference-list reveal reveal-delay-4">
+        <li>官方入口：<a href="https://developer.nvidia.com/cuda/tile" target="_blank" rel="noopener">NVIDIA CUDA Tile</a></li>
+        <li>Python 文档：<a href="https://docs.nvidia.com/cuda/cutile-python/" target="_blank" rel="noopener">cuTile Python Documentation</a></li>
+        <li>Quickstart：<a href="https://docs.nvidia.com/cuda/cutile-python/quickstart.html" target="_blank" rel="noopener">cuTile Python Quickstart</a></li>
+        <li>矩阵乘教程：<a href="https://developer.nvidia.com/blog/how-to-write-high-performance-matrix-multiply-in-nvidia-cuda-tile/" target="_blank" rel="noopener">How to Write High-Performance Matrix Multiply in NVIDIA CUDA Tile</a></li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<div class="layer" id="layer-mma" data-depth="1" data-title="矩阵乘法">
+  <section class="feed-section act3">
+    <div class="section-inner">
+      <div class="kicker reveal">Deep Dive / 分块</div>
+      <h2 class="big-statement reveal reveal-delay-1">矩阵乘法先被切成很多小方块，每个 block 只盯住其中一块 C。</h2>
+      <p class="body-text reveal reveal-delay-2">C 的一个 tile 不是凭空来的。它来自 A 的一排 tile 和 B 的一列 tile 反复相乘、反复累加。所以 cuTile 的矩阵乘法教程会先让你理解 tile shape 和 block id：它们决定“这一块输出由谁负责”。</p>
+      <div class="anim-stage reveal reveal-delay-3">
+        <div class="visual-frame partition">
+          <div class="tile-grid full">
+            <div class="cell"></div><div class="cell"></div><div class="cell active"></div><div class="cell active"></div><div class="cell"></div>
+            <div class="cell"></div><div class="cell"></div><div class="cell active"></div><div class="cell active"></div><div class="cell"></div>
+            <div class="cell"></div><div class="cell"></div><div class="cell active"></div><div class="cell active"></div><div class="cell"></div>
+            <div class="cell"></div><div class="cell"></div><div class="cell active"></div><div class="cell active"></div><div class="cell"></div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+          </div>
+          <div class="line cut1"></div>
+          <div class="line cut2"></div>
+          <div class="label out">一个 block 负责一个输出 tile</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-delay-4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">本文原稿</span>
+          <p>矩阵乘法先被切成很多小方块，每个 block 只盯住其中一块 C。C 的一个 tile 不是凭空来的，它来自 A 的一排 tile 和 B 的一列 tile 反复相乘、反复累加。</p>
+          <p>所以 cuTile 的矩阵乘法教程会先让你理解 tile shape 和 block id。tile shape 决定每块数据有多大，block id 决定当前 block 负责哪一个输出区域。把这两件事看清楚，矩阵乘法就从一大张二维数组，变成了很多个可以独立安排的输出 tile。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section">
+    <div class="section-inner">
+      <div class="kicker reveal">Deep Dive / 算子</div>
+      <h2 class="big-statement reveal reveal-delay-1"><code>ct.mma()</code> 是一份契约：你给它 tile，它给你累加后的 tile。</h2>
+      <p class="body-text reveal reveal-delay-2">从学习角度看，不必一开始就背底层 Tensor Core 指令。先记住它表达的是 matrix multiply-accumulate：A tile 和 B tile 相乘，结果累加到 accumulator tile。</p>
+      <div class="anim-stage reveal reveal-delay-3">
+        <div class="visual-frame contract">
+          <div class="pill a">A tile</div>
+          <div class="pill b">B tile</div>
+          <div class="node core">MMA</div>
+          <div class="v-line c1"></div>
+          <div class="pill acc">Accumulator</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-delay-4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">本文原稿</span>
+          <p>ct.mma() 是一份契约：你给它 tile，它给你累加后的 tile。从学习角度看，不必一开始就背底层 Tensor Core 指令。先记住它表达的是 matrix multiply-accumulate。</p>
+          <p>也就是说，A tile 和 B tile 相乘，结果累加到 accumulator tile。这个抽象很重要，因为它让矩阵乘法的核心语义直接出现在代码里。你读到 ct.mma() 的时候，应该先在脑子里看到“三块 tile 的关系”，再去追它最终怎样映射到硬件。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="kicker reveal">Deep Dive / 边界</div>
+      <h2 class="big-statement reveal reveal-delay-1">cuTile 提高抽象层，但不会替你取消性能工程。</h2>
+      <p class="body-text reveal reveal-delay-2">tile shape 怎么选、数据类型怎么配、pipeline 怎么安排、目标 GPU 是哪一代，这些仍然会影响结果。cuTile 让入口更高，但高性能 kernel 仍然需要测量、profiling 和针对场景的取舍。</p>
+      <div class="anim-stage reveal reveal-delay-3">
+        <div class="visual-frame guardrail">
+          <div class="pill g1">抽象更高</div>
+          <div class="pill g2">测量仍要做</div>
+          <div class="pill g3">硬件仍重要</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-delay-4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body">
+          <span class="source-label">本文原稿</span>
+          <p>cuTile 提高抽象层，但不会替你取消性能工程。tile shape 怎么选、数据类型怎么配、pipeline 怎么安排、目标 GPU 是哪一代，这些仍然会影响结果。</p>
+          <p>这也是学习 cuTile 时最容易误会的地方。因为 DSL 看起来更短，所以人会以为性能问题消失了；但实际上，cuTile 只是让你用更接近数学和 tile 的方式表达 kernel。高性能 kernel 仍然需要测量、profiling 和针对场景的取舍。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+var layerStack = ["layer-overview"];
+var layerTitles = { "layer-overview": "cuTile 概览", "layer-mma": "矩阵乘法" };
+
+var coverageData = {
+  sourceType: "text",
+  totalLength: "约1600字自写教学稿",
+  segments: [
+    { start: 0, end: 220, section: 1, reason: null },
+    { start: 220, end: 450, section: 2, reason: null },
+    { start: 450, end: 700, section: 3, reason: null },
+    { start: 700, end: 940, section: 4, reason: null },
+    { start: 940, end: 1160, section: 5, reason: null },
+    { start: 1160, end: 1390, section: 6, reason: null },
+    { start: 1390, end: 1600, section: 7, reason: null },
+    { start: 1600, end: 2260, section: 4, reason: null, deepDive: true }
+  ]
+};
+
+var topicData = {
+  1: [
+    { name: "thread 到 tile", status: "included", excerpt: "cuTile 的第一件事，是把你的注意力从 thread 移到 tile。" },
+    { name: "成块数据", status: "included", excerpt: "这不是少写几个索引而已，而是把 kernel 的表达方式从单个元素抬到了成块的数据操作。" }
+  ],
+  2: [
+    { name: "三拍结构", status: "included", excerpt: "一个 cuTile kernel，先看成三拍：load、compute、store。" },
+    { name: "数据流优先", status: "included", excerpt: "这个三拍结构很适合学习。因为它让你先抓住数据流。" }
+  ],
+  3: [
+    { name: "Tensor Core 入口", status: "included", excerpt: "cuTile 的野心，不是包装 CUDA，而是给 Tensor Core 时代一个更高层的入口。" },
+    { name: "可移植性", status: "included", excerpt: "这句话的重点在“可移植性”。" }
+  ],
+  4: [
+    { name: "矩阵乘法", status: "included", excerpt: "矩阵乘法是 cuTile 最容易看懂的入口，因为它天然就是 tile 的故事。" },
+    { name: "ct.mma", status: "deep-dive", excerpt: "ct.mma() 是一份契约：你给它 tile，它给你累加后的 tile。" }
+  ],
+  5: [
+    { name: "生态定位", status: "included", excerpt: "cuTile 不是 CUDA C++ 的替代品，也不是 Triton 的简单重名。" }
+  ],
+  6: [
+    { name: "环境要求", status: "included", excerpt: "学习 cuTile 前，先确认它还很新，而且环境要求并不轻。" }
+  ],
+  7: [
+    { name: "学习顺序", status: "included", excerpt: "最好的学习顺序：先看数据流，再看 mma，最后再谈性能。" }
+  ]
+};
+
+function activeLayer() {
+  return document.getElementById(layerStack[layerStack.length - 1]);
+}
+
+function drillDown(targetLayerId) {
+  var current = activeLayer();
+  var target = document.getElementById(targetLayerId);
+  if (!target || current === target) return;
+  layerStack.push(targetLayerId);
+  current.classList.add("transitioning");
+  target.classList.add("transitioning");
+  target.style.transform = "scale(1.08)";
+  target.style.opacity = "0";
+  target.classList.add("active");
+  requestAnimationFrame(function() {
+    current.style.transform = "scale(0.94)";
+    current.style.opacity = "0";
+    target.style.transform = "scale(1)";
+    target.style.opacity = "1";
+  });
+  setTimeout(function() {
+    current.classList.remove("active", "transitioning");
+    target.classList.remove("transitioning");
+    current.style.transform = "";
+    current.style.opacity = "";
+    target.style.transform = "";
+    target.style.opacity = "";
+    target.scrollTop = 0;
+    updateNav();
+    refreshObserver();
+  }, 420);
+}
+
+function goBack() {
+  if (layerStack.length <= 1) return;
+  var current = activeLayer();
+  layerStack.pop();
+  var target = activeLayer();
+  current.classList.add("transitioning");
+  target.classList.add("transitioning", "active");
+  target.style.transform = "scale(0.94)";
+  target.style.opacity = "0";
+  requestAnimationFrame(function() {
+    current.style.transform = "scale(1.08)";
+    current.style.opacity = "0";
+    target.style.transform = "scale(1)";
+    target.style.opacity = "1";
+  });
+  setTimeout(function() {
+    current.classList.remove("active", "transitioning");
+    target.classList.remove("transitioning");
+    current.style.transform = "";
+    current.style.opacity = "";
+    target.style.transform = "";
+    target.style.opacity = "";
+    updateNav();
+    refreshObserver();
+  }, 420);
+}
+
+function updateNav() {
+  var breadcrumb = document.getElementById("breadcrumb");
+  var backBtn = document.getElementById("backBtn");
+  var dots = Array.from(document.querySelectorAll(".dot"));
+  breadcrumb.innerHTML = "";
+  layerStack.forEach(function(id, index) {
+    var span = document.createElement("span");
+    span.textContent = layerTitles[id] || id;
+    if (index === layerStack.length - 1) span.className = "current";
+    else span.onclick = function() {
+      while (layerStack.length > index + 1) layerStack.pop();
+      document.querySelectorAll(".layer").forEach(function(layer) { layer.classList.remove("active"); });
+      document.getElementById(id).classList.add("active");
+      updateNav();
+      refreshObserver();
+    };
+    breadcrumb.appendChild(span);
+    if (index < layerStack.length - 1) {
+      var sep = document.createElement("span");
+      sep.className = "sep";
+      sep.textContent = "/";
+      breadcrumb.appendChild(sep);
+    }
+  });
+  backBtn.style.display = layerStack.length > 1 ? "flex" : "none";
+  breadcrumb.style.display = layerStack.length > 1 ? "none" : "flex";
+  dots.forEach(function(dot, index) { dot.classList.toggle("active", index === layerStack.length - 1); });
+}
+
+function toggleSource(btn) {
+  btn.classList.toggle("open");
+  var body = btn.parentElement.querySelector(".source-body");
+  body.classList.toggle("open");
+}
+
+var observer;
+function refreshObserver() {
+  if (observer) observer.disconnect();
+  var root = activeLayer();
+  observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("visible");
+        var stage = entry.target.querySelector(".visual-frame");
+        if (stage) stage.classList.add("visible");
+      }
+    });
+  }, { root: root, threshold: 0.18 });
+  root.querySelectorAll(".reveal").forEach(function(el) { observer.observe(el); });
+  root.querySelectorAll(".feed-section").forEach(function(section) {
+    var rect = section.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      section.querySelectorAll(".reveal").forEach(function(el) { el.classList.add("visible"); });
+      var stage = section.querySelector(".visual-frame");
+      if (stage) stage.classList.add("visible");
+    }
+  });
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  updateNav();
+  refreshObserver();
+});
+</script>
+</body>
+</html>

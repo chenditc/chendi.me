@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>让 AI Agent 自己进化自己的工程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --c1: #0D9488;
+  --c2: #475569;
+  --bg-act1: #F0FDFA;
+  --bg-act2: #F1F5F9;
+  --bg-act3: #ECFDF5;
+  --font: 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+}
+*{ margin:0; padding:0; box-sizing:border-box; }
+body{ font-family:var(--font); background:#111; overflow:hidden; -webkit-font-smoothing:antialiased; }
+.layer{ position:fixed; inset:0; overflow-y:auto; overflow-x:hidden; opacity:0; pointer-events:none; transition:opacity .6s ease; z-index:0; scroll-behavior:smooth; }
+.layer.active{ opacity:1; pointer-events:auto; z-index:1; }
+.breadcrumb{ position:fixed; top:12px; left:12px; z-index:900; background:rgba(255,255,255,.92); backdrop-filter:blur(8px); border-radius:20px; padding:6px 16px; font-size:13px; color:#334155; display:flex; align-items:center; gap:6px; box-shadow:0 2px 12px rgba(0,0,0,.08); }
+.breadcrumb .sep{ opacity:.4; }
+.back-btn{ position:fixed; top:10px; left:12px; z-index:901; background:rgba(255,255,255,.92); backdrop-filter:blur(8px); border:none; border-radius:50%; width:36px; height:36px; font-size:18px; cursor:pointer; display:none; align-items:center; justify-content:center; box-shadow:0 2px 12px rgba(0,0,0,.08); }
+.feed-section{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:60px 20px; position:relative; }
+.feed-section.dark{ background:#1E293B; color:#F1F5F9; }
+.feed-section.dark .body-text{ color:#CBD5E1; }
+.feed-section.dark .hl{ color:#2DD4BF; }
+.feed-section.dark .hl2{ color:#94A3B8; }
+.section-inner{ max-width:380px; width:100%; }
+.act-label{ font-size:12px; letter-spacing:4px; text-transform:uppercase; color:var(--c1); margin-bottom:12px; font-weight:700; }
+.big-statement{ font-size:28px; font-weight:900; line-height:1.35; margin-bottom:24px; color:#1E293B; }
+.feed-section.dark .big-statement{ color:#F1F5F9; }
+.body-text{ font-size:15px; line-height:1.85; color:#334155; margin-bottom:24px; }
+.hl{ color:var(--c1); font-weight:700; }
+.hl2{ color:var(--c2); font-weight:700; }
+.hook-line{ font-size:14px; color:var(--c1); margin-bottom:16px; font-weight:700; }
+.anim-stage{ width:100%; display:flex; justify-content:center; margin:28px 0; min-height:180px; }
+.anim-stage > div{ width:100%; }
+.reveal{ opacity:0; transform:translateY(30px); transition:opacity .6s ease, transform .6s ease; }
+.reveal.visible{ opacity:1; transform:translateY(0); }
+.reveal-d1{ transition-delay:.15s; }
+.reveal-d2{ transition-delay:.3s; }
+.reveal-d3{ transition-delay:.45s; }
+.source-panel{ margin-top:12px; border-radius:12px; overflow:hidden; }
+.source-toggle{ background:none; border:1px solid #E2E8F0; border-radius:12px; padding:8px 16px; font-size:13px; color:#94A3B8; cursor:pointer; display:flex; align-items:center; gap:6px; font-family:var(--font); transition:all .3s; }
+.source-toggle .arrow{ font-size:10px; transition:transform .3s; display:inline-block; }
+.source-toggle.open{ border-radius:12px 12px 0 0; background:#F8FAFC; border-color:#CBD5E1; }
+.source-toggle.open .arrow{ transform:rotate(90deg); }
+.feed-section.dark .source-toggle{ border-color:#334155; color:#64748B; }
+.feed-section.dark .source-toggle.open{ background:#0F172A; border-color:#475569; }
+.source-body{ display:none; padding:14px 16px; background:#F8FAFC; border:1px solid #E2E8F0; border-top:none; border-radius:0 0 12px 12px; font-size:13px; line-height:1.7; color:#64748B; max-height:600px; overflow-y:auto; }
+.feed-section.dark .source-body{ background:#0F172A; border-color:#334155; color:#94A3B8; }
+.source-label{ display:inline-block; background:var(--c1); color:#fff; font-size:11px; padding:2px 8px; border-radius:4px; margin-bottom:8px; font-weight:700; }
+.drill-btn{ display:inline-block; padding:12px 28px; background:var(--c1); color:#fff; border:none; border-radius:24px; font-size:15px; font-weight:700; cursor:pointer; font-family:var(--font); transition:transform .2s, box-shadow .2s; box-shadow:0 4px 16px rgba(13,148,136,.3); }
+.drill-btn:active{ transform:scale(.96); }
+.page-dots{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:800; display:flex; gap:8px; }
+.page-dots .dot{ width:8px; height:8px; border-radius:50%; background:#CBD5E1; transition:all .3s; }
+.page-dots .dot.active{ background:var(--c1); width:20px; border-radius:4px; }
+
+/* === S1 Animation === */
+
+.s1_stage{position:relative;width:360px;max-width:360px;height:400px;background:#1E293B;border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif}
+.s1_stage *{position:absolute;opacity:0;transition:none}
+.s1_stage .s1_model{width:90px;height:90px;border-radius:50%;background:#475569;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;letter-spacing:.5px}
+.s1_stage .s1_pill{padding:6px 14px;border-radius:20px;background:#0D9488;color:#fff;font-size:11px;font-weight:600;white-space:nowrap}
+.s1_stage .s1_eq{color:#475569;font-size:28px;font-weight:700;top:72%;left:50%;transform:translateX(-50%)}
+.s1_stage .s1_result{bottom:28px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#0D9488,#475569);padding:8px 20px;border-radius:20px;color:#fff;font-size:12px;font-weight:700;white-space:nowrap;letter-spacing:.5px}
+.s1_stage .s1_p1{top:0;left:50%;transform:translateX(-50%)}
+.s1_stage .s1_p2{top:50%;right:0;transform:translateY(-50%)}
+.s1_stage .s1_p3{bottom:80px;left:50%;transform:translateX(-50%)}
+.s1_stage .s1_p4{top:50%;left:0;transform:translateY(-50%)}
+
+/* visible trigger */
+.s1_stage.visible .s1_model{animation:s1_pop .5s .2s both}
+.s1_stage.visible .s1_p1{animation:s1_fly_top .6s .8s both,s1_orbit 6s 1.4s infinite linear}
+.s1_stage.visible .s1_p2{animation:s1_fly_right .6s 1s both,s1_orbit 6s 1.6s infinite linear}
+.s1_stage.visible .s1_p3{animation:s1_fly_bot .6s 1.2s both,s1_orbit 6s 1.8s infinite linear}
+.s1_stage.visible .s1_p4{animation:s1_fly_left .6s 1.4s both,s1_orbit 6s 2s infinite linear}
+.s1_stage.visible .s1_eq{animation:s1_pop .4s 2.2s both}
+.s1_stage.visible .s1_result{animation:s1_pop .5s 2.6s both}
+
+@keyframes s1_pop{
+  0%{opacity:0;transform:translateX(-50%) scale(.3)}
+  60%{transform:translateX(-50%) scale(1.1)}
+  100%{opacity:1;transform:translateX(-50%) scale(1)}
+}
+@keyframes s1_fly_top{
+  0%{opacity:0;top:-40px;left:50%;transform:translateX(-50%)}
+  100%{opacity:1;top:60px;left:50%;transform:translateX(-50%)}
+}
+@keyframes s1_fly_right{
+  0%{opacity:0;right:-80px;top:50%;transform:translateY(-50%)}
+  100%{opacity:1;right:40px;top:50%;transform:translateY(-50%)}
+}
+@keyframes s1_fly_bot{
+  0%{opacity:0;bottom:0;left:50%;transform:translateX(-50%)}
+  100%{opacity:1;bottom:100px;left:50%;transform:translateX(-50%)}
+}
+@keyframes s1_fly_left{
+  0%{opacity:0;left:-80px;top:50%;transform:translateY(-50%)}
+  100%{opacity:1;left:40px;top:50%;transform:translateY(-50%)}
+}
+@keyframes s1_orbit{
+  0%{filter:brightness(1)}
+  25%{filter:brightness(1.3)}
+  50%{filter:brightness(1)}
+  75%{filter:brightness(.85)}
+  100%{filter:brightness(1)}
+}
+
+/* === S2 Animation === */
+
+.s2_stage{position:relative;width:360px;max-width:360px;height:320px;background:#1E293B;border-radius:12px;overflow:hidden;font-family:system-ui,sans-serif}
+.s2_stage .s2_chart{position:relative;width:280px;height:200px;margin:20px auto 0}
+.s2_stage .s2_axis{position:absolute;bottom:0;left:0;width:100%;height:1px;background:#475569}
+.s2_stage .s2_axis-y{position:absolute;bottom:0;left:0;width:1px;height:100%;background:#475569}
+.s2_stage .s2_line{position:absolute;bottom:0;left:0;height:3px;border-radius:2px;transform-origin:left bottom;width:0}
+.s2_stage .s2_model{background:#0D9488;z-index:3}
+.s2_stage .s2_harness{background:#475569;z-index:3}
+.s2_stage .s2_gap{position:absolute;bottom:0;left:0;width:0;height:0;background:rgba(239,68,68,.18);clip-path:polygon(0% 100%,100% 0%,100% 60%,0% 90%);z-index:1}
+.s2_stage .s2_gap-label{position:absolute;color:#EF4444;font-size:13px;font-weight:700;opacity:0;z-index:4;letter-spacing:.5px}
+.s2_stage .s2_label{position:absolute;font-size:11px;font-weight:600;opacity:0;white-space:nowrap;z-index:4}
+.s2_stage .s2_lbl-model{color:#0D9488;top:-2px;right:-10px}
+.s2_stage .s2_lbl-harness{color:#475569;bottom:20px;right:-10px}
+.s2_stage .s2_manual{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;opacity:0}
+.s2_stage .s2_icon{position:relative;font-size:32px;line-height:1}
+.s2_stage .s2_strike{position:absolute;top:50%;left:-4px;width:calc(100% + 8px);height:3px;background:#EF4444;border-radius:2px;transform:rotate(-45deg) scaleX(0);transform-origin:center}
+.s2_stage .s2_manual-text{color:#EF4444;font-size:12px;font-weight:600;opacity:.9}
+/* animations */
+.s2_stage.visible .s2_model{animation:s2m 2s .3s ease-out forwards}
+.s2_stage.visible .s2_harness{animation:s2h 2s .3s ease-out forwards}
+.s2_stage.visible .s2_gap{animation:s2g 2s .3s ease-out forwards}
+.s2_stage.visible .s2_gap-label{animation:s2gl 1s 1.6s ease forwards}
+.s2_stage.visible .s2_lbl-model{animation:s2fl .6s 1.8s ease forwards}
+.s2_stage.visible .s2_lbl-harness{animation:s2fl .6s 1.8s ease forwards}
+.s2_stage.visible .s2_manual{animation:s2fl .6s 2s ease forwards}
+.s2_stage.visible .s2_strike{animation:s2x .4s 2.4s ease forwards}
+@keyframes s2m{to{width:260px;transform:rotate(-52deg)}}
+@keyframes s2h{to{width:260px;transform:rotate(-15deg)}}
+@keyframes s2g{to{width:260px;height:180px}}
+@keyframes s2gl{to{opacity:1}}
+@keyframes s2fl{to{opacity:1}}
+@keyframes s2x{to{transform:rotate(-45deg) scaleX(1)}}
+
+/* === S3 Animation === */
+
+.s3_stage{position:relative;width:360px;max-width:360px;height:340px;margin:0 auto;background:#1E293B;border-radius:16px;overflow:hidden;font-family:system-ui,sans-serif}
+.s3_stage svg{position:absolute;top:0;left:0;width:100%;height:100%}
+.s3_node{position:absolute;width:90px;text-align:center;opacity:0;transform:scale(.4);transition:none}
+.s3_node .s3_icon{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:22px;color:#fff;box-shadow:0 0 12px rgba(0,0,0,.4)}
+.s3_node .s3_label{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.s3_n1{top:32px;left:50%;margin-left:-45px}
+.s3_n1 .s3_icon{background:#0D9488}
+.s3_n1 .s3_label{color:#0D9488}
+.s3_n2{bottom:48px;left:28px}
+.s3_n2 .s3_icon{background:#475569}
+.s3_n2 .s3_label{color:#475569}
+.s3_n3{bottom:48px;right:28px}
+.s3_n3 .s3_icon{background:#0D9488}
+.s3_n3 .s3_label{color:#0D9488}
+.s3_center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0;transition:none}
+.s3_center span{display:block;font-size:13px;font-weight:800;color:#fff;letter-spacing:1px}
+.s3_center em{font-style:normal;font-size:10px;color:#94a3b8;letter-spacing:.5px}
+.s3_arrow{stroke-dasharray:200;stroke-dashoffset:200;transition:none}
+/* visible triggers */
+.s3_stage.visible .s3_n1{opacity:1;transform:scale(1);transition:opacity .5s ease .2s,transform .5s ease .2s}
+.s3_stage.visible .s3_n2{opacity:1;transform:scale(1);transition:opacity .5s ease .6s,transform .5s ease .6s}
+.s3_stage.visible .s3_n3{opacity:1;transform:scale(1);transition:opacity .5s ease 1s,transform .5s ease 1s}
+.s3_stage.visible .s3_a1{stroke-dashoffset:0;transition:stroke-dashoffset .6s ease 1.4s}
+.s3_stage.visible .s3_a2{stroke-dashoffset:0;transition:stroke-dashoffset .6s ease 1.9s}
+.s3_stage.visible .s3_a3{stroke-dashoffset:0;transition:stroke-dashoffset .6s ease 2.4s}
+.s3_stage.visible .s3_center{opacity:1;transition:opacity .6s ease 2.8s}
+
+/* === S4 Animation === */
+
+.s4_stage{position:relative;max-width:360px;background:#1E293B;border-radius:12px;padding:28px 20px;font-family:system-ui,sans-serif;overflow:hidden}
+.s4_stage *{box-sizing:border-box;margin:0;padding:0}
+.s4_title{color:#0D9488;font-size:13px;font-weight:700;text-align:center;letter-spacing:.5px;text-transform:uppercase;margin-bottom:16px;opacity:0}
+.s4_grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.s4_file{background:#0f172a;border-radius:6px;padding:10px 10px 10px 14px;border-left:3px solid #0D9488;color:#cbd5e1;font-size:11px;font-weight:600;position:relative;opacity:0;transform:translateY(12px);transition:opacity .4s,filter .4s,transform .4s}
+.s4_file:nth-child(7){grid-column:1/3;max-width:calc(50% - 4px);justify-self:center}
+.s4_file::before{content:"📄 ";font-size:10px}
+.s4_bug{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);font-size:28px;opacity:0;z-index:5;filter:drop-shadow(0 0 8px rgba(239,68,68,.6));transition:all .4s}
+.s4_arrow{position:absolute;width:2px;height:0;background:linear-gradient(to bottom,#ef4444,#ef444480);top:0;left:0;opacity:0;z-index:4;transform-origin:top center}
+.s4_arrow::after{content:"";position:absolute;bottom:-4px;left:-3px;border-left:4px solid transparent;border-right:4px solid transparent;border-top:6px solid #ef4444}
+.s4_label{position:absolute;top:8px;right:12px;color:#475569;font-size:9px;opacity:0;transition:opacity .4s}
+/* Visible triggers */
+.s4_stage.visible .s4_title{animation:s4in .5s .1s both}
+.s4_stage.visible .s4_file:nth-child(1){animation:s4card .4s .3s both}
+.s4_stage.visible .s4_file:nth-child(2){animation:s4card .4s .45s both}
+.s4_stage.visible .s4_file:nth-child(3){animation:s4card .4s .6s both}
+.s4_stage.visible .s4_file:nth-child(4){animation:s4card .4s .75s both}
+.s4_stage.visible .s4_file:nth-child(5){animation:s4card .4s .9s both}
+.s4_stage.visible .s4_file:nth-child(6){animation:s4card .4s 1.05s both}
+.s4_stage.visible .s4_file:nth-child(7){animation:s4card .4s 1.2s both}
+.s4_stage.visible .s4_bug{animation:s4bug .5s 2s both}
+.s4_stage.visible .s4_arrow{animation:s4arrow .4s 2.4s both}
+.s4_stage.visible .s4_file:nth-child(1),
+.s4_stage.visible .s4_file:nth-child(2),
+.s4_stage.visible .s4_file:nth-child(3),
+.s4_stage.visible .s4_file:nth-child(5),
+.s4_stage.visible .s4_file:nth-child(6),
+.s4_stage.visible .s4_file:nth-child(7){animation:s4card .4s var(--d) both,s4dim .4s 2.6s both}
+.s4_stage.visible .s4_file:nth-child(1){--d:.3s}
+.s4_stage.visible .s4_file:nth-child(2){--d:.45s}
+.s4_stage.visible .s4_file:nth-child(3){--d:.6s}
+.s4_stage.visible .s4_file:nth-child(5){--d:.9s}
+.s4_stage.visible .s4_file:nth-child(6){--d:1.05s}
+.s4_stage.visible .s4_file:nth-child(7){--d:1.2s}
+.s4_stage.visible .s4_file:nth-child(4){animation:s4card .4s .75s both,s4highlight .4s 2.6s both}
+.s4_stage.visible .s4_label{animation:s4in .4s 2.8s both}
+@keyframes s4in{to{opacity:1}}
+@keyframes s4card{to{opacity:1;transform:translateY(0)}}
+@keyframes s4bug{to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes s4arrow{to{opacity:1;height:40px}}
+@keyframes s4dim{to{opacity:.35;filter:saturate(0) brightness(.6)}}
+@keyframes s4highlight{to{opacity:1;border-left-color:#ef4444;box-shadow:0 0 12px rgba(239,68,68,.3)}}
+
+/* === S5 Animation === */
+
+.s5_stage{position:relative;width:360px;max-width:360px;height:480px;background:#1E293B;border-radius:12px;overflow:hidden;font-family:system-ui,sans-serif}
+.s5_stage *{box-sizing:border-box;margin:0;padding:0}
+/* Cloud of raw traces */
+.s5_cloud{position:absolute;top:24px;left:50%;transform:translateX(-50%);width:300px;height:130px;opacity:0;transition:none}
+.s5_cloud .s5_label{position:absolute;top:0;width:100%;text-align:center;font-size:13px;font-weight:700;color:#0D9488;letter-spacing:.5px;opacity:0}
+.s5_dot{position:absolute;width:3px;height:3px;background:#475569;border-radius:50%;opacity:0}
+.s5_line{position:absolute;height:2px;background:#475569;border-radius:1px;opacity:0}
+/* Funnel */
+.s5_funnel{position:absolute;top:160px;left:50%;transform:translateX(-50%);width:0;height:0;opacity:0}
+.s5_funnel::before,.s5_funnel::after{content:'';position:absolute;background:linear-gradient(180deg,#0D9488 0%,#475569 100%);border-radius:2px}
+.s5_funnel::before{top:0;left:0;width:3px;height:140px;transform-origin:top center;transform:rotate(25deg)}
+.s5_funnel::after{top:0;right:0;width:3px;height:140px;transform-origin:top center;transform:rotate(-25deg)}
+.s5_funnel_body{position:absolute;top:0;left:-100px;width:200px;height:140px;clip-path:polygon(0% 0%,100% 0%,65% 100%,35% 100%);background:linear-gradient(180deg,rgba(13,148,136,.12) 0%,rgba(13,148,136,.04) 100%);border:none}
+/* Output stack */
+.s5_output{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);width:120px;opacity:0}
+.s5_output .s5_label{text-align:center;font-size:13px;font-weight:700;color:#0D9488;margin-bottom:8px;opacity:0}
+.s5_bar{height:6px;border-radius:3px;margin:3px auto;opacity:0;transform:scaleX(0);transform-origin:left}
+.s5_bar:nth-child(2){width:100px;background:#0D9488}
+.s5_bar:nth-child(3){width:80px;background:#0D9488}
+.s5_bar:nth-child(4){width:90px;background:#475569}
+.s5_bar:nth-child(5){width:60px;background:#475569}
+.s5_bar:nth-child(6){width:70px;background:#0D9488}
+/* Streaming particles */
+.s5_particle{position:absolute;width:2px;height:2px;background:#0D9488;border-radius:50%;opacity:0}
+/* ANIMATIONS on .visible */
+.s5_stage.visible .s5_cloud{opacity:1;animation:s5_fadeIn .6s ease both}
+.s5_stage.visible .s5_cloud .s5_label{animation:s5_fadeIn .4s .3s ease both}
+.s5_stage.visible .s5_dot{animation:s5_dotPulse 1.2s ease both}
+.s5_stage.visible .s5_line{animation:s5_dotPulse 1.2s ease both}
+.s5_stage.visible .s5_funnel{opacity:1;width:200px;animation:s5_funnelIn .6s 1s ease both}
+.s5_stage.visible .s5_funnel_body{animation:s5_fadeIn .5s 1.1s ease both}
+.s5_stage.visible .s5_particle{animation:s5_stream 1.5s 1.4s ease-in both}
+.s5_stage.visible .s5_output{animation:s5_fadeIn .5s 2.2s ease both}
+.s5_stage.visible .s5_output .s5_label{animation:s5_fadeIn .4s 2.4s ease both}
+.s5_stage.visible .s5_bar{animation:s5_barIn .4s ease both}
+.s5_stage.visible .s5_bar:nth-child(2){animation-delay:2.3s}
+.s5_stage.visible .s5_bar:nth-child(3){animation-delay:2.45s}
+.s5_stage.visible .s5_bar:nth-child(4){animation-delay:2.6s}
+.s5_stage.visible .s5_bar:nth-child(5){animation-delay:2.75s}
+.s5_stage.visible .s5_bar:nth-child(6){animation-delay:2.9s}
+/* Dot stagger delays */
+.s5_stage.visible .s5_dot:nth-child(2){animation-delay:.1s}.s5_stage.visible .s5_dot:nth-child(3){animation-delay:.15s}
+.s5_stage.visible .s5_dot:nth-child(4){animation-delay:.2s}.s5_stage.visible .s5_dot:nth-child(5){animation-delay:.25s}
+.s5_stage.visible .s5_dot:nth-child(6){animation-delay:.3s}.s5_stage.visible .s5_dot:nth-child(7){animation-delay:.05s}
+.s5_stage.visible .s5_dot:nth-child(8){animation-delay:.35s}.s5_stage.visible .s5_dot:nth-child(9){animation-delay:.12s}
+.s5_stage.visible .s5_line:nth-child(10){animation-delay:.18s}.s5_stage.visible .s5_line:nth-child(11){animation-delay:.28s}
+.s5_stage.visible .s5_line:nth-child(12){animation-delay:.08s}.s5_stage.visible .s5_line:nth-child(13){animation-delay:.22s}
+.s5_stage.visible .s5_particle:nth-child(1){animation-delay:1.4s}.s5_stage.visible .s5_particle:nth-child(2){animation-delay:1.55s}
+.s5_stage.visible .s5_particle:nth-child(3){animation-delay:1.7s}.s5_stage.visible .s5_particle:nth-child(4){animation-delay:1.85s}
+.s5_stage.visible .s5_particle:nth-child(5){animation-delay:2s}
+@keyframes s5_fadeIn{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes s5_dotPulse{0%{opacity:0;transform:scale(0)}30%{opacity:.7;transform:scale(1.3)}50%{opacity:1;transform:scale(1)}80%{opacity:.5;transform:scale(.8) translateY(10px)}100%{opacity:0;transform:scale(0) translateY(30px)}}
+@keyframes s5_funnelIn{from{opacity:0;transform:translateX(-50%) scaleY(0)}to{opacity:1;transform:translateX(-50%) scaleY(1)}}
+@keyframes s5_stream{0%{opacity:0;top:170px}20%{opacity:1}80%{opacity:.6}100%{opacity:0;top:350px}}
+@keyframes s5_barIn{from{opacity:0;transform:scaleX(0)}to{opacity:1;transform:scaleX(1)}}
+
+/* === S6 Animation === */
+
+.s6_stage{position:relative;max-width:360px;height:260px;background:#1E293B;border-radius:12px;padding:20px;font-family:system-ui,sans-serif;overflow:hidden;display:flex;align-items:center;gap:0}
+.s6_stage *{box-sizing:border-box;margin:0;padding:0}
+.s6_stage .round{width:140px;flex-shrink:0;opacity:0;transform:translateY(16px)}
+.s6_stage .round .label{font-size:10px;color:#0D9488;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.s6_stage .round .card{background:#334155;border-radius:8px;padding:10px;border-left:3px solid #0D9488}
+.s6_stage .round .card .title{font-size:11px;color:#e2e8f0;font-weight:600;margin-bottom:6px}
+.s6_stage .round .card .line{font-size:9.5px;color:#94a3b8;line-height:1.5}
+.s6_stage .round .card .line.pred{color:#0D9488;font-style:italic;margin-top:4px;font-size:9px}
+.s6_stage .arrow-zone{width:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative;height:2px;background:transparent}
+.s6_stage .arrow-zone::before{content:'';position:absolute;left:0;height:2px;width:0;background:#475569;border-radius:1px}
+.s6_stage .arrow-zone::after{content:'';position:absolute;right:0;width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:0 solid #475569;opacity:0}
+.s6_stage .verify .result{opacity:0;transform:translateX(8px);font-size:10px;line-height:1.8;display:flex;align-items:center;gap:4px}
+.s6_stage .verify .result .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.s6_stage .verify .result.pass{color:#10B981}
+.s6_stage .verify .result.pass .dot{background:#10B981}
+.s6_stage .verify .result.fail{color:#EF4444}
+.s6_stage .verify .result.fail .dot{background:#EF4444}
+.s6_stage .verdict{opacity:0;margin-top:8px;font-size:10px;font-weight:700;color:#10B981;border-top:1px solid #475569;padding-top:6px}
+/* Animations */
+.s6_stage.visible .round:first-child{animation:s6pop .5s .2s both}
+.s6_stage.visible .arrow-zone::before{animation:s6draw .4s .8s both}
+.s6_stage.visible .arrow-zone::after{animation:s6arrow .2s 1.2s both}
+.s6_stage.visible .round:last-child{animation:s6pop .4s 1.3s both}
+.s6_stage.visible .verify .result:nth-child(1){animation:s6slide .3s 1.7s both}
+.s6_stage.visible .verify .result:nth-child(2){animation:s6slide .3s 2.0s both}
+.s6_stage.visible .verify .result:nth-child(3){animation:s6slide .3s 2.3s both}
+.s6_stage.visible .verdict{animation:s6fade .4s 2.7s both}
+@keyframes s6pop{to{opacity:1;transform:translateY(0)}}
+@keyframes s6draw{to{width:100%}}
+@keyframes s6arrow{to{opacity:1;border-left:7px solid #475569}}
+@keyframes s6slide{to{opacity:1;transform:translateX(0)}}
+@keyframes s6fade{to{opacity:1}}
+
+/* === S7 Animation === */
+
+.s7_stage{max-width:360px;background:#1E293B;border-radius:12px;padding:20px;font-family:system-ui,sans-serif;color:#e2e8f0}
+.s7_stage .s7_title{font-size:13px;color:#94a3b8;margin-bottom:16px;text-align:center;opacity:0;transition:opacity .4s}
+.s7_stage.visible .s7_title{opacity:1}
+.s7_stage .s7_row{display:flex;align-items:center;margin-bottom:8px;gap:8px}
+.s7_stage .s7_label{font-size:11px;min-width:78px;text-align:right;white-space:nowrap;color:#94a3b8;opacity:0;transform:translateX(-10px);transition:opacity .3s,transform .3s}
+.s7_stage.visible .s7_label{opacity:1;transform:translateX(0)}
+.s7_stage .s7_track{flex:1;height:22px;background:#0f172a;border-radius:4px;overflow:hidden;position:relative}
+.s7_stage .s7_bar{height:100%;border-radius:4px;width:0;transition:width 1s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;justify-content:flex-end;padding-right:6px;font-size:10px;font-weight:600;color:#fff;white-space:nowrap}
+.s7_stage .s7_bar.gray{background:#475569}
+.s7_stage .s7_bar.slate{background:linear-gradient(90deg,#475569,#64748b)}
+.s7_stage .s7_bar.teal{background:linear-gradient(90deg,#0D9488,#14b8a6);box-shadow:0 0 12px rgba(13,148,136,.6),0 0 24px rgba(13,148,136,.3)}
+.s7_stage.visible .s7_r1 .s7_bar{width:61%;transition-delay:.2s}
+.s7_stage.visible .s7_r2 .s7_bar{width:82%;transition-delay:.35s}
+.s7_stage.visible .s7_r3 .s7_bar{width:89%;transition-delay:.5s}
+.s7_stage.visible .s7_r4 .s7_bar{width:90%;transition-delay:.65s}
+.s7_stage.visible .s7_r5 .s7_bar{width:93%;transition-delay:.8s}
+.s7_stage.visible .s7_r6 .s7_bar{width:94%;transition-delay:.95s}
+.s7_stage.visible .s7_r7 .s7_bar{width:100%;transition-delay:1.1s}
+.s7_stage.visible .s7_r1 .s7_label{transition-delay:.1s}
+.s7_stage.visible .s7_r2 .s7_label{transition-delay:.25s}
+.s7_stage.visible .s7_r3 .s7_label{transition-delay:.4s}
+.s7_stage.visible .s7_r4 .s7_label{transition-delay:.55s}
+.s7_stage.visible .s7_r5 .s7_label{transition-delay:.7s}
+.s7_stage.visible .s7_r6 .s7_label{transition-delay:.85s}
+.s7_stage.visible .s7_r7 .s7_label{transition-delay:1s}
+.s7_stage .s7_r7 .s7_bar{animation:none}
+.s7_stage.visible .s7_r7 .s7_bar{animation:s7glow 2s ease-in-out 2.2s infinite}
+@keyframes s7glow{
+  0%,100%{box-shadow:0 0 12px rgba(13,148,136,.6),0 0 24px rgba(13,148,136,.3)}
+  50%{box-shadow:0 0 20px rgba(13,148,136,.9),0 0 40px rgba(13,148,136,.5)}
+}
+.s7_stage .s7_badge{text-align:center;margin-top:14px;font-size:11px;color:#0D9488;opacity:0;transform:translateY(8px);transition:opacity .5s,transform .5s;transition-delay:2s}
+.s7_stage.visible .s7_badge{opacity:1;transform:translateY(0)}
+
+/* === S8 Animation === */
+
+.s8_stage{position:relative;max-width:360px;min-height:340px;background:#1E293B;border-radius:12px;font-family:system-ui,sans-serif;overflow:hidden;padding:20px;box-sizing:border-box}
+.s8_stage *{box-sizing:border-box;margin:0;padding:0}
+.s8_top,.s8_bot{opacity:0;transform:translateY(18px);transition:opacity .6s,transform .6s}
+.s8_stage.visible .s8_top{opacity:1;transform:translateY(0);transition-delay:.2s}
+.s8_stage.visible .s8_bot{opacity:1;transform:translateY(0);transition-delay:1.2s}
+.s8_label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+.s8_top .s8_label{color:#10B981}
+.s8_bot .s8_label{color:#EF4444}
+.s8_top{margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid #334155}
+.s8_row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.s8_src{background:#0D9488;color:#fff;font-size:12px;font-weight:600;padding:4px 10px;border-radius:6px;white-space:nowrap}
+.s8_arrow{color:#475569;font-size:14px;flex-shrink:0;opacity:0;transition:opacity .4s}
+.s8_stage.visible .s8_arrow{opacity:1}
+.s8_stage.visible .s8_row:nth-child(2) .s8_arrow{transition-delay:.5s}
+.s8_stage.visible .s8_row:nth-child(3) .s8_arrow{transition-delay:.7s}
+.s8_stage.visible .s8_row:nth-child(4) .s8_arrow{transition-delay:.9s}
+.s8_dest{display:flex;align-items:center;gap:6px}
+.s8_dest span{color:#CBD5E1;font-size:12px}
+.s8_check{color:#10B981;font-weight:700;font-size:13px;opacity:0;transition:opacity .3s}
+.s8_stage.visible .s8_row:nth-child(2) .s8_check{opacity:1;transition-delay:.7s}
+.s8_stage.visible .s8_row:nth-child(3) .s8_check{opacity:1;transition-delay:.9s}
+.s8_stage.visible .s8_row:nth-child(4) .s8_check{opacity:1;transition-delay:1.1s}
+.s8_gain{color:#10B981;font-size:11px;font-weight:600;margin-left:auto;opacity:0;transition:opacity .3s}
+.s8_stage.visible .s8_row:nth-child(2) .s8_gain{opacity:1;transition-delay:.8s}
+.s8_stage.visible .s8_row:nth-child(3) .s8_gain{opacity:1;transition-delay:1s}
+.s8_stage.visible .s8_row:nth-child(4) .s8_gain{opacity:1;transition-delay:1.1s}
+.s8_warn{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:14px}
+.s8_big{color:#EF4444;font-size:28px;font-weight:800;line-height:1.1}
+.s8_big sub{font-size:13px;font-weight:600;vertical-align:baseline}
+.s8_dim{color:#64748B;font-size:12px;margin-top:8px}
+.s8_dim b{color:#94A3B8}
+.s8_bar_wrap{margin-top:10px;display:flex;align-items:center;gap:8px}
+.s8_bar{height:6px;border-radius:3px;width:0;transition:width .8s ease-out}
+.s8_bar.s8_pred{background:#EF4444}
+.s8_bar.s8_rand{background:#475569}
+.s8_stage.visible .s8_bar.s8_pred{width:60%;transition-delay:1.6s}
+.s8_stage.visible .s8_bar.s8_rand{width:28%;transition-delay:1.8s}
+.s8_bar_lbl{color:#94A3B8;font-size:10px;white-space:nowrap;min-width:52px}
+.s8_verdict{color:#EF4444;font-size:11px;font-style:italic;margin-top:10px;opacity:0;transition:opacity .5s}
+.s8_stage.visible .s8_verdict{opacity:1;transition-delay:2.2s}
+
+/* === A1 Animation === */
+
+.a1_stage{position:relative;max-width:360px;height:220px;background:#1E293B;border-radius:12px;padding:32px 16px 36px 38px;box-sizing:border-box;font-family:system-ui,sans-serif;overflow:hidden}
+.a1_stage::before{content:'78%\a76%\a74%\a72%\a70%\a68%';white-space:pre;position:absolute;left:6px;top:28px;font-size:9px;color:#475569;line-height:15.2px}
+.a1_stage .a1_row{display:flex;align-items:flex-end;gap:6px;height:100%;position:relative}
+.a1_stage .a1_bar{position:relative;flex:1;border-radius:3px 3px 0 0;background:#475569;transform-origin:bottom;transform:scaleY(0);transition:transform .4s cubic-bezier(.4,0,.2,1),background .3s}
+.a1_stage .a1_bar span{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:8px;color:#94A3B8;white-space:nowrap;opacity:0;transition:opacity .3s}
+.a1_stage .a1_bar i{position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);font-size:8px;font-style:normal;color:#64748B}
+.a1_stage .a1_bar[data-note]::after{content:attr(data-note);position:absolute;top:-30px;left:50%;transform:translateX(-50%);font-size:7px;color:#0D9488;background:#0D948818;padding:1px 4px;border-radius:3px;white-space:nowrap;opacity:0;transition:opacity .4s .2s}
+/* heights: range 68-78 = 10%. each 1% = 7.6px of 76px usable */
+.a1_stage .b1{height:12.92px}.a1_stage .b2{height:38px}
+.a1_stage .b3{height:45.6px}.a1_stage .b4{height:53.2px}
+.a1_stage .b5{height:53.2px}.a1_stage .b6{height:53.2px}
+.a1_stage .b7{height:60.8px}.a1_stage .b8{height:53.2px}
+.a1_stage .b9{height:53.2px}.a1_stage .b10{height:68.4px}
+.a1_stage .b10{background:#0D9488;box-shadow:0 0 12px #0D948866}
+.a1_stage.visible .a1_bar{transform:scaleY(1)}
+.a1_stage.visible .a1_bar span{opacity:1}
+.a1_stage.visible .a1_bar[data-note]::after{opacity:1}
+.a1_stage.visible .b1{transition-delay:0s}.a1_stage.visible .b1 span{transition-delay:.1s}
+.a1_stage.visible .b2{transition-delay:.15s}.a1_stage.visible .b2 span{transition-delay:.25s}
+.a1_stage.visible .b3{transition-delay:.3s}.a1_stage.visible .b3 span{transition-delay:.4s}
+.a1_stage.visible .b4{transition-delay:.45s}.a1_stage.visible .b4 span{transition-delay:.55s}
+.a1_stage.visible .b5{transition-delay:.6s}.a1_stage.visible .b5 span{transition-delay:.7s}
+.a1_stage.visible .b6{transition-delay:.75s}.a1_stage.visible .b6 span{transition-delay:.85s}
+.a1_stage.visible .b7{transition-delay:.9s}.a1_stage.visible .b7 span{transition-delay:1s}
+.a1_stage.visible .b8{transition-delay:1.05s}.a1_stage.visible .b8 span{transition-delay:1.15s}
+.a1_stage.visible .b9{transition-delay:1.2s}.a1_stage.visible .b9 span{transition-delay:1.3s}
+.a1_stage.visible .b10{transition-delay:1.35s}.a1_stage.visible .b10 span{transition-delay:1.45s}
+.a1_stage .a1_axis{position:absolute;bottom:36px;left:38px;right:16px;height:1px;background:#475569}
+.a1_stage .a1_grid{position:absolute;top:28px;left:38px;right:16px;height:76px;background:repeating-linear-gradient(to bottom,transparent,transparent 14.2px,#47556922 14.2px,#47556922 15.2px)}
+.a1_stage .a1_title{position:absolute;top:8px;left:16px;font-size:10px;color:#94A3B8;letter-spacing:.3px}
+
+/* === A2 Animation === */
+
+.a2_stage{position:relative;max-width:360px;background:#1E293B;border-radius:12px;padding:24px 20px;font-family:system-ui,sans-serif;color:#CBD5E1;overflow:hidden}
+.a2_stage .a2_row{display:flex;align-items:center;margin:6px 0;height:28px;opacity:0}
+.a2_stage .a2_lbl{width:90px;font-size:12px;text-align:right;padding-right:10px;flex-shrink:0;color:#94A3B8}
+.a2_stage .a2_bar_wrap{flex:1;position:relative;height:20px}
+.a2_stage .a2_bar{height:100%;border-radius:3px;width:0;transition:width .8s cubic-bezier(.22,1,.36,1)}
+.a2_stage .a2_val{position:absolute;top:2px;font-size:11px;font-weight:700;opacity:0;transition:opacity .4s .6s}
+.a2_stage .a2_bar.teal{background:#0D9488}
+.a2_stage .a2_bar.red{background:#EF4444}
+.a2_stage .a2_bar.dash{border:2px dashed #475569;background:transparent;box-sizing:border-box}
+.a2_stage .a2_sep{height:1px;background:#475569;margin:10px 0 10px 100px;opacity:0;transition:opacity .4s}
+.a2_stage .a2_callout{text-align:center;font-size:13px;font-weight:700;color:#EF4444;opacity:0;transform:scale(.7);transition:opacity .5s,transform .5s}
+.a2_stage .a2_title{font-size:14px;font-weight:700;color:#E2E8F0;margin-bottom:12px;text-align:center;opacity:0;transition:opacity .5s}
+/* negative bar: anchor from right side of left half */
+.a2_stage .a2_bar_wrap.neg{display:flex;justify-content:flex-end}
+.a2_stage .a2_bar_wrap.neg .a2_val{right:auto;left:auto}
+/* visible triggers */
+.a2_stage.visible .a2_title{opacity:1}
+.a2_stage.visible .r1{opacity:1;transition:opacity .3s .2s}
+.a2_stage.visible .r2{opacity:1;transition:opacity .3s .35s}
+.a2_stage.visible .r3{opacity:1;transition:opacity .3s .5s}
+.a2_stage.visible .r4{opacity:1;transition:opacity .3s .65s}
+.a2_stage.visible .r1 .a2_bar{width:76%;transition-delay:.3s}
+.a2_stage.visible .r2 .a2_bar{width:45%;transition-delay:.45s}
+.a2_stage.visible .r3 .a2_bar{width:30%;transition-delay:.6s}
+.a2_stage.visible .r4 .a2_bar{width:31%;transition-delay:.75s}
+.a2_stage.visible .r1 .a2_val{opacity:1;transition-delay:.9s;left:calc(76% + 6px)}
+.a2_stage.visible .r2 .a2_val{opacity:1;transition-delay:1s;left:calc(45% + 6px)}
+.a2_stage.visible .r3 .a2_val{opacity:1;transition-delay:1.1s;left:calc(30% + 6px)}
+.a2_stage.visible .r4 .a2_val{opacity:1;transition-delay:1.2s;right:calc(31% + 6px)}
+.a2_stage.visible .a2_sep{opacity:1;transition-delay:1.4s}
+.a2_stage.visible .r5{opacity:1;transition:opacity .3s 1.5s}
+.a2_stage.visible .r6{opacity:1;transition:opacity .3s 1.7s}
+.a2_stage.visible .r5 .a2_bar{width:60%;transition-delay:1.6s}
+.a2_stage.visible .r6 .a2_bar{width:50%;transition-delay:1.8s}
+.a2_stage.visible .r5 .a2_val{opacity:1;transition-delay:2.2s;left:calc(60% + 6px)}
+.a2_stage.visible .r6 .a2_val{opacity:1;transition-delay:2.4s;left:calc(50% + 6px)}
+.a2_stage.visible .a2_callout{opacity:1;transform:scale(1);transition-delay:2.7s}
+
+</style>
+
+<meta name="description" content="Coding Agent 在长周期软件工程任务上取得了可衡量的进展——但这种进展不仅依赖于底层语言模型， 同样依赖于模型周围的工程组件 ：塑造工作风格的系统 prompt、暴露文件系统和 shell 的工具、控制上下文和执行的中间件、以及恢复机制。这些模型外部的可编辑组件，被统称为 agent 的 harness 。研究表明， 即使基础模型不变，harnes">
+<link rel="canonical" href="https://chendi.me/readings/agentic-harness/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+<div class="breadcrumb" id="breadcrumb"><span id="bc-text">概览</span></div>
+<button class="back-btn" id="back-btn" onclick="goBack()">←</button>
+
+<div class="layer active" id="layer-overview" data-depth="0">
+
+  <section class="feed-section" style="background:var(--bg-act1);">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT I — 问题</p>
+      <h2 class="big-statement reveal">Harness 决定<br>Agent 上限</h2>
+      <p class="body-text reveal reveal-d1">Coding Agent 在长周期软件工程任务上取得了可衡量的进展——但这种进展不仅依赖于底层语言模型，<span class="hl">同样依赖于模型周围的工程组件</span>：塑造工作风格的系统 prompt、暴露文件系统和 shell 的工具、控制上下文和执行的中间件、以及恢复机制。这些模型外部的可编辑组件，被统称为 agent 的<span class="hl2">harness</span>。研究表明，<span class="hl">即使基础模型不变，harness 设计也能显著改变任务完成率</span>。这意味着 harness 工程是提升 coding agent 的一等公民杠杆——针对一个模型优化的 harness 用在另一个模型上可能表现更差，必须随模型变化而重新适配。</p>
+      <div class="anim-stage reveal reveal-d2" id="s1-anim"><div class="s1_stage">
+  <div class="s1_model">Model</div>
+  <div class="s1_pill s1_p1">Prompt</div>
+  <div class="s1_pill s1_p2">Tools</div>
+  <div class="s1_pill s1_p3">Middleware</div>
+  <div class="s1_pill s1_p4">Memory</div>
+  <div class="s1_eq">=</div>
+  <div class="s1_result">Agent Performance</div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>Coding agents are increasingly deployed on long-horizon software-engineering tasks, with measurable progress on issue resolution over real-world code repositories and multi-step terminal workflows. In practice, such progress relies not only on the underlying language model, but equally on the surrounding engineering components: the system prompt that shapes work style, the tools that expose the file system and shell, and the middleware that controls context, execution, and recovery. This collection of model-external, editable components is collectively referred to as the agent's harness.</p><p>Harness design materially shifts task completion on long-horizon coding benchmarks, even with the base model held fixed, making harness engineering a first-class lever for improving coding agents. Moreover, the optimal harness is model-specific: a harness tuned for one base model often underperforms on another and must be re-adapted as the base model changes.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT I — 瓶颈</p>
+      <h2 class="big-statement reveal">手动调 Harness<br>跟不上了</h2>
+      <p class="body-text reveal reveal-d1">在当前实践中，harness 适配是<span class="hl">手动完成的</span>——开发者检查运行轨迹、识别反复出现的失败模式、手工修改 prompt/tools/middleware/skills。但随着基础模型快速推进，<span class="hl2">模型能力和 harness 跟进之间的差距越来越大</span>。一个直觉的方向是用进化 agent 来自动优化 harness，但现有方法面临两个结构性障碍：第一，<span class="hl">长且无结构的轨迹产生的可操作信号很少</span>；第二，紧耦合的 harness 框架使得超出 prompt 之外的编辑容易出错。这留下了一个核心问题：<span class="hl2">进化 agent 如何能联合且稳定地进化 harness 的所有可编辑组件？</span></p>
+      <div class="anim-stage reveal reveal-d2" id="s2-anim"><div class="s2_stage">
+  <div class="s2_chart">
+    <div class="s2_axis"></div>
+    <div class="s2_axis-y"></div>
+    <div class="s2_gap"></div>
+    <div class="s2_line s2_model">
+      <span class="s2_label s2_lbl-model">Model Capability</span>
+    </div>
+    <div class="s2_line s2_harness">
+      <span class="s2_label s2_lbl-harness">Harness</span>
+    </div>
+    <span class="s2_gap-label" style="top:45%;left:42%">Gap</span>
+  </div>
+  <div class="s2_manual">
+    <span class="s2_icon">🧑‍🔍<span class="s2_strike"></span></span>
+    <span class="s2_manual-text">Manual tuning can't keep up</span>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>In current practice, this adaptation is performed manually—developers inspect trajectories, identify recurring failure patterns, and hand-craft edits across prompts, tools, middleware, and skills. Yet as base models advance rapidly, this manual loop struggles to keep pace, creating a widening gap between model capability and the harness needed to realize it.</p><p>An intuitive direction is to automate this loop with an evolution agent that optimizes harness components based on experience. However, few existing approaches jointly evolve the full set of editable components; most focus on a single component, typically the prompt, skills, or an in-context playbook. Jointly evolving multiple components end-to-end faces two structural obstacles: long, unstructured trajectories yield little actionable signal, and tightly coupled harness frameworks make edits beyond the prompt error-prone.</p><p>This leaves the central question of agent-driven harness evolution open: How can an evolution agent jointly and stably evolve all editable components of a coding agent's harness?</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background:var(--bg-act2);">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT II — 方法</p>
+      <h2 class="big-statement reveal">三支柱：<br>可观测性驱动进化</h2>
+      <p class="body-text reveal reveal-d1">论文的核心洞察是：<span class="hl">瓶颈不在 agent 能力，而在可观测性</span>。一旦进化 agent 获得了结构化的上下文和清晰的行动空间，它就能可靠地收敛到更好的 harness 设计。他们提出了 Agentic Harness Engineering（AHE），一个由三个可观测性支柱驱动的闭环：<span class="hl2">组件可观测性</span>通过解耦的 harness 底座让每个 failure pattern 映射到单个组件文件；<span class="hl2">经验可观测性</span>从数百万 token 的原始轨迹蒸馏出分层证据语料库；<span class="hl2">决策可观测性</span>让每次编辑附带自声明预测，下一轮验证。三根支柱将每次编辑变成可证伪的合约。</p>
+      <div class="anim-stage reveal reveal-d2" id="s3-anim"><div class="s3_stage">
+  <svg viewBox="0 0 360 340" fill="none">
+    <defs>
+      <marker id="s3ah" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <path d="M0 0 L8 3 L0 6Z" fill="#0D9488"/>
+      </marker>
+    </defs>
+    <!-- arrows: n1->n2, n2->n3, n3->n1 -->
+    <path class="s3_arrow s3_a1" d="M160 100 Q100 170 108 230" stroke="#0D9488" stroke-width="2" marker-end="url(#s3ah)"/>
+    <path class="s3_arrow s3_a2" d="M128 268 Q180 300 240 268" stroke="#475569" stroke-width="2" marker-end="url(#s3ah)"/>
+    <path class="s3_arrow s3_a3" d="M262 230 Q270 170 205 100" stroke="#0D9488" stroke-width="2" marker-end="url(#s3ah)"/>
+  </svg>
+  <div class="s3_node s3_n1">
+    <div class="s3_icon">&#128196;</div>
+    <div class="s3_label">Component</div>
+  </div>
+  <div class="s3_node s3_n2">
+    <div class="s3_icon">&#9776;</div>
+    <div class="s3_label">Experience</div>
+  </div>
+  <div class="s3_node s3_n3">
+    <div class="s3_icon">&#10003;</div>
+    <div class="s3_label">Decision</div>
+  </div>
+  <div class="s3_center">
+    <span>AHE Loop</span>
+    <em>observability-driven</em>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>Our central insight is that this question is bottlenecked by observability, not by agent capability: once the evolution agent receives structured context over a clear action space, it can reliably converge on better harness designs. We implement this in Agentic Harness Engineering (AHE), a closed loop driven by three observability pillars: component observability via a decoupled harness that exposes seven editable component types as files, so each failure pattern maps cleanly to a single component class; experience observability via a layered, drill-down evidence corpus distilled from millions of raw trajectory tokens, so the evolver consumes structured root causes rather than raw logs; and decision observability via a change manifest that pairs every edit with a self-declared prediction, later verified against the next round's task-level outcomes, so each edit becomes a falsifiable contract and ineffective ones are reverted at file granularity.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT II — 底座</p>
+      <h2 class="big-statement reveal">组件可观测：<br>解耦的 NexAU</h2>
+      <p class="body-text reveal reveal-d1">AHE 的 harness 基于 NexAU 框架，<span class="hl">将七种正交的组件类型暴露为工作区中的独立文件</span>：system prompt、tool description、tool implementation、middleware、skill、sub-agent configuration、long-term memory。这些组件类型是松耦合的——添加一个 middleware 不需要修改 system prompt，添加一个 skill 不需要动任何 tool。这种解耦实现了<span class="hl2">组件可观测性</span>：每个 failure pattern 映射到一个组件类，进化 agent 的每次 pass-rate 变化都定位到单个文件而非散布在数百行 prompt 中。种子 harness 刻意设计为极简——<span class="hl">只有一个 shell 执行工具，没有 middleware、没有 skill、没有 sub-agent</span>——让 AHE 添加的每个组件都必须从实测中赚取它的位置。</p>
+      <div class="anim-stage reveal reveal-d2" id="s4-anim"><div class="s4_stage visible">
+  <div class="s4_title">Component Observability: Decoupled NexAU</div>
+  <div class="s4_grid">
+    <div class="s4_file">Prompt</div>
+    <div class="s4_file">Tool Desc</div>
+    <div class="s4_file">Tool Impl</div>
+    <div class="s4_file">Middleware</div>
+    <div class="s4_file">Skill</div>
+    <div class="s4_file">Sub-agent</div>
+    <div class="s4_file">Memory</div>
+  </div>
+  <div class="s4_bug">🐛</div>
+  <div class="s4_arrow" style="top:calc(50% - 24px);left:calc(50% - 1px)"></div>
+  <div class="s4_label">Bug → Middleware (1:1)</div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>We instantiate the harness on the NexAU framework, which exposes seven orthogonal component types as explicit files at fixed mount points in a single workspace: system prompt, tool description, tool implementation, middleware, skill, sub-agent configuration, and long-term memory. The component types are loosely coupled, so adding a middleware does not require editing the system prompt, and adding a skill does not require touching any tool.</p><p>This decoupling is what realizes component observability: each failure pattern maps to a single component class, giving the evolve agent a clean action space and localizing every pass-rate change to one file rather than scattering it across hundreds of lines of unstructured prompt prose.</p><p>Our seed harness is deliberately minimal: a single shell-execution tool, no middleware, no skills, no sub-agents. A seed already fitted to the target benchmark would contaminate every subsequent edit's attribution, since we could not tell whether a gain came from the loop or from the seed.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background:var(--bg-act3);">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT II — 蒸馏</p>
+      <h2 class="big-statement reveal">经验可观测：<br>Agent Debugger</h2>
+      <p class="body-text reveal reveal-d1">每轮迭代中，AHE 为基准测试中的每个任务生成 k 条轨迹，这些轨迹可能包含错误——但它们散布在<span class="hl">数百万 token 的原始消息中</span>。为了提取可操作的洞察，他们使用 Agent Debugger 框架：将轨迹重构为<span class="hl2">可导航的、基于文件的环境</span>，每条轨迹消息是独立文件，通过 shell 和脚本工具探索。Debugger 分析每个任务的失败根因或成功模式，产出<span class="hl">per-task 分析报告</span>。然后所有报告被聚合成一份<span class="hl2">benchmark-level 概览</span>，作为进化 agent 每轮的入口。这实现了<span class="hl">经验可观测性</span>——从约 1000 万 token 蒸馏到约 1 万 token 的结构化证据。</p>
+      <div class="anim-stage reveal reveal-d2" id="s5-anim"><div class="s5_stage">
+  <div class="s5_cloud">
+    <div class="s5_label">~10M tokens raw traces</div>
+    <span class="s5_dot" style="top:28px;left:20px"></span><span class="s5_dot" style="top:44px;left:60px"></span>
+    <span class="s5_dot" style="top:32px;left:110px"></span><span class="s5_dot" style="top:55px;left:160px"></span>
+    <span class="s5_dot" style="top:38px;left:210px"></span><span class="s5_dot" style="top:60px;left:250px"></span>
+    <span class="s5_dot" style="top:48px;left:40px"></span><span class="s5_dot" style="top:70px;left:140px"></span>
+    <span class="s5_line" style="top:36px;left:80px;width:22px"></span><span class="s5_line" style="top:52px;left:180px;width:18px"></span>
+    <span class="s5_line" style="top:65px;left:100px;width:26px"></span><span class="s5_line" style="top:42px;left:230px;width:20px"></span>
+  </div>
+  <div class="s5_funnel"><div class="s5_funnel_body"></div></div>
+  <span class="s5_particle" style="left:170px"></span><span class="s5_particle" style="left:178px"></span>
+  <span class="s5_particle" style="left:185px"></span><span class="s5_particle" style="left:174px"></span>
+  <span class="s5_particle" style="left:182px"></span>
+  <div class="s5_output">
+    <div class="s5_label">~10K tokens</div>
+    <div class="s5_bar"></div><div class="s5_bar"></div><div class="s5_bar"></div><div class="s5_bar"></div><div class="s5_bar"></div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>We generate k traces for each task in a benchmark using a harness, which may contain errors resulting from the deficiencies of the harness that can be acted on, but scattered across millions of tokens of raw messages. To extract insights from agent trajectories and enable experience observability, we apply Agent Debugger framework to use an agent to explore trajectories framed as a navigable, file-based environment where each trajectory message lives in its own file and is reached through generic shell and scripting tools.</p><p>Finally, a benchmark-level overview is aggregated from every report into a single document as an entry point for every iteration.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT II — 合约</p>
+      <h2 class="big-statement reveal">决策可观测：<br>可证伪的合约</h2>
+      <p class="body-text reveal reveal-d1">Evolve Agent 在每轮中读取证据语料库，决定添加、修改或删除哪些 harness 组件，并记录每次编辑的理由。两个约束确保<span class="hl">决策可观测性</span>：第一，<span class="hl2">可控性</span>——Evolve Agent 只能在 harness 工作区内写入，runs 目录、tracer、verifier 和 LLM 配置都是只读的，种子 system prompt 标记为不可删除。第二，<span class="hl2">每个变更都是证据驱动的</span>——每次编辑附带一个 manifest 条目，记录失败证据、推断的根因、目标修复，以及<span class="hl">预期影响（预期修复哪些任务 + 预计导致哪些回归）</span>。下一轮中，这些预测与实际的 task-level 变化交叉比对——<span class="hl">每次编辑因此变成了一个可证伪的合约</span>，无效编辑在文件粒度被回滚。</p>
+      <div class="anim-stage reveal reveal-d2" id="s6-anim"><div class="s6_stage">
+  <div class="round">
+    <div class="label">Round N</div>
+    <div class="card">
+      <div class="title">Edit #42</div>
+      <div class="line">Fix task A, B</div>
+      <div class="line pred">Prediction: A fixed, B fixed. Risk: task C may regress.</div>
+    </div>
+  </div>
+  <div class="arrow-zone"></div>
+  <div class="round">
+    <div class="label">Round N+1</div>
+    <div class="card verify">
+      <div class="title">Verification</div>
+      <div class="result pass"><span class="dot"></span>A: Fixed ✓</div>
+      <div class="result pass"><span class="dot"></span>B: Fixed ✓</div>
+      <div class="result fail"><span class="dot"></span>C: Regressed ✗</div>
+      <div class="verdict">→ Keep edit</div>
+    </div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>The Evolve Agent closes the AHE loop. In each round it reads the layered evidence corpus produced by the Agent Debugger, decides which harness components to add, modify, or remove, applies those edits to the workspace, and records the reasoning behind every edit. Two constraints govern these edits, and together they realize decision observability.</p><p>The first constraint is controllability: the Evolve Agent writes only inside the harness workspace, while the runs directory, tracer, verifier, and LLM configuration are read-only, and the seed system prompt is marked non-deletable.</p><p>The second constraint is that every change is evidence-driven and ships with a recorded prediction. Each edit attaches a manifest entry that names the failure evidence, the inferred root cause, the targeted fix, and a predicted impact comprising both expected fixes and at-risk regressions. In the next round, the loop intersects the predicted-fix and predicted-regression sets with the observed task-level deltas to produce a per-edit verdict. Each edit thereby becomes falsifiable by the next evaluation, which replaces rationale-driven self-justification with a measurable contract between rounds.</p></div>
+      </div>
+      <p class="hook-line reveal reveal-d3">10 轮迭代的进化曲线长什么样？每个组件贡献了多少？↓</p>
+      <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-details')">深入看数据 ↓</button>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background:var(--bg-act1);">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT III — 结果</p>
+      <h2 class="big-statement reveal">69.7% → 77.0%<br>超越人类设计</h2>
+      <p class="body-text reveal reveal-d1">在 Terminal-Bench 2 的 89 个任务上，AHE 从只有 bash 工具的极简种子 NexAU₀（69.7%）出发，<span class="hl">经过 10 轮自动进化达到 77.0% pass@1</span>。这超过了三个人类设计的 harness：opencode（47.2%）、terminus-2（62.9%）、<span class="hl2">Codex-CLI（71.9%）</span>，也超过了两个自进化基线 ACE（68.9%）和 TF-GRPO（72.3%）。按难度看，AHE 在 Easy 和 Medium 上达到 100.0% 和 88.2%。而其他纯 prompt 自进化方法（ACE/TF-GRPO）之所以落后，是因为它们<span class="hl">只编辑 prompt，从未触及 tools、middleware 和 long-term memory</span>——恰恰是 AHE 增益最大的组件。</p>
+      <div class="anim-stage reveal reveal-d2" id="s7-anim"><div class="s7_stage">
+  <div class="s7_title">Terminal-Bench 2 — Pass Rate (%)</div>
+  <div class="s7_row s7_r1"><span class="s7_label">opencode</span><div class="s7_track"><div class="s7_bar gray">47.2%</div></div></div>
+  <div class="s7_row s7_r2"><span class="s7_label">terminus-2</span><div class="s7_track"><div class="s7_bar gray">62.9%</div></div></div>
+  <div class="s7_row s7_r3"><span class="s7_label">ACE</span><div class="s7_track"><div class="s7_bar gray">68.9%</div></div></div>
+  <div class="s7_row s7_r4"><span class="s7_label">NexAU₀</span><div class="s7_track"><div class="s7_bar slate">69.7%</div></div></div>
+  <div class="s7_row s7_r5"><span class="s7_label">Codex-CLI</span><div class="s7_track"><div class="s7_bar slate">71.9%</div></div></div>
+  <div class="s7_row s7_r6"><span class="s7_label">TF-GRPO</span><div class="s7_track"><div class="s7_bar slate">72.3%</div></div></div>
+  <div class="s7_row s7_r7"><span class="s7_label">AHE</span><div class="s7_track"><div class="s7_bar teal">77.0%</div></div></div>
+  <div class="s7_badge">69.7% → 77.0% · Surpassing human design</div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>We empirically validate AHE on Terminal-Bench 2: ten iterations lift pass@1 from 69.7% to 77.0%, surpassing the human-designed Codex CLI and the self-evolving baselines ACE and TF-GRPO.</p><p>AHE outperforms both human-designed and self-evolve baselines. AHE outperforms every baseline on our panel: three human-designed harnesses, opencode, terminus-2, and Codex-CLI, and the two self-evolve baselines ACE and TF-GRPO. Figure 1 shows the gain accumulates across iterations, with continued evolution pushing pass@1 further above the NexAU₀ seed.</p><p>Prompt-only self-evolution misses the components that carry AHE's gain. The gaps to ACE and TF-GRPO trace to a layer mismatch. ACE distills natural-language playbooks the agent reads in-context, and TF-GRPO is a trajectory-feedback variant of GRPO that reinforces successful tool sequences; starting from the same NexAU₀ seed as AHE, neither method opens the surrounding scaffolding to edits. AHE jointly evolves system prompt, tools, middleware, and long-term memory across iterations.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT IV — 迁移与局限</p>
+      <h2 class="big-statement reveal">冻结迁移<br>与回归盲区</h2>
+      <p class="body-text reveal reveal-d1">AHE 的 harness 在 GPT-5.4 high 上针对 Terminal-Bench 2 进化。但<span class="hl">冻结的 harness 直接迁移到了 SWE-bench-verified</span>（500 个任务、7 个仓库），不做任何 re-evolution，aggregate 成功率达到 75.6%，同时比 NexAU₀ 种子<span class="hl2">少用 12% 的 token</span>。跨模型迁移到 5 个不同的基础模型也全部获得正增益（+2.3 到 +10.1 pp），离 saturation 越远的模型增益越大——说明 AHE 编码的是<span class="hl">通用的工程协调模式</span>，而非 benchmark 特定的窍门。不过论文也坦诚指出一个关键弱点：<span class="hl2">AHE 的回归预测精度只有 11.8%</span>（仅比随机高 2 倍），意味着大部分即将发生的回归无法被预见——这是未来自进化循环最需要改进的方向。</p>
+      <div class="anim-stage reveal reveal-d2" id="s8-anim"><div class="s8_stage">
+  <div class="s8_top">
+    <div class="s8_label">Transfer</div>
+    <div class="s8_row"><div class="s8_src">Terminal-Bench</div></div>
+    <div class="s8_row">
+      <span class="s8_arrow">&#8594;</span>
+      <div class="s8_dest"><span>SWE-bench</span><span class="s8_check">&#10003;</span></div>
+      <span class="s8_gain">+2.3 pp</span>
+    </div>
+    <div class="s8_row">
+      <span class="s8_arrow">&#8594;</span>
+      <div class="s8_dest"><span>5 models</span><span class="s8_check">&#10003;</span></div>
+      <span class="s8_gain">+10.1 pp</span>
+    </div>
+    <div class="s8_row">
+      <span class="s8_arrow">&#8594;</span>
+      <div class="s8_dest"><span>Frozen harness</span><span class="s8_check">&#10003;</span></div>
+      <span class="s8_gain">generalizes</span>
+    </div>
+  </div>
+  <div class="s8_bot">
+    <div class="s8_label">Regression Blindness</div>
+    <div class="s8_warn">
+      <div class="s8_big">11.8<sub>%</sub> <sub>precision</sub></div>
+      <div class="s8_dim">vs Random: <b>5.6%</b></div>
+      <div class="s8_bar_wrap">
+        <span class="s8_bar_lbl">Predicted</span>
+        <div class="s8_bar s8_pred"></div>
+      </div>
+      <div class="s8_bar_wrap">
+        <span class="s8_bar_lbl">Random</span>
+        <div class="s8_bar s8_rand"></div>
+      </div>
+      <div class="s8_verdict">Only ~2x better than random guessing</div>
+    </div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>Without further evolution, the frozen harness transfers to SWE-bench-verified it tops aggregate success at 12% fewer tokens than the seed, and on Terminal-Bench 2 it yields +5.1 to +10.1 pp cross-family gains across three alternate model families, indicating the evolved components encode general engineering experience rather than benchmark-specific tuning.</p><p>Cross-family gains dominate within-family ones: deepseek-v4-flash moves +10.1 pp from 51.7% to 61.8%, qwen-3.6-plus +6.3 pp from 56.2% to 62.5%, and gemini-3.1-flash-lite-preview +5.1 pp from 36.5% to 41.6%.</p><p>Regression blindness. The regression panel tells the opposite story: cross-iteration regression-precision of 11.8% and regression-recall of 11.1% sit only about 2x above their random baselines of 5.6% and 5.4%, so most upcoming regressions go unforeseen. The agent can justify why an edit should help, but it cannot reliably name the tasks the same edit is about to break, which is what produces the non-monotone steps in the evolution curve.</p></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ 深入数据层 ═══ -->
+<div class="layer" id="layer-details" data-depth="1">
+
+  <section class="feed-section" style="background:var(--bg-act3);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">进化曲线：<br>10 轮关键编辑</h2>
+      <p class="body-text reveal reveal-d1">10 轮进化并非单调上升——每轮都可能引入回归。但从整体趋势看，<span class="hl">best-so-far 从 69.7% 一路攀升到 77.0%</span>。论文标注了 4 个里程碑编辑：第 2 轮的<span class="hl2">「contract-first workflow + 可调 shell timeout」</span>（prompt + tool）从种子起跳；第 4 轮的<span class="hl2">「publish-state guard」</span>（prompt + tool）保护验证后的状态不被破坏；第 5 轮的<span class="hl2">「cross-step risk monitor」</span>（middleware）通过观察命令序列发现潜在风险；第 7 轮的<span class="hl2">「post-success hard-block + pre-turn risk salience」</span>（tool + middleware）阻止成功后的意外覆写。每次增益都精确归因到具体的组件文件。</p>
+      <div class="anim-stage reveal reveal-d2" id="a1-anim"><div class="a1_stage">
+  <span class="a1_title">Evolution curve — 10 rounds</span>
+  <div class="a1_grid"></div>
+  <div class="a1_axis"></div>
+  <div class="a1_row">
+    <div class="a1_bar b1"><span>69.7</span><i>1</i></div>
+    <div class="a1_bar b2" data-note="+CoT fix"><span>73.0</span><i>2</i></div>
+    <div class="a1_bar b3"><span>74.0</span><i>3</i></div>
+    <div class="a1_bar b4" data-note="Schema v2"><span>75.0</span><i>4</i></div>
+    <div class="a1_bar b5" data-note="Retry loop"><span>75.0</span><i>5</i></div>
+    <div class="a1_bar b6"><span>75.0</span><i>6</i></div>
+    <div class="a1_bar b7" data-note="Prompt trim"><span>76.0</span><i>7</i></div>
+    <div class="a1_bar b8"><span>75.0</span><i>8</i></div>
+    <div class="a1_bar b9"><span>75.0</span><i>9</i></div>
+    <div class="a1_bar b10"><span>77.0</span><i>10</i></div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>Figure 1: AHE evolves a bash-only seed past every human-designed and self-evolving baseline on Terminal-Bench 2. All three role agents share one base model, isolating the gain to harness edits rather than analyzer or editor capability.</p><p>The gain accumulates across iterations, with continued evolution pushing pass@1 further above the NexAU₀ seed. By difficulty, the only exception is the Hard tier, where AHE marginally trails Codex-CLI.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">组件消融：<br>增益在哪里</h2>
+      <p class="body-text reveal reveal-d1">论文做了组件级消融：将 NexAU₀ 种子替换为 AHE 完整配置中的单个组件，其余三个保持种子默认。<span class="hl">Memory 单独贡献 +5.6 pp</span>（添加了 12 条边界案例经验），<span class="hl2">Tools 贡献 +3.3 pp</span>（1364 行的智能 shell 自动显示文件 hint），<span class="hl2">Middleware 贡献 +2.2 pp</span>（finish-hook 强制 evaluator closure check）。但令人意外的是，<span class="hl">System Prompt 单独贡献 -2.3 pp</span>——因为 79 行的 prompt 编码了依赖其他三个组件的纪律，单独插入反而有害。三个正增益组件之和（+11.1 pp）超过了完整 AHE 的 +7.3 pp，说明<span class="hl2">组件之间非加性交互</span>，叠加时会在同类验证步骤上产生冗余消耗。</p>
+      <div class="anim-stage reveal reveal-d2" id="a2-anim"><div class="a2_stage">
+  <div class="a2_title">Component Ablation: Where the Gain Lives</div>
+  <div class="a2_row r1">
+    <span class="a2_lbl">Memory</span>
+    <div class="a2_bar_wrap"><div class="a2_bar teal"></div><span class="a2_val" style="color:#0D9488">+5.6pp</span></div>
+  </div>
+  <div class="a2_row r2">
+    <span class="a2_lbl">Tools</span>
+    <div class="a2_bar_wrap"><div class="a2_bar teal"></div><span class="a2_val" style="color:#0D9488">+3.3pp</span></div>
+  </div>
+  <div class="a2_row r3">
+    <span class="a2_lbl">Middleware</span>
+    <div class="a2_bar_wrap"><div class="a2_bar teal"></div><span class="a2_val" style="color:#0D9488">+2.2pp</span></div>
+  </div>
+  <div class="a2_row r4">
+    <span class="a2_lbl">Prompt</span>
+    <div class="a2_bar_wrap neg"><div class="a2_bar red"></div><span class="a2_val" style="color:#EF4444">−2.3pp</span></div>
+  </div>
+  <div class="a2_sep"></div>
+  <div class="a2_row r5">
+    <span class="a2_lbl">Sum</span>
+    <div class="a2_bar_wrap"><div class="a2_bar dash"></div><span class="a2_val" style="color:#475569">+8.8pp</span></div>
+  </div>
+  <div class="a2_row r6">
+    <span class="a2_lbl">AHE Full</span>
+    <div class="a2_bar_wrap"><div class="a2_bar teal"></div><span class="a2_val" style="color:#0D9488">+7.3pp</span></div>
+  </div>
+  <div class="a2_callout">Non-additive! Components interact.</div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>Table 3 decomposes the AHE gain at the component level. Each "+ X only" row takes the NexAU₀ seed and swaps in one component from the fully evolved AHE configuration, namely long-term memory, tools, middleware, or system prompt, leaving the other three at their seed defaults. Three of the four single-component variants outperform the seed; the system-prompt swap is the only regression.</p><p>Each component owns a different failure surface. Memory adds 12 boundary-case lessons; on Hard the lessons lift it above full AHE, while on Easy they reduce to superfluous re-verification. Tools become a 1364-line shell that auto-surfaces contract hints from files near each command. Middleware adds a finish-hook that forces one evaluator-isomorphic closure check.</p><p>Components interact non-additively, capping the aggregate gain. The three positive single-component gains sum to +11.1 pp against full AHE's +7.3 pp, and on Hard the memory-only variant exceeds full AHE: memory, middleware, and the system prompt all push toward the same closure-style verification, so stacking them spends turns on redundant re-checks within the long-horizon budget.</p></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="page-dots" id="page-dots"></div>
+
+<script>
+var layerStack = ['layer-overview'];
+var transitioning = false;
+var layerNames = { 'layer-overview': '概览', 'layer-details': '深入数据' };
+var observers = new Map();
+
+function drillDown(targetId) {
+  if (transitioning) return;
+  transitioning = true;
+  var current = document.getElementById(layerStack[layerStack.length - 1]);
+  var target = document.getElementById(targetId);
+  layerStack.push(targetId);
+  target.scrollTop = 0;
+  current.classList.remove('active');
+  target.classList.add('active');
+  updateBreadcrumb();
+  setupObserver(target);
+  buildDots(target);
+  setTimeout(function(){ transitioning = false; }, 600);
+}
+function goBack() {
+  if (transitioning || layerStack.length <= 1) return;
+  transitioning = true;
+  var current = document.getElementById(layerStack.pop());
+  var parent = document.getElementById(layerStack[layerStack.length - 1]);
+  current.classList.remove('active');
+  parent.classList.add('active');
+  updateBreadcrumb();
+  buildDots(parent);
+  setTimeout(function(){ transitioning = false; }, 600);
+}
+function updateBreadcrumb() {
+  var bc = document.getElementById('bc-text');
+  var backBtn = document.getElementById('back-btn');
+  if (layerStack.length <= 1) {
+    bc.innerHTML = layerNames[layerStack[0]] || '概览';
+    backBtn.style.display = 'none';
+    document.getElementById('breadcrumb').style.left = '12px';
+  } else {
+    var parts = layerStack.map(function(id){ return layerNames[id] || id; });
+    bc.innerHTML = parts.join(' <span class="sep">›</span> ');
+    backBtn.style.display = 'flex';
+    document.getElementById('breadcrumb').style.left = '56px';
+  }
+}
+function setupObserver(layer) {
+  if (observers.has(layer.id)) return;
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) e.target.classList.add('visible');
+    });
+  }, { root: layer, threshold: 0.15 });
+  layer.querySelectorAll('.reveal, [class*="_stage"]').forEach(function(el){ obs.observe(el); });
+  observers.set(layer.id, obs);
+}
+function buildDots(layer) {
+  var container = document.getElementById('page-dots');
+  var sections = layer.querySelectorAll('section');
+  container.innerHTML = '';
+  sections.forEach(function(_, i) {
+    var d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    container.appendChild(d);
+  });
+  var dotObs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        var idx = Array.from(sections).indexOf(e.target);
+        container.querySelectorAll('.dot').forEach(function(d, j) {
+          d.classList.toggle('active', j === idx);
+        });
+      }
+    });
+  }, { root: layer, threshold: 0.5 });
+  sections.forEach(function(s){ dotObs.observe(s); });
+}
+function toggleSource(btn) {
+  btn.classList.toggle('open');
+  var body = btn.nextElementSibling;
+  body.style.display = body.style.display === 'block' ? 'none' : 'block';
+}
+setupObserver(document.getElementById('layer-overview'));
+buildDots(document.getElementById('layer-overview'));
+</script>
+</body>
+</html>

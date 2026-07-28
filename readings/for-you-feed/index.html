@@ -1,0 +1,2808 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>客厅里的推荐算法：72000人的 For You Feed</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #EEF2FF; --bg-act2: #ECFDF5; --bg-act3: #F0F9FF;
+  --bg-dark: #0C0F1A; --bg-close: #111827;
+  --text: #1E293B; --text-muted: #64748B; --dim: #94A3B8;
+  --accent: #6366F1; --accent2: #10B981;
+  --warm: #F59E0B; --danger: #EF4444;
+  --neutral: #94A3B8;
+  --card-bg: #FFFFFF;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Noto Sans SC', -apple-system, sans-serif; color: var(--text); }
+
+.layer { position: fixed; inset: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; visibility: hidden; opacity: 0; will-change: transform, opacity; scroll-snap-type: y proximity; }
+.layer.active { visibility: visible; opacity: 1; }
+
+.feed-section { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 80px 24px; scroll-snap-align: start; }
+.feed-section.dark { background: var(--bg-dark); color: #F1F5F9; }
+.feed-section.dark .body-text { color: #94A3B8; }
+.feed-section.dark .big-statement { color: #F1F5F9; }
+.section-inner { max-width: 600px; width: 100%; }
+
+.big-statement { font-family: 'Noto Serif SC', serif; font-size: clamp(22px, 5.5vw, 32px); font-weight: 700; line-height: 1.5; margin-bottom: 32px; }
+.body-text { font-size: 16px; line-height: 1.9; color: var(--text); margin-bottom: 28px; }
+.body-text .hl { color: var(--accent); font-weight: 500; }
+.body-text .hl2 { color: var(--accent2); font-weight: 500; }
+.body-text .hl-danger { color: var(--danger); font-weight: 500; }
+
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-d1 { transition-delay: 0.15s; }
+.reveal-d2 { transition-delay: 0.3s; }
+.reveal-d3 { transition-delay: 0.45s; }
+.reveal-d4 { transition-delay: 0.6s; }
+
+.breadcrumb { position: fixed; top: 16px; left: 16px; z-index: 1000; display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.92); backdrop-filter: blur(12px); padding: 8px 14px; border-radius: 10px; box-shadow: 0 2px 16px rgba(0,0,0,0.1); font-size: 13px; font-weight: 500; }
+.breadcrumb span { color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
+.breadcrumb span:hover { color: var(--accent); }
+.breadcrumb span.current { color: var(--text); cursor: default; }
+.breadcrumb .sep { color: #CBD5E1; margin: 0 2px; cursor: default; }
+
+.back-btn { position: fixed; top: 16px; left: 16px; z-index: 1001; width: 38px; height: 38px; border-radius: 10px; border: none; background: rgba(255,255,255,0.92); backdrop-filter: blur(12px); box-shadow: 0 2px 12px rgba(0,0,0,0.1); font-size: 18px; cursor: pointer; display: none; align-items: center; justify-content: center; color: var(--text); transition: all 0.2s; }
+.back-btn:hover { background: var(--accent); color: #fff; }
+
+.depth-dots { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1000; display: flex; gap: 8px; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px); padding: 8px 14px; border-radius: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #CBD5E1; transition: all 0.3s; }
+.dot.active { background: var(--accent); box-shadow: 0 0 8px rgba(99,102,241,0.5); transform: scale(1.2); }
+
+.drill-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border: 1.5px solid rgba(99,102,241,0.3); border-radius: 10px; background: transparent; color: var(--accent); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.25s; position: relative; z-index: 10; }
+.drill-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
+.dark .drill-btn { border-color: rgba(129,140,248,0.4); color: #818CF8; }
+.dark .drill-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.source-panel { margin-top: 24px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(99,102,241,0.15); background: rgba(99,102,241,0.03); }
+.dark .source-panel { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
+.source-toggle { width: 100%; padding: 12px 16px; border: none; background: none; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--accent); }
+.dark .source-toggle { color: #818CF8; }
+.source-toggle:hover { background: rgba(99,102,241,0.06); }
+.source-toggle .arrow { transition: transform 0.3s; font-size: 11px; }
+.source-toggle.open .arrow { transform: rotate(90deg); }
+.source-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; padding: 0 16px; }
+.source-body.open { max-height: 2000px; padding: 0 16px 16px; overflow-y: auto; }
+.source-body p { font-size: 13px; line-height: 1.8; color: var(--text-muted); margin: 0 0 12px; white-space: pre-wrap; }
+.dark .source-body p { color: #94A3B8; }
+.source-body .source-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 8px; display: block; }
+
+.anim-stage { pointer-events: none; margin: 24px 0; min-height: 80px; }
+.anim-stage > div{ width:100%; }
+.hook-line { font-size: 15px; color: var(--accent); font-weight: 500; margin: 16px 0 8px; line-height: 1.6; }
+.dark .hook-line { color: #818CF8; }
+.section-tag { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+.dark .section-tag { color: #818CF8; }
+
+
+/* === S1 Animation === */
+
+.s1_stage {
+  position: relative;
+  width: 340px;
+  height: 250px;
+  background: #0C0F1A;
+  overflow: hidden;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* 客厅圆角方框 */
+.s1_room {
+  position: absolute;
+  left: 10px;
+  top: 60px;
+  width: 120px;
+  height: 120px;
+  border: 2px solid #6366F1;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.s1_stage.visible .s1_room {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.s1_room_label {
+  color: #E2E8F0;
+  font-size: 48px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.s1_pc {
+  width: 24px;
+  height: 18px;
+  background: #6366F1;
+  border-radius: 2px;
+  position: relative;
+}
+
+.s1_pc::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 5px;
+  width: 14px;
+  height: 3px;
+  background: #6366F1;
+  border-radius: 1px;
+}
+
+/* 连接线 */
+.s1_line {
+  position: absolute;
+  left: 134px;
+  top: 120px;
+  width: 0;
+  height: 2px;
+  background: #94A3B8;
+  transition: width 0.6s ease 0.6s, background-color 0.4s ease 2.0s;
+}
+
+.s1_stage.visible .s1_line {
+  width: 60px;
+}
+
+.s1_stage.visible .s1_line.s1_line_active {
+  background: #10B981;
+}
+
+/* 价格标签 */
+.s1_price {
+  position: absolute;
+  left: 140px;
+  top: 98px;
+  color: #10B981;
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  white-space: nowrap;
+}
+
+.s1_stage.visible .s1_price {
+  opacity: 1;
+  transition-delay: 2.2s;
+}
+
+/* 用户扇形点阵 */
+.s1_users_group {
+  position: absolute;
+  left: 194px;
+  top: 50px;
+  width: 130px;
+  height: 150px;
+}
+
+.s1_dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #94A3B8;
+  border-radius: 50%;
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.s1_stage.visible .s1_dot { opacity: 1; transform: scale(1); }
+.s1_stage.visible .s1_dot:nth-child(1) { transition-delay: 1.4s; }
+.s1_stage.visible .s1_dot:nth-child(2) { transition-delay: 1.5s; }
+.s1_stage.visible .s1_dot:nth-child(3) { transition-delay: 1.6s; }
+.s1_stage.visible .s1_dot:nth-child(4) { transition-delay: 1.7s; }
+.s1_stage.visible .s1_dot:nth-child(5) { transition-delay: 1.8s; }
+.s1_stage.visible .s1_dot:nth-child(6) { transition-delay: 1.9s; }
+.s1_stage.visible .s1_dot:nth-child(7) { transition-delay: 2.0s; }
+.s1_stage.visible .s1_dot:nth-child(8) { transition-delay: 2.1s; }
+
+/* 扇形排列: arc from line endpoint, fanning right */
+.s1_dot:nth-child(1) { left: 10px; top: 18px; }
+.s1_dot:nth-child(2) { left: 28px; top: 6px; }
+.s1_dot:nth-child(3) { left: 48px; top: 2px; }
+.s1_dot:nth-child(4) { left: 68px; top: 6px; }
+.s1_dot:nth-child(5) { left: 82px; top: 20px; }
+.s1_dot:nth-child(6) { left: 88px; top: 40px; }
+.s1_dot:nth-child(7) { left: 82px; top: 60px; }
+.s1_dot:nth-child(8) { left: 68px; top: 74px; }
+
+/* Faint radial lines from arc center to dots */
+.s1_ray {
+  position: absolute;
+  left: 0;
+  top: 70px;
+  width: 1px;
+  height: 1px;
+  transform-origin: 0 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.s1_stage.visible .s1_ray { opacity: 0.25; }
+.s1_stage.visible .s1_ray:nth-child(9)  { transition-delay: 1.4s; }
+.s1_stage.visible .s1_ray:nth-child(10) { transition-delay: 1.5s; }
+.s1_stage.visible .s1_ray:nth-child(11) { transition-delay: 1.6s; }
+.s1_stage.visible .s1_ray:nth-child(12) { transition-delay: 1.7s; }
+.s1_stage.visible .s1_ray:nth-child(13) { transition-delay: 1.8s; }
+.s1_stage.visible .s1_ray:nth-child(14) { transition-delay: 1.9s; }
+.s1_stage.visible .s1_ray:nth-child(15) { transition-delay: 2.0s; }
+.s1_stage.visible .s1_ray:nth-child(16) { transition-delay: 2.1s; }
+
+.s1_users_label {
+  position: absolute;
+  left: 30px;
+  top: 90px;
+  color: #94A3B8;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.4s ease 2.3s;
+  white-space: nowrap;
+}
+
+.s1_stage.visible .s1_users_label {
+  opacity: 1;
+}
+
+
+/* === S2 Animation === */
+
+.s2_stage {
+  width: 340px;
+  height: 260px;
+  background: #F0F0FF;
+  border-radius: 12px;
+  position: relative;
+  margin: 0 auto;
+  overflow: hidden;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* Circles */
+.s2_circle {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  font-weight: 700;
+  opacity: 0;
+  transform: scale(0.7);
+}
+.s2_you {
+  top: 20px;
+  left: 36px;
+  background: #6366F1;
+  color: #fff;
+}
+.s2_him {
+  top: 20px;
+  right: 36px;
+  background: #94A3B8;
+  color: #fff;
+}
+
+/* Post boxes */
+.s2_post {
+  position: absolute;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 600;
+  opacity: 0;
+  transform: scale(0.7);
+  white-space: nowrap;
+  background: #D1FAE5;
+  border: 2px solid #10B981;
+  color: #065F46;
+}
+.s2_postA {
+  top: 148px;
+  left: 110px;
+}
+.s2_postB {
+  top: 148px;
+  right: 32px;
+}
+
+/* SVG overlay */
+.s2_svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 340px;
+  height: 260px;
+  pointer-events: none;
+}
+.s2_link_solid {
+  stroke: #94A3B8;
+  stroke-width: 2;
+  fill: none;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+}
+.s2_link_dash {
+  stroke: #6366F1;
+  stroke-width: 2;
+  fill: none;
+  stroke-dasharray: 6 4;
+  opacity: 0;
+}
+
+/* Recommend label */
+.s2_rec_label {
+  position: absolute;
+  top: 112px;
+  left: 140px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6366F1;
+  opacity: 0;
+  white-space: nowrap;
+  background: #F0F0FF;
+  padding: 0 4px;
+}
+
+/* Keyframes */
+@keyframes s2_scaleIn {
+  0% { opacity: 0; transform: scale(0.7); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes s2_fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes s2_drawLine {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes s2_pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Step 1 (0.2s): "你" */
+.visible .s2_you {
+  animation: s2_scaleIn 0.5s ease-out 0.2s forwards;
+}
+/* Step 2 (0.8s): "帖子A" + line */
+.visible .s2_postA {
+  animation: s2_scaleIn 0.4s ease-out 0.8s forwards;
+}
+.visible .s2_line_you_a {
+  animation: s2_drawLine 0.5s ease-out 1.0s forwards;
+}
+/* Step 3 (1.5s): "他" */
+.visible .s2_him {
+  animation: s2_scaleIn 0.5s ease-out 1.5s forwards;
+}
+/* Step 4 (2.2s): him -> postA */
+.visible .s2_line_him_a {
+  animation: s2_drawLine 0.5s ease-out 2.2s forwards;
+}
+/* Step 5 (2.9s): "帖子B" + him->B */
+.visible .s2_postB {
+  animation: s2_scaleIn 0.4s ease-out 2.9s forwards;
+}
+.visible .s2_line_him_b {
+  animation: s2_drawLine 0.5s ease-out 3.1s forwards;
+}
+/* Step 6 (3.7s): dashed line + label */
+.visible .s2_link_dash {
+  animation: s2_fadeIn 0.6s ease-out 3.7s forwards;
+}
+.visible .s2_rec_label {
+  animation: s2_fadeIn 0.4s ease-out 4.0s forwards, s2_pulse 1.5s ease-in-out 4.4s infinite;
+}
+
+
+/* === S3 Animation === */
+
+.s3_stage {
+  position: relative;
+  width: 340px;
+  height: 280px;
+  background: #ECFDF5;
+  overflow: hidden;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* 中央 Go 方框 */
+.s3_go {
+  position: absolute;
+  left: 120px;
+  top: 100px;
+  width: 100px;
+  height: 80px;
+  border: 2.5px solid #6366F1;
+  border-radius: 14px;
+  background: rgba(99, 102, 241, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  z-index: 2;
+}
+
+.s3_stage.visible .s3_go {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.s3_go_label {
+  color: #6366F1;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+/* 小方框通用样式 */
+.s3_box {
+  position: absolute;
+  height: 44px;
+  border: 2px solid #6366F1;
+  border-radius: 10px;
+  background: rgba(99, 102, 241, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  z-index: 2;
+}
+
+.s3_box_label {
+  color: #6366F1;
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  padding: 0 14px;
+}
+
+/* Firehose 上方 - 4字用方框 */
+.s3_firehose {
+  left: 113px;
+  top: 24px;
+  width: 114px;
+}
+
+.s3_stage.visible .s3_firehose {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 0.8s;
+}
+
+/* SQLite 左下 - 6字用方框 */
+.s3_sqlite {
+  left: 24px;
+  top: 210px;
+  width: 106px;
+}
+
+.s3_stage.visible .s3_sqlite {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 1.6s;
+}
+
+/* 推荐 右下 */
+.s3_recommend {
+  left: 216px;
+  top: 210px;
+  width: 96px;
+}
+
+.s3_stage.visible .s3_recommend {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 2.4s;
+}
+
+/* 连线 SVG */
+.s3_lines {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 340px;
+  height: 280px;
+  z-index: 1;
+}
+
+.s3_line {
+  stroke: #94A3B8;
+  stroke-width: 2;
+  fill: none;
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  transition: stroke-dashoffset 0.5s ease, stroke 0.4s ease;
+}
+
+/* Firehose -> Go: top center of Go to bottom center of Firehose */
+.s3_line_firehose {
+  transition-delay: 1.0s;
+}
+.s3_stage.visible .s3_line_firehose {
+  stroke-dashoffset: 0;
+}
+
+/* SQLite -> Go: left-bottom of Go to top of SQLite */
+.s3_line_sqlite {
+  transition-delay: 1.8s;
+}
+.s3_stage.visible .s3_line_sqlite {
+  stroke-dashoffset: 0;
+}
+
+/* 推荐 -> Go: right-bottom of Go to top of 推荐 */
+.s3_line_recommend {
+  transition-delay: 2.6s;
+}
+.s3_stage.visible .s3_line_recommend {
+  stroke-dashoffset: 0;
+}
+
+/* Emerald 激活态 */
+.s3_line.s3_emerald {
+  stroke: #10B981;
+}
+
+/* 单进程标签 */
+.s3_badge {
+  position: absolute;
+  left: 50%;
+  top: 176px;
+  transform: translateX(-50%) scale(0.8);
+  background: #10B981;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 4px 16px;
+  border-radius: 20px;
+  opacity: 0;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  z-index: 3;
+  white-space: nowrap;
+}
+
+.s3_stage.visible .s3_badge.s3_badge_show {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+
+/* === S4 Animation === */
+
+.s4_stage {
+  position: relative;
+  width: 340px;
+  height: 280px;
+  background: #0C0F1A;
+  overflow: hidden;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* 通用方框 */
+.s4_box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.s4_stage.visible .s4_box { opacity: 1; transform: scale(1); }
+
+.s4_box_gray { background: #2A2E3A; color: #94A3B8; border: 1.5px solid #94A3B8; }
+.s4_box_indigo { background: rgba(99,102,241,0.15); color: #A5B4FC; border: 1.5px solid #6366F1; }
+.s4_box_emerald { background: rgba(16,185,129,0.15); color: #6EE7B7; border: 1.5px solid #10B981; }
+
+/* 行容器 */
+.s4_row {
+  position: absolute;
+  left: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.s4_row1 { top: 32px; }
+.s4_row2 { top: 100px; }
+.s4_row3 { top: 168px; }
+
+/* 箭头 */
+.s4_arrow {
+  color: #94A3B8;
+  font-size: 18px;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.s4_stage.visible .s4_arrow { opacity: 1; transform: translateX(0); }
+
+/* 标注 */
+.s4_label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #10B981;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  white-space: nowrap;
+}
+.s4_stage.visible .s4_label { opacity: 1; }
+
+/* 类别小标签 */
+.s4_cat {
+  font-size: 11px;
+  color: #64748B;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  position: absolute;
+  left: 24px;
+}
+.s4_cat1 { top: 18px; }
+.s4_cat2 { top: 86px; }
+.s4_cat3 { top: 154px; }
+.s4_stage.visible .s4_cat { opacity: 1; }
+
+/* 整体外框 */
+.s4_frame {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  right: 10px;
+  bottom: 8px;
+  border: 2px solid #6366F1;
+  border-radius: 14px;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+}
+
+.s4_frame_label {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0C0F1A;
+  padding: 0 12px;
+  color: #A5B4FC;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 3px;
+}
+
+/* 时序控制 */
+.s4_stage.visible .s4_cat1 { transition-delay: 0.1s; }
+.s4_stage.visible .s4_row1 .s4_box:nth-child(1) { transition-delay: 0.3s; }
+.s4_stage.visible .s4_row1 .s4_arrow { transition-delay: 0.7s; }
+.s4_stage.visible .s4_row1 .s4_box:nth-child(3) { transition-delay: 1.0s; }
+.s4_stage.visible .s4_row1 .s4_label { transition-delay: 1.3s; }
+
+.s4_stage.visible .s4_cat2 { transition-delay: 1.6s; }
+.s4_stage.visible .s4_row2 .s4_box:nth-child(1) { transition-delay: 1.8s; }
+.s4_stage.visible .s4_row2 .s4_arrow { transition-delay: 2.2s; }
+.s4_stage.visible .s4_row2 .s4_box:nth-child(3) { transition-delay: 2.5s; }
+
+.s4_stage.visible .s4_cat3 { transition-delay: 2.8s; }
+.s4_stage.visible .s4_row3 .s4_box:nth-child(1) { transition-delay: 3.0s; }
+
+.s4_stage.visible .s4_frame { opacity: 1; transition-delay: 3.6s; }
+
+
+/* === S5 Animation === */
+
+.s5_stage {
+  position: relative;
+  width: 340px;
+  height: 280px;
+  background: #F0F9FF;
+  overflow: hidden;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* === 进度条容器 === */
+.s5_bar_wrap {
+  position: absolute;
+  left: 20px;
+  top: 40px;
+  width: 180px;
+  height: 32px;
+  background: #E2E8F0;
+  border-radius: 6px;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.s5_stage.visible .s5_bar_wrap {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.s5_bar_fill {
+  width: 0;
+  height: 100%;
+  background: #6366F1;
+  border-radius: 6px;
+  transition: width 1.0s ease 0.6s;
+}
+
+.s5_stage.visible .s5_bar_fill {
+  width: 37%;
+}
+
+/* 进度条标签 */
+.s5_bar_label {
+  position: absolute;
+  left: 20px;
+  top: 18px;
+  color: #64748B;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.4s ease 0.3s;
+}
+
+.s5_stage.visible .s5_bar_label {
+  opacity: 1;
+}
+
+/* 37% 标注 */
+.s5_pct {
+  position: absolute;
+  left: 88px;
+  top: 76px;
+  color: #6366F1;
+  font-size: 22px;
+  font-weight: 700;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  transition-delay: 1.6s;
+}
+
+.s5_stage.visible .s5_pct {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* === 降级模式进度条 === */
+.s5_deg_wrap {
+  position: absolute;
+  left: 20px;
+  top: 120px;
+  width: 240px;
+  height: 32px;
+  background: #E2E8F0;
+  border-radius: 6px;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition-delay: 2.2s;
+}
+
+.s5_stage.visible .s5_deg_wrap {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.s5_deg_fill {
+  width: 0;
+  height: 100%;
+  background: #10B981;
+  border-radius: 6px;
+  transition: width 1.0s ease 2.8s;
+}
+
+.s5_stage.visible .s5_deg_fill {
+  width: 100%;
+}
+
+.s5_deg_label {
+  position: absolute;
+  left: 20px;
+  top: 104px;
+  color: #64748B;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.4s ease 2.2s;
+}
+
+.s5_stage.visible .s5_deg_label {
+  opacity: 1;
+}
+
+/* === 方框标签：210万用户 === */
+.s5_box_users {
+  position: absolute;
+  right: 14px;
+  top: 36px;
+  padding: 10px 14px;
+  background: #6366F1;
+  color: #FFFFFF;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 8px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  transition-delay: 3.4s;
+}
+
+.s5_stage.visible .s5_box_users {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* === 方框标签：Bluesky === */
+.s5_box_bs {
+  position: absolute;
+  right: 30px;
+  top: 112px;
+  padding: 8px 12px;
+  background: #94A3B8;
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  transition-delay: 3.9s;
+}
+
+.s5_stage.visible .s5_box_bs {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* === 底部标语 === */
+.s5_tagline {
+  position: absolute;
+  bottom: 24px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: #6366F1;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition-delay: 4.4s;
+}
+
+.s5_stage.visible .s5_tagline {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 大于号动画 */
+.s5_gt {
+  display: inline-block;
+  color: #10B981;
+  font-size: 22px;
+  margin: 0 4px;
+}
+
+
+/* === S6 Animation === */
+
+.s6_stage {
+  position: relative;
+  width: 340px;
+  height: 260px;
+  background: #F0F0FF;
+  overflow: hidden;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* 用户 — 灰圆, 2字 */
+.s6_user {
+  position: absolute;
+  left: 12px;
+  top: 90px;
+  width: 68px;
+  height: 68px;
+  background: #94A3B8;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s6_stage.visible .s6_user {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* 用户→VPS 连线 */
+.s6_line1 {
+  position: absolute;
+  left: 82px;
+  top: 123px;
+  width: 0;
+  height: 2.5px;
+  background: #94A3B8;
+  transition: width 0.5s ease 0.8s;
+}
+.s6_stage.visible .s6_line1 {
+  width: 26px;
+}
+
+.s6_arrow1 {
+  position: absolute;
+  left: 104px;
+  top: 119px;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 7px solid #94A3B8;
+  opacity: 0;
+  transition: opacity 0.3s ease 1.2s;
+}
+.s6_stage.visible .s6_arrow1 { opacity: 1; }
+
+/* VPS 方框 — indigo */
+.s6_vps {
+  position: absolute;
+  left: 110px;
+  top: 62px;
+  width: 96px;
+  height: 128px;
+  border: 2.5px solid #6366F1;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 8px;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.5s ease 0.5s, transform 0.5s ease 0.5s;
+}
+.s6_stage.visible .s6_vps {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.s6_vps_label {
+  color: #6366F1;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 1px;
+}
+
+/* VPS 内部小标签 */
+.s6_vps_tags {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  opacity: 0;
+  transition: opacity 0.5s ease 1.5s;
+}
+.s6_stage.visible .s6_vps_tags { opacity: 1; }
+
+.s6_tag {
+  background: #E0E7FF;
+  color: #4338CA;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 4px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* VPS→PC 虚线 */
+.s6_line2 {
+  position: absolute;
+  left: 208px;
+  top: 123px;
+  width: 0;
+  height: 0;
+  border-top: 2.5px dashed #94A3B8;
+  transition: width 0.6s ease 2.5s;
+}
+.s6_stage.visible .s6_line2 {
+  width: 48px;
+}
+
+.s6_arrow2 {
+  position: absolute;
+  left: 252px;
+  top: 119px;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 7px solid #94A3B8;
+  opacity: 0;
+  transition: opacity 0.3s ease 3.0s;
+}
+.s6_stage.visible .s6_arrow2 { opacity: 1; }
+
+/* Tailscale 标注 — 在虚线上方居中 */
+.s6_ts_label {
+  position: absolute;
+  left: 213px;
+  top: 56px;
+  color: #94A3B8;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  opacity: 0;
+  white-space: nowrap;
+  transition: opacity 0.4s ease 3.0s;
+}
+.s6_stage.visible .s6_ts_label { opacity: 1; }
+
+/* 客厅PC — emerald */
+.s6_pc {
+  position: absolute;
+  right: 6px;
+  top: 78px;
+  width: 78px;
+  height: 92px;
+  border: 2.5px solid #10B981;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.5s ease 2.0s, transform 0.5s ease 2.0s;
+}
+.s6_stage.visible .s6_pc {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.s6_pc_icon {
+  width: 28px;
+  height: 22px;
+  background: #10B981;
+  border-radius: 3px;
+  position: relative;
+}
+.s6_pc_icon::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 6px;
+  width: 16px;
+  height: 3px;
+  background: #10B981;
+  border-radius: 1px;
+}
+
+.s6_pc_label {
+  color: #10B981;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 4px;
+  white-space: nowrap;
+}
+
+/* === Step 6 高亮 emerald === */
+.s6_line1.s6_hl { background: #10B981; }
+.s6_arrow1.s6_hl { border-left-color: #10B981; }
+.s6_line2.s6_hl { border-color: #10B981; }
+.s6_arrow2.s6_hl { border-left-color: #10B981; }
+.s6_ts_label.s6_hl { color: #10B981; }
+.s6_user.s6_hl { box-shadow: 0 0 0 3px rgba(16,185,129,0.4); }
+.s6_vps.s6_hl { box-shadow: 0 0 0 3px rgba(16,185,129,0.25); }
+.s6_pc.s6_hl { box-shadow: 0 0 0 3px rgba(16,185,129,0.4); }
+
+
+/* === S7 Animation === */
+
+.s7_stage {
+  position: relative;
+  width: 340px;
+  height: 260px;
+  background: #0C0F1A;
+  overflow: hidden;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* 条形图容器 */
+.s7_bar_row {
+  position: absolute;
+  left: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.s7_row1 { top: 48px; }
+.s7_row2 { top: 148px; }
+
+/* 标签 */
+.s7_label {
+  font-size: 13px;
+  color: #94A3B8;
+  position: absolute;
+  left: 24px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s7_label1 { top: 30px; }
+.s7_label2 { top: 130px; }
+
+/* emerald 短条 */
+.s7_bar_emerald {
+  height: 40px;
+  border-radius: 6px;
+  background: #10B981;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 10px;
+  width: 0;
+  transition: width 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+  overflow: hidden;
+}
+.s7_bar_emerald_val {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.s7_stage.visible .s7_bar_emerald {
+  width: 80px;
+}
+.s7_stage.visible .s7_bar_emerald_val {
+  opacity: 1;
+  transition-delay: 0.6s;
+}
+.s7_stage.visible .s7_label1 {
+  opacity: 1;
+  transition-delay: 0.1s;
+}
+
+/* 子段明细 */
+.s7_sub_row {
+  position: absolute;
+  left: 24px;
+  top: 94px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.s7_sub {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6EE7B7;
+  background: rgba(16,185,129,0.15);
+  border: 1px solid rgba(16,185,129,0.3);
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.s7_stage.visible .s7_sub:nth-child(1) { opacity: 1; transform: translateY(0); transition-delay: 1.2s; }
+.s7_stage.visible .s7_sub:nth-child(2) { opacity: 1; transform: translateY(0); transition-delay: 1.5s; }
+.s7_stage.visible .s7_sub:nth-child(3) { opacity: 1; transform: translateY(0); transition-delay: 1.8s; }
+
+/* 灰色长条 */
+.s7_bar_gray {
+  height: 40px;
+  border-radius: 6px;
+  background: #2A2E3A;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 12px;
+  width: 0;
+  transition: width 1s cubic-bezier(0.25, 0.8, 0.25, 1);
+  overflow: hidden;
+}
+.s7_bar_gray_val {
+  font-size: 18px;
+  font-weight: 700;
+  color: #94A3B8;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.s7_stage.visible .s7_bar_gray {
+  width: 280px;
+  transition-delay: 2.2s;
+}
+.s7_stage.visible .s7_bar_gray_val {
+  opacity: 1;
+  transition-delay: 3.0s;
+}
+.s7_stage.visible .s7_label2 {
+  opacity: 1;
+  transition-delay: 2.2s;
+}
+
+/* 商用服务器标签 */
+.s7_comm_label {
+  font-size: 12px;
+  color: #64748B;
+  position: absolute;
+  left: 24px;
+  top: 194px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s7_stage.visible .s7_comm_label {
+  opacity: 1;
+  transition-delay: 3.4s;
+}
+
+/* 8x 标注 */
+.s7_multiplier {
+  position: absolute;
+  right: 28px;
+  top: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s7_mult_line {
+  width: 2px;
+  height: 16px;
+  background: #10B981;
+}
+.s7_mult_text {
+  font-size: 20px;
+  font-weight: 800;
+  color: #10B981;
+  line-height: 1;
+  padding: 2px 0;
+}
+.s7_stage.visible .s7_multiplier {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 4.0s;
+}
+
+
+/* === S8 Animation === */
+
+.s8_stage {
+  width: 340px;
+  height: 260px;
+  background: #F0F0FF;
+  border-radius: 12px;
+  position: relative;
+  margin: 0 auto;
+  overflow: hidden;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* SVG lines layer */
+.s8_svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+
+/* Centralized big box */
+.s8_center_box {
+  position: absolute;
+  top: 60px;
+  left: 30px;
+  width: 72px;
+  height: 72px;
+  background: #CBD5E1;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #475569;
+  opacity: 0;
+  transform: scale(0.7);
+}
+
+/* Small gray dots around center */
+.s8_dot {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #94A3B8;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.s8_dot1 { top: 40px; left: 50px; }
+.s8_dot2 { top: 60px; left: 120px; }
+.s8_dot3 { top: 100px; left: 130px; }
+.s8_dot4 { top: 140px; left: 115px; }
+.s8_dot5 { top: 155px; left: 60px; }
+
+/* Centralized label */
+.s8_label_c {
+  position: absolute;
+  top: 190px;
+  left: 30px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #94A3B8;
+  opacity: 0;
+  width: 72px;
+  text-align: center;
+}
+
+/* Decentralized circles (indigo) */
+.s8_node {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #6366F1;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.s8_n1 { top: 40px; left: 210px; }
+.s8_n2 { top: 40px; left: 290px; }
+.s8_n3 { top: 95px; left: 185px; }
+.s8_n4 { display: none; }
+.s8_n5 { top: 150px; left: 215px; }
+.s8_n6 { top: 150px; left: 295px; }
+
+/* Decentralized label */
+.s8_label_d {
+  position: absolute;
+  top: 190px;
+  left: 200px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #6366F1;
+  opacity: 0;
+  width: 120px;
+  text-align: center;
+}
+
+/* "You" emerald highlight */
+.s8_you {
+  position: absolute;
+  top: 87px;
+  left: 257px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #10B981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+  transform: scale(0);
+  z-index: 2;
+}
+
+/* Bottom label */
+.s8_label_bottom {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 15px;
+  font-weight: 700;
+  color: #6366F1;
+  opacity: 0;
+  white-space: nowrap;
+  letter-spacing: 1px;
+}
+
+/* SVG line styles */
+.s8_line_c {
+  stroke: #94A3B8;
+  stroke-width: 1.5;
+  opacity: 0;
+}
+
+.s8_line_d {
+  stroke: #6366F1;
+  stroke-width: 1.5;
+  opacity: 0;
+}
+
+/* Keyframes */
+@keyframes s8_fadeScaleIn {
+  0% { opacity: 0; transform: scale(0.7); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s8_dotIn {
+  0% { opacity: 0; transform: scale(0); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s8_fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes s8_pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
+  50% { transform: scale(1.1); box-shadow: 0 0 16px 6px rgba(16,185,129,0.3); }
+}
+
+@keyframes s8_labelPop {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.8); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+/* Step 1 (0.2s): Central box appears + lines + dots */
+.visible .s8_center_box {
+  animation: s8_fadeScaleIn 0.5s ease-out 0.2s forwards;
+}
+.visible .s8_dot1 { animation: s8_dotIn 0.3s ease-out 0.5s forwards; }
+.visible .s8_dot2 { animation: s8_dotIn 0.3s ease-out 0.6s forwards; }
+.visible .s8_dot3 { animation: s8_dotIn 0.3s ease-out 0.7s forwards; }
+.visible .s8_dot4 { animation: s8_dotIn 0.3s ease-out 0.8s forwards; }
+.visible .s8_dot5 { animation: s8_dotIn 0.3s ease-out 0.9s forwards; }
+.visible .s8_line_c {
+  animation: s8_fadeIn 0.4s ease-out 0.6s forwards;
+}
+
+/* Step 2 (1.2s): "中心化" label */
+.visible .s8_label_c {
+  animation: s8_fadeIn 0.4s ease-out 1.2s forwards;
+}
+
+/* Step 3 (1.8s): Decentralized nodes + mesh lines */
+.visible .s8_n1 { animation: s8_dotIn 0.3s ease-out 1.8s forwards; }
+.visible .s8_n2 { animation: s8_dotIn 0.3s ease-out 1.9s forwards; }
+.visible .s8_n3 { animation: s8_dotIn 0.3s ease-out 2.0s forwards; }
+.visible .s8_n4 { animation: s8_dotIn 0.3s ease-out 2.1s forwards; }
+.visible .s8_n5 { animation: s8_dotIn 0.3s ease-out 2.2s forwards; }
+.visible .s8_n6 { animation: s8_dotIn 0.3s ease-out 2.3s forwards; }
+.visible .s8_line_d {
+  animation: s8_fadeIn 0.5s ease-out 2.4s forwards;
+}
+
+/* Step 4 (3.0s): "去中心化" label */
+.visible .s8_label_d {
+  animation: s8_fadeIn 0.4s ease-out 3.0s forwards;
+}
+
+/* Step 5 (3.6s): "你" emerald highlight with pulse */
+.visible .s8_you {
+  animation: s8_dotIn 0.4s ease-out 3.6s forwards, s8_pulse 1.5s ease-in-out 4.0s infinite;
+}
+
+/* Step 6 (4.4s): Bottom label */
+.visible .s8_label_bottom {
+  animation: s8_labelPop 0.5s ease-out 4.4s forwards;
+}
+
+
+/* === S9 Animation === */
+
+.s9_stage {
+  position: relative;
+  width: 340px;
+  height: 280px;
+  background: #F0F0FF;
+  overflow: hidden;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* 通用方框 */
+.s9_box {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.s9_stage.visible .s9_box { opacity: 1; transform: scale(1); }
+
+.s9_box_indigo {
+  background: rgba(99,102,241,0.12);
+  color: #6366F1;
+  border: 2px solid #6366F1;
+}
+
+.s9_box_emerald {
+  background: rgba(16,185,129,0.12);
+  color: #10B981;
+  border: 2px solid #10B981;
+}
+
+.s9_box_gray {
+  background: rgba(148,163,184,0.12);
+  color: #94A3B8;
+  border: 2px solid #94A3B8;
+}
+
+/* AT URI 顶部居中 */
+.s9_aturi {
+  left: 50%;
+  top: 24px;
+  transform: scale(0.8) translateX(-50%);
+  transform-origin: left center;
+}
+.s9_stage.visible .s9_aturi {
+  opacity: 1;
+  transform: scale(1) translateX(-50%);
+  transition-delay: 0.2s;
+}
+
+/* 箭头 */
+.s9_arrow {
+  position: absolute;
+  left: 50%;
+  top: 72px;
+  transform: translateX(-50%);
+  color: #94A3B8;
+  font-size: 20px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s9_stage.visible .s9_arrow {
+  opacity: 1;
+  transition-delay: 0.9s;
+}
+
+/* 映射标注 */
+.s9_map_label {
+  position: absolute;
+  left: calc(50% + 20px);
+  top: 70px;
+  color: #6366F1;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s9_stage.visible .s9_map_label {
+  opacity: 1;
+  transition-delay: 1.0s;
+}
+
+/* 整数 ID 居中 */
+.s9_intid {
+  left: 50%;
+  top: 94px;
+  transform: scale(0.8) translateX(-50%);
+  transform-origin: left center;
+}
+.s9_stage.visible .s9_intid {
+  opacity: 1;
+  transform: scale(1) translateX(-50%);
+  transition-delay: 1.2s;
+}
+
+/* 5 读连接 左下 */
+.s9_read {
+  left: 24px;
+  top: 168px;
+}
+.s9_stage.visible .s9_read {
+  transition-delay: 2.0s;
+}
+
+/* mutex 写 右下 */
+.s9_write {
+  right: 24px;
+  top: 168px;
+}
+.s9_stage.visible .s9_write {
+  transition-delay: 2.8s;
+}
+
+/* 底部灰色标签 */
+.s9_ttl {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  color: #94A3B8;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s9_stage.visible .s9_ttl {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  transition-delay: 3.6s;
+}
+
+/* 连接线 - 从整数ID到读/写 */
+.s9_line {
+  position: absolute;
+  background: #CBD5E1;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.s9_line_left {
+  left: 90px;
+  top: 134px;
+  width: 2px;
+  height: 34px;
+  transform: rotate(-30deg);
+  transform-origin: top center;
+}
+.s9_stage.visible .s9_line_left {
+  opacity: 1;
+  transition-delay: 1.8s;
+}
+
+.s9_line_right {
+  right: 90px;
+  top: 134px;
+  width: 2px;
+  height: 34px;
+  transform: rotate(30deg);
+  transform-origin: top center;
+}
+.s9_stage.visible .s9_line_right {
+  opacity: 1;
+  transition-delay: 2.6s;
+}
+
+
+/* === S10 Animation === */
+
+.s10_stage {
+  position: relative;
+  width: 340px;
+  height: 260px;
+  background: #ECFDF5;
+  overflow: hidden;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* === Step 1: 进程方框 === */
+.s10_proc {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 220px;
+  height: 170px;
+  border: 2.5px solid #6366F1;
+  border-radius: 12px;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.s10_stage.visible .s10_proc {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.s10_proc_label {
+  position: absolute;
+  top: -11px;
+  left: 16px;
+  background: #ECFDF5;
+  padding: 0 8px;
+  color: #6366F1;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+/* === Step 2: 缓存区域（大块 emerald） === */
+.s10_cache {
+  position: absolute;
+  top: 16px;
+  left: 12px;
+  right: 12px;
+  height: 100px;
+  background: #10B981;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 20px;
+  font-weight: 700;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition-delay: 0.7s;
+}
+
+.s10_stage.visible .s10_cache {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* === Step 3: 磁盘区域（小块灰色） === */
+.s10_disk {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  height: 28px;
+  background: #94A3B8;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  transition-delay: 1.5s;
+}
+
+.s10_stage.visible .s10_disk {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* === Step 4: 50GB RAM 标签 === */
+.s10_ram {
+  position: absolute;
+  top: 50px;
+  right: 16px;
+  padding: 8px 14px;
+  background: #6366F1;
+  color: #FFFFFF;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 8px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  transition-delay: 2.2s;
+}
+
+.s10_stage.visible .s10_ram {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* === Step 5: 冷启动代价标签 === */
+.s10_cold {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: #94A3B8;
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  transition-delay: 3.0s;
+}
+
+.s10_stage.visible .s10_cold {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+
+/* === S11 Animation === */
+
+.s11_stage {
+  position: relative;
+  width: 340px;
+  height: 260px;
+  background: #F0F9FF;
+  overflow: hidden;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* === Step 1: SQLite 方框 === */
+.s11_sqlite {
+  position: absolute;
+  left: 20px;
+  top: 70px;
+  padding: 12px 18px;
+  background: #6366F1;
+  color: #FFFFFF;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 8px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.s11_stage.visible .s11_sqlite {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* === 箭头1: SQLite → Parquet === */
+.s11_arrow1 {
+  position: absolute;
+  left: 110px;
+  top: 84px;
+  color: #94A3B8;
+  font-size: 20px;
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  transition-delay: 0.8s;
+}
+
+.s11_stage.visible .s11_arrow1 {
+  opacity: 1;
+}
+
+/* === Step 2: Parquet 方框 === */
+.s11_parquet {
+  position: absolute;
+  left: 130px;
+  top: 70px;
+  padding: 12px 14px;
+  background: #10B981;
+  color: #FFFFFF;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 8px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition-delay: 1.0s;
+}
+
+.s11_stage.visible .s11_parquet {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* 2.6GB/天 标注 */
+.s11_rate {
+  position: absolute;
+  left: 120px;
+  top: 46px;
+  color: #10B981;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  transition-delay: 1.5s;
+}
+
+.s11_stage.visible .s11_rate {
+  opacity: 1;
+}
+
+/* === 箭头2: Parquet → DuckDB === */
+.s11_arrow2 {
+  position: absolute;
+  left: 226px;
+  top: 84px;
+  color: #94A3B8;
+  font-size: 20px;
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  transition-delay: 2.0s;
+}
+
+.s11_stage.visible .s11_arrow2 {
+  opacity: 1;
+}
+
+/* === Step 3: DuckDB 方框 === */
+.s11_duckdb {
+  position: absolute;
+  right: 20px;
+  top: 70px;
+  padding: 12px 14px;
+  background: #6366F1;
+  color: #FFFFFF;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 8px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition-delay: 2.2s;
+}
+
+.s11_stage.visible .s11_duckdb {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* === 连接线：DuckDB 到结果 === */
+.s11_vert_line {
+  position: absolute;
+  right: 62px;
+  top: 116px;
+  width: 2px;
+  height: 0;
+  background: #94A3B8;
+  transition: height 0.4s ease;
+  transition-delay: 3.0s;
+}
+
+.s11_stage.visible .s11_vert_line {
+  height: 24px;
+}
+
+/* === Step 4: 结果标签 === */
+.s11_result_pos {
+  position: absolute;
+  right: 12px;
+  top: 148px;
+  padding: 8px 14px;
+  background: #ECFDF5;
+  color: #10B981;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 6px;
+  border: 2px solid #10B981;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition-delay: 3.4s;
+}
+
+.s11_stage.visible .s11_result_pos {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.s11_result_neg {
+  position: absolute;
+  right: 12px;
+  top: 196px;
+  padding: 8px 14px;
+  background: #ECFDF5;
+  color: #10B981;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 6px;
+  border: 2px solid #10B981;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition-delay: 3.9s;
+}
+
+.s11_stage.visible .s11_result_neg {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* === 数据流粒子动画 === */
+.s11_particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6366F1;
+  opacity: 0;
+}
+
+.s11_stage.visible .s11_p1 {
+  animation: s11_flow1 1.5s ease 1.2s forwards;
+}
+.s11_stage.visible .s11_p2 {
+  animation: s11_flow1 1.5s ease 1.5s forwards;
+}
+.s11_stage.visible .s11_p3 {
+  animation: s11_flow2 1.5s ease 2.4s forwards;
+}
+.s11_stage.visible .s11_p4 {
+  animation: s11_flow2 1.5s ease 2.7s forwards;
+}
+
+@keyframes s11_flow1 {
+  0%   { left: 98px;  top: 86px; opacity: 1; }
+  100% { left: 130px; top: 86px; opacity: 0; }
+}
+
+@keyframes s11_flow2 {
+  0%   { left: 216px; top: 86px; opacity: 1; }
+  100% { left: 248px; top: 86px; opacity: 0; }
+}
+
+/* === 标题 === */
+.s11_title {
+  position: absolute;
+  left: 20px;
+  top: 18px;
+  color: #64748B;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.s11_stage.visible .s11_title {
+  opacity: 1;
+}
+
+
+/* === S12 Animation === */
+
+.s12_stage {
+  position: relative;
+  width: 340px;
+  height: 260px;
+  background: #F0F0FF;
+  overflow: hidden;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* Uptime bar background (gray track) */
+.s12_bar_track {
+  position: absolute;
+  left: 24px;
+  top: 36px;
+  width: 292px;
+  height: 32px;
+  background: #D1D5DB;
+  border-radius: 6px;
+  overflow: hidden;
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: opacity 0.3s ease, transform 0.7s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.s12_stage.visible .s12_bar_track {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+/* Emerald fill — 99.77% of 292px = ~291px */
+.s12_bar_fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 0;
+  background: #10B981;
+  border-radius: 6px 0 0 6px;
+  transition: width 1.0s cubic-bezier(0.25, 0.8, 0.25, 1) 0.6s;
+}
+
+.s12_stage.visible .s12_bar_fill {
+  width: 99.33%;
+}
+
+/* Uptime label */
+.s12_uptime_label {
+  position: absolute;
+  left: 24px;
+  top: 74px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #10B981;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.4s ease 1.6s, transform 0.4s ease 1.6s;
+}
+
+.s12_stage.visible .s12_uptime_label {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Alert icons row */
+.s12_alert_row {
+  position: absolute;
+  left: 24px;
+  top: 114px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.s12_alert_box {
+  width: 56px;
+  height: 56px;
+  border: 2.5px solid #6366F1;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: #6366F1;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.s12_stage.visible .s12_alert_box:nth-child(1) {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 2.2s;
+}
+.s12_stage.visible .s12_alert_box:nth-child(2) {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 2.6s;
+}
+.s12_stage.visible .s12_alert_box:nth-child(3) {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 3.0s;
+}
+
+/* Alert label */
+.s12_alert_label {
+  position: absolute;
+  left: 24px;
+  top: 178px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6366F1;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.4s ease 3.4s, transform 0.4s ease 3.4s;
+}
+
+.s12_stage.visible .s12_alert_label {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Bottom tag */
+.s12_bottom_tag {
+  position: absolute;
+  left: 24px;
+  bottom: 20px;
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 14px;
+  background: #6366F1;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.5s ease 4.2s, transform 0.5s ease 4.2s;
+}
+
+.s12_stage.visible .s12_bottom_tag {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+</style>
+
+<meta name="description" content="Bluesky 有一个其他社交平台没有的特性：任何人都可以运行自己的推荐算法。一个叫 spacecowboy 的开发者正是这么做的——他在自己的客厅里，用一台游戏电脑和一个 Go 进程，运行着 Bluesky 上最受欢迎的自定义 feed 之一。没有云服务，没有微服务，没有 Redis—— 每月只花 30 美元 。">
+<link rel="canonical" href="https://chendi.me/readings/for-you-feed/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">←</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ Layer: Overview ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+  <!-- S1 Hero -->
+  <section class="feed-section dark" style="background: linear-gradient(135deg, #0C0F1A 0%, #1E1B4B 100%);">
+    <div class="section-inner">
+      <div class="section-tag reveal">FOR YOU FEED</div>
+      <h2 class="big-statement reveal reveal-d1">一台客厅里的游戏电脑，每天为 <span style="color:#818CF8">72,000 人</span>推荐内容</h2>
+      <p class="body-text reveal reveal-d2">Bluesky 有一个其他社交平台没有的特性：任何人都可以运行自己的推荐算法。一个叫 spacecowboy 的开发者正是这么做的——他在自己的客厅里，用一台游戏电脑和一个 Go 进程，运行着 Bluesky 上最受欢迎的自定义 feed 之一。没有云服务，没有微服务，没有 Redis——<span class="hl">每月只花 30 美元</span>。</p>
+      <div class="anim-stage reveal reveal-d3" id="s1-anim"><div class="s1_stage">
+  <div class="s1_room">
+    <div class="s1_pc"></div>
+    <span class="s1_room_label">客厅</span>
+  </div>
+
+  <div class="s1_line"></div>
+
+  <span class="s1_price">$30/月</span>
+
+  <div class="s1_users_group">
+    <div class="s1_dot"></div>
+    <div class="s1_dot"></div>
+    <div class="s1_dot"></div>
+    <div class="s1_dot"></div>
+    <div class="s1_dot"></div>
+    <div class="s1_dot"></div>
+    <div class="s1_dot"></div>
+    <div class="s1_dot"></div>
+    <span class="s1_users_label">72K 用户</span>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">AT Protocol Blog</span><p>spacecowboy runs the For You Feed, used by around 72,000 people. The feed is served by a single Go process using SQLite on a "gaming" PC in spacecowboy's living room - 16 cores, 96GB of RAM and 4TB of attached NVMe storage.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S2 Algorithm -->
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <div class="section-tag reveal">ALGORITHM</div>
+      <h2 class="big-statement reveal reveal-d1">找到和你<span class="hl">品味相同</span>的人，看他们还点赞了什么</h2>
+      <p class="body-text reveal reveal-d2">For You Feed 的核心算法简单得令人意外：它找到那些和你点赞过相同帖子的人，然后看看他们最近还点赞了什么——就是这样。这本质上是一种协同过滤算法，不需要用户画像、不需要内容分析、不需要机器学习模型。因为用户的点赞行为本身就是最可靠的品味信号，所以 spacecowboy 把整个推荐系统建立在这一个简洁的假设之上。</p>
+      <div class="anim-stage reveal reveal-d3" id="s2-anim"><div class="s2_stage">
+  <div class="s2_circle s2_you">你</div>
+  <div class="s2_circle s2_him">他</div>
+  <div class="s2_post s2_postA">帖子A</div>
+  <div class="s2_post s2_postB">帖子B</div>
+  <svg class="s2_svg" viewBox="0 0 340 260">
+    <defs>
+      <marker id="s2_arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#6366F1"/>
+      </marker>
+    </defs>
+    <!-- you center(68,52) -> postA center(140,166) -->
+    <line x1="68" y1="84" x2="134" y2="148" class="s2_link_solid s2_line_you_a"/>
+    <!-- him center(272,52) -> postA center(140,166) -->
+    <line x1="258" y1="84" x2="160" y2="148" class="s2_link_solid s2_line_him_a"/>
+    <!-- him center(272,52) -> postB center(278,166) -->
+    <line x1="272" y1="84" x2="278" y2="148" class="s2_link_solid s2_line_him_b"/>
+    <!-- postB(260,166) ~~> you(68,52): dashed recommend -->
+    <line x1="260" y1="172" x2="98" y2="64" class="s2_link_dash" marker-end="url(#s2_arr)"/>
+  </svg>
+  <div class="s2_rec_label">推荐</div>
+</div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Algorithm</span><p>It finds people who liked the same posts as you, and shows you what else they've liked recently. Recommendations are based on likes: what else are the people who like the same things as you liking on the platform?</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S3 Architecture (drill) -->
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <div class="section-tag reveal">ARCHITECTURE</div>
+      <h2 class="big-statement reveal reveal-d1">一个 Go 进程<span class="hl2">搞定一切</span>——消费、存储、推荐、托管</h2>
+      <p class="body-text reveal reveal-d2">整个系统就是一个 Go binary，它同时负责四件事：消费 Bluesky 的 Jetstream firehose（实时数据流）、把数据存到 SQLite、响应推荐请求、托管 playground 网站。没有微服务拆分，没有消息队列，没有外部缓存——因为所有东西都在同一个进程里，进程内缓存就能替代 Redis，省去了进程间通信和序列化的全部开销。</p>
+      <div class="anim-stage reveal reveal-d3" id="s3-anim"><div class="s3_stage">
+  <svg class="s3_lines">
+    <!-- Firehose to Go: center-bottom of firehose (170,68) to center-top of Go (170,100) -->
+    <line class="s3_line s3_line_firehose" x1="170" y1="68" x2="170" y2="100"/>
+    <!-- SQLite to Go: center-top of sqlite (77,210) to left-bottom of Go (145,180) -->
+    <line class="s3_line s3_line_sqlite" x1="77" y1="210" x2="145" y2="180"/>
+    <!-- 推荐 to Go: center-top of recommend (264,210) to right-bottom of Go (195,180) -->
+    <line class="s3_line s3_line_recommend" x1="264" y1="210" x2="195" y2="180"/>
+  </svg>
+
+  <div class="s3_go">
+    <span class="s3_go_label">Go</span>
+  </div>
+
+  <div class="s3_box s3_firehose">
+    <span class="s3_box_label">Firehose</span>
+  </div>
+
+  <div class="s3_box s3_sqlite">
+    <span class="s3_box_label">SQLite</span>
+  </div>
+
+  <div class="s3_box s3_recommend">
+    <span class="s3_box_label">推荐</span>
+  </div>
+
+  <span class="s3_badge">单进程</span>
+</div></div>
+      <p class="hook-line reveal reveal-d3">419GB 的 SQLite 和进程内缓存，具体怎么设计的？</p>
+      <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-db', this)">深入了解 ↓</button>
+    </div>
+  </section>
+
+  <!-- S4 Hardware -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="section-tag reveal">HARDWARE</div>
+      <h2 class="big-statement reveal reveal-d1">客厅游戏电脑：<span style="color:#818CF8">AMD 9950X3D</span> + 96GB + 4TB NVMe</h2>
+      <p class="body-text reveal reveal-d2">这台「服务器」是一台放在客厅里的游戏电脑：AMD 9950X3D（16核处理器，带 L3 缓存）、96GB DDR5 内存、两块 2TB NVMe（一块存数据库，一块存系统）。2025 年 spacecowboy 升级了两次——6 月把内存从 32GB 加到 96GB，12 月把 CPU 从 12 核 7900 换成 16 核 9950X3D，性能直接提升了 50-100%。电源备份用的是 Ecoflow Delta 3 UPS，停电能撑 4-5 小时。</p>
+      <div class="anim-stage reveal reveal-d3" id="s4-anim"><div class="s4_stage">
+  <span class="s4_cat s4_cat1">CPU</span>
+  <div class="s4_row s4_row1">
+    <div class="s4_box s4_box_gray">7900</div>
+    <span class="s4_arrow">→</span>
+    <div class="s4_box s4_box_indigo">9950X3D</div>
+    <span class="s4_label">+50-100%</span>
+  </div>
+
+  <span class="s4_cat s4_cat2">内存</span>
+  <div class="s4_row s4_row2">
+    <div class="s4_box s4_box_gray">32GB</div>
+    <span class="s4_arrow">→</span>
+    <div class="s4_box s4_box_emerald">96GB</div>
+  </div>
+
+  <span class="s4_cat s4_cat3">存储</span>
+  <div class="s4_row s4_row3">
+    <div class="s4_box s4_box_indigo">4TB NVMe</div>
+  </div>
+
+  <div class="s4_frame">
+    <span class="s4_frame_label">客 厅</span>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Hardware</span><p>CPU: AMD 9950X3D (16-core processor with L3 cache)—upgraded from 12-core 7900 in December 2025 for 50-100% capacity gains. RAM: 96GB DDR5 6000MT/s—upgraded from 32GB in June 2025. Storage: 2TB NVMe for database, 2TB NVMe for system. Power backup: Ecoflow Delta 3 UPS providing 4-5 hours runtime during outages.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S5 Limits -->
+  <section class="feed-section" style="background: var(--bg-act3);">
+    <div class="section-inner">
+      <div class="section-tag reveal">SCALING</div>
+      <h2 class="big-statement reveal reveal-d1">25 QPS 只用 <span class="hl">37% CPU</span>——降级模式可服务<span class="hl2">全部</span> Bluesky 用户</h2>
+      <p class="body-text reveal reveal-d2">72000 日活用户，每人平均 22 次请求，日常流量在 15-25 QPS 之间。在 25 QPS 时 CPU 使用率只有 37%，也就是说现有硬件还能轻松承受 3 倍用户量。更厉害的是，当负载变高时系统会自动切换到更便宜的算法参数——计算量减少超过 10 倍，但推荐质量几乎没有下降。在降级模式下只用 24 核中的 7 核，理论上可以支持 210 万用户。而 Bluesky 全部日活也只有约 100 万——也就是说这一台客厅游戏电脑，理论上能服务整个平台。</p>
+      <div class="anim-stage reveal reveal-d3" id="s5-anim"><div class="s5_stage">
+  <!-- 当前 25 QPS 进度条 -->
+  <span class="s5_bar_label">当前 25 QPS</span>
+  <div class="s5_bar_wrap">
+    <div class="s5_bar_fill"></div>
+  </div>
+  <span class="s5_pct">37%</span>
+
+  <!-- 降级模式进度条 -->
+  <span class="s5_deg_label">降级模式</span>
+  <div class="s5_deg_wrap">
+    <div class="s5_deg_fill"></div>
+  </div>
+
+  <!-- 容量方框 -->
+  <div class="s5_box_users">210万用户</div>
+  <div class="s5_box_bs">Bluesky 100万日活</div>
+
+  <!-- 底部标语 -->
+  <div class="s5_tagline">一台电脑 <span class="s5_gt">&gt;</span> 整个平台</div>
+</div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Load & Scaling</span><p>Approximately 72,000 users load the feed daily, averaging 22 requests per user. Traffic ranges from 15-25 queries per second. At 25 QPS, CPU utilization reaches 37% (12 of 32 threads). The degraded mode uses only 7 of 24 cores, theoretically enabling 30x current capacity (2.1M users). Since active Bluesky users number ~1M daily, the current setup could support all active users.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S6 Network -->
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <div class="section-tag reveal">NETWORK</div>
+      <h2 class="big-statement reveal reveal-d1"><span class="hl">Tailscale</span> + $7 VPS——不暴露家庭 IP 的代理架构</h2>
+      <p class="body-text reveal reveal-d2">家里的服务器不直接暴露在公网上。一台每月 $7 的 OVH VPS 充当代理：nginx 接收推荐请求，转发给一个 Go 写的 dispatch 进程。Dispatch 先验证 JWT token（通过 DID 文档查询，这样可以避免暴露家庭 IP），然后通过 Tailscale 把请求路由到客厅的游戏电脑——在 Tailscale 网络里它的地址就是 <span class="hl2">http://gaming:8090</span>。维护期间 dispatch 可以返回预设帖子列表，保证用户不会看到空白 feed。</p>
+      <div class="anim-stage reveal reveal-d3" id="s6-anim"><div class="s6_stage">
+  <div class="s6_user">用户</div>
+
+  <div class="s6_line1"></div>
+  <div class="s6_arrow1"></div>
+
+  <div class="s6_vps">
+    <span class="s6_vps_label">VPS</span>
+    <div class="s6_vps_tags">
+      <span class="s6_tag">nginx</span>
+      <span class="s6_tag">dispatch</span>
+    </div>
+  </div>
+
+  <div class="s6_line2"></div>
+  <div class="s6_arrow2"></div>
+  <span class="s6_ts_label">Tailscale</span>
+
+  <div class="s6_pc">
+    <div class="s6_pc_icon"></div>
+    <span class="s6_pc_label">客厅PC</span>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Network</span><p>The local process serves HTTP on localhost:8090 but isn't publicly accessible. A small OVH VPS serves as proxy. Nginx handles requests, forwarding to a Go "dispatch" process that validates JWT tokens via DID document fetching (avoiding home IP exposure), routes requests to correct feed instances across multiple ports. Uses Tailscale networking, addressing the PC as http://gaming:8090.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S7 Cost (drill) -->
+  <section class="feed-section dark" style="background: linear-gradient(180deg, #0C0F1A 0%, #1E1B4B 100%);">
+    <div class="section-inner">
+      <div class="section-tag reveal">COST</div>
+      <h2 class="big-statement reveal reveal-d1"><span style="color:#34D399">$30/月</span>运行整个服务——商用替代方案要 $245</h2>
+      <p class="body-text reveal reveal-d2">总成本只有每月 30 美元：电费 $20（约 200W 持续功耗），VPS $7，域名 $3。如果租用等效的商用服务器，月费是 245 美元——8 倍以上的差距。spacecowboy 把这当作业余爱好项目来维护，甚至拒绝了用户的捐款。监控用的是 hetrixtools.com 免费版，每分钟检查一次，从一月到现在 uptime 是 99.77%。</p>
+      <div class="anim-stage reveal reveal-d3" id="s7-anim"><div class="s7_stage">
+  <!-- Row 1: $30 emerald bar -->
+  <span class="s7_label s7_label1">自建成本</span>
+  <div class="s7_bar_row s7_row1">
+    <div class="s7_bar_emerald">
+      <span class="s7_bar_emerald_val">$30</span>
+    </div>
+  </div>
+
+  <!-- Sub-segments -->
+  <div class="s7_sub_row">
+    <span class="s7_sub">$20 电费</span>
+    <span class="s7_sub">$7 VPS</span>
+    <span class="s7_sub">$3 域名</span>
+  </div>
+
+  <!-- 8x multiplier between bars -->
+  <div class="s7_multiplier">
+    <div class="s7_mult_line"></div>
+    <span class="s7_mult_text">8x</span>
+    <div class="s7_mult_line"></div>
+  </div>
+
+  <!-- Row 2: $245 gray bar -->
+  <span class="s7_label s7_label2">商用方案</span>
+  <div class="s7_bar_row s7_row2">
+    <div class="s7_bar_gray">
+      <span class="s7_bar_gray_val">$245</span>
+    </div>
+  </div>
+
+  <!-- Commercial label -->
+  <span class="s7_comm_label">商用服务器</span>
+</div></div>
+      <p class="hook-line reveal reveal-d3">A/B 测试和数据分析具体怎么做的？</p>
+      <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-analytics', this)">深入了解 ↓</button>
+    </div>
+  </section>
+
+  <!-- S8 Meaning -->
+  <section class="feed-section" style="background: linear-gradient(180deg, #EEF2FF 0%, #E0E7FF 100%);">
+    <div class="section-inner">
+      <div class="section-tag reveal">DECENTRALIZATION</div>
+      <h2 class="big-statement reveal reveal-d1">一个人、一台电脑、$30/月——这就是<span class="hl">去中心化</span>的力量</h2>
+      <p class="body-text reveal reveal-d2">这个故事之所以值得讲，不只是因为技术架构优雅。它证明了一件事：在 Bluesky 的开放协议下，一个人、一台电脑、每月 30 美元，就能为数万人提供比大公司更透明的推荐体验。用户可以选择订阅谁的算法、可以随时切换、可以看到算法是如何工作的。这不是一个关于「省钱」的故事——<span class="hl2">这是一个关于开放协议如何把权力还给个人的故事</span>。</p>
+      <div class="anim-stage reveal reveal-d3" id="s8-anim"><div class="s8_stage">
+  <!-- Centralized side -->
+  <div class="s8_center_box">公司</div>
+  <div class="s8_dot s8_dot1"></div>
+  <div class="s8_dot s8_dot2"></div>
+  <div class="s8_dot s8_dot3"></div>
+  <div class="s8_dot s8_dot4"></div>
+  <div class="s8_dot s8_dot5"></div>
+
+  <svg class="s8_svg" viewBox="0 0 340 260">
+    <!-- Center box (66,96) to dots -->
+    <line class="s8_line_c" x1="102" y1="80" x2="57" y2="47" />
+    <line class="s8_line_c" x1="102" y1="90" x2="127" y2="67" />
+    <line class="s8_line_c" x1="102" y1="100" x2="137" y2="107" />
+    <line class="s8_line_c" x1="102" y1="110" x2="122" y2="147" />
+    <line class="s8_line_c" x1="78" y1="132" x2="67" y2="162" />
+
+    <!-- Mesh network lines (decentralized) -->
+    <line class="s8_line_d" x1="226" y1="56" x2="306" y2="56" />
+    <line class="s8_line_d" x1="226" y1="56" x2="201" y2="111" />
+    <line class="s8_line_d" x1="226" y1="56" x2="281" y2="111" />
+    <line class="s8_line_d" x1="306" y1="56" x2="281" y2="111" />
+    <line class="s8_line_d" x1="306" y1="56" x2="311" y2="166" />
+    <line class="s8_line_d" x1="201" y1="111" x2="281" y2="111" />
+    <line class="s8_line_d" x1="201" y1="111" x2="231" y2="166" />
+    <line class="s8_line_d" x1="281" y1="111" x2="231" y2="166" />
+    <line class="s8_line_d" x1="281" y1="111" x2="311" y2="166" />
+    <line class="s8_line_d" x1="231" y1="166" x2="311" y2="166" />
+  </svg>
+
+  <!-- Decentralized nodes -->
+  <div class="s8_node s8_n1"></div>
+  <div class="s8_node s8_n2"></div>
+  <div class="s8_node s8_n3"></div>
+  <div class="s8_node s8_n4"></div>
+  <div class="s8_node s8_n5"></div>
+  <div class="s8_node s8_n6"></div>
+
+  <!-- "You" emerald node (replaces n4) -->
+  <div class="s8_you">你</div>
+
+  <!-- Labels -->
+  <div class="s8_label_c">中心化</div>
+  <div class="s8_label_d">去中心化</div>
+  <div class="s8_label_bottom">开放协议 = 个人赋权</div>
+</div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Simon Willison</span><p>One of Bluesky's most interesting features is that anyone can run their own custom "feed" implementation and make it available to other users - effectively enabling custom algorithms that can use any mechanism they like to recommend posts.</p></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ Layer: DB + Cache ═══ -->
+<div class="layer" id="layer-db" data-depth="1">
+
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <div class="section-tag reveal">SQLITE</div>
+      <h2 class="big-statement reveal reveal-d1">SQLite <span class="hl">419GB</span>——整数 ID 映射 + mutex 写 + 90 天保留</h2>
+      <p class="body-text reveal reveal-d2">所有数据都存在 SQLite 里，spacecowboy 选择它的一个关键理由是可测试性——单元测试可以直接在内存中创建数据库，不需要 mock 存储层。数据库设计很精巧：每个帖子的 AT URI 被映射成整数 ID 以节省内存，用户同样如此。读取用 5 个并发连接，写入用 Go mutex 保证单线程——避免了 db.SetMaxOpenConns(1) 这种把读也序列化的常见做法。数据只保留 90 天，一个 cleanup goroutine 每 24 小时清理过期数据。VACUUM 操作不跑，因为要花好几个小时。</p>
+      <div class="anim-stage reveal reveal-d3" id="s9-anim"><div class="s9_stage">
+  <!-- Step 1: AT URI -->
+  <div class="s9_box s9_box_indigo s9_aturi">AT URI</div>
+
+  <!-- Step 2: 箭头 + 映射标注 + 整数ID -->
+  <div class="s9_arrow">↓</div>
+  <span class="s9_map_label">映射</span>
+  <div class="s9_box s9_box_emerald s9_intid">整数 ID</div>
+
+  <!-- 连接线 -->
+  <div class="s9_line s9_line_left"></div>
+  <div class="s9_line s9_line_right"></div>
+
+  <!-- Step 3: 5 读连接 -->
+  <div class="s9_box s9_box_emerald s9_read">5 读连接</div>
+
+  <!-- Step 4: mutex 写 -->
+  <div class="s9_box s9_box_indigo s9_write">mutex 写</div>
+
+  <!-- Step 5: 底部标签 -->
+  <div class="s9_ttl">90天 → 清理</div>
+</div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Database</span><p>All data lives in SQLite. A key advantage is testability—databases can be created in-memory for unit tests without mocking the storage layer. Each post AT URI receives an integer identifier. The database uses five concurrent read connections. A Go mutex enforces single-threaded write access. Data retention spans 90 days. The SQLite file measures 419GB; vacuum operations aren't run due to performance costs.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <div class="section-tag reveal">IN-PROCESS CACHE</div>
+      <h2 class="big-statement reveal reveal-d1">进程内 LRU 缓存——<span class="hl2">99%</span> 从内存读取，50GB 常驻</h2>
+      <p class="body-text reveal reveal-d2">推荐系统最重要的性能秘密是进程内缓存（hashicorp/golang-lru）。因为读写都在同一个进程里，所以不需要 Redis 这样的外部缓存——没有进程间通信开销，没有序列化开销。几乎 100% 的推荐数据都从缓存中读取，而不是从磁盘。进程吃掉了大约 50GB 内存，其中 99% 是缓存。这个架构的代价是进程重启后会出现剧烈的性能下降，直到缓存重新预热——但 spacecowboy 认为这是值得的 tradeoff。</p>
+      <div class="anim-stage reveal reveal-d3" id="s10-anim"><div class="s10_stage">
+  <!-- Step 1: 进程方框 -->
+  <div class="s10_proc">
+    <span class="s10_proc_label">进 程</span>
+    <!-- Step 2: 缓存区域 -->
+    <div class="s10_cache">缓存 99%</div>
+    <!-- Step 3: 磁盘区域 -->
+    <div class="s10_disk">磁盘 1%</div>
+  </div>
+
+  <!-- Step 4: RAM 标签 -->
+  <div class="s10_ram">50GB RAM</div>
+
+  <!-- Step 5: 冷启动代价 -->
+  <div class="s10_cold">冷启动代价：重启后性能下降</div>
+</div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Cache</span><p>For You relies heavily on in-process caches (hashicorp/golang-lru). Because writers and readers operate in a single process, separate services like Redis aren't needed. In-process caching avoids interprocess communication and serialization overhead, with nearly 100% of recommendation data sourced from cache rather than disk. The tradeoff: process restarts cause dramatic slowdowns until caches warm up.</p></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ Layer: Analytics ═══ -->
+<div class="layer" id="layer-analytics" data-depth="1">
+
+  <section class="feed-section" style="background: var(--bg-act3);">
+    <div class="section-inner">
+      <div class="section-tag reveal">A/B TESTING</div>
+      <h2 class="big-statement reveal reveal-d1">Parquet + DuckDB——<span class="hl">一个人的数据分析</span>流水线</h2>
+      <p class="body-text reveal reveal-d2">spacecowboy 不只是在跑算法——他还在认真做数据分析。一个独立的 200GB SQLite 数据库记录了每次返回给用户的帖子，当用户点击「show more」或「show less」时这些信号通过 firehose 回传并记录。数据定期导出为每日一个的 parquet 文件（平均 2.6GB），然后用 DuckDB 做查询。他跑了一个月的 A/B 测试，结果显示新算法让用户点击「show less」的概率降低了 2.6%，「show more」增加了 5.7%。</p>
+      <div class="anim-stage reveal reveal-d3" id="s11-anim"><div class="s11_stage">
+  <!-- 标题 -->
+  <span class="s11_title">A/B 测试数据流水线</span>
+
+  <!-- Step 1: SQLite -->
+  <div class="s11_sqlite">SQLite</div>
+
+  <!-- 箭头1 -->
+  <span class="s11_arrow1">→</span>
+
+  <!-- Step 2: Parquet -->
+  <div class="s11_parquet">Parquet</div>
+  <span class="s11_rate">2.6GB/天</span>
+
+  <!-- 箭头2 -->
+  <span class="s11_arrow2">→</span>
+
+  <!-- Step 3: DuckDB -->
+  <div class="s11_duckdb">DuckDB</div>
+
+  <!-- 连接线 -->
+  <div class="s11_vert_line"></div>
+
+  <!-- Step 4: 结果标签 -->
+  <div class="s11_result_pos">+5.7% show more</div>
+  <div class="s11_result_neg">−5.2% show less</div>
+
+  <!-- 数据流粒子 -->
+  <div class="s11_particle s11_p1"></div>
+  <div class="s11_particle s11_p2"></div>
+  <div class="s11_particle s11_p3"></div>
+  <div class="s11_particle s11_p4"></div>
+</div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Analytics</span><p>A separate 200GB SQLite database tracks which posts were returned. Data is periodically dumped into per-day parquet files (2.6GB average size), then queried using DuckDB. Spacecowboy ran a month-long A/B test showing users were 2.6% less likely to press show less, with 5.7% more "show more" interactions and 5.2% fewer "show less" actions.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <div class="section-tag reveal">MONITORING</div>
+      <h2 class="big-statement reveal reveal-d1">免费监控 + <span class="hl2">99.77%</span> uptime——业余爱好的专业水准</h2>
+      <p class="body-text reveal reveal-d2">监控用的是 hetrixtools.com 免费版：每分钟检查一次 foryou.club/playground，超过 5 分钟宕机就发邮件、打电话、发短信。从一月到现在 uptime 是 99.77%。spacecowboy 把这个为 72000 人服务的推荐系统当作业余爱好来维护——他甚至拒绝了用户的捐款。因为这不是一门生意，而是一个关于「一个人能做到什么」的证明。</p>
+      <div class="anim-stage reveal reveal-d3" id="s12-anim"><div class="s12_stage">
+  <!-- Uptime bar -->
+  <div class="s12_bar_track">
+    <div class="s12_bar_fill"></div>
+  </div>
+
+  <!-- Uptime label -->
+  <span class="s12_uptime_label">99.77% uptime</span>
+
+  <!-- Alert icons -->
+  <div class="s12_alert_row">
+    <div class="s12_alert_box">&#9993;</div>
+    <div class="s12_alert_box">&#9742;</div>
+    <div class="s12_alert_box">&#128172;</div>
+  </div>
+
+  <!-- Alert annotation -->
+  <span class="s12_alert_label">5分钟内告警</span>
+
+  <!-- Philosophy tag -->
+  <div class="s12_bottom_tag">业余爱好 · 拒绝捐款</div>
+</div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Monitoring</span><p>Free uptime monitoring via hetrixtools.com checks foryou.club/playground every minute. Email, phone call, and SMS alerts trigger after 5+ minutes downtime. Uptime since January: 99.77%. Spacecowboy maintains this as a hobby project with no financial expectations, declining supporter donations.</p></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+var layerStack = ['layer-overview'];
+var transitioning = false;
+var layerNames = { 'layer-overview': '概览', 'layer-db': 'SQLite 与缓存', 'layer-analytics': '分析与监控' };
+var observers = new Map();
+
+function setupObserver(layerId) {
+  if (observers.has(layerId)) return;
+  var layer = document.getElementById(layerId);
+  var reveals = layer.querySelectorAll('.reveal, [class*=\"_stage\"]');
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        var stage = e.target.querySelector('[class*="_stage"]');
+        if (stage) stage.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.15, root: layer });
+  reveals.forEach(function(el) { obs.observe(el); });
+  observers.set(layerId, obs);
+}
+function resetReveals(layerId) {
+  var layer = document.getElementById(layerId);
+  layer.querySelectorAll('.reveal').forEach(function(el) { el.classList.remove('visible'); });
+  layer.querySelectorAll('[class*="_stage"]').forEach(function(el) { el.classList.remove('visible'); });
+}
+function activateReveals(layerId) {
+  resetReveals(layerId);
+  if (observers.has(layerId)) { observers.get(layerId).disconnect(); observers.delete(layerId); }
+  requestAnimationFrame(function() { setupObserver(layerId); });
+}
+function updateBreadcrumb() {
+  var bc = document.getElementById('breadcrumb'); bc.innerHTML = '';
+  layerStack.forEach(function(id, i) {
+    if (i > 0) { var sep = document.createElement('span'); sep.className = 'sep'; sep.textContent = '>'; bc.appendChild(sep); }
+    var span = document.createElement('span'); span.textContent = layerNames[id] || id;
+    if (i === layerStack.length - 1) { span.className = 'current'; }
+    else { span.addEventListener('click', function() { goBackTo(i); }); }
+    bc.appendChild(span);
+  });
+  document.getElementById('backBtn').style.display = layerStack.length > 1 ? 'flex' : 'none';
+  bc.style.left = layerStack.length > 1 ? '60px' : '16px';
+  document.getElementById('depthDots').querySelectorAll('.dot').forEach(function(d, i) { d.classList.toggle('active', i === layerStack.length - 1); });
+}
+function drillDown(targetId, btnEl) {
+  if (transitioning) return; transitioning = true;
+  var currentId = layerStack[layerStack.length - 1], currentLayer = document.getElementById(currentId), targetLayer = document.getElementById(targetId);
+  targetLayer.scrollTop = 0; resetReveals(targetId); targetLayer.style.visibility = 'visible';
+  currentLayer.style.transition = 'transform 600ms ease-out, opacity 600ms ease-out'; currentLayer.style.transform = 'scale(1.3)'; currentLayer.style.opacity = '0';
+  targetLayer.classList.add('active'); targetLayer.style.opacity = '0'; targetLayer.style.transform = 'scale(0.85)'; targetLayer.style.transition = 'transform 600ms ease-out, opacity 600ms ease-out';
+  requestAnimationFrame(function() { requestAnimationFrame(function() { targetLayer.style.opacity = '1'; targetLayer.style.transform = 'scale(1)'; }); });
+  setTimeout(function() { currentLayer.classList.remove('active'); currentLayer.style.transition = ''; currentLayer.style.transform = ''; currentLayer.style.opacity = ''; targetLayer.style.transition = ''; targetLayer.style.transform = ''; activateReveals(targetId); transitioning = false; }, 650);
+  layerStack.push(targetId); updateBreadcrumb();
+}
+function goBack() {
+  if (layerStack.length <= 1 || transitioning) return; transitioning = true;
+  var currentId = layerStack.pop(), parentId = layerStack[layerStack.length - 1], currentLayer = document.getElementById(currentId), parentLayer = document.getElementById(parentId);
+  currentLayer.style.transition = 'transform 600ms ease-out, opacity 600ms ease-out'; currentLayer.style.transform = 'scale(0.85)'; currentLayer.style.opacity = '0';
+  parentLayer.classList.add('active'); parentLayer.style.transform = 'scale(1.3)'; parentLayer.style.opacity = '0'; parentLayer.style.transition = 'transform 600ms ease-out, opacity 600ms ease-out';
+  requestAnimationFrame(function() { requestAnimationFrame(function() { parentLayer.style.transform = 'scale(1)'; parentLayer.style.opacity = '1'; }); });
+  setTimeout(function() { currentLayer.classList.remove('active'); currentLayer.style.transition = ''; currentLayer.style.transform = ''; currentLayer.style.opacity = ''; currentLayer.style.visibility = ''; parentLayer.style.transition = ''; parentLayer.style.transform = ''; transitioning = false; }, 650);
+  updateBreadcrumb();
+}
+function goBackTo(i) { if (transitioning) return; while (layerStack.length - 1 > i) { if (layerStack.length <= 1) break; goBack(); return; } }
+function toggleSource(btn) { btn.classList.toggle('open'); btn.nextElementSibling.classList.toggle('open'); }
+setupObserver('layer-overview'); updateBreadcrumb();
+</script>
+</body>
+</html>

@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI 原生工程组织 — 当 agentic coding 成为默认</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #ECFEFF;
+  --bg-act2: #F0FDFA;
+  --bg-act3: #FFF1F2;
+  --bg-dark: #0F172A;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --accent: #155E75;
+  --accent2: #9F1239;
+  --warm: #D97706;
+  --danger: #DC2626;
+  --neutral: #94A3B8;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Noto Sans SC',sans-serif;-webkit-font-smoothing:antialiased;}
+.reveal{opacity:0;transform:translateY(40px);transition:opacity .8s ease,transform .8s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-d1{transition-delay:.15s;}
+.reveal-d2{transition-delay:.3s;}
+.reveal-d3{transition-delay:.45s;}
+.reveal-d4{transition-delay:.6s;}
+.big-statement{font-family:'Noto Serif SC',serif;font-size:clamp(22px,5.5vw,32px);font-weight:700;line-height:1.5;margin-bottom:32px;color:var(--text);}
+.body-text{font-size:16px;line-height:1.9;color:var(--text);margin-bottom:28px;}
+.body-text .hl{color:var(--accent);font-weight:500;}
+.body-text .hl2{color:var(--accent2);font-weight:500;}
+.body-text .hl-warm{color:var(--warm);font-weight:500;}
+.hook-line{font-size:15px;line-height:1.7;color:var(--accent);font-weight:600;margin-bottom:20px;}
+.layer{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;visibility:hidden;opacity:0;will-change:transform,opacity;scroll-snap-type:y proximity;}
+.layer.active{visibility:visible;opacity:1;}
+.feed-section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;scroll-snap-align:start;}
+.feed-section.dark{background:var(--bg-dark);color:#F1F5F9;}
+.feed-section.dark .body-text{color:#94A3B8;}
+.feed-section.dark .big-statement{color:#F1F5F9;}
+.feed-section.dark .hook-line{color:#67E8F9;}
+.section-inner{max-width:600px;width:100%;}
+.breadcrumb{position:fixed;top:16px;left:16px;z-index:1000;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);padding:8px 14px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,.1);font-size:13px;font-weight:500;}
+.breadcrumb span{color:var(--text-muted);cursor:pointer;transition:color .2s;}
+.breadcrumb span:hover{color:var(--accent);}
+.breadcrumb span.current{color:var(--text);cursor:default;}
+.breadcrumb .sep{color:#CBD5E1;margin:0 2px;cursor:default;}
+.back-btn{position:fixed;top:16px;left:16px;z-index:1001;width:38px;height:38px;border-radius:10px;border:none;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(0,0,0,.1);font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--text);transition:all .2s;}
+.back-btn:hover{background:var(--accent);color:#fff;}
+.depth-dots{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;gap:8px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);padding:8px 14px;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,.1);}
+.dot{width:10px;height:10px;border-radius:50%;background:#CBD5E1;transition:all .3s;}
+.dot.active{background:var(--accent);box-shadow:0 0 8px rgba(21,94,117,.5);transform:scale(1.2);}
+.drill-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:1.5px solid rgba(21,94,117,.3);border-radius:10px;background:transparent;color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;transition:all .25s;}
+.drill-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(21,94,117,.3);}
+.dark .drill-btn{border-color:rgba(103,232,249,.4);color:#67E8F9;}
+.dark .drill-btn:hover{background:#67E8F9;color:#0F172A;border-color:#67E8F9;}
+.source-panel{margin-top:24px;border-radius:12px;overflow:hidden;border:1px solid rgba(21,94,117,.15);background:rgba(21,94,117,.03);}
+.dark .source-panel{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.04);}
+.source-toggle{width:100%;padding:12px 16px;border:none;background:none;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);}
+.dark .source-toggle{color:#67E8F9;}
+.source-toggle:hover{background:rgba(21,94,117,.06);}
+.source-toggle .arrow{transition:transform .3s;font-size:11px;}
+.source-toggle.open .arrow{transform:rotate(90deg);}
+.source-body{max-height:0;overflow:hidden;transition:max-height .4s ease;padding:0 16px;}
+.source-body.open{max-height:2000px;padding:0 16px 16px;overflow-y:auto;}
+.source-body p{font-size:13px;line-height:1.8;color:var(--text-muted);margin:0 0 12px;white-space:pre-wrap;}
+.dark .source-body p{color:#94A3B8;}
+.source-body .source-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:8px;display:block;}
+.dark .source-body .source-label{color:#67E8F9;}
+.anim-stage{width:100%;display:flex;justify-content:center;margin:28px 0;min-height:180px;}
+.anim-stage > div{width:100%;}
+
+/* === S1 Animation === */
+
+.s1_stage{max-width:520px;width:100%;margin:0 auto;padding:clamp(24px,5vw,40px) clamp(16px,4vw,32px);display:flex;align-items:center;gap:clamp(20px,4vw,36px);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.s1_old{position:relative;flex-shrink:0;text-align:center}
+.s1_old_label{font-size:clamp(13px,2.5vw,15px);color:#94A3B8;margin-bottom:6px;opacity:0;transform:translateY(8px);transition:opacity .5s cubic-bezier(.4,0,.2,1),transform .5s cubic-bezier(.4,0,.2,1)}
+.s1_old_text{font-size:clamp(20px,4vw,28px);font-weight:700;color:#1E293B;position:relative;display:inline-block;opacity:0;transform:scale(1.05);transition:opacity .4s cubic-bezier(.4,0,.2,1),transform .4s cubic-bezier(.4,0,.2,1),color 1s cubic-bezier(.4,0,.2,1) .9s}
+.s1_old_text::after{content:"";position:absolute;left:-4%;top:50%;width:0;height:2.5px;background:#9F1239;border-radius:2px;transition:width .6s cubic-bezier(.22,1,.36,1) 1.1s}
+.s1_arrow{font-size:clamp(18px,3.5vw,24px);color:#94A3B8;opacity:0;transform:translateX(-8px);transition:opacity .5s cubic-bezier(.4,0,.2,1) .6s,transform .5s cubic-bezier(.4,0,.2,1) .6s}
+.s1_new{display:flex;flex-direction:column;gap:clamp(8px,1.5vw,12px)}
+.s1_new_label{font-size:clamp(13px,2.5vw,15px);color:#155E75;font-weight:500;opacity:0;transform:translateY(8px);transition:opacity .5s cubic-bezier(.4,0,.2,1) .7s,transform .5s cubic-bezier(.4,0,.2,1) .7s}
+.s1_item{display:flex;align-items:center;gap:clamp(8px,1.5vw,12px);opacity:0;transform:translateX(16px);padding:clamp(8px,1.5vw,12px) clamp(12px,2.5vw,20px);border-radius:8px;background:rgba(21,94,117,.06);border-left:3px solid transparent}
+.s1_item:nth-child(2){transition:opacity .5s cubic-bezier(.4,0,.2,1) 1.2s,transform .5s cubic-bezier(.22,1,.36,1) 1.2s,border-color .4s cubic-bezier(.4,0,.2,1) 1.7s,background .4s ease 1.7s}
+.s1_item:nth-child(3){transition:opacity .5s cubic-bezier(.4,0,.2,1) 1.5s,transform .5s cubic-bezier(.22,1,.36,1) 1.5s,border-color .4s cubic-bezier(.4,0,.2,1) 2s,background .4s ease 2s}
+.s1_item:nth-child(4){transition:opacity .5s cubic-bezier(.4,0,.2,1) 1.8s,transform .5s cubic-bezier(.22,1,.36,1) 1.8s,border-color .4s cubic-bezier(.4,0,.2,1) 2.3s,background .4s ease 2.3s}
+.s1_dot{width:clamp(6px,1.2vw,8px);height:clamp(6px,1.2vw,8px);border-radius:50%;background:#9F1239;flex-shrink:0;transform:scale(0);transition:transform .4s cubic-bezier(.34,1.56,.64,1)}
+.s1_item:nth-child(2) .s1_dot{transition-delay:1.7s}
+.s1_item:nth-child(3) .s1_dot{transition-delay:2s}
+.s1_item:nth-child(4) .s1_dot{transition-delay:2.3s}
+.s1_item_text{font-size:clamp(15px,3vw,19px);font-weight:600;color:#1E293B}
+.s1_stage.visible .s1_old_label{opacity:1;transform:translateY(0)}
+.s1_stage.visible .s1_old_text{opacity:1;transform:scale(1);color:#94A3B8}
+.s1_stage.visible .s1_old_text::after{width:108%}
+.s1_stage.visible .s1_arrow{opacity:1;transform:translateX(0)}
+.s1_stage.visible .s1_new_label{opacity:1;transform:translateY(0)}
+.s1_stage.visible .s1_item{opacity:1;transform:translateX(0);border-left-color:rgba(159,18,57,.25);background:rgba(21,94,117,.08)}
+.s1_stage.visible .s1_dot{transform:scale(1)}
+
+/* === S2 Animation === */
+
+.s2_stage {
+  background: #0F172A;
+  padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 3vw, 2rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+.s2_stage .s2-title {
+  color: #F1F5F9;
+  font: 700 clamp(1.4rem, 3.5vw, 2rem) system-ui, sans-serif;
+  margin: 0 0 clamp(1.5rem, 3vw, 2.5rem);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+.s2_stage .s2-cards {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.75rem, 2vw, 1.25rem);
+  width: 100%;
+  max-width: 520px;
+}
+.s2_stage .s2-card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  padding: clamp(0.875rem, 2vw, 1.25rem) clamp(1rem, 2.5vw, 1.5rem);
+  opacity: 0;
+  transform: translateX(-40px);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+.s2_stage.visible .s2-card { opacity: 1; transform: translateX(0); }
+.s2_stage.visible .s2-card:nth-child(1) { transition-delay: 0.1s; }
+.s2_stage.visible .s2-card:nth-child(2) { transition-delay: 0.35s; }
+.s2_stage.visible .s2-card:nth-child(3) { transition-delay: 0.6s; }
+.s2_stage.visible .s2-card:nth-child(4) { transition-delay: 0.85s; }
+.s2_stage .s2-card:nth-child(odd)  { --accent: #155E75; }
+.s2_stage .s2-card:nth-child(even) { --accent: #9F1239; }
+.s2_stage .s2-label {
+  font: 600 clamp(0.7rem, 1.5vw, 0.8rem) system-ui, sans-serif;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 0.35rem;
+}
+.s2_stage .s2-flow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.s2_stage .s2-before,
+.s2_stage .s2-after {
+  font: 400 clamp(0.85rem, 2vw, 1rem) system-ui, sans-serif;
+  color: #F1F5F9;
+}
+.s2_stage .s2-before {
+  opacity: 0.55;
+  text-decoration: line-through;
+  text-decoration-color: rgba(241,245,249,0.3);
+}
+.s2_stage .s2-arrow {
+  font: 400 clamp(0.85rem, 2vw, 1rem) system-ui, sans-serif;
+  color: rgba(241,245,249,0.35);
+}
+.s2_stage .s2-after {
+  font-weight: 600;
+}
+
+/* === S3 Animation === */
+
+.s3_stage {
+  max-width: clamp(320px, 90vw, 520px);
+  margin: 0 auto;
+  padding: clamp(24px, 5vw, 40px) clamp(16px, 4vw, 32px);
+  background: #F0FDFA;
+  font-family: -apple-system, "Segoe UI", sans-serif;
+  color: #1E293B;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s3_stage.visible {
+  opacity: 1;
+}
+.s3_stage h2 {
+  font-size: clamp(18px, 4vw, 22px);
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 clamp(20px, 4vw, 32px);
+  color: #155E75;
+  letter-spacing: 0.02em;
+}
+.s3_card {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(12px, 3vw, 18px);
+  background: #fff;
+  border: 1px solid rgba(21,94,117,0.12);
+  border-radius: 10px;
+  padding: clamp(14px, 3vw, 20px);
+  margin-bottom: 14px;
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s3_stage.visible .s3_card:nth-of-type(1) {
+  opacity: 1; transform: translateY(0); transition-delay: 0.15s;
+}
+.s3_stage.visible .s3_card:nth-of-type(2) {
+  opacity: 1; transform: translateY(0); transition-delay: 0.45s;
+}
+.s3_stage.visible .s3_card:nth-of-type(3) {
+  opacity: 1; transform: translateY(0); transition-delay: 0.75s;
+}
+.s3_badge {
+  flex-shrink: 0;
+  width: clamp(36px, 7vw, 44px);
+  height: clamp(36px, 7vw, 44px);
+  border-radius: 50%;
+  background: #155E75;
+  color: #fff;
+  font-size: clamp(16px, 3.5vw, 20px);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.s3_card:nth-of-type(2) .s3_badge { background: #9F1239; }
+.s3_card:nth-of-type(3) .s3_badge { background: #155E75; }
+.s3_card_body {
+  flex: 1;
+  min-width: 0;
+}
+.s3_card_title {
+  font-size: clamp(15px, 3.2vw, 17px);
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: #1E293B;
+}
+.s3_card_title span {
+  color: #155E75;
+  margin-right: 6px;
+}
+.s3_card:nth-of-type(2) .s3_card_title span { color: #9F1239; }
+.s3_card_desc {
+  font-size: clamp(13px, 2.8vw, 14.5px);
+  color: #94A3B8;
+  margin: 0;
+  line-height: 1.5;
+}
+.s3_divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(21,94,117,0.18), transparent);
+  margin: clamp(18px, 4vw, 28px) 0 clamp(14px, 3vw, 22px);
+  opacity: 0;
+  transition: opacity 0.5s ease 1.05s;
+}
+.s3_stage.visible .s3_divider { opacity: 1; }
+.s3_note {
+  text-align: center;
+  font-size: clamp(13px, 2.8vw, 14.5px);
+  color: #94A3B8;
+  margin: 0;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s ease 1.2s, transform 0.5s ease 1.2s;
+}
+.s3_stage.visible .s3_note {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* === S4 Animation === */
+
+.s4_stage {
+  background: #0F172A;
+  color: #F1F5F9;
+  font-family: -apple-system, "Noto Sans SC", sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 3vw, 2rem);
+  max-width: 520px;
+  margin: 0 auto;
+}
+.s4_stage .s4-title {
+  font-size: clamp(1.4rem, 3.5vw, 1.8rem);
+  font-weight: 700;
+  margin-bottom: 2rem;
+  opacity: 0;
+  transform: translateY(-12px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s4_stage .s4-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+.s4_stage .s4-card {
+  background: rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 1.2rem 1.4rem;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  opacity: 0;
+  transform: translateX(-24px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s4_stage .s4-arrow {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 2.4rem;
+  text-align: center;
+  color: #155E75;
+  transition: color 0.5s ease;
+}
+.s4_stage .s4-card.up .s4-arrow {
+  color: #34D399;
+}
+.s4_stage .s4-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.s4_stage .s4-metric {
+  font-size: clamp(1rem, 2.5vw, 1.15rem);
+  font-weight: 600;
+}
+.s4_stage .s4-label {
+  font-size: clamp(0.8rem, 2vw, 0.9rem);
+  color: rgba(241,245,249,0.55);
+}
+.s4_stage .s4-warning {
+  margin-top: 1.8rem;
+  font-size: clamp(0.85rem, 2.2vw, 0.95rem);
+  color: #9F1239;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  text-align: center;
+  border-top: 1px solid rgba(159,18,57,0.3);
+  padding-top: 1.2rem;
+  width: 100%;
+}
+.s4_stage.visible .s4-title {
+  opacity: 1;
+  transform: translateY(0);
+}
+.s4_stage.visible .s4-card:nth-child(1) {
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: 0.3s;
+}
+.s4_stage.visible .s4-card:nth-child(2) {
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: 0.6s;
+}
+.s4_stage.visible .s4-card:nth-child(3) {
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: 0.9s;
+}
+.s4_stage.visible .s4-warning {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 1.3s;
+}
+
+/* === S5 Animation === */
+
+.s5_stage{max-width:520px;margin:0 auto;padding:clamp(20px,4vw,36px);font-family:system-ui,sans-serif;color:#1E293B;opacity:0;transition:opacity .4s}
+.s5_stage.visible{opacity:1}
+.s5_title{text-align:center;font-size:clamp(20px,4vw,28px);font-weight:700;margin-bottom:clamp(16px,3vw,28px);opacity:0;transform:translateY(12px);transition:all .5s}
+.s5_stage.visible .s5_title{opacity:1;transform:translateY(0)}
+.s5_cols{display:flex;align-items:center;gap:clamp(8px,2vw,16px);margin-bottom:clamp(16px,3vw,24px)}
+.s5_col{flex:1}
+.s5_label{font-size:clamp(11px,1.8vw,13px);font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;opacity:0;transition:all .4s}
+.s5_stage.visible .s5_label{opacity:1}
+.s5_stage.visible .s5_label--before{transition-delay:.3s}
+.s5_stage.visible .s5_label--after{transition-delay:.9s}
+.s5_box{border:2px solid #155E75;border-radius:8px;padding:clamp(8px,1.5vw,12px);margin-bottom:8px;text-align:center;opacity:0;transform:translateX(-20px);transition:all .45s}
+.s5_box strong{display:block;font-size:clamp(12px,2vw,14px);color:#155E75}
+.s5_box span{font-size:clamp(10px,1.6vw,12px);color:#94A3B8}
+.s5_stage.visible .s5_box:nth-child(2){transition-delay:.45s}
+.s5_stage.visible .s5_box:nth-child(3){transition-delay:.55s}
+.s5_stage.visible .s5_box:nth-child(4){transition-delay:.65s}
+.s5_stage.visible .s5_box{opacity:1;transform:translateX(0)}
+.s5_arrow{flex:0 0 clamp(28px,5vw,44px);display:flex;align-items:center;justify-content:center;opacity:0;transition:all .5s .75s}
+.s5_stage.visible .s5_arrow{opacity:1}
+.s5_arrow svg{width:clamp(24px,4vw,36px);height:auto}
+.s5_circles{position:relative;min-height:clamp(120px,20vw,180px)}
+.s5_circle{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:clamp(10px,1.6vw,12px);font-weight:600;opacity:0;transform:scale(.5);transition:all .5s}
+.s5_circle--a{width:clamp(80px,14vw,110px);height:clamp(80px,14vw,110px);background:rgba(21,94,117,.15);border:2px solid #155E75;color:#155E75;top:0;left:0;z-index:2}
+.s5_circle--b{width:clamp(80px,14vw,110px);height:clamp(80px,14vw,110px);background:rgba(159,18,57,.12);border:2px solid #9F1239;color:#9F1239;top:clamp(10px,2vw,18px);left:clamp(50px,9vw,72px);z-index:1}
+.s5_circle--c{width:clamp(90px,15vw,120px);height:clamp(90px,15vw,120px);background:rgba(21,94,117,.08);border:2px dashed #94A3B8;color:#1E293B;top:clamp(55px,9vw,80px);left:clamp(18px,3vw,30px);z-index:3}
+.s5_stage.visible .s5_circle--a{opacity:1;transform:scale(1);transition-delay:1s}
+.s5_stage.visible .s5_circle--b{opacity:1;transform:scale(1);transition-delay:1.15s}
+.s5_stage.visible .s5_circle--c{opacity:1;transform:scale(1);transition-delay:1.3s}
+.s5_badges{display:flex;gap:clamp(8px,2vw,12px);flex-wrap:wrap;justify-content:center;margin-top:clamp(12px,2vw,20px)}
+.s5_badge{padding:clamp(6px,1vw,10px) clamp(12px,2vw,18px);border-radius:20px;font-size:clamp(11px,1.8vw,13px);font-weight:600;opacity:0;transform:translateY(10px);transition:all .45s}
+.s5_badge--a{background:rgba(21,94,117,.1);color:#155E75;border:1.5px solid #155E75}
+.s5_badge--b{background:rgba(159,18,57,.08);color:#9F1239;border:1.5px solid #9F1239}
+.s5_stage.visible .s5_badge--a{opacity:1;transform:translateY(0);transition-delay:1.5s}
+.s5_stage.visible .s5_badge--b{opacity:1;transform:translateY(0);transition-delay:1.65s}
+.s5_hire{text-align:center;font-size:clamp(10px,1.6vw,12px);color:#94A3B8;margin-top:clamp(8px,1.5vw,14px);opacity:0;transition:all .4s 1.4s}
+.s5_stage.visible .s5_hire{opacity:1}
+
+/* === S6 Animation === */
+
+.s6_stage {
+  max-width: 520px; margin: 0 auto; padding: clamp(24px, 5vw, 48px);
+  background: #0F172A; font-family: system-ui, -apple-system, sans-serif;
+  color: #F1F5F9; display: flex; flex-direction: column;
+  align-items: center; gap: clamp(20px, 4vw, 36px); overflow: hidden;
+}
+.s6_title {
+  font-size: clamp(20px, 4vw, 28px); font-weight: 700;
+  letter-spacing: 0.02em; opacity: 0; transform: translateY(-18px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s6_stage.visible .s6_title { opacity: 1; transform: translateY(0); }
+.s6_noisy {
+  width: clamp(72px, 14vw, 96px); height: clamp(56px, 11vw, 72px);
+  border: 2.5px solid #F1F5F9; border-radius: 8px; position: relative;
+  opacity: 0; transform: scale(0.7);
+  transition: opacity 0.5s ease 0.3s, transform 0.5s ease 0.3s;
+}
+.s6_stage.visible .s6_noisy { opacity: 1; transform: scale(1); }
+.s6_noisy::before, .s6_noisy::after {
+  content: ""; position: absolute; left: 50%; width: 55%; height: 2.5px;
+  background: #F1F5F9; border-radius: 2px; transform: translateX(-50%);
+}
+.s6_noisy::before { top: 30%; }
+.s6_noisy::after { top: 55%; }
+.s6_stage.visible .s6_noisy {
+  animation: s6_shake 0.12s ease-in-out 0.8s 6 alternate;
+}
+@keyframes s6_shake {
+  0% { transform: translateX(-2px) rotate(-1deg); }
+  100% { transform: translateX(2px) rotate(1deg); }
+}
+.s6_wave {
+  position: absolute; right: -14px; width: 10px;
+  height: 70%; top: 15%; border-right: 2.5px solid #F1F5F9;
+  border-radius: 0 50% 50% 0; opacity: 0;
+}
+.s6_wave:nth-child(2) { right: -24px; height: 50%; top: 25%; }
+.s6_stage.visible .s6_wave {
+  animation: s6_pulse 0.6s ease-in-out 1s 3;
+}
+@keyframes s6_pulse {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.7; }
+}
+.s6_arrow_down {
+  width: 2.5px; height: clamp(24px, 4vw, 36px); background: #475569;
+  position: relative; opacity: 0; transition: opacity 0.4s ease 1.4s;
+}
+.s6_stage.visible .s6_arrow_down { opacity: 1; }
+.s6_arrow_down::after {
+  content: ""; position: absolute; bottom: -6px; left: 50%;
+  transform: translateX(-50%); border-left: 6px solid transparent;
+  border-right: 6px solid transparent; border-top: 8px solid #475569;
+}
+.s6_question {
+  font-size: clamp(18px, 3.5vw, 24px); font-weight: 600; color: #155E75;
+  border: 2px solid #155E75; border-radius: 50%;
+  width: clamp(100px, 20vw, 130px); height: clamp(100px, 20vw, 130px);
+  display: flex; align-items: center; justify-content: center;
+  text-align: center; line-height: 1.3; opacity: 0; transform: scale(0.6);
+  transition: opacity 0.5s ease 1.8s, transform 0.5s ease 1.8s;
+}
+.s6_stage.visible .s6_question { opacity: 1; transform: scale(1); }
+.s6_branches {
+  display: flex; gap: clamp(24px, 6vw, 56px);
+  width: 100%; justify-content: center;
+}
+.s6_branch {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 10px; opacity: 0; transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s6_stage.visible .s6_branch:nth-child(1) {
+  opacity: 1; transform: translateY(0); transition-delay: 2.5s;
+}
+.s6_stage.visible .s6_branch:nth-child(2) {
+  opacity: 1; transform: translateY(0); transition-delay: 3.1s;
+}
+.s6_branch_icon {
+  width: clamp(48px, 10vw, 64px); height: clamp(48px, 10vw, 64px);
+  border-radius: 12px; display: flex; align-items: center;
+  justify-content: center; border: 2px solid;
+}
+.s6_branch:nth-child(1) .s6_branch_icon { border-color: #155E75; }
+.s6_branch:nth-child(2) .s6_branch_icon {
+  border-color: #9F1239; background: #9F1239; color: #F1F5F9;
+  box-shadow: 0 0 20px rgba(159, 18, 57, 0.4);
+}
+.s6_gear {
+  width: 24px; height: 24px; border: 3px solid #155E75; border-radius: 50%;
+}
+.s6_stage.visible .s6_gear { animation: s6_spin 3s linear 3s infinite; }
+@keyframes s6_spin { to { transform: rotate(360deg); } }
+.s6_xmark::before, .s6_xmark::after {
+  content: ""; display: block; width: 22px; height: 3px;
+  background: #F1F5F9; border-radius: 2px;
+}
+.s6_xmark::before { transform: rotate(45deg) translateY(1px); }
+.s6_xmark::after { transform: rotate(-45deg) translateY(-1px); }
+.s6_branch_label { font-size: clamp(14px, 2.8vw, 18px); font-weight: 600; }
+.s6_branch:nth-child(2) .s6_branch_label { color: #9F1239; }
+
+/* === A1 Animation === */
+
+.a1_stage {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: clamp(16px, 4vw, 32px);
+  background: #F0FDFA;
+  font-family: -apple-system, "Segoe UI", sans-serif;
+  color: #1E293B;
+}
+.a1_stage .a1-title {
+  font-size: clamp(18px, 3vw, 24px);
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: clamp(16px, 3vw, 28px);
+  color: #155E75;
+  opacity: 0;
+  transform: translateY(-12px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.a1_stage.visible .a1-title {
+  opacity: 1;
+  transform: translateY(0);
+}
+.a1_stage .a1-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: clamp(14px, 2.5vw, 20px);
+  margin-bottom: clamp(10px, 2vw, 16px);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  border-left: 3px solid #155E75;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.a1_stage.visible .a1-card:nth-child(2) { transition-delay: 0.15s; }
+.a1_stage.visible .a1-card:nth-child(3) { transition-delay: 0.35s; }
+.a1_stage.visible .a1-card:nth-child(4) { transition-delay: 0.55s; }
+.a1_stage.visible .a1-card:nth-child(5) { transition-delay: 0.75s; }
+.a1_stage.visible .a1-card {
+  opacity: 1;
+  transform: translateY(0);
+}
+.a1_stage .a1-card-label {
+  font-size: clamp(13px, 2vw, 15px);
+  font-weight: 700;
+  color: #155E75;
+  margin-bottom: 10px;
+  letter-spacing: 0.02em;
+}
+.a1_stage .a1-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(8px, 2vw, 16px);
+}
+.a1_stage .a1-col-head {
+  font-size: clamp(10px, 1.5vw, 12px);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+.a1_stage .a1-before .a1-col-head {
+  color: #94A3B8;
+}
+.a1_stage .a1-after .a1-col-head {
+  color: #9F1239;
+}
+.a1_stage .a1-before .a1-col-text {
+  font-size: clamp(12px, 1.8vw, 14px);
+  color: #94A3B8;
+  text-decoration: line-through;
+  line-height: 1.5;
+}
+.a1_stage .a1-after .a1-col-text {
+  font-size: clamp(12px, 1.8vw, 14px);
+  color: #155E75;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.a1_stage .a1-after {
+  background: #F0FDFA;
+  border-radius: 6px;
+  padding: clamp(6px, 1vw, 10px);
+}
+.a1_stage .a1-before {
+  padding: clamp(6px, 1vw, 10px);
+}
+
+/* === A2 Animation === */
+
+.a2_stage{max-width:520px;margin:0 auto;padding:clamp(1.2rem,4vw,2rem);background:#0F172A;
+  color:#F1F5F9;font-family:system-ui,sans-serif;border-radius:12px;overflow:hidden}
+.a2_stage *{box-sizing:border-box;margin:0;padding:0}
+.a2_title{font-size:clamp(.85rem,2.5vw,1rem);font-weight:700;letter-spacing:.08em;
+  color:#155E75;text-transform:uppercase;margin-bottom:1rem;opacity:0;transform:translateY(8px);
+  transition:opacity .5s,transform .5s}
+.a2_badges{display:flex;gap:.6rem;justify-content:center;opacity:0;transform:translateY(10px);
+  transition:opacity .5s,transform .5s}
+.a2_badge{padding:.35rem .7rem;border:1.5px solid #155E75;border-radius:6px;
+  font-size:clamp(.7rem,2vw,.82rem);font-weight:600;color:#F1F5F9;white-space:nowrap}
+.a2_bracket{text-align:center;margin:.5rem 0;opacity:0;transition:opacity .4s}
+.a2_bracket span{display:inline-block;padding:.2rem .8rem;background:#155E75;border-radius:4px;
+  font-size:clamp(.65rem,1.8vw,.75rem);font-weight:700;letter-spacing:.06em}
+.a2_pod{border:1.5px dashed #334155;border-radius:8px;padding:.7rem .8rem;margin-top:.5rem;
+  opacity:0;transform:translateY(10px);transition:opacity .5s,transform .5s}
+.a2_pod_label{font-size:clamp(.65rem,1.8vw,.72rem);color:#94A3B8;font-weight:600;
+  margin-bottom:.45rem}
+.a2_tags{display:flex;gap:.4rem;flex-wrap:wrap}
+.a2_tag{padding:.2rem .5rem;background:#1E293B;border-radius:4px;
+  font-size:clamp(.6rem,1.6vw,.7rem);color:#CBD5E1}
+.a2_divider{height:1px;background:linear-gradient(90deg,transparent,#334155,transparent);
+  margin:1.2rem 0;opacity:0;transition:opacity .5s}
+.a2_metrics{display:flex;flex-direction:column;gap:.55rem;opacity:0;transform:translateY(10px);
+  transition:opacity .5s,transform .5s}
+.a2_row{display:flex;align-items:center;gap:.5rem;font-size:clamp(.7rem,2vw,.82rem)}
+.a2_metric_name{min-width:5.5em;font-weight:600;color:#F1F5F9}
+.a2_arrow_down,.a2_arrow_up{width:1.4rem;height:1.4rem;display:flex;align-items:center;
+  justify-content:center;border-radius:50%;font-weight:700;font-size:.7rem;flex-shrink:0}
+.a2_arrow_down{background:#9F1239;color:#F1F5F9}
+.a2_arrow_up{background:#155E75;color:#F1F5F9}
+.a2_metric_desc{color:#94A3B8;font-size:clamp(.6rem,1.7vw,.72rem)}
+.a2_warn{margin-top:1rem;text-align:center;opacity:0;transform:scale(.9);
+  transition:opacity .5s,transform .5s}
+.a2_warn span{display:inline-block;padding:.3rem .9rem;background:#9F1239;border-radius:5px;
+  font-size:clamp(.65rem,1.8vw,.78rem);font-weight:700;letter-spacing:.04em}
+/* activation */
+.a2_stage.visible .a2_title{opacity:1;transform:translateY(0);transition-delay:.1s}
+.a2_stage.visible .a2_badges{opacity:1;transform:translateY(0);transition-delay:.35s}
+.a2_stage.visible .a2_bracket{opacity:1;transition-delay:.6s}
+.a2_stage.visible .a2_pod{opacity:1;transform:translateY(0);transition-delay:.8s}
+.a2_stage.visible .a2_divider{opacity:1;transition-delay:1s}
+.a2_stage.visible .a2_title2{transition-delay:1.15s}
+.a2_stage.visible .a2_metrics{opacity:1;transform:translateY(0);transition-delay:1.35s}
+.a2_stage.visible .a2_row:nth-child(1){animation:a2fade .4s 1.4s both}
+.a2_stage.visible .a2_row:nth-child(2){animation:a2fade .4s 1.6s both}
+.a2_stage.visible .a2_row:nth-child(3){animation:a2fade .4s 1.8s both}
+.a2_stage.visible .a2_warn{opacity:1;transform:scale(1);transition-delay:2.1s}
+@keyframes a2fade{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
+
+</style>
+
+<meta name="description" content="多年来，工程带宽一直是构建应用中最昂贵的部分——从瀑布到敏捷，所有流程都围绕这个成本构建。Fiona Fung 在 Anthropic 担任 Claude Code 和 Claude Cowork 的工程总监，她从 2000 年代在微软做 Visual Studio 开始，经历了从 CD-ROM 发行到持续交付的整个演变。而现在，变化再次到来：在 Claud">
+<link rel="canonical" href="https://chendi.me/readings/ai-native-org/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">←</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ Layer: Overview ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+<!-- S1 -->
+<section class="feed-section" style="background:var(--bg-act1)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">瓶颈迁移：<br>写代码不再是瓶颈了</h2>
+  <p class="body-text reveal reveal-d1">多年来，工程带宽一直是构建应用中最昂贵的部分——从瀑布到敏捷，所有流程都围绕这个成本构建。Fiona Fung 在 Anthropic 担任 Claude Code 和 Claude Cowork 的工程总监，她从 2000 年代在微软做 Visual Studio 开始，经历了从 CD-ROM 发行到持续交付的整个演变。而现在，变化再次到来：在 Claude Code 团队中，<span class="hl">写代码、写测试、重构已经几乎不再拖慢团队了</span>。但瓶颈并没有消失——它只是迁移了。当 agentic coding 消除了手动敲代码的需求后，<span class="hl2">验证、代码审查和安全</span>取而代之成为新的瓶颈。现在每个人都能飞快地生成大量代码，但这也带来了新问题：这些代码是正确的吗？它们如何维护？Fiona 说她收到最多的问题是「人类怎么跟得上代码审查的速度？」</p>
+  <div class="anim-stage reveal reveal-d2" id="s1-anim"><div class="s1_stage">
+  <div class="s1_old">
+    <div class="s1_old_label">旧瓶颈</div>
+    <div class="s1_old_text">写代码</div>
+  </div>
+  <div class="s1_arrow">&rarr;</div>
+  <div class="s1_new">
+    <div class="s1_new_label">新瓶颈</div>
+    <div class="s1_item"><span class="s1_dot"></span><span class="s1_item_text">验证</span></div>
+    <div class="s1_item"><span class="s1_dot"></span><span class="s1_item_text">审查</span></div>
+    <div class="s1_item"><span class="s1_dot"></span><span class="s1_item_text">安全</span></div>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>For years, engineering bandwidth was the expensive part of building applications. Every process we used to have around software planning and shipping, first waterfall and then agile, was built around that cost.</p>
+<p>I started my career in the early 2000s working on Visual Studio. In those days we shipped software on CD-ROMs with hard manufacturing deadlines. Once we could distribute software online, we began increasing to shipping updates continuously. Now we're changing the way we work again, this time around the time and people it takes to write software.</p>
+<p>On the Claude Code team, writing code, writing tests, and refactoring rarely slows us down anymore. But the bottlenecks didn't go away when agentic coding took away the actual need to type code. Verification, code review, and security took their place.</p>
+<p>We can all generate a lot of code really fast now, but this also brings up new questions: Is this code correct? How is it maintained? And one of the top questions I get from fellow engineering leaders: "How are humans keeping up with how you're doing code reviews?"</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S2 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">四个悄悄失效的流程</h2>
+  <p class="body-text reveal reveal-d1">每个流程都是为了解决某个问题而建立的，但当问题不复存在时，流程却很少自动消失。当 Claude Code 团队开始将 agentic coding 作为默认工作方式后，很多既有流程都失效了。<span class="hl" style="color:#67E8F9">规划</span>方面，六个月的路线图到第三个月就过时了，所以团队转向了 JIT（即时）规划：原型先行，内部试用，快速迭代。<span class="hl" style="color:#67E8F9">获取上下文</span>方面，过去第一步是找到写代码的人去问，但现在所有 PR 都有 Claude 辅助，所以新规范是问自己「我到底需要知道什么？」然后直接问 Claude——它往往能给出比原作者更全面的答案。<span class="hl" style="color:#67E8F9">代码审查</span>方面，Claude 处理风格、linting、bug 捕获和测试生成，人类审查者聚焦在需要专业知识的地方：法律、安全、产品判断。<span class="hl" style="color:#67E8F9">团队构成</span>方面，角色开始模糊：PM 大量写代码，工程师做内容和设计，团队更看重创意构建者和深度系统专家，而不是纯粹的编码产出。</p>
+  <div class="anim-stage reveal reveal-d2" id="s2-anim"><div class="s2_stage">
+  <h2 class="s2-title">四个悄悄失效的流程</h2>
+  <div class="s2-cards">
+    <div class="s2-card">
+      <div class="s2-label">规划</div>
+      <div class="s2-flow">
+        <span class="s2-before">六月路线图</span>
+        <span class="s2-arrow">&rarr;</span>
+        <span class="s2-after">JIT 即时规划</span>
+      </div>
+    </div>
+    <div class="s2-card">
+      <div class="s2-label">上下文</div>
+      <div class="s2-flow">
+        <span class="s2-before">找原作者</span>
+        <span class="s2-arrow">&rarr;</span>
+        <span class="s2-after">问 Claude</span>
+      </div>
+    </div>
+    <div class="s2-card">
+      <div class="s2-label">审查</div>
+      <div class="s2-flow">
+        <span class="s2-before">人审一切</span>
+        <span class="s2-arrow">&rarr;</span>
+        <span class="s2-after">Claude 审基础 + 人审专业</span>
+      </div>
+    </div>
+    <div class="s2-card">
+      <div class="s2-label">角色</div>
+      <div class="s2-flow">
+        <span class="s2-before">固定分工</span>
+        <span class="s2-arrow">&rarr;</span>
+        <span class="s2-after">角色模糊化</span>
+      </div>
+    </div>
+  </div>
+</div></div>
+  <p class="hook-line reveal reveal-d3">每个变革的 Before→After 完整对比，以及 Fiona 团队的具体做法。</p>
+  <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-details',this)">深入流程详解 →</button>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>We all put processes in place for a reason, to close a gap or make something work better. But when that gap no longer exists and those processes become obsolete, they rarely go away on their own. When the Claude Code team began using agentic coding as our default way of working, a lot of our existing processes stopped working.</p>
+<p>Planning: The old norm was to spend a lot more time pre-planning because coding time was expensive. When I first joined the Claude Code team, we wrote a pretty good six month roadmap, and then because of Claude Code, so many things changed that it was out of date by month three.</p>
+<p>Context gathering: When engineers wrote code, the first step to getting an answer to most questions was to find the person who wrote the code. Now, since all our PRs are assisted by Claude, "Who made this change?" is no longer sufficient.</p>
+<p>Code review: We use Code Review heavily. Claude handles all the style and linting, PR feedback requests, catching bugs and fixing them before a full commit, and adding tests. Where we still definitely want a human is expertise.</p>
+<p>Team makeup: Claude and AI have reshaped roles across the team. Our PMs code a lot now, which is fun to see.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S3 -->
+<section class="feed-section" style="background:var(--bg-act2)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">三条不可协商的原则</h2>
+  <p class="body-text reveal reveal-d1">在推出这些新规范时，有些方面是强制性的团队原则，有些则交给小组（pod）自行摸索。Fiona 的团队有三条不可协商的「必须做」。第一条：<span class="hl">狂热地 dogfood 自己的产品</span>——每个 Claude Code 团队成员，包括跨职能合作伙伴，都使用 Claude Code 和 Claude Cowork，团队始终在想办法让 Claude 帮助更快更高效地完成工作。第二条：<span class="hl">保持团队尽可能扁平</span>——当 Fiona 加入 Claude Code 时，她要求每个经理首先作为 IC（个人贡献者）入职，通过实际交付来学习如何成为团队中有效的工程师，真正体验在 Anthropic 当工程师是什么感觉。第三条：<span class="hl2">毫不犹豫地杀掉失效流程</span>——团队成员有明确的授权去质疑和终结不再有意义的旧流程。在这三条规则之内，每个 pod 有很大的自主权：可以自行决定如何用 Claude 做分流、如何组织规划仪式或站会、哪些工作流优先「Claude 化」。</p>
+  <div class="anim-stage reveal reveal-d2" id="s3-anim"><div class="s3_stage">
+  <h2>三条不可协商的原则</h2>
+  <div class="s3_card">
+    <div class="s3_badge">1</div>
+    <div class="s3_card_body">
+      <p class="s3_card_title"><span>Dogfood</span></p>
+      <p class="s3_card_desc">狂热地使用自己的产品</p>
+    </div>
+  </div>
+  <div class="s3_card">
+    <div class="s3_badge">2</div>
+    <div class="s3_card_body">
+      <p class="s3_card_title"><span>扁平</span></p>
+      <p class="s3_card_desc">经理先做 IC，再带团队</p>
+    </div>
+  </div>
+  <div class="s3_card">
+    <div class="s3_badge">3</div>
+    <div class="s3_card_body">
+      <p class="s3_card_title"><span>杀流程</span></p>
+      <p class="s3_card_desc">毫不犹豫地终结失效流程</p>
+    </div>
+  </div>
+  <div class="s3_divider"></div>
+  <p class="s3_note">在这三条之内，每个 pod 自主决定</p>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>As these norms changed, some aspects were mandated as team principles and others we let small sub-teams (pods) figure out on their own. There is a set of the Claude Code core team principles that are non-negotiable "must dos":</p>
+<p>Relentlessly dogfood your product: Every Claude Code team member, including cross-functional partners, uses Claude Code (and also Claude Cowork). We're always thinking of ways to get Claude to help us do our work faster, and more efficiently.</p>
+<p>Keep the team flat as possible. When I joined Claude Code I wanted every manager to start out as an IC first, learn how to be an effective engineer on the team by shipping, and really live through and understand what it's like to be an engineer at Anthropic. We have one overall team mission on Claude Code and Claude Cowork. Managers support pods of work while keeping the team agile so people can move to where the work is.</p>
+<p>Don't hesitate to kill processes that no longer work: Finally, we relentlessly question why we do things the way we do. When something doesn't make sense anymore, team members have explicit permission to question and kill old processes.</p>
+<p>Within these few rules, though, each pod has a lot of agency. They have room to adapt how they use Claude to do triage, how they run any planning rituals or standups, and which workflows get "Claudified" first.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S4 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">三个衡量变革的指标</h2>
+  <p class="body-text reveal reveal-d1">如何知道新流程是否在落地？Fiona 建议每个工程领导者在推出变革时追踪三个数字。第一个是<span class="hl" style="color:#67E8F9">入职加速</span>：一个工程师、设计师或 PM 多快能开始产出？在 Fiona 的团队中，这比一年前快得多——工程师在入职第一周就能交付真实代码。第二个是<span class="hl" style="color:#67E8F9">PR 周期时间</span>：这个指标值得深挖，因为它能帮你发现流水线中哪里在挣扎——当代码生成量大幅增加时，构建系统和 CI 有时跟不上节奏。第三个是<span class="hl" style="color:#67E8F9">Claude 辅助的提交比例</span>：在 Fiona 的团队中，默认每次提交都有 Claude 辅助，她说自己过去四个月都没见过一次非 Claude 辅助的提交。但她特别提醒：<span class="hl2" style="color:#FCA5A5">不要把产出量和成功混为一谈</span>。产出量是一个指标，但真正的指标是衡量你试图解决的问题本身。在正确的对齐下，产出量能帮你更快地解决问题。</p>
+  <div class="anim-stage reveal reveal-d2" id="s4-anim"><div class="s4_stage">
+  <div class="s4-title">三个衡量变革的指标</div>
+  <div class="s4-cards">
+    <div class="s4-card">
+      <div class="s4-arrow">&#x2193;</div>
+      <div class="s4-card-body">
+        <div class="s4-metric">入职加速</div>
+        <div class="s4-label">第一周交付代码</div>
+      </div>
+    </div>
+    <div class="s4-card">
+      <div class="s4-arrow">&#x2193;</div>
+      <div class="s4-card-body">
+        <div class="s4-metric">PR 周期</div>
+        <div class="s4-label">暴露流水线瓶颈</div>
+      </div>
+    </div>
+    <div class="s4-card up">
+      <div class="s4-arrow">&#x2191;</div>
+      <div class="s4-card-body">
+        <div class="s4-metric">Claude 辅助</div>
+        <div class="s4-label">100% 提交覆盖</div>
+      </div>
+    </div>
+  </div>
+  <div class="s4-warning">产出量 ≠ 成功</div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>Here are three numbers every engineering leader should start tracking now as they roll out changes.</p>
+<p>Onboarding ramp time goes down: How soon can an engineer, a designer, or a PM start being effective? On our team this is much faster than a year ago, and engineers ship real code now within their first week.</p>
+<p>PR cycle time goes down: This one's interesting to dig into because it might help you identify where your pipeline is struggling to scale. As we're generating so much more code, sometimes build systems and continuous integration (CI) may struggle to keep up.</p>
+<p>Claude-assisted commits going up: For us, by default, every commit is Claude-assisted. I don't think I've seen a non-Claude-assisted commit in the last four months.</p>
+<p>On the third bullet, don't confuse throughput with success. Throughput is one metric, but the real metric is measuring the thing you're trying to solve. With the right alignment, throughput can help you solve problems faster.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S5 -->
+<section class="feed-section" style="background:var(--bg-act3)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">角色模糊化：<br>PM 写代码，工程师做设计</h2>
+  <p class="body-text reveal reveal-d1">Claude 和 AI 正在重塑团队中的角色边界。在 Claude Code 团队中，PM 现在大量写代码——这在过去是不可想象的。有了 Claude，非传统编程人员也能参与更多工程工作，而工程师则承担起内容和设计这类传统上不在技术侧的工作。在招聘方面，Fiona 重点看两类人。第一类是<span class="hl">有产品直觉的创意构建者</span>——那些深度好奇、热衷于交付能解决问题的产品的人。第二类是<span class="hl">有深度系统专长的工程师</span>——比如 Fiona 加入团队时发现缺少系统背景的专家，而在 Web 上构建 Claude Code 需要这类能力来确保 Claude 能在任何地方运行。相比之下，她<span class="hl2">不太看重纯粹的编码产出</span>——因为模型已经能处理这部分了。更重要的问题是：哪里仍然需要人类专业知识？这才是应该聚焦的方向。</p>
+  <div class="anim-stage reveal reveal-d2" id="s5-anim"><div class="s5_stage">
+  <div class="s5_title">角色模糊化</div>
+  <div class="s5_cols">
+    <div class="s5_col">
+      <div class="s5_label s5_label--before">Before</div>
+      <div class="s5_box"><strong>PM</strong><span>规划</span></div>
+      <div class="s5_box"><strong>工程师</strong><span>写代码</span></div>
+      <div class="s5_box"><strong>设计师</strong><span>设计</span></div>
+    </div>
+    <div class="s5_arrow">
+      <svg viewBox="0 0 36 24" fill="none"><path d="M2 12h28m0 0l-7-7m7 7l-7 7" stroke="#155E75" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="s5_col">
+      <div class="s5_label s5_label--after">After</div>
+      <div class="s5_circles">
+        <div class="s5_circle s5_circle--a">PM<br>也写代码</div>
+        <div class="s5_circle s5_circle--b">工程师<br>也做设计</div>
+        <div class="s5_circle s5_circle--c">创意构建者</div>
+      </div>
+    </div>
+  </div>
+  <div class="s5_hire">招聘画像</div>
+  <div class="s5_badges">
+    <div class="s5_badge s5_badge--a">创意构建者 + 产品直觉</div>
+    <div class="s5_badge s5_badge--b">深度系统专家</div>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>Claude and AI have reshaped roles across the team. Our PMs code a lot now, which is fun to see. With Claude, you have nontraditional coders now being able to do more engineering, and you have engineers who take on things like content and design, work that were traditionally not on the technical side.</p>
+<p>On the Claude Code engineering team, I've indexed heavily on two profiles. One is creative builders with product sense: the dreamers who are deeply curious and passionate about shipping products that solve problems. The other one is engineers with deep systems expertise. For example, when I joined the team, I noticed we were missing experts with systems backgrounds and we needed that when building Claude Code on the Web, to ensure we can run Claude everywhere.</p>
+<p>What I index on less, on the other hand, is raw throughput; the models handle that. The more important question is where you still need human expertise, and that's where I'd focus.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S6 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">找到你最吵的流程</h2>
+  <p class="body-text reveal reveal-d1">如果只能留下一个建议，Fiona 说：<span class="hl" style="color:#67E8F9">找到你最吵的工作流</span>。它可能是最昂贵的那个、你一直在逃避的那个、或者团队最不期待的那个。然后问两个问题：它还在服务它原来的目的吗？如果是，能自动化吗？Fiona 分享了一个亲身经历：她曾经在一个团队中参加每周的大型评审会——一屋子人，每个人都在看笔记本电脑，只有轮到自己汇报状态时才抬头说几句，说完又低头继续做自己的事。她问了一个简单的问题：<span class="hl2" style="color:#FCA5A5">「我们为什么要开这个会？感觉是对时间的昂贵浪费。」</span>仅仅这一个问题就让所有人意识到这个会不需要了，于是他们取消了它。所以，问问自己：你的工程工作流中，有哪一个环节是你可以考虑自动化甚至直接丢掉的？</p>
+  <div class="anim-stage reveal reveal-d2" id="s6-anim"><div class="s6_stage">
+  <div class="s6_title">找到你最吵的流程</div>
+  <div class="s6_noisy">
+    <span class="s6_wave"></span>
+    <span class="s6_wave"></span>
+  </div>
+  <div class="s6_arrow_down"></div>
+  <div class="s6_question">还有用吗？</div>
+  <div class="s6_arrow_down" style="transition-delay: 2.3s;"></div>
+  <div class="s6_branches">
+    <div class="s6_branch">
+      <div class="s6_branch_icon"><div class="s6_gear"></div></div>
+      <div class="s6_branch_label">自动化</div>
+    </div>
+    <div class="s6_branch">
+      <div class="s6_branch_icon"><div class="s6_xmark"></div></div>
+      <div class="s6_branch_label">取消</div>
+    </div>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>If I were to leave you with one thing: pick your noisiest workflow. That could be your most expensive workflow, the one you might be dreading, or that your team doesn't look forward to. And ask: is it still serving its purpose? If so, can you automate it?</p>
+<p>I was once on a team that had an expensive weekly review, with a large number of people in a meeting room. I noticed everybody was on their laptops except when it was their time to give a status report. They would pop their head up, say the status, and go back down to their laptops. I asked one simple question: "Why are we having this meeting again? It seems like an expensive use of our time." And just that one question made everyone realize it wasn't needed. So we canceled it.</p>
+<p>So, ask yourself: what's one piece of your engineering workflow that you might consider automating or even dropping altogether?</p>
+    </div>
+  </div>
+</div>
+</section>
+
+</div>
+
+<!-- ═══ Layer: Details ═══ -->
+<div class="layer" id="layer-details" data-depth="1">
+
+<!-- A1 -->
+<section class="feed-section" style="background:var(--bg-act2)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">四个流程变革：<br>Before → After</h2>
+  <p class="body-text reveal reveal-d1"><span class="hl">规划：从六个月路线图到 JIT</span>——过去因为编码时间昂贵，需要大量前期规划。Fiona 加入 Claude Code 团队时写了一份不错的六个月路线图，结果到第三个月就过时了。新方式是 JIT（即时）规划：不做设计文档，而是在 PR 和原型中讨论。流程变成了「做原型→让内部用户试用→根据反馈行动」，因为领域变化太快，不适合做太多产品评审。<span class="hl">获取上下文：问 Claude 而非原作者</span>——过去找代码作者是标准第一步，但现在所有 PR 都有 Claude 辅助，「谁做了这个改动？」已经不够了。新规范是先想清楚「我到底需要知道什么？」——是在查回归？回答客户问题？还是了解决策背景？直接问 Claude，而且要考虑是否能自动化。比如让 Claude 每天早上自动汇总客户反馈频道，从 Fiona 手动带着咖啡做的仪式变成后台自动运行。<span class="hl2">代码审查：信任但验证</span>——Claude 处理所有风格检查、linting、bug 捕获和测试生成。人类审查聚焦专业知识：法律风险容忍度需要法务合作伙伴，信任边界和安全敏感代码需要领域专家，产品判断和品味需要 PM 和设计师。但这个平衡会随模型进步持续变化。<span class="hl2">团队构成：角色模糊化</span>——PM 大量写代码，工程师做内容和设计。Fiona 重点招两类人：有产品直觉的创意构建者，和有深度系统专长的工程师。不看重纯编码产出，因为模型处理这部分。</p>
+  <div class="anim-stage reveal reveal-d2" id="a1-anim"><div class="a1_stage">
+  <div class="a1-title">4 Process Changes: Before vs After</div>
+  <div class="a1-card">
+    <div class="a1-card-label">1. Planning</div>
+    <div class="a1-cols">
+      <div class="a1-before">
+        <div class="a1-col-head">Before</div>
+        <div class="a1-col-text">六月路线图 + 设计文档</div>
+      </div>
+      <div class="a1-after">
+        <div class="a1-col-head">After</div>
+        <div class="a1-col-text">JIT规划 + 原型 + 内部反馈</div>
+      </div>
+    </div>
+  </div>
+  <div class="a1-card">
+    <div class="a1-card-label">2. Context</div>
+    <div class="a1-cols">
+      <div class="a1-before">
+        <div class="a1-col-head">Before</div>
+        <div class="a1-col-text">找代码作者</div>
+      </div>
+      <div class="a1-after">
+        <div class="a1-col-head">After</div>
+        <div class="a1-col-text">问 Claude + 自动化</div>
+      </div>
+    </div>
+  </div>
+  <div class="a1-card">
+    <div class="a1-card-label">3. Review</div>
+    <div class="a1-cols">
+      <div class="a1-before">
+        <div class="a1-col-head">Before</div>
+        <div class="a1-col-text">人审所有代码</div>
+      </div>
+      <div class="a1-after">
+        <div class="a1-col-head">After</div>
+        <div class="a1-col-text">Claude审基础, 人审法律/安全/产品</div>
+      </div>
+    </div>
+  </div>
+  <div class="a1-card">
+    <div class="a1-card-label">4. Roles</div>
+    <div class="a1-cols">
+      <div class="a1-before">
+        <div class="a1-col-head">Before</div>
+        <div class="a1-col-text">PM规划, 工程师写码, 设计师设计</div>
+      </div>
+      <div class="a1-after">
+        <div class="a1-col-head">After</div>
+        <div class="a1-col-text">PM写码, 工程师做设计, 重创意+系统</div>
+      </div>
+    </div>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>Planning: shift roadmaps to just in time — The old norm was to spend a lot more time pre-planning because coding time was expensive. When I first joined the Claude Code team, we wrote a pretty good six month roadmap, and then because of Claude Code, so many things changed that it was out of date by month three. Engineering speed and throughput is different now, so the way we plan sprints has changed. I call it just-in-time (JIT) planning: how do you do just the right amount at the right time? Our planning ritual shifted away from design docs toward discussions in PRs or prototypes.</p>
+<p>Context gathering: ask Claude, not the author — When engineers wrote code, the first step to getting an answer to most questions was to find the person who wrote the code. Now, since all our PRs are assisted by Claude, "Who made this change?" is no longer sufficient. Our new norm is to go a level deeper: what do you actually need to know? You ask Claude that question, and consider whether Claude can answer it directly, also with more data and context.</p>
+<p>On the Claude Code team, no matter what that question is, our process is to also ask "Is there a way to automate it?" For example, having Claude summarize customer feedback channels every morning went from a ritual I did manually with my coffee to something I just have running automatically in the background.</p>
+<p>Code review: trust but verify — We use Code Review heavily. Claude handles all the style and linting, PR feedback requests, catching bugs and fixing them before a full commit, and adding tests. Where we still definitely want a human is expertise. The new norm is human review where it matters: for legal review, I always want my legal partner involved in risk tolerance. For trust boundaries and security-sensitive code, I want the domain experts. Product managers and designers also need to be involved with product sense and taste.</p>
+<p>It's important to continually evaluate, though, because the right balance of trust vs. verify will keep changing as the models improve. What you need humans for today might look different with the next model.</p>
+<p>Team makeup: blurring roles — Our PMs code a lot now. With Claude, you have nontraditional coders now being able to do more engineering, and you have engineers who take on things like content and design. I've indexed heavily on two profiles: creative builders with product sense, and engineers with deep systems expertise. What I index on less is raw throughput; the models handle that.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- A2 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">实施框架与<br>衡量指南</h2>
+  <p class="body-text reveal reveal-d1"><span class="hl" style="color:#67E8F9">实施框架</span>：三条不可协商的原则定义了边界——所有人必须 dogfood 产品、团队保持扁平（经理先做 IC）、积极杀掉失效流程。在这些边界之内，每个 pod 拥有完全的自主权来决定如何用 Claude 做分流、如何组织站会、以及优先 Claude 化哪些工作流。这种「严格原则 + 宽松实施」的模式确保了方向一致性的同时保留了团队适应性。<span class="hl" style="color:#67E8F9">衡量变革的三个指标</span>：第一，入职加速——衡量工程师、设计师或 PM 多快能开始有效产出，Fiona 团队的工程师第一周就交付真实代码；第二，PR 周期时间——这个指标能暴露流水线中的瓶颈，比如当代码量暴增时 CI 系统是否跟得上；第三，Claude 辅助提交比例——Fiona 的团队过去四个月每次提交都有 Claude 辅助。<span class="hl2" style="color:#FCA5A5">但最重要的提醒</span>：不要把产出量等同于成功。产出量只是一个指标，真正的指标是你试图解决的问题本身是否在被解决。在正确的目标对齐下，更高的产出量才能转化为更快的问题解决。</p>
+  <div class="anim-stage reveal reveal-d2" id="a2-anim"><div class="a2_stage">
+  <div class="a2_title">实施框架</div>
+  <div class="a2_badges">
+    <span class="a2_badge">Dogfood</span>
+    <span class="a2_badge">扁平</span>
+    <span class="a2_badge">杀流程</span>
+  </div>
+  <div class="a2_bracket"><span>不可协商</span></div>
+  <div class="a2_pod">
+    <div class="a2_pod_label">Pod 自主权</div>
+    <div class="a2_tags">
+      <span class="a2_tag">分流方式</span>
+      <span class="a2_tag">站会节奏</span>
+      <span class="a2_tag">Claude化优先级</span>
+    </div>
+  </div>
+  <div class="a2_divider"></div>
+  <div class="a2_title a2_title2">衡量指标</div>
+  <div class="a2_metrics">
+    <div class="a2_row">
+      <span class="a2_metric_name">入职</span>
+      <span class="a2_arrow_down">↓</span>
+      <span class="a2_metric_desc">第一周交付</span>
+    </div>
+    <div class="a2_row">
+      <span class="a2_metric_name">PR周期</span>
+      <span class="a2_arrow_down">↓</span>
+      <span class="a2_metric_desc">暴露CI瓶颈</span>
+    </div>
+    <div class="a2_row">
+      <span class="a2_metric_name">Claude辅助</span>
+      <span class="a2_arrow_up">↑</span>
+      <span class="a2_metric_desc">100%覆盖</span>
+    </div>
+  </div>
+  <div class="a2_warn"><span>产出量 ≠ 成功</span></div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original</span>
+<p>As these norms changed, some aspects were mandated as team principles and others we let small sub-teams (pods) figure out on their own. There is a set of the Claude Code core team principles that are non-negotiable "must dos":</p>
+<p>Relentlessly dogfood your product. Keep the team flat as possible. Don't hesitate to kill processes that no longer work.</p>
+<p>Within these few rules, though, each pod has a lot of agency. They have room to adapt how they use Claude to do triage, how they run any planning rituals or standups, and which workflows get "Claudified" first.</p>
+<p>Here are three numbers every engineering leader should start tracking now: Onboarding ramp time goes down. PR cycle time goes down. Claude-assisted commits going up.</p>
+<p>On the third bullet, don't confuse throughput with success. Throughput is one metric, but the real metric is measuring the thing you're trying to solve. With the right alignment, throughput can help you solve problems faster.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+</div>
+
+<script>
+var layerStack=['layer-overview'];
+var transitioning=false;
+var layerNames={'layer-overview':'概览','layer-details':'流程详解'};
+var observers=new Map();
+function setupObserver(layerId){if(observers.has(layerId))return;var layer=document.getElementById(layerId);var reveals=layer.querySelectorAll('.reveal,[class*="_stage"]');var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.15,root:layer});reveals.forEach(function(el){obs.observe(el);});observers.set(layerId,obs);}
+function resetReveals(layerId){var layer=document.getElementById(layerId);layer.querySelectorAll('.reveal').forEach(function(el){el.classList.remove('visible');});layer.querySelectorAll('[class*="_stage"]').forEach(function(el){el.classList.remove('visible');});}
+function activateReveals(layerId){resetReveals(layerId);if(observers.has(layerId)){observers.get(layerId).disconnect();observers.delete(layerId);}requestAnimationFrame(function(){setupObserver(layerId);});}
+function updateBreadcrumb(){var bc=document.getElementById('breadcrumb');bc.innerHTML='';layerStack.forEach(function(id,i){if(i>0){var sep=document.createElement('span');sep.className='sep';sep.textContent='>';bc.appendChild(sep);}var span=document.createElement('span');span.textContent=layerNames[id]||id;if(i===layerStack.length-1){span.className='current';}else{span.addEventListener('click',function(){goBackTo(i);});}bc.appendChild(span);});var backBtn=document.getElementById('backBtn');backBtn.style.display=layerStack.length>1?'flex':'none';bc.style.left=layerStack.length>1?'60px':'16px';var dots=document.getElementById('depthDots');var depth=layerStack.length-1;dots.querySelectorAll('.dot').forEach(function(d,i){d.classList.toggle('active',i===depth);});}
+function drillDown(targetId){if(transitioning)return;transitioning=true;var currentId=layerStack[layerStack.length-1];var currentLayer=document.getElementById(currentId);var targetLayer=document.getElementById(targetId);targetLayer.scrollTop=0;resetReveals(targetId);targetLayer.style.visibility='visible';var d=600;currentLayer.style.transition='transform '+d+'ms ease-out,opacity '+d+'ms ease-out';currentLayer.style.transformOrigin='center center';currentLayer.style.transform='scale(1.3)';currentLayer.style.opacity='0';targetLayer.classList.add('active');targetLayer.style.opacity='0';targetLayer.style.transform='scale(0.85)';targetLayer.style.transition='transform '+d+'ms ease-out,opacity '+d+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){targetLayer.style.opacity='1';targetLayer.style.transform='scale(1)';});});setTimeout(function(){currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';targetLayer.style.transition='';targetLayer.style.transform='';activateReveals(targetId);transitioning=false;},d+50);layerStack.push(targetId);updateBreadcrumb();}
+function goBack(){if(layerStack.length<=1||transitioning)return;transitioning=true;var currentId=layerStack.pop();var parentId=layerStack[layerStack.length-1];var cl=document.getElementById(currentId);var pl=document.getElementById(parentId);var d=600;cl.style.transition='transform '+d+'ms ease-out,opacity '+d+'ms ease-out';cl.style.transform='scale(0.85)';cl.style.opacity='0';pl.classList.add('active');pl.style.transform='scale(1.3)';pl.style.opacity='0';pl.style.transition='transform '+d+'ms ease-out,opacity '+d+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){pl.style.transform='scale(1)';pl.style.opacity='1';});});setTimeout(function(){cl.classList.remove('active');cl.style.transition='';cl.style.transform='';cl.style.opacity='';cl.style.visibility='';pl.style.transition='';pl.style.transform='';transitioning=false;},d+50);updateBreadcrumb();}
+function goBackTo(targetIndex){if(transitioning)return;while(layerStack.length-1>targetIndex){if(layerStack.length<=1)break;goBack();return;}}
+function toggleSource(btn){btn.classList.toggle('open');btn.nextElementSibling.classList.toggle('open');}
+setupObserver('layer-overview');updateBreadcrumb();
+</script>
+</body>
+</html>

@@ -1,0 +1,3321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Specialization Beats Scale — 30亿参数如何击败所有前沿API</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root{
+  --bg-act1:#FFF7ED;--bg-act2:#EEF2FF;--bg-act3:#FFFBEB;
+  --bg-close:#1C1917;--bg-dark:#0F172A;
+  --text:#1E293B;--text-muted:#64748B;--dim:#94A3B8;
+  --accent:#4F46E5;--accent2:#D97706;
+  --warm:#F59E0B;--danger:#DC2626;--neutral:#94A3B8;
+  --card-bg:#FFFFFF;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;font-family:'Noto Sans SC',system-ui,sans-serif;background:#0F172A;}
+.content-width{max-width:640px;margin:0 auto;padding:0 28px;}
+.reveal{opacity:0;transform:translateY(40px);transition:opacity 0.8s ease,transform 0.8s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-delay-1{transition-delay:0.15s;}
+.reveal-delay-2{transition-delay:0.3s;}
+.reveal-delay-3{transition-delay:0.45s;}
+.reveal-delay-4{transition-delay:0.6s;}
+.big-statement{font-family:'Noto Serif SC',serif;font-size:clamp(22px,5.5vw,32px);font-weight:700;line-height:1.5;margin-bottom:32px;color:var(--text);}
+.body-text{font-size:16px;line-height:1.9;color:var(--text);margin-bottom:28px;}
+.body-text .hl{color:var(--accent);font-weight:500;}
+.body-text .hl2{color:var(--accent2);font-weight:500;}
+.body-text .hl-danger{color:var(--danger);font-weight:500;}
+.body-text .hl-warm{color:var(--warm);font-weight:500;}
+.layer{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;visibility:hidden;opacity:0;will-change:transform,opacity;scroll-snap-type:y proximity;}
+.layer.active{visibility:visible;opacity:1;}
+.feed-section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;scroll-snap-align:start;}
+.feed-section.dark{background:var(--bg-dark);color:#F1F5F9;}
+.feed-section.dark .body-text{color:#94A3B8;}
+.feed-section.dark .big-statement{color:#F1F5F9;}
+.feed-section.dark .hl{color:#818CF8;}
+.feed-section.dark .hl2{color:#FBBF24;}
+.feed-section.dark .hl-warm{color:#FBBF24;}
+.section-inner{max-width:600px;width:100%;}
+.breadcrumb{position:fixed;top:16px;left:16px;z-index:1000;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);padding:8px 14px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,0.1);font-size:13px;font-weight:500;}
+.breadcrumb span{color:var(--text-muted);cursor:pointer;transition:color 0.2s;}
+.breadcrumb span:hover{color:var(--accent);}
+.breadcrumb span.current{color:var(--text);cursor:default;}
+.breadcrumb .sep{color:#CBD5E1;margin:0 2px;cursor:default;}
+.back-btn{position:fixed;top:16px;left:16px;z-index:1001;width:38px;height:38px;border-radius:10px;border:none;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(0,0,0,0.1);font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--text);transition:all 0.2s;}
+.back-btn:hover{background:var(--accent);color:#fff;}
+.depth-dots{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;gap:8px;background:rgba(255,255,255,0.9);backdrop-filter:blur(8px);padding:8px 14px;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,0.1);}
+.dot{width:10px;height:10px;border-radius:50%;background:#CBD5E1;transition:all 0.3s;}
+.dot.active{background:var(--accent);box-shadow:0 0 8px rgba(79,70,229,0.5);transform:scale(1.2);}
+.drill-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:1.5px solid rgba(79,70,229,0.3);border-radius:10px;background:transparent;color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.25s;}
+.drill-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(79,70,229,0.3);}
+.dark .drill-btn{border-color:rgba(129,140,248,0.4);color:#818CF8;}
+.dark .drill-btn:hover{background:#4F46E5;color:#fff;border-color:#4F46E5;}
+.source-panel{margin-top:24px;border-radius:12px;overflow:hidden;border:1px solid rgba(79,70,229,0.15);background:rgba(79,70,229,0.03);}
+.dark .source-panel{border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);}
+.source-toggle{width:100%;padding:12px 16px;border:none;background:none;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);}
+.dark .source-toggle{color:#818CF8;}
+.source-toggle:hover{background:rgba(79,70,229,0.06);}
+.source-toggle .arrow{transition:transform 0.3s;font-size:11px;}
+.source-toggle.open .arrow{transform:rotate(90deg);}
+.source-body{max-height:0;overflow:hidden;transition:max-height 0.4s ease;padding:0 16px;}
+.source-body.open{max-height:2000px;padding:0 16px 16px;overflow-y:auto;}
+.source-body p{font-size:13px;line-height:1.8;color:var(--text-muted);margin:0 0 12px 0;white-space:pre-wrap;}
+.dark .source-body p{color:#94A3B8;}
+.source-body .source-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--accent);margin-bottom:8px;display:block;}
+.dark .source-body .source-label{color:#818CF8;}
+.anim-stage{width:100%;display:flex;justify-content:center;margin:28px 0;min-height:180px;}
+.anim-stage>div{width:100%;}
+.hook-line{font-size:14px;color:var(--accent);font-weight:500;margin-top:16px;padding:12px 0;border-top:1px solid rgba(79,70,229,0.12);}
+.dark .hook-line{color:#818CF8;border-top-color:rgba(129,140,248,0.2);}
+.blog-img{width:100%;border-radius:12px;margin:16px 0;box-shadow:0 2px 12px rgba(0,0,0,0.08);}
+.dark .blog-img{box-shadow:0 2px 12px rgba(0,0,0,0.3);}
+
+/* === S1 Animation === */
+
+.s1_stage {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 28px 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  color: #1E293B;
+}
+
+.s1_title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748B;
+  margin-bottom: 20px;
+}
+
+.s1_rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.s1_row {
+  display: grid;
+  grid-template-columns: 110px 1fr 44px;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+
+.s1_label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1E293B;
+  white-space: nowrap;
+  text-align: right;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.s1_score {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748B;
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+  transition: opacity 0.3s ease 0.6s;
+}
+
+.s1_track {
+  height: 28px;
+  background: #F1F5F9;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.s1_bar {
+  height: 100%;
+  border-radius: 6px;
+  width: 0%;
+  transition: width 0.8s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* Row 1 — Specialized 3B (gold winner) */
+.s1_row1 .s1_bar {
+  background: linear-gradient(90deg, #D97706, #F59E0B);
+  transition-delay: 0.1s;
+  box-shadow: 0 0 0 0 rgba(217, 119, 6, 0);
+}
+.s1_row1 .s1_label { transition-delay: 0.05s; }
+.s1_row1 .s1_score { transition-delay: 0.9s; color: #D97706; font-weight: 800; }
+
+/* Row 2 — Claude Opus 4.6 */
+.s1_row2 .s1_bar {
+  background: #4F46E5;
+  transition-delay: 0.25s;
+}
+.s1_row2 .s1_label { transition-delay: 0.15s; }
+.s1_row2 .s1_score { transition-delay: 1.05s; }
+
+/* Row 3 — Gemini 3.1 Pro */
+.s1_row3 .s1_bar {
+  background: #6366F1;
+  transition-delay: 0.4s;
+}
+.s1_row3 .s1_label { transition-delay: 0.25s; }
+.s1_row3 .s1_score { transition-delay: 1.2s; }
+
+/* Row 4 — GPT-5.4 */
+.s1_row4 .s1_bar {
+  background: #94A3B8;
+  transition-delay: 0.55s;
+}
+.s1_row4 .s1_label { transition-delay: 0.35s; }
+.s1_row4 .s1_score { transition-delay: 1.35s; }
+
+/* Row 5 — GPT-4o */
+.s1_row5 .s1_bar {
+  background: #B0B9C6;
+  transition-delay: 0.7s;
+}
+.s1_row5 .s1_label { transition-delay: 0.45s; }
+.s1_row5 .s1_score { transition-delay: 1.5s; }
+
+/* Gap annotation */
+.s1_gap {
+  position: absolute;
+  right: -2px;
+  top: -2px;
+  transform: translateX(100%) translateX(8px);
+  opacity: 0;
+  transition: opacity 0.4s ease 1.4s;
+}
+
+.s1_gap_badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #FEF3C7;
+  color: #92400E;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid #FDE68A;
+  white-space: nowrap;
+}
+
+.s1_gap_line {
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  width: 8px;
+  height: 1px;
+  background: #D97706;
+}
+
+/* Winner badge */
+.s1_winner {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #92400E;
+  background: #FEF3C7;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-left: 6px;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.3s ease 1.2s, transform 0.3s ease 1.2s;
+}
+
+/* Winner crown */
+.s1_crown {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  position: relative;
+}
+.s1_crown::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 1px;
+  width: 8px;
+  height: 3px;
+  background: #D97706;
+  border-radius: 0 0 1px 1px;
+}
+.s1_crown::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 6px solid #D97706;
+}
+
+/* Bottom stat badges */
+.s1_stats {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.s1_stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.s1_stat_cost {
+  background: #FFFBEB;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+  transition-delay: 1.6s;
+}
+
+.s1_stat_degen {
+  background: #EEF2FF;
+  color: #3730A3;
+  border: 1px solid #C7D2FE;
+  transition-delay: 1.8s;
+}
+
+.s1_stat_icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.s1_stat_cost .s1_stat_icon {
+  background: #FDE68A;
+  color: #92400E;
+}
+
+.s1_stat_degen .s1_stat_icon {
+  background: #C7D2FE;
+  color: #3730A3;
+}
+
+/* ---- VISIBLE STATE ---- */
+.s1_stage.visible .s1_label {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.s1_stage.visible .s1_score {
+  opacity: 1;
+}
+
+.s1_stage.visible .s1_row1 .s1_bar { width: 100%; }
+.s1_stage.visible .s1_row2 .s1_bar { width: 91.4%; }
+.s1_stage.visible .s1_row3 .s1_bar { width: 90.0%; }
+.s1_stage.visible .s1_row4 .s1_bar { width: 82.3%; }
+.s1_stage.visible .s1_row5 .s1_bar { width: 69.7%; }
+
+.s1_stage.visible .s1_row1 .s1_bar {
+  box-shadow: 0 0 14px rgba(217, 119, 6, 0.35);
+  animation: s1_glow 2s ease-in-out 1.2s infinite;
+}
+
+.s1_stage.visible .s1_winner {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.s1_stage.visible .s1_gap {
+  opacity: 1;
+}
+
+.s1_stage.visible .s1_stat {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes s1_glow {
+  0%, 100% { box-shadow: 0 0 10px rgba(217, 119, 6, 0.25); }
+  50% { box-shadow: 0 0 20px rgba(217, 119, 6, 0.45); }
+}
+
+/* Bracket between row 1 and row 2 for gap annotation */
+.s1_gap_wrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 44px 0 110px;
+  margin: -4px 0;
+  opacity: 0;
+  transition: opacity 0.4s ease 1.4s;
+  position: relative;
+  height: 20px;
+}
+
+.s1_stage.visible .s1_gap_wrap {
+  opacity: 1;
+}
+
+.s1_gap_bracket {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.s1_gap_arm {
+  width: 1px;
+  height: 14px;
+  position: relative;
+}
+
+.s1_gap_arm::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 100%;
+  background: #D97706;
+  opacity: 0.5;
+}
+
+.s1_gap_arm::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 6px;
+  height: 1px;
+  background: #D97706;
+  opacity: 0.5;
+}
+
+.s1_gap_arm_top::after { top: 0; }
+.s1_gap_arm_bot::after { bottom: 0; }
+
+.s1_gap_text {
+  font-size: 10px;
+  font-weight: 700;
+  color: #D97706;
+  background: #FFFBEB;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid #FDE68A;
+  line-height: 1.4;
+}
+
+/* Mobile adjustments */
+@media (max-width: 380px) {
+  .s1_row {
+    grid-template-columns: 85px 1fr 40px;
+    gap: 6px;
+  }
+  .s1_label { font-size: 11px; }
+  .s1_stats { flex-direction: column; }
+  .s1_gap_wrap { padding-left: 85px; padding-right: 40px; }
+}
+
+/* === S2 Animation === */
+
+.s2_stage {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 32px 24px 28px;
+  background: #0F172A;
+  border-radius: 16px;
+  overflow: hidden;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* ── Chart container ── */
+.s2_chart {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  margin-bottom: 20px;
+}
+
+/* ── Axes ── */
+.s2_axis_y,
+.s2_axis_x {
+  position: absolute;
+  background: #334155;
+}
+
+.s2_axis_y {
+  left: 40px;
+  top: 8px;
+  bottom: 28px;
+  width: 1.5px;
+  transform-origin: bottom;
+  transform: scaleY(0);
+}
+
+.s2_axis_x {
+  left: 40px;
+  bottom: 28px;
+  right: 8px;
+  height: 1.5px;
+  transform-origin: left;
+  transform: scaleX(0);
+}
+
+.s2_stage.visible .s2_axis_y {
+  transform: scaleY(1);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.1s;
+}
+
+.s2_stage.visible .s2_axis_x {
+  transform: scaleX(1);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.3s;
+}
+
+/* ── Axis labels ── */
+.s2_label_y,
+.s2_label_x {
+  position: absolute;
+  font-size: 10px;
+  color: #64748B;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0;
+}
+
+.s2_label_y {
+  left: 0;
+  top: 8px;
+  writing-mode: vertical-lr;
+  transform: rotate(180deg);
+}
+
+.s2_label_x {
+  right: 8px;
+  bottom: 8px;
+}
+
+.s2_stage.visible .s2_label_y,
+.s2_stage.visible .s2_label_x {
+  opacity: 1;
+  transition: opacity 0.4s ease 0.7s;
+}
+
+/* ── Grid lines (subtle) ── */
+.s2_grid {
+  position: absolute;
+  left: 42px;
+  right: 8px;
+  height: 1px;
+  background: #1E293B;
+  opacity: 0;
+}
+
+.s2_grid:nth-child(1) { bottom: calc(28px + 25%); }
+.s2_grid:nth-child(2) { bottom: calc(28px + 50%); }
+.s2_grid:nth-child(3) { bottom: calc(28px + 75%); }
+
+.s2_stage.visible .s2_grid {
+  opacity: 1;
+  transition: opacity 0.4s ease 0.8s;
+}
+
+/* ── Scaling curve ── */
+.s2_curve_wrap {
+  position: absolute;
+  left: 41px;
+  bottom: 29px;
+  right: 8px;
+  top: 8px;
+}
+
+.s2_curve {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.s2_curve_path {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  clip-path: inset(0 100% 0 0);
+}
+
+.s2_stage.visible .s2_curve_path {
+  clip-path: inset(0 0% 0 0);
+  transition: clip-path 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.9s;
+}
+
+/* Curve built from layered pseudo-elements for a smooth log shape */
+.s2_curve_line {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Curve segments using box-shadow chain */
+.s2_curve_seg {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.s2_curve_seg::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 88%;
+  border: 2px solid transparent;
+  border-top-color: #818CF8;
+  border-radius: 0 80% 0 0;
+  opacity: 0.7;
+  box-sizing: border-box;
+}
+
+/* ── Curve title label ── */
+.s2_curve_label {
+  position: absolute;
+  top: 6px;
+  right: 4px;
+  font-size: 10px;
+  color: #818CF8;
+  opacity: 0;
+  transform: translateY(6px);
+  white-space: nowrap;
+}
+
+.s2_stage.visible .s2_curve_label {
+  opacity: 0.7;
+  transform: translateY(0);
+  transition: opacity 0.5s ease 2.0s, transform 0.5s ease 2.0s;
+}
+
+/* ── Data dots on curve ── */
+.s2_dot_wrap {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.s2_dot {
+  border-radius: 50%;
+  background: #818CF8;
+  box-shadow: 0 0 8px rgba(129, 140, 248, 0.4);
+}
+
+.s2_dot_label {
+  font-size: 9px;
+  color: #94A3B8;
+  white-space: nowrap;
+  margin-top: 4px;
+  letter-spacing: 0.02em;
+}
+
+/* Dot 1: GPT-4 — low-left on curve */
+.s2_dot1 {
+  bottom: 18%;
+  left: 15%;
+}
+.s2_dot1 .s2_dot { width: 8px; height: 8px; }
+
+/* Dot 2: Claude 3 — mid curve */
+.s2_dot2 {
+  bottom: 48%;
+  left: 45%;
+}
+.s2_dot2 .s2_dot { width: 10px; height: 10px; }
+
+/* Dot 3: Gemini 1.5 — high-right on curve */
+.s2_dot3 {
+  bottom: 72%;
+  left: 75%;
+}
+.s2_dot3 .s2_dot { width: 13px; height: 13px; }
+
+.s2_stage.visible .s2_dot1 {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.4s ease 2.2s, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 2.2s;
+}
+
+.s2_stage.visible .s2_dot2 {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.4s ease 2.6s, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 2.6s;
+}
+
+.s2_stage.visible .s2_dot3 {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.4s ease 3.0s, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 3.0s;
+}
+
+/* ── The outlier: Specialized 3B ── */
+.s2_outlier {
+  position: absolute;
+  top: 10%;
+  left: 18%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.s2_outlier_dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #FBBF24;
+  box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.5);
+}
+
+.s2_outlier_q {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0F172A;
+  line-height: 1;
+}
+
+.s2_outlier_label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #FBBF24;
+  white-space: nowrap;
+  margin-top: 5px;
+}
+
+.s2_stage.visible .s2_outlier {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.3s ease 3.8s, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 3.8s;
+}
+
+.s2_stage.visible .s2_outlier_dot {
+  animation: s2_pulse 2s ease-in-out 4.2s infinite;
+}
+
+@keyframes s2_pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.5), 0 0 12px rgba(251, 191, 36, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(251, 191, 36, 0), 0 0 20px rgba(251, 191, 36, 0.15);
+  }
+}
+
+/* ── Dashed line from outlier to curve (showing the gap) ── */
+.s2_gap_line {
+  position: absolute;
+  top: 18%;
+  left: 22%;
+  width: 1px;
+  height: 32%;
+  background: repeating-linear-gradient(
+    to bottom,
+    #FBBF24 0,
+    #FBBF24 3px,
+    transparent 3px,
+    transparent 7px
+  );
+  opacity: 0;
+  transform-origin: top;
+  transform: scaleY(0);
+}
+
+.s2_stage.visible .s2_gap_line {
+  opacity: 0.4;
+  transform: scaleY(1);
+  transition: opacity 0.3s ease 4.3s, transform 0.6s ease 4.3s;
+}
+
+/* ── Arrow annotation ── */
+.s2_arrow_note {
+  position: absolute;
+  top: 5%;
+  left: 32%;
+  font-size: 10px;
+  color: #FBBF24;
+  opacity: 0;
+  transform: translateX(-8px);
+  line-height: 1.3;
+}
+
+.s2_arrow_note::before {
+  content: '←';
+  margin-right: 4px;
+  font-size: 12px;
+}
+
+.s2_stage.visible .s2_arrow_note {
+  opacity: 0.85;
+  transform: translateX(0);
+  transition: opacity 0.5s ease 4.6s, transform 0.5s ease 4.6s;
+}
+
+/* ── Bottom label ── */
+.s2_bottom {
+  text-align: center;
+  font-size: 13px;
+  color: #94A3B8;
+  line-height: 1.5;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.s2_stage.visible .s2_bottom {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.6s ease 5.0s, transform 0.6s ease 5.0s;
+}
+
+.s2_bottom_em {
+  color: #FBBF24;
+  font-weight: 600;
+}
+
+/* ── Subtle bg glow ── */
+.s2_glow {
+  position: absolute;
+  top: 10%;
+  left: 5%;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.08) 0%, transparent 70%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.s2_stage.visible .s2_glow {
+  opacity: 1;
+  transition: opacity 1s ease 4.0s;
+}
+
+/* === S3 Animation === */
+
+.s3_stage {
+  max-width: 460px;
+  margin: 0 auto;
+  padding: 32px 20px 28px;
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #1E293B;
+  position: relative;
+}
+
+/* ── shared tokens ── */
+.s3_box {
+  border-radius: 10px;
+  padding: 10px 16px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  position: relative;
+}
+.s3_connector {
+  width: 2px;
+  background: #CBD5E1;
+  margin: 0 auto;
+  height: 0;
+  transition: height 0.5s ease;
+}
+.s3_arrow {
+  width: 0; height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 7px solid #CBD5E1;
+  margin: 0 auto;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* ── origin box ── */
+.s3_origin {
+  background: #4F46E5;
+  color: #fff;
+  max-width: 200px;
+  margin: 0 auto;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(-12px) scale(0.95);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s3_origin_sub {
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.75;
+  margin-top: 2px;
+}
+
+/* ── two-column layout ── */
+.s3_paths {
+  display: flex;
+  gap: 16px;
+  margin-top: 0;
+  position: relative;
+}
+.s3_path {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── left path (general) ── */
+.s3_path_left .s3_connector { background: #94A3B8; }
+.s3_path_left .s3_arrow { border-top-color: #94A3B8; }
+
+.s3_step_general {
+  background: #F1F5F9;
+  border: 1.5px solid #94A3B8;
+  color: #475569;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+/* ── right path (specialized) ── */
+.s3_path_right .s3_connector { background: #D97706; }
+.s3_path_right .s3_arrow { border-top-color: #D97706; }
+
+.s3_step_special {
+  background: #FFFBEB;
+  border: 1.5px solid #D97706;
+  color: #92400E;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+/* ── shared SFT+DPO merge ── */
+.s3_merge_zone {
+  position: relative;
+  margin: 0 -8px;
+  padding: 0;
+}
+.s3_merge_bracket {
+  position: relative;
+  height: 28px;
+  margin: 0 20px;
+}
+.s3_merge_bracket::before,
+.s3_merge_bracket::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 50%;
+  height: 14px;
+  border-bottom: 2px dashed #4F46E5;
+}
+.s3_merge_bracket::before {
+  left: 0;
+  border-right: 2px dashed #4F46E5;
+  border-radius: 0 0 10px 0;
+}
+.s3_merge_bracket::after {
+  right: 0;
+  border-left: 2px dashed #4F46E5;
+  border-radius: 0 0 0 10px;
+}
+.s3_merge_label {
+  background: #EEF2FF;
+  border: 1.5px dashed #4F46E5;
+  color: #4F46E5;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  max-width: 180px;
+  margin: 0 auto;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.s3_merge_bracket_wrap {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* ── insight label between paths ── */
+.s3_insight_tag {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.85);
+  background: #EEF2FF;
+  border: 1.5px solid #4F46E5;
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #4F46E5;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  z-index: 2;
+}
+
+/* ── result badges ── */
+.s3_results {
+  display: flex;
+  gap: 16px;
+  margin-top: 0;
+}
+.s3_result_col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.s3_badge_score {
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.s3_badge_gray {
+  background: #F1F5F9;
+  color: #64748B;
+  border: 2px solid #94A3B8;
+}
+.s3_badge_gold {
+  background: #FFFBEB;
+  color: #B45309;
+  border: 2px solid #D97706;
+  box-shadow: 0 2px 12px rgba(217, 119, 6, 0.15);
+}
+
+.s3_badge_degen {
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.s3_badge_danger {
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
+}
+.s3_badge_green {
+  background: #F0FDF4;
+  color: #16A34A;
+  border: 1px solid #BBF7D0;
+}
+
+.s3_model_name {
+  font-size: 11px;
+  color: #64748B;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+/* ── bottom quote ── */
+.s3_quote {
+  margin-top: 22px;
+  background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+  border-left: 4px solid #4F46E5;
+  border-radius: 0 10px 10px 0;
+  padding: 14px 18px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s3_quote_zh {
+  font-size: 15px;
+  font-weight: 700;
+  color: #4F46E5;
+  margin-bottom: 4px;
+}
+.s3_quote_en {
+  font-size: 11.5px;
+  color: #6366F1;
+  font-weight: 500;
+}
+.s3_quote_eq {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #4F46E5;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.s3_quote_eq span {
+  background: #4F46E5;
+  color: #fff;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 11px;
+}
+
+/* ── VS divider ── */
+.s3_vs {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: -8px;
+  width: 28px;
+  height: 28px;
+  background: #4F46E5;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  z-index: 3;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* ============================
+   ANIMATION TRIGGERS
+   ============================ */
+
+/* Phase 0: origin appears */
+.s3_stage.visible .s3_origin {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition-delay: 0.1s;
+}
+
+/* Phase 1: connectors from origin */
+.s3_stage.visible .s3_conn_origin_left {
+  height: 32px;
+  transition-delay: 0.55s;
+}
+.s3_stage.visible .s3_conn_origin_right {
+  height: 32px;
+  transition-delay: 0.55s;
+}
+.s3_stage.visible .s3_arrow_origin_left {
+  opacity: 1;
+  transition-delay: 0.95s;
+}
+.s3_stage.visible .s3_arrow_origin_right {
+  opacity: 1;
+  transition-delay: 0.95s;
+}
+
+/* Phase 2: LEFT path steps */
+.s3_stage.visible .s3_step_general_1 {
+  opacity: 1; transform: translateY(0);
+  transition-delay: 1.1s;
+}
+.s3_stage.visible .s3_conn_left_1 {
+  height: 24px;
+  transition-delay: 1.5s;
+}
+.s3_stage.visible .s3_arrow_left_1 {
+  opacity: 1;
+  transition-delay: 1.85s;
+}
+
+/* Phase 3: RIGHT path steps */
+.s3_stage.visible .s3_step_special_1 {
+  opacity: 1; transform: translateY(0);
+  transition-delay: 1.6s;
+}
+.s3_stage.visible .s3_conn_right_1 {
+  height: 24px;
+  transition-delay: 2.0s;
+}
+.s3_stage.visible .s3_arrow_right_1 {
+  opacity: 1;
+  transition-delay: 2.3s;
+}
+.s3_stage.visible .s3_step_special_2 {
+  opacity: 1; transform: translateY(0);
+  transition-delay: 2.4s;
+}
+.s3_stage.visible .s3_conn_right_2 {
+  height: 24px;
+  transition-delay: 2.75s;
+}
+.s3_stage.visible .s3_arrow_right_2 {
+  opacity: 1;
+  transition-delay: 3.0s;
+}
+
+/* Phase 4: insight tag */
+.s3_stage.visible .s3_insight_tag {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  transition-delay: 2.2s;
+}
+
+/* Phase 5: merge zone */
+.s3_stage.visible .s3_merge_bracket_wrap {
+  opacity: 1;
+  transition-delay: 3.1s;
+}
+.s3_stage.visible .s3_merge_label {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 3.3s;
+}
+
+/* Phase 6: connectors to results */
+.s3_stage.visible .s3_conn_result_left {
+  height: 24px;
+  transition-delay: 3.7s;
+}
+.s3_stage.visible .s3_conn_result_right {
+  height: 24px;
+  transition-delay: 3.7s;
+}
+.s3_stage.visible .s3_arrow_result_left {
+  opacity: 1;
+  transition-delay: 4.05s;
+}
+.s3_stage.visible .s3_arrow_result_right {
+  opacity: 1;
+  transition-delay: 4.05s;
+}
+
+/* Phase 7: VS badge */
+.s3_stage.visible .s3_vs {
+  opacity: 1;
+  transition-delay: 4.2s;
+}
+
+/* Phase 8: results pop in — left first, right second */
+.s3_stage.visible .s3_model_left {
+  opacity: 1;
+  transition-delay: 4.3s;
+}
+.s3_stage.visible .s3_score_left {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 4.4s;
+}
+.s3_stage.visible .s3_degen_left {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 4.65s;
+}
+
+.s3_stage.visible .s3_model_right {
+  opacity: 1;
+  transition-delay: 4.7s;
+}
+.s3_stage.visible .s3_score_right {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 4.8s;
+}
+.s3_stage.visible .s3_degen_right {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 5.05s;
+}
+
+/* Phase 9: quote */
+.s3_stage.visible .s3_quote {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 5.4s;
+}
+
+/* ── gold winner glow pulse ── */
+@keyframes s3_glow {
+  0%, 100% { box-shadow: 0 2px 12px rgba(217, 119, 6, 0.15); }
+  50% { box-shadow: 0 4px 20px rgba(217, 119, 6, 0.35); }
+}
+.s3_stage.visible .s3_badge_gold {
+  animation: s3_glow 2s ease-in-out 5.2s infinite;
+}
+
+/* === S4 Animation === */
+
+.s4_stage {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  color: #F1F5F9;
+}
+
+.s4_layout {
+  display: flex;
+  gap: 24px;
+  align-items: stretch;
+}
+
+/* === Left: Stacking Tower === */
+.s4_tower {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 6px;
+  flex: 0 0 170px;
+}
+
+.s4_block {
+  border-radius: 8px;
+  padding: 12px 14px;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.s4_block_label_zh {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.s4_block_label_en {
+  font-size: 11px;
+  font-weight: 500;
+  margin-top: 2px;
+  opacity: 0.7;
+}
+
+/* Level 1 — General Purpose (gray) */
+.s4_lv1 {
+  background: rgba(148, 163, 184, 0.2);
+  border: 1.5px solid #94A3B8;
+  transition-delay: 0.1s;
+}
+.s4_lv1 .s4_block_label_zh { color: #94A3B8; }
+.s4_lv1 .s4_block_label_en { color: #94A3B8; }
+
+/* Level 2 — Domain Expert (indigo) */
+.s4_lv2 {
+  background: rgba(129, 140, 248, 0.15);
+  border: 1.5px solid #818CF8;
+  transition-delay: 0.35s;
+}
+.s4_lv2 .s4_block_label_zh { color: #818CF8; }
+.s4_lv2 .s4_block_label_en { color: #818CF8; }
+
+/* Level 3 — Task Expert (amber) */
+.s4_lv3 {
+  background: rgba(251, 191, 36, 0.12);
+  border: 1.5px solid #FBBF24;
+  transition-delay: 0.6s;
+}
+.s4_lv3 .s4_block_label_zh { color: #FBBF24; }
+.s4_lv3 .s4_block_label_en { color: #FBBF24; }
+
+/* Stacking arrow between blocks */
+.s4_arrow_up {
+  text-align: center;
+  font-size: 14px;
+  color: #64748B;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s4_arrow_up.a1 { transition-delay: 0.25s; }
+.s4_arrow_up.a2 { transition-delay: 0.5s; }
+
+/* === Right: Comparison Pairs === */
+.s4_comparisons {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+}
+
+.s4_pair {
+  border-radius: 10px;
+  padding: 14px 16px;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease, box-shadow 0.5s ease;
+}
+
+.s4_pair_7b {
+  background: rgba(129, 140, 248, 0.1);
+  border: 1px solid rgba(129, 140, 248, 0.25);
+  transition-delay: 0.8s;
+}
+
+.s4_pair_3b {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  transition-delay: 1.05s;
+}
+
+.s4_pair_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.s4_pair_tag {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.s4_pair_7b .s4_pair_tag {
+  background: rgba(129, 140, 248, 0.2);
+  color: #818CF8;
+}
+
+.s4_pair_3b .s4_pair_tag {
+  background: rgba(251, 191, 36, 0.2);
+  color: #FBBF24;
+}
+
+.s4_pair_delta {
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.s4_pair_7b .s4_pair_delta { color: #818CF8; }
+.s4_pair_3b .s4_pair_delta { color: #FBBF24; }
+
+.s4_pair_scores {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: #94A3B8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.s4_pair_scores span {
+  font-weight: 600;
+}
+
+.s4_arrow_icon {
+  display: inline-block;
+  font-size: 16px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.s4_pair_7b .s4_arrow_icon { transition-delay: 1.1s; }
+.s4_pair_3b .s4_arrow_icon { transition-delay: 1.35s; }
+
+/* 3B amber glow highlight */
+.s4_stage.visible .s4_pair_3b {
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.15), 0 0 40px rgba(251, 191, 36, 0.06);
+}
+
+/* Big arrow for 3B */
+.s4_pair_3b .s4_arrow_icon {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+/* === Bottom Label === */
+.s4_bottom_label {
+  margin-top: 20px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s ease 1.4s, transform 0.5s ease 1.4s;
+}
+
+.s4_bottom_text {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #FBBF24;
+  padding: 6px 18px;
+  border-radius: 20px;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+}
+
+/* Pulse animation for the bottom label */
+@keyframes s4_pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.3); }
+  50% { box-shadow: 0 0 12px 4px rgba(251, 191, 36, 0.15); }
+}
+
+.s4_stage.visible .s4_bottom_text {
+  animation: s4_pulse 2.5s ease-in-out 2s infinite;
+}
+
+/* === Visible state triggers === */
+.s4_stage.visible .s4_block {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.s4_stage.visible .s4_arrow_up {
+  opacity: 1;
+}
+
+.s4_stage.visible .s4_pair {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.s4_stage.visible .s4_arrow_icon {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.s4_stage.visible .s4_bottom_label {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* === S5 Animation === */
+
+.s5_stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 32px 16px;
+  max-width: 460px;
+  margin: 0 auto;
+}
+
+.s5_card {
+  width: 100%;
+  background: #FFFFFF;
+  border-radius: 10px;
+  padding: 20px 22px 18px 22px;
+  box-shadow: 0 1px 4px rgba(30,41,59,0.07), 0 4px 16px rgba(30,41,59,0.05);
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  opacity: 0;
+  transform: translateX(-38px);
+  transition: opacity 0.55s cubic-bezier(0.23,1,0.32,1), transform 0.55s cubic-bezier(0.23,1,0.32,1);
+  border-left: 4px solid transparent;
+  position: relative;
+}
+
+.s5_card--indigo {
+  border-left-color: #4F46E5;
+}
+
+.s5_card--amber {
+  border-left-color: #D97706;
+}
+
+.s5_badge {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #FFFFFF;
+  letter-spacing: 0.02em;
+  margin-top: 2px;
+}
+
+.s5_badge--indigo {
+  background: #4F46E5;
+}
+
+.s5_badge--amber {
+  background: #D97706;
+}
+
+.s5_body {
+  flex: 1;
+  min-width: 0;
+}
+
+.s5_question {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 15.5px;
+  font-weight: 650;
+  color: #1E293B;
+  line-height: 1.45;
+  margin: 0 0 6px 0;
+}
+
+.s5_subtitle {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: #94A3B8;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.s5_card .s5_underline {
+  position: absolute;
+  bottom: 0;
+  left: 4px;
+  right: 0;
+  height: 2px;
+  border-radius: 0 0 10px 0;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.45s cubic-bezier(0.23,1,0.32,1);
+  transition-delay: 0s;
+}
+
+.s5_underline--indigo {
+  background: linear-gradient(90deg, #4F46E5 0%, rgba(79,70,229,0) 100%);
+}
+
+.s5_underline--amber {
+  background: linear-gradient(90deg, #D97706 0%, rgba(217,119,6,0) 100%);
+}
+
+/* Visible state — staggered entrance */
+.s5_stage.visible .s5_card {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.s5_stage.visible .s5_card:nth-child(1) {
+  transition-delay: 0.1s;
+}
+.s5_stage.visible .s5_card:nth-child(2) {
+  transition-delay: 0.32s;
+}
+.s5_stage.visible .s5_card:nth-child(3) {
+  transition-delay: 0.54s;
+}
+
+.s5_stage.visible .s5_card:nth-child(1) .s5_underline {
+  transform: scaleX(1);
+  transition-delay: 0.5s;
+}
+.s5_stage.visible .s5_card:nth-child(2) .s5_underline {
+  transform: scaleX(1);
+  transition-delay: 0.72s;
+}
+.s5_stage.visible .s5_card:nth-child(3) .s5_underline {
+  transform: scaleX(1);
+  transition-delay: 0.94s;
+}
+
+/* === S6 Animation === */
+
+.s6_stage {
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 48px 24px 40px;
+  background: #0F172A;
+  color: #F1F5F9;
+  font-family: -apple-system, "Noto Sans SC", sans-serif;
+  text-align: center;
+  overflow: hidden;
+}
+
+/* ── fulcrum + beam ── */
+.s6_scale {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  margin-bottom: 28px;
+}
+
+.s6_fulcrum {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 18px solid transparent;
+  border-right: 18px solid transparent;
+  border-bottom: 28px solid #475569;
+}
+
+.s6_beam_wrap {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  width: 320px;
+  margin-left: -160px;
+  transform-origin: center bottom;
+  transform: rotate(12deg);
+  transition: none;
+}
+
+.s6_stage.visible .s6_beam_wrap {
+  animation: s6_tilt 4.8s ease-in-out forwards;
+}
+
+.s6_beam {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 4px;
+  margin-top: -2px;
+  background: #64748B;
+  border-radius: 2px;
+}
+
+/* ── pans ── */
+.s6_pan {
+  position: absolute;
+  top: -2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.s6_pan--left {
+  left: 0;
+  transform: translateX(-20%);
+}
+
+.s6_pan--right {
+  right: 0;
+  transform: translateX(20%);
+}
+
+.s6_rope {
+  width: 2px;
+  height: 40px;
+  background: #475569;
+}
+
+.s6_tray {
+  width: 80px;
+  height: 6px;
+  border-radius: 3px;
+}
+
+.s6_pan--left .s6_tray {
+  background: #818CF8;
+}
+
+.s6_pan--right .s6_tray {
+  background: #FBBF24;
+}
+
+/* ── weight blocks ── */
+.s6_weight {
+  width: 56px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  position: absolute;
+  opacity: 1;
+}
+
+.s6_pan--left .s6_weight {
+  background: #818CF8;
+  color: #0F172A;
+  height: 52px;
+  bottom: 12px;
+}
+
+.s6_pan--right .s6_weight {
+  background: #FBBF24;
+  color: #0F172A;
+  height: 28px;
+  bottom: 12px;
+}
+
+.s6_stage.visible .s6_pan--right .s6_weight {
+  animation: s6_grow 1.6s 1.4s ease-out forwards;
+}
+
+/* ── labels under pans ── */
+.s6_pan_label {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+.s6_pan--left .s6_pan_label {
+  color: #818CF8;
+}
+
+.s6_pan--right .s6_pan_label {
+  color: #FBBF24;
+}
+
+.s6_stage.visible .s6_pan_label {
+  animation: s6_fadein 0.6s 0.4s ease forwards;
+}
+
+/* ── rebalance label ── */
+.s6_rebalance {
+  font-size: 15px;
+  font-weight: 600;
+  color: #F1F5F9;
+  margin-bottom: 32px;
+  opacity: 0;
+  transform: translateY(6px);
+  letter-spacing: 0.04em;
+}
+
+.s6_stage.visible .s6_rebalance {
+  animation: s6_slideup 0.8s 3.6s ease forwards;
+}
+
+.s6_rebalance em {
+  font-style: normal;
+  color: #FBBF24;
+}
+
+/* ── equation ── */
+.s6_equation {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px 2px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 28px;
+  line-height: 1.8;
+}
+
+.s6_eq_token {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+.s6_stage.visible .s6_eq_token { animation: s6_slideup 0.5s ease forwards; }
+
+.s6_stage.visible .s6_eq_t0 { animation-delay: 4.4s; }
+.s6_stage.visible .s6_eq_t1 { animation-delay: 4.6s; }
+.s6_stage.visible .s6_eq_t2 { animation-delay: 4.8s; }
+.s6_stage.visible .s6_eq_t3 { animation-delay: 5.0s; }
+.s6_stage.visible .s6_eq_t4 { animation-delay: 5.2s; }
+.s6_stage.visible .s6_eq_t5 { animation-delay: 5.4s; }
+.s6_stage.visible .s6_eq_t6 { animation-delay: 5.6s; }
+.s6_stage.visible .s6_eq_t7 { animation-delay: 5.8s; }
+.s6_stage.visible .s6_eq_t8 { animation-delay: 6.0s; }
+.s6_stage.visible .s6_eq_t9 { animation-delay: 6.2s; }
+
+.s6_eq_fn { color: #94A3B8; }
+.s6_eq_scale { color: #818CF8; }
+.s6_eq_align { color: #FBBF24; }
+.s6_eq_cost { color: #34D399; }
+.s6_eq_stab { color: #F472B6; }
+.s6_eq_punc { color: #64748B; }
+
+/* ── badge ── */
+.s6_badge {
+  display: inline-block;
+  padding: 8px 20px;
+  border: 1.5px solid #334155;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #94A3B8;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.s6_stage.visible .s6_badge {
+  animation: s6_slideup 0.7s 6.8s ease forwards;
+}
+
+.s6_badge_arrow {
+  display: inline-block;
+  margin-left: 6px;
+  transition: transform 0.3s ease;
+}
+
+/* ── glow pulse on right weight ── */
+.s6_stage.visible .s6_pan--right .s6_weight::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 8px;
+  border: 1.5px solid #FBBF24;
+  opacity: 0;
+  animation: s6_glow 2s 2.6s ease-out forwards;
+}
+
+/* ── keyframes ── */
+@keyframes s6_tilt {
+  0%   { transform: rotate(12deg); }
+  30%  { transform: rotate(12deg); }
+  75%  { transform: rotate(0deg); }
+  85%  { transform: rotate(-1deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes s6_grow {
+  0%   { height: 28px; }
+  100% { height: 52px; }
+}
+
+@keyframes s6_fadein {
+  to { opacity: 1; }
+}
+
+@keyframes s6_slideup {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes s6_glow {
+  0%   { opacity: 0; }
+  40%  { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+
+/* === A1 Animation === */
+
+.a1_stage {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 28px 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  color: #1E293B;
+  background: #FFF7ED;
+  border-radius: 16px;
+}
+
+/* ── Section titles ── */
+.a1_section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94A3B8;
+  margin: 0 0 14px 0;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* ═══════════════════════════════════════
+   METRIC 1: Quality Ranking Bar Chart
+   ═══════════════════════════════════════ */
+.a1_ranking {
+  margin-bottom: 32px;
+}
+
+.a1_bar-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+  height: 26px;
+}
+
+.a1_bar-label {
+  width: 118px;
+  min-width: 118px;
+  font-size: 11.5px;
+  font-weight: 500;
+  text-align: right;
+  padding-right: 10px;
+  color: #1E293B;
+  opacity: 0;
+  transform: translateX(-12px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.a1_bar-track {
+  flex: 1;
+  height: 20px;
+  background: #F1F5F9;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.a1_bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  width: 0%;
+  transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+}
+
+.a1_bar-fill--gold { background: linear-gradient(90deg, #D97706, #F59E0B); }
+.a1_bar-fill--indigo { background: linear-gradient(90deg, #4F46E5, #6366F1); }
+.a1_bar-fill--slate { background: linear-gradient(90deg, #64748B, #94A3B8); }
+
+.a1_bar-score {
+  width: 48px;
+  min-width: 48px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  padding-left: 6px;
+}
+
+.a1_bar-score--gold { color: #D97706; }
+.a1_bar-score--indigo { color: #4F46E5; }
+.a1_bar-score--slate { color: #64748B; }
+
+/* Rank badge for #1 */
+.a1_rank-badge {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 9px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.03em;
+  opacity: 0;
+  transition: opacity 0.3s ease 1.2s;
+}
+
+/* ═══════════════════════════════════════
+   METRIC 2: Cost Comparison Circles
+   ═══════════════════════════════════════ */
+.a1_cost {
+  margin-bottom: 32px;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.a1_cost-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 12px 0;
+  position: relative;
+}
+
+.a1_circle-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.a1_circle-big {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #DC2626 0%, #EF4444 100%);
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 24px rgba(220, 38, 38, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.a1_circle-big-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  text-align: center;
+  line-height: 1.3;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.a1_circle-small {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #D97706, #F59E0B);
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2px 12px rgba(217, 119, 6, 0.25);
+}
+
+.a1_cost-multiplier {
+  font-size: 32px;
+  font-weight: 900;
+  color: #4F46E5;
+  margin: 0 24px;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  line-height: 1;
+  position: relative;
+}
+
+.a1_cost-multiplier-sub {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: #94A3B8;
+  text-align: center;
+  margin-top: 2px;
+  letter-spacing: 0.02em;
+}
+
+.a1_circle-caption {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #64748B;
+  text-align: center;
+  max-width: 90px;
+  line-height: 1.3;
+}
+
+/* ═══════════════════════════════════════
+   METRIC 3: Stability / Degeneration
+   ═══════════════════════════════════════ */
+.a1_stability {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.a1_stab-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  height: 28px;
+}
+
+.a1_stab-label {
+  width: 118px;
+  min-width: 118px;
+  font-size: 11.5px;
+  font-weight: 500;
+  text-align: right;
+  padding-right: 10px;
+  color: #1E293B;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.a1_stab-track {
+  flex: 1;
+  height: 16px;
+  background: #F1F5F9;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.a1_stab-fill {
+  height: 100%;
+  border-radius: 4px;
+  width: 0%;
+  transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.a1_stab-fill--green {
+  background: linear-gradient(90deg, #059669, #34D399);
+}
+
+.a1_stab-fill--teal {
+  background: linear-gradient(90deg, #0D9488, #5EEAD4);
+}
+
+.a1_stab-pct {
+  width: 52px;
+  min-width: 52px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  padding-left: 6px;
+}
+
+.a1_stab-pct--green { color: #059669; }
+.a1_stab-pct--teal { color: #0D9488; }
+
+.a1_stab-note {
+  font-size: 10px;
+  color: #94A3B8;
+  margin-top: 4px;
+  text-align: right;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* ═══════════════════════════════════════
+   VISIBLE STATE — all animations
+   ═══════════════════════════════════════ */
+
+/* Section titles fade in */
+.a1_stage.visible .a1_ranking .a1_section-title {
+  opacity: 1; transform: translateY(0); transition-delay: 0.1s;
+}
+.a1_stage.visible .a1_cost .a1_section-title {
+  opacity: 1; transform: translateY(0); transition-delay: 1.6s;
+}
+.a1_stage.visible .a1_stability .a1_section-title {
+  opacity: 1; transform: translateY(0); transition-delay: 2.8s;
+}
+
+/* ── Bar labels slide in (staggered) ── */
+.a1_stage.visible .a1_bar-row:nth-child(1) .a1_bar-label { opacity:1; transform:translateX(0); transition-delay:0.15s; }
+.a1_stage.visible .a1_bar-row:nth-child(2) .a1_bar-label { opacity:1; transform:translateX(0); transition-delay:0.22s; }
+.a1_stage.visible .a1_bar-row:nth-child(3) .a1_bar-label { opacity:1; transform:translateX(0); transition-delay:0.29s; }
+.a1_stage.visible .a1_bar-row:nth-child(4) .a1_bar-label { opacity:1; transform:translateX(0); transition-delay:0.36s; }
+.a1_stage.visible .a1_bar-row:nth-child(5) .a1_bar-label { opacity:1; transform:translateX(0); transition-delay:0.43s; }
+.a1_stage.visible .a1_bar-row:nth-child(6) .a1_bar-label { opacity:1; transform:translateX(0); transition-delay:0.50s; }
+.a1_stage.visible .a1_bar-row:nth-child(7) .a1_bar-label { opacity:1; transform:translateX(0); transition-delay:0.57s; }
+.a1_stage.visible .a1_bar-row:nth-child(8) .a1_bar-label { opacity:1; transform:translateX(0); transition-delay:0.64s; }
+.a1_stage.visible .a1_bar-row:nth-child(9) .a1_bar-label { opacity:1; transform:translateX(0); transition-delay:0.71s; }
+
+/* ── Bars grow (staggered) ── */
+.a1_stage.visible .a1_bar-row:nth-child(1) .a1_bar-fill { width: 100%;  transition-delay:0.25s; }
+.a1_stage.visible .a1_bar-row:nth-child(2) .a1_bar-fill { width: 91.4%; transition-delay:0.32s; }
+.a1_stage.visible .a1_bar-row:nth-child(3) .a1_bar-fill { width: 90.0%; transition-delay:0.39s; }
+.a1_stage.visible .a1_bar-row:nth-child(4) .a1_bar-fill { width: 82.3%; transition-delay:0.46s; }
+.a1_stage.visible .a1_bar-row:nth-child(5) .a1_bar-fill { width: 75.3%; transition-delay:0.53s; }
+.a1_stage.visible .a1_bar-row:nth-child(6) .a1_bar-fill { width: 70.3%; transition-delay:0.60s; }
+.a1_stage.visible .a1_bar-row:nth-child(7) .a1_bar-fill { width: 69.7%; transition-delay:0.67s; }
+.a1_stage.visible .a1_bar-row:nth-child(8) .a1_bar-fill { width: 67.8%; transition-delay:0.74s; }
+.a1_stage.visible .a1_bar-row:nth-child(9) .a1_bar-fill { width: 63.0%; transition-delay:0.81s; }
+
+/* ── Scores fade in (after bars) ── */
+.a1_stage.visible .a1_bar-row:nth-child(1) .a1_bar-score { opacity:1; transition-delay:0.75s; }
+.a1_stage.visible .a1_bar-row:nth-child(2) .a1_bar-score { opacity:1; transition-delay:0.82s; }
+.a1_stage.visible .a1_bar-row:nth-child(3) .a1_bar-score { opacity:1; transition-delay:0.89s; }
+.a1_stage.visible .a1_bar-row:nth-child(4) .a1_bar-score { opacity:1; transition-delay:0.96s; }
+.a1_stage.visible .a1_bar-row:nth-child(5) .a1_bar-score { opacity:1; transition-delay:1.03s; }
+.a1_stage.visible .a1_bar-row:nth-child(6) .a1_bar-score { opacity:1; transition-delay:1.10s; }
+.a1_stage.visible .a1_bar-row:nth-child(7) .a1_bar-score { opacity:1; transition-delay:1.17s; }
+.a1_stage.visible .a1_bar-row:nth-child(8) .a1_bar-score { opacity:1; transition-delay:1.24s; }
+.a1_stage.visible .a1_bar-row:nth-child(9) .a1_bar-score { opacity:1; transition-delay:1.31s; }
+
+/* Rank badge */
+.a1_stage.visible .a1_rank-badge { opacity: 1; }
+
+/* ── Cost section ── */
+.a1_stage.visible .a1_cost {
+  opacity: 1; transform: translateY(0); transition-delay: 1.5s;
+}
+
+.a1_stage.visible .a1_circle-big {
+  opacity: 1; transform: scale(1); transition-delay: 1.8s;
+}
+.a1_stage.visible .a1_circle-big-label {
+  opacity: 1; transition-delay: 2.2s;
+}
+.a1_stage.visible .a1_circle-small {
+  opacity: 1; transform: scale(1); transition-delay: 2.0s;
+}
+.a1_stage.visible .a1_cost-multiplier {
+  opacity: 1; transform: scale(1); transition-delay: 2.3s;
+}
+
+/* ── Stability section ── */
+.a1_stage.visible .a1_stability {
+  opacity: 1; transform: translateY(0); transition-delay: 2.7s;
+}
+
+.a1_stage.visible .a1_stability .a1_stab-row:nth-child(1) .a1_stab-label {
+  opacity: 1; transform: translateX(0); transition-delay: 2.9s;
+}
+.a1_stage.visible .a1_stability .a1_stab-row:nth-child(2) .a1_stab-label {
+  opacity: 1; transform: translateX(0); transition-delay: 3.0s;
+}
+
+.a1_stage.visible .a1_stability .a1_stab-row:nth-child(1) .a1_stab-fill {
+  width: 33%; transition-delay: 3.0s;
+}
+.a1_stage.visible .a1_stability .a1_stab-row:nth-child(2) .a1_stab-fill {
+  width: 66%; transition-delay: 3.1s;
+}
+
+.a1_stage.visible .a1_stability .a1_stab-row:nth-child(1) .a1_stab-pct {
+  opacity: 1; transition-delay: 3.5s;
+}
+.a1_stage.visible .a1_stability .a1_stab-row:nth-child(2) .a1_stab-pct {
+  opacity: 1; transition-delay: 3.6s;
+}
+
+.a1_stage.visible .a1_stab-note {
+  opacity: 1; transition-delay: 3.7s;
+}
+
+/* ── Dividers ── */
+.a1_divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #E2E8F0 20%, #E2E8F0 80%, transparent);
+  margin: 4px 0 20px 0;
+}
+
+/* ── Mobile tweaks ── */
+@media (max-width: 400px) {
+  .a1_stage { padding: 20px 12px; }
+  .a1_bar-label, .a1_stab-label { width: 90px; min-width: 90px; font-size: 10px; }
+  .a1_bar-score { font-size: 11px; width: 42px; min-width: 42px; }
+  .a1_circle-big { width: 96px; height: 96px; }
+  .a1_circle-small { width: 22px; height: 22px; }
+  .a1_cost-multiplier { font-size: 26px; margin: 0 16px; }
+}
+
+/* === A2 Animation === */
+
+.a2_stage {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 24px 20px 20px;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  color: #F1F5F9;
+  opacity: 0;
+}
+.a2_stage.visible {
+  opacity: 1;
+}
+
+/* --- Panels --- */
+.a2_panel {
+  border: 1px solid rgba(129,140,248,0.25);
+  border-radius: 10px;
+  padding: 16px 18px 14px;
+  margin-bottom: 14px;
+  background: rgba(129,140,248,0.04);
+  opacity: 0;
+  transform: translateY(18px);
+  transition: none;
+}
+.a2_stage.visible .a2_panel--exp1 {
+  animation: a2_panelIn 0.5s 0.15s ease both;
+}
+.a2_stage.visible .a2_panel--exp2 {
+  animation: a2_panelIn 0.5s 0.55s ease both;
+}
+@keyframes a2_panelIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Highlighted 3B panel */
+.a2_panel--exp2 {
+  border-width: 2px;
+  border-color: rgba(251,191,36,0.45);
+  background: rgba(251,191,36,0.06);
+  box-shadow: 0 0 24px rgba(251,191,36,0.08);
+}
+
+/* --- Panel header --- */
+.a2_panelTitle {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #94A3B8;
+  margin: 0 0 12px;
+}
+.a2_panel--exp2 .a2_panelTitle {
+  color: #FBBF24;
+  font-size: 12px;
+}
+
+/* --- Rows --- */
+.a2_row {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+.a2_row:last-of-type {
+  margin-bottom: 0;
+}
+
+.a2_rowLabel {
+  font-size: 12px;
+  color: #94A3B8;
+  margin-bottom: 5px;
+  opacity: 0;
+  transition: none;
+}
+.a2_stage.visible .a2_panel--exp1 .a2_row:nth-child(2) .a2_rowLabel {
+  animation: a2_fadeIn 0.35s 0.45s ease both;
+}
+.a2_stage.visible .a2_panel--exp1 .a2_row:nth-child(3) .a2_rowLabel {
+  animation: a2_fadeIn 0.35s 0.65s ease both;
+}
+.a2_stage.visible .a2_panel--exp2 .a2_row:nth-child(2) .a2_rowLabel {
+  animation: a2_fadeIn 0.35s 0.85s ease both;
+}
+.a2_stage.visible .a2_panel--exp2 .a2_row:nth-child(3) .a2_rowLabel {
+  animation: a2_fadeIn 0.35s 1.05s ease both;
+}
+
+/* --- Bar track --- */
+.a2_barTrack {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.a2_barOuter {
+  flex: 1;
+  height: 22px;
+  background: rgba(148,163,184,0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+.a2_barFill {
+  height: 100%;
+  border-radius: 4px;
+  width: 0%;
+  transition: none;
+}
+
+/* Generic fill */
+.a2_barFill--generic {
+  background: linear-gradient(90deg, #818CF8, #6366F1);
+}
+/* Specialized fill */
+.a2_barFill--spec {
+  background: linear-gradient(90deg, #FBBF24, #F59E0B);
+}
+/* Glowing specialized fill for 3B */
+.a2_barFill--specGlow {
+  background: linear-gradient(90deg, #FBBF24, #F59E0B);
+  box-shadow: 0 0 12px rgba(251,191,36,0.35);
+}
+
+/* Bar animations - Exp 1 */
+.a2_stage.visible .a2_panel--exp1 .a2_row:nth-child(2) .a2_barFill {
+  animation: a2_bar91 0.7s 0.55s cubic-bezier(0.22,0.61,0.36,1) both;
+}
+.a2_stage.visible .a2_panel--exp1 .a2_row:nth-child(3) .a2_barFill {
+  animation: a2_bar93 0.7s 0.75s cubic-bezier(0.22,0.61,0.36,1) both;
+}
+/* Bar animations - Exp 2 */
+.a2_stage.visible .a2_panel--exp2 .a2_row:nth-child(2) .a2_barFill {
+  animation: a2_bar79 0.7s 0.95s cubic-bezier(0.22,0.61,0.36,1) both;
+}
+.a2_stage.visible .a2_panel--exp2 .a2_row:nth-child(3) .a2_barFill {
+  animation: a2_bar92 0.7s 1.15s cubic-bezier(0.22,0.61,0.36,1) both;
+}
+
+@keyframes a2_bar91 { to { width: 91%; } }
+@keyframes a2_bar93 { to { width: 93%; } }
+@keyframes a2_bar79 { to { width: 79%; } }
+@keyframes a2_bar92 { to { width: 92%; } }
+
+/* --- Score + degen badges --- */
+.a2_metrics {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  opacity: 0;
+}
+.a2_score {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #F1F5F9;
+}
+.a2_degen {
+  font-size: 10px;
+  color: #94A3B8;
+  background: rgba(148,163,184,0.1);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+.a2_degen--bad {
+  color: #DC2626;
+  background: rgba(220,38,38,0.12);
+}
+.a2_degen--good {
+  color: #34D399;
+  background: rgba(52,211,153,0.1);
+}
+
+/* Metrics fade-in timing - Exp 1 */
+.a2_stage.visible .a2_panel--exp1 .a2_row:nth-child(2) .a2_metrics {
+  animation: a2_fadeIn 0.3s 1.0s ease both;
+}
+.a2_stage.visible .a2_panel--exp1 .a2_row:nth-child(3) .a2_metrics {
+  animation: a2_fadeIn 0.3s 1.2s ease both;
+}
+/* Metrics fade-in timing - Exp 2 */
+.a2_stage.visible .a2_panel--exp2 .a2_row:nth-child(2) .a2_metrics {
+  animation: a2_fadeIn 0.3s 1.4s ease both;
+}
+.a2_stage.visible .a2_panel--exp2 .a2_row:nth-child(3) .a2_metrics {
+  animation: a2_fadeIn 0.3s 1.6s ease both;
+}
+
+/* 3B specialized score emphasis */
+.a2_panel--exp2 .a2_row:nth-child(3) .a2_score {
+  font-size: 16px;
+  color: #FBBF24;
+}
+
+@keyframes a2_fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* --- Delta badges --- */
+.a2_delta {
+  text-align: center;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(148,163,184,0.15);
+  opacity: 0;
+}
+.a2_stage.visible .a2_panel--exp1 .a2_delta {
+  animation: a2_fadeIn 0.4s 1.35s ease both;
+}
+.a2_stage.visible .a2_panel--exp2 .a2_delta {
+  animation: a2_deltaPopIn 0.5s 1.75s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+.a2_deltaText {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #818CF8;
+  background: rgba(129,140,248,0.1);
+  padding: 3px 12px;
+  border-radius: 20px;
+}
+.a2_panel--exp2 .a2_deltaText {
+  font-size: 16px;
+  font-weight: 800;
+  color: #FBBF24;
+  background: rgba(251,191,36,0.12);
+  padding: 5px 16px;
+  text-shadow: 0 0 16px rgba(251,191,36,0.3);
+}
+
+@keyframes a2_deltaPopIn {
+  0%   { opacity: 0; transform: scale(0.7); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* --- Bottom conclusion --- */
+.a2_conclusion {
+  text-align: center;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #94A3B8;
+  letter-spacing: 0.3px;
+  opacity: 0;
+}
+.a2_stage.visible .a2_conclusion {
+  animation: a2_fadeIn 0.5s 2.1s ease both;
+}
+.a2_conclusionHighlight {
+  color: #FBBF24;
+}
+
+</style>
+
+<meta name="description" content="这篇来自 Dharma-AI 的文章开场就抛出了一个反直觉的事实：在一个精心测量的企业级任务上，一个只有 30 亿参数 的专业化模型在质量、成本和稳定性三个维度上全面超越了所有被测试的商用前沿 API——包括 Claude Opus 4.6、Gemini 3.1 Pro 和 GPT-5.4。具体来说，这个专业化 3B 模型在巴西葡萄牙语 OCR 基准测试上拿">
+<link rel="canonical" href="https://chendi.me/readings/specialization-beats-scale/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">&#8592;</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ 概览层 ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+  <!-- S1: 冲击性开场 -->
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">30 亿参数的专业模型<br><span style="color:var(--accent)">击败了所有商用前沿 API</span></h2>
+      <p class="body-text reveal reveal-delay-1">这篇来自 Dharma-AI 的文章开场就抛出了一个反直觉的事实：在一个精心测量的企业级任务上，一个只有 <span class="hl">30 亿参数</span>的专业化模型在质量、成本和稳定性三个维度上全面超越了所有被测试的商用前沿 API——包括 Claude Opus 4.6、Gemini 3.1 Pro 和 GPT-5.4。具体来说，这个专业化 3B 模型在巴西葡萄牙语 OCR 基准测试上拿到了 <span class="hl2">0.911</span> 的综合分数，而排名第二的 Claude Opus 4.6 只有 0.833——两者之间的 <span class="hl-danger">8 个百分点差距</span>比排行榜上任何其他相邻选手之间的差距都大。在成本维度上，差距更加悬殊：专业化 3B 模型的推理成本大约是 Claude Opus 4.6 的 <span class="hl2">五十二分之一</span>。在生产稳定性上，该模型的文本退化率（text degeneration rate）仅为 <span class="hl">0.20%</span>，是所有被评估模型中最低的。质量第一、成本最低、稳定性最好——全部由同一个最小的专业化模型领跑。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s1-anim"><div class="s1_stage">
+  <div class="s1_title">Model Accuracy Leaderboard</div>
+
+  <div class="s1_rows">
+    <!-- Row 1: Specialized 3B (Winner) -->
+    <div class="s1_row s1_row1">
+      <div class="s1_label">Specialized 3B <span class="s1_winner"><span class="s1_crown"></span>#1</span></div>
+      <div class="s1_track"><div class="s1_bar"></div></div>
+      <div class="s1_score">0.911</div>
+    </div>
+
+    <!-- Gap annotation -->
+    <div class="s1_gap_wrap">
+      <div class="s1_gap_bracket">
+        <div class="s1_gap_text">+8pts gap</div>
+      </div>
+    </div>
+
+    <!-- Row 2: Claude Opus 4.6 -->
+    <div class="s1_row s1_row2">
+      <div class="s1_label">Claude Opus 4.6</div>
+      <div class="s1_track"><div class="s1_bar"></div></div>
+      <div class="s1_score">0.833</div>
+    </div>
+
+    <!-- Row 3: Gemini 3.1 Pro -->
+    <div class="s1_row s1_row3">
+      <div class="s1_label">Gemini 3.1 Pro</div>
+      <div class="s1_track"><div class="s1_bar"></div></div>
+      <div class="s1_score">0.820</div>
+    </div>
+
+    <!-- Row 4: GPT-5.4 -->
+    <div class="s1_row s1_row4">
+      <div class="s1_label">GPT-5.4</div>
+      <div class="s1_track"><div class="s1_bar"></div></div>
+      <div class="s1_score">0.750</div>
+    </div>
+
+    <!-- Row 5: GPT-4o -->
+    <div class="s1_row s1_row5">
+      <div class="s1_label">GPT-4o</div>
+      <div class="s1_track"><div class="s1_bar"></div></div>
+      <div class="s1_score">0.635</div>
+    </div>
+  </div>
+
+  <!-- Stat badges -->
+  <div class="s1_stats">
+    <div class="s1_stat s1_stat_cost">
+      <span class="s1_stat_icon">$</span>
+      52x lower cost
+    </div>
+    <div class="s1_stat s1_stat_degen">
+      <span class="s1_stat_icon">%</span>
+      0.20% degeneration
+    </div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Source (Dharma-AI)</span>
+<p>When a model's training history is moved close enough to its deployment task, parameter count stops being the decisive variable. A 3-billion-parameter specialized model outperformed every commercial frontier API tested in a well-measured enterprise domain — at roughly fifty times lower cost.</p>
+<p>On extraction quality, the highest-scoring model in the comparison was the specialized 3-billion-parameter model. It scored 0.911 on the benchmark's composite score, which combines edit-distance similarity with n-gram overlap.</p>
+<p>The specialized model finished first, and the gap to Claude Opus 4.6 — close to eight percentage points — was wider than any other gap between adjacent finishers in the comparison.</p>
+<p>On cost, the gap was far wider. The specialized 3B model ran at approximately fifty-two times lower cost per million pages than Claude Opus 4.6.</p>
+<p>On production stability, the same model produced the lowest text-degeneration rate evaluated. The 3B model recorded 0.20% on this benchmark.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S2: 采购默认值 -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">采购默认值：<br><span style="color:#818CF8">「选最大的」曾经是对的</span></h2>
+      <p class="body-text reveal reveal-delay-1">这个默认值不是偶然形成的。过去三年里，它确实是正确的。当 GPT-4 发布时，它在所有重要基准上都超越了每一个更小的模型。这个模式在 Claude 3、Gemini 1.5 以及 2025 年的每一代前沿模型发布中不断重复。OpenAI 早在 2020 年就通过 Kaplan et al. 的 <span class="hl">scaling laws</span> 把这个经验关系形式化了：能力随参数数量和训练计算量而扩展。因此得出的教训看起来很简单——<span class="hl2">选最大模型的买家，平均而言就是选了性能最好的工具</span>。在缺乏更精细信号的情况下，默认选择规模是理性的做法。问题在于，这个假设之所以成立，是因为它所依据的对比集并不完整。对比集里缺少的不是更小的前沿模型，而是一种完全不同类型的模型——<span class="hl">专业化模型</span>：一个训练历史被刻意向部署任务靠拢的模型，通过一系列 fine-tuning 步骤把一个较小的基座模型适配到它将要部署的领域。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s2-anim"><div class="s2_stage">
+  <!-- Background glow behind outlier -->
+  <div class="s2_glow"></div>
+
+  <!-- Chart area -->
+  <div class="s2_chart">
+    <!-- Y axis -->
+    <div class="s2_axis_y"></div>
+    <div class="s2_label_y">Performance</div>
+
+    <!-- X axis -->
+    <div class="s2_axis_x"></div>
+    <div class="s2_label_x">Parameters →</div>
+
+    <!-- Grid lines -->
+    <div class="s2_grid"></div>
+    <div class="s2_grid"></div>
+    <div class="s2_grid"></div>
+
+    <!-- Curve area -->
+    <div class="s2_curve_wrap">
+      <!-- Curve label -->
+      <div class="s2_curve_label">Scaling Laws (Kaplan 2020)</div>
+
+      <!-- The curve shape -->
+      <div class="s2_curve_path">
+        <div class="s2_curve_seg"></div>
+      </div>
+
+      <!-- Data dots on the curve -->
+      <div class="s2_dot_wrap s2_dot1">
+        <div class="s2_dot"></div>
+        <div class="s2_dot_label">GPT-4</div>
+      </div>
+
+      <div class="s2_dot_wrap s2_dot2">
+        <div class="s2_dot"></div>
+        <div class="s2_dot_label">Claude 3</div>
+      </div>
+
+      <div class="s2_dot_wrap s2_dot3">
+        <div class="s2_dot"></div>
+        <div class="s2_dot_label">Gemini 1.5</div>
+      </div>
+
+      <!-- Dashed gap line -->
+      <div class="s2_gap_line"></div>
+
+      <!-- The outlier dot -->
+      <div class="s2_outlier">
+        <div style="position:relative;">
+          <div class="s2_outlier_dot"></div>
+          <div class="s2_outlier_q">?</div>
+        </div>
+        <div class="s2_outlier_label">Specialized 3B</div>
+      </div>
+
+      <!-- Arrow annotation -->
+      <div class="s2_arrow_note">高性能 / 低参数量</div>
+    </div>
+  </div>
+
+  <!-- Bottom caption -->
+  <div class="s2_bottom">
+    对比集里<span class="s2_bottom_em">缺少的那种模型</span>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Source</span>
+<p>The procurement default did not arrive by accident. It arrived because, for most of the past three years, it was correct.</p>
+<p>When GPT-4 was released, it outperformed every smaller model on the benchmarks that mattered. The pattern repeated, with refinements, through Claude 3, Gemini 1.5, and each generation of frontier release in 2025. Capability scaled with parameter count and with training compute (Kaplan et al., 2020) — the empirical relationship OpenAI's scaling laws had formalized years earlier.</p>
+<p>The assumption was defensible because, for most of the comparisons that produced it, it was correct. What changed was not that the assumption had always been wrong. What changed was that the comparison set on which it rested may not have been complete.</p>
+<p>What was missing was a different kind of model. Not a smaller frontier model. A specialized model — one whose training history had been deliberately moved closer to the task it would be asked to do, through a sequence of fine-tuning steps that adapted a smaller base to the domain it would be deployed in.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S3: 真正的变量 → drill -->
+  <section class="feed-section" style="background:var(--bg-act2)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">决定性变量：<br><span style="color:var(--accent)">分布对齐 &gt; 参数规模</span></h2>
+      <p class="body-text reveal reveal-delay-1">30 亿参数的模型专注于部署任务，所以经常能超越参数分散在大量任务无关材料上的大模型——这部分直觉上容易理解。但这篇论文的发现更进一步：<span class="hl">关键变量不仅是参数如何分配，而是模型的训练历史被多大程度地向任务靠拢</span>。在报告的实验中，这个变量对相对性能的预测力超过了其他所有被测试的因素——包括参数数量。论文原文直接点明了这一点：<span class="hl2">「contextual specialization can be more decisive than number of model parameters alone」</span>。决定一个模型是否表现最好的因素，不是参数数量，而是它的训练轨迹与部署任务之间的距离有多近。这意味着采购框架中优先级的反转——在传统默认值下，参数数量是主导变量，训练历史是次要修正；而在这篇论文提出的框架下，<span class="hl">对任务的分布对齐</span>成为主导变量，参数数量退为影响对齐收益大小的若干因素之一。论文还用数据直接证明了这一点：同样是 3B 架构，经过同样的训练流程，已经为通用 OCR 预训练过的 <span class="hl2">Nanonets-OCR2</span> 达到了 0.921 / 退化率 0.20%，而通用模型 Qwen2.5-VL-3B 只达到 0.793 / 退化率 1.41%。同架构、同训练——变量是模型在流程开始前就已经朝任务走了多远。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s3-anim"><div class="s3_stage">
+
+  <!-- Origin -->
+  <div class="s3_origin">
+    3B Architecture
+    <div class="s3_origin_sub">Qwen2.5-VL backbone</div>
+  </div>
+
+  <!-- Fork connectors -->
+  <div class="s3_paths" style="margin-top:0;">
+    <div class="s3_path s3_path_left">
+      <div class="s3_connector s3_conn_origin_left"></div>
+      <div class="s3_arrow s3_arrow_origin_left"></div>
+    </div>
+    <div class="s3_path s3_path_right">
+      <div class="s3_connector s3_conn_origin_right"></div>
+      <div class="s3_arrow s3_arrow_origin_right"></div>
+    </div>
+  </div>
+
+  <!-- Training paths -->
+  <div class="s3_paths" style="position:relative;">
+
+    <!-- LEFT: general -->
+    <div class="s3_path s3_path_left">
+      <div class="s3_box s3_step_general s3_step_general_1">
+        General-Purpose<br>Pre-training
+        <div style="font-size:10px;font-weight:400;color:#94A3B8;margin-top:3px;">broad multimodal data</div>
+      </div>
+      <div class="s3_connector s3_conn_left_1" style="background:#94A3B8;"></div>
+      <div class="s3_arrow s3_arrow_left_1" style="border-top-color:#94A3B8;"></div>
+    </div>
+
+    <!-- Insight tag (centered between paths) -->
+    <div class="s3_insight_tag">同架构、同训练</div>
+
+    <!-- RIGHT: specialized -->
+    <div class="s3_path s3_path_right">
+      <div class="s3_box s3_step_special s3_step_special_1">
+        OCR-Specialized<br>Base Training
+        <div style="font-size:10px;font-weight:400;color:#B45309;margin-top:3px;">document-focused data</div>
+      </div>
+      <div class="s3_connector s3_conn_right_1" style="background:#D97706;"></div>
+      <div class="s3_arrow s3_arrow_right_1" style="border-top-color:#D97706;"></div>
+      <div class="s3_box s3_step_special s3_step_special_2">
+        Domain-Aligned<br>Continuation
+        <div style="font-size:10px;font-weight:400;color:#B45309;margin-top:3px;">OCR distribution match</div>
+      </div>
+      <div class="s3_connector s3_conn_right_2" style="background:#D97706;"></div>
+      <div class="s3_arrow s3_arrow_right_2" style="border-top-color:#D97706;"></div>
+    </div>
+  </div>
+
+  <!-- Merge zone: Same SFT + DPO -->
+  <div class="s3_merge_zone">
+    <div class="s3_merge_bracket_wrap">
+      <div class="s3_merge_bracket"></div>
+    </div>
+    <div class="s3_merge_label">Same SFT + DPO Pipeline</div>
+  </div>
+
+  <!-- Connectors to results -->
+  <div class="s3_paths" style="margin-top:0;">
+    <div class="s3_path s3_path_left">
+      <div class="s3_connector s3_conn_result_left" style="background:#94A3B8;"></div>
+      <div class="s3_arrow s3_arrow_result_left" style="border-top-color:#94A3B8;"></div>
+    </div>
+    <div class="s3_path s3_path_right">
+      <div class="s3_connector s3_conn_result_right" style="background:#D97706;"></div>
+      <div class="s3_arrow s3_arrow_result_right" style="border-top-color:#D97706;"></div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="s3_results" style="position:relative;">
+    <div class="s3_vs">VS</div>
+    <div class="s3_result_col">
+      <div class="s3_model_name s3_model_left">Qwen2.5-VL-3B</div>
+      <div class="s3_badge_score s3_badge_gray s3_score_left">0.793</div>
+      <div class="s3_badge_degen s3_badge_danger s3_degen_left">1.41% degeneration</div>
+    </div>
+    <div class="s3_result_col">
+      <div class="s3_model_name s3_model_right">Nanonets-OCR2-3B</div>
+      <div class="s3_badge_score s3_badge_gold s3_score_right">0.921</div>
+      <div class="s3_badge_degen s3_badge_green s3_degen_right">0.20% degeneration</div>
+    </div>
+  </div>
+
+  <!-- Quote -->
+  <div class="s3_quote">
+    <div class="s3_quote_zh">变量 = 起点到任务的距离</div>
+    <div class="s3_quote_en">Variable = distance from starting point to task</div>
+    <div class="s3_quote_eq"><span>distributional alignment</span> &gt; parameter count</div>
+  </div>
+
+</div></div>
+      <p class="hook-line reveal reveal-delay-3">同架构同训练，为什么结果天差地别？完整排行榜和对照实验数据在这里。</p>
+      <button class="drill-btn reveal reveal-delay-4" onclick="drillDown('layer-details')">深入数据详解 &#8594;</button>
+      <div class="source-panel reveal reveal-delay-4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Source (The Variable That Mattered)</span>
+<p>A 3-billion-parameter model focused on the deployment task will often outperform a much larger model whose parameters are spread across material the task will never touch — other languages, other corpora, other domains. What the paper adds goes further: one of the important variables is not only how parameters are allocated, but how the model's training history has been moved toward the task.</p>
+<p>The paper names this directly. In its discussion, the authors describe the result as supporting the claim that "contextual specialization can be more decisive than number of model parameters alone." What determined whether a model performed best was not parameter count, but how close its training trajectory had been moved to its deployment task.</p>
+<p>Specialization is not a way to compensate for being small. It is a way to be aligned.</p>
+<p>The numbers bear the framing out. The 3B Nanonets-OCR2 — already specialized for general OCR before the paper began — was fine-tuned on the target domain through supervised fine-tuning and Direct Preference Optimization, and reached 0.921 with a 0.20% degeneration rate. A 3B general-purpose model of identical architecture, Qwen2.5-VL-3B, was run through the same procedure and reached 0.793 with 1.41% degeneration. Same architecture, same training, different result. The variable was the distance the model had already traveled toward the task before the procedure began.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S4: 专业化复利 → drill -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">专业化的复利效应：<br><span style="color:#FBBF24">起点不同，终点天差地别</span></h2>
+      <p class="body-text reveal reveal-delay-1">分布对齐不是一个模型「有或没有」的二元状态——它是一个<span class="hl">可以逐级提升的层级位置</span>。通用模型坐在底层；通用领域专家（为更广泛的工作类别训练过）坐在上面；特定领域专家（为具体部署任务训练过）坐在最上面。关键发现是：<span class="hl2">同样的下游训练，在不同起点上产生完全不同的结果</span>。论文用两组对照实验结构性地证明了这一点。在 7B 参数规模：从通用起点 Qwen2.5-VL-7B 出发达到 0.906 / 退化率 1.01%，但从已经为通用 OCR 专业化过的 olmOCR-2-7B 出发达到 <span class="hl">0.927</span> / 退化率仅 <span class="hl2">0.40%</span>——质量提升 2.3%，退化率<span class="hl-danger">减半</span>。在 3B 参数规模更加戏剧性：通用起点 0.793 / 1.41% vs 专业起点 0.921 / 0.20%——质量跃升 <span class="hl-danger">16 个百分点</span>，退化率降低了 <span class="hl2">7 倍</span>。两组对照、两个参数规模、一致的结论：<span class="hl">专业化是累积的</span>。一个已经向目标任务的更广泛类别靠拢的模型，从同样的领域特定训练中获益更多。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s4-anim"><div class="s4_stage">
+  <div class="s4_layout">
+    <!-- Left: Stacking Tower -->
+    <div class="s4_tower">
+      <!-- Level 3 (top — rendered first in column-reverse) -->
+      <div class="s4_block s4_lv3">
+        <div class="s4_block_label_zh">任务专家</div>
+        <div class="s4_block_label_en">Domain-Specific OCR</div>
+      </div>
+      <div class="s4_arrow_up a2">&#9650;</div>
+      <!-- Level 2 (middle) -->
+      <div class="s4_block s4_lv2">
+        <div class="s4_block_label_zh">领域专家</div>
+        <div class="s4_block_label_en">OCR Specialist</div>
+      </div>
+      <div class="s4_arrow_up a1">&#9650;</div>
+      <!-- Level 1 (bottom) -->
+      <div class="s4_block s4_lv1">
+        <div class="s4_block_label_zh">通用基座</div>
+        <div class="s4_block_label_en">Vanilla Generalist</div>
+      </div>
+    </div>
+
+    <!-- Right: Comparison Pairs -->
+    <div class="s4_comparisons">
+      <div class="s4_pair s4_pair_7b">
+        <div class="s4_pair_header">
+          <span class="s4_pair_tag">7B</span>
+          <span class="s4_pair_delta">+2.3%</span>
+        </div>
+        <div class="s4_pair_scores">
+          <span>0.906</span> &rarr; <span>0.927</span>
+          <span class="s4_arrow_icon">&#8593;</span>
+        </div>
+      </div>
+      <div class="s4_pair s4_pair_3b">
+        <div class="s4_pair_header">
+          <span class="s4_pair_tag">3B</span>
+          <span class="s4_pair_delta">+16%</span>
+        </div>
+        <div class="s4_pair_scores">
+          <span>0.793</span> &rarr; <span>0.921</span>
+          <span class="s4_arrow_icon">&#8593;&#8593;</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Label -->
+  <div class="s4_bottom_label">
+    <span class="s4_bottom_text">专业化是累积的</span>
+  </div>
+</div></div>
+      <p class="hook-line reveal reveal-delay-3">7B 和 3B 两组对照实验的完整数据，以及专业化层级图。</p>
+      <button class="drill-btn reveal reveal-delay-4" onclick="drillDown('layer-details')">深入数据详解 &#8594;</button>
+      <div class="source-panel reveal reveal-delay-4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Source (Specialization Compounds)</span>
+<p>Alignment is not a single thing a model either has or lacks. It is a position on a hierarchy that can be moved up one step at a time.</p>
+<p>At the 7-billion-parameter scale: the best fine-tuned model derived from Qwen2.5-VL-7B-Instruct — a general-purpose start — reached 0.906 with a 1.01% degeneration rate. The same training applied to olmOCR-2–7B — already specialized for general OCR — reached 0.927 with 0.40% degeneration. The quality gain was approximately 2.3 percent; the degeneration rate fell by nearly half.</p>
+<p>At the 3-billion-parameter scale: Qwen2.5-VL-3B finished at 0.793 with 1.41% degeneration; Nanonets-OCR2–3B finished at 0.921 with 0.20% degeneration. Same procedure, same architecture class, different starting position. The quality gain was approximately 16 percent; the degeneration rate fell by a factor of roughly seven.</p>
+<p>Two pairs, two parameter scales, two consistent results. Specialization accumulates. A model already moved closer to the broader category of its eventual task benefits more from the same domain-specific training than a model starting from a wider distribution.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S5: 三个战略问题 -->
+  <section class="feed-section" style="background:var(--bg-act3)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">三个战略问题：<br><span style="color:var(--accent2)">采购决策应该怎么变？</span></h2>
+      <p class="body-text reveal reveal-delay-1">这篇论文最实用的价值不是告诉企业下一步该做什么，而是提供了三个应该被追问的问题。<span class="hl">第一个问题</span>：分布对齐是否应该与参数数量一起被提升为 AI 评估中的一级变量？论文的证据并不主张把它放在参数数量之上，而是更审慎地论证——对齐作为变量的影响足够大，应该被<span class="hl2">显式测试</span>而不是假设它可以忽略。<span class="hl">第二个问题</span>：公共基准测试的领先，本身是否足以作为企业采购决策的依据？在这个精心测量的领域里，<span class="hl-danger">领跑公共基准的模型并不是交付最佳结果的模型</span>。如果这种偏差在其他领域也出现，企业评估可能需要额外一层证据——在代表实际部署场景的工作负载上运行测试。<span class="hl2">第三个问题</span>是关于架构而非方法的：如果对齐是一个会复利累积的层级位置，那么起始模型的选择——不仅仅是 fine-tuning 流程——本身就成为一个战略决策。更深层的含义可能是组织层面的：企业最终可能从建立一个<span class="hl">逐步对齐到自身领域和工作流的模型生态系统</span>中获益更多，而不是去寻找一个万能的通用模型。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s5-anim"><div class="s5_stage">
+  <div class="s5_card s5_card--indigo">
+    <div class="s5_badge s5_badge--indigo">Q1</div>
+    <div class="s5_body">
+      <p class="s5_question">分布对齐是否应成为一级变量？</p>
+      <p class="s5_subtitle">不是高于参数数量，而是被显式测试</p>
+    </div>
+    <span class="s5_underline s5_underline--indigo"></span>
+  </div>
+
+  <div class="s5_card s5_card--amber">
+    <div class="s5_badge s5_badge--amber">Q2</div>
+    <div class="s5_body">
+      <p class="s5_question">基准领先 = 采购依据？</p>
+      <p class="s5_subtitle">在实际部署场景上运行测试</p>
+    </div>
+    <span class="s5_underline s5_underline--amber"></span>
+  </div>
+
+  <div class="s5_card s5_card--indigo">
+    <div class="s5_badge s5_badge--indigo">Q3</div>
+    <div class="s5_body">
+      <p class="s5_question">起始模型的选择是战略决策</p>
+      <p class="s5_subtitle">模型生态 vs 万能通用模型</p>
+    </div>
+    <span class="s5_underline s5_underline--indigo"></span>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Source (Strategic Questions)</span>
+<p>The first: whether distributional alignment should be elevated alongside parameter count as a first-class variable in serious AI evaluation. The paper's evidence does not argue for elevating it above parameter count. It argues, more modestly, that alignment is large enough as a variable to be tested explicitly rather than assumed to be small.</p>
+<p>The second follows: is benchmark leadership, on its own, sufficient evidence for an enterprise procurement decision? In one well-measured domain, the model that led the public benchmarks was not the model that delivered the best result.</p>
+<p>The third is about architecture, not method. If alignment is a position on a hierarchy that compounds, the choice of starting model — not only the fine-tuning procedure — becomes a strategic decision in its own right. A starting model already closer to the deployment task may produce materially better outcomes than a larger, more general model under the same training budget. But the deeper implication may be organizational rather than procedural. If specialization compounds, enterprises may eventually benefit less from searching for a single universally capable model than from building an ecosystem of models progressively aligned to their own domains, workflows, and operational constraints.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S6: 有边界的重构 -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">有边界的重构：<br><span style="color:#818CF8">不是规模不重要，而是少了一个变量</span></h2>
+      <p class="body-text reveal reveal-delay-1">这篇文章的贡献是故意狭窄的。它没有论证前沿模型是劣等的、是可弃用的、或者采购默认值应该被颠倒。它的论点是：基于一篇论文的证据，<span class="hl-danger">前沿模型不一定是每个企业 AI 工作负载的最佳选择</span>。在所报告的实验中，训练历史与部署任务更紧密对齐的小型专业化模型，在质量、成本和生产稳定性上都超越了被评估的大型商用 API。因此其含义不是前沿模型不好，而是<span class="hl2">专业化历史</span>作为一个变量，对企业 AI 系统的战略重要性可能远超当前大多数评估框架的假设。作者写这篇文章的目的不是论证规模不再重要，而是要<span class="hl">隔离出一个当前企业 AI 对话中可能仍然被低估的变量</span>。训练历史是可以被观察、评估并通过连续的专业化阶段向部署任务靠拢的。在论文报告的对比中，这个关系实质性地改变了每个被评估模型的排名。它是否也会在其他地方改变排名——这是下一组实验要回答的问题。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s6-anim"><div class="s6_stage">
+  <!-- balance scale -->
+  <div class="s6_scale">
+    <div class="s6_beam_wrap">
+      <div class="s6_beam"></div>
+
+      <!-- left pan: parameter scale -->
+      <div class="s6_pan s6_pan--left">
+        <div class="s6_rope"></div>
+        <div class="s6_tray"></div>
+        <div class="s6_weight">规模</div>
+        <span class="s6_pan_label">参数规模</span>
+      </div>
+
+      <!-- right pan: specialization history -->
+      <div class="s6_pan s6_pan--right">
+        <div class="s6_rope"></div>
+        <div class="s6_tray"></div>
+        <div class="s6_weight" style="position:relative;">专业化</div>
+        <span class="s6_pan_label">专业化历史</span>
+      </div>
+    </div>
+
+    <div class="s6_fulcrum"></div>
+  </div>
+
+  <!-- rebalance label -->
+  <div class="s6_rebalance">不是颠倒，而是<em>重新平衡</em></div>
+
+  <!-- equation -->
+  <div class="s6_equation">
+    <span class="s6_eq_token s6_eq_t0 s6_eq_fn">评估</span>
+    <span class="s6_eq_token s6_eq_t1 s6_eq_punc">=</span>
+    <span class="s6_eq_token s6_eq_t2 s6_eq_fn">f(</span>
+    <span class="s6_eq_token s6_eq_t3 s6_eq_scale">规模</span>
+    <span class="s6_eq_token s6_eq_t4 s6_eq_punc">,</span>
+    <span class="s6_eq_token s6_eq_t5 s6_eq_align">对齐</span>
+    <span class="s6_eq_token s6_eq_t6 s6_eq_punc">,</span>
+    <span class="s6_eq_token s6_eq_t7 s6_eq_cost">成本</span>
+    <span class="s6_eq_token s6_eq_t8 s6_eq_punc">,</span>
+    <span class="s6_eq_token s6_eq_t9 s6_eq_stab">稳定性</span>
+    <span class="s6_eq_token s6_eq_t9 s6_eq_fn">)</span>
+  </div>
+
+  <!-- badge -->
+  <div class="s6_badge">
+    下一组实验的问题 <span class="s6_badge_arrow">→</span>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Source (A Bounded Reframe)</span>
+<p>The article's contribution is narrow, by design. It has not argued that frontier models are inferior, or disposable, or that the procurement default should be inverted. It has argued, on the strength of one paper's evidence, that frontier models are not necessarily the best-performing choice for every enterprise AI workload.</p>
+<p>In the experiments reported, smaller specialized models with training histories more closely aligned to the deployment task achieved superior quality, lower cost, and greater production stability than the larger commercial APIs evaluated. The implication is not that frontier models are inferior. It is that specialization history may be a more strategically important variable for enterprise AI systems than many evaluation frameworks currently assume.</p>
+<p>We wrote this article not to argue that scale no longer matters, but to isolate a variable the current enterprise AI conversation may still underweight. Training history can be observed, evaluated, and moved closer to a deployment task through successive stages of specialization. In the comparisons reported in the paper, that relationship materially changed the ranking of every model evaluated. Whether it changes rankings elsewhere is a question for the next set of experiments.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ 数据详解层 ═══ -->
+<div class="layer" id="layer-details" data-depth="1">
+
+  <!-- A1: 完整排行榜 + 成本 + 稳定性 -->
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">完整排行榜：<br><span style="color:var(--accent)">9 个模型的质量、成本与稳定性</span></h2>
+      <p class="body-text reveal reveal-delay-1">论文使用的基准测试是一个领域特定的评估：跨越印刷文档、手写文本和法律行政记录的<span class="hl">巴西葡萄牙语 OCR</span>。综合分数结合了编辑距离相似度和 n-gram 重叠。完整排行榜清晰地展示了专业化模型的统治地位：<span class="hl2">专业化 3B 模型以 0.911 排名第一</span>，Claude Opus 4.6 以 0.833 排名第二（差距 8 个百分点），Gemini 3.1 Pro 0.820，GPT-5.4 0.750，Google Vision 0.686，Google Document AI 0.640，GPT-4o 0.635，Amazon Textract 0.618，Mistral OCR 3 垫底 0.574。在成本维度上，专业化 3B 模型每百万页的推理成本大约是 Claude Opus 4.6 的 <span class="hl-danger">五十二分之一</span>——质量-成本的 Pareto 前沿图上，专业化模型独占左上角（高质量低成本），所有商用 API 都在右下方。在生产稳定性上，文本退化率（模型进入自我强化循环并无法产生可用输出的频率）方面，3B 模型仅 <span class="hl">0.20%</span>，次好的专业化模型为 0.40%，通用开源基线更高。SFT 相比原始模型降低了退化率，而 DPO 在 SFT 基础上进一步降低了退化率。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a1-anim"><div class="a1_stage">
+
+  <!-- ── METRIC 1: Quality Ranking ── -->
+  <div class="a1_ranking">
+    <div class="a1_section-title">Quality Ranking — Composite Score</div>
+
+    <div class="a1_bar-row">
+      <div class="a1_bar-label">Specialized 3B</div>
+      <div class="a1_bar-track">
+        <div class="a1_bar-fill a1_bar-fill--gold">
+          <span class="a1_rank-badge">#1</span>
+        </div>
+      </div>
+      <div class="a1_bar-score a1_bar-score--gold">0.911</div>
+    </div>
+
+    <div class="a1_bar-row">
+      <div class="a1_bar-label">Claude Opus 4.6</div>
+      <div class="a1_bar-track">
+        <div class="a1_bar-fill a1_bar-fill--indigo"></div>
+      </div>
+      <div class="a1_bar-score a1_bar-score--indigo">0.833</div>
+    </div>
+
+    <div class="a1_bar-row">
+      <div class="a1_bar-label">Gemini 3.1 Pro</div>
+      <div class="a1_bar-track">
+        <div class="a1_bar-fill a1_bar-fill--slate"></div>
+      </div>
+      <div class="a1_bar-score a1_bar-score--slate">0.820</div>
+    </div>
+
+    <div class="a1_bar-row">
+      <div class="a1_bar-label">GPT-5.4</div>
+      <div class="a1_bar-track">
+        <div class="a1_bar-fill a1_bar-fill--slate"></div>
+      </div>
+      <div class="a1_bar-score a1_bar-score--slate">0.750</div>
+    </div>
+
+    <div class="a1_bar-row">
+      <div class="a1_bar-label">Google Vision</div>
+      <div class="a1_bar-track">
+        <div class="a1_bar-fill a1_bar-fill--slate"></div>
+      </div>
+      <div class="a1_bar-score a1_bar-score--slate">0.686</div>
+    </div>
+
+    <div class="a1_bar-row">
+      <div class="a1_bar-label">Document AI</div>
+      <div class="a1_bar-track">
+        <div class="a1_bar-fill a1_bar-fill--slate"></div>
+      </div>
+      <div class="a1_bar-score a1_bar-score--slate">0.640</div>
+    </div>
+
+    <div class="a1_bar-row">
+      <div class="a1_bar-label">GPT-4o</div>
+      <div class="a1_bar-track">
+        <div class="a1_bar-fill a1_bar-fill--slate"></div>
+      </div>
+      <div class="a1_bar-score a1_bar-score--slate">0.635</div>
+    </div>
+
+    <div class="a1_bar-row">
+      <div class="a1_bar-label">Textract</div>
+      <div class="a1_bar-track">
+        <div class="a1_bar-fill a1_bar-fill--slate"></div>
+      </div>
+      <div class="a1_bar-score a1_bar-score--slate">0.618</div>
+    </div>
+
+    <div class="a1_bar-row">
+      <div class="a1_bar-label">Mistral OCR 3</div>
+      <div class="a1_bar-track">
+        <div class="a1_bar-fill a1_bar-fill--slate"></div>
+      </div>
+      <div class="a1_bar-score a1_bar-score--slate">0.574</div>
+    </div>
+  </div>
+
+  <div class="a1_divider"></div>
+
+  <!-- ── METRIC 2: Cost Comparison ── -->
+  <div class="a1_cost">
+    <div class="a1_section-title">Cost per 1K Pages</div>
+
+    <div class="a1_cost-row">
+      <div class="a1_circle-group">
+        <div class="a1_circle-big">
+          <span class="a1_circle-big-label">Commercial<br>API</span>
+        </div>
+        <div class="a1_circle-caption">General-purpose API</div>
+      </div>
+
+      <div class="a1_cost-multiplier">
+        52x
+        <span class="a1_cost-multiplier-sub">cost gap</span>
+      </div>
+
+      <div class="a1_circle-group">
+        <div class="a1_circle-small"></div>
+        <div class="a1_circle-caption">Specialized 3B</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="a1_divider"></div>
+
+  <!-- ── METRIC 3: Stability ── -->
+  <div class="a1_stability">
+    <div class="a1_section-title">Text Degeneration Rate</div>
+
+    <div class="a1_stab-row">
+      <div class="a1_stab-label">Specialized 3B</div>
+      <div class="a1_stab-track">
+        <div class="a1_stab-fill a1_stab-fill--green"></div>
+      </div>
+      <div class="a1_stab-pct a1_stab-pct--green">0.20%</div>
+    </div>
+
+    <div class="a1_stab-row">
+      <div class="a1_stab-label">Next best model</div>
+      <div class="a1_stab-track">
+        <div class="a1_stab-fill a1_stab-fill--teal"></div>
+      </div>
+      <div class="a1_stab-pct a1_stab-pct--teal">0.40%</div>
+    </div>
+
+    <div class="a1_stab-note">Lower is better — measures output corruption rate</div>
+  </div>
+
+</div></div>
+      <img class="blog-img reveal reveal-delay-3" src="https://cdn-uploads.huggingface.co/production/uploads/69d815b52c6db28cfdfdd422/051-Cj0MhSNUuZZjBDBrb.webp" alt="Models Scoreboard">
+      <img class="blog-img reveal reveal-delay-4" src="https://cdn-uploads.huggingface.co/production/uploads/69d815b52c6db28cfdfdd422/w-VeOVfROWObLSkPIscjz.jpeg" alt="Text degeneration rate chart">
+      <div class="source-panel reveal reveal-delay-4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Source (Empirical Record)</span>
+<p>The benchmark used in the paper was a domain-specific evaluation: Brazilian Portuguese OCR across printed documents, handwritten text, and legal and administrative records.</p>
+<p>Specialized 3B Model: 0.911. Claude Opus 4.6: 0.833. Gemini 3.1 Pro: 0.820. GPT-5.4: 0.750. Google Vision: 0.686. Google Document AI: 0.640. GPT-4o: 0.635. Amazon Textract: 0.618. Mistral OCR 3: 0.574.</p>
+<p>On cost, the specialized 3B model ran at approximately fifty-two times lower cost per million pages than Claude Opus 4.6 — a margin computed from inference-infrastructure cost against published API pricing.</p>
+<p>On production stability, the same model produced the lowest text-degeneration rate evaluated. The 3B model recorded 0.20% on this benchmark; the next closest specialized model, 0.40%.</p>
+<p>These three findings — quality, cost, and stability, all led by the same 3B specialized model — are the article's empirical anchor. Together, they make the empirical case stronger than any single finding would alone.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- A2: 复利证据详解 -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">复利证据：<br><span style="color:#FBBF24">同训练 + 不同起点 = 天壤之别</span></h2>
+      <p class="body-text reveal reveal-delay-1">论文的证据是结构性的：两组对照实验，两个参数规模，直接证明了专业化如何累积。在 <span class="hl">7B 参数规模</span>：从通用模型 Qwen2.5-VL-7B-Instruct 出发的最佳微调版本达到了 0.906 / 退化率 1.01%；而从已经为通用 OCR 专业化过的 olmOCR-2-7B 出发，经过同样的训练，达到了 <span class="hl2">0.927</span> / 退化率仅 <span class="hl2">0.40%</span>。质量提升约 2.3 个百分点，退化率降低了将近一半。同样的架构、同样的数据、同样的训练流水线——唯一的变量是起始位置。在 <span class="hl">3B 参数规模</span>，差距更加戏剧性：Qwen2.5-VL-3B 以 0.793 / 退化率 1.41% 完成训练，而 Nanonets-OCR2-3B 以 <span class="hl2">0.921</span> / 退化率 <span class="hl2">0.20%</span> 完成——同样的流程、同样的架构类别、不同的起始位置。质量跃升约 16 个百分点，退化率降低了约 7 倍。论文将此描述为三个专业化层级：Level 1 是通用基座（vanilla generalist），Level 2 是通用领域 OCR 专家（general-domain OCR specialist），Level 3 是特定领域 OCR 专家（domain-specific OCR specialist），以及一个投射的 Level N 代表未来更细粒度的子领域专业化。每个层级都建立在前一个层级编码的分布之上——多个训练阶段可以逐步将模型向目标任务分布靠拢，即使在相似的架构和计算约束下也能产生实质性不同的结果。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a2-anim"><div class="a2_stage">
+
+  <!-- Experiment 1: 7B Scale -->
+  <div class="a2_panel a2_panel--exp1">
+    <p class="a2_panelTitle">Experiment 1 &mdash; 7B Scale</p>
+
+    <div class="a2_row">
+      <div class="a2_rowLabel">Qwen2.5-VL-7B (通用起点)</div>
+      <div class="a2_barTrack">
+        <div class="a2_barOuter">
+          <div class="a2_barFill a2_barFill--generic"></div>
+        </div>
+        <div class="a2_metrics">
+          <span class="a2_score">0.906</span>
+          <span class="a2_degen a2_degen--bad">1.01% degen</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="a2_row">
+      <div class="a2_rowLabel">olmOCR-2-7B (OCR起点)</div>
+      <div class="a2_barTrack">
+        <div class="a2_barOuter">
+          <div class="a2_barFill a2_barFill--spec"></div>
+        </div>
+        <div class="a2_metrics">
+          <span class="a2_score">0.927</span>
+          <span class="a2_degen a2_degen--good">0.40% degen</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="a2_delta">
+      <span class="a2_deltaText">+2.3% | 退化率 &divide;2</span>
+    </div>
+  </div>
+
+  <!-- Experiment 2: 3B Scale -->
+  <div class="a2_panel a2_panel--exp2">
+    <p class="a2_panelTitle">Experiment 2 &mdash; 3B Scale</p>
+
+    <div class="a2_row">
+      <div class="a2_rowLabel">Qwen2.5-VL-3B (通用起点)</div>
+      <div class="a2_barTrack">
+        <div class="a2_barOuter">
+          <div class="a2_barFill a2_barFill--generic"></div>
+        </div>
+        <div class="a2_metrics">
+          <span class="a2_score">0.793</span>
+          <span class="a2_degen a2_degen--bad">1.41% degen</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="a2_row">
+      <div class="a2_rowLabel">Nanonets-OCR2-3B (OCR起点)</div>
+      <div class="a2_barTrack">
+        <div class="a2_barOuter">
+          <div class="a2_barFill a2_barFill--specGlow"></div>
+        </div>
+        <div class="a2_metrics">
+          <span class="a2_score">0.921</span>
+          <span class="a2_degen a2_degen--good">0.20% degen</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="a2_delta">
+      <span class="a2_deltaText">+16% | 退化率 &divide;7</span>
+    </div>
+  </div>
+
+  <!-- Conclusion -->
+  <div class="a2_conclusion">同训练 + 不同起点 = <span class="a2_conclusionHighlight">专业化累积</span></div>
+
+</div></div>
+      <img class="blog-img reveal reveal-delay-3" src="https://cdn-uploads.huggingface.co/production/uploads/69d815b52c6db28cfdfdd422/PcXWBmnQqxiBA61D3-Vnm.jpeg" alt="Progressive specialization strategy">
+      <div class="source-panel reveal reveal-delay-4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Source (Specialization Compounds)</span>
+<p>At the 7-billion-parameter scale: the best fine-tuned model derived from Qwen2.5-VL-7B-Instruct — a general-purpose start — reached 0.906 with a 1.01% degeneration rate. The same training applied to olmOCR-2–7B — already specialized for general OCR — reached 0.927 with 0.40% degeneration.</p>
+<p>At the 3-billion-parameter scale: Qwen2.5-VL-3B finished at 0.793 with 1.41% degeneration; Nanonets-OCR2–3B finished at 0.921 with 0.20% degeneration. Same procedure, same architecture class, different starting position. The quality gain was approximately 16 percent; the degeneration rate fell by a factor of roughly seven.</p>
+<p>There are levels of specialization, and each level builds on the distribution encoded by the one before it. Multiple stages of training can progressively move a model closer to the target task distribution, producing materially different downstream outcomes even under similar architectural and computational constraints.</p>
+<p>That pattern — alignment as an accumulating quantity — is the article's strongest claim from the paper's evidence.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+var layerStack=['layer-overview'];
+var transitioning=false;
+var layerNames={'layer-overview':'概览','layer-details':'数据详解'};
+var observers=new Map();
+
+function setupObserver(layerId){if(observers.has(layerId))return;var layer=document.getElementById(layerId);var reveals=layer.querySelectorAll('.reveal, [class*="_stage"]');var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.15,root:layer});reveals.forEach(function(el){obs.observe(el);});observers.set(layerId,obs);}
+function resetReveals(layerId){var layer=document.getElementById(layerId);layer.querySelectorAll('.reveal').forEach(function(el){el.classList.remove('visible');});layer.querySelectorAll('[class*="_stage"]').forEach(function(el){el.classList.remove('visible');});}
+function activateReveals(layerId){resetReveals(layerId);if(observers.has(layerId)){observers.get(layerId).disconnect();observers.delete(layerId);}requestAnimationFrame(function(){setupObserver(layerId);});}
+function updateBreadcrumb(){var bc=document.getElementById('breadcrumb');bc.innerHTML='';layerStack.forEach(function(id,i){if(i>0){var sep=document.createElement('span');sep.className='sep';sep.textContent='>';bc.appendChild(sep);}var span=document.createElement('span');span.textContent=layerNames[id]||id;if(i===layerStack.length-1){span.className='current';}else{span.addEventListener('click',function(){goBackTo(i);});}bc.appendChild(span);});var backBtn=document.getElementById('backBtn');backBtn.style.display=layerStack.length>1?'flex':'none';bc.style.left=layerStack.length>1?'60px':'16px';var dots=document.getElementById('depthDots');var depth=layerStack.length-1;dots.querySelectorAll('.dot').forEach(function(d,i){d.classList.toggle('active',i===depth);});}
+function drillDown(targetId,btnEl){if(transitioning)return;transitioning=true;var currentId=layerStack[layerStack.length-1];var currentLayer=document.getElementById(currentId);var targetLayer=document.getElementById(targetId);targetLayer.scrollTop=0;resetReveals(targetId);targetLayer.style.visibility='visible';var duration=600;currentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';currentLayer.style.transformOrigin='center center';currentLayer.style.transform='scale(1.3)';currentLayer.style.opacity='0';targetLayer.classList.add('active');targetLayer.style.opacity='0';targetLayer.style.transform='scale(0.85)';targetLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){targetLayer.style.opacity='1';targetLayer.style.transform='scale(1)';});});setTimeout(function(){currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';targetLayer.style.transition='';targetLayer.style.transform='';activateReveals(targetId);transitioning=false;},duration+50);layerStack.push(targetId);updateBreadcrumb();}
+function goBack(){if(layerStack.length<=1||transitioning)return;transitioning=true;var currentId=layerStack.pop();var parentId=layerStack[layerStack.length-1];var currentLayer=document.getElementById(currentId);var parentLayer=document.getElementById(parentId);var duration=600;currentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';currentLayer.style.transform='scale(0.85)';currentLayer.style.opacity='0';parentLayer.classList.add('active');parentLayer.style.transform='scale(1.3)';parentLayer.style.opacity='0';parentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){parentLayer.style.transform='scale(1)';parentLayer.style.opacity='1';});});setTimeout(function(){currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';currentLayer.style.visibility='';parentLayer.style.transition='';parentLayer.style.transform='';transitioning=false;},duration+50);updateBreadcrumb();}
+function goBackTo(targetIndex){if(transitioning)return;while(layerStack.length-1>targetIndex){if(layerStack.length<=1)break;goBack();return;}}
+function toggleSource(btn){btn.classList.toggle('open');btn.nextElementSibling.classList.toggle('open');}
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+</body>
+</html>

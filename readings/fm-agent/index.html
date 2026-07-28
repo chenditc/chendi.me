@@ -1,0 +1,2005 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>用 LLM 给 LLM 的代码找 Bug</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --accent: #6366F1;
+  --accent2: #10B981;
+  --warm: #F59E0B;
+  --danger: #EF4444;
+  --bg-act1: #EEF2FF;
+  --bg-act2: #ECFDF5;
+  --bg-close: #0F172A;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --dim: #94A3B8;
+  --card-bg: #FFFFFF;
+  --neutral: #CBD5E1;
+}
+
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--bg-act1); font-family: 'Noto Sans SC', -apple-system, 'PingFang SC', sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; }
+
+.space { display: flex; width: 200%; height: 100%; transition: transform 0.55s cubic-bezier(0.32,0.72,0,1); will-change: transform; }
+.main-scroll { flex: 0 0 50%; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; transition: transform 0.55s cubic-bezier(0.32,0.72,0,1); transform-origin: right center; }
+.detail-scroll { flex: 0 0 50%; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; background: #FAFAF8; visibility: hidden; transition: visibility 0s 0.55s; }
+body.dd-active .space { transform: translateX(calc(-50% + 24px)); }
+body.dd-active .main-scroll { transform: scale(0.96); pointer-events: none; border-radius: 12px; overflow: hidden; }
+body.dd-active .detail-scroll { visibility: visible; transition: visibility 0s 0s; }
+
+.content-width { max-width: 640px; margin: 0 auto; padding: 0 28px; }
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.15s; }
+.reveal-delay-2 { transition-delay: 0.3s; }
+.reveal-delay-3 { transition-delay: 0.45s; }
+.reveal-delay-4 { transition-delay: 0.6s; }
+
+.big-statement { font-family: 'Noto Serif SC', serif; font-size: clamp(22px, 5.5vw, 32px); font-weight: 700; line-height: 1.5; margin-bottom: 32px; }
+.body-text { font-size: 16px; line-height: 1.9; color: var(--text); margin-bottom: 28px; }
+.body-text .hl { color: var(--accent); font-weight: 500; }
+.body-text .hl2 { color: var(--accent2); font-weight: 500; }
+.body-text .hl-danger { color: var(--danger); font-weight: 500; }
+
+.hero { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 28px; background: linear-gradient(180deg, #EEF2FF 0%, #C7D2FE 100%); }
+.hero-title { font-family: 'Noto Serif SC', serif; font-size: clamp(28px, 7vw, 42px); font-weight: 700; line-height: 1.4; margin-bottom: 16px; color: var(--text); }
+.hero-sub { font-size: 16px; color: var(--text-muted); line-height: 1.7; max-width: 320px; }
+
+.section-label { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--dim); margin-bottom: 12px; }
+.section-dark { background: var(--bg-close); color: #F1F5F9; }
+.section-dark .body-text { color: #CBD5E1; }
+.section-dark .section-label { color: #64748B; }
+.section-dark .big-statement { color: #F1F5F9; }
+
+.act-break { padding: 48px 28px; text-align: center; }
+.act-label { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+.act-title { font-family: 'Noto Serif SC', serif; font-size: clamp(20px, 5vw, 28px); font-weight: 700; color: var(--text); }
+
+.deep-dive-trigger { text-align: center; color: var(--accent); font-size: 14px; padding: 16px 0; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; }
+.deep-dive-trigger:hover { opacity: 1; }
+.detail-header { padding: 16px 20px; font-size: 15px; color: var(--accent); cursor: pointer; font-weight: 500; border-bottom: 1px solid rgba(0,0,0,0.06); position: sticky; top: 0; background: #FAFAF8; z-index: 10; }
+.detail-body { padding: 24px 20px; }
+.detail-body h4 { font-size: 18px; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+.detail-body p { font-size: 15px; line-height: 1.8; color: var(--text-muted); margin-bottom: 14px; }
+.original-text { margin-top: 20px; padding: 16px; background: rgba(0,0,0,0.03); border-radius: 12px; border-left: 3px solid var(--accent); }
+.original-text p { font-size: 14px; color: var(--text-muted); }
+
+.dd-anim { opacity: 0; animation-fill-mode: forwards; animation-duration: 0.5s; }
+body.dd-active .dd-anim { animation-name: ddFadeIn; }
+.dd-slide { opacity: 0; transform: translateY(20px); animation-fill-mode: forwards; animation-duration: 0.5s; }
+body.dd-active .dd-slide { animation-name: ddSlideUp; }
+.dd-pop { opacity: 0; transform: scale(0.7); animation-fill-mode: forwards; animation-duration: 0.4s; }
+body.dd-active .dd-pop { animation-name: ddPop; }
+.dd-d1 { animation-delay: 0.3s !important; }
+.dd-d2 { animation-delay: 0.6s !important; }
+.dd-d3 { animation-delay: 0.9s !important; }
+@keyframes ddFadeIn { to { opacity: 1; } }
+@keyframes ddSlideUp { to { opacity: 1; transform: translateY(0); } }
+@keyframes ddPop { to { opacity: 1; transform: scale(1); } }
+
+.takeaway { padding: 64px 28px; text-align: center; background: var(--bg-close); }
+.takeaway-text { font-family: 'Noto Serif SC', serif; font-size: clamp(20px, 5vw, 28px); font-weight: 700; color: #F59E0B; line-height: 1.6; max-width: 480px; margin: 0 auto; }
+
+.source-horizon { position: fixed; bottom: 0; left: 0; right: 0; height: 32px; z-index: 200; background: transparent; transition: height 0.35s cubic-bezier(0.32,0.72,0,1), background 0.35s ease; overflow: hidden; cursor: pointer; padding-bottom: env(safe-area-inset-bottom, 0); }
+.source-horizon.expanded { height: 72px; background: rgba(15,23,42,0.95); backdrop-filter: blur(8px); }
+.horizon-track { position: absolute; bottom: 0; left: 8px; right: 8px; height: 3px; }
+.source-horizon.expanded .horizon-track { bottom: auto; top: 8px; height: 4px; }
+.horizon-seg { position: absolute; top: 0; height: 100%; border-radius: 2px; }
+.horizon-seg.covered { background: var(--accent); }
+.horizon-seg.covered.deep-dive { background: var(--accent); }
+.horizon-seg.gap { background: transparent; }
+.horizon-detail { position: absolute; top: 16px; left: 8px; right: 8px; bottom: 4px; opacity: 0; transition: opacity 0.25s ease 0.1s; pointer-events: none; }
+.source-horizon.expanded .horizon-detail { opacity: 1; pointer-events: auto; }
+.horizon-marker { position: absolute; top: 0; transform: translateX(-50%); text-align: center; }
+.marker-tick { width: 2px; height: 10px; background: rgba(255,255,255,0.5); margin: 0 auto 4px; border-radius: 1px; }
+.marker-tick.active { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+.marker-label { font-size: 9px; color: rgba(255,255,255,0.7); white-space: nowrap; font-family: 'Noto Sans SC', sans-serif; }
+.horizon-gap-zone { position: absolute; top: 0; height: 14px; cursor: help; }
+.horizon-gap-zone .gap-pattern { width: 100%; height: 100%; background: repeating-linear-gradient(-45deg, transparent, transparent 2px, rgba(251,146,60,0.35) 2px, rgba(251,146,60,0.35) 4px); border-radius: 2px; }
+.horizon-gap-zone .gap-tooltip { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: #1E293B; color: #F8FAFC; font-size: 11px; padding: 4px 10px; border-radius: 6px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.horizon-gap-zone:hover .gap-tooltip { opacity: 1; }
+.horizon-pct { position: absolute; right: 0; top: 2px; font-size: 11px; font-weight: 600; color: var(--accent); font-family: 'Noto Sans SC', sans-serif; }
+@keyframes markerPulse { 0%,100% { box-shadow: 0 0 4px var(--accent2); } 50% { box-shadow: 0 0 10px var(--accent2); } }
+.marker-tick.active { animation: markerPulse 2s ease-in-out infinite; }
+
+.coverage-gap-inline { display: flex; align-items: center; gap: 12px; padding: 8px 28px; max-width: 640px; margin: 0 auto; }
+.coverage-gap-inline .gap-line { flex: 1; height: 1px; background: var(--dim); opacity: 0.25; }
+.coverage-gap-inline .gap-text { font-size: 12px; font-style: italic; color: var(--dim); white-space: nowrap; opacity: 0.5; }
+
+.coverage-map { margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.06); }
+.coverage-map-title { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--dim); margin-bottom: 14px; }
+.coverage-bars { display: flex; flex-direction: column; gap: 6px; }
+.cbar-row { display: flex; align-items: center; gap: 10px; height: 28px; cursor: pointer; border-radius: 6px; padding: 4px 6px; margin: 0 -6px; transition: background 0.15s; }
+.cbar-row:hover { background: rgba(0,0,0,0.03); }
+.cbar-label { width: 120px; flex-shrink: 0; font-size: 12px; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cbar-track { flex: 1; height: 12px; background: rgba(0,0,0,0.03); border-radius: 6px; overflow: hidden; position: relative; }
+.cbar-fill { height: 100%; border-radius: 6px; transform-origin: left; }
+.cbar-fill.included { background: var(--accent); }
+.cbar-fill.deep-dive-bar { background: repeating-linear-gradient(-45deg, var(--accent2), var(--accent2) 3px, rgba(124,58,237,0.5) 3px, rgba(124,58,237,0.5) 6px); }
+.cbar-fill.compressed-bar { background: var(--dim); opacity: 0.4; }
+.cbar-row.included .cbar-label { color: var(--text); }
+.cbar-row.deep-dive .cbar-label { color: var(--accent2); }
+.cbar-row.compressed .cbar-label { color: var(--dim); text-decoration: line-through; }
+.cbar-excerpt { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.22,1,0.36,1); margin: 0 0 0 130px; }
+.cbar-excerpt.open { max-height: 300px; }
+.cbar-excerpt-inner { font-size: 13px; line-height: 1.7; color: var(--text-muted); padding: 8px 12px; margin: 4px 0 8px; background: rgba(0,0,0,0.02); border-radius: 8px; border-left: 3px solid var(--accent); }
+.cbar-row.compressed + .cbar-excerpt .cbar-excerpt-inner { border-left-color: var(--dim); }
+.cbar-row.deep-dive + .cbar-excerpt .cbar-excerpt-inner { border-left-color: var(--accent2); }
+.cbar-expand-hint { font-size: 10px; color: var(--dim); opacity: 0.6; margin-left: 4px; }
+.anim-stage > div{ width:100%; }
+</style>
+
+<meta name="description" content="用 LLM 给 LLM 的代码找 Bug">
+<link rel="canonical" href="https://chendi.me/readings/fm-agent/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+<div class="space" id="space">
+<div class="main-scroll" id="mainScroll">
+
+  <div class="hero reveal">
+    <div class="hero-title">用 LLM 给 LLM 的<br>代码找 Bug</div>
+    <div class="hero-sub">2 天, 27 万行代码, 522 个新 bug</div>
+  </div>
+
+  <div class="act-break reveal">
+    <div class="act-label">ACT I</div>
+    <div class="act-title">LLM 代码的验证困境</div>
+  </div>
+
+  <!-- Section 1 -->
+  <section style="padding: 48px 0; background: var(--bg-act1);">
+    <div class="content-width">
+      <div class="section-label reveal">01 - 代码规模爆炸</div>
+      <div class="big-statement reveal reveal-delay-1">LLM 生成了 14 万行的编译器<br>但没有人知道里面藏了多少 bug</div>
+      <div class="body-text reveal reveal-delay-2">LLM 辅助开发已经非常普遍，甚至可以生成<span class="hl">超过 10 万行代码</span>的大型系统——编译器、深度学习框架、操作系统。但由于 LLM 的<span class="hl-danger">幻觉问题</span>，生成的代码可能包含 bug。对这些大规模系统进行正确性验证变得至关重要，然而现有的自动化验证技术在面对大规模系统时<span class="hl-danger">力不从心</span>——系统代码结合了复杂的控制流、丰富的状态操作和深层的函数间依赖。</div>
+    </div>
+    <div class="content-width">
+      <div id="s1-anim" class="reveal reveal-delay-3">
+        <style>
+.s1_stage {
+  width: 340px;
+  height: 400px;
+  background: #0F172A;
+  border-radius: 12px;
+  padding: 24px 20px;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #E2E8F0;
+  overflow: hidden;
+  position: relative;
+}
+
+.s1_title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #F1F5F9;
+  margin-bottom: 20px;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.s1_stage.visible .s1_title {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.s1_bar_group {
+  margin-bottom: 14px;
+  opacity: 0;
+  transform: translateX(-15px);
+}
+
+.s1_stage.visible .s1_bar_group { animation: s1_fadeSlide 0.5s ease forwards; }
+.s1_stage.visible .s1_bar_group:nth-child(1) { animation-delay: 0.4s; }
+.s1_stage.visible .s1_bar_group:nth-child(2) { animation-delay: 0.8s; }
+.s1_stage.visible .s1_bar_group:nth-child(3) { animation-delay: 1.2s; }
+.s1_stage.visible .s1_bar_group:nth-child(4) { animation-delay: 1.6s; }
+
+@keyframes s1_fadeSlide {
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.s1_label {
+  font-size: 11px;
+  color: #CBD5E1;
+  margin-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.s1_label_name { font-weight: 600; }
+.s1_label_loc { font-size: 10px; color: #94A3B8; }
+
+.s1_track {
+  height: 28px;
+  background: #1E293B;
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.s1_fill {
+  height: 100%;
+  background: #6366F1;
+  border-radius: 6px;
+  width: 0;
+  position: relative;
+  transition: none;
+}
+
+.s1_stage.visible .s1_bar_group:nth-child(1) .s1_fill { animation: s1_grow1 1.0s ease forwards 0.6s; }
+.s1_stage.visible .s1_bar_group:nth-child(2) .s1_fill { animation: s1_grow2 1.0s ease forwards 1.0s; }
+.s1_stage.visible .s1_bar_group:nth-child(3) .s1_fill { animation: s1_grow3 1.0s ease forwards 1.4s; }
+.s1_stage.visible .s1_bar_group:nth-child(4) .s1_fill { animation: s1_grow4 1.0s ease forwards 1.8s; }
+
+@keyframes s1_grow1 { to { width: 100%; } }
+@keyframes s1_grow2 { to { width: 75%; } }
+@keyframes s1_grow3 { to { width: 10.5%; } }
+@keyframes s1_grow4 { to { width: 7.7%; } }
+
+.s1_bugs {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.s1_bug {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: #EF4444;
+  border-radius: 50%;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.s1_stage.visible .s1_bar_group:nth-child(1) .s1_bug { animation: s1_popBug 0.3s ease forwards 1.8s; }
+.s1_stage.visible .s1_bar_group:nth-child(2) .s1_bug { animation: s1_popBug 0.3s ease forwards 2.2s; }
+.s1_stage.visible .s1_bar_group:nth-child(3) .s1_bug { animation: s1_popBug 0.3s ease forwards 2.6s; }
+.s1_stage.visible .s1_bar_group:nth-child(4) .s1_bug { animation: s1_popBug 0.3s ease forwards 3.0s; }
+
+@keyframes s1_popBug {
+  0% { opacity: 0; transform: scale(0); }
+  70% { opacity: 1; transform: scale(1.4); }
+  100% { opacity: 0.9; transform: scale(1); }
+}
+
+.s1_counter {
+  text-align: center;
+  margin-top: 20px;
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.s1_stage.visible .s1_counter {
+  animation: s1_counterIn 0.6s ease forwards 3.6s;
+}
+
+@keyframes s1_counterIn {
+  0% { opacity: 0; transform: scale(0.8); }
+  60% { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.s1_counter_num {
+  font-size: 28px;
+  font-weight: 800;
+  color: #EF4444;
+  line-height: 1.2;
+}
+
+.s1_counter_label {
+  font-size: 12px;
+  color: #CBD5E1;
+  margin-top: 2px;
+}
+
+.s1_bug_count {
+  font-size: 10px;
+  color: #EF4444;
+  opacity: 0;
+  font-weight: 600;
+}
+
+.s1_stage.visible .s1_bar_group:nth-child(1) .s1_bug_count { animation: s1_fadeIn 0.3s ease forwards 2.0s; }
+.s1_stage.visible .s1_bar_group:nth-child(2) .s1_bug_count { animation: s1_fadeIn 0.3s ease forwards 2.4s; }
+.s1_stage.visible .s1_bar_group:nth-child(3) .s1_bug_count { animation: s1_fadeIn 0.3s ease forwards 2.8s; }
+.s1_stage.visible .s1_bar_group:nth-child(4) .s1_bug_count { animation: s1_fadeIn 0.3s ease forwards 3.2s; }
+
+@keyframes s1_fadeIn { to { opacity: 1; } }
+</style>
+
+<div class="s1_stage">
+  <div class="s1_title">LLM 生成的代码规模</div>
+  <div class="s1_bars">
+    <div class="s1_bar_group">
+      <div class="s1_label">
+        <span class="s1_label_name">CCC 编译器</span>
+        <span class="s1_label_loc">143k LoC <span class="s1_bug_count">339 bugs</span></span>
+      </div>
+      <div class="s1_track">
+        <div class="s1_fill">
+          <div class="s1_bugs" id="s1_bugs_0"></div>
+        </div>
+      </div>
+    </div>
+    <div class="s1_bar_group">
+      <div class="s1_label">
+        <span class="s1_label_name">VibeTensor ML框架</span>
+        <span class="s1_label_loc">108k LoC <span class="s1_bug_count">141 bugs</span></span>
+      </div>
+      <div class="s1_track">
+        <div class="s1_fill">
+          <div class="s1_bugs" id="s1_bugs_1"></div>
+        </div>
+      </div>
+    </div>
+    <div class="s1_bar_group">
+      <div class="s1_label">
+        <span class="s1_label_name">VibeOS 操作系统</span>
+        <span class="s1_label_loc">15k LoC <span class="s1_bug_count">23 bugs</span></span>
+      </div>
+      <div class="s1_track">
+        <div class="s1_fill">
+          <div class="s1_bugs" id="s1_bugs_2"></div>
+        </div>
+      </div>
+    </div>
+    <div class="s1_bar_group">
+      <div class="s1_label">
+        <span class="s1_label_name">Bespoke OLAP 数据库</span>
+        <span class="s1_label_loc">11k LoC <span class="s1_bug_count">19 bugs</span></span>
+      </div>
+      <div class="s1_track">
+        <div class="s1_fill">
+          <div class="s1_bugs" id="s1_bugs_3"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="s1_counter">
+    <div class="s1_counter_num">522</div>
+    <div class="s1_counter_label">个隐藏 bug</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var bugCounts = [8, 6, 3, 3];
+  var barWidths = [100, 75, 10.5, 7.7];
+  for (var i = 0; i < 4; i++) {
+    var container = document.getElementById('s1_bugs_' + i);
+    if (!container) continue;
+    for (var j = 0; j < bugCounts[i]; j++) {
+      var dot = document.createElement('div');
+      dot.className = 's1_bug';
+      dot.style.left = (5 + Math.random() * 88) + '%';
+      dot.style.top = (15 + Math.random() * 55) + '%';
+      dot.style.animationDelay = undefined;
+      container.appendChild(dot);
+    }
+  }
+})();
+
+if (typeof deepDiveData === 'undefined') if (typeof deepDiveData === 'undefined') var deepDiveData = {};
+deepDiveData[1] = {
+  title: "代码规模爆炸",
+  sections: [
+    {
+      heading: "LLM 代码生成的现状",
+      body: "大语言模型现在能一次性生成数万甚至十几万行代码，构建完整的编译器、ML 框架、操作系统和数据库系统。四个被测系统总计超过 27 万行代码。"
+    },
+    {
+      heading: "隐藏的代价",
+      body: "规模带来了质量隐患。在这 27 万行代码中，研究者共发现了 522 个 bug。最大的系统 CCC 编译器有 143k 行代码和 339 个 bug，bug 密度约 2.4 个/千行。"
+    },
+    {
+      heading: "为什么需要自动化检测",
+      body: "人工审查数十万行 LLM 生成的代码不现实。代码量太大、生成速度太快，传统 code review 流程跟不上。这催生了对自动化 bug 检测工具的需求——这正是 FM-Agent 要解决的问题。"
+    }
+  ]
+};
+</script>
+      </div>
+      <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(1)">↓ 深入了解：代码规模与 bug 密度</div>
+    </div>
+  </section>
+
+  <!-- Section 2 -->
+  <section style="padding: 48px 0; background: var(--bg-act1);">
+    <div class="content-width">
+      <div class="section-label reveal">02 - 理论完美，实践卡住</div>
+      <div class="big-statement reveal reveal-delay-1">{P} C {Q} 能证明代码正确<br>但谁来写 14 万行的规约？</div>
+      <div class="body-text reveal reveal-delay-2">组合推理是一个很有前景的方法——对每个小组件单独推理，然后组合起来证明整个系统的正确性。<span class="hl">Hoare 逻辑</span>用三元组 {P} C {Q} 来定义代码片段的形式化规约：P 是执行前必须满足的前置条件，Q 是执行后保证成立的后置条件。但关键瓶颈在于：Hoare 逻辑要求<span class="hl-danger">为每个函数写形式化规约</span>，这需要大量人力。对于 LLM 生成的代码，开发者往往对代码缺乏深入理解，写规约更是难上加难。</div>
+    </div>
+    <div class="content-width">
+      <div id="s2-anim" class="reveal reveal-delay-3">
+        <style>
+.s2_stage {
+  width: 340px;
+  height: 400px;
+  background: #0F172A;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  color: #CBD5E1;
+}
+
+.s2_title {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #CBD5E1;
+  padding: 16px 20px 0;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.s2_stage.visible .s2_title {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.s2_triple_area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 24px;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.6s ease 0.4s, transform 0.6s ease 0.4s;
+}
+
+.s2_stage.visible .s2_triple_area {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.s2_box {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+.s2_box_p {
+  background: rgba(99, 102, 241, 0.15);
+  border: 1.5px solid #6366F1;
+  color: #6366F1;
+}
+
+.s2_box_c {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1.5px solid #10B981;
+  color: #10B981;
+  padding: 10px 20px;
+}
+
+.s2_box_q {
+  background: rgba(99, 102, 241, 0.15);
+  border: 1.5px solid #6366F1;
+  color: #6366F1;
+}
+
+.s2_arrow {
+  font-size: 18px;
+  color: #475569;
+  opacity: 0;
+  transition: opacity 0.4s ease 0.8s;
+}
+
+.s2_stage.visible .s2_arrow {
+  opacity: 1;
+}
+
+.s2_label_hoare {
+  text-align: center;
+  font-size: 11px;
+  color: #6366F1;
+  margin-top: 8px;
+  opacity: 0;
+  transition: opacity 0.5s ease 1.0s;
+}
+
+.s2_stage.visible .s2_label_hoare {
+  opacity: 0.7;
+}
+
+.s2_wall_container {
+  position: absolute;
+  bottom: 60px;
+  left: 20px;
+  right: 20px;
+  height: 0;
+  overflow: visible;
+}
+
+.s2_wall {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(180deg, #EF4444 0%, #991B1B 100%);
+  border-radius: 6px 6px 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(100%);
+  opacity: 0;
+  transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 1.6s, opacity 0.4s ease 1.6s;
+  box-shadow: 0 -4px 20px rgba(239, 68, 68, 0.3);
+}
+
+.s2_stage.visible .s2_wall {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.s2_wall_text_big {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.s2_wall_text_small {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 4px;
+}
+
+.s2_wall_bricks {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0.1;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 28px,
+      rgba(255,255,255,0.3) 28px,
+      rgba(255,255,255,0.3) 30px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 58px,
+      rgba(255,255,255,0.3) 58px,
+      rgba(255,255,255,0.3) 60px
+    );
+  pointer-events: none;
+}
+
+.s2_dimmed_label {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 11px;
+  color: #64748B;
+  opacity: 0;
+  transition: opacity 0.6s ease 2.6s;
+}
+
+.s2_stage.visible .s2_dimmed_label {
+  opacity: 0.6;
+}
+
+.s2_crack {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 8px;
+  opacity: 0;
+  transition: opacity 0.4s ease 2.4s;
+}
+
+.s2_stage.visible .s2_crack {
+  opacity: 0.6;
+}
+
+.s2_crack line {
+  stroke: #EF4444;
+  stroke-width: 1.5;
+}
+
+@keyframes s2_pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.2); }
+  50% { box-shadow: 0 0 12px 4px rgba(99, 102, 241, 0.15); }
+}
+
+.s2_stage.visible .s2_box_p,
+.s2_stage.visible .s2_box_q {
+  animation: s2_pulse 2.5s ease-in-out infinite;
+  animation-delay: 0.6s;
+}
+
+@keyframes s2_wall_shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+.s2_stage.visible .s2_wall {
+  animation: s2_wall_shake 0.3s ease 2.4s 1;
+}
+</style>
+
+<div class="s2_stage">
+  <div class="s2_title">Hoare Logic: {P} C {Q}</div>
+
+  <div class="s2_triple_area">
+    <div class="s2_box s2_box_p">{P}</div>
+    <span class="s2_arrow">&#x2192;</span>
+    <div class="s2_box s2_box_c">C</div>
+    <span class="s2_arrow">&#x2192;</span>
+    <div class="s2_box s2_box_q">{Q}</div>
+  </div>
+
+  <div class="s2_label_hoare">Precondition &#x2192; Code &#x2192; Postcondition</div>
+
+  <div class="s2_wall_container">
+    <div class="s2_wall">
+      <div class="s2_wall_bricks"></div>
+      <svg class="s2_crack" viewBox="0 0 40 8">
+        <line x1="0" y1="4" x2="12" y2="1"/>
+        <line x1="12" y1="1" x2="20" y2="6"/>
+        <line x1="20" y1="6" x2="28" y2="2"/>
+        <line x1="28" y1="2" x2="40" y2="5"/>
+      </svg>
+      <div class="s2_wall_text_big">14万行 x 手写规约</div>
+      <div class="s2_wall_text_small">Manual specification wall</div>
+    </div>
+  </div>
+
+  <div class="s2_dimmed_label">传统方法: 每个函数都需要人写规约</div>
+</div>
+
+<script>
+if (typeof deepDiveData === 'undefined') if (typeof deepDiveData === 'undefined') var deepDiveData = {};
+deepDiveData[2] = {
+  title: "Hoare Logic 与组合推理的规模困境",
+  sections: [
+    {
+      heading: "Hoare Triple 的优雅与局限",
+      body: "Hoare logic 用 {P} C {Q} 三元组描述程序行为: 如果前置条件 P 成立, 执行代码 C 后, 后置条件 Q 必然成立。这一框架在数学上完美——它支持组合推理(compositional reasoning), 即大程序的正确性可以由各部分的正确性推导而来。然而, 每个函数都需要人工撰写前置/后置条件, 循环需要不变量(loop invariants), 数据结构需要表示不变量(representation invariants)。对于 seL4 这样 8700 行 C 代码的微内核, 团队花了约 20 人年完成验证, 规约与证明代码量超过 14 万行——是源码的 16 倍。"
+    },
+    {
+      heading: "规模化的根本障碍",
+      body: "手写规约的成本随代码规模超线性增长。原因有三: (1) 规约本身需要领域专家, 不是普通开发者能写的; (2) 代码变更时规约必须同步更新, 维护成本持续累积; (3) 真实系统中函数间的交互组合爆炸, 规约的复杂度远超代码本身。这就是为什么形式化验证在工业界长期停留在安全关键的小型系统(航空电子、密码学核心)而未能推广。"
+    },
+    {
+      heading: "FM-Agent 的突破思路",
+      body: "FM-Agent 的核心洞察是: 与其让人写规约, 不如让 LLM 自动生成。LLM 在大量代码和数学文本上训练, 具备了'猜测'合理规约的能力。生成的规约再交给 SMT solver 做形式化检验——LLM 负责创造性的猜测, solver 负责严格的验证。这种分工让形式化方法首次有可能应用到大规模真实代码上。"
+    }
+  ]
+};
+</script>
+      </div>
+      <div class="deep-dive-trigger reveal reveal-delay-4" onclick="toggleDeepDive(2)">↓ 深入了解：Hoare 逻辑与组合推理</div>
+    </div>
+  </section>
+
+  <div class="act-break reveal" style="background: var(--bg-act2);">
+    <div class="act-label" style="color: var(--accent2);">ACT II</div>
+    <div class="act-title">FM-Agent 的解法</div>
+  </div>
+
+  <!-- Section 3 -->
+  <section style="padding: 48px 0; background: var(--bg-act2);">
+    <div class="content-width">
+      <div class="section-label reveal">03 - 核心洞察</div>
+      <div class="big-statement reveal reveal-delay-1"><span style="color:var(--accent)">不看代码怎么写的</span><br><span style="color:var(--accent2)">看调用者怎么用的</span></div>
+      <div class="body-text reveal reveal-delay-2">FM-Agent 的核心洞察：<span class="hl">从调用者推导规约</span>比从实现推导更准确。传统方法从函数实现推导规约，但如果实现本身有 bug，推导出的规约就会把 bug 当作正确行为。FM-Agent 反过来看——分析调用者如何使用这个函数，从调用者的期望推导出函数应该做什么。调用者传入的参数可以帮助推断前置条件，调用后的后续代码可以帮助推断后置条件。而且 LLM 能准确预测小代码块的执行结果——在微软 VerusBench 上，<span class="hl2">Claude Code 对 98.6% 的函数正确预测了执行结果</span>。</div>
+    </div>
+    <div class="content-width">
+      <div id="s3-anim" class="reveal reveal-delay-3">
+        <!-- Section 3: 核心洞察 — Top-down vs Bottom-up -->
+<style>
+.s3_wrap {
+  width: 340px;
+  height: 420px;
+  position: relative;
+  background: #0F172A;
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  color: #E2E8F0;
+}
+.s3_title {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #CBD5E1;
+  padding: 14px 0 6px;
+  letter-spacing: 1px;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.5s, transform 0.5s;
+}
+.s3_wrap.visible .s3_title {
+  opacity: 1;
+  transform: translateY(0);
+}
+.s3_panels {
+  display: flex;
+  width: 100%;
+  height: 340px;
+  padding: 0 10px;
+  box-sizing: border-box;
+  gap: 8px;
+}
+.s3_panel {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.s3_label {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.s3_left .s3_label { color: #EF4444; }
+.s3_right .s3_label { color: #10B981; }
+.s3_wrap.visible .s3_left .s3_label {
+  opacity: 1;
+  transition-delay: 0.4s;
+}
+.s3_wrap.visible .s3_right .s3_label {
+  opacity: 1;
+  transition-delay: 2.8s;
+}
+
+/* Call graph area */
+.s3_graph {
+  position: relative;
+  width: 140px;
+  height: 260px;
+}
+
+/* Nodes */
+.s3_node {
+  position: absolute;
+  width: 44px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  z-index: 2;
+}
+.s3_wrap.visible .s3_node {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Node positions — left panel */
+.s3_left .s3_n1 { left: 48px; top: 10px; transition-delay: 0.5s; }
+.s3_left .s3_n2 { left: 20px; top: 90px; transition-delay: 0.6s; }
+.s3_left .s3_n3 { left: 76px; top: 90px; transition-delay: 0.6s; }
+.s3_left .s3_n4 { left: 48px; top: 170px; transition-delay: 0.7s; }
+
+/* Node positions — right panel */
+.s3_right .s3_n1 { left: 48px; top: 10px; transition-delay: 2.9s; }
+.s3_right .s3_n2 { left: 20px; top: 90px; transition-delay: 3.0s; }
+.s3_right .s3_n3 { left: 76px; top: 90px; transition-delay: 3.0s; }
+.s3_right .s3_n4 { left: 48px; top: 170px; transition-delay: 3.1s; }
+
+/* Node colors */
+.s3_left .s3_node { background: #1E293B; border: 2px solid #475569; color: #CBD5E1; }
+.s3_right .s3_node { background: #1E293B; border: 2px solid #475569; color: #CBD5E1; }
+
+/* Bug marker on F4 left */
+.s3_bug {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #EF4444;
+  top: -4px;
+  right: -4px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 3;
+}
+.s3_wrap.visible .s3_left .s3_bug {
+  opacity: 1;
+  transition-delay: 0.9s;
+}
+
+/* SVG arrows */
+.s3_arrows {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 140px;
+  height: 260px;
+  z-index: 1;
+}
+.s3_arrow {
+  stroke-width: 2;
+  fill: none;
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  transition: stroke-dashoffset 0.6s ease;
+}
+
+/* Left arrows (bottom-up, red) */
+.s3_left .s3_a1 { stroke: #EF4444; }
+.s3_left .s3_a2 { stroke: #EF4444; }
+.s3_wrap.visible .s3_left .s3_a1 {
+  stroke-dashoffset: 0;
+  transition-delay: 1.1s;
+}
+.s3_wrap.visible .s3_left .s3_a2 {
+  stroke-dashoffset: 0;
+  transition-delay: 1.5s;
+}
+
+/* Right arrows (top-down, green) */
+.s3_right .s3_a1 { stroke: #10B981; }
+.s3_right .s3_a2 { stroke: #10B981; }
+.s3_wrap.visible .s3_right .s3_a1 {
+  stroke-dashoffset: 0;
+  transition-delay: 3.3s;
+}
+.s3_wrap.visible .s3_right .s3_a2 {
+  stroke-dashoffset: 0;
+  transition-delay: 3.7s;
+}
+
+/* Arrowheads */
+.s3_left .s3_head { fill: #EF4444; }
+.s3_right .s3_head { fill: #10B981; }
+
+/* Result badges */
+.s3_badge {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 14px;
+  border-radius: 14px;
+  white-space: nowrap;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+  opacity: 0;
+  z-index: 4;
+}
+.s3_left .s3_badge {
+  background: rgba(239, 68, 68, 0.15);
+  color: #EF4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.s3_right .s3_badge {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.s3_wrap.visible .s3_left .s3_badge {
+  transform: translateX(-50%) scale(1);
+  opacity: 1;
+  transition-delay: 2.0s;
+}
+.s3_wrap.visible .s3_right .s3_badge {
+  transform: translateX(-50%) scale(1);
+  opacity: 1;
+  transition-delay: 4.2s;
+}
+
+/* Bug propagation glow on left nodes */
+.s3_left .s3_infected {
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+}
+.s3_wrap.visible .s3_left .s3_n4.s3_infected {
+  border-color: #EF4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+  transition-delay: 0.9s;
+}
+.s3_wrap.visible .s3_left .s3_n2.s3_infected {
+  border-color: #EF4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+  transition-delay: 1.4s;
+}
+.s3_wrap.visible .s3_left .s3_n1.s3_infected {
+  border-color: #EF4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);
+  transition-delay: 1.8s;
+}
+
+/* Right panel correct glow */
+.s3_right .s3_correct {
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+}
+.s3_wrap.visible .s3_right .s3_n1.s3_correct {
+  border-color: #10B981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+  transition-delay: 3.2s;
+}
+.s3_wrap.visible .s3_right .s3_n2.s3_correct {
+  border-color: #10B981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+  transition-delay: 3.6s;
+}
+
+/* Divider */
+.s3_divider {
+  position: absolute;
+  left: 50%;
+  top: 40px;
+  width: 1px;
+  height: 0;
+  background: #334155;
+  transition: height 0.6s ease;
+  transition-delay: 0.3s;
+}
+.s3_wrap.visible .s3_divider {
+  height: 320px;
+}
+
+/* Subtitle */
+.s3_sub {
+  text-align: center;
+  font-size: 11px;
+  color: #64748B;
+  padding-top: 4px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.s3_wrap.visible .s3_sub {
+  opacity: 1;
+  transition-delay: 4.6s;
+}
+</style>
+
+<div class="s3_wrap s3_stage" id="s3_section">
+  <div class="s3_divider"></div>
+  <div class="s3_title">Top-down vs Bottom-up</div>
+  <div class="s3_panels">
+    <!-- Left: Bottom-up (problem) -->
+    <div class="s3_panel s3_left">
+      <div class="s3_label">自底向上</div>
+      <div class="s3_graph">
+        <div class="s3_node s3_n1 s3_infected">F1</div>
+        <div class="s3_node s3_n2 s3_infected">F2</div>
+        <div class="s3_node s3_n3">F3</div>
+        <div class="s3_node s3_n4 s3_infected">F4<span class="s3_bug"></span></div>
+        <svg class="s3_arrows" viewBox="0 0 140 260">
+          <defs>
+            <marker id="s3_arrowUp" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+              <polygon points="0,6 3,0 6,6" class="s3_head" />
+            </marker>
+          </defs>
+          <!-- F4 -> F2 (upward) -->
+          <line class="s3_arrow s3_a1" x1="70" y1="170" x2="42" y2="118" marker-end="url(#s3_arrowUp)" />
+          <!-- F2 -> F1 (upward) -->
+          <line class="s3_arrow s3_a2" x1="42" y1="90" x2="70" y2="38" marker-end="url(#s3_arrowUp)" />
+        </svg>
+        <div class="s3_badge">X 误导</div>
+      </div>
+    </div>
+    <!-- Right: Top-down (solution) -->
+    <div class="s3_panel s3_right">
+      <div class="s3_label">自顶向下</div>
+      <div class="s3_graph">
+        <div class="s3_node s3_n1 s3_correct">F1</div>
+        <div class="s3_node s3_n2 s3_correct">F2</div>
+        <div class="s3_node s3_n3">F3</div>
+        <div class="s3_node s3_n4">F4<span class="s3_bug"></span></div>
+        <svg class="s3_arrows" viewBox="0 0 140 260">
+          <defs>
+            <marker id="s3_arrowDown" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+              <polygon points="0,0 3,6 6,0" class="s3_head" />
+            </marker>
+          </defs>
+          <!-- F1 -> F2 (downward) -->
+          <line class="s3_arrow s3_a1" x1="70" y1="38" x2="42" y2="90" marker-end="url(#s3_arrowDown)" />
+          <!-- F2 -> F4 (downward) -->
+          <line class="s3_arrow s3_a2" x1="42" y1="118" x2="70" y2="170" marker-end="url(#s3_arrowDown)" />
+        </svg>
+        <div class="s3_badge">&#10003; 准确</div>
+      </div>
+    </div>
+  </div>
+  <div class="s3_sub">调用者定义行为契约, 实现缺陷不会污染规约</div>
+</div>
+
+<script>
+// deepDiveData[3]
+if (typeof deepDiveData === 'undefined') if (typeof deepDiveData === 'undefined') var deepDiveData = {};
+deepDiveData[3] = {
+  title: "核心洞察: Top-down vs Bottom-up Spec Derivation",
+  content: [
+    "洞察一: 自底向上推导规约会继承实现缺陷。当从 F4 的实际行为反推 F2、F1 的期望行为时, 如果 F4 本身有 bug, 那么推导出的规约也会把 bug 当成正确行为固化下来。这就是 '从实现推规约' 的根本问题。",
+    "洞察二: 自顶向下推导规约能隔离缺陷。F1 的调用者知道 F1 应该做什么, F1 知道它期望 F2 做什么。这条从调用者到被调用者的链路定义了每一层的行为契约, 与底层实现是否有 bug 无关。",
+    "洞察三: FM-Agent 的核心创新在于利用调用图结构。传统方法把每个函数当独立单元生成测试, FM-Agent 沿调用图自顶向下传播上下文, 让每个函数的 spec 由它的调用者 (而非它的实现) 来约束。这使得生成的测试能真正捕获回归 bug, 而不是简单地复述当前行为。"
+  ]
+};
+</script>
+      </div>
+      <div class="deep-dive-trigger reveal reveal-delay-4" style="color:var(--accent2);" onclick="toggleDeepDive(3)">↓ 深入了解：自顶向下 vs 自底向上</div>
+    </div>
+  </section>
+
+  <!-- Section 4 -->
+  <section style="padding: 48px 0; background: var(--bg-act2);">
+    <div class="content-width">
+      <div class="section-label reveal">04 - 三大组件</div>
+      <div class="big-statement reveal reveal-delay-1">生成规约 → 推理验证 → 触发 bug</div>
+      <div class="body-text reveal reveal-delay-2">三个核心组件组成流水线：<span class="hl">规约生成器</span>采用自顶向下方式，从入口函数开始沿调用图逐层向下生成规约，同一层的函数并行处理以提升可扩展性。<span class="hl2">代码推理器</span>推广了 Hoare 逻辑的推理规则，使其能处理自然语言的前后置条件——从函数的前置条件开始，逐语句推导后置条件，如果最终无法蕴含规约中的后置条件，则报告潜在 bug。<span class="hl-danger">Bug 验证器</span>为每个潜在 bug 生成系统级测试用例来触发它，最多尝试 10 次。</div>
+    </div>
+    <div class="content-width">
+      <div id="s4-anim" class="reveal reveal-delay-3">
+        <style>
+/* === S4: Three-Component Pipeline === */
+.s4_stage {
+  position: relative;
+  width: 340px;
+  height: 380px;
+  margin: 0 auto;
+  font-family: -apple-system, 'PingFang SC', sans-serif;
+  overflow: hidden;
+}
+
+/* --- Shared box style --- */
+.s4_box {
+  position: absolute;
+  border-radius: 10px;
+  padding: 10px 12px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+/* --- Box 1: Specification Generator --- */
+.s4_box1 {
+  top: 60px; left: 4px; width: 88px;
+  background: #6366F1;
+  color: #fff;
+}
+
+/* --- Box 2: Code Reasoner --- */
+.s4_box2 {
+  top: 60px; left: 108px; width: 112px;
+  background: #6366F1;
+  color: #fff;
+}
+
+/* --- Box 3: Bug Validator --- */
+.s4_box3 {
+  top: 60px; right: 4px; width: 88px;
+  background: #10B981;
+  color: #fff;
+}
+
+.s4_box_title {
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+
+.s4_box_inner {
+  font-size: 9px;
+  line-height: 1.4;
+  opacity: 0.9;
+}
+
+/* --- Input labels above boxes --- */
+.s4_input_label {
+  position: absolute;
+  font-size: 9px;
+  font-weight: 600;
+  color: #6366F1;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  white-space: nowrap;
+}
+.s4_il1 { top: 38px; left: 14px; }
+.s4_il2 { top: 38px; left: 130px; }
+.s4_il3 { top: 38px; right: 12px; color: #10B981; }
+
+/* --- Output labels below boxes --- */
+.s4_output_label {
+  position: absolute;
+  font-size: 9px;
+  font-weight: 700;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  white-space: nowrap;
+}
+.s4_ol1 { top: 178px; left: 24px; color: #6366F1; }
+.s4_ol2 { top: 178px; left: 140px; color: #EF4444; }
+.s4_ol3 { top: 178px; right: 10px; color: #EF4444; }
+
+/* --- Tags under box 1 --- */
+.s4_tags {
+  position: absolute;
+  top: 196px; left: 4px;
+  display: flex; gap: 4px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s4_tag {
+  font-size: 8px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(99,102,241,0.12);
+  color: #6366F1;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* --- Arrow connectors (SVG) --- */
+.s4_arrows {
+  position: absolute;
+  top: 56px; left: 0;
+  width: 340px;
+  height: 150px;
+  pointer-events: none;
+}
+.s4_arrow_line {
+  stroke: #CBD5E1;
+  stroke-width: 2;
+  fill: none;
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  transition: stroke-dashoffset 0.8s ease;
+}
+
+/* --- Flow dots --- */
+.s4_dot {
+  position: absolute;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #6366F1;
+  opacity: 0;
+}
+.s4_dot1 { top: 100px; left: 95px; }
+.s4_dot2 { top: 100px; left: 230px; background: #EF4444; }
+
+/* --- Title --- */
+.s4_title {
+  position: absolute;
+  top: 6px; left: 0; right: 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: #1E293B;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+/* --- Bottom summary --- */
+.s4_summary {
+  position: absolute;
+  bottom: 16px; left: 16px; right: 16px;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #475569;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s4_summary_hl {
+  color: #6366F1;
+  font-weight: 700;
+}
+
+/* --- Bottom bar --- */
+.s4_bar {
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 0; height: 3px;
+  background: linear-gradient(90deg, #6366F1, #10B981);
+  border-radius: 2px;
+  transition: width 1s ease;
+}
+
+/* === ANIMATION KEYFRAMES === */
+@keyframes s4_dotFlow1 {
+  0%   { left: 95px; opacity: 1; }
+  100% { left: 108px; opacity: 0; }
+}
+@keyframes s4_dotFlow2 {
+  0%   { left: 230px; opacity: 1; }
+  100% { left: 246px; opacity: 0; }
+}
+
+/* === VISIBLE STATE === */
+.s4_stage.visible .s4_title {
+  opacity: 1; transform: translateY(0);
+}
+.s4_stage.visible .s4_box1 {
+  opacity: 1; transform: translateY(0);
+  transition-delay: 0.4s;
+}
+.s4_stage.visible .s4_il1 {
+  opacity: 1; transform: translateY(0);
+  transition-delay: 0.5s;
+}
+.s4_stage.visible .s4_box2 {
+  opacity: 1; transform: translateY(0);
+  transition-delay: 0.9s;
+}
+.s4_stage.visible .s4_il2 {
+  opacity: 1; transform: translateY(0);
+  transition-delay: 1.0s;
+}
+.s4_stage.visible .s4_box3 {
+  opacity: 1; transform: translateY(0);
+  transition-delay: 1.4s;
+}
+.s4_stage.visible .s4_il3 {
+  opacity: 1; transform: translateY(0);
+  transition-delay: 1.5s;
+}
+
+/* Arrow draw-in */
+.s4_stage.visible .s4_arrow_line {
+  stroke-dashoffset: 0;
+}
+.s4_stage.visible .s4_al1 { transition-delay: 1.9s; }
+.s4_stage.visible .s4_al2 { transition-delay: 2.3s; }
+
+/* Output labels */
+.s4_stage.visible .s4_ol1 {
+  opacity: 1; transform: translateY(0);
+  transition-delay: 2.0s;
+}
+.s4_stage.visible .s4_ol2 {
+  opacity: 1; transform: translateY(0);
+  transition-delay: 2.5s;
+}
+.s4_stage.visible .s4_ol3 {
+  opacity: 1; transform: translateY(0);
+  transition-delay: 3.0s;
+}
+
+/* Tags */
+.s4_stage.visible .s4_tags {
+  opacity: 1;
+  transition-delay: 2.2s;
+}
+
+/* Dots flow */
+.s4_stage.visible .s4_dot1 {
+  animation: s4_dotFlow1 0.8s ease 2.8s infinite;
+}
+.s4_stage.visible .s4_dot2 {
+  animation: s4_dotFlow2 0.8s ease 3.2s infinite;
+}
+
+/* Summary */
+.s4_stage.visible .s4_summary {
+  opacity: 1; transform: translateY(0);
+  transition-delay: 3.4s;
+}
+
+/* Bottom bar */
+.s4_stage.visible .s4_bar {
+  width: 100%;
+  transition-delay: 3.6s;
+}
+</style>
+
+<div class="s4_stage" id="s4">
+  <!-- Title -->
+  <div class="s4_title">FM-Agent 三大组件</div>
+
+  <!-- Input labels -->
+  <div class="s4_input_label s4_il1">System Code</div>
+  <div class="s4_input_label s4_il2">Spec + Code</div>
+  <div class="s4_input_label s4_il3">Potential Bugs</div>
+
+  <!-- Box 1: Specification Generator -->
+  <div class="s4_box s4_box1">
+    <div class="s4_box_title">Specification Generator</div>
+    <div class="s4_box_inner">实现 + 调用者<br/>+ 领域知识</div>
+  </div>
+
+  <!-- Box 2: Code Reasoner -->
+  <div class="s4_box s4_box2">
+    <div class="s4_box_title">Code Reasoner</div>
+    <div class="s4_box_inner">{P} -> 逐语句推理 -> {Q}</div>
+  </div>
+
+  <!-- Box 3: Bug Validator -->
+  <div class="s4_box s4_box3">
+    <div class="s4_box_title">Bug Validator</div>
+    <div class="s4_box_inner">生成测试 -> 执行 -> 确认</div>
+  </div>
+
+  <!-- Arrow SVG -->
+  <svg class="s4_arrows" viewBox="0 0 340 150" fill="none">
+    <!-- Arrow 1: box1 -> box2 -->
+    <line class="s4_arrow_line s4_al1" x1="96" y1="48" x2="110" y2="48"/>
+    <polygon class="s4_arrow_line s4_al1" points="107,44 114,48 107,52" style="fill:#CBD5E1;stroke:none;opacity:0" />
+    <!-- Arrow 2: box2 -> box3 -->
+    <line class="s4_arrow_line s4_al2" x1="232" y1="48" x2="248" y2="48"/>
+    <polygon class="s4_arrow_line s4_al2" points="245,44 252,48 245,52" style="fill:#CBD5E1;stroke:none;opacity:0" />
+  </svg>
+
+  <!-- Output labels -->
+  <div class="s4_output_label s4_ol1">-> Spec</div>
+  <div class="s4_output_label s4_ol2">-> 潜在 Bug</div>
+  <div class="s4_output_label s4_ol3">-> Bug Report</div>
+
+  <!-- Tags -->
+  <div class="s4_tags">
+    <span class="s4_tag">自顶向下</span>
+    <span class="s4_tag">并行生成</span>
+  </div>
+
+  <!-- Flow dots -->
+  <div class="s4_dot s4_dot1"></div>
+  <div class="s4_dot s4_dot2"></div>
+
+  <!-- Summary -->
+  <div class="s4_summary">
+    <span class="s4_summary_hl">Spec Generator</span> 用调用者+领域知识自顶向下生成规约,<br/>
+    <span class="s4_summary_hl">Code Reasoner</span> 做自然语言 Hoare 推理,<br/>
+    <span class="s4_summary_hl">Bug Validator</span> 生成测试确认真阳性
+  </div>
+
+  <!-- Bottom bar -->
+  <div class="s4_bar"></div>
+</div>
+
+<script>
+(function(){
+  // Arrow tip reveal
+  const observer = new MutationObserver(function(){
+    const stage = document.getElementById('s4');
+    if (stage && stage.classList.contains('visible')) {
+      const tips = stage.querySelectorAll('polygon');
+      tips.forEach(function(tip, i){
+        setTimeout(function(){ tip.style.opacity = '1'; }, (i === 0 ? 2200 : 2600));
+      });
+    }
+  });
+  const stage = document.getElementById('s4');
+  if (stage) {
+    observer.observe(stage, { attributes: true, attributeFilter: ['class'] });
+  }
+})();
+
+// deepDiveData
+window.deepDiveData = window.deepDiveData || {};
+window.deepDiveData[4] = {
+  title: "FM-Agent 三大组件详解",
+  body: "FM-Agent 的流水线由三个解耦组件组成:\n\n"
+    + "1. **Specification Generator** -- 不靠人工写 spec，而是让 LLM 从代码的实现细节、调用者上下文和领域知识三个维度自顶向下生成规约。多个函数可以并行处理，大幅提升吞吐。\n\n"
+    + "2. **Code Reasoner** -- 受 Hoare Logic 启发，用自然语言而非形式符号做 {前置条件} -> 逐语句推理 -> {后置条件}。LLM 扮演定理证明器，在推理中发现 spec 与实现的偏差即为潜在 bug。\n\n"
+    + "3. **Bug Validator** -- 针对每个潜在 bug 自动生成最小复现测试，在沙箱中执行。只有测试实际失败的 bug 才进入最终报告，过滤掉 LLM 的幻觉误报。\n\n"
+    + "这种三阶段设计将「理解意图」「逻辑推理」「实证验证」分离，每个环节可以独立优化和扩展。并行生成策略使得即使面对大型代码库也能保持合理耗时。"
+};
+</script>
+      </div>
+      <div class="deep-dive-trigger reveal reveal-delay-4" style="color:var(--accent2);" onclick="toggleDeepDive(4)">↓ 深入了解：FM-Agent 工作流详解</div>
+    </div>
+  </section>
+
+  <!-- Section 5 (dark) -->
+  <section class="section-dark" style="padding: 48px 0;">
+    <div class="content-width">
+      <div class="section-label reveal">05 - 实战结果</div>
+      <div class="big-statement reveal reveal-delay-1"><span style="color:var(--warm)">2 天</span>处理 <span style="color:var(--warm)">27.7 万行</span>代码<br>发现 <span style="color:var(--warm)">522 个</span>新 bug</div>
+      <div class="body-text reveal reveal-delay-2">FM-Agent 在 4 个大规模系统上进行了评估：CCC 编译器（143k 行，<span class="hl" style="color:var(--warm)">339 个 bug</span>）、VibeTensor 深度学习框架（108k 行，141 个 bug）、VibeOS 操作系统（15k 行，23 个 bug）、Bespoke OLAP 数据库（11k 行，19 个 bug）。这些系统已经被开发者用各种方法测试过——单元测试、集成测试、差分测试、多 agent code review——但 FM-Agent 仍然发现了 522 个新 bug。消融实验更能说明问题：去掉自顶向下的规约生成后，在 CCC 上只发现 <span style="color:var(--danger)">57</span> 个 bug（vs 339 个）。整个推理过程总计消耗 34 亿 token。</div>
+    </div>
+    <div class="content-width">
+      <div id="s5-anim" class="reveal reveal-delay-3">
+        <!-- Section 5: 实战结果 — 522 new bugs across 4 systems -->
+<style>
+.s5_wrap {
+  width: 340px;
+  height: 420px;
+  background: #0F172A;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
+  overflow: hidden;
+  position: relative;
+  padding: 24px 20px;
+  box-sizing: border-box;
+}
+
+.s5_title {
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 20px;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s5_wrap.visible .s5_title {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.s5_bars {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.s5_bar_row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.s5_bar_label {
+  color: #CBD5E1;
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 80px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.s5_bar_track {
+  flex: 1;
+  height: 22px;
+  background: rgba(99, 102, 241, 0.12);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.s5_bar_fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366F1, #818CF8);
+  border-radius: 4px;
+  width: 0%;
+  transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.s5_bar_count {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 32px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* Sequential bar animations */
+.s5_wrap.visible .s5_bar_row:nth-child(1) .s5_bar_fill {
+  width: 100%;
+  transition-delay: 0.4s;
+}
+.s5_wrap.visible .s5_bar_row:nth-child(1) .s5_bar_count {
+  opacity: 1;
+  transition-delay: 1.2s;
+}
+
+.s5_wrap.visible .s5_bar_row:nth-child(2) .s5_bar_fill {
+  width: 41.6%;
+  transition-delay: 0.9s;
+}
+.s5_wrap.visible .s5_bar_row:nth-child(2) .s5_bar_count {
+  opacity: 1;
+  transition-delay: 1.7s;
+}
+
+.s5_wrap.visible .s5_bar_row:nth-child(3) .s5_bar_fill {
+  width: 6.8%;
+  transition-delay: 1.4s;
+}
+.s5_wrap.visible .s5_bar_row:nth-child(3) .s5_bar_count {
+  opacity: 1;
+  transition-delay: 2.2s;
+}
+
+.s5_wrap.visible .s5_bar_row:nth-child(4) .s5_bar_fill {
+  width: 5.6%;
+  transition-delay: 1.9s;
+}
+.s5_wrap.visible .s5_bar_row:nth-child(4) .s5_bar_count {
+  opacity: 1;
+  transition-delay: 2.7s;
+}
+
+/* Total counter */
+.s5_total {
+  text-align: center;
+  margin-bottom: 8px;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.s5_wrap.visible .s5_total {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 3.2s;
+}
+
+.s5_total_num {
+  font-size: 36px;
+  font-weight: 800;
+  color: #F59E0B;
+  text-shadow: 0 0 20px rgba(245, 158, 11, 0.4), 0 0 40px rgba(245, 158, 11, 0.15);
+  line-height: 1.1;
+}
+
+.s5_total_label {
+  font-size: 12px;
+  color: #CBD5E1;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* Stats line */
+.s5_stats {
+  text-align: center;
+  font-size: 11px;
+  color: #64748B;
+  margin-bottom: 14px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  letter-spacing: 0.3px;
+}
+.s5_wrap.visible .s5_stats {
+  opacity: 1;
+  transition-delay: 3.8s;
+}
+
+/* Ablation callout */
+.s5_ablation {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 6px;
+  padding: 8px 12px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.s5_wrap.visible .s5_ablation {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 4.4s;
+}
+
+.s5_ablation_text {
+  font-size: 10.5px;
+  color: #CBD5E1;
+  line-height: 1.5;
+}
+
+.s5_ablation_highlight {
+  color: #F59E0B;
+  font-weight: 700;
+}
+
+.s5_ablation_dim {
+  color: #64748B;
+}
+</style>
+
+<div class="s5_wrap s5_stage" id="s5">
+  <div class="s5_title">across 4 real-world systems</div>
+
+  <div class="s5_bars">
+    <div class="s5_bar_row">
+      <span class="s5_bar_label">CCC</span>
+      <div class="s5_bar_track"><div class="s5_bar_fill"></div></div>
+      <span class="s5_bar_count">339</span>
+    </div>
+    <div class="s5_bar_row">
+      <span class="s5_bar_label">VibeTensor</span>
+      <div class="s5_bar_track"><div class="s5_bar_fill"></div></div>
+      <span class="s5_bar_count">141</span>
+    </div>
+    <div class="s5_bar_row">
+      <span class="s5_bar_label">VibeOS</span>
+      <div class="s5_bar_track"><div class="s5_bar_fill"></div></div>
+      <span class="s5_bar_count">23</span>
+    </div>
+    <div class="s5_bar_row">
+      <span class="s5_bar_label">Bespoke OLAP</span>
+      <div class="s5_bar_track"><div class="s5_bar_fill"></div></div>
+      <span class="s5_bar_count">19</span>
+    </div>
+  </div>
+
+  <div class="s5_total">
+    <div class="s5_total_num" id="s5_counter">522</div>
+    <div class="s5_total_label">new bugs found</div>
+  </div>
+
+  <div class="s5_stats">2 天 | 27.7 万行 | 3.4B tokens</div>
+
+  <div class="s5_ablation">
+    <div class="s5_ablation_text">
+      消融实验：去掉自顶向下<br>
+      CCC 只找到 <span class="s5_ablation_highlight">57</span> 个 bug
+      <span class="s5_ablation_dim">(vs 339)</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // Counter animation for the total number
+  const el = document.getElementById('s5');
+  const counterEl = document.getElementById('s5_counter');
+  let counted = false;
+
+  function animateCounter() {
+    if (counted) return;
+    counted = true;
+    const target = 522;
+    const duration = 1200;
+    const start = performance.now();
+    function tick(now) {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      counterEl.textContent = Math.round(target * eased);
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // Watch for .visible class
+  const obs = new MutationObserver(function(mutations) {
+    if (el.classList.contains('visible')) {
+      setTimeout(animateCounter, 3200);
+    }
+  });
+  obs.observe(el, { attributes: true, attributeFilter: ['class'] });
+
+  // If already visible
+  if (el.classList.contains('visible')) {
+    setTimeout(animateCounter, 3200);
+  }
+
+  // deepDiveData
+  window.deepDiveData = window.deepDiveData || {};
+  window.deepDiveData[5] = {
+    title: "实战结果深度解析",
+    content: "FM-Agent 在 4 个真实系统上发现了 522 个新 bug，涵盖多种类型：IR 语义错误（编译器生成的中间表示不符合语言规范）、崩溃/段错误（未处理的边界条件导致程序终止）、内存问题（泄漏、越界访问）、以及静默错误计算（程序不崩溃但输出结果错误）。\n\n消融实验揭示了自顶向下分析策略的关键作用：在 CCC 编译器上，去掉自顶向下的规范分解后，发现的 bug 数从 339 骤降至 57——仅为原来的 16.8%。这说明 FM-Agent 的核心优势不在于随机模糊测试的覆盖率，而在于它能理解规范层级结构、有针对性地生成测试用例。\n\n各系统的 bug 分布也反映了项目成熟度差异：CCC 作为正在开发中的编译器有最多 bug（339），VibeTensor 作为新兴 ML 框架次之（141），而 VibeOS 和 Bespoke OLAP 相对成熟，bug 数较少但每个 bug 的严重程度更高。总计消耗 3.4B tokens，处理了 27.7 万行代码，整个过程仅用 2 天完成。"
+  };
+})();
+</script>
+      </div>
+      <div class="deep-dive-trigger reveal reveal-delay-4" style="color:var(--warm);" onclick="toggleDeepDive(5)">↓ 深入了解：完整实验数据</div>
+    </div>
+  </section>
+
+  <div class="takeaway reveal">
+    <div class="takeaway-text">FM-Agent 不是要取代形式化验证，<br>而是让大规模 bug 发现成为可能。</div>
+  </div>
+
+  <div style="height: 48px; background: var(--bg-close);"></div>
+
+</div><!-- /main-scroll -->
+<div class="detail-scroll" id="detailScroll">
+  <div class="detail-header" id="detailBack">&larr; 返回</div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+</div><!-- /space -->
+
+<div class="source-horizon" id="sourceHorizon">
+  <div class="horizon-track" id="horizonTrack"></div>
+  <div class="horizon-detail" id="horizonDetail"></div>
+</div>
+
+<script>
+var coverageData = {
+  sourceType: "text",
+  totalLength: 6025,
+  segments: [
+    { start: 0, end: 1050, section: 1, reason: null },
+    { start: 1050, end: 1780, section: 2, reason: null },
+    { start: 1780, end: 3200, section: 3, reason: null },
+    { start: 3200, end: 4550, section: 4, reason: null },
+    { start: 4550, end: 6025, section: 5, reason: null }
+  ]
+};
+
+var topicData = {
+  1: [
+    { name: "论文信息", status: "included", excerpt: "论文：FM-Agent: Scaling Formal Methods to Large Systems via LLM-Based Hoare-Style Reasoning\n作者：Haoran Ding, Zhaoguo Wang, Haibo Chen（上海交通大学）\n发表：arXiv:2604.11556, April 2026" },
+    { name: "LLM代码规模爆炸", status: "included", excerpt: "LLM 辅助的软件开发已经非常普遍，甚至可以生成超过 10 万行代码的大型系统，比如编译器。但由于 LLM 的幻觉问题，生成的代码可能包含 bug。因此，对这些大规模系统进行正确性验证变得至关重要。" },
+    { name: "验证技术力不从心", status: "included", excerpt: "然而，现有的自动化验证技术在面对大规模系统时力不从心——系统代码结合了复杂的控制流、丰富的状态操作和深层的函数间依赖。" }
+  ],
+  2: [
+    { name: "组合推理方法", status: "included", excerpt: "组合推理（Compositional Reasoning）是一个很有前景的方法。核心思想是对每个小组件单独推理，然后组合起来证明整个系统的正确性。Hoare 逻辑用三元组 {P} C {Q} 来定义代码片段 C 的形式化规约——P 是执行前必须满足的前置条件，Q 是执行后保证成立的后置条件。" },
+    { name: "写规约的瓶颈", status: "included", excerpt: "但关键瓶颈在于：Hoare 逻辑要求为每个函数写形式化规约，这需要大量人力。对于 LLM 生成的代码，开发者往往对代码缺乏深入理解，写规约更是难上加难。" }
+  ],
+  3: [
+    { name: "洞察一：从调用者推导", status: "included", excerpt: "洞察一：从调用者推导规约比从实现推导更准确。 传统方法从函数实现推导规约，但如果实现本身有 bug，推导出的规约就会把 bug 当作正确行为。FM-Agent 反过来看——分析调用者如何使用这个函数，从调用者的期望推导出函数应该做什么。比如，调用者传入的参数可以帮助推断前置条件，调用后的后续代码可以帮助推断后置条件。这样即使函数实现有 bug，规约也能反映出开发者的真实意图。" },
+    { name: "洞察二：LLM预测执行结果", status: "included", excerpt: "洞察二：LLM 能准确预测小代码块的执行结果。 在微软 VerusBench 上的实验中，Claude Code 对 98.6% 的函数正确预测了执行结果（438/444）。这意味着 LLM 可以直接对自然语言规约进行 Hoare 风格的逐语句推理。" },
+    { name: "洞察三：LLM理解调用链", status: "included", excerpt: "洞察三：LLM 能理解从系统入口到内部函数的关联。 在 CCC 编译器的 10 个 bug 上实验，即使 bug 函数距离入口有 7 层调用，LLM 仍能成功生成触发 bug 的测试用例。" }
+  ],
+  4: [
+    { name: "规约生成器", status: "included", excerpt: "组件一：规约生成器（Specification Generator）。 采用自顶向下的方式生成规约。先从入口函数开始，分析其实现和领域知识生成规约。然后为每个被调用的函数生成「期望规约」——从调用者的角度描述这个函数应该做什么。沿着调用图逐层向下，直到所有函数都有了规约。对于被多个函数调用的函数，合并来自所有调用者的期望规约。" },
+    { name: "并行处理创新", status: "included", excerpt: "关键创新：FM-Agent 将调用图分层后并行处理同一层的函数，大幅提升了可扩展性。对于强连通分量（递归调用环），同时生成其中所有函数的规约。" },
+    { name: "代码推理器", status: "included", excerpt: "组件二：代码推理器（Code Reasoner）。 对每个函数，检查其实现是否与规约一致。FM-Agent 推广了 Hoare 逻辑的推理规则，使其能处理自然语言的前后置条件。从函数的前置条件开始，逐语句推导后置条件。如果最终的后置条件无法蕴含规约中的后置条件，则报告潜在 bug。" },
+    { name: "Bug验证器", status: "included", excerpt: "组件三：Bug 验证器（Bug Validator）。 为每个潜在 bug 生成测试用例来触发它。FM-Agent 生成系统级输入而非函数级输入，这样开发者可以更容易理解 bug 的根因。最多尝试 10 次，超过则标记为未确认。" }
+  ],
+  5: [
+    { name: "四大系统评估", status: "included", excerpt: "FM-Agent 在 4 个大规模系统上进行了评估：\n\n| 系统 | 类型 | 代码行数 | 函数数 | 发现 bug 数 |\n|------|------|---------|--------|-----------|\n| CCC | C 编译器 (Claude Code 开发) | 143k | 4,957 | 339 |\n| VibeTensor | 深度学习框架 (NVIDIA 开发) | 108k | 3,031 | 141 |\n| VibeOS | 操作系统 (Claude Code 开发) | 15k | 452 | 23 |\n| Bespoke OLAP | 数据库 (GPT-5.2 Codex 开发) | 11k | 109 | 19 |\n| **总计** | | **277k** | **8,549** | **522** |" },
+    { name: "已测试仍发现新bug", status: "included", excerpt: "这些系统已经被开发者用各种方法测试过（单元测试、集成测试、差分测试、多 agent code review），但 FM-Agent 仍然发现了 522 个新 bug。" },
+    { name: "CCC bug分类", status: "included", excerpt: "在 CCC 编译器中，339 个 bug 包括：111 个 IR 层错误代码生成、68 个运行时输出错误、39 个缺失/错误的诊断信息、14 个编译崩溃或挂起、9 个编译优化错误。" },
+    { name: "推理成本", status: "included", excerpt: "整个推理过程在 2 天内完成，总计消耗 34 亿 token。" },
+    { name: "自顶向下的优势", status: "included", excerpt: "传统的手写规约往往偏好自底向上——先写底层函数的规约，再写上层的。这是因为开发者手写代码时对每个函数都有深入理解，自底向上可以复用底层规约。\n\n但对于 LLM 生成的代码，两个前提不成立了：第一，开发者对 LLM 生成的代码缺乏深入理解；第二，实现可能有 bug，会误导从实现推导的规约。自顶向下的方式先从调用者角度捕获期望行为，即使实现有 bug 也不会被误导。" },
+    { name: "消融实验", status: "included", excerpt: "消融实验验证了这一点：去掉自顶向下的规约生成后，在 CCC 上只发现 57 个 bug（vs 339 个）。" },
+    { name: "与形式化验证的关系", status: "included", excerpt: "FM-Agent 不保证完备性（soundness），但具有远超传统工具的可扩展性。传统形式化验证工具（如 Coq）需要手动证明，一个文件系统的验证需要几个研究人员花 1.5 年。FM-Agent 在 2 天内推理了 27.7 万行代码。\n\n两者针对不同场景：形式化验证保证正确性但需要大量人力，FM-Agent 提供可扩展的 bug 发现能力。未来可以将两者结合。" }
+  ]
+};
+
+if (typeof deepDiveData === 'undefined') if (typeof deepDiveData === 'undefined') var deepDiveData = {};
+
+deepDiveData[1] = {
+  title: "代码规模与 bug 密度",
+  sections: [
+    {
+      heading: "LLM 生成代码的规模化挑战",
+      body: "当 LLM 可以在几天内生成超过 10 万行代码的编译器或深度学习框架时，传统的人工代码审查变得不可行。一个经验丰富的工程师每天能仔细审查的代码量大约在 200-400 行，10 万行代码意味着一个人需要至少 250 个工作日。\n\n更关键的问题在于，LLM 的幻觉特性意味着 bug 可能以非常隐蔽的方式嵌入代码中——语法正确、逻辑看似合理，但在特定边界条件下会产生错误结果。",
+      diagram: ""
+    },
+    {
+      heading: "现有验证技术的瓶颈",
+      body: "现有的自动化验证技术（如模糊测试、符号执行）在面对大规模系统时力不从心。这些系统的代码结合了复杂的控制流、丰富的状态操作和深层的函数间依赖，远远超出了传统工具的处理能力。FM-Agent 论文中测试的 4 个系统总共包含 27.7 万行代码和 8,549 个函数，这个规模对任何现有工具来说都是巨大挑战。",
+      diagram: ""
+    }
+  ]
+};
+
+deepDiveData[2] = {
+  title: "Hoare 逻辑与组合推理",
+  sections: [
+    {
+      heading: "Hoare 三元组 {P} C {Q}",
+      body: "Hoare 逻辑的核心是三元组 {P} C {Q}：如果程序 C 在满足前置条件 P 的状态下开始执行，那么执行结束后后置条件 Q 一定成立。这提供了一种数学上严格的方式来证明代码的正确性。\n\n组合推理的优势在于：你可以独立验证每个函数，然后通过组合规则推导出整个系统的正确性，而不需要一次性分析整个系统。",
+      diagram: ""
+    },
+    {
+      heading: "为什么写规约这么难",
+      body: "对于人工编写的代码，开发者通常对每个函数有深入理解，写规约虽然费时但理论上可行。但对于 LLM 生成的代码，开发者可能只给了一个高层需求，LLM 自动生成了所有实现细节。开发者对这些细节缺乏深入理解，要求他们为每个函数写形式化规约几乎是不可能的。这就是 FM-Agent 要解决的核心问题。",
+      diagram: ""
+    }
+  ]
+};
+
+deepDiveData[3] = {
+  title: "自顶向下 vs 自底向上",
+  sections: [
+    {
+      heading: "传统自底向上的问题",
+      body: "传统方法从函数实现推导规约（自底向上）。但如果实现本身有 bug，推导出的规约就会把 bug 当作正确行为。这在手写代码中问题不大，因为开发者对自己写的代码有深入理解。但对于 LLM 生成的代码，实现中的 bug 会系统性地污染所有从实现推导出的规约。",
+      diagram: ""
+    },
+    {
+      heading: "自顶向下的优势",
+      body: "FM-Agent 从调用者的角度推导规约。调用者传入的参数暗示了前置条件，调用后的后续代码暗示了后置条件。即使被调用函数的实现有 bug，调用者的使用方式仍然反映了开发者的真实意图。\n\n消融实验数据极具说服力：在 CCC 编译器上，有自顶向下规约生成时发现 339 个 bug，去掉后只能发现 57 个——差距接近 6 倍。",
+      diagram: ""
+    },
+    {
+      heading: "LLM 的预测能力",
+      body: "另一个关键洞察是 LLM 能准确预测小代码块的执行结果。在 VerusBench 上 98.6% 的准确率意味着 LLM 可以直接进行 Hoare 风格的逐语句推理，而不需要传统的形式化证明工具。这让整个方法能够处理自然语言描述的规约，而不局限于形式化语言。",
+      diagram: ""
+    }
+  ]
+};
+
+deepDiveData[4] = {
+  title: "FM-Agent 工作流详解",
+  sections: [
+    {
+      heading: "规约生成器：分层并行",
+      body: "规约生成器从入口函数开始，沿调用图逐层向下。关键创新在于将调用图分层后并行处理同一层的函数。对于被多个函数调用的函数，合并来自所有调用者的期望规约。对于强连通分量（递归调用环），同时生成其中所有函数的规约。这种分层并行策略大幅提升了可扩展性。",
+      diagram: ""
+    },
+    {
+      heading: "代码推理器：自然语言 Hoare 推理",
+      body: "代码推理器推广了 Hoare 逻辑的推理规则，使其能处理自然语言描述的前后置条件。从函数的前置条件开始，逐语句推导后置条件。如果最终的后置条件无法蕴含规约中的后置条件，则报告潜在 bug。这是将形式化方法与 LLM 能力结合的核心创新。",
+      diagram: ""
+    },
+    {
+      heading: "Bug 验证器：系统级测试",
+      body: "Bug 验证器为每个潜在 bug 生成系统级输入（而非函数级输入），这样开发者可以更容易理解 bug 的根因。实验表明即使 bug 函数距离入口有 7 层调用深度，LLM 仍能成功生成触发 bug 的测试用例。最多尝试 10 次，超过则标记为未确认。",
+      diagram: ""
+    }
+  ]
+};
+
+deepDiveData[5] = {
+  title: "完整实验数据",
+  sections: [
+    {
+      heading: "四大系统详细结果",
+      body: "CCC 编译器（Claude Code 开发）：143k 行代码，4,957 个函数，发现 339 个 bug，包括 111 个 IR 层错误代码生成、68 个运行时输出错误、39 个缺失/错误的诊断信息、14 个编译崩溃或挂起、9 个编译优化错误。\n\nVibeTensor（NVIDIA 开发）：108k 行代码，3,031 个函数，发现 141 个 bug。\n\nVibeOS（Claude Code 开发）：15k 行代码，452 个函数，发现 23 个 bug。\n\nBespoke OLAP（GPT-5.2 Codex 开发）：11k 行代码，109 个函数，发现 19 个 bug。",
+      diagram: ""
+    },
+    {
+      heading: "消融实验与成本",
+      body: "消融实验验证了自顶向下范式的核心价值：去掉自顶向下规约生成后，在 CCC 上只发现 57 个 bug（vs 339 个），减少了 83%。\n\n整个推理过程在 2 天内完成，总计消耗 34 亿 token。相比之下，传统形式化验证工具（如 Coq）验证一个文件系统需要几个研究人员花 1.5 年。FM-Agent 不保证完备性，但提供了远超传统工具的可扩展性。",
+      diagram: ""
+    }
+  ]
+};
+
+var ddCurrentN = null;
+
+function toggleDeepDive(n) {
+  if (document.body.classList.contains('dd-active') && ddCurrentN === n) { closeDeepDive(); return; }
+  ddCurrentN = n;
+  var body = document.getElementById('detailBody');
+  if (deepDiveData[n]) {
+    var d = deepDiveData[n];
+    var html = '<h4>' + d.title + '</h4>';
+    d.sections.forEach(function(s) {
+      if (s.heading) html += '<h4>' + s.heading + '</h4>';
+      if (s.diagram) html += s.diagram;
+      html += s.body.split('\n\n').map(function(p) { return '<p>' + p + '</p>'; }).join('');
+    });
+    if (d.originalText) html += '<div class="original-text"><p><strong>原文：</strong>' + d.originalText + '</p></div>';
+    if (topicData[n]) {
+      html += '<div class="coverage-map"><div class="coverage-map-title">本节话题覆盖</div><div class="coverage-bars">';
+      topicData[n].forEach(function(t) {
+        var cls = t.status;
+        var pct = cls === 'included' ? 100 : cls === 'deep-dive' ? 80 : 40;
+        var fillCls = cls === 'included' ? 'included' : cls === 'deep-dive' ? 'deep-dive-bar' : 'compressed-bar';
+        html += '<div class="cbar-row ' + cls + '" onclick="this.nextElementSibling.classList.toggle(\'open\')"><div class="cbar-label">' + t.name + '<span class="cbar-expand-hint">\u25B8</span></div><div class="cbar-track"><div class="cbar-fill ' + fillCls + '" style="width:' + pct + '%"></div></div></div>';
+        html += '<div class="cbar-excerpt"><div class="cbar-excerpt-inner">' + (t.excerpt || '') + '</div></div>';
+      });
+      html += '</div></div>';
+    }
+    body.innerHTML = html;
+  }
+  document.getElementById('detailScroll').scrollTop = 0;
+  document.body.classList.add('dd-active');
+}
+function closeDeepDive() {
+  document.body.classList.remove('dd-active');
+  document.getElementById('space').style.transform = '';
+  document.getElementById('mainScroll').style.transform = '';
+  ddCurrentN = null;
+}
+
+document.getElementById('detailBack').addEventListener('click', closeDeepDive);
+document.getElementById('mainScroll').addEventListener('click', function(e) {
+  if (document.body.classList.contains('dd-active') && !e.target.closest('.deep-dive-trigger')) closeDeepDive();
+});
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && document.body.classList.contains('dd-active')) closeDeepDive(); });
+
+var mainScrollRoot = document.getElementById('mainScroll');
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      var stage = entry.target.querySelector('[class*="_stage"]');
+      if (stage) stage.classList.add('visible');
+    }
+  });
+}, { threshold: 0.15, root: mainScrollRoot });
+document.querySelectorAll('.reveal, [class*=\"_stage\"]').forEach(function(el) { observer.observe(el); });
+
+(function() {
+  if (typeof coverageData === 'undefined') return;
+  var horizon = document.getElementById('sourceHorizon');
+  var track = document.getElementById('horizonTrack');
+  var detail = document.getElementById('horizonDetail');
+  if (!horizon || !track || !coverageData.segments) return;
+  function toNum(v) {
+    if (typeof v === 'number') return v;
+    var parts = String(v).split(':').map(Number);
+    return parts.length === 3 ? parts[0]*3600+parts[1]*60+parts[2] : parts.length === 2 ? parts[0]*60+parts[1] : parts[0];
+  }
+  var total = toNum(coverageData.totalLength);
+  var coveredLen = 0;
+  coverageData.segments.forEach(function(seg) {
+    var s = toNum(seg.start), e = toNum(seg.end);
+    var leftPct = (s / total * 100).toFixed(2) + '%';
+    var widthPct = ((e - s) / total * 100).toFixed(2) + '%';
+    var div = document.createElement('div');
+    div.className = 'horizon-seg ' + (seg.section ? (seg.deepDive ? 'covered deep-dive' : 'covered') : 'gap');
+    div.style.left = leftPct; div.style.width = widthPct;
+    track.appendChild(div);
+    if (seg.section) coveredLen += (e - s);
+    if (!seg.section && seg.reason) {
+      var gz = document.createElement('div');
+      gz.className = 'horizon-gap-zone';
+      gz.style.left = leftPct; gz.style.width = widthPct;
+      gz.innerHTML = '<div class="gap-pattern"></div><div class="gap-tooltip">' + seg.reason + ' (' + seg.start + '-' + seg.end + '字)</div>';
+      detail.appendChild(gz);
+    }
+    if (seg.section && !seg.deepDive) {
+      var mk = document.createElement('div');
+      mk.className = 'horizon-marker';
+      mk.style.left = ((s + (e-s)/2) / total * 100).toFixed(2) + '%';
+      mk.innerHTML = '<div class="marker-tick"></div><div class="marker-label">S' + seg.section + '</div>';
+      mk.addEventListener('click', function(ev) {
+        ev.stopPropagation();
+        var target = document.getElementById('s' + seg.section + '-anim');
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+      detail.appendChild(mk);
+    }
+  });
+  var pct = document.createElement('div');
+  pct.className = 'horizon-pct';
+  pct.textContent = Math.round(coveredLen / total * 100) + '%';
+  detail.appendChild(pct);
+  horizon.addEventListener('click', function() { horizon.classList.toggle('expanded'); });
+  var collapseTimer;
+  mainScrollRoot.addEventListener('scroll', function() {
+    clearTimeout(collapseTimer);
+    var markers = detail.querySelectorAll('.marker-tick');
+    markers.forEach(function(m) { m.classList.remove('active'); });
+    var scrollTop = mainScrollRoot.scrollTop;
+    var closest = null, closestDist = Infinity;
+    coverageData.segments.forEach(function(seg) {
+      if (!seg.section || seg.deepDive) return;
+      var el = document.getElementById('s' + seg.section + '-anim');
+      if (!el) return;
+      var dist = Math.abs(el.offsetTop - scrollTop - window.innerHeight/2);
+      if (dist < closestDist) { closestDist = dist; closest = seg.section; }
+    });
+    if (closest) {
+      var ticks = detail.querySelectorAll('.horizon-marker');
+      ticks.forEach(function(mk) {
+        if (mk.querySelector('.marker-label').textContent === 'S' + closest)
+          mk.querySelector('.marker-tick').classList.add('active');
+      });
+    }
+    collapseTimer = setTimeout(function() { horizon.classList.remove('expanded'); }, 2000);
+  });
+})();
+</script>
+</body>
+</html>

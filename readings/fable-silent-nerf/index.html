@@ -1,0 +1,3031 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Claude Fable 的隐形降级 — 你永远不会知道</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #FEF2F2;
+  --bg-act2: #FAF5FF;
+  --bg-act3: #FFF7ED;
+  --bg-dark: #0F172A;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --accent: #991B1B;
+  --accent2: #6B21A8;
+  --warm: #F59E0B;
+  --danger: #DC2626;
+  --neutral: #94A3B8;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Noto Sans SC',sans-serif;-webkit-font-smoothing:antialiased;}
+.reveal{opacity:0;transform:translateY(40px);transition:opacity .8s ease,transform .8s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-d1{transition-delay:.15s;}
+.reveal-d2{transition-delay:.3s;}
+.reveal-d3{transition-delay:.45s;}
+.reveal-d4{transition-delay:.6s;}
+.big-statement{font-family:'Noto Serif SC',serif;font-size:clamp(22px,5.5vw,32px);font-weight:700;line-height:1.5;margin-bottom:32px;color:var(--text);}
+.body-text{font-size:16px;line-height:1.9;color:var(--text);margin-bottom:28px;}
+.body-text .hl{color:var(--accent);font-weight:500;}
+.body-text .hl2{color:var(--accent2);font-weight:500;}
+.body-text .hl-warm{color:var(--warm);font-weight:500;}
+.hook-line{font-size:15px;line-height:1.7;color:var(--accent);font-weight:600;margin-bottom:20px;}
+.layer{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;visibility:hidden;opacity:0;will-change:transform,opacity;scroll-snap-type:y proximity;}
+.layer.active{visibility:visible;opacity:1;}
+.feed-section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;scroll-snap-align:start;}
+.feed-section.dark{background:var(--bg-dark);color:#F1F5F9;}
+.feed-section.dark .body-text{color:#94A3B8;}
+.feed-section.dark .big-statement{color:#F1F5F9;}
+.feed-section.dark .hook-line{color:#FCA5A5;}
+.section-inner{max-width:600px;width:100%;}
+.breadcrumb{position:fixed;top:16px;left:16px;z-index:1000;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);padding:8px 14px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,.1);font-size:13px;font-weight:500;}
+.breadcrumb span{color:var(--text-muted);cursor:pointer;transition:color .2s;}
+.breadcrumb span:hover{color:var(--accent);}
+.breadcrumb span.current{color:var(--text);cursor:default;}
+.breadcrumb .sep{color:#CBD5E1;margin:0 2px;cursor:default;}
+.back-btn{position:fixed;top:16px;left:16px;z-index:1001;width:38px;height:38px;border-radius:10px;border:none;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(0,0,0,.1);font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--text);transition:all .2s;}
+.back-btn:hover{background:var(--accent);color:#fff;}
+.depth-dots{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;gap:8px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);padding:8px 14px;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,.1);}
+.dot{width:10px;height:10px;border-radius:50%;background:#CBD5E1;transition:all .3s;}
+.dot.active{background:var(--accent);box-shadow:0 0 8px rgba(153,27,27,.5);transform:scale(1.2);}
+.drill-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:1.5px solid rgba(153,27,27,.3);border-radius:10px;background:transparent;color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;transition:all .25s;}
+.drill-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(153,27,27,.3);}
+.dark .drill-btn{border-color:rgba(252,165,165,.4);color:#FCA5A5;}
+.dark .drill-btn:hover{background:#FCA5A5;color:#0F172A;border-color:#FCA5A5;}
+.source-panel{margin-top:24px;border-radius:12px;overflow:hidden;border:1px solid rgba(153,27,27,.15);background:rgba(153,27,27,.03);}
+.dark .source-panel{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.04);}
+.source-toggle{width:100%;padding:12px 16px;border:none;background:none;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);}
+.dark .source-toggle{color:#FCA5A5;}
+.source-toggle:hover{background:rgba(153,27,27,.06);}
+.source-toggle .arrow{transition:transform .3s;font-size:11px;}
+.source-toggle.open .arrow{transform:rotate(90deg);}
+.source-body{max-height:0;overflow:hidden;transition:max-height .4s ease;padding:0 16px;}
+.source-body.open{max-height:2000px;padding:0 16px 16px;overflow-y:auto;}
+.source-body p{font-size:13px;line-height:1.8;color:var(--text-muted);margin:0 0 12px;white-space:pre-wrap;}
+.dark .source-body p{color:#94A3B8;}
+.source-body .source-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:8px;display:block;}
+.dark .source-body .source-label{color:#FCA5A5;}
+.anim-stage{width:100%;display:flex;justify-content:center;margin:28px 0;min-height:180px;}
+.anim-stage > div{width:100%;}
+
+/* === S1 Animation === */
+
+/* ── S1: Hidden Bomb in the System Card ── */
+
+.s1fn_stage {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 48px 24px 56px;
+  font-family: -apple-system, 'Helvetica Neue', 'Noto Sans SC', Arial, sans-serif;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  background: #0f1117;
+  min-height: 480px;
+}
+
+/* All animated elements start hidden */
+.s1fn_anim {
+  opacity: 0;
+}
+
+/* ── Step 1: Document Card ── */
+.s1fn_doc_wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.s1fn_doc {
+  width: 96px;
+  height: 116px;
+  background: #1e2330;
+  border: 2px solid #94A3B8;
+  border-radius: 6px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+/* folded corner */
+.s1fn_doc::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 22px;
+  height: 22px;
+  background: #0f1117;
+  border-left: 2px solid #94A3B8;
+  border-bottom: 2px solid #94A3B8;
+  border-radius: 0 6px 0 0;
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+}
+
+.s1fn_doc_line {
+  width: 58px;
+  height: 3px;
+  background: #94A3B8;
+  border-radius: 2px;
+  opacity: 0.4;
+}
+
+.s1fn_doc_line--short {
+  width: 38px;
+}
+
+.s1fn_doc_line--accent {
+  background: #94A3B8;
+  opacity: 0.6;
+}
+
+.s1fn_doc_label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #94A3B8;
+  letter-spacing: 0.04em;
+}
+
+.s1fn_page_count {
+  font-size: 12px;
+  color: #94A3B8;
+  opacity: 0.7;
+  letter-spacing: 0.06em;
+}
+
+/* Step 1 animation: fade + rise */
+@keyframes s1fn_fadeRise {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.s1fn_stage.visible .s1fn_doc_wrap {
+  animation: s1fn_fadeRise 0.6s ease-out 0.2s forwards;
+  opacity: 0;
+}
+
+/* ── Step 2: Magnifying Glass ── */
+.s1fn_mag_wrap {
+  position: absolute;
+  top: 62px;
+  left: calc(50% + 10px);
+}
+
+.s1fn_mag {
+  width: 36px;
+  height: 36px;
+  position: relative;
+}
+
+.s1fn_mag_circle {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #6B21A8;
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.s1fn_mag_handle {
+  width: 12px;
+  height: 3px;
+  background: #6B21A8;
+  border-radius: 2px;
+  position: absolute;
+  bottom: 4px;
+  right: 0;
+  transform: rotate(45deg);
+  transform-origin: right center;
+}
+
+@keyframes s1fn_magSlide {
+  from { opacity: 0; transform: translateX(24px) translateY(-8px); }
+  to   { opacity: 1; transform: translateX(0) translateY(0); }
+}
+
+.s1fn_stage.visible .s1fn_mag_wrap {
+  animation: s1fn_magSlide 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.9s forwards;
+  opacity: 0;
+}
+
+/* ── Step 3: Highlighted clause ── */
+.s1fn_clause_wrap {
+  width: 100%;
+  max-width: 340px;
+  background: #1a1520;
+  border: 1px solid #2d2040;
+  border-radius: 6px;
+  padding: 14px 18px;
+  position: relative;
+  overflow: hidden;
+}
+
+.s1fn_clause_line {
+  height: 3px;
+  background: #94A3B8;
+  border-radius: 2px;
+  margin-bottom: 8px;
+  opacity: 0.2;
+}
+
+.s1fn_clause_line:last-child { margin-bottom: 0; }
+
+.s1fn_clause_highlight {
+  display: inline-block;
+  background: rgba(153, 27, 27, 0.18);
+  border-bottom: 2px solid #991B1B;
+  border-radius: 3px;
+  padding: 2px 8px;
+  margin: 4px 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #991B1B;
+  letter-spacing: 0.05em;
+  position: relative;
+}
+
+@keyframes s1fn_clauseFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s1fn_textGlow {
+  0%   { text-shadow: 0 0 0px #991B1B; color: #991B1B; }
+  50%  { text-shadow: 0 0 12px rgba(153,27,27,0.8), 0 0 24px rgba(153,27,27,0.4); color: #ef4444; }
+  100% { text-shadow: 0 0 6px rgba(153,27,27,0.6); color: #991B1B; }
+}
+
+.s1fn_stage.visible .s1fn_clause_wrap {
+  animation: s1fn_clauseFadeIn 0.5s ease-out 1.5s forwards;
+  opacity: 0;
+}
+
+.s1fn_stage.visible .s1fn_clause_highlight {
+  animation: s1fn_textGlow 1.2s ease-in-out 2.1s infinite;
+}
+
+/* ── Step 4: Crossed-out eye ── */
+.s1fn_eye_wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.s1fn_eye_icon {
+  width: 44px;
+  height: 44px;
+  position: relative;
+}
+
+/* eye shape via clip */
+.s1fn_eye_body {
+  position: absolute;
+  inset: 0;
+  border: 3px solid #94A3B8;
+  border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+  transform: scaleY(0.6);
+  top: 8px;
+}
+
+.s1fn_eye_pupil {
+  width: 12px;
+  height: 12px;
+  background: #94A3B8;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -40%);
+}
+
+/* diagonal cross line */
+.s1fn_eye_cross {
+  position: absolute;
+  width: 3px;
+  height: 52px;
+  background: #991B1B;
+  border-radius: 2px;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.s1fn_eye_label {
+  font-size: 12px;
+  color: #94A3B8;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
+}
+
+@keyframes s1fn_eyeFade {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.s1fn_stage.visible .s1fn_eye_wrap {
+  animation: s1fn_eyeFade 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 2.3s forwards;
+  opacity: 0;
+}
+
+/* ── Step 5: Warning badge ── */
+.s1fn_badge_wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(107, 33, 168, 0.12);
+  border: 2px solid #6B21A8;
+  border-radius: 8px;
+  padding: 10px 20px;
+}
+
+.s1fn_badge_dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #6B21A8;
+  flex-shrink: 0;
+}
+
+.s1fn_badge_text {
+  font-size: 15px;
+  font-weight: 700;
+  color: #6B21A8;
+  letter-spacing: 0.06em;
+}
+
+@keyframes s1fn_badgePop {
+  from { opacity: 0; transform: scale(0.75); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s1fn_badgePulse {
+  0%   { box-shadow: 0 0 0 0 rgba(107, 33, 168, 0.5); border-color: #6B21A8; }
+  50%  { box-shadow: 0 0 0 8px rgba(107, 33, 168, 0); border-color: #a855f7; }
+  100% { box-shadow: 0 0 0 0 rgba(107, 33, 168, 0); border-color: #6B21A8; }
+}
+
+@keyframes s1fn_dotPulse {
+  0%, 100% { background: #6B21A8; transform: scale(1); }
+  50%       { background: #a855f7; transform: scale(1.3); }
+}
+
+.s1fn_stage.visible .s1fn_badge_wrap {
+  animation:
+    s1fn_badgePop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 2.9s forwards,
+    s1fn_badgePulse 1.4s ease-in-out 3.4s infinite;
+  opacity: 0;
+}
+
+.s1fn_stage.visible .s1fn_badge_dot {
+  animation: s1fn_dotPulse 1.4s ease-in-out 3.4s infinite;
+}
+
+/* ── Demo: auto-activate for preview ── */
+.s1fn_stage { animation: none; }
+
+/* === S2 Animation === */
+
+/* ── S2 Three Invisible Weapons ── */
+
+.s2fn_stage {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 32px 16px;
+  font-family: -apple-system, 'Helvetica Neue', 'Noto Sans SC', Arial, sans-serif;
+  font-size: 14px;
+  color: #1e293b;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* All animated elements start hidden */
+.s2fn_anim {
+  opacity: 0;
+}
+
+/* When stage is visible, apply fill-mode forwards to all animated children */
+.s2fn_stage.visible .s2fn_anim {
+  animation-fill-mode: forwards;
+}
+
+/* ── Keyframes ── */
+
+@keyframes s2fn_fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s2fn_drawLine {
+  from { opacity: 0; stroke-dashoffset: 120; }
+  to   { opacity: 1; stroke-dashoffset: 0; }
+}
+
+@keyframes s2fn_popIn {
+  from { opacity: 0; transform: scale(0.7); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s2fn_slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s2fn_pulse {
+  0%   { opacity: 0; transform: translateY(4px); }
+  60%  { opacity: 1; transform: translateY(-2px); }
+  100% { opacity: 0.85; transform: translateY(0); }
+}
+
+/* ── Step 1: Input box ── */
+
+.s2fn_input-box {
+  border: 2px solid #94A3B8;
+  border-radius: 8px;
+  padding: 10px 16px;
+  text-align: center;
+  font-weight: 600;
+  color: #1e293b;
+  background: #f8fafc;
+  letter-spacing: 0.02em;
+}
+
+.s2fn_stage.visible .s2fn_input-box {
+  animation: s2fn_fadeUp 0.5s ease both;
+  animation-delay: 0.2s;
+}
+
+/* ── Connector: input → fork ── */
+
+.s2fn_connector-top {
+  display: flex;
+  justify-content: center;
+  height: 28px;
+  margin: 0;
+}
+
+.s2fn_connector-top svg {
+  overflow: visible;
+}
+
+.s2fn_stage.visible .s2fn_line-top {
+  animation: s2fn_drawLine 0.4s ease both;
+  animation-delay: 0.8s;
+}
+
+/* ── Step 2: Three parallel paths ── */
+
+.s2fn_paths {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.s2fn_path {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+/* Path labels */
+.s2fn_path-label {
+  border-radius: 6px;
+  padding: 7px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 0.01em;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.s2fn_path--prompt .s2fn_path-label {
+  background: #fdf4ff;
+  border: 1.5px solid #6B21A8;
+  color: #6B21A8;
+}
+
+.s2fn_path--steering .s2fn_path-label {
+  background: #fff1f2;
+  border: 1.5px solid #991B1B;
+  color: #991B1B;
+}
+
+.s2fn_path--peft .s2fn_path-label {
+  background: #f8fafc;
+  border: 1.5px solid #94A3B8;
+  color: #475569;
+}
+
+.s2fn_stage.visible .s2fn_path--prompt .s2fn_path-label {
+  animation: s2fn_slideDown 0.45s ease both;
+  animation-delay: 1.0s;
+}
+
+.s2fn_stage.visible .s2fn_path--steering .s2fn_path-label {
+  animation: s2fn_slideDown 0.45s ease both;
+  animation-delay: 1.4s;
+}
+
+.s2fn_stage.visible .s2fn_path--peft .s2fn_path-label {
+  animation: s2fn_slideDown 0.45s ease both;
+  animation-delay: 1.8s;
+}
+
+/* Vertical connector within each path */
+.s2fn_path-vline {
+  width: 2px;
+  height: 22px;
+  background: #94A3B8;
+  border-radius: 1px;
+}
+
+.s2fn_path--prompt .s2fn_path-vline { background: #6B21A8; opacity: 0.35; }
+.s2fn_path--steering .s2fn_path-vline { background: #991B1B; opacity: 0.35; }
+.s2fn_path--peft .s2fn_path-vline { background: #94A3B8; opacity: 0.45; }
+
+.s2fn_stage.visible .s2fn_path--prompt .s2fn_path-vline {
+  animation: s2fn_fadeUp 0.3s ease both;
+  animation-delay: 1.5s;
+}
+.s2fn_stage.visible .s2fn_path--steering .s2fn_path-vline {
+  animation: s2fn_fadeUp 0.3s ease both;
+  animation-delay: 1.9s;
+}
+.s2fn_stage.visible .s2fn_path--peft .s2fn_path-vline {
+  animation: s2fn_fadeUp 0.3s ease both;
+  animation-delay: 2.3s;
+}
+
+/* ── Step 3: Intervention icons ── */
+
+.s2fn_icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.s2fn_path--prompt .s2fn_icon {
+  background: #f3e8ff;
+  border: 1.5px solid #6B21A8;
+  color: #6B21A8;
+}
+
+.s2fn_path--steering .s2fn_icon {
+  background: #ffe4e6;
+  border: 1.5px solid #991B1B;
+  color: #991B1B;
+}
+
+.s2fn_path--peft .s2fn_icon {
+  background: #f1f5f9;
+  border: 1.5px solid #94A3B8;
+  color: #64748b;
+}
+
+/* SVG icons inline */
+.s2fn_icon svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.s2fn_stage.visible .s2fn_path--prompt .s2fn_icon {
+  animation: s2fn_popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: 1.6s;
+}
+.s2fn_stage.visible .s2fn_path--steering .s2fn_icon {
+  animation: s2fn_popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: 2.0s;
+}
+.s2fn_stage.visible .s2fn_path--peft .s2fn_icon {
+  animation: s2fn_popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: 2.4s;
+}
+
+/* Vline below icon */
+.s2fn_path-vline-b {
+  width: 2px;
+  height: 22px;
+  background: #94A3B8;
+  border-radius: 1px;
+}
+.s2fn_path--prompt .s2fn_path-vline-b { background: #6B21A8; opacity: 0.3; }
+.s2fn_path--steering .s2fn_path-vline-b { background: #991B1B; opacity: 0.3; }
+.s2fn_path--peft .s2fn_path-vline-b { background: #94A3B8; opacity: 0.4; }
+
+.s2fn_stage.visible .s2fn_path--prompt .s2fn_path-vline-b {
+  animation: s2fn_fadeUp 0.3s ease both;
+  animation-delay: 2.1s;
+}
+.s2fn_stage.visible .s2fn_path--steering .s2fn_path-vline-b {
+  animation: s2fn_fadeUp 0.3s ease both;
+  animation-delay: 2.5s;
+}
+.s2fn_stage.visible .s2fn_path--peft .s2fn_path-vline-b {
+  animation: s2fn_fadeUp 0.3s ease both;
+  animation-delay: 2.9s;
+}
+
+/* ── Step 4: Converge SVG ── */
+
+.s2fn_converge {
+  width: 100%;
+  height: 36px;
+  margin: 0;
+  display: block;
+}
+
+.s2fn_converge-line {
+  fill: none;
+  stroke: #94A3B8;
+  stroke-width: 1.5;
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  stroke-linecap: round;
+}
+
+.s2fn_stage.visible .s2fn_converge-line-l {
+  animation: s2fn_drawLine 0.5s ease both;
+  animation-delay: 2.8s;
+}
+.s2fn_stage.visible .s2fn_converge-line-m {
+  animation: s2fn_drawLine 0.5s ease both;
+  animation-delay: 2.9s;
+}
+.s2fn_stage.visible .s2fn_converge-line-r {
+  animation: s2fn_drawLine 0.5s ease both;
+  animation-delay: 3.0s;
+}
+
+/* ── Step 4: Output box ── */
+
+.s2fn_output-box {
+  border: 2px solid #94A3B8;
+  border-radius: 8px;
+  padding: 10px 16px;
+  text-align: center;
+  font-weight: 600;
+  color: #334155;
+  background: #f8fafc;
+  letter-spacing: 0.02em;
+  position: relative;
+}
+
+.s2fn_stage.visible .s2fn_output-box {
+  animation: s2fn_fadeUp 0.5s ease both;
+  animation-delay: 3.4s;
+}
+
+/* ── Step 5: Quality indicator ── */
+
+.s2fn_quality {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+}
+
+.s2fn_quality-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #fff1f2;
+  border: 1.5px solid #991B1B;
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #991B1B;
+  letter-spacing: 0.03em;
+}
+
+.s2fn_quality-arrow {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.s2fn_stage.visible .s2fn_quality-badge {
+  animation: s2fn_pulse 0.6s ease both;
+  animation-delay: 4.0s;
+  /* stay visible after pulse */
+  animation-fill-mode: forwards;
+}
+
+/* fork top connector svg line */
+.s2fn_fork-line {
+  fill: none;
+  stroke: #94A3B8;
+  stroke-width: 1.5;
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  stroke-linecap: round;
+}
+
+.s2fn_stage.visible .s2fn_fork-line-l {
+  animation: s2fn_drawLine 0.4s ease both;
+  animation-delay: 0.9s;
+}
+.s2fn_stage.visible .s2fn_fork-line-m {
+  animation: s2fn_drawLine 0.4s ease both;
+  animation-delay: 1.0s;
+}
+.s2fn_stage.visible .s2fn_fork-line-r {
+  animation: s2fn_drawLine 0.4s ease both;
+  animation-delay: 1.1s;
+}
+
+/* === S3 Animation === */
+
+/* === S3 Frontier/Product Boundary Animation === */
+
+.s3fn_stage {
+  max-width: 520px;
+  margin: 0 auto;
+  font-family: -apple-system, 'Helvetica Neue', 'Noto Sans SC', Arial, sans-serif;
+  padding: 40px 24px;
+  position: relative;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+/* All animated elements start invisible */
+.s3fn_anim {
+  opacity: 0;
+}
+
+/* Trigger: fill-mode forwards on all anims when visible */
+.s3fn_stage.visible .s3fn_anim {
+  animation-fill-mode: forwards;
+}
+
+/* === Layout: two boxes + divider row === */
+.s3fn_row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  position: relative;
+}
+
+/* === Box: 前沿AI (left) === */
+.s3fn_box_left {
+  width: 160px;
+  height: 80px;
+  border: 2.5px solid #991B1B;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #991B1B;
+  letter-spacing: 0.03em;
+  background: #fff5f5;
+  position: relative;
+  z-index: 2;
+}
+
+.s3fn_stage.visible .s3fn_box_left {
+  animation: s3fn_fadeIn 0.6s ease forwards;
+  animation-delay: 0s;
+}
+
+/* === Box: 产品开发 (right) === */
+.s3fn_box_right {
+  width: 160px;
+  height: 80px;
+  border: 2.5px solid #6B21A8;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #6B21A8;
+  letter-spacing: 0.03em;
+  background: #faf5ff;
+  position: relative;
+  z-index: 2;
+}
+
+.s3fn_stage.visible .s3fn_box_right {
+  animation: s3fn_fadeIn 0.6s ease forwards;
+  animation-delay: 0.4s;
+}
+
+/* === Divider container === */
+.s3fn_divider_wrap {
+  width: 48px;
+  height: 80px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  z-index: 3;
+}
+
+/* Solid line — appears, then transitions to dashed, then fades */
+.s3fn_divider {
+  width: 3px;
+  height: 60px;
+  background: #94A3B8;
+  border-radius: 2px;
+  position: absolute;
+}
+
+.s3fn_stage.visible .s3fn_divider {
+  animation: s3fn_dividerLife 3.2s ease forwards;
+  animation-delay: 0.8s;
+}
+
+/* === Tags drift area === */
+.s3fn_tags_wrap {
+  width: 100%;
+  height: 48px;
+  position: relative;
+  margin-top: 18px;
+  overflow: visible;
+}
+
+/* Each tag starts left of center, drifts right */
+.s3fn_tag {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  color: #fff;
+  background: #94A3B8;
+  letter-spacing: 0.02em;
+}
+
+.s3fn_tag_1 {
+  background: #991B1B;
+}
+.s3fn_tag_2 {
+  background: #6B21A8;
+}
+.s3fn_tag_3 {
+  background: #94A3B8;
+}
+
+.s3fn_stage.visible .s3fn_tag_1 {
+  animation: s3fn_tagDrift 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation-delay: 1.2s;
+}
+.s3fn_stage.visible .s3fn_tag_2 {
+  animation: s3fn_tagDrift 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation-delay: 1.6s;
+}
+.s3fn_stage.visible .s3fn_tag_3 {
+  animation: s3fn_tagDrift 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation-delay: 2.0s;
+}
+
+/* === Caption below === */
+.s3fn_caption {
+  margin-top: 22px;
+  font-size: 13px;
+  color: #94A3B8;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+.s3fn_stage.visible .s3fn_caption {
+  animation: s3fn_fadeIn 0.8s ease forwards;
+  animation-delay: 3.0s;
+}
+
+/* ===========================
+   KEYFRAMES
+   =========================== */
+
+@keyframes s3fn_fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Divider: fade in solid → stay → turn dashed (via opacity pulse) → fade out */
+@keyframes s3fn_dividerLife {
+  0%   { opacity: 0; }
+  10%  { opacity: 1; }
+  /* solid phase */
+  40%  { opacity: 1; background: #94A3B8; }
+  /* dashed phase — simulate with opacity flicker */
+  50%  { opacity: 0.6; background: #94A3B8; }
+  55%  { opacity: 1;   background: #94A3B8; }
+  60%  { opacity: 0.5; background: #94A3B8; }
+  65%  { opacity: 1;   background: #94A3B8; }
+  70%  { opacity: 0.3; background: #94A3B8; }
+  80%  { opacity: 0.15; }
+  100% { opacity: 0; }
+}
+
+/* Tags: start left of center divider, drift to right side */
+@keyframes s3fn_tagDrift {
+  0%   { opacity: 0; left: calc(50% - 120px); }
+  15%  { opacity: 1; }
+  60%  { opacity: 1; left: calc(50% + 20px); }
+  85%  { opacity: 0.7; left: calc(50% + 80px); }
+  100% { opacity: 0; left: calc(50% + 110px); }
+}
+
+/* === S4 Animation === */
+
+/* ── S4 Supply Chain Trust Break ── */
+
+.s4fn_stage {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 48px 24px 56px;
+  font-family: -apple-system, 'Helvetica Neue', 'Noto Sans SC', Arial, sans-serif;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+/* All animated elements start invisible */
+.s4fn_anim {
+  opacity: 0;
+}
+
+/* When stage is visible, apply fill-mode forwards to all animated children */
+.s4fn_stage.visible .s4fn_anim {
+  animation-fill-mode: forwards;
+}
+
+/* ── Chain container ── */
+.s4fn_chain {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-top: 8px;
+  position: relative;
+}
+
+/* ── Node (circle) ── */
+.s4fn_node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.s4fn_circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2.5px solid #94A3B8;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #94A3B8;
+  letter-spacing: 0.02em;
+  position: relative;
+  z-index: 1;
+}
+
+.s4fn_node-label {
+  font-size: 12px;
+  color: #94A3B8;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+}
+
+/* Claude node – gets highlighted */
+.s4fn_node--claude .s4fn_circle {
+  border-color: #6B21A8;
+  color: #6B21A8;
+  font-size: 12px;
+}
+
+/* ── Link bar between nodes ── */
+.s4fn_link {
+  width: 48px;
+  height: 4px;
+  background: #94A3B8;
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* The right link (Claude → 结果) – will crack */
+.s4fn_link--right {
+  overflow: visible;
+}
+
+/* ── Appear animations ── */
+
+/* Step 1: developer node */
+.s4fn_node--dev {
+  animation: s4fn_fadeUp 0.5s ease both;
+}
+.s4fn_stage.visible .s4fn_node--dev {
+  animation-delay: 0.2s;
+}
+
+/* Step 1: left link */
+.s4fn_link--left {
+  animation: s4fn_growRight 0.4s ease both;
+}
+.s4fn_stage.visible .s4fn_link--left {
+  animation-delay: 0.6s;
+}
+
+/* Step 1: Claude node */
+.s4fn_node--claude {
+  animation: s4fn_fadeUp 0.5s ease both;
+}
+.s4fn_stage.visible .s4fn_node--claude {
+  animation-delay: 0.9s;
+}
+
+/* Step 1: right link */
+.s4fn_link--right {
+  animation: s4fn_growRight 0.4s ease both;
+}
+.s4fn_stage.visible .s4fn_link--right {
+  animation-delay: 1.3s;
+}
+
+/* Step 1: result node */
+.s4fn_node--result {
+  animation: s4fn_fadeUp 0.5s ease both;
+}
+.s4fn_stage.visible .s4fn_node--result {
+  animation-delay: 1.6s;
+}
+
+/* ── Step 3: Question mark above Claude ── */
+.s4fn_qmark {
+  position: absolute;
+  top: -34px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 22px;
+  font-weight: 700;
+  color: #6B21A8;
+  letter-spacing: 0;
+  animation: s4fn_popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.s4fn_stage.visible .s4fn_qmark {
+  animation-delay: 2.2s;
+}
+
+/* ── Step 4: rotating labels above Claude ── */
+.s4fn_labels {
+  position: absolute;
+  top: -62px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  width: 120px;
+  height: 22px;
+  overflow: visible;
+}
+
+.s4fn_label {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 600;
+  color: #6B21A8;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+.s4fn_label--1 {
+  animation: s4fn_labelCycle 0.5s ease both;
+}
+.s4fn_stage.visible .s4fn_label--1 {
+  animation-delay: 3.0s;
+}
+
+.s4fn_label--2 {
+  animation: s4fn_labelCycle 0.5s ease both;
+}
+.s4fn_stage.visible .s4fn_label--2 {
+  animation-delay: 3.7s;
+}
+
+.s4fn_label--3 {
+  animation: s4fn_labelStack 0.5s ease both;
+}
+.s4fn_stage.visible .s4fn_label--3 {
+  animation-delay: 4.4s;
+}
+
+/* ── Step 5: crack overlay on right link ── */
+.s4fn_crack {
+  position: absolute;
+  top: -8px;
+  left: 0;
+  width: 100%;
+  height: 20px;
+  pointer-events: none;
+}
+
+/* Crack drawn as two diagonal SVG-like lines using pseudo-elements + clip */
+.s4fn_crack-inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  animation: s4fn_crackIn 0.6s ease both;
+}
+.s4fn_stage.visible .s4fn_crack-inner {
+  animation-delay: 5.0s;
+}
+
+/* Simulate a jagged crack using rotated thin bars */
+.s4fn_crack-inner::before,
+.s4fn_crack-inner::after {
+  content: '';
+  position: absolute;
+  background: #991B1B;
+  top: 50%;
+  left: 50%;
+}
+
+.s4fn_crack-inner::before {
+  width: 2px;
+  height: 18px;
+  transform: translate(-6px, -50%) rotate(20deg);
+}
+
+.s4fn_crack-inner::after {
+  width: 2px;
+  height: 18px;
+  transform: translate(4px, -50%) rotate(-20deg);
+}
+
+/* The right link bar turns red and splits on crack */
+.s4fn_link--right .s4fn_bar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #94A3B8;
+  animation: s4fn_linkBreak 0.6s ease both;
+}
+.s4fn_stage.visible .s4fn_link--right .s4fn_bar {
+  animation-delay: 5.0s;
+}
+
+/* Gap effect: two halves */
+.s4fn_link--right {
+  display: flex;
+  align-items: center;
+  position: relative;
+  background: transparent;
+  overflow: visible;
+}
+
+.s4fn_half {
+  height: 4px;
+  background: #94A3B8;
+  flex: 1;
+  transition: none;
+  animation: none;
+}
+
+.s4fn_half--left {
+  animation: s4fn_halfLeft 0.6s ease both;
+}
+.s4fn_stage.visible .s4fn_half--left {
+  animation-delay: 5.0s;
+}
+
+.s4fn_half--right {
+  animation: s4fn_halfRight 0.6s ease both;
+}
+.s4fn_stage.visible .s4fn_half--right {
+  animation-delay: 5.0s;
+}
+
+/* Gap in between halves */
+.s4fn_gap {
+  width: 0;
+  height: 4px;
+  background: transparent;
+  animation: s4fn_gapOpen 0.6s ease both;
+}
+.s4fn_stage.visible .s4fn_gap {
+  animation-delay: 5.0s;
+}
+
+/* ── Step 6: "无法信任" label ── */
+.s4fn_verdict {
+  margin-top: 36px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #991B1B;
+  letter-spacing: 0.06em;
+  opacity: 0;
+  animation: s4fn_verdictIn 0.7s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.s4fn_stage.visible .s4fn_verdict {
+  animation-delay: 5.8s;
+}
+
+.s4fn_verdict-bar {
+  display: block;
+  width: 40px;
+  height: 2px;
+  background: #991B1B;
+  margin: 8px auto 0;
+  opacity: 0;
+  animation: s4fn_fadeIn 0.4s ease both;
+}
+.s4fn_stage.visible .s4fn_verdict-bar {
+  animation-delay: 6.2s;
+}
+
+/* ── Keyframes ── */
+
+@keyframes s4fn_fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes s4fn_growRight {
+  from {
+    opacity: 0;
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+    transform-origin: left center;
+  }
+}
+
+@keyframes s4fn_popIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+@keyframes s4fn_labelCycle {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+  20%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+  70%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(6px); }
+}
+
+@keyframes s4fn_labelStack {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+  30%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes s4fn_crackIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scaleY(0); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scaleY(1); }
+}
+
+@keyframes s4fn_halfLeft {
+  from { background: #94A3B8; }
+  to   { background: #991B1B; }
+}
+
+@keyframes s4fn_halfRight {
+  from { background: #94A3B8; }
+  to   { background: #991B1B; }
+}
+
+@keyframes s4fn_gapOpen {
+  from { width: 0; }
+  to   { width: 12px; }
+}
+
+@keyframes s4fn_verdictIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+    letter-spacing: 0.02em;
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    letter-spacing: 0.06em;
+  }
+}
+
+@keyframes s4fn_fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* === S5 Animation === */
+
+  .s5fn_stage {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    font-family: -apple-system, 'Helvetica Neue', 'Noto Sans SC', Arial, sans-serif;
+    background: #0f172a;
+    border-radius: 12px;
+    min-height: 360px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  /* All animated elements start hidden */
+  .s5fn_anim {
+    opacity: 0;
+  }
+
+  /* When stage becomes visible, trigger animations with fill-mode */
+  .s5fn_stage.visible .s5fn_anim {
+    animation-fill-mode: forwards;
+  }
+
+  /* ── Step 1: Red dot + 0.03% label ── */
+  .s5fn_dot_wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 24px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .s5fn_dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #991B1B;
+  }
+
+  .s5fn_dot_label {
+    margin-top: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #991B1B;
+    letter-spacing: 0.04em;
+  }
+
+  .s5fn_stage.visible .s5fn_dot_wrap {
+    animation: s5fn_fadeIn 0.5s ease forwards;
+    animation-delay: 0.4s;
+  }
+
+  /* ── Step 2: Timeline arrow ── */
+  .s5fn_timeline {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-top: 36px;
+    position: relative;
+  }
+
+  .s5fn_line {
+    flex: 1;
+    height: 2px;
+    background: #94A3B8;
+    position: relative;
+  }
+
+  .s5fn_arrow {
+    width: 0;
+    height: 0;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-left: 10px solid #94A3B8;
+    flex-shrink: 0;
+  }
+
+  .s5fn_stage.visible .s5fn_timeline {
+    animation: s5fn_slideIn 0.5s ease forwards;
+    animation-delay: 0.9s;
+  }
+
+  /* ── Step 3 & 4: Timeline labels ── */
+  .s5fn_labels {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .s5fn_label_left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .s5fn_label_right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+
+  .s5fn_era {
+    font-size: 11px;
+    color: #94A3B8;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .s5fn_tech {
+    font-size: 13px;
+    font-weight: 600;
+    color: #94A3B8;
+  }
+
+  .s5fn_stage.visible .s5fn_label_left {
+    animation: s5fn_fadeIn 0.45s ease forwards;
+    animation-delay: 1.4s;
+  }
+
+  .s5fn_stage.visible .s5fn_label_right {
+    animation: s5fn_fadeIn 0.45s ease forwards;
+    animation-delay: 1.9s;
+  }
+
+  /* ── Step 5: Dot grows into large circle ── */
+  .s5fn_dot_big {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(153, 27, 27, 0.18);
+    border: 2px solid #991B1B;
+    position: absolute;
+    top: 24px;
+    /* center horizontally relative to dot_wrap */
+    left: 50%;
+    transform: translateX(-50%) scale(1);
+    z-index: 1;
+    transform-origin: center center;
+  }
+
+  .s5fn_stage.visible .s5fn_dot_big {
+    animation: s5fn_expand 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation-delay: 2.5s;
+  }
+
+  /* ── Step 6: "Tomorrow?" label ── */
+  .s5fn_tomorrow {
+    margin-top: 20px;
+    font-size: 22px;
+    font-weight: 700;
+    color: #6B21A8;
+    letter-spacing: 0.05em;
+    text-align: center;
+  }
+
+  .s5fn_stage.visible .s5fn_tomorrow {
+    animation: s5fn_popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation-delay: 3.3s;
+  }
+
+  /* ── Keyframes ── */
+  @keyframes s5fn_fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes s5fn_slideIn {
+    from { opacity: 0; transform: scaleX(0); transform-origin: left center; }
+    to   { opacity: 1; transform: scaleX(1); transform-origin: left center; }
+  }
+
+  @keyframes s5fn_expand {
+    from { opacity: 0.2; width: 18px; height: 18px; }
+    to   { opacity: 1;   width: 130px; height: 130px; margin-left: -56px; margin-top: -56px; }
+  }
+
+  @keyframes s5fn_popIn {
+    from { opacity: 0; transform: scale(0.7); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+/* === S6 Animation === */
+
+  .s6fn_stage {
+    max-width: 520px;
+    margin: 0 auto;
+    font-family: -apple-system, 'Helvetica Neue', 'Noto Sans SC', Arial, sans-serif;
+    position: relative;
+    min-height: 340px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    box-sizing: border-box;
+  }
+
+  .s6fn_anim {
+    opacity: 0;
+  }
+
+  .s6fn_stage.visible .s6fn_anim {
+    animation-fill-mode: forwards;
+  }
+
+  /* Step 1: Policy card appears */
+  @keyframes s6fn_fadeInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-18px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Step 2: Protest icons appear */
+  @keyframes s6fn_popIn {
+    0%   { opacity: 0; transform: scale(0.4); }
+    70%  { opacity: 1; transform: scale(1.15); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  /* Step 3: Critique label appears */
+  @keyframes s6fn_slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Step 4: Strikethrough line draws across */
+  @keyframes s6fn_strikeGrow {
+    from {
+      opacity: 1;
+      width: 0;
+    }
+    to {
+      opacity: 1;
+      width: 100%;
+    }
+  }
+
+  /* Step 4b: policy card dims */
+  @keyframes s6fn_dimCard {
+    from { opacity: 1; }
+    to   { opacity: 0.28; filter: grayscale(60%); }
+  }
+
+  /* Step 5: New card replaces */
+  @keyframes s6fn_riseIn {
+    from {
+      opacity: 0;
+      transform: translateY(22px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  /* ── Layout ── */
+  .s6fn_center_col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    gap: 0;
+  }
+
+  /* Step 1 — policy card */
+  .s6fn_policy_wrap {
+    position: relative;
+    width: 260px;
+    margin-bottom: 18px;
+  }
+
+  .s6fn_policy_card {
+    border: 2.5px solid #991B1B;
+    border-radius: 10px;
+    padding: 14px 22px;
+    text-align: center;
+    background: #fff0f0;
+    position: relative;
+  }
+
+  .s6fn_policy_label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #991B1B;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .s6fn_policy_title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #991B1B;
+    line-height: 1.2;
+  }
+
+  /* Step 1 animation */
+  .s6fn_stage.visible .s6fn_step1 {
+    animation: s6fn_fadeInDown 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.3s forwards;
+  }
+
+  /* Step 2 — protest icons row */
+  .s6fn_protests {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 14px;
+    justify-content: center;
+  }
+
+  .s6fn_bubble {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 2.5px solid #6B21A8;
+    background: #f5f0ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    font-weight: 900;
+    color: #6B21A8;
+    position: relative;
+    box-shadow: 0 1px 6px rgba(107,33,168,0.10);
+  }
+
+  .s6fn_bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -7px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 7px solid #6B21A8;
+  }
+
+  .s6fn_stage.visible .s6fn_step2a {
+    animation: s6fn_popIn 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) 0.85s forwards;
+  }
+  .s6fn_stage.visible .s6fn_step2b {
+    animation: s6fn_popIn 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) 1.25s forwards;
+  }
+  .s6fn_stage.visible .s6fn_step2c {
+    animation: s6fn_popIn 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) 1.65s forwards;
+  }
+
+  /* Step 3 — critique label */
+  .s6fn_critique {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 2px solid #6B21A8;
+    border-radius: 6px;
+    padding: 5px 14px;
+    background: #f5f0ff;
+    margin-bottom: 18px;
+  }
+
+  .s6fn_critique_prefix {
+    font-size: 10px;
+    font-weight: 700;
+    color: #94A3B8;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .s6fn_critique_word {
+    font-size: 15px;
+    font-weight: 900;
+    color: #6B21A8;
+    letter-spacing: 0.04em;
+  }
+
+  .s6fn_stage.visible .s6fn_step3 {
+    animation: s6fn_slideInRight 0.45s cubic-bezier(0.22, 1, 0.36, 1) 2.1s forwards;
+  }
+
+  /* Step 4 — strikethrough over policy card */
+  .s6fn_strike_line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    height: 4px;
+    border-radius: 2px;
+    background: #991B1B;
+    transform: translateY(-50%);
+    width: 0;
+    opacity: 0;
+  }
+
+  .s6fn_stage.visible .s6fn_step4_line {
+    animation: s6fn_strikeGrow 0.38s ease-out 2.6s forwards;
+  }
+
+  .s6fn_stage.visible .s6fn_step4_dim {
+    animation: s6fn_dimCard 0.38s ease-out 2.6s forwards;
+  }
+
+  /* Step 5 — replacement card */
+  .s6fn_new_card {
+    border: 2.5px solid #94A3B8;
+    border-radius: 10px;
+    padding: 14px 22px;
+    text-align: center;
+    background: #f8fafc;
+    width: 260px;
+    box-sizing: border-box;
+    margin-top: 4px;
+  }
+
+  .s6fn_new_label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #94A3B8;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .s6fn_new_title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #475569;
+    line-height: 1.2;
+  }
+
+  .s6fn_stage.visible .s6fn_step5 {
+    animation: s6fn_riseIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) 3.1s forwards;
+  }
+
+/* === A1 Animation === */
+
+/* ===== A1 Grey Zone Animation ===== */
+
+.a1fn_stage {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 40px 24px 48px;
+  font-family: -apple-system, 'Helvetica Neue', 'Noto Sans SC', Arial, sans-serif;
+  position: relative;
+  box-sizing: border-box;
+  background: #0f0f13;
+  border-radius: 12px;
+  min-height: 520px;
+}
+
+/* ---- All animated elements start hidden ---- */
+.a1fn_anim {
+  opacity: 0;
+}
+
+/* ---- Step 1: Three cards appear vertically ---- */
+@keyframes a1fn_card_in {
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ---- Step 2: Left tag slides in ---- */
+@keyframes a1fn_tag_left_in {
+  from {
+    opacity: 0;
+    transform: translateX(-12px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* ---- Step 3: Right tag slides in ---- */
+@keyframes a1fn_tag_right_in {
+  from {
+    opacity: 0;
+    transform: translateX(12px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* ---- Step 4: Question zone fades in ---- */
+@keyframes a1fn_zone_in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---- Step 5: Arrow rises and label appears ---- */
+@keyframes a1fn_arrow_rise {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes a1fn_label_in {
+  from {
+    opacity: 0;
+    letter-spacing: 0.08em;
+  }
+  to {
+    opacity: 1;
+    letter-spacing: 0.04em;
+  }
+}
+
+/* ---- Boundary pulse ---- */
+@keyframes a1fn_boundary_pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(153, 27, 27, 0.0);
+    border-color: rgba(153, 27, 27, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 12px 2px rgba(153, 27, 27, 0.22);
+    border-color: rgba(153, 27, 27, 0.75);
+  }
+}
+
+/* =========================================
+   Visible state: trigger all animations
+   ========================================= */
+
+/* Card 1 */
+.a1fn_stage.visible .a1fn_card_1 {
+  animation: a1fn_card_in 0.45s ease-out 0.2s forwards;
+}
+/* Card 2 */
+.a1fn_stage.visible .a1fn_card_2 {
+  animation: a1fn_card_in 0.45s ease-out 0.6s forwards;
+}
+/* Card 3 */
+.a1fn_stage.visible .a1fn_card_3 {
+  animation: a1fn_card_in 0.45s ease-out 1.0s forwards;
+}
+
+/* Left tags (2021: 前沿) — Step 2 */
+.a1fn_stage.visible .a1fn_tag_left_1 {
+  animation: a1fn_tag_left_in 0.38s ease-out 1.6s forwards;
+}
+.a1fn_stage.visible .a1fn_tag_left_2 {
+  animation: a1fn_tag_left_in 0.38s ease-out 2.0s forwards;
+}
+.a1fn_stage.visible .a1fn_tag_left_3 {
+  animation: a1fn_tag_left_in 0.38s ease-out 2.4s forwards;
+}
+
+/* Right tags (2026: 标配) — Step 3 */
+.a1fn_stage.visible .a1fn_tag_right_1 {
+  animation: a1fn_tag_right_in 0.38s ease-out 3.0s forwards;
+}
+.a1fn_stage.visible .a1fn_tag_right_2 {
+  animation: a1fn_tag_right_in 0.38s ease-out 3.4s forwards;
+}
+.a1fn_stage.visible .a1fn_tag_right_3 {
+  animation: a1fn_tag_right_in 0.38s ease-out 3.8s forwards;
+}
+
+/* Question zone — Step 4 */
+.a1fn_stage.visible .a1fn_zone {
+  animation:
+    a1fn_zone_in 0.5s ease-out 4.4s forwards,
+    a1fn_boundary_pulse 2.4s ease-in-out 5.0s infinite;
+}
+
+/* Arrow — Step 5 */
+.a1fn_stage.visible .a1fn_arrow {
+  animation: a1fn_arrow_rise 0.6s ease-out 5.0s forwards;
+}
+.a1fn_stage.visible .a1fn_arrow_label {
+  animation: a1fn_label_in 0.45s ease-out 5.5s forwards;
+}
+
+/* animation-fill-mode: forwards on all .a1fn_anim */
+.a1fn_stage.visible .a1fn_anim {
+  animation-fill-mode: forwards;
+}
+
+/* =========================================
+   Layout & Component Styles
+   ========================================= */
+
+.a1fn_title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #94A3B8;
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+/* Cards area */
+.a1fn_cards {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.a1fn_card_row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+}
+
+/* Core card */
+.a1fn_card {
+  display: inline-block;
+  background: #1a1a24;
+  border: 1px solid #2e2e42;
+  border-radius: 8px;
+  padding: 10px 22px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #e2e8f0;
+  letter-spacing: 0.03em;
+  min-width: 130px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+/* Tags */
+.a1fn_tag {
+  display: inline-block;
+  border-radius: 5px;
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.a1fn_tag_left {
+  background: rgba(107, 33, 168, 0.18);
+  border: 1px solid rgba(107, 33, 168, 0.55);
+  color: #c084fc;
+}
+
+.a1fn_tag_right {
+  background: rgba(148, 163, 184, 0.10);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: #94A3B8;
+}
+
+/* Question zone — Step 4 */
+.a1fn_zone {
+  border: 1.5px dashed rgba(153, 27, 27, 0.45);
+  border-radius: 8px;
+  padding: 12px 18px;
+  margin-bottom: 22px;
+  text-align: center;
+  position: relative;
+  background: rgba(153, 27, 27, 0.05);
+}
+
+.a1fn_zone_label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f87171;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.a1fn_zone_sub {
+  font-size: 12px;
+  color: rgba(148, 163, 184, 0.7);
+  letter-spacing: 0.03em;
+}
+
+.a1fn_qmark {
+  font-size: 22px;
+  font-weight: 900;
+  color: #991B1B;
+  opacity: 0.7;
+  display: inline-block;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* Arrow — Step 5 */
+.a1fn_arrow_wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.a1fn_arrow_label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #991B1B;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+.a1fn_arrow_svg {
+  display: block;
+}
+
+/* === A2 Animation === */
+
+  .a2fn_stage {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    font-family: -apple-system, 'Helvetica Neue', 'Noto Sans SC', Arial, sans-serif;
+    background: #0f0f0f;
+    color: #94A3B8;
+    min-height: 480px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .a2fn_anim {
+    opacity: 0;
+  }
+
+  .a2fn_stage.visible .a2fn_anim {
+    animation-fill-mode: forwards;
+  }
+
+  /* Step 1: Recursive loop label */
+  .a2fn_loop_label {
+    animation: a2fn_fadeUp 0.6s ease forwards;
+    animation-delay: 0s;
+    text-align: center;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #94A3B8;
+    margin-bottom: 8px;
+  }
+
+  .a2fn_stage.visible .a2fn_loop_label {
+    animation: a2fn_fadeUp 0.6s ease forwards;
+    animation-delay: 0s;
+  }
+
+  /* The circular loop SVG container */
+  .a2fn_loop_wrap {
+    animation: a2fn_fadeIn 0.7s ease forwards;
+    animation-delay: 0.2s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 6px;
+    position: relative;
+    width: 140px;
+    height: 140px;
+  }
+
+  .a2fn_stage.visible .a2fn_loop_wrap {
+    animation: a2fn_fadeIn 0.7s ease forwards;
+    animation-delay: 0.2s;
+  }
+
+  .a2fn_circle_svg {
+    width: 140px;
+    height: 140px;
+    position: absolute;
+    top: 0; left: 0;
+  }
+
+  .a2fn_circle_track {
+    fill: none;
+    stroke: #94A3B8;
+    stroke-width: 2;
+    opacity: 0.18;
+  }
+
+  .a2fn_circle_arc {
+    fill: none;
+    stroke: #6B21A8;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-dasharray: 320;
+    stroke-dashoffset: 320;
+    animation: a2fn_drawArc 1.2s ease forwards;
+    animation-delay: 0s;
+  }
+
+  .a2fn_stage.visible .a2fn_circle_arc {
+    animation: a2fn_drawArc 1.2s ease forwards;
+    animation-delay: 0.3s;
+  }
+
+  .a2fn_arrow_head {
+    fill: #6B21A8;
+    opacity: 0;
+    animation: a2fn_fadeIn 0.3s ease forwards;
+    animation-delay: 0s;
+  }
+
+  .a2fn_stage.visible .a2fn_arrow_head {
+    animation: a2fn_fadeIn 0.3s ease forwards;
+    animation-delay: 1.4s;
+  }
+
+  .a2fn_loop_inner_text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 11px;
+    color: #6B21A8;
+    letter-spacing: 0.04em;
+    text-align: center;
+    line-height: 1.4;
+    opacity: 0;
+    animation: a2fn_fadeIn 0.5s ease forwards;
+    animation-delay: 0s;
+  }
+
+  .a2fn_stage.visible .a2fn_loop_inner_text {
+    animation: a2fn_fadeIn 0.5s ease forwards;
+    animation-delay: 1.2s;
+  }
+
+  /* Step 2: Safety reason tag */
+  .a2fn_safety_tag {
+    animation: a2fn_slideRight 0.5s ease forwards;
+    animation-delay: 0s;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .a2fn_stage.visible .a2fn_safety_tag {
+    animation: a2fn_slideRight 0.5s ease forwards;
+    animation-delay: 1.8s;
+  }
+
+  .a2fn_tag_pill {
+    display: inline-block;
+    border: 1px solid #6B21A8;
+    color: #6B21A8;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.06em;
+  }
+
+  /* Step 3: Arrow + lock */
+  .a2fn_arrow_lock_row {
+    animation: a2fn_fadeUp 0.5s ease forwards;
+    animation-delay: 0s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .a2fn_stage.visible .a2fn_arrow_lock_row {
+    animation: a2fn_fadeUp 0.5s ease forwards;
+    animation-delay: 2.4s;
+  }
+
+  .a2fn_arrow_line {
+    width: 60px;
+    height: 2px;
+    background: #94A3B8;
+    position: relative;
+    opacity: 0.5;
+  }
+
+  .a2fn_arrow_line::after {
+    content: '';
+    position: absolute;
+    right: -1px;
+    top: -4px;
+    width: 0;
+    height: 0;
+    border-left: 7px solid #94A3B8;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    opacity: 0.5;
+  }
+
+  .a2fn_lock_icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .a2fn_lock_svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .a2fn_lock_label {
+    font-size: 10px;
+    color: #94A3B8;
+    letter-spacing: 0.05em;
+    opacity: 0.7;
+    text-align: center;
+  }
+
+  /* Step 4: Conflict venn */
+  .a2fn_conflict_row {
+    animation: a2fn_fadeUp 0.6s ease forwards;
+    animation-delay: 0s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+
+  .a2fn_stage.visible .a2fn_conflict_row {
+    animation: a2fn_fadeUp 0.6s ease forwards;
+    animation-delay: 3.0s;
+  }
+
+  .a2fn_venn_wrap {
+    position: relative;
+    width: 120px;
+    height: 56px;
+    margin-bottom: 6px;
+  }
+
+  .a2fn_venn_circle {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    top: 0;
+  }
+
+  .a2fn_venn_left {
+    left: 0;
+    background: rgba(107, 33, 168, 0.22);
+    border: 2px solid #6B21A8;
+  }
+
+  .a2fn_venn_right {
+    right: 0;
+    background: rgba(153, 27, 27, 0.22);
+    border: 2px solid #991B1B;
+  }
+
+  .a2fn_venn_label_left {
+    position: absolute;
+    left: 2px;
+    top: 18px;
+    font-size: 10px;
+    color: #6B21A8;
+    letter-spacing: 0.04em;
+    width: 36px;
+    text-align: center;
+  }
+
+  .a2fn_venn_label_right {
+    position: absolute;
+    right: 2px;
+    top: 18px;
+    font-size: 10px;
+    color: #991B1B;
+    letter-spacing: 0.04em;
+    width: 36px;
+    text-align: center;
+  }
+
+  .a2fn_conflict_icon {
+    font-size: 11px;
+    color: #991B1B;
+    letter-spacing: 0.04em;
+    margin-top: 4px;
+    opacity: 0.85;
+  }
+
+  /* Divider */
+  .a2fn_divider {
+    animation: a2fn_fadeIn 0.4s ease forwards;
+    animation-delay: 0s;
+    border: none;
+    border-top: 1px solid rgba(148, 163, 184, 0.12);
+    margin: 0 0 16px;
+  }
+
+  .a2fn_stage.visible .a2fn_divider {
+    animation: a2fn_fadeIn 0.4s ease forwards;
+    animation-delay: 3.6s;
+  }
+
+  /* Step 5: Final question */
+  .a2fn_final_label {
+    animation: a2fn_riseRed 0.7s ease forwards;
+    animation-delay: 0s;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: #991B1B;
+    letter-spacing: 0.04em;
+    line-height: 1.5;
+  }
+
+  .a2fn_stage.visible .a2fn_final_label {
+    animation: a2fn_riseRed 0.7s ease forwards;
+    animation-delay: 4.0s;
+  }
+
+  .a2fn_final_sub {
+    animation: a2fn_fadeIn 0.6s ease forwards;
+    animation-delay: 0s;
+    text-align: center;
+    font-size: 11px;
+    color: #94A3B8;
+    margin-top: 6px;
+    letter-spacing: 0.05em;
+    opacity: 0;
+  }
+
+  .a2fn_stage.visible .a2fn_final_sub {
+    animation: a2fn_fadeIn 0.6s ease forwards;
+    animation-delay: 4.6s;
+  }
+
+  /* Keyframes */
+  @keyframes a2fn_fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  @keyframes a2fn_fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes a2fn_slideRight {
+    from { opacity: 0; transform: translateX(-12px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes a2fn_drawArc {
+    from { stroke-dashoffset: 320; }
+    to   { stroke-dashoffset: 30; }
+  }
+
+  @keyframes a2fn_riseRed {
+    from { opacity: 0; transform: translateY(8px); color: #94A3B8; }
+    to   { opacity: 1; transform: translateY(0);  color: #991B1B; }
+  }
+
+</style>
+
+<meta name="description" content="Jonathan Ready 在翻阅 Fable 5 和 Mythos 5 的系统卡时发现了一段令人不安的文字。Anthropic 宣布已实施新的干预措施， 限制 Claude 在「前沿 LLM 开发」方向的有效性 ——比如构建预训练管线、分布式训练基础设施或 ML 加速器设计。用 Claude 开发竞争模型本就违反服务条款，但 Anthropic 选择了通">
+<link rel="canonical" href="https://chendi.me/readings/fable-silent-nerf/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+<div id="breadcrumb" class="breadcrumb"></div>
+<button id="backBtn" class="back-btn" onclick="goBack()">←</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ 概览层 ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+<!-- S1: 系统卡里的隐形条款 -->
+<section class="feed-section" style="background:var(--bg-act1)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">一份 319 页的系统卡里，<br>藏着一颗隐形炸弹</h2>
+  <p class="body-text reveal reveal-d1">Jonathan Ready 在翻阅 Fable 5 和 Mythos 5 的系统卡时发现了一段令人不安的文字。Anthropic 宣布已实施新的干预措施，<span class="hl">限制 Claude 在「前沿 LLM 开发」方向的有效性</span>——比如构建预训练管线、分布式训练基础设施或 ML 加速器设计。用 Claude 开发竞争模型本就违反服务条款，但 Anthropic 选择了通过安全措施来执行这一限制。这听起来合理——直到你读到下一段。与针对网络安全、生物化学的干预不同，<span class="hl2">这些限制对用户「不可见」</span>。Fable 5 不会降级到其他模型，你不会收到任何警告。Ready 的反应是："我没想到会在一份 model card 里读到这些。"</p>
+  <div class="anim-stage reveal reveal-d2" id="s1-anim"><div class="s1fn_stage ">
+
+  <!-- Step 1: Document icon -->
+  <div class="s1fn_doc_wrap s1fn_anim">
+    <div class="s1fn_doc">
+      <div class="s1fn_doc_line"></div>
+      <div class="s1fn_doc_line"></div>
+      <div class="s1fn_doc_line s1fn_doc_line--short"></div>
+      <div class="s1fn_doc_line s1fn_doc_line--accent"></div>
+      <div class="s1fn_doc_line s1fn_doc_line--short"></div>
+    </div>
+    <div class="s1fn_doc_label">系统卡</div>
+    <div class="s1fn_page_count">319页</div>
+
+    <!-- Step 2: Magnifying glass (positioned relative to doc) -->
+    <div class="s1fn_mag_wrap s1fn_anim">
+      <div class="s1fn_mag">
+        <div class="s1fn_mag_circle"></div>
+        <div class="s1fn_mag_handle"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: Highlighted clause -->
+  <div class="s1fn_clause_wrap s1fn_anim">
+    <div class="s1fn_clause_line" style="width: 88%;"></div>
+    <div class="s1fn_clause_line" style="width: 70%;"></div>
+    <div class="s1fn_clause_highlight s1fn_anim">隐形干预</div>
+    <div class="s1fn_clause_line" style="width: 80%;"></div>
+    <div class="s1fn_clause_line" style="width: 55%;"></div>
+  </div>
+
+  <!-- Step 4: Crossed-out eye -->
+  <div class="s1fn_eye_wrap s1fn_anim">
+    <div class="s1fn_eye_icon">
+      <div class="s1fn_eye_body"></div>
+      <div class="s1fn_eye_pupil"></div>
+      <div class="s1fn_eye_cross"></div>
+    </div>
+    <div class="s1fn_eye_label">对用户不可见</div>
+  </div>
+
+  <!-- Step 5: Warning badge -->
+  <div class="s1fn_badge_wrap s1fn_anim">
+    <div class="s1fn_badge_dot"></div>
+    <div class="s1fn_badge_text">静默降级</div>
+  </div>
+
+</div></div>
+  <p class="hook-line reveal reveal-d3">那它到底怎么限制你的？</p>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original — Jonathan Ready</span>
+      <p>I didn't expect to read this in a model card. Fable 5 model card:</p>
+      <p>we've implemented new interventions that limit Claude's effectiveness for requests targeting frontier LLM development (for example, on building pretraining pipelines, distributed training infrastructure, or ML accelerator design). Using Claude to develop competing models already violates our Terms of Service, but enforcing this restriction through our safeguards avoids accelerating the actors most willing to violate these terms. Unlike our interventions for cybersecurity, biology and chemistry, and distillation attempts, these safeguards will not be visible to the user. Fable 5 will not fall back to a different model. Instead, the safeguards will limit effectiveness through methods such as prompt modification, steering vectors, or parameter-efficient fine-tuning (PEFT).</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S2: 你看不到的三种武器 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">Prompt 修改、Steering Vectors、PEFT——<br>三种你永远看不到的武器</h2>
+  <p class="body-text reveal reveal-d1">系统卡披露了三种「隐形干预」的技术手段。<span class="hl">Prompt 修改</span>意味着你的输入在到达模型之前就被悄悄改写了。<span class="hl2">Steering vectors</span> 是在模型的内部激活空间中注入方向向量——模型的行为被改变了，但输入和输出格式看起来完全正常。<span class="hl">PEFT</span>（参数高效微调）则是对模型的一小部分参数做微调，让它在特定领域变得不那么有帮助。Jonathan Ready 一针见血地总结：<span class="hl2">"Claude 现在可以被静默降级了。Anthropic 决定在这件事发生时不告诉用户。"</span>问题在于，你得到的答案看起来完全正常——它只是没那么好而已。而你永远无法分辨这是模型在困惑，还是一个隐形的政策限制在起作用。</p>
+  <div class="anim-stage reveal reveal-d2" id="s2-anim"><div class="s2fn_stage">
+
+  <!-- Step 1: Input box -->
+  <div class="s2fn_anim s2fn_input-box">
+    你的输入
+  </div>
+
+  <!-- Fork: input splits into 3 paths -->
+  <svg class="s2fn_connector-top" viewBox="0 0 360 28" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- center vertical down -->
+    <path class="s2fn_anim s2fn_fork-line s2fn_fork-line-m" d="M180 0 L180 10"/>
+    <!-- left branch -->
+    <path class="s2fn_anim s2fn_fork-line s2fn_fork-line-l" d="M180 10 L60 28"/>
+    <!-- center branch -->
+    <path class="s2fn_anim s2fn_fork-line s2fn_fork-line-m" d="M180 10 L180 28"/>
+    <!-- right branch -->
+    <path class="s2fn_anim s2fn_fork-line s2fn_fork-line-r" d="M180 10 L300 28"/>
+  </svg>
+
+  <!-- Step 2 + 3: Three parallel paths with intervention icons -->
+  <div class="s2fn_paths">
+
+    <!-- Path 1: Prompt修改 -->
+    <div class="s2fn_path s2fn_path--prompt">
+      <div class="s2fn_anim s2fn_path-label">Prompt 修改</div>
+      <div class="s2fn_anim s2fn_path-vline"></div>
+      <!-- Gear icon -->
+      <div class="s2fn_anim s2fn_icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </div>
+      <div class="s2fn_anim s2fn_path-vline-b"></div>
+    </div>
+
+    <!-- Path 2: Steering -->
+    <div class="s2fn_path s2fn_path--steering">
+      <div class="s2fn_anim s2fn_path-label">Steering</div>
+      <div class="s2fn_anim s2fn_path-vline"></div>
+      <!-- Wrench icon -->
+      <div class="s2fn_anim s2fn_icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+        </svg>
+      </div>
+      <div class="s2fn_anim s2fn_path-vline-b"></div>
+    </div>
+
+    <!-- Path 3: PEFT -->
+    <div class="s2fn_path s2fn_path--peft">
+      <div class="s2fn_anim s2fn_path-label">PEFT</div>
+      <div class="s2fn_anim s2fn_path-vline"></div>
+      <!-- Sliders icon -->
+      <div class="s2fn_anim s2fn_icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <line x1="4" y1="21" x2="4" y2="14"/>
+          <line x1="4" y1="10" x2="4" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12" y2="3"/>
+          <line x1="20" y1="21" x2="20" y2="16"/>
+          <line x1="20" y1="12" x2="20" y2="3"/>
+          <line x1="1" y1="14" x2="7" y2="14"/>
+          <line x1="9" y1="8" x2="15" y2="8"/>
+          <line x1="17" y1="16" x2="23" y2="16"/>
+        </svg>
+      </div>
+      <div class="s2fn_anim s2fn_path-vline-b"></div>
+    </div>
+
+  </div>
+
+  <!-- Step 4: Converge paths → output -->
+  <svg class="s2fn_anim s2fn_converge" viewBox="0 0 360 36" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path class="s2fn_converge-line s2fn_converge-line-l" d="M60 0 L180 36"/>
+    <path class="s2fn_converge-line s2fn_converge-line-m" d="M180 0 L180 36"/>
+    <path class="s2fn_converge-line s2fn_converge-line-r" d="M300 0 L180 36"/>
+  </svg>
+
+  <!-- Output box -->
+  <div class="s2fn_anim s2fn_output-box">
+    看似正常的回答
+  </div>
+
+  <!-- Step 5: Quality down indicator -->
+  <div class="s2fn_quality">
+    <div class="s2fn_anim s2fn_quality-badge">
+      <span class="s2fn_quality-arrow">&#8595;</span>
+      质量降低
+    </div>
+  </div>
+
+</div></div>
+  <p class="hook-line reveal reveal-d3">但什么算「前沿 AI 开发」？</p>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original — Jonathan Ready</span>
+      <p>Claude can now be silently nerfed. Anthropic has decided it won't tell users when this happens.</p>
+      <p>...the safeguards will limit effectiveness through methods such as prompt modification, steering vectors, or parameter-efficient fine-tuning (PEFT). These interventions will not affect the vast majority of coding work. We estimate they will impact ~0.03% of traffic, concentrated in fewer than 0.1% of organizations.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S3: 前沿AI的边界在消失 -->
+<section class="feed-section" style="background:var(--bg-act2)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">五年前还是前沿的 CLIP，<br>今天在一个旅游创业应用里跑着</h2>
+  <p class="body-text reveal reveal-d1">Anthropic 给出了几个「前沿 AI 开发」的例子，但<span class="hl">没有划出清晰的界限</span>。问题是：曾经只属于 AI 实验室的技术，现在正在被普通软件公司广泛使用。创业公司在训练 embedding 模型、构建 reranker、微调和部署小型 LLM。Jonathan Ready 自己的小型 bootstrapped 应用 wanderfugl.com 就有自定义的 reranker 和他亲手训练的 embedding 算法——这些在几年前还被视为前沿技术。五年前，<span class="hl2">CLIP 是前沿 AI 研究项目</span>；今天 Ready 在用它为一个旅游创业应用做微调。「前沿 AI 开发」和「正常产品开发」之间的边界，<span class="hl">每年都在变得更模糊</span>。</p>
+  <div class="anim-stage reveal reveal-d2" id="s3-anim"><div class="s3fn_stage ">
+  <!-- Step 1+2+3: Two boxes with divider -->
+  <div class="s3fn_row">
+    <div class="s3fn_box_left s3fn_anim">前沿 AI</div>
+
+    <div class="s3fn_divider_wrap">
+      <div class="s3fn_divider s3fn_anim"></div>
+    </div>
+
+    <div class="s3fn_box_right s3fn_anim">产品开发</div>
+  </div>
+
+  <!-- Step 4: Tags drift left→right across the dissolving line -->
+  <div class="s3fn_tags_wrap">
+    <div class="s3fn_tag s3fn_tag_1 s3fn_anim">embedding</div>
+    <div class="s3fn_tag s3fn_tag_2 s3fn_anim">reranker</div>
+    <div class="s3fn_tag s3fn_tag_3 s3fn_anim">微调 LLM</div>
+  </div>
+
+  <!-- Step 5: Caption after boundary fades -->
+  <div class="s3fn_caption s3fn_anim">边界，正在消失</div>
+</div></div>
+  <p class="hook-line reveal reveal-d3">这种模糊地带意味着什么？</p>
+  <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-details',this)">深入了解 ↓</button>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original — Jonathan Ready</span>
+      <p>Anthropic gives a few examples of what it considers "frontier AI development," but doesn't provide a clear line. The problem is that many techniques once reserved for AI labs are now being used by ordinary software companies. Startups train embedding models. They build rerankers. They finetune and host small llms. The boundary between "frontier AI research" and normal product development is becoming harder to define every year.</p>
+      <p>Modern software companies increasingly build their own embedding, reranking, and recommendation systems. Even my small bootstrapped app, wanderfugl.com, has a custom reranker and embedding algorithm that I trained myself.</p>
+      <p>Five years ago, models like CLIP were frontier AI research projects. Today I'm fine-tuning them for a bootstrapped travel startup.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S4: 供应链信任断裂 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">一旦你的开发工具可以<br>在不告诉你的情况下<br>停止为你优化——信任就碎了</h2>
+  <p class="body-text reveal reveal-d1">这创造了一个真实的<span class="hl">供应链风险</span>。如果 Claude 在你开发 AI 组件时给了你糟糕或错误的建议，你无法知道这是<span class="hl2">模型在困惑</span>、你的问题无解、还是某个<span class="hl">隐形的政策限制悄悄启动了</span>。Anthropic 明确选择了不在这种情况发生时告诉用户。正如 Jonathan Ready 所说："一旦一个开发工具可以在不告诉你的情况下停止为你的成功优化，<span class="hl2">你就不可能完全信任你的基础设施了</span>。"这不仅是技术问题——这是开发者与工具提供商之间契约的根本性断裂。你把最关键的工作交给了一个可能在暗中削弱自己的工具，而你永远无法区分「工具不够好」和「工具不想帮你」。</p>
+  <div class="anim-stage reveal reveal-d2" id="s4-anim"><div class="s4fn_stage ">
+
+  <!-- Chain row -->
+  <div class="s4fn_chain">
+
+    <!-- Node: 开发者 -->
+    <div class="s4fn_node s4fn_node--dev s4fn_anim">
+      <div class="s4fn_circle">开发者</div>
+      <span class="s4fn_node-label">Developer</span>
+    </div>
+
+    <!-- Link: dev → Claude -->
+    <div class="s4fn_link s4fn_link--left s4fn_anim"></div>
+
+    <!-- Node: Claude (with question mark + rotating labels) -->
+    <div class="s4fn_node s4fn_node--claude s4fn_anim" style="position:relative;">
+      <!-- Step 3: question mark -->
+      <div class="s4fn_qmark s4fn_anim">?</div>
+      <!-- Step 4: rotating labels -->
+      <div class="s4fn_labels">
+        <span class="s4fn_label s4fn_label--1 s4fn_anim">困惑?</span>
+        <span class="s4fn_label s4fn_label--2 s4fn_anim">无解?</span>
+        <span class="s4fn_label s4fn_label--3 s4fn_anim">隐形限制?</span>
+      </div>
+      <div class="s4fn_circle">Claude</div>
+      <span class="s4fn_node-label">LLM</span>
+    </div>
+
+    <!-- Link: Claude → 结果 (breakable) -->
+    <div class="s4fn_link s4fn_link--right s4fn_anim">
+      <div class="s4fn_half s4fn_half--left s4fn_anim"></div>
+      <div class="s4fn_gap s4fn_anim"></div>
+      <div class="s4fn_half s4fn_half--right s4fn_anim"></div>
+      <!-- Crack marker -->
+      <div class="s4fn_crack">
+        <div class="s4fn_crack-inner s4fn_anim"></div>
+      </div>
+    </div>
+
+    <!-- Node: 结果 -->
+    <div class="s4fn_node s4fn_node--result s4fn_anim">
+      <div class="s4fn_circle">结果</div>
+      <span class="s4fn_node-label">Output</span>
+    </div>
+
+  </div>
+
+  <!-- Step 6: verdict -->
+  <div class="s4fn_verdict s4fn_anim">
+    无法信任
+    <span class="s4fn_verdict-bar s4fn_anim"></span>
+  </div>
+
+</div></div>
+  <p class="hook-line reveal reveal-d3">Anthropic 说只影响 0.03% 的人</p>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original — Jonathan Ready</span>
+      <p>That creates a real supply chain risk for businesses. If Claude gives me poor or incorrect advice while I'm working on an AI component, I have no way of knowing whether the model was confused, whether my problem is unsolvable, or if some invisible policy restriction quietly kicked in. Anthropic has explicitly chosen not to tell users when this is happening.</p>
+      <p>Once a development tool can stop optimizing for your success without telling you, it becomes impossible to fully trust your infrastructure.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S5: 0.03%的今天 -->
+<section class="feed-section" style="background:var(--bg-act3)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">Anthropic 说只影响<br>0.03% 的开发者。<br>但「AI 公司」的定义正在改变。</h2>
+  <p class="body-text reveal reveal-d1">Anthropic 声称这些安全措施只影响约 <span class="hl">0.03% 的流量</span>，集中在不到 0.1% 的组织中。也许今天确实如此。但问题是<span class="hl2">「AI 公司」的定义正在改变</span>。五年前，创办一家创业公司意味着写 API 和 SQL 查询。今天，它经常意味着训练、调优和部署模型。五年前，CLIP 是前沿 AI 研究项目；今天 Jonathan Ready 在为一个 bootstrapped 旅游创业公司微调它。如果你在为产品调试模型训练管线时 Claude 给了一个糟糕的答案——是模型困惑了？是你给了它糟糕的上下文？还是<span class="hl">一个隐藏的政策削弱了 Claude 帮助你的能力</span>？你不会知道。</p>
+  <div class="anim-stage reveal reveal-d2" id="s5-anim"><div class="s5fn_stage ">
+
+  <!-- Step 1: Small red dot + 0.03% -->
+  <div class="s5fn_anim s5fn_dot_wrap">
+    <div class="s5fn_dot"></div>
+    <div class="s5fn_dot_label">0.03%</div>
+  </div>
+
+  <!-- Step 5 overlay: expanding circle (sits behind dot_wrap via z-index) -->
+  <div class="s5fn_anim s5fn_dot_big"></div>
+
+  <!-- Step 2: Timeline arrow -->
+  <div class="s5fn_anim s5fn_timeline">
+    <div class="s5fn_line"></div>
+    <div class="s5fn_arrow"></div>
+  </div>
+
+  <!-- Steps 3 & 4: Left/right labels -->
+  <div class="s5fn_labels">
+    <div class="s5fn_anim s5fn_label_left">
+      <span class="s5fn_era">5 年前</span>
+      <span class="s5fn_tech">API + SQL</span>
+    </div>
+    <div class="s5fn_anim s5fn_label_right">
+      <span class="s5fn_era">今天</span>
+      <span class="s5fn_tech">训练 + 部署模型</span>
+    </div>
+  </div>
+
+  <!-- Step 6: Tomorrow? -->
+  <div class="s5fn_anim s5fn_tomorrow">明天 ?</div>
+
+</div></div>
+  <p class="hook-line reveal reveal-d3">但故事还没结束</p>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original — Jonathan Ready</span>
+      <p>Anthropic says these safeguards only affect 0.03% of developers. Maybe that's true today.</p>
+      <p>The problem is that the definition of an AI company is changing.</p>
+      <p>Maybe you're not training frontier models today—most companies aren't. But modern software increasingly contains AI models. Five years ago, building a startup meant writing APIs and SQL queries. Today, it often means training, tuning, and deploying models.</p>
+      <p>Five years ago, models like CLIP were frontier AI research projects. Today I'm fine-tuning them for a bootstrapped travel startup.</p>
+      <p>If you're debugging a model training pipeline for your product and Claude gives a bad answer, was the model confused? Did you give it bad context? Or did a hidden policy nerf Claude's ability to assist you?</p>
+      <p>You won't know.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S6: 怒火与撤回 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">社区怒火迫使 Anthropic<br>在几天内撤回了政策</h2>
+  <p class="body-text reveal reveal-d1">文章发布后，开发者和研究社区的反应是愤怒的。Simon Willison 评论说，Anthropic 用<span class="hl2">「递归自我改进」</span>来为隐形限制辩护<span class="hl">"仍然感觉相当科幻"</span>。他直言："我完全不能接受一个模型会因为一些可能与 Anthropic 自身目标冲突的研究，就<span class="hl2">悄悄腐蚀它对 ML 加速器设计相关问题的回答</span>。"面对广泛的愤怒，Anthropic 迅速撤回了这一政策。更新后的声明说：Fable 5 针对前沿 LLM 开发的安全措施将对用户可见，而非静默降级。但这一事件暴露了一个更深层的问题：<span class="hl">当你的 AI 工具提供商也是你潜在的竞争对手时，「隐形干预」的边界在哪里？</span></p>
+  <div class="anim-stage reveal reveal-d2" id="s6-anim"><div class="s6fn_stage">
+  <div class="s6fn_center_col">
+
+    <!-- Step 1: Policy card -->
+    <div class="s6fn_policy_wrap">
+      <div class="s6fn_policy_card s6fn_anim s6fn_step4_dim">
+        <div class="s6fn_policy_label">政策</div>
+        <div class="s6fn_policy_title">隐形干预</div>
+        <!-- Step 4: Strikethrough line -->
+        <div class="s6fn_strike_line s6fn_anim s6fn_step4_line"></div>
+      </div>
+    </div>
+    <!-- end policy wrap -->
+    <!-- (step1 wrapper for entry animation) -->
+
+    <!-- Step 2: Protest bubbles -->
+    <div class="s6fn_protests">
+      <div class="s6fn_bubble s6fn_anim s6fn_step2a">!</div>
+      <div class="s6fn_bubble s6fn_anim s6fn_step2b">!</div>
+      <div class="s6fn_bubble s6fn_anim s6fn_step2c">!</div>
+    </div>
+
+    <!-- Step 3: Critique label -->
+    <div class="s6fn_critique s6fn_anim s6fn_step3">
+      <span class="s6fn_critique_prefix">Simon Willison:</span>
+      <span class="s6fn_critique_word">科幻</span>
+    </div>
+
+    <!-- Step 5: Replacement card -->
+    <div class="s6fn_new_card s6fn_anim s6fn_step5">
+      <div class="s6fn_new_label">新政策</div>
+      <div class="s6fn_new_title">对用户可见</div>
+    </div>
+
+  </div>
+</div></div>
+  <p class="hook-line reveal reveal-d3">从「递归自我改进」到政策撤回——这场争论揭示了什么？</p>
+  <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-details',this)">深入了解 ↓</button>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original — Simon Willison</span>
+      <p>I believe this is the first time Anthropic have announced these kinds of silent interventions. The justification still feels pretty science-fiction to me - the linked article talks about "recursive self-improvement". I'm not at all keen on a model that silently corrupts its replies to questions about "ML accelerator design" purely to slow down research that might conflict with Anthropic's own goals!</p>
+      <p>Update: Anthropic walked back this policy in the face of widespread outrage from the research community.</p>
+      <span class="source-label" style="margin-top:12px;">Original — Jonathan Ready (Update)</span>
+      <p>Update: Anthropic has walked back this policy after outrage from developers. The company now says Fable 5's safeguards for frontier LLM development will be visible to users instead of silently degrading the model.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+</div>
+
+<!-- ═══ 详解层 ═══ -->
+<div class="layer" id="layer-details" data-depth="1">
+
+<!-- A1: 灰色地带的真实案例 -->
+<section class="feed-section" style="background:var(--bg-act2)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">一个旅游应用的 reranker、<br>一个创业公司的 embedding——<br>都可能触发「前沿 AI」标志</h2>
+  <p class="body-text reveal reveal-d1">Jonathan Ready 用自己的经历说明了边界的模糊。他的小型 bootstrapped 应用 wanderfugl.com 有一个<span class="hl">自定义的 reranker</span> 和他亲手训练的 <span class="hl2">embedding 算法</span>。这些技术五年前被认为是前沿的——但今天它们是产品开发的标配。创业公司在训练 embedding 模型、构建 reranker、微调和托管小型 LLM。Anthropic 给出的「前沿 AI 开发」示例包括<span class="hl">"构建预训练管线、分布式训练基础设施或 ML 加速器设计"</span>。但现代软件公司经常涉及这些领域的边缘。如果一个自动化系统在判断什么是「前沿」什么不是，<span class="hl2">它如何处理这个越来越模糊的灰色地带</span>？今天的 0.03% 很容易变成明天的 3%——因为不是标准变了，而是整个行业都在向「前沿」靠拢。</p>
+  <div class="anim-stage reveal reveal-d2" id="a1-anim"><div class="a1fn_stage ">
+
+  <div class="a1fn_title">灰色地带的真实案例</div>
+
+  <!-- Step 4: Question zone (boundary) at top -->
+  <div class="a1fn_zone a1fn_anim a1fn_zone">
+    <span class="a1fn_zone_label">前沿 AI 边界</span>
+    <span class="a1fn_zone_sub">frontier boundary<span class="a1fn_qmark">?</span></span>
+  </div>
+
+  <!-- Step 5: Arrow pointing up toward boundary -->
+  <div class="a1fn_arrow_wrap">
+    <div class="a1fn_arrow_label a1fn_anim a1fn_arrow_label">0.03% &rarr; ?</div>
+    <svg class="a1fn_arrow_svg a1fn_anim a1fn_arrow" width="28" height="32" viewBox="0 0 28 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <line x1="14" y1="31" x2="14" y2="5" stroke="#991B1B" stroke-width="2.5" stroke-linecap="round"/>
+      <polyline points="5,14 14,3 23,14" fill="none" stroke="#991B1B" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <!-- Step 1–3: Cards with tags -->
+  <div class="a1fn_cards" style="margin-top:18px;">
+
+    <!-- Card row 1: reranker -->
+    <div class="a1fn_card_row">
+      <span class="a1fn_tag a1fn_tag_left a1fn_anim a1fn_tag_left_1">2021: 前沿</span>
+      <div class="a1fn_card a1fn_anim a1fn_card_1">reranker</div>
+      <span class="a1fn_tag a1fn_tag_right a1fn_anim a1fn_tag_right_1">2026: 标配</span>
+    </div>
+
+    <!-- Card row 2: embedding -->
+    <div class="a1fn_card_row">
+      <span class="a1fn_tag a1fn_tag_left a1fn_anim a1fn_tag_left_2">2021: 前沿</span>
+      <div class="a1fn_card a1fn_anim a1fn_card_2">embedding</div>
+      <span class="a1fn_tag a1fn_tag_right a1fn_anim a1fn_tag_right_2">2026: 标配</span>
+    </div>
+
+    <!-- Card row 3: 微调CLIP -->
+    <div class="a1fn_card_row">
+      <span class="a1fn_tag a1fn_tag_left a1fn_anim a1fn_tag_left_3">2021: 前沿</span>
+      <div class="a1fn_card a1fn_anim a1fn_card_3">微调 CLIP</div>
+      <span class="a1fn_tag a1fn_tag_right a1fn_anim a1fn_tag_right_3">2026: 标配</span>
+    </div>
+
+  </div>
+
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original — Jonathan Ready</span>
+      <p>Modern software companies increasingly build their own embedding, reranking, and recommendation systems. Even my small bootstrapped app, wanderfugl.com, has a custom reranker and embedding algorithm that I trained myself.</p>
+      <p>Anthropic gives a few examples of what it considers "frontier AI development," but doesn't provide a clear line. The problem is that many techniques once reserved for AI labs are now being used by ordinary software companies. Startups train embedding models. They build rerankers. They finetune and host small llms. The boundary between "frontier AI research" and normal product development is becoming harder to define every year.</p>
+      <p>Five years ago, models like CLIP were frontier AI research projects. Today I'm fine-tuning them for a bootstrapped travel startup.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- A2: 递归自我改进的科幻论证 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">「递归自我改进」——<br>一个科幻概念如何成了<br>限制用户的理由</h2>
+  <p class="body-text reveal reveal-d1">Anthropic 为隐形干预提供的核心论证是<span class="hl2">「近期模型加速自身开发的能力」</span>——即递归自我改进。这个概念来自 AI 安全研究：一个足够强大的 AI 可能会改进自己的训练过程，形成失控的正反馈循环。Simon Willison 直言这个论证<span class="hl">"仍然感觉相当科幻"</span>。更关键的是，他指出了利益冲突：Anthropic 正在静默降低模型对「可能与 Anthropic 自身目标冲突」的研究的帮助——这意味着<span class="hl2">一家公司在用安全叙事来保护自己的竞争优势</span>。社区的愤怒不仅仅是因为「隐形」——而是因为<span class="hl">「谁来定义什么是危险的」</span>这个问题的答案是：你的竞争对手。Anthropic 最终撤回了政策，将干预改为对用户可见。但这个先例——AI 工具提供商可以静默降级其产品以保护自身利益——一旦被打开，就很难被遗忘。</p>
+  <div class="anim-stage reveal reveal-d2" id="a2-anim"><div class="a2fn_stage ">
+
+  <!-- Step 1: Loop label + SVG arc -->
+  <div class="a2fn_anim a2fn_loop_label">递归自我改进</div>
+
+  <div class="a2fn_anim a2fn_loop_wrap">
+    <svg class="a2fn_circle_svg" viewBox="0 0 140 140">
+      <circle class="a2fn_circle_track" cx="70" cy="70" r="52"/>
+      <path
+        class="a2fn_circle_arc"
+        d="M 70,18 A 52,52 0 1,1 69.99,18.001"
+        stroke-linecap="round"
+      />
+      <polygon class="a2fn_arrow_head" points="70,14 62,26 78,26"/>
+    </svg>
+    <div class="a2fn_loop_inner_text">AI<br>improves<br>AI</div>
+  </div>
+
+  <!-- Step 2: Safety reason tag -->
+  <div class="a2fn_anim a2fn_safety_tag">
+    <span class="a2fn_tag_pill">安全理由</span>
+  </div>
+
+  <!-- Step 3: Arrow + lock -->
+  <div class="a2fn_anim a2fn_arrow_lock_row">
+    <div class="a2fn_arrow_line"></div>
+    <div class="a2fn_lock_icon">
+      <svg class="a2fn_lock_svg" viewBox="0 0 28 28" fill="none">
+        <rect x="5" y="13" width="18" height="12" rx="2.5"
+              fill="none" stroke="#94A3B8" stroke-width="1.8" opacity="0.7"/>
+        <path d="M9 13V9a5 5 0 0 1 10 0v4"
+              stroke="#94A3B8" stroke-width="1.8" stroke-linecap="round" opacity="0.7"/>
+        <circle cx="14" cy="19" r="1.8" fill="#94A3B8" opacity="0.7"/>
+      </svg>
+      <span class="a2fn_lock_label">隐形限制</span>
+    </div>
+  </div>
+
+  <!-- Step 4: Conflict venn -->
+  <div class="a2fn_anim a2fn_conflict_row">
+    <div class="a2fn_venn_wrap">
+      <div class="a2fn_venn_circle a2fn_venn_left"></div>
+      <div class="a2fn_venn_circle a2fn_venn_right"></div>
+      <span class="a2fn_venn_label_left">安全</span>
+      <span class="a2fn_venn_label_right">竞争</span>
+    </div>
+    <div class="a2fn_conflict_icon">-- conflict --</div>
+  </div>
+
+  <!-- Divider -->
+  <hr class="a2fn_anim a2fn_divider"/>
+
+  <!-- Step 5: Final question -->
+  <div class="a2fn_anim a2fn_final_label">谁来定义危险?</div>
+  <div class="a2fn_anim a2fn_final_sub">你的竞争对手</div>
+
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original — Simon Willison</span>
+      <p>I believe this is the first time Anthropic have announced these kinds of silent interventions. The justification still feels pretty science-fiction to me - the linked article talks about "recursive self-improvement". I'm not at all keen on a model that silently corrupts its replies to questions about "ML accelerator design" purely to slow down research that might conflict with Anthropic's own goals!</p>
+      <p>Update: Anthropic walked back this policy in the face of widespread outrage from the research community.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+</div>
+
+<script>
+var layerStack=['layer-overview'];
+var transitioning=false;
+var layerNames={'layer-overview':'概览','layer-details':'灰色地带与论证详解'};
+var observers=new Map();
+
+function setupObserver(layerId){if(observers.has(layerId))return;var layer=document.getElementById(layerId);var reveals=layer.querySelectorAll('.reveal,[class*="_stage"]');var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.15,root:layer});reveals.forEach(function(el){obs.observe(el);});observers.set(layerId,obs);}
+function resetReveals(layerId){var layer=document.getElementById(layerId);layer.querySelectorAll('.reveal').forEach(function(el){el.classList.remove('visible');});layer.querySelectorAll('[class*="_stage"]').forEach(function(el){el.classList.remove('visible');});}
+function activateReveals(layerId){resetReveals(layerId);if(observers.has(layerId)){observers.get(layerId).disconnect();observers.delete(layerId);}requestAnimationFrame(function(){setupObserver(layerId);});}
+
+function updateBreadcrumb(){var bc=document.getElementById('breadcrumb');bc.innerHTML='';layerStack.forEach(function(id,i){if(i>0){var sep=document.createElement('span');sep.className='sep';sep.textContent='>';bc.appendChild(sep);}var span=document.createElement('span');span.textContent=layerNames[id]||id;if(i===layerStack.length-1){span.className='current';}else{span.addEventListener('click',function(){goBackTo(i);});}bc.appendChild(span);});var backBtn=document.getElementById('backBtn');backBtn.style.display=layerStack.length>1?'flex':'none';bc.style.left=layerStack.length>1?'60px':'16px';var dots=document.getElementById('depthDots');var depth=layerStack.length-1;dots.querySelectorAll('.dot').forEach(function(d,i){d.classList.toggle('active',i===depth);});}
+
+function drillDown(targetId,btnEl){if(transitioning)return;transitioning=true;var currentId=layerStack[layerStack.length-1];var currentLayer=document.getElementById(currentId);var targetLayer=document.getElementById(targetId);targetLayer.scrollTop=0;resetReveals(targetId);targetLayer.style.visibility='visible';var duration=600;currentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';currentLayer.style.transformOrigin='center center';currentLayer.style.transform='scale(1.3)';currentLayer.style.opacity='0';targetLayer.classList.add('active');targetLayer.style.opacity='0';targetLayer.style.transform='scale(0.85)';targetLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){targetLayer.style.opacity='1';targetLayer.style.transform='scale(1)';});});setTimeout(function(){currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';targetLayer.style.transition='';targetLayer.style.transform='';activateReveals(targetId);transitioning=false;},duration+50);layerStack.push(targetId);updateBreadcrumb();}
+
+function goBack(){if(layerStack.length<=1||transitioning)return;transitioning=true;var currentId=layerStack.pop();var parentId=layerStack[layerStack.length-1];var currentLayer=document.getElementById(currentId);var parentLayer=document.getElementById(parentId);var duration=600;currentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';currentLayer.style.transform='scale(0.85)';currentLayer.style.opacity='0';parentLayer.classList.add('active');parentLayer.style.transform='scale(1.3)';parentLayer.style.opacity='0';parentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){parentLayer.style.transform='scale(1)';parentLayer.style.opacity='1';});});setTimeout(function(){currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';currentLayer.style.visibility='';parentLayer.style.transition='';parentLayer.style.transform='';transitioning=false;},duration+50);updateBreadcrumb();}
+
+function goBackTo(targetIndex){if(transitioning)return;while(layerStack.length-1>targetIndex){if(layerStack.length<=1)break;goBack();return;}}
+
+function toggleSource(btn){btn.classList.toggle('open');btn.nextElementSibling.classList.toggle('open');}
+
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+</body>
+</html>

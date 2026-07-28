@@ -1,0 +1,2422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CZ @ Consensus Miami 2026 — 三项无国界技术</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #FFFBEB;
+  --bg-act2: #FAF5FF;
+  --bg-act3: #FEF3C7;
+  --bg-dark: #0F172A;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --accent: #CA8A04;
+  --accent2: #7E22CE;
+  --warm: #D97706;
+  --danger: #DC2626;
+  --neutral: #94A3B8;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Noto Sans SC',sans-serif;-webkit-font-smoothing:antialiased;}
+.reveal{opacity:0;transform:translateY(40px);transition:opacity .8s ease,transform .8s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-d1{transition-delay:.15s;}
+.reveal-d2{transition-delay:.3s;}
+.reveal-d3{transition-delay:.45s;}
+.reveal-d4{transition-delay:.6s;}
+.big-statement{font-family:'Noto Serif SC',serif;font-size:clamp(22px,5.5vw,32px);font-weight:700;line-height:1.5;margin-bottom:32px;color:var(--text);}
+.body-text{font-size:16px;line-height:1.9;color:var(--text);margin-bottom:28px;}
+.body-text .hl{color:var(--accent);font-weight:500;}
+.body-text .hl2{color:var(--accent2);font-weight:500;}
+.body-text .hl-warm{color:var(--warm);font-weight:500;}
+.hook-line{font-size:15px;line-height:1.7;color:var(--accent);font-weight:600;margin-bottom:20px;}
+.layer{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;visibility:hidden;opacity:0;will-change:transform,opacity;scroll-snap-type:y proximity;}
+.layer.active{visibility:visible;opacity:1;}
+.feed-section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;scroll-snap-align:start;}
+.feed-section.dark{background:var(--bg-dark);color:#F1F5F9;}
+.feed-section.dark .body-text{color:#94A3B8;}
+.feed-section.dark .big-statement{color:#F1F5F9;}
+.feed-section.dark .hook-line{color:#FDE68A;}
+.section-inner{max-width:600px;width:100%;}
+.breadcrumb{position:fixed;top:16px;left:16px;z-index:1000;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);padding:8px 14px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,.1);font-size:13px;font-weight:500;}
+.breadcrumb span{color:var(--text-muted);cursor:pointer;transition:color .2s;}
+.breadcrumb span:hover{color:var(--accent);}
+.breadcrumb span.current{color:var(--text);cursor:default;}
+.breadcrumb .sep{color:#CBD5E1;margin:0 2px;cursor:default;}
+.back-btn{position:fixed;top:16px;left:16px;z-index:1001;width:38px;height:38px;border-radius:10px;border:none;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(0,0,0,.1);font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--text);transition:all .2s;}
+.back-btn:hover{background:var(--accent);color:#fff;}
+.depth-dots{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;gap:8px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);padding:8px 14px;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,.1);}
+.dot{width:10px;height:10px;border-radius:50%;background:#CBD5E1;transition:all .3s;}
+.dot.active{background:var(--accent);box-shadow:0 0 8px rgba(202,138,4,.5);transform:scale(1.2);}
+.drill-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:1.5px solid rgba(202,138,4,.3);border-radius:10px;background:transparent;color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;transition:all .25s;}
+.drill-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(202,138,4,.3);}
+.dark .drill-btn{border-color:rgba(253,230,138,.4);color:#FDE68A;}
+.dark .drill-btn:hover{background:#FDE68A;color:#0F172A;border-color:#FDE68A;}
+.source-panel{margin-top:24px;border-radius:12px;overflow:hidden;border:1px solid rgba(202,138,4,.15);background:rgba(202,138,4,.03);}
+.dark .source-panel{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.04);}
+.source-toggle{width:100%;padding:12px 16px;border:none;background:none;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);}
+.dark .source-toggle{color:#FDE68A;}
+.source-toggle:hover{background:rgba(202,138,4,.06);}
+.source-toggle .arrow{transition:transform .3s;font-size:11px;}
+.source-toggle.open .arrow{transform:rotate(90deg);}
+.source-body{max-height:0;overflow:hidden;transition:max-height .4s ease;padding:0 16px;}
+.source-body.open{max-height:2000px;padding:0 16px 16px;overflow-y:auto;}
+.source-body p{font-size:13px;line-height:1.8;color:var(--text-muted);margin:0 0 12px;white-space:pre-wrap;}
+.dark .source-body p{color:#94A3B8;}
+.source-body .source-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:8px;display:block;}
+.dark .source-body .source-label{color:#FDE68A;}
+.anim-stage{width:100%;display:flex;justify-content:center;margin:28px 0;min-height:180px;}
+.anim-stage > div{width:100%;}
+
+/* === S1 Animation === */
+
+.s1cz_stage {
+  max-width: 520px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 48px 20px 36px;
+  text-align: center;
+  font-family: 'Noto Sans SC', sans-serif;
+}
+
+/* --- Nodes container (row layout) --- */
+.s1cz_nodes {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 32px;
+  position: relative;
+  margin-bottom: 28px;
+}
+
+/* --- Individual node --- */
+.s1cz_node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  transform: translateY(18px) scale(0.85);
+  transition: none;
+}
+
+.s1cz_node_icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  border: 2.5px solid #94A3B8;
+  background: #FFFBEB;
+  position: relative;
+  z-index: 2;
+}
+
+.s1cz_node:nth-child(1) .s1cz_node_icon {
+  border-color: #7E22CE;
+}
+.s1cz_node:nth-child(2) .s1cz_node_icon {
+  border-color: #CA8A04;
+}
+.s1cz_node:nth-child(3) .s1cz_node_icon {
+  border-color: #7E22CE;
+}
+
+.s1cz_node_label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1E293B;
+  letter-spacing: 0.02em;
+}
+
+/* --- Connector lines (SVG) --- */
+.s1cz_connectors {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.s1cz_line {
+  stroke: #94A3B8;
+  stroke-width: 2;
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  fill: none;
+}
+
+/* --- Subtitle --- */
+.s1cz_subtitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #CA8A04;
+  letter-spacing: 0.06em;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.s1cz_subtitle_sub {
+  display: block;
+  font-size: 13px;
+  font-weight: 400;
+  color: #94A3B8;
+  margin-top: 4px;
+  letter-spacing: 0.03em;
+}
+
+/* ===== Animations ===== */
+@keyframes s1cz_fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes s1cz_drawLine {
+  0% {
+    stroke-dashoffset: 120;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes s1cz_subtitleReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes s1cz_pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(202, 138, 4, 0);
+  }
+  50% {
+    box-shadow: 0 0 14px 4px rgba(202, 138, 4, 0.18);
+  }
+}
+
+/* ===== Triggered states ===== */
+.s1cz_stage.visible .s1cz_node:nth-child(1) {
+  animation: s1cz_fadeInUp 0.6s ease-out 0.1s forwards;
+}
+.s1cz_stage.visible .s1cz_node:nth-child(2) {
+  animation: s1cz_fadeInUp 0.6s ease-out 0.35s forwards;
+}
+.s1cz_stage.visible .s1cz_node:nth-child(3) {
+  animation: s1cz_fadeInUp 0.6s ease-out 0.6s forwards;
+}
+
+.s1cz_stage.visible .s1cz_line:nth-child(1) {
+  animation: s1cz_drawLine 0.5s ease-in-out 0.9s forwards;
+}
+.s1cz_stage.visible .s1cz_line:nth-child(2) {
+  animation: s1cz_drawLine 0.5s ease-in-out 1.15s forwards;
+}
+
+.s1cz_stage.visible .s1cz_subtitle {
+  animation: s1cz_subtitleReveal 0.5s ease-out 1.5s forwards;
+}
+
+.s1cz_stage.visible .s1cz_node_icon {
+  animation: s1cz_pulseGlow 2.4s ease-in-out 1.8s infinite;
+}
+
+/* === S2 Animation === */
+
+.s2cz_stage {
+  max-width: 520px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 32px 0;
+  font-family: 'Noto Sans SC', sans-serif;
+}
+
+.s2cz_card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 16px;
+  padding: 28px 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.s2cz_card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #7E22CE, #CA8A04, #94A3B8);
+}
+
+.s2cz_header {
+  text-align: center;
+  margin-bottom: 24px;
+  opacity: 0;
+  transform: translateY(-12px);
+}
+
+.s2cz_stage.visible .s2cz_header {
+  animation: s2cz_fadeDown 0.6s ease-out 0.1s forwards;
+}
+
+.s2cz_title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #F1F5F9;
+  letter-spacing: 0.5px;
+  margin: 0 0 4px 0;
+}
+
+.s2cz_subtitle {
+  font-size: 13px;
+  color: #94A3B8;
+  margin: 0;
+}
+
+.s2cz_divider {
+  height: 1px;
+  background: rgba(148, 163, 184, 0.15);
+  margin: 0 0 20px 0;
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.s2cz_stage.visible .s2cz_divider {
+  animation: s2cz_expandLine 0.5s ease-out 0.5s forwards;
+}
+
+.s2cz_section_label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin: 0 0 12px 4px;
+  opacity: 0;
+}
+
+.s2cz_section_label--strength {
+  color: #CA8A04;
+}
+
+.s2cz_section_label--gap {
+  color: #7E22CE;
+}
+
+.s2cz_stage.visible .s2cz_section_label--strength {
+  animation: s2cz_fadeIn 0.4s ease-out 0.7s forwards;
+}
+
+.s2cz_stage.visible .s2cz_section_label--gap {
+  animation: s2cz_fadeIn 0.4s ease-out 2.0s forwards;
+}
+
+.s2cz_row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.s2cz_row--strength {
+  background: rgba(202, 138, 4, 0.08);
+  border: 1px solid rgba(202, 138, 4, 0.15);
+}
+
+.s2cz_row--gap {
+  background: rgba(126, 34, 206, 0.08);
+  border: 1px solid rgba(126, 34, 206, 0.15);
+}
+
+.s2cz_stage.visible .s2cz_row--s1 {
+  animation: s2cz_slideIn 0.5s ease-out 0.9s forwards;
+}
+
+.s2cz_stage.visible .s2cz_row--s2 {
+  animation: s2cz_slideIn 0.5s ease-out 1.2s forwards;
+}
+
+.s2cz_stage.visible .s2cz_row--s3 {
+  animation: s2cz_slideIn 0.5s ease-out 1.5s forwards;
+}
+
+.s2cz_stage.visible .s2cz_row--g1 {
+  animation: s2cz_slideIn 0.5s ease-out 2.2s forwards;
+}
+
+.s2cz_stage.visible .s2cz_row--g2 {
+  animation: s2cz_slideIn 0.5s ease-out 2.5s forwards;
+}
+
+.s2cz_row_left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.s2cz_icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.s2cz_icon--strength {
+  background: rgba(202, 138, 4, 0.15);
+}
+
+.s2cz_icon--gap {
+  background: rgba(126, 34, 206, 0.15);
+}
+
+.s2cz_row_label {
+  font-size: 14px;
+  color: #F1F5F9;
+  font-weight: 500;
+}
+
+.s2cz_row_label_en {
+  font-size: 11px;
+  color: #94A3B8;
+  font-weight: 400;
+  margin-top: 1px;
+}
+
+.s2cz_score {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.s2cz_score--high {
+  color: #CA8A04;
+}
+
+.s2cz_score--mid {
+  color: #7E22CE;
+}
+
+.s2cz_bar_track {
+  width: 60px;
+  height: 5px;
+  background: rgba(148, 163, 184, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.s2cz_bar_fill {
+  height: 100%;
+  border-radius: 3px;
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.s2cz_bar_fill--strength {
+  background: #CA8A04;
+}
+
+.s2cz_bar_fill--gap {
+  background: #7E22CE;
+}
+
+.s2cz_stage.visible .s2cz_row--s1 .s2cz_bar_fill {
+  animation: s2cz_fillBar 0.6s ease-out 1.3s forwards;
+}
+
+.s2cz_stage.visible .s2cz_row--s2 .s2cz_bar_fill {
+  animation: s2cz_fillBar 0.6s ease-out 1.6s forwards;
+}
+
+.s2cz_stage.visible .s2cz_row--s3 .s2cz_bar_fill {
+  animation: s2cz_fillBar 0.6s ease-out 1.9s forwards;
+}
+
+.s2cz_stage.visible .s2cz_row--g1 .s2cz_bar_fill {
+  animation: s2cz_fillBarPartial 0.6s ease-out 2.6s forwards;
+}
+
+.s2cz_stage.visible .s2cz_row--g2 .s2cz_bar_fill {
+  animation: s2cz_fillBarPartial 0.6s ease-out 2.9s forwards;
+}
+
+.s2cz_gap_spacer {
+  height: 8px;
+}
+
+.s2cz_divider2 {
+  height: 1px;
+  background: rgba(148, 163, 184, 0.1);
+  margin: 4px 0 16px 0;
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.s2cz_stage.visible .s2cz_divider2 {
+  animation: s2cz_expandLine 0.5s ease-out 1.8s forwards;
+}
+
+.s2cz_footer {
+  text-align: center;
+  margin-top: 20px;
+  opacity: 0;
+}
+
+.s2cz_stage.visible .s2cz_footer {
+  animation: s2cz_fadeIn 0.6s ease-out 3.2s forwards;
+}
+
+.s2cz_verdict {
+  font-size: 13px;
+  color: #94A3B8;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.s2cz_verdict_highlight {
+  color: #CA8A04;
+  font-weight: 600;
+}
+
+@keyframes s2cz_fadeDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s2cz_fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes s2cz_expandLine {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@keyframes s2cz_slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes s2cz_fillBar {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(0.9); }
+}
+
+@keyframes s2cz_fillBarPartial {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(0.45); }
+}
+
+/* === S3 Animation === */
+
+.s3cz_stage {
+  max-width: 520px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 48px 20px;
+  background: #FAF5FF;
+  font-family: 'Noto Sans SC', sans-serif;
+  color: #1E293B;
+  box-sizing: border-box;
+}
+
+.s3cz_title {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94A3B8;
+  margin-bottom: 36px;
+  opacity: 0;
+}
+
+.s3cz_stage.visible .s3cz_title {
+  animation: s3cz_fadeIn 0.5s ease forwards;
+}
+
+.s3cz_map {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 40px;
+}
+
+.s3cz_chain {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  border-radius: 12px;
+  background: #FFFFFF;
+  border-left: 4px solid transparent;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  opacity: 0;
+  transform: translateX(-40px);
+}
+
+.s3cz_chain_icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+.s3cz_chain_info {
+  flex: 1;
+  min-width: 0;
+}
+
+.s3cz_chain_name {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 3px;
+  line-height: 1.3;
+}
+
+.s3cz_chain_desc {
+  font-size: 13px;
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+.s3cz_chain_tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Chain 1 — BNB Smart Chain — Gold */
+.s3cz_chain--bsc {
+  border-left-color: #CA8A04;
+}
+.s3cz_chain--bsc .s3cz_chain_icon {
+  background: #CA8A04;
+}
+.s3cz_chain--bsc .s3cz_chain_tag {
+  background: rgba(202,138,4,0.12);
+  color: #CA8A04;
+}
+
+/* Chain 2 — opBNB — Purple */
+.s3cz_chain--opbnb {
+  border-left-color: #7E22CE;
+}
+.s3cz_chain--opbnb .s3cz_chain_icon {
+  background: #7E22CE;
+}
+.s3cz_chain--opbnb .s3cz_chain_tag {
+  background: rgba(126,34,206,0.12);
+  color: #7E22CE;
+}
+
+/* Chain 3 — BNB Greenfield — Neutral */
+.s3cz_chain--greenfield {
+  border-left-color: #94A3B8;
+}
+.s3cz_chain--greenfield .s3cz_chain_icon {
+  background: #94A3B8;
+}
+.s3cz_chain--greenfield .s3cz_chain_tag {
+  background: rgba(148,163,184,0.12);
+  color: #94A3B8;
+}
+
+/* Connector lines between chains */
+.s3cz_connector {
+  width: 2px;
+  height: 14px;
+  margin: -14px 0 -14px 39px;
+  position: relative;
+  z-index: 0;
+}
+.s3cz_connector_line {
+  width: 2px;
+  height: 100%;
+  background: repeating-linear-gradient(
+    to bottom,
+    #94A3B8 0px,
+    #94A3B8 3px,
+    transparent 3px,
+    transparent 6px
+  );
+  margin: 0 auto;
+  opacity: 0;
+}
+
+.s3cz_stage.visible .s3cz_connector_line {
+  animation: s3cz_fadeIn 0.3s ease forwards;
+  animation-delay: 0.8s;
+}
+
+/* Protocol badges section */
+.s3cz_protocols_label {
+  text-align: center;
+  font-size: 12px;
+  color: #94A3B8;
+  font-weight: 500;
+  margin-bottom: 14px;
+  opacity: 0;
+}
+
+.s3cz_stage.visible .s3cz_protocols_label {
+  animation: s3cz_fadeIn 0.4s ease forwards;
+  animation-delay: 1.0s;
+}
+
+.s3cz_protocols {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.s3cz_pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 24px;
+  background: #FFFFFF;
+  border: 1px solid rgba(148,163,184,0.25);
+  font-size: 13px;
+  font-weight: 600;
+  color: #1E293B;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  opacity: 0;
+  transform: scale(0.7);
+}
+
+.s3cz_pill_dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.s3cz_pill--pancake .s3cz_pill_dot { background: #CA8A04; }
+.s3cz_pill--venus .s3cz_pill_dot { background: #7E22CE; }
+.s3cz_pill--trust .s3cz_pill_dot { background: #94A3B8; }
+
+/* Animations triggered by .visible */
+.s3cz_stage.visible .s3cz_chain--bsc {
+  animation: s3cz_slideIn 0.5s cubic-bezier(0.22,1,0.36,1) forwards;
+  animation-delay: 0.15s;
+}
+.s3cz_stage.visible .s3cz_chain--opbnb {
+  animation: s3cz_slideIn 0.5s cubic-bezier(0.22,1,0.36,1) forwards;
+  animation-delay: 0.35s;
+}
+.s3cz_stage.visible .s3cz_chain--greenfield {
+  animation: s3cz_slideIn 0.5s cubic-bezier(0.22,1,0.36,1) forwards;
+  animation-delay: 0.55s;
+}
+
+.s3cz_stage.visible .s3cz_pill--pancake {
+  animation: s3cz_popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  animation-delay: 1.15s;
+}
+.s3cz_stage.visible .s3cz_pill--venus {
+  animation: s3cz_popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  animation-delay: 1.3s;
+}
+.s3cz_stage.visible .s3cz_pill--trust {
+  animation: s3cz_popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  animation-delay: 1.45s;
+}
+
+@keyframes s3cz_fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes s3cz_slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes s3cz_popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* === S4 Animation === */
+
+/* ── S4: AI Agent Payment Flow ── */
+.s4cz_stage {
+  max-width: 520px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 48px 20px 56px;
+  background: #0F172A;
+  font-family: inherit;
+  color: #F1F5F9;
+  box-sizing: border-box;
+}
+
+/* ── flow container ── */
+.s4cz_flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 36px;
+  position: relative;
+}
+
+/* ── agent nodes ── */
+.s4cz_agent {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2.5px solid #7E22CE;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0;
+  background: rgba(126, 34, 206, 0.1);
+}
+
+.s4cz_agent_icon {
+  font-size: 32px;
+  line-height: 1;
+  color: #7E22CE;
+}
+
+/* ── arrows ── */
+.s4cz_arrow {
+  flex: 1;
+  height: 3px;
+  background: #94A3B8;
+  position: relative;
+  min-width: 40px;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.s4cz_arrow_right {
+  transform-origin: left center;
+}
+
+.s4cz_arrow_left {
+  transform-origin: left center;
+}
+
+.s4cz_arrow::after {
+  content: '';
+  position: absolute;
+  right: -2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid #94A3B8;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+
+/* ── blockchain center node ── */
+.s4cz_chain {
+  width: 88px;
+  height: 88px;
+  border-radius: 16px;
+  border: 2.5px solid #CA8A04;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0;
+  background: rgba(202, 138, 4, 0.08);
+  position: relative;
+}
+
+.s4cz_chain_icon {
+  font-size: 34px;
+  line-height: 1;
+  color: #CA8A04;
+}
+
+/* ── node labels ── */
+.s4cz_node_label {
+  text-align: center;
+  font-size: 12px;
+  color: #94A3B8;
+  margin-top: 8px;
+  letter-spacing: 0.02em;
+  opacity: 0;
+}
+
+.s4cz_agent_col,
+.s4cz_chain_col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── bottom label ── */
+.s4cz_label {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #CA8A04;
+  letter-spacing: 0.03em;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* ══════════════════════════════════
+   KEYFRAMES
+   ══════════════════════════════════ */
+
+@keyframes s4cz_fadeIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s4cz_growArrow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@keyframes s4cz_pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(202, 138, 4, 0.4); }
+  50%      { box-shadow: 0 0 20px 6px rgba(202, 138, 4, 0.25); }
+}
+
+@keyframes s4cz_labelReveal {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s4cz_nodeLabelIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ══════════════════════════════════
+   TRIGGERED ANIMATIONS (.visible)
+   ══════════════════════════════════ */
+
+/* Step 1: Left agent fades in — delay 0s */
+.s4cz_stage.visible .s4cz_agent_left {
+  animation: s4cz_fadeIn 0.6s ease-out 0s forwards;
+}
+.s4cz_stage.visible .s4cz_label_left {
+  animation: s4cz_nodeLabelIn 0.4s ease-out 0.3s forwards;
+}
+
+/* Step 2: Left arrow grows — delay 0.5s */
+.s4cz_stage.visible .s4cz_arrow_left {
+  animation: s4cz_growArrow 0.5s ease-out 0.5s forwards;
+}
+
+/* Step 3: Center blockchain node appears + pulse — delay 0.9s */
+.s4cz_stage.visible .s4cz_chain {
+  animation: s4cz_fadeIn 0.6s ease-out 0.9s forwards,
+             s4cz_pulse 2s ease-in-out 1.5s infinite;
+}
+.s4cz_stage.visible .s4cz_label_chain {
+  animation: s4cz_nodeLabelIn 0.4s ease-out 1.2s forwards;
+}
+
+/* Step 4: Right arrow grows — delay 1.4s */
+.s4cz_stage.visible .s4cz_arrow_right {
+  animation: s4cz_growArrow 0.5s ease-out 1.4s forwards;
+}
+
+/* Step 5: Right agent fades in — delay 1.8s */
+.s4cz_stage.visible .s4cz_agent_right {
+  animation: s4cz_fadeIn 0.6s ease-out 1.8s forwards;
+}
+.s4cz_stage.visible .s4cz_label_right {
+  animation: s4cz_nodeLabelIn 0.4s ease-out 2.1s forwards;
+}
+
+/* Step 6: Bottom label — delay 2.4s */
+.s4cz_stage.visible .s4cz_label {
+  animation: s4cz_labelReveal 0.6s ease-out 2.4s forwards;
+}
+
+/* === S5 Animation === */
+
+.s5cz_stage {
+  max-width: 520px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 20px 36px;
+  font-family: 'Noto Sans SC', sans-serif;
+  color: #1E293B;
+}
+
+/* ===== Part 1: NVIDIA Analogy Timeline ===== */
+.s5cz_part1 {
+  margin-bottom: 36px;
+}
+
+.s5cz_part1_title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #94A3B8;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 20px;
+  opacity: 0;
+}
+
+.s5cz_timeline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 20px;
+}
+
+.s5cz_before,
+.s5cz_after {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: scale(0.85);
+}
+
+.s5cz_box {
+  padding: 14px 18px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.s5cz_before .s5cz_box {
+  background: #F1F5F9;
+  border: 2px solid #94A3B8;
+  color: #64748B;
+}
+
+.s5cz_after .s5cz_box {
+  background: #F5F3FF;
+  border: 2px solid #7E22CE;
+  color: #7E22CE;
+}
+
+.s5cz_era {
+  font-size: 12px;
+  color: #94A3B8;
+  font-weight: 400;
+}
+
+/* Arrow between before and after */
+.s5cz_arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  flex-shrink: 0;
+  opacity: 0;
+}
+
+.s5cz_arrow_line {
+  width: 56px;
+  height: 2px;
+  background: #94A3B8;
+  position: relative;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.s5cz_arrow_line::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 10px solid #94A3B8;
+}
+
+/* Blockchain analogy line below */
+.s5cz_analogy {
+  text-align: center;
+  padding: 14px 20px;
+  border-radius: 10px;
+  background: rgba(202, 138, 4, 0.08);
+  border: 1.5px dashed #CA8A04;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.s5cz_analogy_text {
+  font-size: 15px;
+  font-weight: 700;
+  color: #CA8A04;
+  line-height: 1.5;
+}
+
+.s5cz_analogy_arrow {
+  color: #94A3B8;
+  margin: 0 6px;
+}
+
+/* ===== Part 2: CZ Labs Allocation Bar ===== */
+.s5cz_part2 {
+  margin-top: 8px;
+}
+
+.s5cz_part2_title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #94A3B8;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 16px;
+  opacity: 0;
+}
+
+.s5cz_bar_track {
+  width: 100%;
+  height: 40px;
+  border-radius: 10px;
+  background: #F1F5F9;
+  display: flex;
+  overflow: hidden;
+  margin-bottom: 12px;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.s5cz_seg {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  width: 0%;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.s5cz_seg_blockchain {
+  background: #CA8A04;
+  border-radius: 10px 0 0 10px;
+}
+
+.s5cz_seg_ai {
+  background: #7E22CE;
+}
+
+.s5cz_seg_biotech {
+  background: #94A3B8;
+  border-radius: 0 10px 10px 0;
+}
+
+/* Legend row */
+.s5cz_legend {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.s5cz_legend_item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1E293B;
+}
+
+.s5cz_legend_dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.s5cz_legend_dot_bc { background: #CA8A04; }
+.s5cz_legend_dot_ai { background: #7E22CE; }
+.s5cz_legend_dot_bt { background: #94A3B8; }
+
+/* ===== Keyframes ===== */
+@keyframes s5cz_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes s5cz_scaleIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s5cz_slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s5cz_drawArrow {
+  from { opacity: 1; transform: scaleX(0); }
+  to { opacity: 1; transform: scaleX(1); }
+}
+
+@keyframes s5cz_growBlockchain {
+  from { width: 0%; }
+  to { width: 70%; }
+}
+
+@keyframes s5cz_growAI {
+  from { width: 0%; }
+  to { width: 20%; }
+}
+
+@keyframes s5cz_growBiotech {
+  from { width: 0%; }
+  to { width: 10%; }
+}
+
+@keyframes s5cz_barReveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Triggered by .visible ===== */
+
+/* Part 1 sequence */
+.s5cz_stage.visible .s5cz_part1_title {
+  animation: s5cz_fadeIn 0.4s ease-out 0.2s forwards;
+}
+
+.s5cz_stage.visible .s5cz_before {
+  animation: s5cz_scaleIn 0.5s ease-out 0.5s forwards;
+}
+
+.s5cz_stage.visible .s5cz_arrow {
+  animation: s5cz_fadeIn 0.1s ease-out 1.0s forwards;
+}
+
+.s5cz_stage.visible .s5cz_arrow_line {
+  animation: s5cz_drawArrow 0.4s ease-out 1.0s forwards;
+}
+
+.s5cz_stage.visible .s5cz_after {
+  animation: s5cz_scaleIn 0.5s ease-out 1.5s forwards;
+}
+
+.s5cz_stage.visible .s5cz_analogy {
+  animation: s5cz_slideUp 0.5s ease-out 2.1s forwards;
+}
+
+/* Part 2 sequence */
+.s5cz_stage.visible .s5cz_part2_title {
+  animation: s5cz_fadeIn 0.4s ease-out 2.7s forwards;
+}
+
+.s5cz_stage.visible .s5cz_bar_track {
+  animation: s5cz_barReveal 0.4s ease-out 3.1s forwards;
+}
+
+.s5cz_stage.visible .s5cz_seg_blockchain {
+  animation: s5cz_growBlockchain 0.8s ease-out 3.5s forwards;
+}
+
+.s5cz_stage.visible .s5cz_seg_ai {
+  animation: s5cz_growAI 0.6s ease-out 4.3s forwards;
+}
+
+.s5cz_stage.visible .s5cz_seg_biotech {
+  animation: s5cz_growBiotech 0.5s ease-out 4.9s forwards;
+}
+
+.s5cz_stage.visible .s5cz_legend {
+  animation: s5cz_slideUp 0.4s ease-out 5.4s forwards;
+}
+
+/* === S6 Animation === */
+
+.s6cz_stage {
+  max-width: 520px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 48px 16px;
+  background: #0F172A;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.s6cz_heading {
+  text-align: center;
+  color: #F1F5F9;
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  opacity: 0;
+}
+
+.s6cz_subheading {
+  text-align: center;
+  color: #94A3B8;
+  font-size: 14px;
+  margin: 0 0 32px 0;
+  opacity: 0;
+}
+
+.s6cz_grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.s6cz_quad {
+  border-radius: 12px;
+  padding: 22px 16px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(24px) scale(0.92);
+}
+
+.s6cz_quad--czlabs {
+  background: linear-gradient(135deg, rgba(202,138,4,0.15) 0%, rgba(202,138,4,0.05) 100%);
+  border: 1.5px solid #CA8A04;
+}
+
+.s6cz_quad--bnb {
+  background: linear-gradient(135deg, rgba(126,34,206,0.15) 0%, rgba(126,34,206,0.05) 100%);
+  border: 1.5px solid #7E22CE;
+}
+
+.s6cz_quad--kiko {
+  background: linear-gradient(135deg, rgba(148,163,184,0.12) 0%, rgba(148,163,184,0.04) 100%);
+  border: 1.5px solid #94A3B8;
+}
+
+.s6cz_quad--gov {
+  background: rgba(202,138,4,0.05);
+  border: 1.5px dashed #CA8A04;
+}
+
+.s6cz_icon {
+  font-size: 28px;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.s6cz_title {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  line-height: 1.3;
+}
+
+.s6cz_quad--czlabs .s6cz_title { color: #CA8A04; }
+.s6cz_quad--bnb .s6cz_title    { color: #7E22CE; }
+.s6cz_quad--kiko .s6cz_title   { color: #94A3B8; }
+.s6cz_quad--gov .s6cz_title    { color: #CA8A04; }
+
+.s6cz_desc {
+  font-size: 12px;
+  color: #F1F5F9;
+  margin: 0;
+  line-height: 1.5;
+  opacity: 0.75;
+}
+
+/* Keyframes */
+@keyframes s6cz_fadeUp {
+  from { opacity: 0; transform: translateY(24px) scale(0.92); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes s6cz_fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Triggered when .visible is added */
+.s6cz_stage.visible .s6cz_heading {
+  animation: s6cz_fadeIn 0.5s ease-out forwards;
+  animation-delay: 0s;
+}
+
+.s6cz_stage.visible .s6cz_subheading {
+  animation: s6cz_fadeIn 0.5s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* Staggered: top-left -> top-right -> bottom-right -> bottom-left (clockwise) */
+.s6cz_stage.visible .s6cz_quad--czlabs {
+  animation: s6cz_fadeUp 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  animation-delay: 0.4s;
+}
+
+.s6cz_stage.visible .s6cz_quad--bnb {
+  animation: s6cz_fadeUp 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  animation-delay: 0.6s;
+}
+
+.s6cz_stage.visible .s6cz_quad--gov {
+  animation: s6cz_fadeUp 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  animation-delay: 0.8s;
+}
+
+.s6cz_stage.visible .s6cz_quad--kiko {
+  animation: s6cz_fadeUp 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  animation-delay: 1.0s;
+}
+
+/* === A1 Animation === */
+
+/* ── A1: Detailed 3-Chain Architecture ── */
+
+/* Keyframes */
+@keyframes a1cz_slideInLeft {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes a1cz_popIn {
+  from { opacity: 0; transform: scale(0); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes a1cz_fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Stage container */
+.a1cz_stage {
+  max-width: 520px;
+  width: 100%;
+  margin: 0 auto;
+  font-family: 'Noto Sans SC', sans-serif;
+  color: #1E293B;
+  padding: 24px 0;
+}
+
+/* ── Layer cards ── */
+.a1cz_layer_card {
+  border-radius: 14px;
+  padding: 20px 22px;
+  margin-bottom: 16px;
+  background: #FFFFFF;
+  opacity: 0;
+  position: relative;
+}
+
+.a1cz_layer_card_gold {
+  border: 2px solid #CA8A04;
+  box-shadow: 0 2px 12px rgba(202, 138, 4, 0.12);
+}
+
+.a1cz_layer_card_purple {
+  border: 2px solid #7E22CE;
+  box-shadow: 0 2px 12px rgba(126, 34, 206, 0.12);
+}
+
+.a1cz_layer_card_neutral {
+  border: 2px solid #94A3B8;
+  box-shadow: 0 2px 12px rgba(148, 163, 184, 0.12);
+}
+
+/* Layer number badge */
+.a1cz_layer_num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.a1cz_layer_num_gold { background: #CA8A04; }
+.a1cz_layer_num_purple { background: #7E22CE; }
+.a1cz_layer_num_neutral { background: #94A3B8; }
+
+/* Layer title row */
+.a1cz_layer_title {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 28px;
+  margin-bottom: 6px;
+}
+
+.a1cz_layer_title_gold { color: #CA8A04; }
+.a1cz_layer_title_purple { color: #7E22CE; }
+.a1cz_layer_title_neutral { color: #94A3B8; }
+
+/* Subtitle tag */
+.a1cz_layer_sub {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.a1cz_layer_sub_gold { background: rgba(202, 138, 4, 0.1); color: #CA8A04; }
+.a1cz_layer_sub_purple { background: rgba(126, 34, 206, 0.1); color: #7E22CE; }
+.a1cz_layer_sub_neutral { background: rgba(148, 163, 184, 0.15); color: #94A3B8; }
+
+/* Protocol badges container */
+.a1cz_protocols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* Individual protocol badge */
+.a1cz_badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0;
+}
+
+.a1cz_badge_gold {
+  background: rgba(202, 138, 4, 0.08);
+  border: 1px solid rgba(202, 138, 4, 0.25);
+  color: #CA8A04;
+}
+
+.a1cz_badge_purple {
+  background: rgba(126, 34, 206, 0.08);
+  border: 1px solid rgba(126, 34, 206, 0.25);
+  color: #7E22CE;
+}
+
+.a1cz_badge_neutral {
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #94A3B8;
+}
+
+/* Badge role labels */
+.a1cz_badge_role {
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+/* Detail line */
+.a1cz_detail {
+  font-size: 13px;
+  color: #94A3B8;
+  margin-top: 4px;
+  line-height: 1.6;
+}
+
+/* ── Connecting vertical lines ── */
+.a1cz_connector {
+  width: 2px;
+  height: 20px;
+  margin: 0 auto;
+  opacity: 0;
+}
+
+.a1cz_connector_gold { background: #CA8A04; }
+.a1cz_connector_purple { background: #7E22CE; }
+
+/* ── Trust Wallet badge ── */
+.a1cz_wallet {
+  margin-top: 20px;
+  border: 2px solid #CA8A04;
+  border-radius: 14px;
+  padding: 16px 22px;
+  background: linear-gradient(135deg, rgba(202, 138, 4, 0.06), rgba(126, 34, 206, 0.06));
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  opacity: 0;
+}
+
+.a1cz_wallet_icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #CA8A04, #7E22CE);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 20px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.a1cz_wallet_text {
+  flex: 1;
+}
+
+.a1cz_wallet_name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+.a1cz_wallet_desc {
+  font-size: 13px;
+  color: #94A3B8;
+  margin-top: 2px;
+}
+
+/* ── Animations triggered by .visible ── */
+
+/* Layer 1 card slides in at 0.3s */
+.a1cz_stage.visible .a1cz_card_1 {
+  animation: a1cz_slideInLeft 0.5s 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Connector 1 at 0.9s */
+.a1cz_stage.visible .a1cz_conn_1 {
+  animation: a1cz_fadeUp 0.3s 0.9s forwards;
+}
+
+/* Layer 2 card slides in at 1.3s */
+.a1cz_stage.visible .a1cz_card_2 {
+  animation: a1cz_slideInLeft 0.5s 1.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Connector 2 at 1.9s */
+.a1cz_stage.visible .a1cz_conn_2 {
+  animation: a1cz_fadeUp 0.3s 1.9s forwards;
+}
+
+/* Layer 3 card slides in at 2.3s */
+.a1cz_stage.visible .a1cz_card_3 {
+  animation: a1cz_slideInLeft 0.5s 2.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Protocol badges pop in after their parent card */
+/* BSC protocols: 1.0s, 1.2s, 1.4s */
+.a1cz_stage.visible .a1cz_proto_1 {
+  animation: a1cz_popIn 0.3s 1.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.a1cz_stage.visible .a1cz_proto_2 {
+  animation: a1cz_popIn 0.3s 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.a1cz_stage.visible .a1cz_proto_3 {
+  animation: a1cz_popIn 0.3s 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* opBNB badges: 2.0s, 2.2s */
+.a1cz_stage.visible .a1cz_proto_4 {
+  animation: a1cz_popIn 0.3s 2.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.a1cz_stage.visible .a1cz_proto_5 {
+  animation: a1cz_popIn 0.3s 2.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Greenfield badges: 3.0s, 3.2s */
+.a1cz_stage.visible .a1cz_proto_6 {
+  animation: a1cz_popIn 0.3s 3.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.a1cz_stage.visible .a1cz_proto_7 {
+  animation: a1cz_popIn 0.3s 3.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Trust Wallet slides up at 3.6s */
+.a1cz_stage.visible .a1cz_wallet {
+  animation: a1cz_fadeUp 0.5s 3.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* === A2 Animation === */
+
+.a2cz_stage {
+  max-width: 520px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 48px 20px;
+  background: #0F172A;
+  font-family: 'Noto Sans SC', sans-serif;
+  color: #F1F5F9;
+  box-sizing: border-box;
+}
+
+.a2cz_heading {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.a2cz_heading_title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #CA8A04;
+  margin: 0 0 6px 0;
+}
+
+.a2cz_heading_sub {
+  font-size: 14px;
+  color: #94A3B8;
+  margin: 0;
+}
+
+.a2cz_cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.a2cz_card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: rgba(126, 34, 206, 0.08);
+  border: 1px solid rgba(126, 34, 206, 0.25);
+  border-radius: 12px;
+  padding: 18px 20px;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.a2cz_stage.visible .a2cz_card {
+  animation: a2cz_slideUp 0.5s ease-out forwards;
+}
+
+.a2cz_stage.visible .a2cz_card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.a2cz_stage.visible .a2cz_card:nth-child(2) {
+  animation-delay: 0.35s;
+}
+
+.a2cz_stage.visible .a2cz_card:nth-child(3) {
+  animation-delay: 0.6s;
+}
+
+.a2cz_stage.visible .a2cz_card:nth-child(4) {
+  animation-delay: 0.85s;
+}
+
+@keyframes a2cz_slideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.a2cz_icon {
+  font-size: 28px;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(202, 138, 4, 0.12);
+  border-radius: 10px;
+}
+
+.a2cz_card_body {
+  flex: 1;
+  min-width: 0;
+}
+
+.a2cz_card_title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #CA8A04;
+  margin: 0 0 4px 0;
+}
+
+.a2cz_card_desc {
+  font-size: 13px;
+  color: #94A3B8;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.a2cz_summary {
+  text-align: center;
+  margin-top: 32px;
+  font-size: 13px;
+  color: #7E22CE;
+  opacity: 0;
+}
+
+.a2cz_stage.visible .a2cz_summary {
+  animation: a2cz_fadeIn 0.6s ease-out 1.2s forwards;
+}
+
+@keyframes a2cz_fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.a2cz_summary_line {
+  display: inline-block;
+  border-top: 1px solid rgba(126, 34, 206, 0.3);
+  padding-top: 12px;
+}
+
+</style>
+
+<meta name="description" content="CZ 在 Consensus Miami 2026 上说，他成年后经历了三项根本性技术： 互联网、区块链和 AI ——它们的共同点是都没有国界。你可以在凌晨三点给世界任何角落的人发消息，但今天你不能在凌晨三点的周末汇款，因为 钱仍然按国家划分 。而现在区块链提供了让钱变得无国界的技术——一个高效、低成本、即时、基本上无许可的全球市场。AI 也是无国界技术：你">
+<link rel="canonical" href="https://chendi.me/readings/cz-consensus-miami/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">←</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ Layer: Overview ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+<!-- S1 -->
+<section class="feed-section" style="background:var(--bg-act1)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">三项无国界技术：<br>互联网、区块链、AI</h2>
+  <p class="body-text reveal reveal-d1">CZ 在 Consensus Miami 2026 上说，他成年后经历了三项根本性技术：<span class="hl">互联网、区块链和 AI</span>——它们的共同点是都没有国界。你可以在凌晨三点给世界任何角落的人发消息，但今天你不能在凌晨三点的周末汇款，因为<span class="hl2">钱仍然按国家划分</span>。而现在区块链提供了让钱变得无国界的技术——一个高效、低成本、即时、基本上无许可的全球市场。AI 也是无国界技术：你的 agent 可以和世界另一端的 agent 交互。过去几年 CZ 一直刻意避开美国（out of sight, out of mind），但随着美国加密政策在过去一年半的 180 度转变，他现在回来弥补缺席——与社区互动、与建设者接触、与监管者对话。他坦言，关于他本人、BNB Chain 和整个生态系统，美国市场存在相当多的误解，所以他此行的目的就是花更多时间来修正这些认知。</p>
+  <div class="anim-stage reveal reveal-d2" id="s1-anim"><div class="s1cz_stage">
+  <div class="s1cz_nodes">
+    <svg class="s1cz_connectors" viewBox="0 0 320 80" preserveAspectRatio="xMidYMid meet">
+      <line class="s1cz_line" x1="60" y1="40" x2="160" y2="40" />
+      <line class="s1cz_line" x1="160" y1="40" x2="260" y2="40" />
+    </svg>
+
+    <div class="s1cz_node">
+      <div class="s1cz_node_icon">🌐</div>
+      <span class="s1cz_node_label">Internet</span>
+    </div>
+
+    <div class="s1cz_node">
+      <div class="s1cz_node_icon">⛓</div>
+      <span class="s1cz_node_label">Blockchain</span>
+    </div>
+
+    <div class="s1cz_node">
+      <div class="s1cz_node_icon">🤖</div>
+      <span class="s1cz_node_label">AI</span>
+    </div>
+  </div>
+
+  <div class="s1cz_subtitle">
+    三项无国界技术
+    <span class="s1cz_subtitle_sub">Three Borderless Technologies</span>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original (ASR Transcript)</span>
+<p>In my adult life, there's really three fundamental technologies. There's internet, there's blockchain, there's AI. All three technologies are borderless, they're global, right? So you can send a message to anybody anywhere in the world. You can do that at 3 am. Today you can't send money at 3 am on weekend. And money is divided by country, right? So money, but now we have the technology to make money borderless.</p>
+<p>I think just very frankly, for the last few years, I've been trying to avoid US, right? I've been trying to stay out of mind, out of sight, out of sight, out of mind. But I think obviously the US policy towards crypto changed in the last year and a half or so. So now, I have to actually make up for the absence. There's a lack of engagement with the US communities. There's a lack of engagement with the US builders, and also with the regulators, policymakers, et cetera. And there's a lot of quite a bit of misconception about me, BNB Chain, our ecosystem, etc. So, I'm here to spend more time, to engage with more of our community and try to hopefully fix that.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S2 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">美国加密政策：<br>180 度急转弯的成绩单</h2>
+  <p class="body-text reveal reveal-d1">被问到给美国加密政策打分时，CZ 给出了高度评价。他指出美国有一份强大的文件——<span class="hl" style="color:#FDE68A">宪法</span>——让美国能在某些政策上做 180 度转弯并快速自我纠正。美国有人才库、有金融市场、有传统监管框架，而当权者现在非常前瞻——所以美国目前<span class="hl" style="color:#FDE68A">在全球加密政策中领先</span>。GENIUS Act 已经推进，Clarity Act 正在辩论。大多数其他国家没有美国这样的速度和信心来推出加密法规。但 CZ 也指出了一个关键短板：<span class="hl2" style="color:#C4B5FD">最好的流动性在美国之外</span>。加密市场是极少数美国消费者无法获得全球最优价格的市场之一。Binance 拥有市场中最好的流动性，CZ 表示他们非常想以某种方式——无论是恢复 Binance US 还是其他途径——为美国提供全球最优价格。过去几年离开美国的开发者现在正在回流，这是一个积极的信号。</p>
+  <div class="anim-stage reveal reveal-d2" id="s2-anim"><div class="s2cz_stage">
+  <div class="s2cz_card">
+
+    <div class="s2cz_header">
+      <p class="s2cz_title">US Crypto Policy Report Card</p>
+      <p class="s2cz_subtitle">CZ 评估 · Consensus Miami 2026</p>
+    </div>
+
+    <div class="s2cz_divider"></div>
+
+    <p class="s2cz_section_label s2cz_section_label--strength">Strengths</p>
+
+    <div class="s2cz_row s2cz_row--strength s2cz_row--s1">
+      <div class="s2cz_row_left">
+        <div class="s2cz_icon s2cz_icon--strength">✓</div>
+        <div>
+          <div class="s2cz_row_label">人才储备</div>
+          <div class="s2cz_row_label_en">Talent Pool</div>
+        </div>
+      </div>
+      <div class="s2cz_score s2cz_score--high">
+        <div class="s2cz_bar_track">
+          <div class="s2cz_bar_fill s2cz_bar_fill--strength"></div>
+        </div>
+        A
+      </div>
+    </div>
+
+    <div class="s2cz_row s2cz_row--strength s2cz_row--s2">
+      <div class="s2cz_row_left">
+        <div class="s2cz_icon s2cz_icon--strength">✓</div>
+        <div>
+          <div class="s2cz_row_label">资本市场</div>
+          <div class="s2cz_row_label_en">Capital Markets</div>
+        </div>
+      </div>
+      <div class="s2cz_score s2cz_score--high">
+        <div class="s2cz_bar_track">
+          <div class="s2cz_bar_fill s2cz_bar_fill--strength"></div>
+        </div>
+        A
+      </div>
+    </div>
+
+    <div class="s2cz_row s2cz_row--strength s2cz_row--s3">
+      <div class="s2cz_row_left">
+        <div class="s2cz_icon s2cz_icon--strength">✓</div>
+        <div>
+          <div class="s2cz_row_label">宪法保护</div>
+          <div class="s2cz_row_label_en">Constitutional Protection</div>
+        </div>
+      </div>
+      <div class="s2cz_score s2cz_score--high">
+        <div class="s2cz_bar_track">
+          <div class="s2cz_bar_fill s2cz_bar_fill--strength"></div>
+        </div>
+        A-
+      </div>
+    </div>
+
+    <div class="s2cz_divider2"></div>
+
+    <p class="s2cz_section_label s2cz_section_label--gap">Gaps</p>
+
+    <div class="s2cz_row s2cz_row--gap s2cz_row--g1">
+      <div class="s2cz_row_left">
+        <div class="s2cz_icon s2cz_icon--gap">&#x26A0;</div>
+        <div>
+          <div class="s2cz_row_label">流动性在海外</div>
+          <div class="s2cz_row_label_en">Liquidity Outside US</div>
+        </div>
+      </div>
+      <div class="s2cz_score s2cz_score--mid">
+        <div class="s2cz_bar_track">
+          <div class="s2cz_bar_fill s2cz_bar_fill--gap"></div>
+        </div>
+        C+
+      </div>
+    </div>
+
+    <div class="s2cz_row s2cz_row--gap s2cz_row--g2">
+      <div class="s2cz_row_left">
+        <div class="s2cz_icon s2cz_icon--gap">&#x26A0;</div>
+        <div>
+          <div class="s2cz_row_label">监管仍在追赶</div>
+          <div class="s2cz_row_label_en">Regulation Catching Up</div>
+        </div>
+      </div>
+      <div class="s2cz_score s2cz_score--mid">
+        <div class="s2cz_bar_track">
+          <div class="s2cz_bar_fill s2cz_bar_fill--gap"></div>
+        </div>
+        C
+      </div>
+    </div>
+
+    <div class="s2cz_footer">
+      <p class="s2cz_verdict">基础强劲，但<span class="s2cz_verdict_highlight">流动性与监管</span>仍需补课</p>
+    </div>
+
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original (ASR Transcript)</span>
+<p>US, this is a very strong document in the US, which is the US Constitution, right? So US can turn 180 degrees on some policies. And it can self correct, and when it self corrects, it self corrects very quickly. US have the fundamentals, you have the talent pool, you have the financial markets. It has the traditional regulatory frameworks, and the people in power now are very forward thinking. So things can change very quickly.</p>
+<p>So I think US right now is leading in the world in terms of crypto policies. Most other countries do not have as fast a pace, and the confidence to put in crypto regulations that quickly. So we've seen GENIUS act, clarity has been debated.</p>
+<p>What's a little bit lacking in the US right now is the best liquidity, right? So the best liquidity in crypto is outside of the US. US is one the crypto is one of the very few markets that US don't have access to the best prices. So in our ecosystem, Binance has the best liquidity in this market. And we will love to be able to provide that in some way, either bring back Binance US or somehow provide US the best liquidity in the world and the best prices for the consumers.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S3 -->
+<section class="feed-section" style="background:var(--bg-act2)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">BNB：最活跃的<br>第一层区块链</h2>
+  <p class="body-text reveal reveal-d1">当被要求向美国开发者推销 BNB 时，CZ 给出了一个全面的生态概览。BNB 实际上是<span class="hl">最活跃的区块链</span>，而且不止一条链——它有三条：BNB Smart Chain（主链）、opBNB（Layer 2）和 Greenfield（去中心化存储）。生态中有 PancakeSwap（DEX 交易量全球第二，仅次于 Hyperliquid 但增长迅速）、Listar、Venus 等借贷协议，在亚洲和非洲非常受欢迎。加上 Binance 交易所、Trust Wallet、CoinMarketCap，这是一个<span class="hl2">相当完整的生态系统</span>——但在美国却几乎没有被利用。CZ 直言：美国消费者被排除在这个活跃生态之外了。BNB ETF 的普及也落后于其他币种的 ETF，因为美国机构直到最近才能获得 BNB 代币。但 CZ 认为这反而是机会：当机构进入时，对代币通常是利好。过去几年 BNB Chain 在美国的市场、社区建设和开发者活动都远不如其他 L1，现在正在改变。</p>
+  <div class="anim-stage reveal reveal-d2" id="s3-anim"><div class="s3cz_stage">
+  <div class="s3cz_title">BNB Ecosystem Map</div>
+
+  <div class="s3cz_map">
+    <!-- Chain 1: BNB Smart Chain -->
+    <div class="s3cz_chain s3cz_chain--bsc">
+      <div class="s3cz_chain_icon">BSC</div>
+      <div class="s3cz_chain_info">
+        <div class="s3cz_chain_name">BNB Smart Chain</div>
+        <div class="s3cz_chain_desc">智能合约层</div>
+      </div>
+      <span class="s3cz_chain_tag">L1</span>
+    </div>
+
+    <div class="s3cz_connector"><div class="s3cz_connector_line"></div></div>
+
+    <!-- Chain 2: opBNB -->
+    <div class="s3cz_chain s3cz_chain--opbnb">
+      <div class="s3cz_chain_icon">op</div>
+      <div class="s3cz_chain_info">
+        <div class="s3cz_chain_name">opBNB</div>
+        <div class="s3cz_chain_desc">高速 L2</div>
+      </div>
+      <span class="s3cz_chain_tag">L2</span>
+    </div>
+
+    <div class="s3cz_connector"><div class="s3cz_connector_line"></div></div>
+
+    <!-- Chain 3: BNB Greenfield -->
+    <div class="s3cz_chain s3cz_chain--greenfield">
+      <div class="s3cz_chain_icon">GF</div>
+      <div class="s3cz_chain_info">
+        <div class="s3cz_chain_name">BNB Greenfield</div>
+        <div class="s3cz_chain_desc">去中心化存储</div>
+      </div>
+      <span class="s3cz_chain_tag">Storage</span>
+    </div>
+  </div>
+
+  <!-- Protocol badges -->
+  <div class="s3cz_protocols_label">Key Protocols</div>
+  <div class="s3cz_protocols">
+    <span class="s3cz_pill s3cz_pill--pancake">
+      <span class="s3cz_pill_dot"></span>PancakeSwap
+    </span>
+    <span class="s3cz_pill s3cz_pill--venus">
+      <span class="s3cz_pill_dot"></span>Venus
+    </span>
+    <span class="s3cz_pill s3cz_pill--trust">
+      <span class="s3cz_pill_dot"></span>Trust Wallet
+    </span>
+  </div>
+</div></div>
+  <p class="hook-line reveal reveal-d3">三条链、PancakeSwap、Venus、Trust Wallet……BNB 生态的完整拆解。</p>
+  <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-details',this)">深入生态详解 →</button>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original (ASR Transcript)</span>
+<p>So BNB is actually a very fairly large comprehensive and a complete ecosystem. It's actually the number one most active blockchain. And there's actually three blockchains. There's a BNB Smart Chain, there's an opBNB which is a L2. And then Greenfield which is a decentralized storage blockchain.</p>
+<p>It's one of the most active dex, PancakeSwap. It's got a proper dex, which is quite a number two in volume right now. It's still a bit smaller than Hyperliquid, but it's number two. And it's growing fast. And then you have Listar, you have Venus, you have all those lending protocols that are very popular in Asia, and in Africa, in other places where it's not as popular in the US.</p>
+<p>And then in the same ecosystem, you have the Binance exchange, you have Trust Wallet, you have CoinMarketCap. So it's a fairly complete ecosystem, that's quite active, that's not that used in the US. And the US consumers are being left out of it, so we're hoping to fix that.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S4 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">AI Agent 的原生货币<br>就是加密货币</h2>
+  <p class="body-text reveal reveal-d1">这是 CZ 在这次对话中最核心的论断。他从达沃斯的观点出发：<span class="hl" style="color:#FDE68A">AI agent 的原生货币将是加密货币</span>，而且 agent 之间的支付次数将是人类之间的百万倍。为什么？因为三项无国界技术注定会融合。他举了一个具体例子：一个新加坡人想来迈阿密参加会议，他的 agent 与 Expedia 的 agent 对话、查找预算范围内的酒店、比较价格——所有这些都应该由 agent 完成。但当需要支付时，agent <span class="hl2" style="color:#C4B5FD">不知道怎么刷你的信用卡</span>——信用卡没有 API。所以 agent 最自然的支付方式就是区块链：直接转账，简单快捷。CZ 还描述了交易的未来：你不应该打开字节跳动的 app 去看一堆图表、选一个、放大、手动输入价格和数量——你应该打开手机说「展示我的投资组合，过去 24 小时发生了什么？Clarity Act 通过了吗？战争结束了吗？好，把我 10% 的稳定币转成 BNB」，然后 agent 在后台执行。他坦言对还没有人做出来这个产品感到「相当沮丧」。</p>
+  <div class="anim-stage reveal reveal-d2" id="s4-anim"><!-- S4: AI Agent Payment Flow -->
+<div class="s4cz_stage">
+  <div class="s4cz_flow">
+
+    <!-- Left Agent -->
+    <div class="s4cz_agent_col">
+      <div class="s4cz_agent s4cz_agent_left">
+        <span class="s4cz_agent_icon">&#x1F916;</span>
+      </div>
+      <div class="s4cz_node_label s4cz_label_left">AI Agent A</div>
+    </div>
+
+    <!-- Arrow: left → center -->
+    <div class="s4cz_arrow s4cz_arrow_left"></div>
+
+    <!-- Blockchain Center -->
+    <div class="s4cz_chain_col">
+      <div class="s4cz_chain">
+        <span class="s4cz_chain_icon">&#x26D3;</span>
+      </div>
+      <div class="s4cz_node_label s4cz_label_chain">Blockchain</div>
+    </div>
+
+    <!-- Arrow: center → right -->
+    <div class="s4cz_arrow s4cz_arrow_right"></div>
+
+    <!-- Right Agent -->
+    <div class="s4cz_agent_col">
+      <div class="s4cz_agent s4cz_agent_right">
+        <span class="s4cz_agent_icon">&#x1F916;</span>
+      </div>
+      <div class="s4cz_node_label s4cz_label_right">AI Agent B</div>
+    </div>
+
+  </div>
+
+  <!-- Bottom thesis label -->
+  <div class="s4cz_label">AI Agent 的原生货币 = 加密货币</div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original (ASR Transcript)</span>
+<p>If your agent interacts with somebody in Pakistan, they might be a coder, they might be a designer, they might be somebody who's working for you. Or vice versa, and you got to do a transaction, right? So, that transaction can be your agent to his agent, or a guy from Singapore wants to travel to Miami for a conference, and the agent can talk to the Expedia agent and book a ticket and book hotels.</p>
+<p>When that guy wants to pay in Singapore, the credit card will work, but the agent doesn't know how to swipe your credit card. The credit cards don't have an API, right? So the most native thing for the agent to use is obviously a blockchain. If Expedia actually did accept crypto, then the agent just direct transfer. Is very simple, very quick, the most natural technology.</p>
+<p>I think there's gonna be a lot of agentic requirement for payments in the future, and agents gonna do much more microtransactions. If you wanna, I don't wanna pay 200 dollars to subscribe to a newspaper, but sometimes there's an article I'm willing to pay a dollar to read. And then I want my agent to pay it. I don't want for a dollar to have to key in my credit card and all this other stuff.</p>
+<p>What you should do is just open up your phone, say show me my portfolio. What happened in the last 24 hours? Did the Clarity Act get passed? And then you say, okay, I want to convert 10 percent more of my stable coins into BNB. And if you have a large position that should just happen in the background with an agent.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S5 -->
+<section class="feed-section" style="background:var(--bg-act3)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">区块链不会消失：<br>为 AI 时代做好准备</h2>
+  <p class="body-text reveal reveal-d1">CZ 强调了一个关键观点：<span class="hl">AI 仍然需要钱，所以区块链不会消失</span>。他看到很多区块链建设者转去做 AI，觉得这没问题——但他拿 NVIDIA 做类比：显卡曾经不是性感的东西，CPU 才是，NVIDIA 花了四十年才等到 AI 时代让它成为全球最有价值的公司。所以对区块链建设者来说，钱这个概念不会过时。在 CZ Labs 的投资中，70-80% 仍然投在区块链，20% 在 AI，大约 10% 在生物科技。对于 BNB Chain 如何应对 AI 时代，CZ 的回答是：<span class="hl2">所有区块链都需要为 AI 做好准备</span>——支持 agent 支付、支持 open cloud skills，支持一切 AI 需要的东西。他指出 AI 发展速度极快（open cloud 才两个月大，就已经被顶级玩家复制了），我们看到的只是 24 小时旅程中的百万分之一秒。BNB Chain 的定位很清晰：<span class="hl">成为 agent 的钱</span>（the money for agents）。</p>
+  <div class="anim-stage reveal reveal-d2" id="s5-anim"><div class="s5cz_stage">
+
+  <!-- Part 1: NVIDIA Analogy Timeline -->
+  <div class="s5cz_part1">
+    <div class="s5cz_part1_title">NVIDIA 类比</div>
+
+    <div class="s5cz_timeline">
+      <div class="s5cz_before">
+        <div class="s5cz_box">NVIDIA做显卡</div>
+        <span class="s5cz_era">游戏时代</span>
+      </div>
+
+      <div class="s5cz_arrow">
+        <div class="s5cz_arrow_line"></div>
+      </div>
+
+      <div class="s5cz_after">
+        <div class="s5cz_box">NVIDIA成为AI基础设施</div>
+        <span class="s5cz_era">AI时代</span>
+      </div>
+    </div>
+
+    <div class="s5cz_analogy">
+      <span class="s5cz_analogy_text">区块链<span class="s5cz_analogy_arrow">&rarr;</span>AI时代的金融基础设施</span>
+    </div>
+  </div>
+
+  <!-- Part 2: CZ Labs Allocation -->
+  <div class="s5cz_part2">
+    <div class="s5cz_part2_title">CZ Labs 投资分配</div>
+
+    <div class="s5cz_bar_track">
+      <div class="s5cz_seg s5cz_seg_blockchain">70%</div>
+      <div class="s5cz_seg s5cz_seg_ai">20%</div>
+      <div class="s5cz_seg s5cz_seg_biotech">10%</div>
+    </div>
+
+    <div class="s5cz_legend">
+      <div class="s5cz_legend_item">
+        <div class="s5cz_legend_dot s5cz_legend_dot_bc"></div>
+        Blockchain
+      </div>
+      <div class="s5cz_legend_item">
+        <div class="s5cz_legend_dot s5cz_legend_dot_ai"></div>
+        AI
+      </div>
+      <div class="s5cz_legend_item">
+        <div class="s5cz_legend_dot s5cz_legend_dot_bt"></div>
+        Biotech
+      </div>
+    </div>
+  </div>
+
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original (ASR Transcript)</span>
+<p>AI is a fundamental technology that can change many different parts of our world. But AI still needs money. So the blockchain is not going away, right? AI is not gonna, we're not gonna suddenly not need money because we have agents. Money is a fundamental concept of the economy which powers which drives everything. So blockchain's not going away.</p>
+<p>I see a lot of blockchain builders that go to AI. Like that's fine. But if you look at NVIDIA. For years, graphics cards were not the sexy thing. CPUs were, right? So they took forty years to come to now, and now the AI come around, and then the most valuable company in the world. So I think for blockchain builders, money is not going away.</p>
+<p>For CZ Labs, we still invest seventy eighty percent of our funds in blockchain. That's where our core expertise are. And then twenty percent in AI, and then maybe ten percent in biotech.</p>
+<p>All the blockchains need to be AI ready. So you need to support agent payments, you need to have open cloud skills. AI is so new that it's gonna change. Open cloud is only like two months old. And now it's been copied by the top players too. I think we're gonna see a lot more. BNB Chain should just be the money for agents.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S6 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">CZ 的新篇章：<br>间接贡献世界</h2>
+  <p class="body-text reveal reveal-d1">被问到「今天的 CZ 是谁」时，他的回答出人意料地朴素。他的哲学很简单：<span class="hl" style="color:#FDE68A">来到这个世界应该做出正面贡献</span>——能力小做小贡献，能力大做大贡献。他说 Binance 的目标最初只是三年内进入前十交易所，结果五个月就成了第一名，连他自己都惊讶。但成为第一从来不是他的目标，他不在乎名声、权力，甚至钱——钱够用就行，多了也没多大帮助。现在他把时间分成四块：<span class="hl" style="color:#FDE68A">CZ Labs</span> 帮助创始人（投资、指导代币经济学、行业建议）；<span class="hl" style="color:#FDE68A">BNB Chain</span> 帮助生态建设者；<span class="hl2" style="color:#C4B5FD">Kiko Academy</span> 免费教 26 万孩子（项目才一年半，每次开会他都很开心——这就是内在奖励）；以及为大约十几个国家的政府提供加密监管政策咨询（UAE、巴基斯坦、泰国、非洲国家等）。他自嘲是个「one trick pony」，没精力再创业了，但想通过帮助其他创始人成功来间接贡献世界。从每天工作 20 小时、30-40 个会变成了 10 小时——「life is pretty good now」。</p>
+  <div class="anim-stage reveal reveal-d2" id="s6-anim"><div class="s6cz_stage">
+  <h2 class="s6cz_heading">CZ 的四象限人生</h2>
+  <p class="s6cz_subheading">离开 Binance CEO 之后的四个方向</p>
+
+  <div class="s6cz_grid">
+
+    <div class="s6cz_quad s6cz_quad--czlabs">
+      <div class="s6cz_icon">🚀</div>
+      <p class="s6cz_title">CZ Labs</p>
+      <p class="s6cz_desc">投资与孵化</p>
+    </div>
+
+    <div class="s6cz_quad s6cz_quad--bnb">
+      <div class="s6cz_icon">🔗</div>
+      <p class="s6cz_title">BNB Chain</p>
+      <p class="s6cz_desc">生态建设</p>
+    </div>
+
+    <div class="s6cz_quad s6cz_quad--kiko">
+      <div class="s6cz_icon">📚</div>
+      <p class="s6cz_title">Kiko Academy</p>
+      <p class="s6cz_desc">教育</p>
+    </div>
+
+    <div class="s6cz_quad s6cz_quad--gov">
+      <div class="s6cz_icon">🏛️</div>
+      <p class="s6cz_title">政府顾问</p>
+      <p class="s6cz_desc">国家级区块链咨询</p>
+    </div>
+
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original (ASR Transcript)</span>
+<p>I think people, we come to this world, we should make a positive contribution to it, hopefully. And if you can, you should, right? And if your abilities are small, you make a small contribution. If your abilities are high, you make a bigger positive contribution.</p>
+<p>When I started Binance, our goal was we gonna be the top ten exchange in three years. And we've become number one in five months. We're like what happened? But for me that was never my goal. I never said I wanna climb on the right rankings. My goal is really just to do your best, to contribute.</p>
+<p>I kind of split my time in four different areas. CZ Labs, helping founders. BNB Chain, helping the ecosystem builders. I spent a bit of time on Kiko Academy, which is a very fun project. Kiko Academy today teaches 260,000 kids for free. And this project only a year and a half old. Every time I have a call with them, I feel happy. That's the intrinsic reward.</p>
+<p>And then the fourth thing I do is I consult with different governments, only like a handful, like maybe a dozen governments around the world on crypto regulatory policies. Countries like UAE, Pakistan, Thailand, many African countries.</p>
+<p>I don't think I got the stamina to run another startup, to lead another company. I'm a one trick pony. So I want to help other founders, other entrepreneurs to build. I can give them advice on token economics, what to avoid, what the industry's like.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+</div>
+
+<!-- ═══ Layer: Details ═══ -->
+<div class="layer" id="layer-details" data-depth="1">
+
+<!-- A1 -->
+<section class="feed-section" style="background:var(--bg-act2)">
+<div class="section-inner">
+  <h2 class="big-statement reveal">BNB 三链生态详解</h2>
+  <p class="body-text reveal reveal-d1"><span class="hl">BNB Smart Chain</span> 是主链，号称最活跃的区块链。<span class="hl">opBNB</span> 是 Layer 2 解决方案，提供更低成本和更高吞吐量。<span class="hl">Greenfield</span> 是去中心化存储区块链，补全了生态的数据层。在 DeFi 层面，PancakeSwap 是交易量全球第二的 DEX（仅次于 Hyperliquid），增长迅速；Venus 和 Listar 等借贷协议在亚洲和非洲非常受欢迎。基础设施层面，Trust Wallet 提供钱包入口，CoinMarketCap 提供市场数据，Binance 交易所提供中心化流动性。CZ 特别指出，BNB Chain 过去几年在美国的存在感远不如其他 L1——社区建设、开发者活动、营销都做得不够。但现在正在变化：纽约有了 beauty house，旧金山有了小团队，CZ Labs 也大幅增加了对美国的投资。<span class="hl2">BNB ETF</span> 的普及落后于其他代币的 ETF，因为美国机构直到最近才能获得 BNB。CZ 把这看作机会——当机构涌入时，对持有者是利好。美国消费者还没有充分接入这个生态，这意味着有大量增长空间。</p>
+  <div class="anim-stage reveal reveal-d2" id="a1-anim"><!-- ── A1: Detailed 3-Chain Architecture ── -->
+<div class="a1cz_stage">
+
+  <!-- Layer 1: BNB Smart Chain -->
+  <div class="a1cz_layer_card a1cz_layer_card_gold a1cz_card_1">
+    <div class="a1cz_layer_title a1cz_layer_title_gold">
+      <span class="a1cz_layer_num a1cz_layer_num_gold">1</span>BNB Smart Chain
+    </div>
+    <span class="a1cz_layer_sub a1cz_layer_sub_gold">EVM兼容 · 智能合约</span>
+    <div class="a1cz_protocols">
+      <span class="a1cz_badge a1cz_badge_gold a1cz_proto_1">PancakeSwap <span class="a1cz_badge_role">DEX</span></span>
+      <span class="a1cz_badge a1cz_badge_gold a1cz_proto_2">Venus <span class="a1cz_badge_role">借贷</span></span>
+      <span class="a1cz_badge a1cz_badge_gold a1cz_proto_3">Four.meme <span class="a1cz_badge_role">Meme平台</span></span>
+    </div>
+  </div>
+
+  <!-- Connector 1→2 -->
+  <div class="a1cz_connector a1cz_connector_gold a1cz_conn_1"></div>
+
+  <!-- Layer 2: opBNB -->
+  <div class="a1cz_layer_card a1cz_layer_card_purple a1cz_card_2">
+    <div class="a1cz_layer_title a1cz_layer_title_purple">
+      <span class="a1cz_layer_num a1cz_layer_num_purple">2</span>opBNB
+    </div>
+    <span class="a1cz_layer_sub a1cz_layer_sub_purple">L2 · 高吞吐</span>
+    <div class="a1cz_protocols">
+      <span class="a1cz_badge a1cz_badge_purple a1cz_proto_4">5000+ TPS</span>
+      <span class="a1cz_badge a1cz_badge_purple a1cz_proto_5">低Gas</span>
+    </div>
+  </div>
+
+  <!-- Connector 2→3 -->
+  <div class="a1cz_connector a1cz_connector_purple a1cz_conn_2"></div>
+
+  <!-- Layer 3: BNB Greenfield -->
+  <div class="a1cz_layer_card a1cz_layer_card_neutral a1cz_card_3">
+    <div class="a1cz_layer_title a1cz_layer_title_neutral">
+      <span class="a1cz_layer_num a1cz_layer_num_neutral">3</span>BNB Greenfield
+    </div>
+    <span class="a1cz_layer_sub a1cz_layer_sub_neutral">去中心化存储</span>
+    <div class="a1cz_protocols">
+      <span class="a1cz_badge a1cz_badge_neutral a1cz_proto_6">数据主权</span>
+      <span class="a1cz_badge a1cz_badge_neutral a1cz_proto_7">AI数据集</span>
+    </div>
+  </div>
+
+  <!-- Trust Wallet -->
+  <div class="a1cz_wallet">
+    <div class="a1cz_wallet_icon">TW</div>
+    <div class="a1cz_wallet_text">
+      <div class="a1cz_wallet_name">Trust Wallet</div>
+      <div class="a1cz_wallet_desc">10亿+下载 · 入口</div>
+    </div>
+  </div>
+
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original (ASR Transcript)</span>
+<p>BNB is actually a very fairly large comprehensive and a complete ecosystem. It's actually the number one most active blockchain. And there's actually three blockchains. There's a BNB Smart Chain, there's an opBNB which is a L2. And then Greenfield which is a decentralized storage blockchain. And on top of that, there's many different ecosystem players around the BNB chain.</p>
+<p>PancakeSwap, it's got a proper dex, which is number two in volume right now. It's still a bit smaller than Hyperliquid, but it's number two and it's growing fast. And then you have Listar, you have Venus, you have all those lending protocols that are very popular in Asia, and in Africa.</p>
+<p>BNB Chain in particular has not had a lot of exposure in the US. I think other L1s, other layer one blockchains have done much more marketing, community building, builder houses in the US. So I think that's already changing.</p>
+<p>Also the BNB token. US institutions do not have access to BNB token until very recently. So the BNB ETFs are not as widespread as some of the other ETFs for other coins. BNB is lagging behind on that. But at the same time, the lack of access for institutions to BNB is actually an opportunity for BNB investors. When the institutions come in, that's generally better for the token.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- A2 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <h2 class="big-statement reveal">AI × 加密：<br>从旅行预订到微支付</h2>
+  <p class="body-text reveal reveal-d1">CZ 描绘了 AI agent 经济的具体场景。<span class="hl" style="color:#FDE68A">跨境服务</span>：你的 agent 与巴基斯坦的程序员或设计师的 agent 交互，完成工作后需要支付——agent 对 agent 的交易，区块链是最自然的方式。<span class="hl" style="color:#FDE68A">旅行预订</span>：新加坡人要来迈阿密开会，agent 与 Expedia 的 agent 对话，搜索预算范围内的酒店、比价——所有这些 agent 完成，但支付时信用卡没有 API，区块链才是原生接口。<span class="hl" style="color:#FDE68A">微支付</span>：不想花 200 美元订阅报纸，但愿意花 1 美元读一篇文章——让 agent 支付，不用输入信用卡。<span class="hl2" style="color:#C4B5FD">交易的未来</span>：不再是看图表、输入价格和数量、点红绿按钮——而是用自然语言对话：「展示我的组合，过去 24 小时怎样？把 10% 稳定币转成 BNB。」大单交易由 agent 在后台执行。CZ 认为技术已经具备，只是没人做出来——他对此「相当沮丧」。而未来所有量化交易都应该是 agent 在做，交易所需要做到 agent ready。<span class="hl" style="color:#FDE68A">快问快答</span>：RWA（真实世界资产代币化）——「一年前觉得被高估，现在改主意了，低估了」；机构入场——「刚刚开始」；行业对会议的痴迷——「挺好的，高效社交」。</p>
+  <div class="anim-stage reveal reveal-d2" id="a2-anim"><div class="a2cz_stage">
+  <div class="a2cz_heading">
+    <p class="a2cz_heading_title">AI &times; Crypto Use Cases</p>
+    <p class="a2cz_heading_sub">当 AI Agent 拥有了自己的钱包</p>
+  </div>
+
+  <div class="a2cz_cards">
+    <div class="a2cz_card">
+      <div class="a2cz_icon">🌍</div>
+      <div class="a2cz_card_body">
+        <p class="a2cz_card_title">跨境服务 Cross-border</p>
+        <p class="a2cz_card_desc">AI agent 替你预订全球酒店和航班</p>
+      </div>
+    </div>
+
+    <div class="a2cz_card">
+      <div class="a2cz_icon">💰</div>
+      <div class="a2cz_card_body">
+        <p class="a2cz_card_title">微支付 Micropayments</p>
+        <p class="a2cz_card_desc">Agent间的实时小额结算</p>
+      </div>
+    </div>
+
+    <div class="a2cz_card">
+      <div class="a2cz_icon">💬</div>
+      <div class="a2cz_card_body">
+        <p class="a2cz_card_title">自然语言交易 NL Trading</p>
+        <p class="a2cz_card_desc">用中文告诉agent买入BNB</p>
+      </div>
+    </div>
+
+    <div class="a2cz_card">
+      <div class="a2cz_icon">📊</div>
+      <div class="a2cz_card_body">
+        <p class="a2cz_card_title">数据市场 Data Marketplace</p>
+        <p class="a2cz_card_desc">Agent自动购买训练数据</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="a2cz_summary">
+    <span class="a2cz_summary_line">Rapid Fire 精选 — 从CZ的闪电问答环节</span>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d3">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Original (ASR Transcript)</span>
+<p>If your agent interacts with somebody in Pakistan, they might be a coder, they might be a designer, they might be somebody who's working for you. And you got to do a transaction. So that transaction can be your agent to his agent.</p>
+<p>A guy from Singapore wants to travel to Miami for a conference, and the agent can talk to the Expedia agent and book a ticket and book hotels. And the agent will spend all the time finding you the hotel that's in the budget range, which ones available. All of that should be done by the agent. And when that guy wants to pay, the agent doesn't know how to swipe your credit card. The credit cards don't have an API. So the most native thing for the agent to use is obviously a blockchain.</p>
+<p>I don't wanna pay 200 dollars to subscribe to a newspaper, but sometimes there's an article I'm willing to pay a dollar to read. And then I want my agent to pay it. For a dollar, I don't want to have to key in my credit card.</p>
+<p>Today if you open the Bytedance app, there's a bunch of charts, numbers, and then you have to select one chart, zoom in, figure out the price, typing the price on the phone. That's very counterintuitive. What you should do is just open up your phone, say show me my portfolio. What happened in the last 24 hours?</p>
+<p>Tokenized real world assets. I actually think it's underrated now. I thought it was overrated a year ago, but now I've changed. RWA is a real thing. Institutional adoption of crypto. It's just starting, we just seen the beginning of it.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+</div>
+
+<script>
+var layerStack=['layer-overview'];
+var transitioning=false;
+var layerNames={'layer-overview':'概览','layer-details':'生态与AI详解'};
+var observers=new Map();
+function setupObserver(layerId){if(observers.has(layerId))return;var layer=document.getElementById(layerId);var reveals=layer.querySelectorAll('.reveal,[class*="_stage"]');var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.15,root:layer});reveals.forEach(function(el){obs.observe(el);});observers.set(layerId,obs);}
+function resetReveals(layerId){var layer=document.getElementById(layerId);layer.querySelectorAll('.reveal').forEach(function(el){el.classList.remove('visible');});layer.querySelectorAll('[class*="_stage"]').forEach(function(el){el.classList.remove('visible');});}
+function activateReveals(layerId){resetReveals(layerId);if(observers.has(layerId)){observers.get(layerId).disconnect();observers.delete(layerId);}requestAnimationFrame(function(){setupObserver(layerId);});}
+function updateBreadcrumb(){var bc=document.getElementById('breadcrumb');bc.innerHTML='';layerStack.forEach(function(id,i){if(i>0){var sep=document.createElement('span');sep.className='sep';sep.textContent='>';bc.appendChild(sep);}var span=document.createElement('span');span.textContent=layerNames[id]||id;if(i===layerStack.length-1){span.className='current';}else{span.addEventListener('click',function(){goBackTo(i);});}bc.appendChild(span);});var backBtn=document.getElementById('backBtn');backBtn.style.display=layerStack.length>1?'flex':'none';bc.style.left=layerStack.length>1?'60px':'16px';var dots=document.getElementById('depthDots');var depth=layerStack.length-1;dots.querySelectorAll('.dot').forEach(function(d,i){d.classList.toggle('active',i===depth);});}
+function drillDown(targetId){if(transitioning)return;transitioning=true;var currentId=layerStack[layerStack.length-1];var currentLayer=document.getElementById(currentId);var targetLayer=document.getElementById(targetId);targetLayer.scrollTop=0;resetReveals(targetId);targetLayer.style.visibility='visible';var d=600;currentLayer.style.transition='transform '+d+'ms ease-out,opacity '+d+'ms ease-out';currentLayer.style.transformOrigin='center center';currentLayer.style.transform='scale(1.3)';currentLayer.style.opacity='0';targetLayer.classList.add('active');targetLayer.style.opacity='0';targetLayer.style.transform='scale(0.85)';targetLayer.style.transition='transform '+d+'ms ease-out,opacity '+d+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){targetLayer.style.opacity='1';targetLayer.style.transform='scale(1)';});});setTimeout(function(){currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';targetLayer.style.transition='';targetLayer.style.transform='';activateReveals(targetId);transitioning=false;},d+50);layerStack.push(targetId);updateBreadcrumb();}
+function goBack(){if(layerStack.length<=1||transitioning)return;transitioning=true;var currentId=layerStack.pop();var parentId=layerStack[layerStack.length-1];var cl=document.getElementById(currentId);var pl=document.getElementById(parentId);var d=600;cl.style.transition='transform '+d+'ms ease-out,opacity '+d+'ms ease-out';cl.style.transform='scale(0.85)';cl.style.opacity='0';pl.classList.add('active');pl.style.transform='scale(1.3)';pl.style.opacity='0';pl.style.transition='transform '+d+'ms ease-out,opacity '+d+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){pl.style.transform='scale(1)';pl.style.opacity='1';});});setTimeout(function(){cl.classList.remove('active');cl.style.transition='';cl.style.transform='';cl.style.opacity='';cl.style.visibility='';pl.style.transition='';pl.style.transform='';transitioning=false;},d+50);updateBreadcrumb();}
+function goBackTo(targetIndex){if(transitioning)return;while(layerStack.length-1>targetIndex){if(layerStack.length<=1)break;goBack();return;}}
+function toggleSource(btn){btn.classList.toggle('open');btn.nextElementSibling.classList.toggle('open');}
+setupObserver('layer-overview');updateBreadcrumb();
+</script>
+</body>
+</html>

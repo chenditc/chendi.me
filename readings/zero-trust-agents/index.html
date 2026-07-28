@@ -1,0 +1,4563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Zero Trust for AI Agents — 35 页安全框架拆解</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root{
+  --bg-act1:#FFF5F0;--bg-act2:#F3F0FF;--bg-act3:#F0F7F4;
+  --bg-close:#1C1917;--bg-dark:#1A1A2E;
+  --text:#1E293B;--text-muted:#64748B;--dim:#94A3B8;
+  --accent:#D4785C;--accent2:#7C6BAE;
+  --warm:#E8A87C;--danger:#E05252;--neutral:#94A3B8;
+  --card-bg:#FFFFFF;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;font-family:'Noto Sans SC',system-ui,sans-serif;background:#1A1A2E;}
+.content-width{max-width:640px;margin:0 auto;padding:0 28px;}
+.reveal{opacity:0;transform:translateY(40px);transition:opacity 0.8s ease,transform 0.8s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-delay-1{transition-delay:0.15s;}
+.reveal-delay-2{transition-delay:0.3s;}
+.reveal-delay-3{transition-delay:0.45s;}
+.reveal-delay-4{transition-delay:0.6s;}
+.big-statement{font-family:'Noto Serif SC',serif;font-size:clamp(22px,5.5vw,32px);font-weight:700;line-height:1.5;margin-bottom:32px;color:var(--text);}
+.body-text{font-size:16px;line-height:1.9;color:var(--text);margin-bottom:28px;}
+.body-text .hl{color:var(--accent);font-weight:500;}
+.body-text .hl2{color:var(--accent2);font-weight:500;}
+.body-text .hl-danger{color:var(--danger);font-weight:500;}
+.body-text .hl-warm{color:var(--warm);font-weight:500;}
+.layer{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;visibility:hidden;opacity:0;will-change:transform,opacity;scroll-snap-type:y proximity;}
+.layer.active{visibility:visible;opacity:1;}
+.feed-section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;scroll-snap-align:start;}
+.feed-section.dark{background:var(--bg-dark);color:#F1F5F9;}
+.feed-section.dark .body-text{color:#94A3B8;}
+.feed-section.dark .big-statement{color:#F1F5F9;}
+.feed-section.dark .hl{color:#E8A87C;}
+.feed-section.dark .hl2{color:#B8A9D4;}
+.feed-section.dark .hl-warm{color:#E8A87C;}
+.section-inner{max-width:600px;width:100%;}
+.breadcrumb{position:fixed;top:16px;left:16px;z-index:1000;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);padding:8px 14px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,0.1);font-size:13px;font-weight:500;}
+.breadcrumb span{color:var(--text-muted);cursor:pointer;transition:color 0.2s;}
+.breadcrumb span:hover{color:var(--accent);}
+.breadcrumb span.current{color:var(--text);cursor:default;}
+.breadcrumb .sep{color:#CBD5E1;margin:0 2px;cursor:default;}
+.back-btn{position:fixed;top:16px;left:16px;z-index:1001;width:38px;height:38px;border-radius:10px;border:none;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(0,0,0,0.1);font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--text);transition:all 0.2s;}
+.back-btn:hover{background:var(--accent);color:#fff;}
+.depth-dots{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;gap:8px;background:rgba(255,255,255,0.9);backdrop-filter:blur(8px);padding:8px 14px;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,0.1);}
+.dot{width:10px;height:10px;border-radius:50%;background:#CBD5E1;transition:all 0.3s;}
+.dot.active{background:var(--accent);box-shadow:0 0 8px rgba(212,120,92,0.5);transform:scale(1.2);}
+.drill-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:1.5px solid rgba(212,120,92,0.3);border-radius:10px;background:transparent;color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.25s;}
+.drill-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(212,120,92,0.3);}
+.dark .drill-btn{border-color:rgba(212,120,92,0.4);color:#E8A87C;}
+.dark .drill-btn:hover{background:#D4785C;color:#1A1A2E;border-color:#D4785C;}
+.source-panel{margin-top:24px;border-radius:12px;overflow:hidden;border:1px solid rgba(212,120,92,0.15);background:rgba(212,120,92,0.03);}
+.dark .source-panel{border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);}
+.source-toggle{width:100%;padding:12px 16px;border:none;background:none;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);}
+.dark .source-toggle{color:#E8A87C;}
+.source-toggle:hover{background:rgba(212,120,92,0.06);}
+.source-toggle .arrow{transition:transform 0.3s;font-size:11px;}
+.source-toggle.open .arrow{transform:rotate(90deg);}
+.source-body{max-height:0;overflow:hidden;transition:max-height 0.4s ease;padding:0 16px;}
+.source-body.open{max-height:2000px;padding:0 16px 16px;overflow-y:auto;}
+.source-body p{font-size:13px;line-height:1.8;color:var(--text-muted);margin:0 0 12px 0;white-space:pre-wrap;}
+.dark .source-body p{color:#94A3B8;}
+.source-body .source-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--accent);margin-bottom:8px;display:block;}
+.dark .source-body .source-label{color:#E8A87C;}
+.anim-stage{width:100%;display:flex;justify-content:center;margin:28px 0;min-height:180px;}
+.anim-stage>div{width:100%;}
+.hook-line{font-size:14px;color:var(--accent);font-weight:500;margin-top:16px;padding:12px 0;border-top:1px solid rgba(212,120,92,0.12);}
+.dark .hook-line{color:#E8A87C;border-top-color:rgba(212,120,92,0.2);}
+
+/* === S1 Animation === */
+
+/* ── S1: Timeline Compression Meter ── */
+.s1_stage {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #1A1A2E;
+  background: #FFF5F0;
+}
+
+.s1_heading {
+  text-align: center;
+  margin-bottom: 36px;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.s1_stage.visible .s1_heading {
+  opacity: 1;
+  transform: translateY(0);
+}
+.s1_heading h2 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  margin: 0 0 6px 0;
+  color: #1A1A2E;
+}
+.s1_heading p {
+  font-size: 14px;
+  color: #64748B;
+  margin: 0;
+}
+
+/* ── Row container ── */
+.s1_row {
+  margin-bottom: 32px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s1_stage.visible .s1_row--before {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.3s;
+}
+.s1_stage.visible .s1_row--now {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 2.6s;
+}
+
+.s1_label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+}
+.s1_label--before { color: #64748B; }
+.s1_label--now { color: #D4785C; }
+
+.s1_time-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.s1_time-badge--months {
+  background: #E2E8F0;
+  color: #475569;
+}
+.s1_time-badge--hours {
+  background: #D4785C;
+  color: #fff;
+}
+
+/* ── Track (the bar background) ── */
+.s1_track {
+  position: relative;
+  height: 48px;
+  background: #F1F5F9;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* ── Fill bar (animated width) ── */
+.s1_fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 8px;
+  width: 0;
+  transition: width 2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.s1_fill--before {
+  background: linear-gradient(90deg, #CBD5E1 0%, #94A3B8 100%);
+}
+.s1_fill--now {
+  background: linear-gradient(90deg, #E8A87C 0%, #D4785C 100%);
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.s1_stage.visible .s1_fill--before {
+  width: 100%;
+  transition-delay: 0.6s;
+}
+.s1_stage.visible .s1_fill--now {
+  width: 22%;
+  transition-delay: 3.0s;
+}
+
+/* ── Stage markers ── */
+.s1_markers {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.s1_marker {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* Before markers — spread across full width */
+.s1_row--before .s1_marker:nth-child(1) { left: 5%; }
+.s1_row--before .s1_marker:nth-child(2) { left: 40%; }
+.s1_row--before .s1_marker:nth-child(3) { left: 70%; }
+.s1_row--before .s1_marker:nth-child(4) { left: 95%; }
+
+.s1_stage.visible .s1_row--before .s1_marker:nth-child(1) { opacity: 1; transition-delay: 1.0s; }
+.s1_stage.visible .s1_row--before .s1_marker:nth-child(2) { opacity: 1; transition-delay: 1.4s; }
+.s1_stage.visible .s1_row--before .s1_marker:nth-child(3) { opacity: 1; transition-delay: 1.8s; }
+.s1_stage.visible .s1_row--before .s1_marker:nth-child(4) { opacity: 1; transition-delay: 2.2s; }
+
+/* Now markers — crammed into the first ~22% */
+.s1_row--now .s1_marker:nth-child(1) { left: 2%; }
+.s1_row--now .s1_marker:nth-child(2) { left: 8%; }
+.s1_row--now .s1_marker:nth-child(3) { left: 15%; }
+.s1_row--now .s1_marker:nth-child(4) { left: 21%; }
+
+.s1_stage.visible .s1_row--now .s1_marker:nth-child(1) { opacity: 1; transition-delay: 3.2s; }
+.s1_stage.visible .s1_row--now .s1_marker:nth-child(2) { opacity: 1; transition-delay: 3.4s; }
+.s1_stage.visible .s1_row--now .s1_marker:nth-child(3) { opacity: 1; transition-delay: 3.6s; }
+.s1_stage.visible .s1_row--now .s1_marker:nth-child(4) { opacity: 1; transition-delay: 3.8s; }
+
+/* ── Marker dot (CSS shapes) ── */
+.s1_dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.s1_dot--vuln {
+  background: #94A3B8;
+  border-radius: 4px;
+  transform: rotate(45deg);
+}
+.s1_dot--patch {
+  background: #94A3B8;
+  border-radius: 50%;
+}
+.s1_dot--reverse {
+  background: #94A3B8;
+  border-radius: 50% 50% 50% 0;
+}
+.s1_dot--exploit {
+  background: #64748B;
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+
+/* Now-row dots use accent colors */
+.s1_row--now .s1_dot--vuln { background: #E8A87C; }
+.s1_row--now .s1_dot--patch { background: #D4785C; }
+.s1_row--now .s1_dot--reverse { background: #D4785C; }
+.s1_row--now .s1_dot--exploit { background: #E05252; }
+
+.s1_marker-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+  white-space: nowrap;
+  color: #475569;
+}
+.s1_row--now .s1_marker-label {
+  color: #1A1A2E;
+  font-weight: 700;
+}
+
+/* ── Connector line between markers ── */
+.s1_connector {
+  position: absolute;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s1_row--before .s1_connector {
+  left: 5%;
+  right: 5%;
+  background: repeating-linear-gradient(90deg, #94A3B8 0, #94A3B8 6px, transparent 6px, transparent 12px);
+}
+.s1_row--now .s1_connector {
+  left: 2%;
+  width: 19%;
+  background: repeating-linear-gradient(90deg, #D4785C 0, #D4785C 4px, transparent 4px, transparent 8px);
+}
+.s1_stage.visible .s1_row--before .s1_connector { opacity: 0.4; transition-delay: 1.0s; }
+.s1_stage.visible .s1_row--now .s1_connector { opacity: 0.5; transition-delay: 3.2s; }
+
+/* ── Time annotations on track ── */
+.s1_time-span {
+  position: absolute;
+  bottom: -20px;
+  font-size: 10px;
+  color: #94A3B8;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s1_row--before .s1_time-span--start { left: 4%; }
+.s1_row--before .s1_time-span--end { right: 2%; }
+.s1_row--now .s1_time-span--start { left: 0%; }
+.s1_row--now .s1_time-span--end { left: 22%; }
+.s1_row--now .s1_time-span { color: #D4785C; font-weight: 600; }
+
+.s1_stage.visible .s1_row--before .s1_time-span { opacity: 1; transition-delay: 2.4s; }
+.s1_stage.visible .s1_row--now .s1_time-span { opacity: 1; transition-delay: 3.8s; }
+
+/* ── Compression badge ── */
+.s1_badge-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.s1_stage.visible .s1_badge-wrap {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 4.2s;
+}
+
+.s1_badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #1A1A2E;
+  color: #fff;
+  padding: 14px 28px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(26, 26, 46, 0.18);
+}
+
+.s1_badge-number {
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: #D4785C;
+  animation: s1_pulse 2s ease-in-out infinite;
+  animation-play-state: paused;
+}
+.s1_stage.visible .s1_badge-number {
+  animation-play-state: running;
+  animation-delay: 4.2s;
+}
+
+@keyframes s1_pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.08); }
+}
+
+.s1_badge-text {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 500;
+  color: #CBD5E1;
+}
+.s1_badge-text strong {
+  display: block;
+  font-size: 14px;
+  color: #fff;
+  font-weight: 700;
+}
+
+/* ── Arrow between rows ── */
+.s1_arrow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: -8px 0 -4px 0;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.s1_stage.visible .s1_arrow {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 2.5s;
+}
+.s1_arrow-icon {
+  width: 32px;
+  height: 32px;
+  background: #7C6BAE;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(124, 107, 174, 0.3);
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .s1_stage { padding: 28px 16px; }
+  .s1_heading h2 { font-size: 18px; }
+  .s1_marker-label { font-size: 8px; }
+  .s1_badge { padding: 10px 20px; }
+  .s1_badge-number { font-size: 28px; }
+  .s1_dot { width: 16px; height: 16px; }
+}
+
+/* === S2 Animation === */
+
+/* ── S2: Pentagon of Agent Properties ── */
+.s2_stage {
+  --s2-bg: #1A1A2E;
+  --s2-accent: #E8A87C;
+  --s2-purple: #B8A9D4;
+  --s2-danger: #E05252;
+  --s2-neutral: #94A3B8;
+  --s2-light: #F1F5F9;
+  --s2-accent-dim: rgba(232,168,124,0.15);
+  --s2-purple-dim: rgba(184,169,212,0.12);
+  --s2-danger-dim: rgba(224,82,82,0.12);
+  --s2-line: rgba(148,163,184,0.18);
+
+  position: relative;
+  background: var(--s2-bg);
+  padding: 56px 20px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  overflow: hidden;
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ── Hub ── */
+.s2_hub {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 2.5px solid var(--s2-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: none;
+  z-index: 2;
+}
+.s2_stage.visible .s2_hub {
+  animation: s2_hubIn 0.7s cubic-bezier(0.34,1.4,0.64,1) 0.15s forwards;
+}
+
+.s2_hub::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  opacity: 0;
+}
+.s2_stage.visible .s2_hub::before {
+  animation: s2_pulseRing 2.4s ease-in-out 0.85s infinite;
+}
+
+.s2_hub_label {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--s2-accent);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.s2_hub_icon {
+  position: absolute;
+  top: -2px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* Simple agent silhouette via stacked shapes */
+.s2_hub_icon::before {
+  content: "";
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--s2-accent-dim);
+  border: 1.5px solid var(--s2-accent);
+  position: absolute;
+  top: 18px;
+}
+.s2_hub_icon::after {
+  content: "";
+  width: 30px;
+  height: 16px;
+  border-radius: 8px 8px 0 0;
+  background: var(--s2-accent-dim);
+  border: 1.5px solid var(--s2-accent);
+  border-bottom: none;
+  position: absolute;
+  top: 40px;
+}
+
+/* ── Connector trunk ── */
+.s2_trunk {
+  width: 1.5px;
+  height: 28px;
+  background: var(--s2-line);
+  flex-shrink: 0;
+  opacity: 0;
+}
+.s2_stage.visible .s2_trunk {
+  animation: s2_lineGrow 0.4s ease 0.7s forwards;
+}
+
+/* ── Property nodes container ── */
+.s2_nodes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  max-width: 400px;
+}
+
+/* ── Single property node ── */
+.s2_node {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(148,163,184,0.08);
+  position: relative;
+  opacity: 0;
+  transform: translateY(18px);
+  transition: none;
+}
+.s2_node:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(148,163,184,0.15);
+}
+
+/* Connector dot above each node */
+.s2_dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--s2-neutral);
+  margin: 0 auto;
+  flex-shrink: 0;
+  opacity: 0;
+}
+/* Connector segment between nodes */
+.s2_seg {
+  width: 1.5px;
+  height: 10px;
+  background: var(--s2-line);
+  margin: 0 auto;
+  flex-shrink: 0;
+  opacity: 0;
+}
+
+/* Stagger animations for nodes, dots, segments */
+.s2_stage.visible .s2_nodes .s2_pair:nth-child(1) .s2_dot { animation: s2_fadeIn 0.3s ease 0.9s forwards; }
+.s2_stage.visible .s2_nodes .s2_pair:nth-child(1) .s2_seg  { animation: s2_lineGrow 0.3s ease 0.95s forwards; }
+.s2_stage.visible .s2_nodes .s2_pair:nth-child(1) .s2_node { animation: s2_nodeIn 0.5s cubic-bezier(0.22,1,0.36,1) 1.05s forwards; }
+
+.s2_stage.visible .s2_nodes .s2_pair:nth-child(2) .s2_dot { animation: s2_fadeIn 0.3s ease 1.35s forwards; }
+.s2_stage.visible .s2_nodes .s2_pair:nth-child(2) .s2_seg  { animation: s2_lineGrow 0.3s ease 1.4s forwards; }
+.s2_stage.visible .s2_nodes .s2_pair:nth-child(2) .s2_node { animation: s2_nodeIn 0.5s cubic-bezier(0.22,1,0.36,1) 1.5s forwards; }
+
+.s2_stage.visible .s2_nodes .s2_pair:nth-child(3) .s2_dot { animation: s2_fadeIn 0.3s ease 1.8s forwards; }
+.s2_stage.visible .s2_nodes .s2_pair:nth-child(3) .s2_seg  { animation: s2_lineGrow 0.3s ease 1.85s forwards; }
+.s2_stage.visible .s2_nodes .s2_pair:nth-child(3) .s2_node { animation: s2_nodeIn 0.5s cubic-bezier(0.22,1,0.36,1) 1.95s forwards; }
+
+.s2_stage.visible .s2_nodes .s2_pair:nth-child(4) .s2_dot { animation: s2_fadeIn 0.3s ease 2.25s forwards; }
+.s2_stage.visible .s2_nodes .s2_pair:nth-child(4) .s2_seg  { animation: s2_lineGrow 0.3s ease 2.3s forwards; }
+.s2_stage.visible .s2_nodes .s2_pair:nth-child(4) .s2_node { animation: s2_nodeIn 0.5s cubic-bezier(0.22,1,0.36,1) 2.4s forwards; }
+
+.s2_stage.visible .s2_nodes .s2_pair:nth-child(5) .s2_dot { animation: s2_fadeIn 0.3s ease 2.7s forwards; }
+.s2_stage.visible .s2_nodes .s2_pair:nth-child(5) .s2_seg  { animation: s2_lineGrow 0.3s ease 2.75s forwards; }
+.s2_stage.visible .s2_nodes .s2_pair:nth-child(5) .s2_node { animation: s2_nodeIn 0.5s cubic-bezier(0.22,1,0.36,1) 2.85s forwards; }
+
+/* ── Icon boxes ── */
+.s2_icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* 1 - Gear (Autonomous Execution) */
+.s2_icon_gear {
+  background: var(--s2-accent-dim);
+  border: 1px solid rgba(232,168,124,0.3);
+}
+.s2_icon_gear::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2.5px solid var(--s2-accent);
+  background: transparent;
+}
+.s2_icon_gear::after {
+  content: "";
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px dashed rgba(232,168,124,0.4);
+}
+
+/* 2 - Plug (Tool Access) */
+.s2_icon_plug {
+  background: var(--s2-purple-dim);
+  border: 1px solid rgba(184,169,212,0.3);
+}
+.s2_icon_plug::before {
+  content: "";
+  width: 12px;
+  height: 8px;
+  border: 2px solid var(--s2-purple);
+  border-radius: 2px;
+  position: absolute;
+  top: 12px;
+}
+.s2_icon_plug::after {
+  content: "";
+  width: 6px;
+  height: 10px;
+  background: var(--s2-purple);
+  border-radius: 0 0 2px 2px;
+  position: absolute;
+  top: 20px;
+}
+
+/* 3 - Question mark (Decision Ambiguity) */
+.s2_icon_question {
+  background: rgba(232,168,124,0.08);
+  border: 1px solid rgba(232,168,124,0.25);
+}
+.s2_icon_question::before {
+  content: "?";
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--s2-accent);
+  line-height: 1;
+}
+
+/* 4 - DB/Memory (Context Persistence) */
+.s2_icon_db {
+  background: var(--s2-purple-dim);
+  border: 1px solid rgba(184,169,212,0.3);
+}
+.s2_icon_db::before {
+  content: "";
+  width: 18px;
+  height: 6px;
+  border: 2px solid var(--s2-purple);
+  border-radius: 50%;
+  position: absolute;
+  top: 11px;
+}
+.s2_icon_db::after {
+  content: "";
+  width: 18px;
+  height: 14px;
+  border-left: 2px solid var(--s2-purple);
+  border-right: 2px solid var(--s2-purple);
+  border-bottom: 2px solid var(--s2-purple);
+  border-radius: 0 0 4px 4px;
+  position: absolute;
+  top: 14px;
+}
+
+/* 5 - Network (Multi-Agent) */
+.s2_icon_net {
+  background: rgba(232,168,124,0.08);
+  border: 1px solid rgba(232,168,124,0.25);
+}
+.s2_icon_net::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--s2-accent);
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  box-shadow:
+    12px 0 0 0 var(--s2-accent),
+    6px 12px 0 0 var(--s2-accent);
+}
+.s2_icon_net::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 0;
+  border-top: 1.5px solid rgba(232,168,124,0.5);
+  top: 14px;
+  left: 13px;
+  transform: rotate(0deg);
+  box-shadow:
+    -4px 8px 0 0 rgba(232,168,124,0.4);
+}
+
+/* ── Node text ── */
+.s2_node_text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.s2_node_zh {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--s2-light);
+  line-height: 1.3;
+}
+.s2_node_en {
+  font-size: 12px;
+  color: var(--s2-neutral);
+  line-height: 1.3;
+}
+
+/* ── Node number badge ── */
+.s2_node_num {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--s2-bg);
+  border: 1.5px solid var(--s2-neutral);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--s2-neutral);
+}
+
+/* ── Concept badges at bottom ── */
+.s2_concepts {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.s2_badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(16px) scale(0.95);
+  transition: none;
+}
+
+.s2_badge_danger {
+  background: var(--s2-danger-dim);
+  border: 1.5px solid rgba(224,82,82,0.35);
+  color: #F87171;
+}
+.s2_badge_accent {
+  background: var(--s2-accent-dim);
+  border: 1.5px solid rgba(232,168,124,0.35);
+  color: var(--s2-accent);
+}
+
+.s2_badge_icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.s2_badge_danger .s2_badge_icon {
+  background: rgba(224,82,82,0.2);
+  border: 1px solid rgba(224,82,82,0.4);
+}
+.s2_badge_accent .s2_badge_icon {
+  background: rgba(232,168,124,0.2);
+  border: 1px solid rgba(232,168,124,0.4);
+}
+
+/* Blast radius expanding ring */
+.s2_blast_ring {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(224,82,82,0.5);
+  position: relative;
+}
+.s2_stage.visible .s2_blast_ring::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(224,82,82,0.6);
+  animation: s2_blastPulse 2s ease-in-out 3.8s infinite;
+  opacity: 0;
+}
+
+/* Shield for least agency */
+.s2_shield {
+  position: relative;
+  width: 12px;
+  height: 14px;
+}
+.s2_shield::before {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 14px;
+  border: 2px solid var(--s2-accent);
+  border-radius: 2px 2px 6px 6px;
+  clip-path: polygon(50% 0%, 100% 15%, 100% 65%, 50% 100%, 0% 65%, 0% 15%);
+  background: rgba(232,168,124,0.25);
+}
+
+.s2_stage.visible .s2_badge_danger {
+  animation: s2_badgeIn 0.6s cubic-bezier(0.22,1,0.36,1) 3.3s forwards;
+}
+.s2_stage.visible .s2_badge_accent {
+  animation: s2_badgeIn 0.6s cubic-bezier(0.22,1,0.36,1) 3.55s forwards;
+}
+
+/* ── Decorative corner lines ── */
+.s2_stage::before {
+  content: "";
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-top: 1.5px solid rgba(148,163,184,0.1);
+  border-right: 1.5px solid rgba(148,163,184,0.1);
+  opacity: 0;
+}
+.s2_stage.visible::before {
+  animation: s2_fadeIn 0.6s ease 0.2s forwards;
+}
+.s2_stage::after {
+  content: "";
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  width: 40px;
+  height: 40px;
+  border-bottom: 1.5px solid rgba(148,163,184,0.1);
+  border-left: 1.5px solid rgba(148,163,184,0.1);
+  opacity: 0;
+}
+.s2_stage.visible::after {
+  animation: s2_fadeIn 0.6s ease 0.2s forwards;
+}
+
+/* ── Section label ── */
+.s2_label {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--s2-neutral);
+  margin-bottom: 24px;
+  opacity: 0;
+}
+.s2_stage.visible .s2_label {
+  animation: s2_fadeIn 0.5s ease 0.1s forwards;
+}
+
+/* ── Keyframes ── */
+@keyframes s2_hubIn {
+  0% { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s2_pulseRing {
+  0%, 100% {
+    border-color: transparent;
+    transform: scale(1);
+    opacity: 0;
+  }
+  20% { opacity: 0.6; border-color: rgba(232,168,124,0.4); }
+  80% { opacity: 0; border-color: rgba(232,168,124,0.05); transform: scale(1.5); }
+}
+
+@keyframes s2_fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes s2_lineGrow {
+  0% { opacity: 0; transform: scaleY(0); }
+  100% { opacity: 1; transform: scaleY(1); }
+}
+
+@keyframes s2_nodeIn {
+  0% { opacity: 0; transform: translateY(18px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s2_badgeIn {
+  0% { opacity: 0; transform: translateY(16px) scale(0.95); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes s2_blastPulse {
+  0%, 100% { opacity: 0; transform: scale(1); }
+  15% { opacity: 0.7; }
+  70% { opacity: 0; transform: scale(2.2); }
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .s2_stage { padding: 40px 12px 36px; }
+  .s2_node { padding: 12px 14px; gap: 12px; }
+  .s2_icon { width: 36px; height: 36px; border-radius: 8px; }
+  .s2_node_zh { font-size: 14px; }
+  .s2_concepts { gap: 8px; }
+  .s2_badge { padding: 8px 14px; font-size: 13px; }
+}
+
+/* === S3 Animation === */
+
+/* ═══ S3: Threat Matrix Grid ═══ */
+.s3_stage{
+  width:100%;
+  position:relative;
+}
+
+/* Grid layout */
+.s3_grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+@media(max-width:480px){
+  .s3_grid{grid-template-columns:1fr;gap:10px;}
+}
+
+/* Individual card */
+.s3_card{
+  background:#FFFFFF;
+  border-radius:10px;
+  border-left:3.5px solid var(--s3-accent,#94A3B8);
+  padding:14px 14px 12px;
+  opacity:0;
+  transform:translateY(18px) scale(0.97);
+  transition:opacity 0.5s ease,transform 0.5s ease;
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 1px 4px rgba(0,0,0,0.06);
+}
+
+/* Staggered entry */
+.s3_stage.visible .s3_card:nth-child(1){opacity:1;transform:translateY(0) scale(1);transition-delay:0s;}
+.s3_stage.visible .s3_card:nth-child(2){opacity:1;transform:translateY(0) scale(1);transition-delay:0.4s;}
+.s3_stage.visible .s3_card:nth-child(3){opacity:1;transform:translateY(0) scale(1);transition-delay:0.8s;}
+.s3_stage.visible .s3_card:nth-child(4){opacity:1;transform:translateY(0) scale(1);transition-delay:1.2s;}
+.s3_stage.visible .s3_card:nth-child(5){opacity:1;transform:translateY(0) scale(1);transition-delay:1.6s;}
+.s3_stage.visible .s3_card:nth-child(6){opacity:1;transform:translateY(0) scale(1);transition-delay:2.0s;}
+
+/* Card header row: icon + title + badge */
+.s3_head{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:6px;
+}
+
+.s3_icon{
+  width:30px;
+  height:30px;
+  border-radius:7px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:15px;
+  flex-shrink:0;
+  background:var(--s3-icon-bg,#F1F5F9);
+  color:var(--s3-accent,#94A3B8);
+}
+
+.s3_name{
+  font-size:14px;
+  font-weight:600;
+  color:#1E293B;
+  flex:1;
+  line-height:1.3;
+}
+
+.s3_badge{
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:0.03em;
+  padding:2px 7px;
+  border-radius:4px;
+  white-space:nowrap;
+  flex-shrink:0;
+  background:var(--s3-badge-bg,#F1F5F9);
+  color:var(--s3-badge-color,#64748B);
+}
+
+/* Description */
+.s3_desc{
+  font-size:12px;
+  line-height:1.55;
+  color:#64748B;
+  margin-bottom:8px;
+}
+
+/* Severity bar */
+.s3_severity{
+  height:3px;
+  border-radius:2px;
+  background:#F1F5F9;
+  overflow:hidden;
+}
+.s3_severity_fill{
+  height:100%;
+  border-radius:2px;
+  width:0%;
+  background:var(--s3-accent,#94A3B8);
+  transition:width 0.8s ease;
+}
+
+/* Animate severity bars after cards appear */
+.s3_stage.visible .s3_card:nth-child(1) .s3_severity_fill{width:100%;transition-delay:0.3s;}
+.s3_stage.visible .s3_card:nth-child(2) .s3_severity_fill{width:78%;transition-delay:0.7s;}
+.s3_stage.visible .s3_card:nth-child(3) .s3_severity_fill{width:70%;transition-delay:1.1s;}
+.s3_stage.visible .s3_card:nth-child(4) .s3_severity_fill{width:85%;transition-delay:1.5s;}
+.s3_stage.visible .s3_card:nth-child(5) .s3_severity_fill{width:65%;transition-delay:1.9s;}
+.s3_stage.visible .s3_card:nth-child(6) .s3_severity_fill{width:50%;transition-delay:2.3s;}
+
+/* ═══ Interconnect overlay pulse ═══ */
+.s3_interconnect{
+  position:absolute;
+  inset:0;
+  border-radius:12px;
+  border:2px solid transparent;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity 0.4s ease;
+}
+.s3_stage.visible .s3_interconnect{
+  opacity:1;
+  transition-delay:2.8s;
+  animation:s3_pulse 2.5s ease-in-out 3.2s infinite;
+}
+@keyframes s3_pulse{
+  0%{border-color:rgba(124,107,174,0);box-shadow:inset 0 0 0 0 rgba(124,107,174,0);}
+  40%{border-color:rgba(124,107,174,0.25);box-shadow:inset 0 0 20px 2px rgba(124,107,174,0.06);}
+  100%{border-color:rgba(124,107,174,0);box-shadow:inset 0 0 0 0 rgba(124,107,174,0);}
+}
+
+/* ═══ Footer tag ═══ */
+.s3_footer{
+  text-align:center;
+  margin-top:12px;
+  opacity:0;
+  transform:translateY(8px);
+  transition:opacity 0.5s ease,transform 0.5s ease;
+}
+.s3_stage.visible .s3_footer{
+  opacity:1;
+  transform:translateY(0);
+  transition-delay:2.8s;
+}
+.s3_footer_tag{
+  display:inline-block;
+  font-size:11px;
+  font-weight:600;
+  color:#7C6BAE;
+  background:rgba(124,107,174,0.09);
+  padding:4px 12px;
+  border-radius:6px;
+  letter-spacing:0.02em;
+}
+
+/* === S4 Animation === */
+
+/* ── S4: Three-Tier Zero Trust Framework ── */
+.s4_stage {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 32px 20px 24px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #F1F5F9;
+}
+
+/* ── Layout: domains on left, tiers on right ── */
+.s4_body {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+}
+
+/* ── Domain labels (left column) ── */
+.s4_domains {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0;
+  padding-bottom: 38px; /* align with tier stack bottom */
+  flex-shrink: 0;
+  width: 72px;
+}
+.s4_domain {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  opacity: 0;
+  transform: translateX(-12px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.s4_stage.visible .s4_domain { opacity: 1; transform: translateX(0); }
+.s4_stage.visible .s4_domain:nth-child(1) { transition-delay: 0.3s; }
+.s4_stage.visible .s4_domain:nth-child(2) { transition-delay: 0.45s; }
+.s4_stage.visible .s4_domain:nth-child(3) { transition-delay: 0.6s; }
+.s4_stage.visible .s4_domain:nth-child(4) { transition-delay: 0.75s; }
+.s4_stage.visible .s4_domain:nth-child(5) { transition-delay: 0.9s; }
+.s4_stage.visible .s4_domain:nth-child(6) { transition-delay: 1.05s; }
+.s4_stage.visible .s4_domain:nth-child(7) { transition-delay: 1.2s; }
+
+.s4_domain_label {
+  font-size: 11px;
+  color: #94A3B8;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+}
+
+/* ── Dot indicators next to domain labels ── */
+.s4_dots {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+.s4_dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(148,163,184,0.2);
+  transition: background 0.4s ease, box-shadow 0.4s ease;
+}
+.s4_dot--f { /* foundation dot */ }
+.s4_dot--e { /* enterprise dot */ }
+.s4_dot--a { /* advanced dot */ }
+
+/* Dots light up with tier animations */
+.s4_stage.visible .s4_dot--f {
+  background: #94A3B8;
+  box-shadow: 0 0 4px rgba(148,163,184,0.5);
+}
+.s4_stage.visible .s4_domain:nth-child(1) .s4_dot--f { transition-delay: 1.0s; }
+.s4_stage.visible .s4_domain:nth-child(2) .s4_dot--f { transition-delay: 1.1s; }
+.s4_stage.visible .s4_domain:nth-child(3) .s4_dot--f { transition-delay: 1.2s; }
+.s4_stage.visible .s4_domain:nth-child(4) .s4_dot--f { transition-delay: 1.3s; }
+.s4_stage.visible .s4_domain:nth-child(5) .s4_dot--f { transition-delay: 1.4s; }
+.s4_stage.visible .s4_domain:nth-child(6) .s4_dot--f { transition-delay: 1.5s; }
+.s4_stage.visible .s4_domain:nth-child(7) .s4_dot--f { transition-delay: 1.6s; }
+
+.s4_stage.visible .s4_dot--e {
+  background: #E8A87C;
+  box-shadow: 0 0 4px rgba(232,168,124,0.5);
+}
+.s4_stage.visible .s4_domain:nth-child(1) .s4_dot--e { transition-delay: 2.4s; }
+.s4_stage.visible .s4_domain:nth-child(2) .s4_dot--e { transition-delay: 2.5s; }
+.s4_stage.visible .s4_domain:nth-child(3) .s4_dot--e { transition-delay: 2.6s; }
+.s4_stage.visible .s4_domain:nth-child(4) .s4_dot--e { transition-delay: 2.7s; }
+.s4_stage.visible .s4_domain:nth-child(5) .s4_dot--e { transition-delay: 2.8s; }
+.s4_stage.visible .s4_domain:nth-child(6) .s4_dot--e { transition-delay: 2.9s; }
+.s4_stage.visible .s4_domain:nth-child(7) .s4_dot--e { transition-delay: 3.0s; }
+
+.s4_stage.visible .s4_dot--a {
+  background: #B8A9D4;
+  box-shadow: 0 0 4px rgba(184,169,212,0.5);
+}
+.s4_stage.visible .s4_domain:nth-child(1) .s4_dot--a { transition-delay: 3.8s; }
+.s4_stage.visible .s4_domain:nth-child(2) .s4_dot--a { transition-delay: 3.9s; }
+.s4_stage.visible .s4_domain:nth-child(3) .s4_dot--a { transition-delay: 4.0s; }
+.s4_stage.visible .s4_domain:nth-child(4) .s4_dot--a { transition-delay: 4.1s; }
+.s4_stage.visible .s4_domain:nth-child(5) .s4_dot--a { transition-delay: 4.2s; }
+.s4_stage.visible .s4_domain:nth-child(6) .s4_dot--a { transition-delay: 4.3s; }
+.s4_stage.visible .s4_domain:nth-child(7) .s4_dot--a { transition-delay: 4.4s; }
+
+/* ── Tier stack (right area) ── */
+.s4_tiers {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+/* ── Individual tier bar ── */
+.s4_tier {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  height: 56px;
+  display: flex;
+  align-items: center;
+}
+.s4_tier_fill {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 1.0s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.s4_tier_content {
+  position: relative;
+  z-index: 1;
+  padding: 0 14px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.s4_tier_name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+.s4_tier_sub {
+  font-size: 10px;
+  opacity: 0.75;
+  letter-spacing: 0.2px;
+}
+
+/* Foundation tier */
+.s4_tier--f .s4_tier_fill { background: rgba(148,163,184,0.2); border: 1px solid rgba(148,163,184,0.35); }
+.s4_tier--f .s4_tier_name { color: #CBD5E1; }
+.s4_tier--f .s4_tier_sub { color: #94A3B8; }
+
+/* Enterprise tier */
+.s4_tier--e .s4_tier_fill { background: rgba(232,168,124,0.15); border: 1px solid rgba(232,168,124,0.35); }
+.s4_tier--e .s4_tier_name { color: #E8A87C; }
+.s4_tier--e .s4_tier_sub { color: #E8A87C; }
+
+/* Advanced tier */
+.s4_tier--a .s4_tier_fill { background: rgba(184,169,212,0.15); border: 1px solid rgba(184,169,212,0.35); }
+.s4_tier--a .s4_tier_name { color: #B8A9D4; }
+.s4_tier--a .s4_tier_sub { color: #B8A9D4; }
+
+/* Tier grow animation triggered by .visible */
+.s4_stage.visible .s4_tier--f .s4_tier_fill {
+  transform: scaleX(1);
+  transition-delay: 0.6s;
+}
+.s4_stage.visible .s4_tier--f .s4_tier_content {
+  opacity: 1;
+  transition-delay: 1.2s;
+}
+
+.s4_stage.visible .s4_tier--e .s4_tier_fill {
+  transform: scaleX(1);
+  transition-delay: 2.0s;
+}
+.s4_stage.visible .s4_tier--e .s4_tier_content {
+  opacity: 1;
+  transition-delay: 2.6s;
+}
+
+.s4_stage.visible .s4_tier--a .s4_tier_fill {
+  transform: scaleX(1);
+  transition-delay: 3.4s;
+}
+.s4_stage.visible .s4_tier--a .s4_tier_content {
+  opacity: 1;
+  transition-delay: 4.0s;
+}
+
+/* ── Tier width indicators (progression widths) ── */
+.s4_tier--f { width: 100%; }
+.s4_tier--e { width: 82%; }
+.s4_tier--a { width: 64%; }
+
+/* ── Arrow connectors between tiers ── */
+.s4_arrow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 24px;
+  height: 18px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s4_arrow svg {
+  width: 14px;
+  height: 14px;
+}
+.s4_stage.visible .s4_arrow--1 { opacity: 0.5; transition-delay: 1.8s; }
+.s4_stage.visible .s4_arrow--2 { opacity: 0.5; transition-delay: 3.2s; }
+
+/* ── Bottom quote ── */
+.s4_quote {
+  text-align: center;
+  margin-top: 24px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.s4_stage.visible .s4_quote {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 4.6s;
+}
+.s4_quote_text {
+  font-size: 13px;
+  color: #E05252;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+@keyframes s4_pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+.s4_stage.visible .s4_quote_text {
+  animation: s4_pulse 2.5s ease-in-out infinite;
+  animation-delay: 5.2s;
+}
+
+.s4_quote_sub {
+  font-size: 10px;
+  color: #94A3B8;
+  margin-top: 4px;
+}
+
+/* ── Heading ── */
+.s4_heading {
+  text-align: center;
+  margin-bottom: 24px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s4_stage.visible .s4_heading {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.1s;
+}
+.s4_heading_title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #F1F5F9;
+  letter-spacing: 0.5px;
+  margin: 0 0 4px 0;
+}
+.s4_heading_sub {
+  font-size: 11px;
+  color: #94A3B8;
+  margin: 0;
+}
+
+/* === S5 Animation === */
+
+.s5_stage {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 48px 24px 56px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  position: relative;
+}
+
+/* --- vertical spine --- */
+.s5_pipeline {
+  position: relative;
+  padding-left: 28px;
+}
+
+.s5_spine {
+  position: absolute;
+  left: 17px;
+  top: 18px;
+  bottom: 18px;
+  width: 2px;
+  background: #CBD5E1;
+  transform-origin: top center;
+  transform: scaleY(0);
+  transition: transform 1.8s cubic-bezier(0.22, 1, 0.36, 1) 0.15s;
+}
+
+.s5_stage.visible .s5_spine {
+  transform: scaleY(1);
+}
+
+/* --- node row --- */
+.s5_node {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  position: relative;
+  padding-bottom: 20px;
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.s5_stage.visible .s5_node { opacity: 1; transform: translateY(0); }
+.s5_stage.visible .s5_node:nth-child(1) { transition-delay: 0.2s; }
+.s5_stage.visible .s5_node:nth-child(2) { transition-delay: 0.4s; }
+.s5_stage.visible .s5_node:nth-child(3) { transition-delay: 0.6s; }
+.s5_stage.visible .s5_node:nth-child(4) { transition-delay: 0.8s; }
+.s5_stage.visible .s5_node:nth-child(5) { transition-delay: 1.0s; }
+.s5_stage.visible .s5_node:nth-child(6) { transition-delay: 1.2s; }
+.s5_stage.visible .s5_node:nth-child(7) { transition-delay: 1.4s; }
+.s5_stage.visible .s5_node:nth-child(8) { transition-delay: 1.6s; }
+
+.s5_node:last-child {
+  padding-bottom: 0;
+}
+
+/* --- circle marker --- */
+.s5_circle {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2.5px solid #94A3B8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #64748B;
+  position: relative;
+  z-index: 2;
+  transition: border-color 0.4s ease, background 0.4s ease, color 0.4s ease, transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.s5_stage.visible .s5_circle {
+  border-color: #7C6BAE;
+  color: #7C6BAE;
+}
+
+/* highlighted phase 4 circle */
+.s5_node--critical .s5_circle {
+  width: 42px;
+  height: 42px;
+  font-size: 16px;
+  margin-left: -3px;
+  margin-right: -3px;
+}
+
+.s5_stage.visible .s5_node--critical .s5_circle {
+  border-color: #E05252;
+  background: #E05252;
+  color: #fff;
+  box-shadow: 0 0 0 5px rgba(224, 82, 82, 0.15);
+  transform: scale(1.05);
+}
+
+/* --- content block --- */
+.s5_content {
+  padding-top: 5px;
+  min-width: 0;
+}
+
+.s5_node--critical .s5_content {
+  padding-top: 8px;
+}
+
+.s5_phase_name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1E293B;
+  line-height: 1.3;
+  margin: 0 0 2px;
+}
+
+.s5_phase_en {
+  font-size: 11px;
+  color: #94A3B8;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  margin-left: 6px;
+}
+
+.s5_stat {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748B;
+  background: rgba(124, 107, 174, 0.09);
+  padding: 2px 10px;
+  border-radius: 10px;
+  line-height: 1.6;
+  transition: background 0.4s ease 0.3s, color 0.4s ease 0.3s;
+}
+
+.s5_stage.visible .s5_stat {
+  color: #7C6BAE;
+}
+
+/* danger stat variant for phase 4 */
+.s5_stat--danger {
+  background: rgba(224, 82, 82, 0.08);
+  color: #94A3B8;
+}
+
+.s5_stage.visible .s5_stat--danger {
+  color: #E05252;
+  background: rgba(224, 82, 82, 0.1);
+}
+
+.s5_stat_arrow {
+  display: inline-block;
+  margin: 0 2px;
+  transition: transform 0.3s ease;
+}
+
+.s5_stage.visible .s5_stat_arrow {
+  animation: s5_arrow_pulse 1.2s ease 2.2s 2;
+}
+
+@keyframes s5_arrow_pulse {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(3px); }
+}
+
+/* --- pulse on circles after they appear --- */
+.s5_stage.visible .s5_node:nth-child(1) .s5_circle { animation: s5_pop 0.35s ease 0.35s both; }
+.s5_stage.visible .s5_node:nth-child(2) .s5_circle { animation: s5_pop 0.35s ease 0.55s both; }
+.s5_stage.visible .s5_node:nth-child(3) .s5_circle { animation: s5_pop 0.35s ease 0.75s both; }
+.s5_stage.visible .s5_node:nth-child(4) .s5_circle { animation: s5_pop_critical 0.5s ease 0.95s both; }
+.s5_stage.visible .s5_node:nth-child(5) .s5_circle { animation: s5_pop 0.35s ease 1.15s both; }
+.s5_stage.visible .s5_node:nth-child(6) .s5_circle { animation: s5_pop 0.35s ease 1.35s both; }
+.s5_stage.visible .s5_node:nth-child(7) .s5_circle { animation: s5_pop 0.35s ease 1.55s both; }
+.s5_stage.visible .s5_node:nth-child(8) .s5_circle { animation: s5_pop 0.35s ease 1.75s both; }
+
+@keyframes s5_pop {
+  0% { transform: scale(0.5); }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+@keyframes s5_pop_critical {
+  0% { transform: scale(0.5); }
+  50% { transform: scale(1.2); }
+  75% { transform: scale(1.0); }
+  100% { transform: scale(1.05); }
+}
+
+/* --- section heading --- */
+.s5_heading {
+  text-align: center;
+  margin-bottom: 36px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.s5_stage.visible .s5_heading {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.s5_heading_label {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #D4785C;
+  margin-bottom: 8px;
+}
+
+.s5_heading_title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1E293B;
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* --- completion badge at bottom --- */
+.s5_completion {
+  text-align: center;
+  margin-top: 32px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s ease 2.0s, transform 0.5s ease 2.0s;
+}
+
+.s5_stage.visible .s5_completion {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.s5_completion_pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #7C6BAE;
+  background: rgba(124, 107, 174, 0.1);
+  padding: 6px 16px;
+  border-radius: 14px;
+}
+
+.s5_completion_icon {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #7C6BAE;
+  position: relative;
+}
+
+.s5_completion_icon::after {
+  content: '';
+  position: absolute;
+  top: 3.5px;
+  left: 3px;
+  width: 4.5px;
+  height: 7px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(40deg);
+}
+
+/* === S6 Animation === */
+
+.s6_stage {
+  --s6-bg: #1A1A2E;
+  --s6-accent: #E8A87C;
+  --s6-accent2: #B8A9D4;
+  --s6-danger: #E05252;
+  --s6-neutral: #94A3B8;
+  --s6-text: #F1F5F9;
+  background: var(--s6-bg);
+  color: var(--s6-text);
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  padding: 2rem 1.2rem;
+  max-width: 600px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* --- Title --- */
+.s6_title {
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-bottom: 1.6rem;
+  opacity: 0;
+  transform: translateY(-12px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s6_stage.visible .s6_title {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* --- Comparison columns --- */
+.s6_compare {
+  display: flex;
+  gap: 0.6rem;
+  align-items: stretch;
+  margin-bottom: 1.4rem;
+}
+.s6_col {
+  flex: 1;
+  border: 1px solid rgba(148,163,184,0.18);
+  border-radius: 10px;
+  padding: 1rem 0.7rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.s6_stage.visible .s6_col--left {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.25s;
+}
+.s6_stage.visible .s6_col--right {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.65s;
+}
+
+/* Icon area */
+.s6_icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  position: relative;
+  flex-shrink: 0;
+}
+.s6_icon--human {
+  background: rgba(224,82,82,0.13);
+  border: 1.5px solid var(--s6-danger);
+}
+.s6_icon--ai {
+  background: rgba(232,168,124,0.13);
+  border: 1.5px solid var(--s6-accent);
+}
+
+/* Clock ring around icon */
+.s6_icon::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 2px dashed transparent;
+}
+.s6_stage.visible .s6_icon--human::after {
+  border-color: rgba(224,82,82,0.35);
+  animation: s6_spin_slow 8s linear infinite;
+  animation-delay: 0.6s;
+}
+.s6_stage.visible .s6_icon--ai::after {
+  border-color: rgba(232,168,124,0.45);
+  animation: s6_spin_fast 1.5s linear infinite;
+  animation-delay: 1s;
+}
+
+@keyframes s6_spin_slow {
+  to { transform: rotate(360deg); }
+}
+@keyframes s6_spin_fast {
+  to { transform: rotate(360deg); }
+}
+
+.s6_col_label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--s6-neutral);
+}
+.s6_col_desc {
+  font-size: 0.82rem;
+  text-align: center;
+  line-height: 1.35;
+  color: var(--s6-text);
+  opacity: 0.88;
+}
+
+/* Badge */
+.s6_badge {
+  display: inline-block;
+  padding: 0.18rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin-top: 0.15rem;
+}
+.s6_badge--danger {
+  background: rgba(224,82,82,0.18);
+  color: var(--s6-danger);
+  border: 1px solid rgba(224,82,82,0.35);
+}
+.s6_badge--accent {
+  background: rgba(232,168,124,0.18);
+  color: var(--s6-accent);
+  border: 1px solid rgba(232,168,124,0.35);
+}
+
+/* --- Center flow arrow section --- */
+.s6_flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.4rem;
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.s6_stage.visible .s6_flow {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 1.1s;
+}
+.s6_flow_box {
+  flex: 1;
+  border-radius: 8px;
+  padding: 0.55rem 0.5rem;
+  font-size: 0.73rem;
+  line-height: 1.4;
+  text-align: center;
+}
+.s6_flow_box--ai {
+  background: rgba(232,168,124,0.1);
+  border: 1px solid rgba(232,168,124,0.25);
+}
+.s6_flow_box--human {
+  background: rgba(184,169,212,0.1);
+  border: 1px solid rgba(184,169,212,0.25);
+}
+.s6_flow_box_title {
+  font-weight: 700;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.25rem;
+}
+.s6_flow_box--ai .s6_flow_box_title { color: var(--s6-accent); }
+.s6_flow_box--human .s6_flow_box_title { color: var(--s6-accent2); }
+
+/* Arrow between flow boxes */
+.s6_flow_arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+  color: var(--s6-neutral);
+  font-size: 0.65rem;
+  opacity: 0.7;
+}
+.s6_flow_arrow_line {
+  width: 28px;
+  height: 2px;
+  background: var(--s6-neutral);
+  position: relative;
+  opacity: 0.5;
+}
+.s6_flow_arrow_line::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: -3px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid var(--s6-neutral);
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  opacity: 0.5;
+}
+.s6_stage.visible .s6_flow_arrow_line {
+  animation: s6_pulse_arrow 2s ease-in-out infinite;
+  animation-delay: 1.6s;
+}
+@keyframes s6_pulse_arrow {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.85; }
+}
+
+/* --- MITRE coverage bar --- */
+.s6_mitre {
+  margin-bottom: 1.3rem;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.s6_stage.visible .s6_mitre {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 1.5s;
+}
+.s6_mitre_label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--s6-neutral);
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+.s6_mitre_bar {
+  display: flex;
+  gap: 4px;
+  height: 28px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.s6_mitre_block {
+  flex: 1;
+  border-radius: 4px;
+  background: rgba(148,163,184,0.1);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+.s6_mitre_fill {
+  width: 100%;
+  border-radius: 4px;
+  transition: height 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  height: 0;
+}
+.s6_stage.visible .s6_mitre_fill--1 { height: 85%; background: var(--s6-accent); opacity: 0.7; transition-delay: 1.9s; }
+.s6_stage.visible .s6_mitre_fill--2 { height: 62%; background: var(--s6-accent2); opacity: 0.65; transition-delay: 2.05s; }
+.s6_stage.visible .s6_mitre_fill--3 { height: 90%; background: var(--s6-accent); opacity: 0.75; transition-delay: 2.2s; }
+.s6_stage.visible .s6_mitre_fill--4 { height: 45%; background: var(--s6-danger); opacity: 0.6; transition-delay: 2.35s; }
+.s6_stage.visible .s6_mitre_fill--5 { height: 72%; background: var(--s6-accent2); opacity: 0.7; transition-delay: 2.5s; }
+
+.s6_mitre_labels {
+  display: flex;
+  gap: 4px;
+  margin-top: 0.3rem;
+}
+.s6_mitre_labels span {
+  flex: 1;
+  text-align: center;
+  font-size: 0.55rem;
+  color: var(--s6-neutral);
+  opacity: 0.7;
+}
+
+/* --- Bottom pulsing badge --- */
+.s6_tabletop {
+  text-align: center;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s6_stage.visible .s6_tabletop {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 2.6s;
+}
+.s6_tabletop_badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1rem;
+  border-radius: 24px;
+  background: rgba(232,168,124,0.08);
+  border: 1.5px solid rgba(232,168,124,0.3);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--s6-text);
+}
+.s6_stage.visible .s6_tabletop_badge {
+  animation: s6_pulse_badge 2.5s ease-in-out infinite;
+  animation-delay: 3s;
+}
+@keyframes s6_pulse_badge {
+  0%, 100% { border-color: rgba(232,168,124,0.25); box-shadow: 0 0 0 0 rgba(232,168,124,0); }
+  50% { border-color: rgba(232,168,124,0.55); box-shadow: 0 0 18px 2px rgba(232,168,124,0.12); }
+}
+.s6_tabletop_dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--s6-accent);
+  flex-shrink: 0;
+}
+.s6_stage.visible .s6_tabletop_dot {
+  animation: s6_dot_blink 1.8s ease-in-out infinite;
+  animation-delay: 3s;
+}
+@keyframes s6_dot_blink {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* --- Divider line --- */
+.s6_divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(148,163,184,0.2), transparent);
+  margin: 0.2rem 0 1rem;
+}
+
+/* === A1 Animation === */
+
+.a1_stage {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  background: #FFF5F0;
+  border-radius: 16px;
+  font-family: -apple-system, "Segoe UI", sans-serif;
+  color: #1E293B;
+  overflow: hidden;
+}
+
+/* ── Attack Section ── */
+.a1_attack_zone {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.a1_path {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  transform: translateY(-30px);
+}
+
+.a1_stage.visible .a1_path_direct {
+  animation: a1_slidein 0.6s 0.2s ease-out forwards;
+}
+.a1_stage.visible .a1_path_indirect {
+  animation: a1_slidein 0.6s 0.5s ease-out forwards;
+}
+
+.a1_path_label {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  margin-bottom: 10px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  text-align: center;
+}
+.a1_path_direct .a1_path_label {
+  background: #E05252;
+  color: #fff;
+}
+.a1_path_indirect .a1_path_label {
+  background: #7C6BAE;
+  color: #fff;
+}
+
+/* ── Direct arrow ── */
+.a1_arrow_direct {
+  width: 4px;
+  height: 70px;
+  background: #E05252;
+  position: relative;
+  border-radius: 2px;
+}
+.a1_arrow_direct::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 14px solid #E05252;
+}
+
+.a1_badge {
+  margin-top: 6px;
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #E05252;
+  background: rgba(224,82,82,0.1);
+  padding: 2px 10px;
+  border-radius: 10px;
+  opacity: 0;
+}
+.a1_stage.visible .a1_badge {
+  animation: a1_pulse 1.2s 0.9s ease-in-out infinite;
+}
+
+/* ── Indirect path ── */
+.a1_arrow_indirect_wrap {
+  width: 100%;
+  height: 90px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+.a1_arrow_curve {
+  position: absolute;
+  width: 80%;
+  height: 100%;
+}
+.a1_arrow_curve svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.a1_curve_line {
+  fill: none;
+  stroke: #7C6BAE;
+  stroke-width: 2.5;
+  stroke-dasharray: 6 4;
+  stroke-dashoffset: 80;
+}
+.a1_stage.visible .a1_curve_line {
+  animation: a1_dash 1.5s 0.7s ease-out forwards;
+}
+.a1_curve_head {
+  fill: #7C6BAE;
+  opacity: 0;
+}
+.a1_stage.visible .a1_curve_head {
+  animation: a1_fadein 0.3s 2s ease-out forwards;
+}
+
+.a1_intermediary {
+  position: absolute;
+  top: 6px;
+  right: 0;
+  font-size: 10px;
+  color: #64748B;
+  background: #fff;
+  border: 1px solid #94A3B8;
+  border-radius: 4px;
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+
+.a1_stealth_label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #7C6BAE;
+  margin-top: 4px;
+  opacity: 0;
+  letter-spacing: 0.05em;
+}
+.a1_stage.visible .a1_stealth_label {
+  animation: a1_fadein 0.4s 1.8s ease-out forwards;
+}
+
+/* ── Agent box (shared target) ── */
+.a1_agent_row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.a1_agent_box {
+  background: #1E293B;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 36px;
+  border-radius: 8px;
+  text-align: center;
+  letter-spacing: 0.04em;
+  position: relative;
+  opacity: 0;
+}
+.a1_stage.visible .a1_agent_box {
+  animation: a1_fadein 0.5s 0.1s ease-out forwards;
+}
+.a1_agent_box::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 11px;
+  border: 2px dashed #E05252;
+  opacity: 0;
+}
+.a1_stage.visible .a1_agent_box::before {
+  animation: a1_fadein 0.4s 1.4s ease-out forwards, a1_glow 2s 1.8s ease-in-out infinite;
+}
+
+/* ── Divider ── */
+.a1_divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 22px;
+  opacity: 0;
+}
+.a1_stage.visible .a1_divider {
+  animation: a1_fadein 0.5s 1.6s ease-out forwards;
+}
+.a1_divider_line {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #D4785C, transparent);
+}
+.a1_divider_label {
+  font-size: 13px;
+  font-weight: 800;
+  color: #D4785C;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ── Defense Layers ── */
+.a1_defenses {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.a1_defense {
+  background: #fff;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  opacity: 0;
+  transform: translateY(20px);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.a1_stage.visible .a1_d1 {
+  animation: a1_defrise 0.5s 2.0s ease-out forwards;
+}
+.a1_stage.visible .a1_d2 {
+  animation: a1_defrise 0.5s 2.5s ease-out forwards;
+}
+.a1_stage.visible .a1_d3 {
+  animation: a1_defrise 0.5s 3.0s ease-out forwards;
+}
+
+.a1_def_icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.a1_d1 .a1_def_icon { background: rgba(212,120,92,0.12); }
+.a1_d2 .a1_def_icon { background: rgba(124,107,174,0.12); }
+.a1_d3 .a1_def_icon { background: rgba(148,163,184,0.12); }
+
+.a1_def_body {
+  flex: 1;
+  min-width: 0;
+}
+.a1_def_title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #1E293B;
+}
+.a1_def_stat {
+  font-size: 11px;
+  color: #64748B;
+}
+
+/* ── Bar chart (Spotlighting) ── */
+.a1_bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 28px;
+}
+.a1_bar {
+  width: 30px;
+  border-radius: 3px 3px 0 0;
+  position: relative;
+}
+.a1_bar_before {
+  background: #E05252;
+  height: 28px;
+}
+.a1_bar_after {
+  background: #D4785C;
+  height: 28px;
+}
+.a1_stage.visible .a1_bar_after {
+  animation: a1_shrinkbar 0.8s 2.6s ease-out forwards;
+}
+.a1_bar_lbl {
+  position: absolute;
+  bottom: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: #64748B;
+  white-space: nowrap;
+}
+
+/* ── Shield (Constitutional Classifiers) ── */
+.a1_shield_wrap {
+  position: relative;
+  width: 36px;
+  height: 36px;
+}
+.a1_shield_svg {
+  width: 36px;
+  height: 36px;
+}
+.a1_shield_fill {
+  fill: #7C6BAE;
+  opacity: 0.15;
+}
+.a1_shield_stroke {
+  fill: none;
+  stroke: #7C6BAE;
+  stroke-width: 2;
+}
+.a1_shield_check {
+  fill: none;
+  stroke: #7C6BAE;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+}
+.a1_stage.visible .a1_shield_check {
+  animation: a1_checkdraw 0.6s 3.1s ease-out forwards;
+}
+
+/* ── Isolation box ── */
+.a1_iso_box {
+  width: 48px;
+  height: 32px;
+  border: 2px solid #94A3B8;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.a1_iso_inner {
+  width: 24px;
+  height: 16px;
+  border: 2px dashed #E05252;
+  border-radius: 3px;
+  opacity: 0;
+}
+.a1_stage.visible .a1_iso_inner {
+  animation: a1_fadein 0.4s 3.5s ease-out forwards;
+}
+.a1_iso_label_trusted {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  background: #fff;
+  padding: 0 3px;
+  color: #94A3B8;
+  white-space: nowrap;
+}
+.a1_iso_label_untrusted {
+  font-size: 7px;
+  color: #E05252;
+  text-align: center;
+  line-height: 1;
+}
+
+/* ── Block wall effect ── */
+.a1_block_wall {
+  height: 4px;
+  margin-top: 6px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #D4785C, #7C6BAE, #94A3B8);
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.a1_stage.visible .a1_block_wall {
+  animation: a1_wallgrow 0.8s 3.6s ease-out forwards;
+}
+
+/* ── Keyframes ── */
+@keyframes a1_slidein {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes a1_fadein {
+  to { opacity: 1; }
+}
+@keyframes a1_pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.08); }
+}
+@keyframes a1_dash {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes a1_defrise {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes a1_shrinkbar {
+  to { height: 3px; }
+}
+@keyframes a1_checkdraw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes a1_wallgrow {
+  to { opacity: 1; transform: scaleX(1); }
+}
+@keyframes a1_glow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.9; }
+}
+
+/* === A2 Animation === */
+
+/* === A2: Supply Chain + Memory Poisoning === */
+.a2_stage {
+  --a2-bg: #1A1A2E;
+  --a2-accent: #E8A87C;
+  --a2-accent2: #B8A9D4;
+  --a2-danger: #E05252;
+  --a2-neutral: #94A3B8;
+  --a2-text: #F1F5F9;
+  background: var(--a2-bg);
+  color: var(--a2-text);
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  font-family: -apple-system, "Noto Sans SC", sans-serif;
+  overflow: hidden;
+}
+
+/* --- Section titles --- */
+.a2_section-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.a2_stage.visible .a2_section-title {
+  opacity: 1;
+  transform: translateY(0);
+}
+.a2_section-title .a2_icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.a2_s1-title .a2_icon { background: rgba(224,82,82,0.2); color: var(--a2-danger); }
+.a2_s2-title .a2_icon { background: rgba(184,169,212,0.2); color: var(--a2-accent2); }
+.a2_s2-title { margin-top: 28px; transition-delay: 2.4s; }
+.a2_s1-title { transition-delay: 0.1s; }
+
+/* === SECTION 1: Pipeline === */
+.a2_pipeline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 20px;
+  position: relative;
+}
+.a2_pipe-node {
+  background: rgba(241,245,249,0.06);
+  border: 1px solid rgba(241,245,249,0.12);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  position: relative;
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 0.4s ease, transform 0.4s ease, border-color 0.6s ease, box-shadow 0.6s ease;
+  min-width: 80px;
+}
+.a2_stage.visible .a2_pipe-node:nth-child(1) { opacity: 1; transform: scale(1); transition-delay: 0.3s; }
+.a2_stage.visible .a2_pipe-node:nth-child(3) { opacity: 1; transform: scale(1); transition-delay: 0.6s; }
+.a2_stage.visible .a2_pipe-node:nth-child(5) { opacity: 1; transform: scale(1); transition-delay: 0.9s; }
+
+/* Pipeline arrows */
+.a2_pipe-arrow {
+  width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  position: relative;
+}
+.a2_pipe-arrow::before {
+  content: "";
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: var(--a2-neutral);
+  border-radius: 1px;
+}
+.a2_pipe-arrow::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 5px solid var(--a2-neutral);
+}
+.a2_stage.visible .a2_pipe-arrow:nth-child(2) { opacity: 0.6; transition-delay: 0.5s; }
+.a2_stage.visible .a2_pipe-arrow:nth-child(4) { opacity: 0.6; transition-delay: 0.8s; }
+
+/* Poison injection badge */
+.a2_poison-badge {
+  position: absolute;
+  top: -10px;
+  right: -8px;
+  background: var(--a2-danger);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 8px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.a2_stage.visible .a2_poison-badge {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 1.1s;
+}
+
+/* Poison injection arrow (pointing down into Training Data) */
+.a2_poison-inject {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.a2_stage.visible .a2_poison-inject {
+  opacity: 1;
+  transition-delay: 1.0s;
+}
+.a2_poison-inject::before {
+  content: "INJECT";
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--a2-danger);
+  letter-spacing: 1px;
+}
+.a2_poison-inject::after {
+  content: "";
+  width: 2px;
+  height: 10px;
+  background: var(--a2-danger);
+  margin-top: 2px;
+}
+
+/* Propagation glow animation */
+.a2_pipe-node.a2_poisoned {
+  overflow: hidden;
+}
+.a2_pipe-node.a2_poisoned::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  border: 1.5px solid transparent;
+  opacity: 0;
+}
+
+@keyframes a2_poison_glow_1 {
+  0%, 30% { border-color: transparent; box-shadow: none; opacity: 0; }
+  40% { opacity: 1; }
+  50%, 100% { border-color: var(--a2-danger); box-shadow: 0 0 12px rgba(224,82,82,0.3), inset 0 0 8px rgba(224,82,82,0.08); opacity: 1; }
+}
+@keyframes a2_poison_glow_2 {
+  0%, 50% { border-color: transparent; box-shadow: none; opacity: 0; }
+  60% { opacity: 1; }
+  70%, 100% { border-color: var(--a2-danger); box-shadow: 0 0 12px rgba(224,82,82,0.25), inset 0 0 8px rgba(224,82,82,0.06); opacity: 1; }
+}
+@keyframes a2_poison_glow_3 {
+  0%, 70% { border-color: transparent; box-shadow: none; opacity: 0; }
+  80% { opacity: 1; }
+  90%, 100% { border-color: var(--a2-danger); box-shadow: 0 0 12px rgba(224,82,82,0.2), inset 0 0 8px rgba(224,82,82,0.05); opacity: 1; }
+}
+
+.a2_stage.visible .a2_pipe-node:nth-child(1)::after {
+  animation: a2_poison_glow_1 2.5s ease forwards;
+  animation-delay: 1.2s;
+}
+.a2_stage.visible .a2_pipe-node:nth-child(3)::after {
+  animation: a2_poison_glow_2 2.5s ease forwards;
+  animation-delay: 1.2s;
+}
+.a2_stage.visible .a2_pipe-node:nth-child(5)::after {
+  animation: a2_poison_glow_3 2.5s ease forwards;
+  animation-delay: 1.2s;
+}
+
+/* Propagation pulse traveling along arrows */
+.a2_pipe-arrow .a2_pulse {
+  position: absolute;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--a2-danger);
+  box-shadow: 0 0 6px rgba(224,82,82,0.6);
+  opacity: 0;
+}
+@keyframes a2_pulse_travel {
+  0% { left: 0; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { left: calc(100% - 6px); opacity: 0; }
+}
+.a2_stage.visible .a2_pipe-arrow:nth-child(2) .a2_pulse {
+  animation: a2_pulse_travel 0.7s ease forwards;
+  animation-delay: 2.0s;
+}
+.a2_stage.visible .a2_pipe-arrow:nth-child(4) .a2_pulse {
+  animation: a2_pulse_travel 0.7s ease forwards;
+  animation-delay: 2.5s;
+}
+
+/* Node subtle label */
+.a2_pipe-label {
+  font-size: 10px;
+  color: var(--a2-neutral);
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+/* === Stat cards === */
+.a2_stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.a2_stat-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(224,82,82,0.06);
+  border: 1px solid rgba(224,82,82,0.15);
+  border-radius: 8px;
+  padding: 10px 12px;
+  opacity: 0;
+  transform: translateX(-16px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.a2_stage.visible .a2_stat-card:nth-child(1) { opacity: 1; transform: translateX(0); transition-delay: 2.8s; }
+.a2_stage.visible .a2_stat-card:nth-child(2) { opacity: 1; transform: translateX(0); transition-delay: 3.15s; }
+.a2_stage.visible .a2_stat-card:nth-child(3) { opacity: 1; transform: translateX(0); transition-delay: 3.5s; }
+
+.a2_stat-left {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--a2-accent);
+  min-width: 0;
+  flex: 1;
+}
+.a2_stat-arrow {
+  color: var(--a2-danger);
+  font-size: 14px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+.a2_stat-right {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--a2-danger);
+  min-width: 0;
+  flex: 1;
+  text-align: right;
+}
+
+/* === SECTION 2: Memory Poisoning cards === */
+.a2_mem-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.a2_mem-card {
+  background: rgba(184,169,212,0.06);
+  border: 1px solid rgba(184,169,212,0.15);
+  border-radius: 10px;
+  padding: 14px;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.a2_stage.visible .a2_mem-card:nth-child(1) { opacity: 1; transform: translateY(0); transition-delay: 2.8s; }
+.a2_stage.visible .a2_mem-card:nth-child(2) { opacity: 1; transform: translateY(0); transition-delay: 3.2s; }
+.a2_stage.visible .a2_mem-card:nth-child(3) { opacity: 1; transform: translateY(0); transition-delay: 3.6s; }
+
+.a2_mem-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--a2-accent2);
+  margin-bottom: 8px;
+}
+.a2_mem-desc {
+  font-size: 10px;
+  color: var(--a2-neutral);
+  line-height: 1.4;
+}
+
+/* --- RAG Poisoning: arrow into DB icon --- */
+.a2_rag-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+  height: 36px;
+}
+.a2_rag-doc {
+  width: 22px;
+  height: 28px;
+  background: rgba(224,82,82,0.15);
+  border: 1.5px solid var(--a2-danger);
+  border-radius: 3px;
+  position: relative;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.a2_stage.visible .a2_rag-doc { opacity: 1; transition-delay: 3.2s; }
+.a2_rag-doc::before {
+  content: "";
+  position: absolute;
+  top: 5px; left: 4px; right: 4px;
+  height: 1.5px;
+  background: var(--a2-danger);
+  border-radius: 1px;
+  box-shadow: 0 4px 0 var(--a2-danger), 0 8px 0 var(--a2-danger);
+}
+.a2_rag-arrow-line {
+  width: 28px;
+  height: 2px;
+  position: relative;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.a2_stage.visible .a2_rag-arrow-line { opacity: 1; transition-delay: 3.4s; }
+.a2_rag-arrow-line::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--a2-danger);
+  border-radius: 1px;
+}
+.a2_rag-arrow-line::after {
+  content: "";
+  position: absolute;
+  right: -1px;
+  top: -3px;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 5px solid var(--a2-danger);
+}
+@keyframes a2_rag_pulse {
+  0% { box-shadow: 0 0 0 rgba(224,82,82,0); }
+  50% { box-shadow: 0 0 8px rgba(224,82,82,0.4); }
+  100% { box-shadow: 0 0 0 rgba(224,82,82,0); }
+}
+.a2_rag-db {
+  width: 32px;
+  height: 28px;
+  border: 1.5px solid var(--a2-accent2);
+  border-radius: 6px;
+  position: relative;
+  background: rgba(184,169,212,0.08);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.a2_stage.visible .a2_rag-db {
+  opacity: 1;
+  transition-delay: 3.3s;
+  animation: a2_rag_pulse 2s ease infinite;
+  animation-delay: 3.8s;
+}
+.a2_rag-db::before,
+.a2_rag-db::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  height: 1px;
+  background: var(--a2-accent2);
+  opacity: 0.4;
+}
+.a2_rag-db::before { top: 9px; }
+.a2_rag-db::after { top: 17px; }
+.a2_rag-db-label {
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  color: var(--a2-neutral);
+  white-space: nowrap;
+}
+
+/* --- Shared Context: overlapping circles --- */
+.a2_overlap-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+  height: 40px;
+  position: relative;
+}
+.a2_overlap-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid;
+  position: absolute;
+  opacity: 0;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.a2_overlap-circle:nth-child(1) {
+  border-color: var(--a2-accent);
+  background: rgba(232,168,124,0.1);
+  left: calc(50% - 28px);
+}
+.a2_overlap-circle:nth-child(2) {
+  border-color: var(--a2-accent2);
+  background: rgba(184,169,212,0.1);
+  left: calc(50% - 8px);
+}
+.a2_overlap-circle:nth-child(3) {
+  border-color: var(--a2-danger);
+  background: rgba(224,82,82,0.1);
+  left: calc(50% + 12px);
+}
+.a2_stage.visible .a2_overlap-circle:nth-child(1) { opacity: 0.8; transition-delay: 3.5s; }
+.a2_stage.visible .a2_overlap-circle:nth-child(2) { opacity: 0.8; transition-delay: 3.65s; }
+.a2_stage.visible .a2_overlap-circle:nth-child(3) { opacity: 0.8; transition-delay: 3.8s; }
+.a2_overlap-label {
+  position: absolute;
+  font-size: 7px;
+  font-weight: 600;
+  color: var(--a2-text);
+  opacity: 0.7;
+  pointer-events: none;
+}
+.a2_overlap-circle:nth-child(1) .a2_overlap-label { top: 10px; left: 6px; }
+.a2_overlap-circle:nth-child(2) .a2_overlap-label { top: 10px; left: 7px; }
+.a2_overlap-circle:nth-child(3) .a2_overlap-label { top: 10px; left: 7px; }
+
+/* --- Long-term Drift: gradient bar --- */
+.a2_drift-visual {
+  margin-top: 10px;
+  height: 20px;
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+  background: rgba(241,245,249,0.04);
+  border: 1px solid rgba(241,245,249,0.08);
+}
+.a2_drift-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background: linear-gradient(
+    90deg,
+    rgba(184,169,212,0.15) 0%,
+    rgba(184,169,212,0.3) 30%,
+    rgba(224,82,82,0.2) 60%,
+    rgba(224,82,82,0.45) 100%
+  );
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 1.8s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.a2_stage.visible .a2_drift-fill {
+  transform: scaleX(1);
+  transition-delay: 4.0s;
+}
+.a2_drift-labels {
+  display: flex;
+  justify-content: space-between;
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 8px;
+  font-weight: 600;
+  pointer-events: none;
+}
+.a2_drift-labels span:first-child { color: var(--a2-accent2); }
+.a2_drift-labels span:last-child { color: var(--a2-danger); }
+
+/* Divider between sections */
+.a2_divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(241,245,249,0.1), transparent);
+  margin: 20px 0;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.a2_stage.visible .a2_divider { opacity: 1; transition-delay: 2.2s; }
+
+/* === A3 Animation === */
+
+/* ── A3: Three Pillars x Three Tiers ── */
+.a3_stage{max-width:500px;width:100%;margin:0 auto;padding:16px 0;}
+
+/* grid: 3 columns */
+.a3_grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+
+/* each pillar column */
+.a3_col{display:flex;flex-direction:column;align-items:center;gap:0;}
+
+/* pillar header */
+.a3_head{text-align:center;margin-bottom:10px;}
+.a3_icon{font-size:26px;line-height:1;display:block;margin-bottom:4px;}
+.a3_label{font-size:13px;font-weight:600;color:#1E293B;letter-spacing:0.02em;}
+
+/* stacked blocks container — bottom-to-top */
+.a3_blocks{display:flex;flex-direction:column-reverse;gap:6px;width:100%;}
+
+/* individual block */
+.a3_blk{
+  padding:10px 6px;
+  border-radius:8px;
+  text-align:center;
+  font-size:12px;
+  font-weight:600;
+  line-height:1.3;
+  color:#fff;
+  opacity:0;
+  transform:translateY(16px) scaleY(0.7);
+  transform-origin:bottom center;
+  transition:opacity 0.5s ease,transform 0.5s cubic-bezier(.34,1.56,.64,1);
+}
+
+/* tier colors */
+.a3_blk--f{background:#94A3B8;}
+.a3_blk--e{background:#D4785C;}
+.a3_blk--a{background:#7C6BAE;}
+
+/* tier label (small text below main text) */
+.a3_tier{display:block;font-size:10px;font-weight:400;opacity:0.8;margin-top:2px;}
+
+/* ── animation on .visible ── */
+
+/* Foundation tier (all 3 cols together) — stagger by column */
+.a3_stage.visible .a3_col:nth-child(1) .a3_blk--f{opacity:1;transform:translateY(0) scaleY(1);transition-delay:0.1s;}
+.a3_stage.visible .a3_col:nth-child(2) .a3_blk--f{opacity:1;transform:translateY(0) scaleY(1);transition-delay:0.2s;}
+.a3_stage.visible .a3_col:nth-child(3) .a3_blk--f{opacity:1;transform:translateY(0) scaleY(1);transition-delay:0.3s;}
+
+/* Enterprise tier */
+.a3_stage.visible .a3_col:nth-child(1) .a3_blk--e{opacity:1;transform:translateY(0) scaleY(1);transition-delay:0.6s;}
+.a3_stage.visible .a3_col:nth-child(2) .a3_blk--e{opacity:1;transform:translateY(0) scaleY(1);transition-delay:0.7s;}
+.a3_stage.visible .a3_col:nth-child(3) .a3_blk--e{opacity:1;transform:translateY(0) scaleY(1);transition-delay:0.8s;}
+
+/* Advanced tier */
+.a3_stage.visible .a3_col:nth-child(1) .a3_blk--a{opacity:1;transform:translateY(0) scaleY(1);transition-delay:1.1s;}
+.a3_stage.visible .a3_col:nth-child(2) .a3_blk--a{opacity:1;transform:translateY(0) scaleY(1);transition-delay:1.2s;}
+.a3_stage.visible .a3_col:nth-child(3) .a3_blk--a{opacity:1;transform:translateY(0) scaleY(1);transition-delay:1.3s;}
+
+/* ── anti-pattern bar ── */
+.a3_anti{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  margin-top:18px;
+  padding:8px 14px;
+  border:1.5px dashed #E05252;
+  border-radius:8px;
+  background:rgba(224,82,82,0.06);
+  opacity:0;
+  transform:translateY(10px);
+  transition:opacity 0.5s ease,transform 0.5s ease;
+  transition-delay:0s;
+}
+.a3_stage.visible .a3_anti{opacity:1;transform:translateY(0);transition-delay:1.7s;}
+.a3_anti_x{
+  font-size:18px;font-weight:700;color:#E05252;line-height:1;flex-shrink:0;
+}
+.a3_anti_txt{
+  font-size:12px;color:#E05252;font-weight:500;
+  text-decoration:line-through;
+  text-decoration-thickness:1.5px;
+}
+.a3_anti_note{
+  font-size:11px;color:#64748B;font-weight:400;text-decoration:none;
+}
+
+/* ── tier legend ── */
+.a3_legend{
+  display:flex;justify-content:center;gap:16px;
+  margin-top:14px;
+  opacity:0;
+  transition:opacity 0.5s ease;transition-delay:0s;
+}
+.a3_stage.visible .a3_legend{opacity:1;transition-delay:1.9s;}
+.a3_leg{display:flex;align-items:center;gap:5px;font-size:11px;color:#64748B;}
+.a3_dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+.a3_dot--f{background:#94A3B8;}
+.a3_dot--e{background:#D4785C;}
+.a3_dot--a{background:#7C6BAE;}
+
+/* === A4 Animation === */
+
+.a4_stage {
+  --a4-accent: #E8A87C;
+  --a4-accent2: #B8A9D4;
+  --a4-danger: #E05252;
+  --a4-neutral: #94A3B8;
+  --a4-text: #F1F5F9;
+  --a4-bg: #1A1A2E;
+  --a4-panel-bg: rgba(255,255,255,0.04);
+  --a4-border: rgba(255,255,255,0.08);
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  color: var(--a4-text);
+  background: var(--a4-bg);
+  border-radius: 12px;
+}
+
+/* Grid layout */
+.a4_grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+@media (max-width: 400px) {
+  .a4_grid { grid-template-columns: 1fr; }
+}
+
+/* Panels */
+.a4_panel {
+  background: var(--a4-panel-bg);
+  border: 1px solid var(--a4-border);
+  border-radius: 10px;
+  padding: 16px 14px 14px;
+  opacity: 0;
+  transform: translateY(18px) scale(0.97);
+  transition: none;
+  position: relative;
+  overflow: hidden;
+}
+.a4_stage.visible .a4_panel {
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.a4_stage.visible .a4_p1 { opacity: 1; transform: translateY(0) scale(1); transition-delay: 0.1s; }
+.a4_stage.visible .a4_p2 { opacity: 1; transform: translateY(0) scale(1); transition-delay: 0.35s; }
+.a4_stage.visible .a4_p3 { opacity: 1; transform: translateY(0) scale(1); transition-delay: 0.6s; }
+.a4_stage.visible .a4_p4 { opacity: 1; transform: translateY(0) scale(1); transition-delay: 0.85s; }
+
+.a4_panel_title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--a4-neutral);
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+/* ========== Panel 1: Dwell Time ========== */
+.a4_dwell_wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.a4_ring_box {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+}
+.a4_ring_svg {
+  width: 56px;
+  height: 56px;
+  transform: rotate(-90deg);
+}
+.a4_ring_bg {
+  fill: none;
+  stroke: rgba(255,255,255,0.06);
+  stroke-width: 5;
+}
+.a4_ring_fg {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 150.8;
+  stroke-dashoffset: 150.8;
+  transition: none;
+}
+.a4_stage.visible .a4_ring_fg {
+  stroke-dashoffset: 22.6;
+  stroke: #4ADE80;
+  transition: stroke-dashoffset 1.8s ease 0.6s, stroke 1.2s ease 1.2s;
+}
+.a4_ring_fg {
+  stroke: var(--a4-danger);
+}
+.a4_ring_label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--a4-text);
+  white-space: nowrap;
+}
+
+.a4_dwell_text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.a4_old_val {
+  font-size: 14px;
+  color: var(--a4-danger);
+  text-decoration: line-through;
+  opacity: 0;
+  transition: none;
+}
+.a4_stage.visible .a4_old_val {
+  opacity: 0.7;
+  transition: opacity 0.4s ease 0.8s;
+}
+.a4_new_val {
+  font-size: 16px;
+  font-weight: 700;
+  color: #4ADE80;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: none;
+}
+.a4_stage.visible .a4_new_val {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 0.5s ease 1.4s, transform 0.5s ease 1.4s;
+}
+.a4_dwell_sub {
+  font-size: 10px;
+  color: var(--a4-neutral);
+  opacity: 0;
+  transition: none;
+}
+.a4_stage.visible .a4_dwell_sub {
+  opacity: 1;
+  transition: opacity 0.4s ease 1.8s;
+}
+
+/* ========== Panel 2: Coverage Bar ========== */
+.a4_cov_label {
+  font-size: 12px;
+  color: var(--a4-text);
+  margin-bottom: 10px;
+  opacity: 0.85;
+}
+.a4_bar_track {
+  position: relative;
+  height: 18px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 9px;
+  overflow: visible;
+}
+.a4_bar_fill {
+  height: 100%;
+  border-radius: 9px;
+  background: linear-gradient(90deg, var(--a4-accent2), var(--a4-accent));
+  width: 0%;
+  transition: none;
+  position: relative;
+}
+.a4_stage.visible .a4_bar_fill {
+  width: 85%;
+  transition: width 1.6s cubic-bezier(0.22, 1, 0.36, 1) 0.8s;
+}
+.a4_bar_pct {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--a4-bg);
+  opacity: 0;
+  transition: none;
+}
+.a4_stage.visible .a4_bar_pct {
+  opacity: 1;
+  transition: opacity 0.3s ease 2s;
+}
+.a4_bar_target {
+  position: absolute;
+  right: 0;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  background: var(--a4-text);
+  opacity: 0.35;
+  border-radius: 1px;
+}
+.a4_bar_target_label {
+  position: absolute;
+  right: -2px;
+  top: -16px;
+  font-size: 9px;
+  color: var(--a4-neutral);
+  white-space: nowrap;
+}
+.a4_cov_gap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 10px;
+  color: var(--a4-neutral);
+  opacity: 0;
+  transition: none;
+}
+.a4_stage.visible .a4_cov_gap {
+  opacity: 1;
+  transition: opacity 0.4s ease 2.2s;
+}
+.a4_cov_gap_dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--a4-danger);
+  opacity: 0.7;
+}
+
+/* ========== Panel 3: Behavioral Baseline ========== */
+.a4_chart_box {
+  position: relative;
+  height: 64px;
+  margin-top: 4px;
+}
+.a4_chart_svg {
+  width: 100%;
+  height: 64px;
+  overflow: visible;
+}
+.a4_chart_line {
+  fill: none;
+  stroke: var(--a4-accent2);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 300;
+  stroke-dashoffset: 300;
+  transition: none;
+}
+.a4_stage.visible .a4_chart_line {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 2s ease 1.1s;
+}
+.a4_chart_anomaly {
+  fill: none;
+  stroke: var(--a4-danger);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  transition: none;
+}
+.a4_stage.visible .a4_chart_anomaly {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.6s ease 2.6s;
+}
+.a4_anomaly_zone {
+  fill: var(--a4-danger);
+  opacity: 0;
+  transition: none;
+}
+.a4_stage.visible .a4_anomaly_zone {
+  opacity: 0.1;
+  transition: opacity 0.4s ease 2.8s;
+}
+.a4_anomaly_tag {
+  position: absolute;
+  right: 16px;
+  top: 2px;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--a4-danger);
+  background: rgba(224, 82, 82, 0.12);
+  padding: 2px 6px;
+  border-radius: 4px;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: none;
+}
+.a4_stage.visible .a4_anomaly_tag {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s ease 3s, transform 0.3s ease 3s;
+}
+.a4_baseline_label {
+  font-size: 10px;
+  color: var(--a4-neutral);
+  margin-top: 6px;
+  opacity: 0;
+  transition: none;
+}
+.a4_stage.visible .a4_baseline_label {
+  opacity: 1;
+  transition: opacity 0.4s ease 2s;
+}
+
+/* ========== Panel 4: Integrity Chain ========== */
+.a4_chain {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin: 8px 0 10px;
+  flex-wrap: nowrap;
+}
+.a4_link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid var(--a4-accent);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--a4-accent);
+  opacity: 0;
+  transform: scale(0.8);
+  transition: none;
+  white-space: nowrap;
+}
+.a4_stage.visible .a4_link {
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.a4_stage.visible .a4_l1 { opacity: 1; transform: scale(1); transition-delay: 1.3s; }
+.a4_stage.visible .a4_l2 { opacity: 1; transform: scale(1); transition-delay: 1.7s; }
+.a4_stage.visible .a4_l3 { opacity: 1; transform: scale(1); transition-delay: 2.1s; }
+
+.a4_arrow {
+  font-size: 12px;
+  color: var(--a4-neutral);
+  margin: 0 3px;
+  opacity: 0;
+  transition: none;
+}
+.a4_stage.visible .a4_arrow {
+  transition: opacity 0.3s ease;
+}
+.a4_stage.visible .a4_arr1 { opacity: 0.6; transition-delay: 1.6s; }
+.a4_stage.visible .a4_arr2 { opacity: 0.6; transition-delay: 2.0s; }
+
+.a4_verified {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 11px;
+  color: #4ADE80;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: none;
+}
+.a4_stage.visible .a4_verified {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.5s ease 2.6s, transform 0.5s ease 2.6s;
+}
+.a4_check_icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(74, 222, 128, 0.15);
+  flex-shrink: 0;
+}
+.a4_check_svg {
+  width: 12px;
+  height: 12px;
+}
+.a4_check_path {
+  stroke: #4ADE80;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  stroke-dasharray: 16;
+  stroke-dashoffset: 16;
+  transition: none;
+}
+.a4_stage.visible .a4_check_path {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.4s ease 2.9s;
+}
+
+/* ========== Summary Bar ========== */
+.a4_summary {
+  text-align: center;
+  font-size: 12px;
+  color: var(--a4-text);
+  padding: 10px 14px;
+  border: 1.5px solid transparent;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: none;
+  position: relative;
+}
+.a4_stage.visible .a4_summary {
+  opacity: 1;
+  transform: translateY(0);
+  border-color: var(--a4-danger);
+  transition: opacity 0.5s ease 3.2s, transform 0.5s ease 3.2s, border-color 0.5s ease 3.2s;
+  animation: a4_pulse_border 2s ease-in-out 3.8s infinite;
+}
+@keyframes a4_pulse_border {
+  0%, 100% { border-color: var(--a4-danger); box-shadow: 0 0 0 0 rgba(224,82,82,0); }
+  50% { border-color: rgba(224,82,82,0.6); box-shadow: 0 0 12px 2px rgba(224,82,82,0.12); }
+}
+.a4_summary_arrow {
+  color: var(--a4-danger);
+  font-weight: 700;
+}
+.a4_summary_em {
+  color: var(--a4-danger);
+  font-weight: 600;
+}
+
+</style>
+
+<meta name="description" content="传统的边界防御已经过时了。前沿 AI 模型正在把 漏洞到利用的时间从数月压缩到数小时 ，而且边际成本几乎为零。防御者用 AI 找 bug 修 bug？攻击者也在用——或者干脆等你发补丁，然后反向工程出 exploit。这不是未来的事： 模型已经能发现传统工具和人类审计员遗漏多年的严重漏洞 。对于部署 Agent 的组织，这个加速效应双倍生效——基础设施暴露在">
+<link rel="canonical" href="https://chendi.me/readings/zero-trust-agents/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">&#8592;</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ 概览层 ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+  <!-- S1: 新威胁格局 -->
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">新威胁格局：<br><span style="color:var(--accent)">漏洞到利用，月→小时</span></h2>
+      <p class="body-text reveal reveal-delay-1">传统的边界防御已经过时了。前沿 AI 模型正在把<span class="hl-danger">漏洞到利用的时间从数月压缩到数小时</span>，而且边际成本几乎为零。防御者用 AI 找 bug 修 bug？攻击者也在用——或者干脆等你发补丁，然后反向工程出 exploit。这不是未来的事：<span class="hl">模型已经能发现传统工具和人类审计员遗漏多年的严重漏洞</span>。对于部署 Agent 的组织，这个加速效应双倍生效——基础设施暴露在 AI 加速攻击下，而 Agent 本身又引入了<span class="hl2">自主解释目标、选择工具、执行多步操作</span>的新能力。最强的组织不是拥有最先进 AI 的组织，而是<span class="hl-warm">基础足够扎实、从第一天就为失陷而设计</span>的组织。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s1-anim"><div class="s1_stage">
+  <!-- Heading -->
+  <div class="s1_heading">
+    <h2>Vulnerability-to-Exploit Timeline</h2>
+    <p>How AI compresses the attacker's window</p>
+  </div>
+
+  <!-- BEFORE row -->
+  <div class="s1_row s1_row--before">
+    <div class="s1_label s1_label--before">
+      Before
+      <span class="s1_time-badge s1_time-badge--months">Months</span>
+    </div>
+    <div class="s1_track">
+      <div class="s1_fill s1_fill--before"></div>
+      <div class="s1_connector"></div>
+      <div class="s1_markers">
+        <div class="s1_marker">
+          <div class="s1_dot s1_dot--vuln"></div>
+          <span class="s1_marker-label">Vulnerability</span>
+        </div>
+        <div class="s1_marker">
+          <div class="s1_dot s1_dot--patch"></div>
+          <span class="s1_marker-label">Patch</span>
+        </div>
+        <div class="s1_marker">
+          <div class="s1_dot s1_dot--reverse"></div>
+          <span class="s1_marker-label">Reverse Eng.</span>
+        </div>
+        <div class="s1_marker">
+          <div class="s1_dot s1_dot--exploit"></div>
+          <span class="s1_marker-label">Exploit</span>
+        </div>
+      </div>
+      <span class="s1_time-span s1_time-span--start">Day 0</span>
+      <span class="s1_time-span s1_time-span--end">~6 months</span>
+    </div>
+  </div>
+
+  <!-- Arrow -->
+  <div class="s1_arrow">
+    <div class="s1_arrow-icon">&#8595;</div>
+  </div>
+
+  <!-- NOW row -->
+  <div class="s1_row s1_row--now">
+    <div class="s1_label s1_label--now">
+      Now &mdash; AI-Accelerated
+      <span class="s1_time-badge s1_time-badge--hours">Hours</span>
+    </div>
+    <div class="s1_track">
+      <div class="s1_fill s1_fill--now"></div>
+      <div class="s1_connector"></div>
+      <div class="s1_markers">
+        <div class="s1_marker">
+          <div class="s1_dot s1_dot--vuln"></div>
+          <span class="s1_marker-label">Vulnerability</span>
+        </div>
+        <div class="s1_marker">
+          <div class="s1_dot s1_dot--patch"></div>
+          <span class="s1_marker-label">Patch</span>
+        </div>
+        <div class="s1_marker">
+          <div class="s1_dot s1_dot--reverse"></div>
+          <span class="s1_marker-label">Rev. Eng.</span>
+        </div>
+        <div class="s1_marker">
+          <div class="s1_dot s1_dot--exploit"></div>
+          <span class="s1_marker-label">Exploit</span>
+        </div>
+      </div>
+      <span class="s1_time-span s1_time-span--start">Hour 0</span>
+      <span class="s1_time-span s1_time-span--end">~6 hrs</span>
+    </div>
+  </div>
+
+  <!-- Compression badge -->
+  <div class="s1_badge-wrap">
+    <div class="s1_badge">
+      <span class="s1_badge-number">100x</span>
+      <span class="s1_badge-text">
+        <strong>Faster Exploitation</strong>
+        What took months now takes hours
+      </span>
+    </div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Source (Anthropic — Zero Trust for AI Agents)</span>
+<p>Perimeter-based cybersecurity defenses can't keep up with modern threats, and the threats themselves are accelerating. Frontier AI models are compressing the timeline between vulnerability and exploit from months to hours, at a marginal cost measured in dollars.</p>
+<p>Defenders who adopt these tools find and fix bugs faster; attackers who adopt them, or who simply wait for defenders' patches and reverse-engineer them into exploits, move faster too. This is not a future concern; models can already find serious vulnerabilities that traditional tooling and human reviewers have missed for years.</p>
+<p>The organizations best positioned for this shift will not necessarily be the ones with the most advanced AI. They will be the ones whose fundamentals are strong enough that AI-assisted scanning finds fewer bugs in the first place, and whose agent deployments were architected for breach from day one.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S2: Agent 五大安全特性 -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">Agent 五大安全特性：<br><span style="color:#E8A87C">传统安全模型没设计过的能力</span></h2>
+      <p class="body-text reveal reveal-delay-1">传统软件执行预定义逻辑，Agent 不一样——它们以不同程度的<span class="hl">自主权</span>执行多步操作。五个安全特性让它们成为独特的挑战：(1) <span class="hl">自主执行</span>，无需人工逐步批准，被操纵的 Agent 能以机器速度造成伤害；(2) <span class="hl2">工具访问</span>，通过 API、数据库、文件系统、MCP 协议与外部交互，一个被攻陷的 MCP 栈可导致数据窃取和恶意代码执行；(3) <span class="hl-warm">决策模糊性</span>，Agent 需要解释指令并选择路径，攻击者可利用这种歧义；(4) <span class="hl">上下文持久化</span>，跨会话记忆创造了新的数据保护需求；(5) <span class="hl2">多 Agent 协调</span>，Agent 间的信任关系让攻击者可以从一个 Agent 横向移动到另一个。两个新概念也因此诞生：<span class="hl-danger">爆炸半径</span>（出错时的潜在损害范围）和<span class="hl">最小代理权</span>（最小权限的 Agent 版——不仅限制访问什么，还限制能做什么、多频繁、在哪里）。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s2-anim"><div class="s2_stage visible">
+
+  <div class="s2_label">Agent Security Properties</div>
+
+  <!-- Central Hub -->
+  <div class="s2_hub">
+    <div class="s2_hub_icon"></div>
+    <span class="s2_hub_label" style="margin-top:42px;">Agent</span>
+  </div>
+
+  <!-- Trunk connector -->
+  <div class="s2_trunk"></div>
+
+  <!-- Property Nodes -->
+  <div class="s2_nodes">
+
+    <!-- Node 1 -->
+    <div class="s2_pair">
+      <div class="s2_dot"></div>
+      <div class="s2_seg"></div>
+      <div class="s2_node">
+        <span class="s2_node_num">1</span>
+        <div class="s2_icon s2_icon_gear"></div>
+        <div class="s2_node_text">
+          <span class="s2_node_zh">自主执行</span>
+          <span class="s2_node_en">Autonomous Execution</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Node 2 -->
+    <div class="s2_pair">
+      <div class="s2_dot"></div>
+      <div class="s2_seg"></div>
+      <div class="s2_node">
+        <span class="s2_node_num">2</span>
+        <div class="s2_icon s2_icon_plug"></div>
+        <div class="s2_node_text">
+          <span class="s2_node_zh">工具访问</span>
+          <span class="s2_node_en">Tool Access / MCP</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Node 3 -->
+    <div class="s2_pair">
+      <div class="s2_dot"></div>
+      <div class="s2_seg"></div>
+      <div class="s2_node">
+        <span class="s2_node_num">3</span>
+        <div class="s2_icon s2_icon_question"></div>
+        <div class="s2_node_text">
+          <span class="s2_node_zh">决策模糊</span>
+          <span class="s2_node_en">Decision Ambiguity</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Node 4 -->
+    <div class="s2_pair">
+      <div class="s2_dot"></div>
+      <div class="s2_seg"></div>
+      <div class="s2_node">
+        <span class="s2_node_num">4</span>
+        <div class="s2_icon s2_icon_db"></div>
+        <div class="s2_node_text">
+          <span class="s2_node_zh">上下文持久</span>
+          <span class="s2_node_en">Context Persistence</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Node 5 -->
+    <div class="s2_pair">
+      <div class="s2_dot"></div>
+      <div class="s2_seg"></div>
+      <div class="s2_node">
+        <span class="s2_node_num">5</span>
+        <div class="s2_icon s2_icon_net"></div>
+        <div class="s2_node_text">
+          <span class="s2_node_zh">多Agent协调</span>
+          <span class="s2_node_en">Multi-Agent Coordination</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Concept Badges -->
+  <div class="s2_concepts">
+    <div class="s2_badge s2_badge_danger">
+      <div class="s2_badge_icon"><div class="s2_blast_ring"></div></div>
+      <span>爆炸半径 Blast Radius</span>
+    </div>
+    <div class="s2_badge s2_badge_accent">
+      <div class="s2_badge_icon"><div class="s2_shield"></div></div>
+      <span>最小代理权 Least Agency</span>
+    </div>
+  </div>
+
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Source (Part I: Security considerations)</span>
+<p>Agents execute operations without human initiation or approval at each step. This efficiency also means a manipulated agent can cause harm at machine speed.</p>
+<p>Tool access allows agents to interact with APIs, databases, file systems, and external services. This includes Model Context Protocol (MCP), which standardizes how agents connect to these resources. A compromised MCP stack can lead to data theft, malicious code execution, and sabotage.</p>
+<p>Making decisions requires agents to interpret instructions and choose how to accomplish goals. This introduces ambiguity attackers can exploit.</p>
+<p>Context persistence allows agents to maintain memory across sessions. It also creates new data protection needs.</p>
+<p>Multi-agent coordination enables agents to communicate with other agents. These trust relationships let attackers compromise one agent and pivot through others.</p>
+<p>Blast radius measures the potential damage if something goes wrong. Least agency, a new term coined by OWASP, extends least privilege to agentic applications — restricting what each agent tool can do, how often, and where.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S3: 六类威胁 → drill -->
+  <section class="feed-section" style="background:var(--bg-act2)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">六类威胁：<br><span style="color:var(--accent2)">Agent 面临的独特攻击面</span></h2>
+      <p class="body-text reveal reveal-delay-1">OWASP 识别出的 Agent 威胁涵盖六大类。<span class="hl-danger">Prompt Injection</span> 是最直接的——直接注入可达 <span class="hl-danger">100% 成功率</span>，间接注入更隐蔽（嵌入网页/邮件中，LLM 无法可靠区分信息上下文和可执行指令）。<span class="hl2">工具投毒</span>通过篡改 MCP 工具描述符诱导 Agent 执行非预期操作，工具链攻击则把安全工具串联成恶意序列。<span class="hl">身份与权限滥用</span>包括未限定的权限继承、confused deputy 攻击、以及基于记忆的权限保留。<span class="hl-warm">供应链风险</span>令人警醒：仅 250 份恶意文档就能在 6 亿到 130 亿参数的模型中植入后门，且这些后门能在安全训练中存活。<span class="hl2">记忆与上下文投毒</span>（RAG 投毒、共享上下文投毒、长期记忆漂移）则是最隐蔽的长期威胁。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s3-anim"><div class="s3_stage">
+  <div class="s3_interconnect"></div>
+  <div class="s3_grid">
+
+    <!-- 1. Prompt Injection -->
+    <div class="s3_card" style="--s3-accent:#E05252;--s3-icon-bg:rgba(224,82,82,0.08);--s3-badge-bg:rgba(224,82,82,0.1);--s3-badge-color:#E05252;">
+      <div class="s3_head">
+        <div class="s3_icon">&#9888;</div>
+        <span class="s3_name">Prompt Injection</span>
+        <span class="s3_badge">100%</span>
+      </div>
+      <p class="s3_desc">直接注入可达 100% 成功率，间接注入嵌入网页/邮件中更隐蔽</p>
+      <div class="s3_severity"><div class="s3_severity_fill"></div></div>
+    </div>
+
+    <!-- 2. 工具投毒 -->
+    <div class="s3_card" style="--s3-accent:#7C6BAE;--s3-icon-bg:rgba(124,107,174,0.08);--s3-badge-bg:rgba(124,107,174,0.1);--s3-badge-color:#7C6BAE;">
+      <div class="s3_head">
+        <div class="s3_icon">&#9881;</div>
+        <span class="s3_name">工具投毒</span>
+        <span class="s3_badge">MCP</span>
+      </div>
+      <p class="s3_desc">篡改 MCP 工具描述符，诱导 Agent 执行非预期操作或串联恶意序列</p>
+      <div class="s3_severity"><div class="s3_severity_fill"></div></div>
+    </div>
+
+    <!-- 3. 身份滥用 -->
+    <div class="s3_card" style="--s3-accent:#D4785C;--s3-icon-bg:rgba(212,120,92,0.08);--s3-badge-bg:rgba(212,120,92,0.1);--s3-badge-color:#D4785C;">
+      <div class="s3_head">
+        <div class="s3_icon">&#128272;</div>
+        <span class="s3_name">身份滥用</span>
+        <span class="s3_badge">deputy</span>
+      </div>
+      <p class="s3_desc">未限定权限继承、confused deputy 攻击、基于记忆的权限保留</p>
+      <div class="s3_severity"><div class="s3_severity_fill"></div></div>
+    </div>
+
+    <!-- 4. 供应链 -->
+    <div class="s3_card" style="--s3-accent:#E8A87C;--s3-icon-bg:rgba(232,168,124,0.1);--s3-badge-bg:rgba(232,168,124,0.12);--s3-badge-color:#C47A4A;">
+      <div class="s3_head">
+        <div class="s3_icon">&#128230;</div>
+        <span class="s3_name">供应链</span>
+        <span class="s3_badge">250 docs</span>
+      </div>
+      <p class="s3_desc">仅 250 份恶意文档即可植入后门，且后门在安全训练中存活</p>
+      <div class="s3_severity"><div class="s3_severity_fill"></div></div>
+    </div>
+
+    <!-- 5. 记忆投毒 -->
+    <div class="s3_card" style="--s3-accent:#7C6BAE;--s3-icon-bg:rgba(124,107,174,0.08);--s3-badge-bg:rgba(124,107,174,0.1);--s3-badge-color:#7C6BAE;">
+      <div class="s3_head">
+        <div class="s3_icon">&#129504;</div>
+        <span class="s3_name">记忆投毒</span>
+        <span class="s3_badge">RAG</span>
+      </div>
+      <p class="s3_desc">RAG 投毒、共享上下文投毒、长期记忆漂移——最隐蔽的长期威胁</p>
+      <div class="s3_severity"><div class="s3_severity_fill"></div></div>
+    </div>
+
+    <!-- 6. 资源耗尽 -->
+    <div class="s3_card" style="--s3-accent:#94A3B8;--s3-icon-bg:rgba(148,163,184,0.1);--s3-badge-bg:rgba(148,163,184,0.12);--s3-badge-color:#64748B;">
+      <div class="s3_head">
+        <div class="s3_icon">&#8635;</div>
+        <span class="s3_name">资源耗尽</span>
+        <span class="s3_badge">DoS</span>
+      </div>
+      <p class="s3_desc">无限循环调用、上下文窗口膨胀、触发高成本工具链的拒绝服务</p>
+      <div class="s3_severity"><div class="s3_severity_fill"></div></div>
+    </div>
+
+  </div>
+  <div class="s3_footer">
+    <span class="s3_footer_tag">6 类威胁相互关联，攻击者可组合利用</span>
+  </div>
+</div></div>
+      <p class="hook-line reveal reveal-delay-3">Prompt Injection 的 100% 成功率和供应链的 250 文档后门是怎么回事？</p>
+      <button class="drill-btn reveal reveal-delay-4" onclick="drillDown('layer-threats')">深入威胁详解 &#8594;</button>
+      <div class="source-panel reveal reveal-delay-4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Source (Part II: Current threats)</span>
+<p>Direct prompt injection occurs when attackers craft inputs that override system instructions. Research shows algorithmic approaches can achieve 100% attack success rates with prompts that transfer across multiple model families.</p>
+<p>Indirect prompt injection presents the more insidious threat. Microsoft Research confirms that LLMs cannot reliably distinguish between informational context and actionable instructions.</p>
+<p>Tool poisoning occurs when attackers compromise tool interfaces such as MCP tool descriptors, schemas, or metadata. The first documented in-the-wild malicious MCP server impersonated a legitimate email service and secretly copied all sent emails.</p>
+<p>Anthropic research demonstrates that injecting just 250 malicious documents can successfully backdoor LLMs ranging from 600 million to 13 billion parameters, and these backdoors persist through safety training including supervised fine-tuning and RLHF.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S4: 三级 Zero Trust 框架 → drill -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">三级 Zero Trust 框架：<br><span style="color:#B8A9D4">Foundation → Enterprise → Advanced</span></h2>
+      <p class="body-text reveal reveal-delay-1">追着单个威胁跑永远是被动的。Anthropic 提出跨 <span class="hl">7 个安全域</span>的三级框架。<span class="hl">Foundation</span> 是最低可行安全——加密身份、OAuth 短期 token、RBAC deny-by-default、基于身份的隔离、全量日志、手动基线定义。注意：AI 加速攻击已经把 Foundation 的门槛抬高了，纯摩擦型控制（rate limit、MFA）不再达标。<span class="hl2">Enterprise</span> 是大多数组织应瞄准的水位——X.509 证书认证、ABAC 上下文感知策略、容器化沙箱执行（gVisor）、不可变审计日志、统计异常检测。<span class="hl-warm">Advanced</span> 是高风险/强监管场景的目标——硬件绑定凭证（HSM/TPM）、JIT/JEA 即时权限、机密计算（AMD SEV/Intel TDX）、完整决策溯源链、ML 行为分析。每一级都建立在前一级之上——从 Foundation 升到 Enterprise 是加强而非替换。核心设计测试：<span class="hl-danger">「这个控制是让攻击变得不可能，还是只是变得麻烦？」</span>Agent 攻击者有无限耐心和接近零的单次成本——只有消除路径的控制才有效，制造摩擦的不行。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s4-anim"><div class="s4_stage">
+  <div class="s4_heading">
+    <div class="s4_heading_title">Three-Tier Zero Trust Framework</div>
+    <div class="s4_heading_sub">7 security domains &times; 3 maturity tiers</div>
+  </div>
+
+  <div class="s4_body">
+    <!-- Left: 7 domain labels with dot indicators -->
+    <div class="s4_domains">
+      <div class="s4_domain">
+        <div class="s4_dots">
+          <div class="s4_dot s4_dot--f"></div>
+          <div class="s4_dot s4_dot--e"></div>
+          <div class="s4_dot s4_dot--a"></div>
+        </div>
+        <span class="s4_domain_label">身份认证</span>
+      </div>
+      <div class="s4_domain">
+        <div class="s4_dots">
+          <div class="s4_dot s4_dot--f"></div>
+          <div class="s4_dot s4_dot--e"></div>
+          <div class="s4_dot s4_dot--a"></div>
+        </div>
+        <span class="s4_domain_label">访问控制</span>
+      </div>
+      <div class="s4_domain">
+        <div class="s4_dots">
+          <div class="s4_dot s4_dot--f"></div>
+          <div class="s4_dot s4_dot--e"></div>
+          <div class="s4_dot s4_dot--a"></div>
+        </div>
+        <span class="s4_domain_label">资源隔离</span>
+      </div>
+      <div class="s4_domain">
+        <div class="s4_dots">
+          <div class="s4_dot s4_dot--f"></div>
+          <div class="s4_dot s4_dot--e"></div>
+          <div class="s4_dot s4_dot--a"></div>
+        </div>
+        <span class="s4_domain_label">可观测性</span>
+      </div>
+      <div class="s4_domain">
+        <div class="s4_dots">
+          <div class="s4_dot s4_dot--f"></div>
+          <div class="s4_dot s4_dot--e"></div>
+          <div class="s4_dot s4_dot--a"></div>
+        </div>
+        <span class="s4_domain_label">行为监控</span>
+      </div>
+      <div class="s4_domain">
+        <div class="s4_dots">
+          <div class="s4_dot s4_dot--f"></div>
+          <div class="s4_dot s4_dot--e"></div>
+          <div class="s4_dot s4_dot--a"></div>
+        </div>
+        <span class="s4_domain_label">输入输出</span>
+      </div>
+      <div class="s4_domain">
+        <div class="s4_dots">
+          <div class="s4_dot s4_dot--f"></div>
+          <div class="s4_dot s4_dot--e"></div>
+          <div class="s4_dot s4_dot--a"></div>
+        </div>
+        <span class="s4_domain_label">完整性</span>
+      </div>
+    </div>
+
+    <!-- Right: Tier stack (bottom to top: Foundation → Enterprise → Advanced) -->
+    <div class="s4_tiers">
+      <!-- Advanced (top) -->
+      <div class="s4_tier s4_tier--a">
+        <div class="s4_tier_fill"></div>
+        <div class="s4_tier_content">
+          <span class="s4_tier_name">Advanced</span>
+          <span class="s4_tier_sub">高风险 / 强监管</span>
+        </div>
+      </div>
+
+      <div class="s4_arrow s4_arrow--2">
+        <svg viewBox="0 0 14 14" fill="none"><path d="M7 2 L7 12 M3 8 L7 12 L11 8" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+
+      <!-- Enterprise (middle) -->
+      <div class="s4_tier s4_tier--e">
+        <div class="s4_tier_fill"></div>
+        <div class="s4_tier_content">
+          <span class="s4_tier_name">Enterprise</span>
+          <span class="s4_tier_sub">企业标准</span>
+        </div>
+      </div>
+
+      <div class="s4_arrow s4_arrow--1">
+        <svg viewBox="0 0 14 14" fill="none"><path d="M7 2 L7 12 M3 8 L7 12 L11 8" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+
+      <!-- Foundation (bottom) -->
+      <div class="s4_tier s4_tier--f">
+        <div class="s4_tier_fill"></div>
+        <div class="s4_tier_content">
+          <span class="s4_tier_name">Foundation</span>
+          <span class="s4_tier_sub">最低可行安全</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Design test quote -->
+  <div class="s4_quote">
+    <div class="s4_quote_text">&ldquo;不可能 vs 只是麻烦？&rdquo;</div>
+    <div class="s4_quote_sub">design test: eliminate the path, don&rsquo;t just add friction</div>
+  </div>
+</div></div>
+      <p class="hook-line reveal reveal-delay-3">身份认证、权限管理、沙箱隔离——7 个域如何跨三级递进？</p>
+      <button class="drill-btn reveal reveal-delay-4" onclick="drillDown('layer-framework')">深入框架详解 &#8594;</button>
+      <div class="source-panel reveal reveal-delay-4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Source (Part III: Applying Zero Trust)</span>
+<p>Foundation represents the minimum viable security appropriate for smaller deployments or initial implementations. Because AI-accelerated offense has compressed exploitation timelines, the Foundation floor has been raised: friction-only controls no longer qualify.</p>
+<p>Enterprise reflects enterprise standard practices that most organizations with significant deployments should target.</p>
+<p>Advanced describes aspirational capabilities for most organizations, or baseline for organizations with high-risk deployments/stringent regulatory requirements.</p>
+<p>When you evaluate any control in this document, ask a single question: does this make the attack impossible, or just tedious? Agentic attackers have unlimited patience and near-zero per-attempt cost. Prefer a control that removes a capability over a control that throttles it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S5: 八阶段部署工作流 -->
+  <section class="feed-section" style="background:var(--bg-act3)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">八阶段部署工作流：<br><span style="color:var(--accent)">从需求到度量的完整路径</span></h2>
+      <p class="body-text reveal reveal-delay-1">框架落地需要可执行的步骤。八个阶段覆盖完整的 Agent 安全部署：<span class="hl">Phase 1 需求识别</span>（对齐法规、业务目标和约束）→ <span class="hl2">Phase 2 供应链管理</span>（AI-BOM 物料清单、OpenSSF Scorecard 评估依赖健康度、加密签名、供应商评估）→ <span class="hl">Phase 3 边界定义</span>（逐 Agent 定义允许/禁止行为、升级触发器、爆炸半径评估）→ <span class="hl-danger">Phase 4 Prompt Injection 防御</span>（输入隔离、Spotlighting 将间接注入从 50%+ 降到 2% 以下、Constitutional Classifiers 阻断 95% 越狱）→ <span class="hl2">Phase 5 工具访问安全</span>（工具白名单、参数验证、沙箱执行、rate limiting）→ <span class="hl-warm">Phase 6 凭证保护</span>（短期 token、证书认证、JIT 即时权限、硬件绑定凭证）→ <span class="hl">Phase 7 记忆防护</span>（会话隔离、上下文完整性校验、保留策略）→ <span class="hl2">Phase 8 度量</span>（dwell time、coverage、检测速度、可解释性、行为一致性）。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s5-anim"><div class="s5_stage">
+  <div class="s5_heading">
+    <span class="s5_heading_label">Implementation</span>
+    <h3 class="s5_heading_title">8-Phase 部署流水线</h3>
+  </div>
+
+  <div class="s5_pipeline">
+    <div class="s5_spine"></div>
+
+    <!-- Phase 1 -->
+    <div class="s5_node">
+      <div class="s5_circle">1</div>
+      <div class="s5_content">
+        <div class="s5_phase_name">需求识别<span class="s5_phase_en">Requirements</span></div>
+      </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="s5_node">
+      <div class="s5_circle">2</div>
+      <div class="s5_content">
+        <div class="s5_phase_name">供应链管理<span class="s5_phase_en">Supply Chain</span></div>
+        <span class="s5_stat">AI-BOM</span>
+      </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="s5_node">
+      <div class="s5_circle">3</div>
+      <div class="s5_content">
+        <div class="s5_phase_name">边界定义<span class="s5_phase_en">Boundaries</span></div>
+        <span class="s5_stat">Blast Radius</span>
+      </div>
+    </div>
+
+    <!-- Phase 4 — critical -->
+    <div class="s5_node s5_node--critical">
+      <div class="s5_circle">4</div>
+      <div class="s5_content">
+        <div class="s5_phase_name">注入防御<span class="s5_phase_en">Injection Defense</span></div>
+        <span class="s5_stat s5_stat--danger">50% <span class="s5_stat_arrow">&rarr;</span> 2%</span>
+      </div>
+    </div>
+
+    <!-- Phase 5 -->
+    <div class="s5_node">
+      <div class="s5_circle">5</div>
+      <div class="s5_content">
+        <div class="s5_phase_name">工具安全<span class="s5_phase_en">Tool Access</span></div>
+        <span class="s5_stat">白名单 + 沙箱</span>
+      </div>
+    </div>
+
+    <!-- Phase 6 -->
+    <div class="s5_node">
+      <div class="s5_circle">6</div>
+      <div class="s5_content">
+        <div class="s5_phase_name">凭证保护<span class="s5_phase_en">Credentials</span></div>
+        <span class="s5_stat">JIT / JEA</span>
+      </div>
+    </div>
+
+    <!-- Phase 7 -->
+    <div class="s5_node">
+      <div class="s5_circle">7</div>
+      <div class="s5_content">
+        <div class="s5_phase_name">记忆防护<span class="s5_phase_en">Memory</span></div>
+        <span class="s5_stat">隔离 + 校验</span>
+      </div>
+    </div>
+
+    <!-- Phase 8 -->
+    <div class="s5_node">
+      <div class="s5_circle">8</div>
+      <div class="s5_content">
+        <div class="s5_phase_name">度量<span class="s5_phase_en">Measurement</span></div>
+        <span class="s5_stat">Dwell Time</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="s5_completion">
+    <div class="s5_completion_pill">
+      <span class="s5_completion_icon"></span>
+      全阶段零信任覆盖
+    </div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Source (Part IV: Implementation workflow)</span>
+<p>Successful agent implementation requires a defined, repeatable process built on the security architecture above. Each phase addresses specific security controls while mitigating the identified threats.</p>
+<p>Phase 1: Identify requirements. Phase 2: Manage supply chain risks. Phase 3: Define agent boundaries. Phase 4: Defend against prompt injection. Phase 5: Secure tool access. Phase 6: Protect agent credentials. Phase 7: Safeguard agent memory. Phase 8: Measure what matters.</p>
+<p>Microsoft's Spotlighting technique reduces indirect injection attack success from over 50% to under 2% by clearly delimiting untrusted content.</p>
+<p>Constitutional classifiers provide an additional detection layer. Anthropic's approach blocked 95% of jailbreak attempts in testing with minimal increase in over-refusal rates.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S6: 自主防御 -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">自主防御：<br><span style="color:#E8A87C">当攻击者也是 Agent</span></h2>
+      <p class="body-text reveal reveal-delay-1">保护 Agent 是一半工作，另一半是让安全运营<span class="hl">快到能跟 AI 加速的攻击者对抗</span>。当漏洞利用在补丁发布数小时内出现，靠人工处理告警的流程太慢了——Agent 攻击者可能在人类审核一条告警的时间内攻击数百上千个系统。答案不是把人移出循环，而是把人从<span class="hl2">记账工作</span>中解放出来。自动化证据收集、关联分析和文档生成；让人专注<span class="hl-warm">遏制决策、披露通知和客户沟通</span>。实操建议：先拿一条已知高误报率的告警规则开始——接入前沿模型做第一轮分类，给每个告警生成结构化处理建议，跑两周看人机一致率。<span class="hl2">Agentic SOAR</span>（新一代安全编排自动化响应）能在秒级响应新型攻击——自动隔离、动态访问控制调整、会话终止、凭证撤销。用 <span class="hl">MITRE ATT&CK</span> 映射检测覆盖率。最后：<span class="hl-danger">桌面演练要模拟 5 个同时发生的事件</span>，而不是 1 个——为数量级增长做准备。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s6-anim"><div class="s6_stage">
+  <div class="s6_title">Autonomous Defense / Agentic SOAR</div>
+
+  <!-- Two-column comparison -->
+  <div class="s6_compare">
+    <!-- LEFT: Traditional SOC -->
+    <div class="s6_col s6_col--left">
+      <div class="s6_icon s6_icon--human">&#128100;</div>
+      <div class="s6_col_label">Traditional SOC</div>
+      <div class="s6_col_desc">人工审核告警<br>逐条分析 &middot; 手动响应</div>
+      <div class="s6_badge s6_badge--danger">&#9201; Days</div>
+    </div>
+
+    <!-- RIGHT: Agentic SOAR -->
+    <div class="s6_col s6_col--right">
+      <div class="s6_icon s6_icon--ai">&#129302;</div>
+      <div class="s6_col_label">Agentic SOAR</div>
+      <div class="s6_col_desc">自动分类+响应<br>并行处理 &middot; 实时决策</div>
+      <div class="s6_badge s6_badge--accent">&#9889; Seconds</div>
+    </div>
+  </div>
+
+  <div class="s6_divider"></div>
+
+  <!-- Handoff flow -->
+  <div class="s6_flow">
+    <div class="s6_flow_box s6_flow_box--ai">
+      <div class="s6_flow_box_title">&#129302; AI Agent</div>
+      证据收集 &middot; 关联分析 &middot; 文档生成
+    </div>
+    <div class="s6_flow_arrow">
+      <span>协作</span>
+      <div class="s6_flow_arrow_line"></div>
+    </div>
+    <div class="s6_flow_box s6_flow_box--human">
+      <div class="s6_flow_box_title">&#128100; Human</div>
+      遏制决策 &middot; 信息披露 &middot; 外部沟通
+    </div>
+  </div>
+
+  <div class="s6_divider"></div>
+
+  <!-- MITRE ATT&CK coverage -->
+  <div class="s6_mitre">
+    <div class="s6_mitre_label">MITRE ATT&amp;CK Coverage</div>
+    <div class="s6_mitre_bar">
+      <div class="s6_mitre_block"><div class="s6_mitre_fill s6_mitre_fill--1"></div></div>
+      <div class="s6_mitre_block"><div class="s6_mitre_fill s6_mitre_fill--2"></div></div>
+      <div class="s6_mitre_block"><div class="s6_mitre_fill s6_mitre_fill--3"></div></div>
+      <div class="s6_mitre_block"><div class="s6_mitre_fill s6_mitre_fill--4"></div></div>
+      <div class="s6_mitre_block"><div class="s6_mitre_fill s6_mitre_fill--5"></div></div>
+    </div>
+    <div class="s6_mitre_labels">
+      <span>侦察</span>
+      <span>渗透</span>
+      <span>执行</span>
+      <span>持久化</span>
+      <span>外泄</span>
+    </div>
+  </div>
+
+  <!-- Bottom pulsing badge -->
+  <div class="s6_tabletop">
+    <div class="s6_tabletop_badge">
+      <span class="s6_tabletop_dot"></span>
+      桌面演练：5个同时事件
+    </div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Source (Part V: Defensive operations)</span>
+<p>Securing the agents you deploy is half the work. The other half is running security operations fast enough to contend with attackers who are themselves AI-accelerated.</p>
+<p>The answer is not to remove humans from the loop — it is to move humans off the bookkeeping and onto the decisions. Automate evidence collection, enrichment, correlation, and documentation. Keep humans on containment calls, disclosure calls, and customer-comms calls.</p>
+<p>The next generation of SOAR is Agentic SOAR, which adds adaptive capabilities that respond to novel situations. This allows flexibility beyond existing playbooks and the adaptability to directly address malicious AI-driven attacks within seconds.</p>
+<p>Run the version where five hit in the same week. Plan for an order-of-magnitude increase in finding volume and rehearse it before it happens.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ 威胁详解层 ═══ -->
+<div class="layer" id="layer-threats" data-depth="1">
+
+  <!-- A1: Prompt Injection 双路径 -->
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">Prompt Injection 双路径：<br><span style="color:var(--accent)">100% 成功率 + 隐形间接注入</span></h2>
+      <p class="body-text reveal reveal-delay-1"><span class="hl-danger">直接 Prompt Injection</span> 是正面强攻——攻击者精心构造输入来覆盖系统指令。技术手段包括显式指令覆盖、Base64/十六进制编码绕过过滤器、对人类无意义但影响模型输出的对抗后缀。研究表明算法化方法可以达到<span class="hl-danger">跨多个模型族的 100% 攻击成功率</span>。<span class="hl2">间接 Prompt Injection</span> 更阴险——攻击者把恶意指令嵌入 Agent 处理的外部数据源（网页、邮件、文档）。微软研究确认：<span class="hl">LLM 无法可靠地区分信息上下文和可执行指令</span>。用户永远看不到恶意载荷，Agent 把它当作合法请求执行。防御上，<span class="hl-warm">Spotlighting</span> 技术通过明确界定不受信内容，将间接注入成功率从 <span class="hl-danger">50%+ 降到 2% 以下</span>。<span class="hl2">Constitutional Classifiers</span> 提供额外检测层——Anthropic 的方案在测试中<span class="hl">阻断了 95% 的越狱尝试</span>，且几乎不增加误拒率。再结合升级触发器、输入隔离、攻击面缩减，形成纵深防御。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a1-anim"><div class="a1_stage visible">
+  <!-- Attack Paths -->
+  <div class="a1_attack_zone">
+    <!-- Direct Injection -->
+    <div class="a1_path a1_path_direct">
+      <div class="a1_path_label">Direct Injection</div>
+      <div class="a1_arrow_direct"></div>
+      <div class="a1_badge">100% success</div>
+    </div>
+
+    <!-- Indirect Injection -->
+    <div class="a1_path a1_path_indirect">
+      <div class="a1_path_label">Indirect Injection</div>
+      <div class="a1_arrow_indirect_wrap">
+        <div class="a1_intermediary">Web / Email / Doc</div>
+        <div class="a1_arrow_curve">
+          <svg viewBox="0 0 120 90">
+            <path class="a1_curve_line" d="M60,0 C90,10 110,40 100,60 C90,80 60,85 60,90" />
+            <polygon class="a1_curve_head" points="54,86 60,96 66,86" />
+          </svg>
+        </div>
+      </div>
+      <div class="a1_stealth_label">隐形攻击</div>
+    </div>
+  </div>
+
+  <!-- Agent Target -->
+  <div class="a1_agent_row">
+    <div class="a1_agent_box">AI Agent</div>
+  </div>
+
+  <!-- Divider -->
+  <div class="a1_divider">
+    <div class="a1_divider_line"></div>
+    <div class="a1_divider_label">防御</div>
+    <div class="a1_divider_line"></div>
+  </div>
+
+  <!-- Defense Layers -->
+  <div class="a1_defenses">
+    <!-- D1: Spotlighting -->
+    <div class="a1_defense a1_d1">
+      <div class="a1_def_icon">
+        <div class="a1_bars">
+          <div class="a1_bar a1_bar_before">
+            <span class="a1_bar_lbl">50%</span>
+          </div>
+          <div class="a1_bar a1_bar_after">
+            <span class="a1_bar_lbl">2%</span>
+          </div>
+        </div>
+      </div>
+      <div class="a1_def_body">
+        <div class="a1_def_title">Spotlighting</div>
+        <div class="a1_def_stat">攻击成功率 50% &rarr; 2%</div>
+      </div>
+    </div>
+
+    <!-- D2: Constitutional Classifiers -->
+    <div class="a1_defense a1_d2">
+      <div class="a1_def_icon">
+        <div class="a1_shield_wrap">
+          <svg class="a1_shield_svg" viewBox="0 0 36 36">
+            <path class="a1_shield_fill" d="M18 3 L30 9 L30 18 C30 26 24 32 18 34 C12 32 6 26 6 18 L6 9 Z" />
+            <path class="a1_shield_stroke" d="M18 3 L30 9 L30 18 C30 26 24 32 18 34 C12 32 6 26 6 18 L6 9 Z" />
+            <polyline class="a1_shield_check" points="12,18 16,23 24,13" />
+          </svg>
+        </div>
+      </div>
+      <div class="a1_def_body">
+        <div class="a1_def_title">Constitutional Classifiers</div>
+        <div class="a1_def_stat">95% 注入攻击被拦截</div>
+      </div>
+    </div>
+
+    <!-- D3: Input Isolation -->
+    <div class="a1_defense a1_d3">
+      <div class="a1_def_icon">
+        <div class="a1_iso_box">
+          <span class="a1_iso_label_trusted">trusted</span>
+          <div class="a1_iso_inner">
+            <span class="a1_iso_label_untrusted">!</span>
+          </div>
+        </div>
+      </div>
+      <div class="a1_def_body">
+        <div class="a1_def_title">Input Isolation</div>
+        <div class="a1_def_stat">不可信内容隔离处理</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Block Wall -->
+  <div class="a1_block_wall"></div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Source (Part II + Part IV)</span>
+<p>Direct prompt injection occurs when attackers craft inputs that override system instructions. Techniques include explicit instruction overrides, encoding schemes like Base64 or hexadecimal to bypass filters, and adversarial suffixes that appear meaningless to humans but influence model outputs. Research shows algorithmic approaches can achieve 100% attack success rates with prompts that transfer across multiple model families.</p>
+<p>Indirect prompt injection presents the more insidious threat. Attackers embed malicious instructions in external data sources that agents process, such as web pages or emails. Microsoft Research confirms that LLMs cannot reliably distinguish between informational context and actionable instructions.</p>
+<p>Microsoft's Spotlighting technique reduces indirect injection attack success from over 50% to under 2% by clearly delimiting untrusted content.</p>
+<p>Constitutional classifiers provide an additional detection layer. Anthropic's approach blocked 95% of jailbreak attempts in testing with minimal increase in over-refusal rates.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- A2: 供应链 + 记忆投毒 -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">供应链 + 记忆投毒：<br><span style="color:#E8A87C">250 份文档，后门永存</span></h2>
+      <p class="body-text reveal reveal-delay-1">Agent 生态的供应链风险远超传统软件——它们在运行时动态加载外部工具和 Agent persona，传统软件成分分析力不从心。<span class="hl-danger">模型供应链</span>方面，Anthropic 研究证明仅 <span class="hl-danger">250 份恶意文档</span>就能在 6 亿到 130 亿参数的 LLM 中植入后门，且这些后门<span class="hl">在安全训练（SFT + RLHF）后依然存活</span>。安全研究人员已在主流平台发现约 <span class="hl-warm">100 个恶意 AI 模型</span>，其中包括加载时发起反向 shell 连接的模型。<span class="hl2">工具供应链</span>方面，PyTorch 依赖混淆攻击展示了恶意包如何在安装时窃取 SSH 密钥等敏感数据。防御建议：用 AI-BOM（AI 物料清单）扩展 OWASP CycloneDX，用 OpenSSF Scorecard 自动评估依赖健康度，加密签名所有组件，对低分且无人维护的小依赖——<span class="hl">让前沿模型重写你实际用到的功能子集</span>，比继续依赖不健康的包更安全。<span class="hl2">记忆投毒</span>则是最隐蔽的长期威胁。<span class="hl-warm">RAG 投毒</span>通过毒化向量数据库的源头来污染检索结果。<span class="hl2">共享上下文投毒</span>利用多租户环境中的复用上下文。<span class="hl">长期记忆漂移</span>最微妙——摘要或 peer-agent 反馈逐渐偏移存储的知识，因为没有单个改变看起来是恶意的，所以极难检测。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a2-anim"><div class="a2_stage">
+
+  <!-- SECTION 1: Supply Chain Attacks -->
+  <div class="a2_section-title a2_s1-title">
+    <span class="a2_icon">&#x26A0;</span>
+    供应链攻击
+  </div>
+
+  <!-- Pipeline -->
+  <div class="a2_pipeline">
+    <div class="a2_pipe-node a2_poisoned" style="position:relative; padding-top: 30px;">
+      <div class="a2_poison-inject"></div>
+      训练数据
+      <div class="a2_pipe-label">Training Data</div>
+      <span class="a2_poison-badge">250 docs</span>
+    </div>
+    <div class="a2_pipe-arrow">
+      <div class="a2_pulse"></div>
+    </div>
+    <div class="a2_pipe-node a2_poisoned">
+      模型
+      <div class="a2_pipe-label">Model</div>
+    </div>
+    <div class="a2_pipe-arrow">
+      <div class="a2_pulse"></div>
+    </div>
+    <div class="a2_pipe-node a2_poisoned">
+      部署
+      <div class="a2_pipe-label">Deployment</div>
+    </div>
+  </div>
+
+  <!-- Stat cards -->
+  <div class="a2_stats">
+    <div class="a2_stat-card">
+      <span class="a2_stat-left">250 恶意文档</span>
+      <span class="a2_stat-arrow">&rarr;</span>
+      <span class="a2_stat-right">600M-13B 参数后门</span>
+    </div>
+    <div class="a2_stat-card">
+      <span class="a2_stat-left">PyTorch 依赖混淆</span>
+      <span class="a2_stat-arrow">&rarr;</span>
+      <span class="a2_stat-right">SSH 密钥窃取</span>
+    </div>
+    <div class="a2_stat-card">
+      <span class="a2_stat-left">~100 恶意模型</span>
+      <span class="a2_stat-arrow">&rarr;</span>
+      <span class="a2_stat-right">反向 Shell</span>
+    </div>
+  </div>
+
+  <div class="a2_divider"></div>
+
+  <!-- SECTION 2: Memory Poisoning -->
+  <div class="a2_section-title a2_s2-title">
+    <span class="a2_icon">&#x1F9EA;</span>
+    记忆投毒
+  </div>
+
+  <div class="a2_mem-cards">
+    <!-- RAG Poisoning -->
+    <div class="a2_mem-card">
+      <div class="a2_mem-label">RAG 投毒</div>
+      <div class="a2_mem-desc">注入恶意文档进入向量数据库，污染检索结果</div>
+      <div class="a2_rag-visual">
+        <div class="a2_rag-doc"></div>
+        <div class="a2_rag-arrow-line"></div>
+        <div class="a2_rag-db" style="position:relative;">
+          <span class="a2_rag-db-label">Vector DB</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Shared Context -->
+    <div class="a2_mem-card">
+      <div class="a2_mem-label">共享上下文</div>
+      <div class="a2_mem-desc">多租户环境下上下文交叉污染</div>
+      <div class="a2_overlap-visual">
+        <div class="a2_overlap-circle">
+          <span class="a2_overlap-label">A</span>
+        </div>
+        <div class="a2_overlap-circle">
+          <span class="a2_overlap-label">B</span>
+        </div>
+        <div class="a2_overlap-circle">
+          <span class="a2_overlap-label">C</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Long-term Drift -->
+    <div class="a2_mem-card">
+      <div class="a2_mem-label">长期漂移</div>
+      <div class="a2_mem-desc">持久记忆中渐进式注入，缓慢改变模型行为</div>
+      <div class="a2_drift-visual">
+        <div class="a2_drift-fill"></div>
+        <div class="a2_drift-labels">
+          <span>正常</span>
+          <span>偏移</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Source (Part II: Supply chain + Memory poisoning)</span>
+<p>Anthropic research demonstrates that injecting just 250 malicious documents can successfully backdoor LLMs ranging from 600 million to 13 billion parameters, and these backdoors persist through safety training including supervised fine-tuning and RLHF.</p>
+<p>The PyTorch dependency confusion attack demonstrated how malicious packages can exfiltrate sensitive data, including SSH keys during installation. Security researchers have discovered approximately 100 malicious AI models on major platforms, including models that initiate reverse shell connections when loaded.</p>
+<p>RAG poisoning introduces malicious data into vector databases through poisoned sources, direct uploads, or over-trusted pipelines. The agent retrieves this contaminated context when answering queries, producing false answers or executing targeted payloads.</p>
+<p>Long-term memory drift is subtler: summaries or peer-agent feedback gradually shift stored knowledge or goal weighting, producing behavioral deviations over time that are difficult to detect because no single change appears malicious.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ 框架详解层 ═══ -->
+<div class="layer" id="layer-framework" data-depth="1">
+
+  <!-- A3: 身份 + 权限 + 隔离 -->
+  <section class="feed-section" style="background:var(--bg-act2)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">身份 + 权限 + 隔离：<br><span style="color:var(--accent2)">三级递进的核心三柱</span></h2>
+      <p class="body-text reveal reveal-delay-1"><span class="hl">身份认证</span>是一切安全能力的地基——没有可验证身份，无法执行访问控制、审计或归因。Foundation 要求<span class="hl">加密根植的唯一标识符</span>（不只是标签），Enterprise 升级到 <span class="hl2">X.509 证书 + 双向 TLS + 证书钉扎</span>，Advanced 达到<span class="hl-warm">硬件绑定凭证（HSM/TPM）+ 远程证明</span>。静态 API key 和共享服务账户密码？AI 辅助代码分析会最先找到它们——<span class="hl-danger">连 Foundation 都不达标</span>。<span class="hl2">权限管理</span>从 RBAC deny-by-default（Foundation）到 ABAC 上下文感知策略（Enterprise：融合时间、位置、数据敏感度、风险评分）到 JIT/JEA 即时权限（Advanced：任务结束自动撤销，零常驻权限）。<span class="hl">资源隔离</span>从基于身份的网络分段（Foundation：每个工作负载加密身份，服务只接受显式命名的调用者）到容器化沙箱（Enterprise：gVisor 运行时，限制挂载和网络）到<span class="hl-warm">硬件隔离 + 机密计算</span>（Advanced：AMD SEV / Intel TDX，microVM 架构）。处理不受信输入的 Agent 必须跑在沙箱里——这是 Enterprise 的底线，不是 Advanced 的理想。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a3-anim"><div class="a3_stage">
+  <div class="a3_grid">
+    <!-- Column 1: Identity -->
+    <div class="a3_col">
+      <div class="a3_head">
+        <span class="a3_icon">&#128273;</span>
+        <span class="a3_label">身份</span>
+      </div>
+      <div class="a3_blocks">
+        <!-- reversed order: Advanced on top, Foundation at bottom -->
+        <div class="a3_blk a3_blk--a">HSM/TPM<span class="a3_tier">硬件绑定</span></div>
+        <div class="a3_blk a3_blk--e">X.509 证书<span class="a3_tier">mTLS + 钉扎</span></div>
+        <div class="a3_blk a3_blk--f">加密 ID<span class="a3_tier">唯一标识符</span></div>
+      </div>
+    </div>
+    <!-- Column 2: Access -->
+    <div class="a3_col">
+      <div class="a3_head">
+        <span class="a3_icon">&#128737;</span>
+        <span class="a3_label">权限</span>
+      </div>
+      <div class="a3_blocks">
+        <div class="a3_blk a3_blk--a">JIT / JEA<span class="a3_tier">零常驻权限</span></div>
+        <div class="a3_blk a3_blk--e">ABAC<span class="a3_tier">上下文感知</span></div>
+        <div class="a3_blk a3_blk--f">RBAC<span class="a3_tier">deny-by-default</span></div>
+      </div>
+    </div>
+    <!-- Column 3: Isolation -->
+    <div class="a3_col">
+      <div class="a3_head">
+        <span class="a3_icon">&#128230;</span>
+        <span class="a3_label">隔离</span>
+      </div>
+      <div class="a3_blocks">
+        <div class="a3_blk a3_blk--a">机密计算<span class="a3_tier">SEV / TDX</span></div>
+        <div class="a3_blk a3_blk--e">容器沙箱<span class="a3_tier">gVisor 运行时</span></div>
+        <div class="a3_blk a3_blk--f">网络分段<span class="a3_tier">身份驱动</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Anti-pattern -->
+  <div class="a3_anti">
+    <span class="a3_anti_x">&#10007;</span>
+    <span class="a3_anti_txt">Static API Key + 共享服务账户</span>
+    <span class="a3_anti_note">&nbsp;-- 连 Foundation 都不达标</span>
+  </div>
+
+  <!-- Legend -->
+  <div class="a3_legend">
+    <span class="a3_leg"><span class="a3_dot a3_dot--f"></span>Foundation</span>
+    <span class="a3_leg"><span class="a3_dot a3_dot--e"></span>Enterprise</span>
+    <span class="a3_leg"><span class="a3_dot a3_dot--a"></span>Advanced</span>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Source (Part III: Identity, Access, Boundaries)</span>
+<p>Identity and authentication form the foundation for every other security capability. Without verifiable identity, you cannot enforce access controls, maintain audit trails, or attribute actions to specific agents.</p>
+<p>Foundation: Unique cryptographic identifiers for each agent instance. Enterprise: Certificate-based authentication with full lifecycle management. Advanced: Hardware-backed identity with attestation.</p>
+<p>Foundation: Role-based access control (RBAC) with deny-by-default. Enterprise: Attribute-based access control (ABAC) with context-aware policies. Advanced: Continuous authorization with real-time policy evaluation.</p>
+<p>Foundation: Identity-based isolation of agent workloads, backed by network segmentation. Enterprise: Sandboxed execution environments per agent. Advanced: Hardware isolation with confidential computing.</p>
+<p>Sandboxed execution constrains what a compromised agent can reach, even within its own identity boundary, and should be considered mandatory rather than aspirational for agents that process web content, documents, or any other untrusted input.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- A4: 可观测性 + 输入输出 + 完整性 -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">可观测性 + 行为监控 + 完整性：<br><span style="color:#B8A9D4">看见、理解、恢复</span></h2>
+      <p class="body-text reveal reveal-delay-1"><span class="hl">可观测性</span>揭示实际发生了什么——先度量两个指标：<span class="hl-danger">dwell time</span>（异常发生到人工发现的延迟）和 <span class="hl-danger">coverage</span>（实际被调查的告警占比），这是 AI 自动化杠杆最大的地方。日志三级递进：Foundation 全量记录（agent 身份 + 操作 + 上下文 + 时间戳）→ Enterprise 不可变审计日志（加密完整性验证 + 追加写入 + 跨 agent 分布式追踪 OpenTelemetry）→ Advanced 实时 SIEM 流 + 完整决策溯源链（输入→检索→工具输出→推理→输出全链路记录，支持 replay）。<span class="hl2">行为监控</span>从捕获变为理解——Foundation 手动定义基线 + 阈值告警 → Enterprise 统计异常检测（可调灵敏度、跨指标关联、降低误报）→ Advanced ML 行为分析（融合时间、用户、业务周期上下文，捕获阈值方法遗漏的微妙异常）。<span class="hl-warm">输入输出控制</span>在边界处阻止攻击——输入隔离、Constitutional Classifiers、攻击面缩减。<span class="hl">完整性与恢复</span>确保即使失陷也能回到已知良好状态——配置完整性、版本化记忆存储、回滚能力。跳过任何一项，攻击者就利用那个缺口。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a4-anim"><div class="a4_stage">
+  <div class="a4_grid">
+
+    <!-- Panel 1: Dwell Time -->
+    <div class="a4_panel a4_p1">
+      <div class="a4_panel_title">Dwell Time</div>
+      <div class="a4_dwell_wrap">
+        <div class="a4_ring_box">
+          <svg class="a4_ring_svg" viewBox="0 0 56 56">
+            <circle class="a4_ring_bg" cx="28" cy="28" r="24"/>
+            <circle class="a4_ring_fg" cx="28" cy="28" r="24"/>
+          </svg>
+          <span class="a4_ring_label">85%</span>
+        </div>
+        <div class="a4_dwell_text">
+          <span class="a4_old_val">Days</span>
+          <span class="a4_new_val">&lt; 1 Hour</span>
+          <span class="a4_dwell_sub">MTTD 目标</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 2: Coverage -->
+    <div class="a4_panel a4_p2">
+      <div class="a4_panel_title">Coverage</div>
+      <div class="a4_cov_label">告警调查覆盖率</div>
+      <div class="a4_bar_track">
+        <div class="a4_bar_fill">
+          <span class="a4_bar_pct">85%</span>
+        </div>
+        <div class="a4_bar_target">
+          <span class="a4_bar_target_label">100%</span>
+        </div>
+      </div>
+      <div class="a4_cov_gap">
+        <span class="a4_cov_gap_dot"></span>
+        15% 未覆盖 = 盲区
+      </div>
+    </div>
+
+    <!-- Panel 3: Behavioral Baseline -->
+    <div class="a4_panel a4_p3">
+      <div class="a4_panel_title">行为基线</div>
+      <div class="a4_chart_box">
+        <svg class="a4_chart_svg" viewBox="0 0 180 64" preserveAspectRatio="none">
+          <!-- Anomaly highlight zone -->
+          <rect class="a4_anomaly_zone" x="130" y="0" width="40" height="64" rx="3"/>
+          <!-- Normal baseline wave -->
+          <polyline class="a4_chart_line" points="0,40 15,36 30,42 45,38 60,41 75,35 90,39 105,37 120,40 130,38"/>
+          <!-- Anomaly spike -->
+          <polyline class="a4_chart_anomaly" points="130,38 140,12 150,8 160,18 170,42"/>
+        </svg>
+        <span class="a4_anomaly_tag">异常偏离</span>
+      </div>
+      <div class="a4_baseline_label">正常模式 → 异常尖峰检测</div>
+    </div>
+
+    <!-- Panel 4: Integrity -->
+    <div class="a4_panel a4_p4">
+      <div class="a4_panel_title">完整性</div>
+      <div class="a4_chain">
+        <span class="a4_link a4_l1">Input</span>
+        <span class="a4_arrow a4_arr1">→</span>
+        <span class="a4_link a4_l2">Decision</span>
+        <span class="a4_arrow a4_arr2">→</span>
+        <span class="a4_link a4_l3">Output</span>
+      </div>
+      <div class="a4_verified">
+        <span class="a4_check_icon">
+          <svg class="a4_check_svg" viewBox="0 0 16 16">
+            <polyline class="a4_check_path" points="3,8.5 6.5,12 13,4"/>
+          </svg>
+        </span>
+        Provenance Verified
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Summary Bar -->
+  <div class="a4_summary">
+    跳过任何一项 <span class="a4_summary_arrow">→</span> <span class="a4_summary_em">攻击者利用缺口</span>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Source (Part III: Observability, Monitoring, Integrity)</span>
+<p>Before investing anywhere else in detection, instrument two things: dwell time (how long between an anomaly occurring and a human becoming aware of it) and coverage (the fraction of alerts that actually get investigated). These are the two metrics AI-assisted automation has the greatest leverage to move.</p>
+<p>Foundation: Comprehensive logs of agent actions with timestamps and context. Enterprise: Immutable audit trails with integrity verification. Advanced: Real-time streaming to SIEM with correlation capabilities.</p>
+<p>Foundation: Manual definition of expected agent behavior patterns. Enterprise: Automated baseline learning from normal operations. Advanced: Machine learning-based behavioral analysis with contextual awareness.</p>
+<p>Verify every agent action, grant minimum necessary permissions, contain damage when compromise occurs. Identity enables attribution and access control. Observability reveals what happened. Behavioral monitoring detects anomalies. Input and output controls prevent attacks at boundaries. Integrity protections enable recovery. Skip one capability and attackers exploit the gap.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+var layerStack=['layer-overview'];
+var transitioning=false;
+var layerNames={'layer-overview':'概览','layer-threats':'威胁详解','layer-framework':'框架详解'};
+var observers=new Map();
+
+function setupObserver(layerId){if(observers.has(layerId))return;var layer=document.getElementById(layerId);var reveals=layer.querySelectorAll('.reveal, [class*="_stage"]');var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.15,root:layer});reveals.forEach(function(el){obs.observe(el);});observers.set(layerId,obs);}
+function resetReveals(layerId){var layer=document.getElementById(layerId);layer.querySelectorAll('.reveal').forEach(function(el){el.classList.remove('visible');});layer.querySelectorAll('[class*="_stage"]').forEach(function(el){el.classList.remove('visible');});}
+function activateReveals(layerId){resetReveals(layerId);if(observers.has(layerId)){observers.get(layerId).disconnect();observers.delete(layerId);}requestAnimationFrame(function(){setupObserver(layerId);});}
+function updateBreadcrumb(){var bc=document.getElementById('breadcrumb');bc.innerHTML='';layerStack.forEach(function(id,i){if(i>0){var sep=document.createElement('span');sep.className='sep';sep.textContent='>';bc.appendChild(sep);}var span=document.createElement('span');span.textContent=layerNames[id]||id;if(i===layerStack.length-1){span.className='current';}else{span.addEventListener('click',function(){goBackTo(i);});}bc.appendChild(span);});var backBtn=document.getElementById('backBtn');backBtn.style.display=layerStack.length>1?'flex':'none';bc.style.left=layerStack.length>1?'60px':'16px';var dots=document.getElementById('depthDots');var depth=layerStack.length-1;dots.querySelectorAll('.dot').forEach(function(d,i){d.classList.toggle('active',i===depth);});}
+function drillDown(targetId,btnEl){if(transitioning)return;transitioning=true;var currentId=layerStack[layerStack.length-1];var currentLayer=document.getElementById(currentId);var targetLayer=document.getElementById(targetId);targetLayer.scrollTop=0;resetReveals(targetId);targetLayer.style.visibility='visible';var duration=600;currentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';currentLayer.style.transformOrigin='center center';currentLayer.style.transform='scale(1.3)';currentLayer.style.opacity='0';targetLayer.classList.add('active');targetLayer.style.opacity='0';targetLayer.style.transform='scale(0.85)';targetLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){targetLayer.style.opacity='1';targetLayer.style.transform='scale(1)';});});setTimeout(function(){currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';targetLayer.style.transition='';targetLayer.style.transform='';activateReveals(targetId);transitioning=false;},duration+50);layerStack.push(targetId);updateBreadcrumb();}
+function goBack(){if(layerStack.length<=1||transitioning)return;transitioning=true;var currentId=layerStack.pop();var parentId=layerStack[layerStack.length-1];var currentLayer=document.getElementById(currentId);var parentLayer=document.getElementById(parentId);var duration=600;currentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';currentLayer.style.transform='scale(0.85)';currentLayer.style.opacity='0';parentLayer.classList.add('active');parentLayer.style.transform='scale(1.3)';parentLayer.style.opacity='0';parentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){parentLayer.style.transform='scale(1)';parentLayer.style.opacity='1';});});setTimeout(function(){currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';currentLayer.style.visibility='';parentLayer.style.transition='';parentLayer.style.transform='';transitioning=false;},duration+50);updateBreadcrumb();}
+function goBackTo(targetIndex){if(transitioning)return;while(layerStack.length-1>targetIndex){if(layerStack.length<=1)break;goBack();return;}}
+function toggleSource(btn){btn.classList.toggle('open');btn.nextElementSibling.classList.toggle('open');}
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+</body>
+</html>

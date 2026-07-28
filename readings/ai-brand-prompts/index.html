@@ -1,0 +1,1799 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>AI 品牌摄影提示词：从普通到编辑级</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;600;700&family=Noto+Serif+SC:wght@700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+/* === Variables === */
+:root {
+  --bg-act1: #FFF7ED; /* warm peach */
+  --bg-act2: #F0F9FF; /* light blue */
+  --bg-act3: #1E293B; /* dark slate */
+  --bg-close: #0F172A;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --dim: #94A3B8;
+  --accent: #F97316; /* orange */
+  --accent2: #0EA5E9; /* sky blue */
+  --warm: #F59E0B;
+  --danger: #EF4444;
+  --card-bg: #FFFFFF;
+}
+
+/* === Core Framework === */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Noto Sans SC', -apple-system, sans-serif; color: var(--text); }
+.content-width { max-width: 640px; margin: 0 auto; padding: 0 28px; }
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.15s; }
+.reveal-delay-2 { transition-delay: 0.3s; }
+.reveal-delay-3 { transition-delay: 0.45s; }
+.reveal-delay-4 { transition-delay: 0.6s; }
+
+/* === Typography === */
+.big-statement { font-family: 'Noto Serif SC', serif; font-size: clamp(22px, 5.5vw, 32px); font-weight: 700; line-height: 1.5; margin-bottom: 32px; }
+.body-text { font-size: 16px; line-height: 1.9; color: var(--text); margin-bottom: 28px; }
+.body-text .hl { color: var(--accent); font-weight: 500; }
+.body-text .hl-blue { color: var(--accent2); font-weight: 500; }
+.body-text .hl-danger { color: var(--danger); font-weight: 500; }
+
+/* === Spatial Canvas === */
+.space { display: flex; width: 200%; height: 100%; transition: transform 0.55s cubic-bezier(0.32,0.72,0,1); will-change: transform; }
+.main-scroll { flex: 0 0 50%; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; transition: transform 0.55s cubic-bezier(0.32,0.72,0,1); transform-origin: right center; }
+.detail-scroll { flex: 0 0 50%; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; background: #FAFAF8; visibility: hidden; transition: visibility 0s 0.55s; }
+body.dd-active .space { transform: translateX(calc(-50% + 24px)); }
+body.dd-active .main-scroll { transform: scale(0.96); pointer-events: none; border-radius: 12px; overflow: hidden; }
+body.dd-active .detail-scroll { visibility: visible; transition: visibility 0s 0s; }
+.detail-scroll::before { content: ''; position: sticky; top: 0; display: block; width: 100%; height: 0; box-shadow: -8px 0 24px rgba(0,0,0,0.1); z-index: 4; pointer-events: none; }
+
+/* === Sections === */
+.section { padding: 80px 0 60px; position: relative; }
+.section-label { font-size: 11px; font-weight: 700; letter-spacing: 3px; color: var(--accent); margin-bottom: 12px; }
+.hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 40px 28px; background: linear-gradient(180deg, var(--bg-act1) 0%, #FDE8D0 100%); }
+.hero-title { font-family: 'Noto Serif SC', serif; font-size: clamp(28px, 7vw, 42px); font-weight: 700; line-height: 1.4; margin-bottom: 16px; }
+.hero-subtitle { font-size: 15px; color: var(--text-muted); }
+.act-break { padding: 48px 28px; text-align: center; }
+.act-label { font-size: 11px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: var(--dim); margin-bottom: 8px; }
+.act-title { font-family: 'Noto Serif SC', serif; font-size: 20px; font-weight: 700; }
+
+/* === Deep-Dive Trigger === */
+.deep-dive-trigger { text-align: center; color: var(--accent); font-size: 14px; padding: 16px 0; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; }
+.deep-dive-trigger:hover { opacity: 1; }
+.detail-header { padding: 16px 20px; font-size: 14px; color: var(--accent); cursor: pointer; position: sticky; top: 0; background: #FAFAF8; z-index: 5; border-bottom: 1px solid rgba(0,0,0,0.06); }
+.detail-body { padding: 20px; line-height: 1.8; font-size: 15px; }
+.detail-body h4 { font-size: 16px; font-weight: 700; margin: 24px 0 12px; color: var(--text); }
+.detail-body h4:first-child { margin-top: 0; }
+.detail-body p { margin: 0 0 16px; color: var(--text-muted); }
+.original-text { margin-top: 20px; padding: 16px; background: rgba(0,0,0,0.03); border-radius: 8px; border-left: 3px solid var(--accent); font-size: 14px; line-height: 1.7; }
+
+/* === DD Animations === */
+.dd-anim { opacity: 0; animation-fill-mode: forwards; animation-duration: 0.5s; }
+body.dd-active .dd-anim { animation-name: ddFadeIn; }
+.dd-pop { opacity: 0; transform: scale(0.7); animation-fill-mode: forwards; animation-duration: 0.4s; }
+body.dd-active .dd-pop { animation-name: ddPop; }
+.dd-d1 { animation-delay: 0.3s !important; }
+.dd-d2 { animation-delay: 0.6s !important; }
+.dd-d3 { animation-delay: 0.9s !important; }
+@keyframes ddFadeIn { to { opacity: 1; } }
+@keyframes ddPop { to { opacity: 1; transform: scale(1); } }
+
+/* === Source Horizon === */
+.source-horizon { position: fixed; bottom: 0; left: 0; right: 0; height: 32px; z-index: 200; background: transparent; transition: height 0.35s cubic-bezier(0.32,0.72,0,1), background 0.35s ease; overflow: hidden; cursor: pointer; padding-bottom: env(safe-area-inset-bottom, 0); }
+.source-horizon.expanded { height: 72px; background: rgba(15,23,42,0.95); backdrop-filter: blur(8px); }
+.horizon-track { position: absolute; bottom: 0; left: 8px; right: 8px; height: 3px; }
+.source-horizon.expanded .horizon-track { bottom: auto; top: 8px; height: 4px; }
+.horizon-seg { position: absolute; top: 0; height: 100%; border-radius: 2px; }
+.horizon-seg.covered { background: var(--accent); }
+.horizon-seg.covered.deep-dive { background: var(--accent); }
+.horizon-seg.gap { background: transparent; }
+.horizon-detail { position: absolute; top: 16px; left: 8px; right: 8px; bottom: 4px; opacity: 0; transition: opacity 0.25s ease 0.1s; pointer-events: none; }
+.source-horizon.expanded .horizon-detail { opacity: 1; pointer-events: auto; }
+.horizon-marker { position: absolute; top: 0; transform: translateX(-50%); text-align: center; }
+.marker-tick { width: 2px; height: 10px; background: rgba(255,255,255,0.5); margin: 0 auto 4px; border-radius: 1px; }
+.marker-tick.active { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+.marker-label { font-size: 9px; color: rgba(255,255,255,0.7); white-space: nowrap; font-family: 'Noto Sans SC', sans-serif; }
+.horizon-gap-zone { position: absolute; top: 0; height: 14px; cursor: help; }
+.horizon-gap-zone .gap-pattern { width: 100%; height: 100%; background: repeating-linear-gradient(-45deg, transparent, transparent 2px, rgba(251,146,60,0.35) 2px, rgba(251,146,60,0.35) 4px); border-radius: 2px; }
+.horizon-gap-zone .gap-tooltip { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: #1E293B; color: #F8FAFC; font-size: 11px; padding: 4px 10px; border-radius: 6px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.horizon-gap-zone:hover .gap-tooltip { opacity: 1; }
+.horizon-pct { position: absolute; right: 0; top: 2px; font-size: 11px; font-weight: 600; color: var(--accent); font-family: 'Noto Sans SC', sans-serif; }
+@keyframes markerPulse { 0%,100% { box-shadow: 0 0 4px var(--accent2); } 50% { box-shadow: 0 0 10px var(--accent2); } }
+.marker-tick.active { animation: markerPulse 2s ease-in-out infinite; }
+
+/* === Inline Gap Markers === */
+.coverage-gap-inline { display: flex; align-items: center; gap: 12px; padding: 8px 28px; max-width: 640px; margin: 0 auto; }
+.coverage-gap-inline .gap-line { flex: 1; height: 1px; background: var(--dim); opacity: 0.25; }
+.coverage-gap-inline .gap-text { font-size: 12px; font-style: italic; color: var(--dim); white-space: nowrap; opacity: 0.5; }
+
+/* === Coverage Footnote === */
+.coverage-map { margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.06); }
+.coverage-map-title { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--dim); margin-bottom: 14px; }
+.coverage-bars { display: flex; flex-direction: column; gap: 6px; }
+.cbar-row { display: flex; align-items: center; gap: 10px; height: 28px; cursor: pointer; border-radius: 6px; padding: 4px 6px; margin: 0 -6px; transition: background 0.15s; }
+.cbar-row:hover { background: rgba(0,0,0,0.03); }
+.cbar-label { width: 120px; flex-shrink: 0; font-size: 12px; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cbar-track { flex: 1; height: 12px; background: rgba(0,0,0,0.03); border-radius: 6px; overflow: hidden; }
+.cbar-fill { height: 100%; border-radius: 6px; }
+.cbar-fill.included { background: var(--accent); }
+.cbar-fill.deep-dive-bar { background: repeating-linear-gradient(-45deg, var(--accent2), var(--accent2) 3px, rgba(14,165,233,0.5) 3px, rgba(14,165,233,0.5) 6px); }
+.cbar-fill.compressed-bar { background: var(--dim); opacity: 0.4; }
+.cbar-row.included .cbar-label { color: var(--text); }
+.cbar-row.deep-dive .cbar-label { color: var(--accent2); }
+.cbar-row.compressed .cbar-label { color: var(--dim); text-decoration: line-through; }
+.cbar-excerpt { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.22,1,0.36,1); margin: 0 0 0 130px; }
+.cbar-excerpt.open { max-height: 300px; }
+.cbar-excerpt-inner { font-size: 13px; line-height: 1.7; color: var(--text-muted); padding: 8px 12px; margin: 4px 0 8px; background: rgba(0,0,0,0.02); border-radius: 8px; border-left: 3px solid var(--accent); }
+.cbar-row.compressed + .cbar-excerpt .cbar-excerpt-inner { border-left-color: var(--dim); }
+.cbar-row.deep-dive + .cbar-excerpt .cbar-excerpt-inner { border-left-color: var(--accent2); }
+.cbar-expand-hint { font-size: 10px; color: var(--dim); opacity: 0.6; margin-left: 4px; }
+.coverage-omitted { margin-top: 14px; font-size: 13px; color: var(--text-muted); line-height: 1.7; }
+.coverage-omitted strong { color: var(--text); font-weight: 500; }
+.omit-reason { display: inline-block; font-size: 11px; background: rgba(0,0,0,0.04); padding: 1px 8px; border-radius: 4px; color: var(--dim); margin-left: 4px; }
+
+/* === Takeaway === */
+.takeaway { padding: 80px 28px; text-align: center; }
+.takeaway-quote { font-family: 'Noto Serif SC', serif; font-size: clamp(18px, 4.5vw, 24px); font-weight: 700; line-height: 1.6; max-width: 540px; margin: 0 auto 24px; }
+.footer { padding: 40px 28px; text-align: center; font-size: 13px; color: var(--dim); }
+
+/* Section-specific dark text */
+.section-dark .section-label { color: var(--warm); }
+.section-dark .big-statement { color: #F0FDF4; }
+.section-dark .body-text { color: #CBD5E1; }
+.section-dark .body-text .hl { color: var(--warm); }
+.section-dark .deep-dive-trigger { color: var(--warm); }
+
+/* === Responsive === */
+@media (max-width: 420px) {
+  .hero-title { font-size: 26px; }
+  .takeaway-quote { font-size: 18px; }
+}
+.anim-stage > div{ width:100%; }
+</style>
+
+<meta name="description" content="当你在 AI 图像生成器中输入「模特穿着衬衫的漂亮照片」时，结果不可避免地是 普通的 。它看起来像库存摄影——因为指令本身就是一个普通的想法。要获得编辑级效果，你必须停止像工程师那样输入查询，而要像 创意总监 为团队提供简报那样思考。">
+<link rel="canonical" href="https://chendi.me/readings/ai-brand-prompts/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<div class="space" id="space">
+<div class="main-scroll" id="mainScroll">
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-title reveal">AI 品牌摄影提示词</div>
+  <div class="hero-subtitle reveal reveal-delay-1">从「漂亮的照片」到编辑级高端时尚</div>
+  <div style="margin-top:24px; font-size:13px; color:var(--dim);" class="reveal reveal-delay-2">基于 Manus 博客 · 品牌摄影提示词指南</div>
+</div>
+
+<!-- Act I -->
+<div class="act-break reveal" style="background: var(--bg-act1);">
+  <div class="act-label">Act I</div>
+  <div class="act-title">问题与框架</div>
+</div>
+
+<!-- S1 — 普通提示词的陷阱 -->
+<section class="section" style="background: var(--bg-act1);">
+  <div class="content-width">
+    <div class="section-label reveal">01</div>
+    <h2 class="big-statement reveal reveal-delay-1">普通提示词的陷阱</h2>
+    <p class="body-text reveal reveal-delay-2">当你在 AI 图像生成器中输入「模特穿着衬衫的漂亮照片」时，结果不可避免地是<span class="hl">普通的</span>。它看起来像库存摄影——因为指令本身就是一个普通的想法。要获得编辑级效果，你必须停止像工程师那样输入查询，而要像<span class="hl-blue">创意总监</span>为团队提供简报那样思考。</p>
+    <div id="s1-anim" class="reveal reveal-delay-3"><style>
+/* === S1: 普通提示词的陷阱 === */
+.s1_stage {
+  position: relative;
+  width: 340px;
+  height: 280px;
+  margin: 0 auto;
+}
+
+.s1_stage svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+/* AI 中心圆 */
+.s1_ai {
+  position: absolute;
+  top: 100px; left: 142px;
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  border: 2.5px solid var(--accent);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* 输入框：通用样式 */
+.s1_input {
+  position: absolute;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+/* 左侧模糊输入 */
+.s1_vague {
+  top: 16px; left: 10px;
+  border: 2px solid var(--dim);
+  color: var(--dim);
+  background: #fff;
+}
+
+/* 右侧精确输入 */
+.s1_precise {
+  top: 16px; right: 10px;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  background: #FFF7ED;
+}
+
+/* 输出结果 */
+.s1_output {
+  position: absolute;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* 左侧输出：库存感 */
+.s1_output_vague {
+  bottom: 16px; left: 16px;
+  border: 2px solid #CBD5E1;
+  color: #94A3B8;
+  background: #F1F5F9;
+}
+
+/* 右侧输出：编辑级 */
+.s1_output_precise {
+  bottom: 16px; right: 16px;
+  border: 2px solid var(--accent2);
+  color: var(--accent2);
+  background: #F0F9FF;
+}
+
+/* SVG 连线样式 */
+.s1_line_path {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+}
+.s1_stroke_dim { stroke: var(--dim); }
+.s1_stroke_accent { stroke: var(--accent); }
+
+/* === KEYFRAMES === */
+@keyframes s1_scaleIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s1_fadeScaleIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s1_drawLine {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes s1_fadeSlideUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s1_dimDown {
+  0% { opacity: 1; filter: brightness(1); }
+  100% { opacity: 0.5; filter: brightness(0.65); }
+}
+@keyframes s1_glow {
+  0% { box-shadow: 0 0 0px rgba(14,165,233,0); }
+  100% { box-shadow: 0 0 18px rgba(14,165,233,0.5); }
+}
+
+/* === ANIMATION SEQUENCE triggered by .visible === */
+
+/* 0.3s — AI 圆出现 */
+.s1_stage.visible .s1_ai {
+  animation: s1_scaleIn 0.45s 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+
+/* 0.9s — 左侧「漂亮照片」框出现 */
+.s1_stage.visible .s1_vague {
+  animation: s1_fadeScaleIn 0.4s 0.9s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+
+/* 1.4s — 左侧输入→AI 连线 */
+.s1_stage.visible .s1_path_vague_in {
+  animation: s1_drawLine 0.4s 1.4s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+
+/* 1.9s — AI→左下输出连线 + 库存感出现并变暗 */
+.s1_stage.visible .s1_path_vague_out {
+  animation: s1_drawLine 0.35s 1.9s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+.s1_stage.visible .s1_output_vague {
+  animation: s1_fadeSlideUp 0.35s 1.9s ease forwards, s1_dimDown 0.5s 2.2s ease forwards;
+}
+
+/* 2.4s — 右侧「创意简报」框出现 */
+.s1_stage.visible .s1_precise {
+  animation: s1_fadeScaleIn 0.4s 2.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+
+/* 2.9s — 右侧输入→AI 连线 */
+.s1_stage.visible .s1_path_precise_in {
+  animation: s1_drawLine 0.4s 2.9s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+
+/* 3.4s — AI→右下输出连线 + 编辑级出现并发光 */
+.s1_stage.visible .s1_path_precise_out {
+  animation: s1_drawLine 0.35s 3.4s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+.s1_stage.visible .s1_output_precise {
+  animation: s1_fadeSlideUp 0.35s 3.4s ease forwards, s1_glow 0.5s 3.7s ease forwards;
+}
+</style>
+
+<div class="s1_stage">
+  <!-- AI 中心节点 -->
+  <div class="s1_ai">AI</div>
+
+  <!-- 左侧：模糊输入 -->
+  <div class="s1_input s1_vague">漂亮照片</div>
+
+  <!-- 右侧：精确输入 -->
+  <div class="s1_input s1_precise">创意简报</div>
+
+  <!-- SVG 连线层 -->
+  <svg viewBox="0 0 340 280">
+    <!-- 左上输入(~68,52) → AI圆左上边缘(~150,112) -->
+    <path class="s1_line_path s1_stroke_dim s1_path_vague_in" d="M 82 52 L 150 110" />
+    <!-- AI圆左下边缘(~150,148) → 左下输出(~68,232) -->
+    <path class="s1_line_path s1_stroke_dim s1_path_vague_out" d="M 150 148 L 82 228" />
+    <!-- 右上输入(~272,52) → AI圆右上边缘(~192,112) -->
+    <path class="s1_line_path s1_stroke_accent s1_path_precise_in" d="M 258 52 L 192 110" />
+    <!-- AI圆右下边缘(~192,148) → 右下输出(~272,232) -->
+    <path class="s1_line_path s1_stroke_accent s1_path_precise_out" d="M 192 148 L 260 228" />
+  </svg>
+
+  <!-- 左侧输出 -->
+  <div class="s1_output s1_output_vague">库存感</div>
+
+  <!-- 右侧输出 -->
+  <div class="s1_output s1_output_precise">编辑级</div>
+</div></div>
+    <div class="deep-dive-trigger" onclick="toggleDeepDive(1)">&#8595; 深入了解</div>
+  </div>
+</section>
+
+<!-- S2 — 四层指令架构 -->
+<section class="section" style="background: var(--bg-act1);">
+  <div class="content-width">
+    <div class="section-label reveal">02</div>
+    <h2 class="big-statement reveal reveal-delay-1">四层指令架构</h2>
+    <p class="body-text reveal reveal-delay-2">一个成功的提示词不会留下任何偶然性。如果你省略了一个细节，AI 将用<span class="hl-danger">默认的美学</span>填补空白——超光滑的人工光泽。为了抵消这一点，你的提示词需要四个不同层次的指令：<span class="hl">主体和服装</span>、<span class="hl">环境和场景</span>、<span class="hl-blue">相机和胶片</span>、<span class="hl-blue">光线</span>。</p>
+    <div id="s2-anim" class="reveal reveal-delay-3"><style>
+/* S2 — 四层指令架构 */
+.s2_stage {
+  position: relative;
+  width: 340px;
+  height: 280px;
+  margin: 0 auto;
+}
+
+/* Layer bars */
+.s2_layer {
+  position: absolute;
+  left: 40px;
+  width: 260px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.s2_layer--1 { bottom: 16px; background: #F97316; }
+.s2_layer--2 { bottom: 66px; background: #FB923C; }
+.s2_layer--3 { bottom: 116px; background: #0EA5E9; }
+.s2_layer--4 { bottom: 166px; background: #38BDF8; }
+
+/* Vertical completeness line */
+.s2_vline {
+  position: absolute;
+  left: 24px;
+  bottom: 16px;
+  width: 2.5px;
+  height: 0;
+  background: #94A3B8;
+  border-radius: 2px;
+}
+
+/* Right-side label */
+.s2_label {
+  position: absolute;
+  right: 4px;
+  top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0EA5E9;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+/* Keyframes */
+@keyframes s2_layerIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s2_vlineGrow {
+  to { height: 190px; }
+}
+@keyframes s2_fadeIn {
+  to { opacity: 1; }
+}
+
+/* Animation sequence triggered by .visible */
+.s2_stage.visible .s2_layer--1 {
+  animation: s2_layerIn 0.4s 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.s2_stage.visible .s2_layer--2 {
+  animation: s2_layerIn 0.4s 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.s2_stage.visible .s2_layer--3 {
+  animation: s2_layerIn 0.4s 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.s2_stage.visible .s2_layer--4 {
+  animation: s2_layerIn 0.4s 1.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.s2_stage.visible .s2_vline {
+  animation: s2_vlineGrow 0.5s 2.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.s2_stage.visible .s2_label {
+  animation: s2_fadeIn 0.4s 2.9s ease forwards;
+}
+</style>
+
+<div class="s2_stage">
+  <div class="s2_layer s2_layer--4">光线</div>
+  <div class="s2_layer s2_layer--3">相机与胶片</div>
+  <div class="s2_layer s2_layer--2">环境与场景</div>
+  <div class="s2_layer s2_layer--1">主体与服装</div>
+  <div class="s2_vline"></div>
+  <div class="s2_label">四层齐备 = 编辑级</div>
+</div></div>
+    <div class="deep-dive-trigger" onclick="toggleDeepDive(2)">&#8595; 深入了解</div>
+  </div>
+</section>
+
+<!-- Act II -->
+<div class="act-break reveal" style="background: var(--bg-act2);">
+  <div class="act-label">Act II</div>
+  <div class="act-title">六种基本机位</div>
+</div>
+
+<!-- S3 — 广角与三分四 -->
+<section class="section" style="background: var(--bg-act2);">
+  <div class="content-width">
+    <div class="section-label reveal">03</div>
+    <h2 class="big-statement reveal reveal-delay-1">广角与三分四</h2>
+    <p class="body-text reveal reveal-delay-2"><span class="hl">广角镜头</span>建立品牌所处的世界——展示完整服装，提供足够的负空间用于文本覆盖。<span class="hl-blue">三分之四镜头</span>则是电商和社交媒体的主力，让观众更接近服装的合身与造型，同时保留场景背景。</p>
+    <div id="s3-anim" class="reveal reveal-delay-3"><style>
+.s3_stage {
+  position: relative;
+  width: 340px;
+  height: 260px;
+  margin: 0 auto;
+}
+
+/* Viewfinder frames */
+.s3_frame {
+  position: absolute;
+  border: 2.5px solid var(--accent, #F97316);
+  border-radius: 4px;
+  opacity: 0;
+  transform: scale(0.8);
+}
+.s3_frame-left {
+  top: 16px; left: 12px;
+  width: 140px; height: 160px;
+}
+.s3_frame-right {
+  top: 16px; right: 12px;
+  width: 110px; height: 160px;
+  border-color: var(--accent2, #0EA5E9);
+}
+
+/* Corner marks for viewfinder look */
+.s3_frame::before,
+.s3_frame::after {
+  content: '';
+  position: absolute;
+  width: 10px; height: 10px;
+  border-color: inherit;
+  border-style: solid;
+}
+.s3_frame::before {
+  top: -2px; left: -2px;
+  border-width: 2.5px 0 0 2.5px;
+}
+.s3_frame::after {
+  bottom: -2px; right: -2px;
+  border-width: 0 2.5px 2.5px 0;
+}
+
+/* Frame labels */
+.s3_label {
+  position: absolute;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  opacity: 0;
+  transform: translateY(-6px);
+  white-space: nowrap;
+}
+.s3_label-left {
+  top: -20px; left: 12px;
+  color: var(--accent, #F97316);
+}
+.s3_label-right {
+  top: -20px; right: 12px;
+  color: var(--accent2, #0EA5E9);
+}
+
+/* Human figures — simple line art via borders */
+.s3_figure {
+  position: absolute;
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* Left figure: small person + environment */
+.s3_figure-left {
+  top: 56px; left: 62px;
+}
+.s3_figure-left .s3_head {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--dim, #94A3B8);
+  margin: 0 auto 3px;
+}
+.s3_figure-left .s3_body {
+  width: 2px; height: 22px;
+  background: var(--dim, #94A3B8);
+  margin: 0 auto;
+  position: relative;
+}
+.s3_figure-left .s3_body::before {
+  content: '';
+  position: absolute;
+  top: 4px; left: -7px;
+  width: 16px; height: 2px;
+  background: var(--dim, #94A3B8);
+}
+.s3_figure-left .s3_body::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: -5px;
+  width: 12px; height: 2px;
+  background: var(--dim, #94A3B8);
+  border-radius: 0 0 3px 3px;
+}
+
+/* Environment elements around left figure */
+.s3_env {
+  position: absolute;
+  opacity: 0;
+}
+.s3_env-floor {
+  top: 140px; left: 24px;
+  width: 116px; height: 1.5px;
+  background: #CBD5E1;
+}
+.s3_env-block1 {
+  top: 100px; left: 28px;
+  width: 16px; height: 36px;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 2px;
+}
+.s3_env-block2 {
+  top: 110px; right: 28px;
+  width: 20px; height: 26px;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 2px;
+}
+
+/* Right figure: larger person filling the frame */
+.s3_figure-right {
+  top: 36px; right: 40px;
+}
+.s3_figure-right .s3_head {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--dim, #94A3B8);
+  margin: 0 auto 4px;
+}
+.s3_figure-right .s3_body {
+  width: 4px; height: 70px;
+  background: var(--dim, #94A3B8);
+  margin: 0 auto;
+  position: relative;
+}
+.s3_figure-right .s3_body::before {
+  content: '';
+  position: absolute;
+  top: 8px; left: -14px;
+  width: 32px; height: 3px;
+  background: var(--dim, #94A3B8);
+}
+.s3_figure-right .s3_body::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: -8px;
+  width: 20px; height: 3px;
+  background: var(--dim, #94A3B8);
+  border-radius: 0 0 4px 4px;
+}
+
+/* Negative space indicators in left frame */
+.s3_neg-space {
+  position: absolute;
+  top: 44px; left: 100px;
+  font-size: 9px;
+  color: #CBD5E1;
+  letter-spacing: 2px;
+  opacity: 0;
+  writing-mode: vertical-lr;
+}
+
+/* Usage labels at bottom */
+.s3_usage {
+  position: absolute;
+  bottom: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(8px);
+}
+.s3_usage-left {
+  left: 38px;
+  color: var(--accent, #F97316);
+}
+.s3_usage-right {
+  right: 30px;
+  color: var(--accent2, #0EA5E9);
+}
+.s3_vs {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  font-size: 12px;
+  color: var(--dim, #94A3B8);
+  font-weight: 500;
+  opacity: 0;
+}
+
+/* === KEYFRAMES === */
+@keyframes s3_frameIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s3_labelIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s3_figureIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s3_fadeIn {
+  to { opacity: 1; }
+}
+@keyframes s3_usageIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s3_vsIn {
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* === TRIGGERED ANIMATIONS === */
+.s3_stage.visible .s3_frame-left {
+  animation: s3_frameIn 0.5s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s3_stage.visible .s3_label-left {
+  animation: s3_labelIn 0.4s 0.3s ease forwards;
+}
+
+.s3_stage.visible .s3_figure-left {
+  animation: s3_figureIn 0.4s 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s3_stage.visible .s3_env {
+  animation: s3_fadeIn 0.4s 0.9s ease forwards;
+}
+.s3_stage.visible .s3_neg-space {
+  animation: s3_fadeIn 0.4s 1.0s ease forwards;
+}
+
+.s3_stage.visible .s3_frame-right {
+  animation: s3_frameIn 0.5s 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s3_stage.visible .s3_label-right {
+  animation: s3_labelIn 0.4s 1.4s ease forwards;
+}
+
+.s3_stage.visible .s3_figure-right {
+  animation: s3_figureIn 0.4s 1.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.s3_stage.visible .s3_usage-left {
+  animation: s3_usageIn 0.4s 2.4s ease forwards;
+}
+.s3_stage.visible .s3_vs {
+  animation: s3_vsIn 0.4s 2.4s ease forwards;
+}
+.s3_stage.visible .s3_usage-right {
+  animation: s3_usageIn 0.4s 2.4s ease forwards;
+}
+</style>
+
+<div class="s3_stage">
+  <!-- Left viewfinder: Wide angle -->
+  <div class="s3_label s3_label-left">广角 50mm</div>
+  <div class="s3_frame s3_frame-left">
+    <!-- Small figure with environment -->
+    <div class="s3_figure s3_figure-left">
+      <div class="s3_head"></div>
+      <div class="s3_body"></div>
+    </div>
+    <div class="s3_env s3_env-floor"></div>
+    <div class="s3_env s3_env-block1"></div>
+    <div class="s3_env s3_env-block2"></div>
+    <div class="s3_neg-space">负空间</div>
+  </div>
+
+  <!-- Right viewfinder: Three-quarter -->
+  <div class="s3_label s3_label-right">三分四 85mm</div>
+  <div class="s3_frame s3_frame-right">
+    <div class="s3_figure s3_figure-right">
+      <div class="s3_head"></div>
+      <div class="s3_body"></div>
+    </div>
+  </div>
+
+  <!-- Usage labels -->
+  <div class="s3_usage s3_usage-left">建立世界</div>
+  <div class="s3_vs">vs</div>
+  <div class="s3_usage s3_usage-right">聚焦合身</div>
+</div></div>
+    <div class="deep-dive-trigger" onclick="toggleDeepDive(3)">&#8595; 深入了解</div>
+  </div>
+</section>
+
+<!-- S4 — 轮廓与特写 -->
+<section class="section" style="background: var(--bg-act2);">
+  <div class="content-width">
+    <div class="section-label reveal">04</div>
+    <h2 class="big-statement reveal reveal-delay-1">轮廓与特写</h2>
+    <p class="body-text reveal reveal-delay-2"><span class="hl">侧面轮廓</span>改变观众视角，以正面镜头无法做到的方式突出服装的轮廓和结构。<span class="hl-blue">特写镜头</span>完全聚焦于细节：亚麻的织物、翻领的缝线、配饰的五金件——如果客户无法通过屏幕感受质感，你就无法销售高端服装。</p>
+    <div id="s4-anim" class="reveal reveal-delay-3"><style>
+.s4_stage {
+  position: relative;
+  width: 340px;
+  height: 240px;
+  margin: 0 auto;
+}
+
+/* 左侧：侧面轮廓 — 头 + 身体线 */
+.s4_head {
+  position: absolute;
+  top: 20px;
+  left: 40px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2.5px solid var(--accent, #F97316);
+  background: transparent;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.s4_body {
+  position: absolute;
+  top: 46px;
+  left: 50px;
+  width: 3px;
+  height: 0;
+  background: var(--accent, #F97316);
+  border-radius: 2px;
+}
+
+.s4_shoulder {
+  position: absolute;
+  top: 48px;
+  left: 32px;
+  width: 40px;
+  height: 2.5px;
+  background: var(--accent, #F97316);
+  border-radius: 2px;
+  opacity: 0;
+}
+
+.s4_lbl_outline {
+  position: absolute;
+  top: 128px;
+  left: 33px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent, #F97316);
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* 右侧：特写方框 */
+.s4_closeup {
+  position: absolute;
+  top: 20px;
+  right: 40px;
+  width: 100px;
+  height: 100px;
+  border: 2.5px solid var(--accent2, #0EA5E9);
+  border-radius: 8px;
+  background: transparent;
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* 方框内抽象纹理线 */
+.s4_tex {
+  position: absolute;
+  height: 2px;
+  background: var(--accent2, #0EA5E9);
+  opacity: 0.35;
+  border-radius: 1px;
+}
+.s4_tex:nth-child(1) { top: 20px; left: 14px; width: 60px; }
+.s4_tex:nth-child(2) { top: 34px; left: 10px; width: 75px; }
+.s4_tex:nth-child(3) { top: 48px; left: 20px; width: 50px; }
+.s4_tex:nth-child(4) { top: 62px; left: 12px; width: 68px; }
+.s4_tex:nth-child(5) { top: 76px; left: 18px; width: 55px; }
+
+.s4_lbl_closeup {
+  position: absolute;
+  top: 128px;
+  right: 60px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent2, #0EA5E9);
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* 焦距标签 */
+.s4_lbl_85 {
+  position: absolute;
+  top: 150px;
+  left: 30px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dim, #94A3B8);
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.s4_lbl_120 {
+  position: absolute;
+  top: 150px;
+  right: 35px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dim, #94A3B8);
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* 虚线箭头 */
+.s4_dash {
+  position: absolute;
+  top: 70px;
+  left: 72px;
+  width: 0;
+  height: 0;
+  border-top: 1.5px dashed var(--dim, #94A3B8);
+  opacity: 0;
+}
+
+.s4_arrowhead {
+  position: absolute;
+  top: 64px;
+  left: 188px;
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 8px solid var(--dim, #94A3B8);
+  opacity: 0;
+}
+
+/* 发光 */
+.s4_glow {
+  position: absolute;
+  top: 15px;
+  right: 35px;
+  width: 110px;
+  height: 110px;
+  border-radius: 10px;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* === KEYFRAMES === */
+@keyframes s4_scaleIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s4_growDown {
+  to { height: 75px; }
+}
+@keyframes s4_fadeIn {
+  to { opacity: 1; }
+}
+@keyframes s4_slideUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s4_dashGrow {
+  to { width: 120px; opacity: 1; }
+}
+@keyframes s4_glow_pulse {
+  0%   { opacity: 0; box-shadow: 0 0 0 rgba(14,165,233,0); }
+  50%  { opacity: 1; box-shadow: 0 0 28px rgba(14,165,233,0.5); }
+  100% { opacity: 1; box-shadow: 0 0 20px rgba(14,165,233,0.35); }
+}
+
+/* === VISIBLE 触发 === */
+.s4_stage.visible .s4_head {
+  animation: s4_scaleIn 0.45s 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+.s4_stage.visible .s4_body {
+  animation: s4_growDown 0.45s 0.3s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+.s4_stage.visible .s4_shoulder {
+  animation: s4_fadeIn 0.35s 0.5s ease forwards;
+}
+.s4_stage.visible .s4_lbl_outline {
+  animation: s4_slideUp 0.4s 0.3s ease forwards;
+}
+
+.s4_stage.visible .s4_closeup {
+  animation: s4_scaleIn 0.5s 0.9s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+.s4_stage.visible .s4_lbl_closeup {
+  animation: s4_slideUp 0.4s 0.9s ease forwards;
+}
+
+.s4_stage.visible .s4_lbl_85 {
+  animation: s4_slideUp 0.4s 1.4s ease forwards;
+}
+.s4_stage.visible .s4_lbl_120 {
+  animation: s4_slideUp 0.4s 1.9s ease forwards;
+}
+
+.s4_stage.visible .s4_dash {
+  animation: s4_dashGrow 0.6s 2.4s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+.s4_stage.visible .s4_arrowhead {
+  animation: s4_fadeIn 0.3s 2.9s ease forwards;
+}
+
+.s4_stage.visible .s4_glow {
+  animation: s4_glow_pulse 1s 2.9s ease-in-out forwards;
+}
+</style>
+
+<div class="s4_stage">
+  <!-- 侧面轮廓 -->
+  <div class="s4_head"></div>
+  <div class="s4_body"></div>
+  <div class="s4_shoulder"></div>
+  <div class="s4_lbl_outline">轮廓</div>
+
+  <!-- 特写方框 + 纹理 -->
+  <div class="s4_closeup">
+    <div class="s4_tex"></div>
+    <div class="s4_tex"></div>
+    <div class="s4_tex"></div>
+    <div class="s4_tex"></div>
+    <div class="s4_tex"></div>
+  </div>
+  <div class="s4_lbl_closeup">特写</div>
+
+  <!-- 焦距标签 -->
+  <div class="s4_lbl_85">85mm</div>
+  <div class="s4_lbl_120">120mm 微距</div>
+
+  <!-- 虚线箭头 -->
+  <div class="s4_dash"></div>
+  <div class="s4_arrowhead"></div>
+
+  <!-- 发光 -->
+  <div class="s4_glow"></div>
+</div></div>
+    <div class="deep-dive-trigger" onclick="toggleDeepDive(4)">&#8595; 深入了解</div>
+  </div>
+</section>
+
+<!-- S5 — 背面与双人 -->
+<section class="section" style="background: var(--bg-act2);">
+  <div class="content-width">
+    <div class="section-label reveal">05</div>
+    <h2 class="big-statement reveal reveal-delay-1">背面与双人</h2>
+    <p class="body-text reveal reveal-delay-2"><span class="hl">背面角度</span>展示正面镜头无法捕捉的垂坠感和轮廓，为广告活动增加电影般的深度。<span class="hl-blue">双人镜头</span>让系列更生动——展示不同单品的搭配，以及美学在不同体型和肤色中的体现。</p>
+    <div id="s5-anim" class="reveal reveal-delay-3"><style>
+.s5_stage {
+  position: relative;
+  width: 340px;
+  height: 260px;
+  margin: 0 auto;
+}
+
+/* Center circle: 画册 */
+.s5_center {
+  position: absolute;
+  top: 100px; left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  border: 2.5px solid var(--accent, #F97316);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent, #F97316);
+  z-index: 2;
+}
+
+/* Angle tags */
+.s5_tag {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  border: 2px solid var(--dim, #94A3B8);
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dim, #94A3B8);
+  opacity: 0;
+  transform: scale(0);
+  z-index: 2;
+}
+
+/* Tag positions — radial around center */
+.s5_tag--zhengmian { top: 20px; left: 142px; }
+.s5_tag--cemian    { top: 90px; left: 36px; }
+.s5_tag--texie     { top: 90px; left: 248px; }
+.s5_tag--beimian   { top: 180px; left: 36px; }
+.s5_tag--shuangren { top: 180px; left: 248px; }
+
+/* New tags: orange and blue with glow */
+.s5_tag--new-orange {
+  border-color: var(--accent, #F97316);
+  color: #fff;
+  background: var(--accent, #F97316);
+}
+.s5_tag--new-blue {
+  border-color: var(--accent2, #0EA5E9);
+  color: #fff;
+  background: var(--accent2, #0EA5E9);
+}
+
+/* Connector lines (SVG) */
+.s5_lines {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+.s5_line {
+  stroke: var(--dim, #94A3B8);
+  stroke-width: 1.5;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+}
+.s5_line--orange { stroke: var(--accent, #F97316); }
+.s5_line--blue   { stroke: var(--accent2, #0EA5E9); }
+
+/* Glow effect for new tags */
+@keyframes s5_glow_orange {
+  0%, 100% { box-shadow: 0 0 8px rgba(249,115,22,0.4); }
+  50% { box-shadow: 0 0 20px rgba(249,115,22,0.7); }
+}
+@keyframes s5_glow_blue {
+  0%, 100% { box-shadow: 0 0 8px rgba(14,165,233,0.4); }
+  50% { box-shadow: 0 0 20px rgba(14,165,233,0.7); }
+}
+
+/* Animation keyframes */
+@keyframes s5_scaleCenter {
+  to { transform: translateX(-50%) scale(1); }
+}
+@keyframes s5_tagIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s5_drawLine {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Triggered by .visible */
+.s5_stage.visible .s5_center {
+  animation: s5_scaleCenter 0.4s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.s5_stage.visible .s5_tag--zhengmian {
+  animation: s5_tagIn 0.35s 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s5_stage.visible .s5_tag--cemian {
+  animation: s5_tagIn 0.35s 1.1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s5_stage.visible .s5_tag--texie {
+  animation: s5_tagIn 0.35s 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* New tags with glow */
+.s5_stage.visible .s5_tag--beimian.s5_tag--new-orange {
+  animation: s5_tagIn 0.35s 1.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+             s5_glow_orange 1.5s 2.3s ease-in-out infinite;
+}
+.s5_stage.visible .s5_tag--shuangren.s5_tag--new-blue {
+  animation: s5_tagIn 0.35s 2.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+             s5_glow_blue 1.5s 2.7s ease-in-out infinite;
+}
+
+/* Lines all appear together at 2.7s */
+.s5_stage.visible .s5_line {
+  animation: s5_drawLine 0.6s 2.7s ease-out forwards;
+}
+</style>
+
+<div class="s5_stage">
+  <!-- Center circle -->
+  <div class="s5_center">画册</div>
+
+  <!-- Angle tags -->
+  <div class="s5_tag s5_tag--zhengmian">正面</div>
+  <div class="s5_tag s5_tag--cemian">侧面</div>
+  <div class="s5_tag s5_tag--texie">特写</div>
+  <div class="s5_tag s5_tag--beimian s5_tag--new-orange">背面</div>
+  <div class="s5_tag s5_tag--shuangren s5_tag--new-blue">双人</div>
+
+  <!-- Connector lines (SVG overlay) -->
+  <svg class="s5_lines" viewBox="0 0 340 260">
+    <line class="s5_line" x1="170" y1="120" x2="170" y2="76"/>
+    <line class="s5_line" x1="148" y1="128" x2="92" y2="118"/>
+    <line class="s5_line" x1="192" y1="128" x2="248" y2="118"/>
+    <line class="s5_line s5_line--orange" x1="152" y1="148" x2="92" y2="180"/>
+    <line class="s5_line s5_line--blue" x1="188" y1="148" x2="248" y2="180"/>
+  </svg>
+</div></div>
+    <div class="deep-dive-trigger" onclick="toggleDeepDive(5)">&#8595; 深入了解</div>
+  </div>
+</section>
+
+<!-- Act III -->
+<div class="act-break reveal" style="background: var(--bg-act3);">
+  <div class="act-label" style="color: var(--warm);">Act III</div>
+  <div class="act-title" style="color: #F0FDF4;">一致性纪律</div>
+</div>
+
+<!-- S6 — 一致性纪律 -->
+<section class="section section-dark" style="background: var(--bg-act3);">
+  <div class="content-width">
+    <div class="section-label reveal">06</div>
+    <h2 class="big-statement reveal reveal-delay-1">锁定你的视觉语言</h2>
+    <p class="body-text reveal reveal-delay-2">生成一张出色的图片很容易。生成十张看起来像属于<span class="hl">同一杂志版面</span>的图片需要纪律。锁定主体描述、相机参数和光线语言——一旦你省略了胶片类型，AI 将恢复到默认的光滑风格，打破连续拍摄的幻觉。</p>
+    <div id="s6-anim" class="reveal reveal-delay-3"><style>
+.s6_stage {
+  position: relative;
+  width: 340px;
+  height: 280px;
+  margin: 0 auto;
+}
+
+/* Center circle */
+.s6_center {
+  position: absolute;
+  top: 110px; left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  border: 2.5px solid var(--warm);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--warm);
+  z-index: 5;
+  transition: color 0.4s ease, border-color 0.4s ease;
+}
+
+/* Triangle labels */
+.s6_label {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  border: 2px solid var(--accent2);
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: #CBD5E1;
+  opacity: 0;
+  transform: scale(0);
+  z-index: 5;
+}
+
+/* Top: 主体 */
+.s6_label_subject {
+  top: 16px; left: 50%;
+  margin-left: -28px;
+}
+
+/* Bottom right: 相机 */
+.s6_label_camera {
+  top: 195px; left: 232px;
+}
+
+/* Bottom left: 光线 */
+.s6_label_light {
+  top: 195px; left: 52px;
+}
+
+/* SVG for arrows */
+.s6_svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 340px;
+  height: 280px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.s6_arrow_path {
+  fill: none;
+  stroke: var(--warm);
+  stroke-width: 2;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  marker-end: url(#s6_arrowhead);
+}
+
+.s6_arrow_path.s6_break {
+  stroke: var(--danger);
+  stroke-dasharray: 6 4;
+  stroke-dashoffset: 0;
+}
+
+/* Animations triggered by .visible */
+@keyframes s6_scaleCenter {
+  to { transform: translateX(-50%) scale(1); }
+}
+@keyframes s6_labelIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s6_drawArrow {
+  to { stroke-dashoffset: 0; }
+}
+
+.s6_stage.visible .s6_center {
+  animation: s6_scaleCenter 0.4s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.s6_stage.visible .s6_label_subject {
+  animation: s6_labelIn 0.35s 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s6_stage.visible .s6_label_camera {
+  animation: s6_labelIn 0.35s 1.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s6_stage.visible .s6_label_light {
+  animation: s6_labelIn 0.35s 1.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Arrow draw animations */
+.s6_stage.visible .s6_arrow_1 {
+  animation: s6_drawArrow 0.5s 2.1s ease forwards;
+}
+.s6_stage.visible .s6_arrow_2 {
+  animation: s6_drawArrow 0.5s 2.35s ease forwards;
+}
+.s6_stage.visible .s6_arrow_3 {
+  animation: s6_drawArrow 0.5s 2.6s ease forwards;
+}
+</style>
+
+<div class="s6_stage" id="s6_stage">
+  <!-- Center -->
+  <div class="s6_center" id="s6_center_text">一致</div>
+
+  <!-- Triangle labels -->
+  <div class="s6_label s6_label_subject">主体</div>
+  <div class="s6_label s6_label_camera" id="s6_camera">相机</div>
+  <div class="s6_label s6_label_light">光线</div>
+
+  <!-- SVG arrows forming the cycle -->
+  <svg class="s6_svg" viewBox="0 0 340 280">
+    <defs>
+      <marker id="s6_arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#F59E0B"/>
+      </marker>
+      <marker id="s6_arrowhead_red" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EF4444"/>
+      </marker>
+    </defs>
+    <!-- Subject -> Camera (top to bottom-right) -->
+    <path class="s6_arrow_path s6_arrow_1" d="M 195 60 Q 250 120 270 190" />
+    <!-- Camera -> Light (bottom-right to bottom-left) -->
+    <path class="s6_arrow_path s6_arrow_2" id="s6_arrow_break" d="M 232 225 Q 170 260 108 225" />
+    <!-- Light -> Subject (bottom-left to top) -->
+    <path class="s6_arrow_path s6_arrow_3" d="M 68 195 Q 60 120 145 55" />
+  </svg>
+</div>
+
+<script>
+(function() {
+  var stage = document.getElementById('s6_stage');
+  var centerText = document.getElementById('s6_center_text');
+  var arrowBreak = document.getElementById('s6_arrow_break');
+  var camera = document.getElementById('s6_camera');
+  var timers = [];
+
+  function runBreakSequence() {
+    // 2.8s: Break the camera->light arrow
+    timers.push(setTimeout(function() {
+      arrowBreak.classList.add('s6_break');
+      arrowBreak.style.stroke = '#EF4444';
+      arrowBreak.style.markerEnd = 'url(#s6_arrowhead_red)';
+      arrowBreak.style.strokeDasharray = '6 4';
+      arrowBreak.style.strokeDashoffset = '0';
+      centerText.textContent = '断裂';
+      centerText.style.color = '#EF4444';
+      centerText.style.borderColor = '#EF4444';
+      camera.style.borderColor = '#EF4444';
+      camera.style.color = '#EF4444';
+    }, 2800));
+
+    // 3.4s: Restore
+    timers.push(setTimeout(function() {
+      arrowBreak.classList.remove('s6_break');
+      arrowBreak.style.stroke = '';
+      arrowBreak.style.markerEnd = 'url(#s6_arrowhead)';
+      arrowBreak.style.strokeDasharray = '200';
+      arrowBreak.style.strokeDashoffset = '0';
+      centerText.textContent = '一致';
+      centerText.style.color = '#F59E0B';
+      centerText.style.borderColor = '#F59E0B';
+      camera.style.borderColor = '';
+      camera.style.color = '';
+    }, 3400));
+  }
+
+  // Observe .visible
+  var s6Observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      if (m.type === 'attributes' && stage.classList.contains('visible')) {
+        runBreakSequence();
+      }
+    });
+  });
+  s6Observer.observe(stage, { attributes: true, attributeFilter: ['class'] });
+
+  // If already visible
+  if (stage.classList.contains('visible')) {
+    runBreakSequence();
+  }
+})();
+</script></div>
+    <div class="deep-dive-trigger" onclick="toggleDeepDive(6)">&#8595; 深入了解</div>
+  </div>
+</section>
+
+<!-- Takeaway -->
+<div class="takeaway reveal" style="background: var(--bg-close);">
+  <div class="takeaway-quote" style="color: #F0FDF4;">AI 为你提供了一个世界级的工作室、地球上的任何地点和无限的设备。<br>你只需要提供<span style="color:var(--accent);">愿景</span>和<span style="color:var(--accent2);">词汇</span>。</div>
+</div>
+
+<!-- Footer -->
+<div class="footer" style="background: var(--bg-close);">
+  <p>基于 Manus Blog「如何为品牌拍摄编写 AI 图像提示词」</p>
+</div>
+
+</div><!-- /main-scroll -->
+
+<div class="detail-scroll" id="detailScroll">
+  <div class="detail-header" id="detailBack">&larr; 返回</div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+
+</div><!-- /space -->
+
+<!-- Source Horizon -->
+<div class="source-horizon" id="sourceHorizon">
+  <div class="horizon-track" id="horizonTrack"></div>
+  <div class="horizon-detail" id="horizonDetail"></div>
+</div>
+
+<script>
+var deepDiveData = {};
+deepDiveData[1] = {
+  title: "普通提示词 vs 创意总监思维",
+  sections: [
+    {
+      heading: "为什么普通提示词不够",
+      body: "当你输入「模特穿着衬衫的漂亮照片」时，AI 没有收到任何具体的创意指令。它不知道你想要什么面料质感、什么光线方向、什么相机参数。于是它只能用自己的默认设置——超光滑的皮肤、均匀的照明、毫无个性的背景。结果自然看起来像库存摄影。"
+    },
+    {
+      heading: "创意总监的思考方式",
+      body: "一个好的创意总监给摄影团队的 brief 会精确到每一个维度：模特穿什么面料（「海军蓝无结构亚麻西装外套」而不是「西装」）、在什么环境拍摄（「风化的石头码头，灰蓝色地中海」而不是「海边」）、用什么相机参数（「Kodak Portra 400, 50mm」而不是「高清」）、什么光线（「强烈的定向下午光」而不是「好看的光」）。这四个维度的精确度直接决定了最终图像的质量等级。"
+    }
+  ],
+  originalText: "当品牌所有者在生成器中输入「模特穿着衬衫的漂亮照片」时，结果不可避免地是普通的。它看起来像是库存摄影，因为指令本身就是一个普通的想法。要获得真正能销售产品的编辑级高端时尚效果，您必须停止像软件工程师那样输入查询，而要像创意总监为团队提供简报那样思考。"
+};
+deepDiveData[2] = {
+  title: "四层指令架构详解",
+  sections: [
+    {
+      heading: "第一层：主体与服装",
+      body: "以极其精确的方式定义主体和服装。不要仅仅要求一个「西装」，而是要求「海军蓝无结构亚麻西装外套、白色圆领 T 恤和奶油色亚麻裤子」。你对面料织物、剪裁和造型的描述越具体，最终图像中衣服的垂坠感和质感就会越真实。"
+    },
+    {
+      heading: "第二层：环境与场景",
+      body: "背景提供了上下文，并将主体置于现实中。「一个海滩」是模糊的。「一个风化的石头码头，背后是平静的灰蓝色地中海」则为 AI 提供了具体的纹理（风化的石头、平静的水面）和一个颜色调色板（灰蓝色）来工作。"
+    },
+    {
+      heading: "第三层：相机与胶片",
+      body: "这是避免可怕的「AI 外观」的秘密。通过请求特定的胶片类型和焦距，你可以迫使生成器模仿真实摄影的颗粒感、色彩科学和景深。「使用 Kodak Portra 400 胶片拍摄，50mm 镜头」会立即将输出从数字渲染转变为编辑级摄影。"
+    },
+    {
+      heading: "第四层：光线",
+      body: "光线设置了氛围并定义了服装的形状。「强烈的定向下午光」或「从后方的温暖轮廓光」告诉 AI 精确地将高光和阴影放置在哪里，为衣服增加三维深度。"
+    }
+  ],
+  originalText: "一个成功的提示词不会留下任何偶然性。如果您省略了一个细节，AI 将用其默认的美学填补空白，这通常是超光滑的人工光泽。为了抵消这一点，您的提示词需要四个不同层次的指令。"
+};
+deepDiveData[3] = {
+  title: "广角与三分四镜头详解",
+  sections: [
+    {
+      heading: "广角镜头：建立世界",
+      body: "广角镜头建立了你的品牌所处的世界。它展示从头到脚的完整服装，同时提供足够的负空间用于文本覆盖或网站横幅。使用 50mm 镜头可以在保持自然透视的同时捕捉完整场景。"
+    },
+    {
+      heading: "三分四镜头：电商主力",
+      body: "从大腿中部向上拍摄的三分之四镜头是电子商务和社交媒体的主力。使用 85mm 镜头配合浅景深，可以让观众更接近服装的合身和造型，同时背景被自然虚化，突出主体。"
+    },
+    {
+      heading: "提示词对比",
+      body: "广角提示词强调环境和全身：「站在风化的石头码头上，背后是平静的灰蓝色地中海」。三分四提示词则聚焦姿态：「一只手插在口袋里，目光直视镜头」，配合「戏剧性的定向侧光，清晰的阴影」来突出面料质感。"
+    }
+  ],
+  originalText: "广角镜头建立了您的品牌所处的世界。它展示了从头到脚的完整服装，同时提供了足够的负空间用于文本覆盖或网站横幅。从大腿中部向上拍摄的三分之四镜头是电子商务和社交媒体的主力。"
+};
+deepDiveData[4] = {
+  title: "侧面轮廓与特写镜头",
+  sections: [
+    {
+      heading: "侧面轮廓：结构之美",
+      body: "侧面轮廓为画册增加了多样性，无需更换场景或服装。它改变了观众的视角，以正面镜头无法做到的方式突出服装的轮廓和结构。85mm 镜头配合柔和的自然光，可以创造出优雅的剪影效果。"
+    },
+    {
+      heading: "特写镜头：质感为王",
+      body: "如果客户无法通过屏幕感受到面料的质感，你就无法销售高端服装。特写镜头完全聚焦于细节：亚麻的织物、翻领的缝线或配饰的五金件。120mm 微距镜头配合戏剧性阴影效果和强烈的定向光，让每一根纤维都清晰可见。"
+    }
+  ],
+  originalText: "侧面轮廓为您的画册增加了多样性，而无需更换场景或服装。如果客户无法通过屏幕感受到面料的质感，您就无法销售高端服装。特写镜头完全聚焦于细节：亚麻的织物、翻领的缝线或配饰的五金件。"
+};
+deepDiveData[5] = {
+  title: "背面角度与双人镜头",
+  sections: [
+    {
+      heading: "背面角度：电影般的深度",
+      body: "背面角度展示了正面镜头完全无法捕捉的服装垂坠感和轮廓。它为广告活动增加了电影般的深度，特别适合外套、夹克以及任何背面有趣细节的服装。搭配轮廓光和长长的戏剧性阴影，可以创造出极具氛围感的画面。"
+    },
+    {
+      heading: "双人镜头：多样性与搭配",
+      body: "当一个广告活动展示多个主体在同一环境中互动时，它会显得更加生动。双人镜头展示了系列中不同单品如何搭配，以及美学如何在不同的体型和肤色中体现。一坐一站的姿势差异增加了画面的动态感。"
+    }
+  ],
+  originalText: "背面角度展示了正面镜头完全无法捕捉的服装垂坠感和轮廓。当一个广告活动展示多个主体在同一环境中互动时，它会显得更加生动。它展示了您的系列中不同单品如何搭配，以及美学如何在不同的体型和肤色中体现。"
+};
+deepDiveData[6] = {
+  title: "在拍摄中保持一致性",
+  sections: [
+    {
+      heading: "模特一致性",
+      body: "为了在不同角度保持模特的一致性，请在每个提示词中使用完全相同的身体描述（「年轻男子，凌乱的棕色头发」）。在高级 AI 工具中，你可以使用角色参考或种子锁定等功能来确保面部保持一致。"
+    },
+    {
+      heading: "美学一致性：锁定三要素",
+      body: "锁定你的相机、胶片类型和光线描述。如果你的主打镜头使用了「Kodak Portra 400，柔和的电影色彩分级，定向下午阳光」，你必须在细节镜头和广角镜头中包含完全相同的措辞。一旦你省略了胶片类型的描述，AI 将恢复到其默认的光滑风格，打破了单一连续拍摄的幻觉。"
+    },
+    {
+      heading: "愿景与词汇",
+      body: "AI 为你提供了一个世界级的工作室、地球上的任何地点和无限的设备。你只需要提供愿景和词汇来将其变为现实。关键不在于技术能力，而在于你能否像创意总监一样精确地表达你的视觉构想。"
+    }
+  ],
+  originalText: "生成一张出色的图片很容易。生成十张看起来像是属于同一杂志版面的图片需要一定的纪律性。如果您的主打镜头使用了「Kodak Portra 400，柔和的电影色彩分级，定向下午阳光」，您必须在细节镜头和广角镜头中包含完全相同的措辞。AI 为您提供了一个世界级的工作室、地球上的任何地点和无限的设备。您只需要提供愿景和词汇来将其变为现实。"
+};
+var ddCurrentN = null;
+
+function toggleDeepDive(n) {
+  if (document.body.classList.contains('dd-active') && ddCurrentN === n) { closeDeepDive(); return; }
+  ddCurrentN = n;
+  var body = document.getElementById('detailBody');
+  var scroll = document.getElementById('detailScroll');
+  if (deepDiveData[n]) {
+    var d = deepDiveData[n];
+    var html = '<h4>' + d.title + '</h4>';
+    d.sections.forEach(function(s) {
+      if (s.heading) html += '<h4>' + s.heading + '</h4>';
+      if (s.diagram) html += s.diagram;
+      html += s.body.split('\n\n').map(function(p) { return '<p>' + p + '</p>'; }).join('');
+    });
+    if (d.originalText) html += '<div class="original-text"><p><strong>原文：</strong>' + d.originalText + '</p></div>';
+    body.innerHTML = html;
+  }
+  scroll.scrollTop = 0;
+  document.body.classList.add('dd-active');
+}
+function closeDeepDive() {
+  document.body.classList.remove('dd-active');
+  document.getElementById('space').style.transform = '';
+  document.getElementById('mainScroll').style.transform = '';
+  ddCurrentN = null;
+}
+document.getElementById('detailBack').addEventListener('click', closeDeepDive);
+document.getElementById('mainScroll').addEventListener('click', function(e) {
+  if (document.body.classList.contains('dd-active') && !e.target.closest('.deep-dive-trigger')) closeDeepDive();
+});
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && document.body.classList.contains('dd-active')) closeDeepDive(); });
+
+var mainScrollRoot = document.getElementById('mainScroll');
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+}, { threshold: 0.15, root: mainScrollRoot });
+document.querySelectorAll('.reveal, [class*=\"_stage\"]').forEach(function(el) { observer.observe(el); });
+document.querySelectorAll('.s1_stage, .s2_stage, .s3_stage, .s4_stage, .s5_stage, .s6_stage').forEach(function(el) { observer.observe(el); });
+
+// === coverageData ===
+var coverageData = {
+  sourceType: "text",
+  totalLength: 3300,
+  segments: [
+    { start: 0, end: 450, section: 1, reason: null },
+    { start: 450, end: 900, section: 2, reason: null },
+    { start: 900, end: 1350, section: 2, reason: null, deepDive: true },
+    { start: 1350, end: 1700, section: 3, reason: null },
+    { start: 1700, end: 2100, section: 4, reason: null },
+    { start: 2100, end: 2500, section: 5, reason: null },
+    { start: 2500, end: 2900, section: 5, reason: null, deepDive: true },
+    { start: 2900, end: 3300, section: 6, reason: null }
+  ]
+};
+
+// === topicData ===
+var topicData = {
+  1: [
+    { name: "AI图像生成现状", status: "included", excerpt: "品牌摄影的转变是不可否认的。AI 图像生成已经超越了概念艺术和新奇渲染——它现在是构建画册、广告活动和产品目录的实用且可扩展的工具。但尽管技术已经进步，大多数人使用它的方式却没有。" },
+    { name: "普通提示词的问题", status: "included", excerpt: "当品牌所有者在生成器中输入「模特穿着衬衫的漂亮照片」时，结果不可避免地是普通的。它看起来像是库存摄影，因为指令本身就是一个普通的想法。" },
+    { name: "创意总监思维", status: "included", excerpt: "要获得真正能销售产品的编辑级高端时尚效果，您必须停止像软件工程师那样输入查询，而要像创意总监为团队提供简报那样思考。您需要具体说明相机、灯光、模特和环境。" }
+  ],
+  2: [
+    { name: "默认美学问题", status: "included", excerpt: "一个成功的提示词不会留下任何偶然性。如果您省略了一个细节，AI 将用其默认的美学填补空白，这通常是超光滑的人工光泽。为了抵消这一点，您的提示词需要四个不同层次的指令。" },
+    { name: "主体和服装层", status: "included", excerpt: "首先，以极其精确的方式定义主体和服装。不要仅仅要求一个「西装」。而是要求「海军蓝无结构亚麻西装外套、白色圆领 T 恤和奶油色亚麻裤子」。您对面料织物、剪裁和造型的描述越具体，最终图像中衣服的垂坠感和质感就会越真实。" },
+    { name: "环境和场景层", status: "deep-dive", excerpt: "确定环境和场景。背景提供了上下文，并将主体置于现实中。「一个海滩」是模糊的。「一个风化的石头码头，背后是平静的灰蓝色地中海」则为 AI 提供了具体的纹理（风化的石头、平静的水面）和一个颜色调色板（灰蓝色）来工作。" },
+    { name: "相机和胶片层", status: "deep-dive", excerpt: "指定相机和胶片类型。这是避免可怕的「AI 外观」的秘密。通过请求特定的胶片类型和焦距，您可以迫使生成器模仿真实摄影的颗粒感、色彩科学和景深。「使用 Kodak Portra 400 胶片拍摄，50mm 镜头」会立即将输出从数字渲染转变为编辑级摄影。" },
+    { name: "光线层", status: "deep-dive", excerpt: "指明光线。光线设置了氛围并定义了服装的形状。「强烈的定向下午光」或「从后方的温暖轮廓光」告诉 AI 精确地将高光和阴影放置在哪里，为衣服增加三维深度。" }
+  ],
+  3: [
+    { name: "广角镜头用途", status: "included", excerpt: "广角镜头建立了您的品牌所处的世界。它展示了从头到脚的完整服装，同时提供了足够的负空间用于文本覆盖或网站横幅。" },
+    { name: "广角提示词示例", status: "included", excerpt: "全身高端时尚编辑拍摄。一位年轻男子，短黑色卷发，穿着海军蓝无结构亚麻西装外套、白色圆领 T 恤、奶油色亚麻裤子。站在风化的石头码头上，背后是平静的灰蓝色地中海。一条腿承重，表情强烈。使用 Kodak Portra 400 胶片拍摄，50mm 镜头，柔和的去饱和色彩分级，强烈的定向下午光。" },
+    { name: "三分四镜头用途", status: "included", excerpt: "从大腿中部向上拍摄的三分之四镜头是电子商务和社交媒体的主力。它让观众更接近服装的合身和造型，同时不失去场景的背景。" },
+    { name: "三分四提示词示例", status: "deep-dive", excerpt: "大腿中部向上高端时尚编辑肖像。一位年轻男子，凌乱的棕色头发，穿着奶油色亚麻西装外套和棕褐色裤子。站在俯瞰大海的石头露台上，一只手插在口袋里，目光直视镜头。使用 Kodak Portra 400 胶片拍摄，85mm 镜头，浅景深。柔和的电影色彩分级，戏剧性的定向侧光，清晰的阴影。" }
+  ],
+  4: [
+    { name: "侧面轮廓用途", status: "included", excerpt: "侧面轮廓为您的画册增加了多样性，而无需更换场景或服装。它改变了观众的视角，并以正面镜头无法做到的方式突出服装的轮廓和结构。" },
+    { name: "侧面提示词示例", status: "included", excerpt: "高端时尚编辑侧面轮廓肖像。一位年轻男子，凌乱的棕色头发，穿着奶油色粗针织毛衣，内搭白色衬衫。背景是风化剥落的灰泥墙。表情冷峻，目光远离镜头。使用 Kodak Portra 400 胶片拍摄，85mm 镜头。柔和的电影色彩分级，柔和的自然光。" },
+    { name: "特写镜头用途", status: "included", excerpt: "如果客户无法通过屏幕感受到面料的质感，您就无法销售高端服装。特写镜头完全聚焦于细节：亚麻的织物、翻领的缝线或配饰的五金件。" },
+    { name: "特写提示词示例", status: "deep-dive", excerpt: "极端特写高端时尚编辑细节镜头。紧贴男子的脸和胸部。穿着奶油色亚麻西装外套，内搭白色亚麻衬衫，顶部纽扣解开。对西装外套翻领、织物纹理和面部特征进行极其清晰的聚焦。目光强烈。使用 Kodak Portra 400 胶片拍摄，120mm 微距镜头。戏剧性的阴影效果，强烈的定向光，柔和的电影色彩。" }
+  ],
+  5: [
+    { name: "背面角度用途", status: "included", excerpt: "背面角度展示了正面镜头完全无法捕捉的服装垂坠感和轮廓。它为广告活动增加了电影般的深度，特别适合外套、夹克以及任何背面有趣细节的服装。" },
+    { name: "背面提示词示例", status: "included", excerpt: "高端时尚编辑背面角度镜头。一位年轻男子，凌乱的棕色头发，沿着通往大海的石灰岩台阶走去。穿着奶油色亚麻西装外套和棕褐色裤子。回头看。背后有强烈的轮廓光，温暖的下午阳光。使用 Kodak Portra 400 胶片拍摄，50mm 镜头。柔和的电影色彩分级，长长的戏剧性阴影。" },
+    { name: "双人镜头用途", status: "deep-dive", excerpt: "当一个广告活动展示多个主体在同一环境中互动时，它会显得更加生动。它展示了您的系列中不同单品如何搭配，以及美学如何在不同的体型和肤色中体现。" },
+    { name: "双人提示词示例", status: "deep-dive", excerpt: "高端时尚编辑双人镜头。两位男性模特在乡村风格的石阶上。模特 1（坐着）：凌乱的棕色头发，奶油色粗针织毛衣，棕褐色裤子，向左看。模特 2（站着）：短黑发，海军蓝亚麻西装外套，白色 T 恤，奶油色裤子，向右看。两人表情强烈冷峻。使用 Kodak Portra 400 胶片拍摄，50mm 镜头。柔和的电影色彩分级，定向下午阳光。" }
+  ],
+  6: [
+    { name: "模特一致性", status: "included", excerpt: "为了在不同角度保持模特的一致性，请在每个提示词中使用完全相同的身体描述（「年轻男子，凌乱的棕色头发」）。在高级 AI 工具中，您可以使用角色参考或种子锁定等功能来确保面部保持一致。" },
+    { name: "美学一致性", status: "included", excerpt: "为了保持美学的一致性，请锁定您的相机、胶片类型和光线描述。如果您的主打镜头使用了「Kodak Portra 400，柔和的电影色彩分级，定向下午阳光」，您必须在细节镜头和广角镜头中包含完全相同的措辞。一旦您省略了胶片类型的描述，AI 将恢复到其默认的光滑风格，打破了单一连续拍摄的幻觉。" },
+    { name: "愿景与词汇", status: "included", excerpt: "AI 为您提供了一个世界级的工作室、地球上的任何地点和无限的设备。您只需要提供愿景和词汇来将其变为现实。" }
+  ]
+};
+
+// === Source Horizon ===
+(function() {
+  if (typeof coverageData === 'undefined') return;
+  var horizon = document.getElementById('sourceHorizon');
+  var track = document.getElementById('horizonTrack');
+  var detail = document.getElementById('horizonDetail');
+  if (!horizon || !track || !coverageData.segments) return;
+
+  function toNum(v) {
+    if (typeof v === 'number') return v;
+    var parts = String(v).split(':').map(Number);
+    return parts.length === 3 ? parts[0]*3600+parts[1]*60+parts[2]
+         : parts.length === 2 ? parts[0]*60+parts[1] : parts[0];
+  }
+  var total = toNum(coverageData.totalLength);
+  var coveredLen = 0;
+
+  coverageData.segments.forEach(function(seg) {
+    var s = toNum(seg.start), e = toNum(seg.end);
+    var leftPct = (s / total * 100).toFixed(2) + '%';
+    var widthPct = ((e - s) / total * 100).toFixed(2) + '%';
+    var div = document.createElement('div');
+    div.className = 'horizon-seg ' + (seg.section ? (seg.deepDive ? 'covered deep-dive' : 'covered') : 'gap');
+    div.style.left = leftPct; div.style.width = widthPct;
+    track.appendChild(div);
+    if (seg.section) coveredLen += (e - s);
+    if (!seg.section && seg.reason) {
+      var gz = document.createElement('div');
+      gz.className = 'horizon-gap-zone';
+      gz.style.left = leftPct; gz.style.width = widthPct;
+      gz.innerHTML = '<div class="gap-pattern"></div><div class="gap-tooltip">' + seg.reason + ' (' + seg.start + '-' + seg.end + '字)</div>';
+      detail.appendChild(gz);
+    }
+    if (seg.section && !seg.deepDive) {
+      var mk = document.createElement('div');
+      mk.className = 'horizon-marker';
+      mk.style.left = ((s + (e-s)/2) / total * 100).toFixed(2) + '%';
+      mk.innerHTML = '<div class="marker-tick"></div><div class="marker-label">S' + seg.section + '</div>';
+      mk.addEventListener('click', function(ev) {
+        ev.stopPropagation();
+        var target = document.getElementById('s' + seg.section + '-anim');
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+      detail.appendChild(mk);
+    }
+  });
+  var pct = document.createElement('div');
+  pct.className = 'horizon-pct';
+  pct.textContent = Math.round(coveredLen / total * 100) + '%';
+  detail.appendChild(pct);
+  horizon.addEventListener('click', function() { horizon.classList.toggle('expanded'); });
+  var collapseTimer;
+  mainScrollRoot.addEventListener('scroll', function() {
+    clearTimeout(collapseTimer);
+    var markers = detail.querySelectorAll('.marker-tick');
+    markers.forEach(function(m) { m.classList.remove('active'); });
+    var scrollTop = mainScrollRoot.scrollTop;
+    var closest = null, closestDist = Infinity;
+    coverageData.segments.forEach(function(seg) {
+      if (!seg.section || seg.deepDive) return;
+      var el = document.getElementById('s' + seg.section + '-anim');
+      if (!el) return;
+      var dist = Math.abs(el.offsetTop - scrollTop - window.innerHeight/2);
+      if (dist < closestDist) { closestDist = dist; closest = seg.section; }
+    });
+    if (closest) {
+      detail.querySelectorAll('.horizon-marker').forEach(function(mk) {
+        if (mk.querySelector('.marker-label').textContent === 'S' + closest)
+          mk.querySelector('.marker-tick').classList.add('active');
+      });
+    }
+    collapseTimer = setTimeout(function() { horizon.classList.remove('expanded'); }, 2000);
+  });
+})();
+
+// === Coverage Footnote ===
+(function() {
+  if (typeof topicData === 'undefined') return;
+  var origToggle = window.toggleDeepDive;
+  if (!origToggle) return;
+  window.toggleDeepDive = function(n) {
+    origToggle(n);
+    setTimeout(function() {
+      var body = document.getElementById('detailBody');
+      if (!body || body.querySelector('.coverage-map')) return;
+      var topics = topicData[n];
+      if (!topics || !topics.length) return;
+      var map = document.createElement('div');
+      map.className = 'coverage-map';
+      var title = document.createElement('div');
+      title.className = 'coverage-map-title';
+      title.textContent = '原文话题覆盖';
+      map.appendChild(title);
+      var bars = document.createElement('div');
+      bars.className = 'coverage-bars';
+      var compressed = [];
+      topics.forEach(function(t) {
+        var row = document.createElement('div');
+        row.className = 'cbar-row ' + t.status;
+        var barClass = t.status === 'included' ? 'included' : t.status === 'deep-dive' ? 'deep-dive-bar' : 'compressed-bar';
+        var width = t.status === 'compressed' ? '30%' : t.status === 'deep-dive' ? '60%' : '85%';
+        var hint = t.excerpt ? '<span class="cbar-expand-hint">\u25B8</span>' : '';
+        row.innerHTML = '<div class="cbar-label">' + t.name + hint + '</div>'
+          + '<div class="cbar-track"><div class="cbar-fill ' + barClass + '" style="width:' + width + '"></div></div>';
+        bars.appendChild(row);
+        if (t.excerpt) {
+          var exc = document.createElement('div');
+          exc.className = 'cbar-excerpt';
+          exc.innerHTML = '<div class="cbar-excerpt-inner">' + t.excerpt + '</div>';
+          row.addEventListener('click', function() { exc.classList.toggle('open'); });
+          bars.appendChild(exc);
+        }
+        if (t.status === 'compressed') compressed.push(t);
+      });
+      map.appendChild(bars);
+      if (compressed.length) {
+        var omit = document.createElement('div');
+        omit.className = 'coverage-omitted';
+        omit.innerHTML = '本节省略了：' + compressed.map(function(t) {
+          return '<strong>' + t.name + '</strong>' + (t.reason ? '<span class="omit-reason">' + t.reason + '</span>' : '');
+        }).join('、');
+        map.appendChild(omit);
+      }
+      body.appendChild(map);
+    }, 100);
+  };
+})();
+
+// Section time labels
+(function() {
+  if (typeof coverageData === 'undefined') return;
+  var sectionTimes = {};
+  coverageData.segments.forEach(function(seg) {
+    if (!seg.section || seg.deepDive) return;
+    if (!sectionTimes[seg.section]) sectionTimes[seg.section] = { start: seg.start, end: seg.end };
+    else sectionTimes[seg.section].end = seg.end;
+  });
+  document.querySelectorAll('.section-label').forEach(function(label) {
+    var num = parseInt(label.textContent);
+    if (sectionTimes[num]) {
+      var s = sectionTimes[num].start, e = sectionTimes[num].end;
+      var unit = coverageData.sourceType === 'text' ? '字' : '';
+      label.textContent = label.textContent.trim() + ' \u00B7 ' + s + '-' + e + unit;
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

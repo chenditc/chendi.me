@@ -1,0 +1,3616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Manus 最后的访谈：从猛犸浏览器到 Meta 收购</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --accent: #F97316;
+  --accent2: #06B6D4;
+  --warm: #FBBF24;
+  --danger: #EF4444;
+  --bg-act1: #FFFBF5;
+  --bg-act2: #F0FDFA;
+  --bg-act3: #0F172A;
+  --bg-close: #1E293B;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --dim: #94A3B8;
+  --card-bg: #FFFFFF;
+  --neutral: #CBD5E1;
+}
+
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--bg-act1); font-family: 'Noto Sans SC', -apple-system, 'PingFang SC', sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; }
+
+/* === SPATIAL CANVAS === */
+.space { display: flex; width: 200%; height: 100%; transition: transform 0.55s cubic-bezier(0.32,0.72,0,1); will-change: transform; }
+.main-scroll { flex: 0 0 50%; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; transition: transform 0.55s cubic-bezier(0.32,0.72,0,1); transform-origin: right center; }
+.detail-scroll { flex: 0 0 50%; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; background: #FAFAF8; visibility: hidden; transition: visibility 0s 0.55s; }
+body.dd-active .space { transform: translateX(calc(-50% + 24px)); }
+body.dd-active .main-scroll { transform: scale(0.96); pointer-events: none; border-radius: 12px; overflow: hidden; }
+body.dd-active .detail-scroll { visibility: visible; transition: visibility 0s 0s; }
+
+/* === CORE FRAMEWORK === */
+.content-width { max-width: 640px; margin: 0 auto; padding: 0 28px; }
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.15s; }
+.reveal-delay-2 { transition-delay: 0.3s; }
+.reveal-delay-3 { transition-delay: 0.45s; }
+.reveal-delay-4 { transition-delay: 0.6s; }
+
+/* === TYPOGRAPHY === */
+.big-statement { font-family: 'Noto Serif SC', serif; font-size: clamp(22px, 5.5vw, 32px); font-weight: 700; line-height: 1.5; margin-bottom: 32px; }
+.body-text { font-size: 16px; line-height: 1.9; color: var(--text); margin-bottom: 28px; }
+.body-text .hl { color: var(--accent); font-weight: 500; }
+.body-text .hl-warn { color: var(--warm); font-weight: 500; }
+.body-text .hl-danger { color: var(--danger); font-weight: 500; }
+
+/* === HERO === */
+.hero { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 28px; background: linear-gradient(180deg, var(--bg-act1) 0%, #FEF3C7 100%); }
+.hero-label { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 20px; }
+.hero-title { font-family: 'Noto Serif SC', serif; font-size: clamp(28px, 7vw, 44px); font-weight: 700; line-height: 1.4; margin-bottom: 20px; color: var(--text); }
+.hero-sub { font-size: 16px; color: var(--text-muted); max-width: 480px; line-height: 1.7; }
+.hero-meta { margin-top: 32px; font-size: 13px; color: var(--dim); }
+
+/* === SECTION === */
+.section { padding: 80px 0; }
+.section-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; }
+.section-dark { background: var(--bg-close); color: #F1F5F9; }
+.section-dark .section-label { color: var(--accent2); }
+.section-dark .body-text { color: #CBD5E1; }
+.section-dark .big-statement { color: #F1F5F9; }
+.section-dark .body-text .hl { color: var(--accent); }
+.section-dark .body-text .hl-danger { color: #FCA5A5; }
+.section-dark .deep-dive-trigger { color: var(--accent2); }
+
+/* === ACT TRANSITIONS === */
+.act-transition { padding: 60px 0; text-align: center; }
+.act-num { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); }
+.act-title { font-family: 'Noto Serif SC', serif; font-size: clamp(20px, 5vw, 28px); font-weight: 700; margin-top: 12px; }
+.act-transition-dark { background: var(--bg-act3); color: #F1F5F9; }
+.act-transition-dark .act-num { color: var(--accent2); }
+.act-transition-dark .act-title { color: #F1F5F9; }
+
+/* === DEEP DIVE TRIGGER === */
+.deep-dive-trigger { text-align: center; color: var(--accent); font-size: 14px; padding: 16px 0; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; }
+.deep-dive-trigger:hover { opacity: 1; }
+
+/* === DETAIL PANEL === */
+.detail-header { padding: 20px 24px; font-size: 14px; color: var(--accent); cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.06); position: sticky; top: 0; background: #FAFAF8; z-index: 10; }
+.detail-body { padding: 24px; }
+.detail-body h4 { font-size: 18px; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+.detail-body p { font-size: 15px; line-height: 1.8; color: var(--text-muted); margin-bottom: 16px; }
+.detail-body .original-text { margin-top: 24px; padding: 16px; background: rgba(0,0,0,0.03); border-radius: 8px; border-left: 3px solid var(--accent); }
+.detail-body .original-text p { font-size: 14px; color: var(--dim); margin-bottom: 8px; }
+
+/* === DD ANIMATION CLASSES === */
+.dd-anim { opacity: 0; animation-fill-mode: forwards; animation-duration: 0.5s; }
+body.dd-active .dd-anim { animation-name: ddFadeIn; }
+.dd-slide { opacity: 0; transform: translateY(20px); animation-fill-mode: forwards; animation-duration: 0.5s; }
+body.dd-active .dd-slide { animation-name: ddSlideUp; }
+.dd-pop { opacity: 0; transform: scale(0.7); animation-fill-mode: forwards; animation-duration: 0.4s; }
+body.dd-active .dd-pop { animation-name: ddPop; }
+.dd-d1 { animation-delay: 0.3s !important; }
+.dd-d2 { animation-delay: 0.6s !important; }
+.dd-d3 { animation-delay: 0.9s !important; }
+@keyframes ddFadeIn { to { opacity: 1; } }
+@keyframes ddSlideUp { to { opacity: 1; transform: translateY(0); } }
+@keyframes ddPop { to { opacity: 1; transform: scale(1); } }
+
+/* === TAKEAWAY === */
+.takeaway { padding: 80px 0; background: var(--bg-act3); color: #F1F5F9; text-align: center; }
+.takeaway .big-statement { color: #F8FAFC; max-width: 560px; margin: 0 auto 24px; }
+.takeaway .body-text { color: #94A3B8; max-width: 520px; margin: 0 auto; }
+
+/* === FOOTER === */
+.footer { padding: 40px 0; background: #0B1120; text-align: center; font-size: 12px; color: #475569; }
+
+/* === SOURCE HORIZON === */
+.source-horizon { position: fixed; bottom: 0; left: 0; right: 0; height: 32px; z-index: 200; background: transparent; transition: height 0.35s cubic-bezier(0.32,0.72,0,1), background 0.35s ease; overflow: hidden; cursor: pointer; padding-bottom: env(safe-area-inset-bottom, 0); }
+.source-horizon.expanded { height: 72px; background: rgba(15,23,42,0.95); backdrop-filter: blur(8px); }
+.horizon-track { position: absolute; bottom: 0; left: 8px; right: 8px; height: 3px; }
+.source-horizon.expanded .horizon-track { bottom: auto; top: 8px; height: 4px; }
+.horizon-seg { position: absolute; top: 0; height: 100%; border-radius: 2px; }
+.horizon-seg.covered { background: var(--accent); }
+.horizon-seg.covered.deep-dive { background: var(--accent2); }
+.horizon-seg.gap { background: transparent; }
+.horizon-detail { position: absolute; top: 16px; left: 8px; right: 8px; bottom: 4px; opacity: 0; transition: opacity 0.25s ease 0.1s; pointer-events: none; }
+.source-horizon.expanded .horizon-detail { opacity: 1; pointer-events: auto; }
+.horizon-marker { position: absolute; top: 0; transform: translateX(-50%); text-align: center; }
+.marker-tick { width: 2px; height: 10px; background: rgba(255,255,255,0.5); margin: 0 auto 4px; border-radius: 1px; }
+.marker-tick.active { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+.marker-label { font-size: 9px; color: rgba(255,255,255,0.7); white-space: nowrap; font-family: 'Noto Sans SC', sans-serif; }
+.horizon-gap-zone { position: absolute; top: 0; height: 14px; cursor: help; }
+.horizon-gap-zone .gap-pattern { width: 100%; height: 100%; background: repeating-linear-gradient(-45deg, transparent, transparent 2px, rgba(251,146,60,0.35) 2px, rgba(251,146,60,0.35) 4px); border-radius: 2px; }
+.horizon-gap-zone .gap-tooltip { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: #1E293B; color: #F8FAFC; font-size: 11px; padding: 4px 10px; border-radius: 6px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.horizon-gap-zone:hover .gap-tooltip { opacity: 1; }
+.horizon-pct { position: absolute; right: 0; top: 2px; font-size: 11px; font-weight: 600; color: var(--accent); font-family: 'Noto Sans SC', sans-serif; }
+@keyframes markerPulse { 0%,100% { box-shadow: 0 0 4px var(--accent2); } 50% { box-shadow: 0 0 10px var(--accent2); } }
+.marker-tick.active { animation: markerPulse 2s ease-in-out infinite; }
+
+/* === INLINE GAP === */
+.coverage-gap-inline { display: flex; align-items: center; gap: 12px; padding: 8px 28px; max-width: 640px; margin: 0 auto; }
+.coverage-gap-inline .gap-line { flex: 1; height: 1px; background: var(--dim); opacity: 0.25; }
+.coverage-gap-inline .gap-text { font-size: 12px; font-style: italic; color: var(--dim); white-space: nowrap; opacity: 0.5; }
+
+/* === COVERAGE FOOTNOTE === */
+.coverage-map { margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.06); }
+.coverage-map-title { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--dim); margin-bottom: 14px; }
+.coverage-bars { display: flex; flex-direction: column; gap: 6px; }
+.cbar-row { display: flex; align-items: center; gap: 10px; height: 28px; cursor: pointer; border-radius: 6px; padding: 4px 6px; margin: 0 -6px; transition: background 0.15s; }
+.cbar-row:hover { background: rgba(0,0,0,0.03); }
+.cbar-label { width: 120px; flex-shrink: 0; font-size: 12px; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cbar-track { flex: 1; height: 12px; background: rgba(0,0,0,0.03); border-radius: 6px; overflow: hidden; position: relative; }
+.cbar-fill { height: 100%; border-radius: 6px; transform-origin: left; }
+.cbar-fill.included { background: var(--accent); }
+.cbar-fill.deep-dive-bar { background: repeating-linear-gradient(-45deg, var(--accent2), var(--accent2) 3px, rgba(6,182,212,0.5) 3px, rgba(6,182,212,0.5) 6px); }
+.cbar-fill.compressed-bar { background: var(--dim); opacity: 0.4; }
+.cbar-row.included .cbar-label { color: var(--text); }
+.cbar-row.deep-dive .cbar-label { color: var(--accent2); }
+.cbar-row.compressed .cbar-label { color: var(--dim); text-decoration: line-through; }
+.cbar-excerpt { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.22,1,0.36,1); margin: 0 0 0 130px; }
+.cbar-excerpt.open { max-height: 300px; }
+.cbar-excerpt-inner { font-size: 13px; line-height: 1.7; color: var(--text-muted); padding: 8px 12px; margin: 4px 0 8px; background: rgba(0,0,0,0.02); border-radius: 8px; border-left: 3px solid var(--accent); }
+.cbar-row.compressed + .cbar-excerpt .cbar-excerpt-inner { border-left-color: var(--dim); }
+.cbar-row.deep-dive + .cbar-excerpt .cbar-excerpt-inner { border-left-color: var(--accent2); }
+.cbar-expand-hint { font-size: 10px; color: var(--dim); opacity: 0.6; margin-left: 4px; }
+.coverage-omitted { margin-top: 14px; font-size: 13px; color: var(--text-muted); line-height: 1.7; }
+.coverage-omitted strong { color: var(--text); font-weight: 500; }
+.omit-reason { display: inline-block; font-size: 11px; background: rgba(0,0,0,0.04); padding: 1px 8px; border-radius: 4px; color: var(--dim); margin-left: 4px; }
+
+/* === RESPONSIVE === */
+@media (max-width: 420px) {
+  .hero-title { font-size: 26px; }
+  .big-statement { font-size: 20px; }
+}
+.anim-stage > div{ width:100%; }
+</style>
+
+<meta name="description" content="季逸超（Peak）4 岁去美国，二年级回国，高中时做了 iOS 浏览器「猛犸」，靠 App Store 付费下载赚了第一桶金。真格基金承诺「不管干什么都投」，他用这笔钱从零搭了搜索引擎、爬虫、索引，训了两个 0.3B 模型解决 16K long context——产品叫 Magi。但移动互联网的蛮荒期靠的是硬件平台更替，AI 时代没有新平台， 所有人的反应速">
+<link rel="canonical" href="https://chendi.me/readings/manus-interview/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+<div class="space" id="space">
+<div class="main-scroll" id="mainScroll">
+
+<!-- ========== HERO ========== -->
+<div class="hero">
+  <div class="hero-label reveal">Podcast Visual Narrative</div>
+  <h1 class="hero-title reveal reveal-delay-1">Manus 最后的访谈<br>从猛犸浏览器到 Meta 收购</h1>
+  <p class="hero-sub reveal reveal-delay-2">当 Agent 从聊天机器人进化为自主执行者，一个三次创业失败的技术少年如何找到了那只「手」？</p>
+  <p class="hero-meta reveal reveal-delay-3">Zhang Xiaojun Podcast · 2025.12.01 · 约 3.5 小时</p>
+</div>
+
+<!-- === INLINE GAP: 片花 === -->
+<div class="coverage-gap-inline reveal" style="background: var(--bg-act1);">
+  <div class="gap-line"></div>
+  <span class="gap-text">~ 1:30 片花/开场已跳过 ~</span>
+  <div class="gap-line"></div>
+</div>
+
+<!-- ========== ACT I ========== -->
+<div class="act-transition reveal" style="background: var(--bg-act1);">
+  <div class="content-width">
+    <p class="act-num">Act I</p>
+    <p class="act-title">三次赴死</p>
+  </div>
+</div>
+
+<!-- ===== S1: 少年极客到 GPT-3 ===== -->
+<div class="section" style="background: var(--bg-act1);">
+  <div class="content-width">
+    <p class="section-label reveal">01 — 三次赴死</p>
+    <h2 class="big-statement reveal reveal-delay-1">高中做浏览器赚了 30 万美金，然后花了六年训模型、做搜索引擎——直到 GPT-3 随便一个 prompt 就和他五五开。「天要塌了。」</h2>
+    <p class="body-text reveal reveal-delay-2">季逸超（Peak）4 岁去美国，二年级回国，高中时做了 iOS 浏览器「猛犸」，靠 App Store 付费下载赚了第一桶金。真格基金承诺「不管干什么都投」，他用这笔钱从零搭了搜索引擎、爬虫、索引，训了两个 0.3B 模型解决 16K long context——产品叫 Magi。但移动互联网的蛮荒期靠的是硬件平台更替，AI 时代没有新平台，<span class="hl">所有人的反应速度一样快</span>。2019 年拿到 GPT-3 early access 的那个下午，他发现通用模型正在吃掉一切垂直解——<span class="hl-danger">「我的第一反应就是赶紧卖掉公司。」</span></p>
+    <div id="s1-anim" class="reveal reveal-delay-3">
+<style>
+/* === S1: 少年极客到 GPT-3 === */
+.s1_stage {
+  position: relative;
+  width: 340px;
+  height: 420px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* Timeline vertical axis */
+.s1_timeline {
+  position: absolute;
+  left: 40px;
+  top: 30px;
+  width: 3px;
+  height: 0;
+  background: #CBD5E1;
+  border-radius: 2px;
+}
+
+/* Year labels on timeline */
+.s1_year {
+  position: absolute;
+  left: 18px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #94A3B8;
+  opacity: 0;
+  transform: translateX(-8px);
+}
+.s1_y2009 { top: 30px; }
+.s1_y2014 { top: 155px; }
+.s1_y2020 { top: 280px; }
+
+/* Mountain / project blocks */
+.s1_peak {
+  position: absolute;
+  left: 70px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  transform: translateX(-12px);
+}
+.s1_peak_mammoth { top: 22px; }
+.s1_peak_magi { top: 147px; }
+
+.s1_circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 3px solid #F97316;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #F97316;
+  flex-shrink: 0;
+}
+
+.s1_tag {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  line-height: 1.4;
+}
+.s1_tag_sub {
+  font-size: 11px;
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+/* GPT-3 lightning strike */
+.s1_lightning_group {
+  position: absolute;
+  left: 70px;
+  top: 272px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  transform: scale(0.5);
+}
+.s1_circle_cyan {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid #06B6D4;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #06B6D4;
+  flex-shrink: 0;
+}
+.s1_lightning_label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #06B6D4;
+  line-height: 1.4;
+}
+
+/* Collapse effect - gray overlay on mountains */
+.s1_collapse_line {
+  position: absolute;
+  left: 82px;
+  width: 40px;
+  height: 0;
+  background: #CBD5E1;
+  opacity: 0;
+}
+.s1_collapse1 { top: 48px; }
+.s1_collapse2 { top: 173px; }
+
+/* Crisis text */
+.s1_crisis {
+  position: absolute;
+  left: 70px;
+  top: 352px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #EF4444;
+  opacity: 0;
+  transform: translateY(8px);
+  white-space: nowrap;
+}
+
+/* Spark of restart */
+.s1_spark {
+  position: absolute;
+  left: 240px;
+  top: 352px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: scale(0);
+}
+.s1_spark_dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #F97316;
+  box-shadow: 0 0 16px rgba(249, 115, 22, 0.6);
+}
+.s1_spark_label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #F97316;
+}
+
+/* Narration */
+.s1_narration {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 13px;
+  color: #94A3B8;
+  min-height: 32px;
+}
+.s1_narr {
+  position: absolute;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s1_narr.s1_show { opacity: 1; }
+
+/* === KEYFRAMES === */
+@keyframes s1_timeline_grow {
+  to { height: 320px; }
+}
+@keyframes s1_fade_slide {
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes s1_scale_in {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s1_fade_in {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s1_collapse_strike {
+  0% { height: 0; opacity: 0; }
+  50% { height: 3px; opacity: 1; }
+  100% { height: 3px; opacity: 1; }
+}
+@keyframes s1_dim_out {
+  to { opacity: 0.3; filter: grayscale(1); }
+}
+@keyframes s1_spark_glow {
+  0% { opacity: 0; transform: scale(0); }
+  60% { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes s1_pulse_spark {
+  0% { box-shadow: 0 0 16px rgba(249, 115, 22, 0.6); }
+  50% { box-shadow: 0 0 28px rgba(249, 115, 22, 0.9); }
+  100% { box-shadow: 0 0 16px rgba(249, 115, 22, 0.6); }
+}
+
+/* === TRIGGERED SEQUENCE === */
+.s1_stage.visible .s1_timeline {
+  animation: s1_timeline_grow 1.8s 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Year labels */
+.s1_stage.visible .s1_y2009 {
+  animation: s1_fade_slide 0.4s 0.6s ease forwards;
+}
+.s1_stage.visible .s1_y2014 {
+  animation: s1_fade_slide 0.4s 1.4s ease forwards;
+}
+.s1_stage.visible .s1_y2020 {
+  animation: s1_fade_slide 0.4s 2.2s ease forwards;
+}
+
+/* Mammoth peak */
+.s1_stage.visible .s1_peak_mammoth {
+  animation: s1_fade_slide 0.5s 1.0s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Magi peak */
+.s1_stage.visible .s1_peak_magi {
+  animation: s1_fade_slide 0.5s 1.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* GPT-3 strike */
+.s1_stage.visible .s1_lightning_group {
+  animation: s1_scale_in 0.5s 2.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Collapse strikes */
+.s1_stage.visible .s1_collapse1 {
+  animation: s1_collapse_strike 0.3s 3.6s ease forwards;
+}
+.s1_stage.visible .s1_collapse2 {
+  animation: s1_collapse_strike 0.3s 3.8s ease forwards;
+}
+
+/* Dim the mountains */
+.s1_stage.visible .s1_peak_mammoth.s1_will_dim {
+  animation: s1_fade_slide 0.5s 1.0s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+             s1_dim_out 0.6s 4.0s ease forwards;
+}
+.s1_stage.visible .s1_peak_magi.s1_will_dim {
+  animation: s1_fade_slide 0.5s 1.8s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+             s1_dim_out 0.6s 4.0s ease forwards;
+}
+
+/* Crisis text */
+.s1_stage.visible .s1_crisis {
+  animation: s1_fade_in 0.5s 4.4s ease forwards;
+}
+
+/* Spark */
+.s1_stage.visible .s1_spark {
+  animation: s1_spark_glow 0.6s 5.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s1_stage.visible .s1_spark .s1_spark_dot {
+  animation: s1_pulse_spark 1.5s 5.8s ease infinite;
+}
+</style>
+
+<div class="s1_stage">
+  <!-- Timeline axis -->
+  <div class="s1_timeline"></div>
+
+  <!-- Year markers -->
+  <div class="s1_year s1_y2009">2009</div>
+  <div class="s1_year s1_y2014">2014</div>
+  <div class="s1_year s1_y2020">2020</div>
+
+  <!-- Peak 1: Mammoth Browser -->
+  <div class="s1_peak s1_peak_mammoth s1_will_dim">
+    <div class="s1_circle">猛犸</div>
+    <div>
+      <div class="s1_tag">iOS浏览器</div>
+      <div class="s1_tag_sub">30万$ / 高中生</div>
+    </div>
+  </div>
+
+  <!-- Peak 2: Magi -->
+  <div class="s1_peak s1_peak_magi s1_will_dim">
+    <div class="s1_circle">Magi</div>
+    <div>
+      <div class="s1_tag">知识图谱引擎</div>
+      <div class="s1_tag_sub">6年 / 从零训模型</div>
+    </div>
+  </div>
+
+  <!-- GPT-3 Lightning -->
+  <div class="s1_lightning_group">
+    <div class="s1_circle_cyan">GPT-3</div>
+    <div class="s1_lightning_label">一个prompt<br>就五五开</div>
+  </div>
+
+  <!-- Collapse lines -->
+  <div class="s1_collapse_line s1_collapse1"></div>
+  <div class="s1_collapse_line s1_collapse2"></div>
+
+  <!-- Crisis -->
+  <div class="s1_crisis">「天要塌了」</div>
+
+  <!-- Spark of restart -->
+  <div class="s1_spark">
+    <div class="s1_spark_dot"></div>
+    <div class="s1_spark_label">重新开始</div>
+  </div>
+
+  <!-- Narration -->
+  <div class="s1_narration">
+    <div class="s1_narr" data-start="600" data-end="1800">高中生做出付费浏览器，赚了30万美金</div>
+    <div class="s1_narr" data-start="1800" data-end="2800">花六年从零训模型，构建知识图谱引擎</div>
+    <div class="s1_narr" data-start="2800" data-end="3600">GPT-3降临，一个prompt追平六年功力</div>
+    <div class="s1_narr" data-start="3600" data-end="4800">两座山同时崩塌</div>
+    <div class="s1_narr" data-start="4800" data-end="5600">赶紧卖掉公司</div>
+    <div class="s1_narr" data-start="5600" data-end="9999">废墟中，新故事开始了</div>
+  </div>
+</div>
+    </div>
+    <div class="deep-dive-trigger reveal" onclick="toggleDeepDive(1)">↓ 深入了解：从猛犸到 Magi 的技术冒险</div>
+  </div>
+</div>
+
+<!-- ===== S2: 正常人联盟与 AI 制造业 ===== -->
+<div class="section" style="background: var(--bg-act1);">
+  <div class="content-width">
+    <p class="section-label reveal">02 — 正常人联盟</p>
+    <h2 class="big-statement reveal reveal-delay-1">「别的创始人都太艺术家了。」他找了一个身心健全、没有极端思想的 CEO——这在 AI 圈已经是稀缺品质。</h2>
+    <p class="body-text reveal reveal-delay-2">卖掉 Magi 后，Peak 聊遍了所有大模型公司，但上次创业的 PTSD 让他不想再碰垂直整合。他需要一块「空的画布」来观察用户。Chrome 插件 Monica 就是这块画布——它不改变用户习惯，功能分发基于 context，消解了复杂度爆炸。而 Monica 的创始人肖红最稀缺的品质是<span class="hl">「很正常」</span>：身心健全，没有不良嗜好。Peak 意识到 AI 时代更像制造业——用户量增长，成本线性提升，<span class="hl">对经营能力的要求远高于移动互联网</span>。最终，所有大模型公司都会变成模型+应用公司，而做出好应用比做出好模型难得多。</p>
+    <div id="s2-anim" class="reveal reveal-delay-3">
+<style>
+/* === S2 Stage === */
+.s2_stage {
+  position: relative;
+  width: 340px;
+  height: 420px;
+  margin: 24px auto;
+  font-family: -apple-system, 'PingFang SC', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --- Left: Artist (gray, fades) --- */
+.s2_artist {
+  position: absolute;
+  top: 24px;
+  left: 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  transform: scale(0);
+}
+.s2_artist_circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2.5px solid #CBD5E1;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #94A3B8;
+  transition: opacity 0.8s ease;
+}
+
+/* --- Right: Normal person (orange, stays bright) --- */
+.s2_normal {
+  position: absolute;
+  top: 24px;
+  right: 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  transform: scale(0);
+}
+.s2_normal_circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2.5px solid #F97316;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #F97316;
+  transition: all 0.6s ease;
+}
+
+/* --- Tags --- */
+.s2_tag {
+  position: absolute;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(6px);
+}
+.s2_tag_gray {
+  background: #F1F5F9;
+  color: #94A3B8;
+  border: 1px solid #E2E8F0;
+}
+.s2_tag_orange {
+  background: #FFF7ED;
+  color: #F97316;
+  border: 1px solid #FDBA74;
+}
+
+/* Left tags */
+.s2_tag_l1 { left: 2px; top: 100px; }
+.s2_tag_l2 { left: 12px; top: 128px; }
+.s2_tag_l3 { left: 0px; top: 156px; }
+
+/* Right tags */
+.s2_tag_r1 { right: 14px; top: 100px; }
+.s2_tag_r2 { right: 24px; top: 128px; }
+.s2_tag_r3 { right: 14px; top: 156px; }
+
+/* --- VS divider --- */
+.s2_vs {
+  position: absolute;
+  top: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  font-weight: 700;
+  color: #CBD5E1;
+  opacity: 0;
+}
+
+/* --- Cost curve area --- */
+.s2_chart {
+  position: absolute;
+  bottom: 40px;
+  left: 24px;
+  right: 24px;
+  height: 160px;
+  opacity: 0;
+  transform: translateY(10px);
+}
+.s2_chart_box {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.s2_axis_y {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 20px;
+  width: 2px;
+  background: #CBD5E1;
+  border-radius: 1px;
+}
+.s2_axis_x {
+  position: absolute;
+  left: 0;
+  bottom: 20px;
+  right: 0;
+  height: 2px;
+  background: #CBD5E1;
+  border-radius: 1px;
+}
+.s2_axis_label {
+  font-size: 10px;
+  color: #94A3B8;
+  position: absolute;
+}
+.s2_label_y {
+  left: 6px;
+  top: -2px;
+}
+.s2_label_x {
+  right: 0;
+  bottom: 4px;
+}
+.s2_line_ai {
+  position: absolute;
+  left: 2px;
+  bottom: 22px;
+  width: 0;
+  height: 2px;
+  background: #F97316;
+  border-radius: 1px;
+  transform-origin: bottom left;
+  transform: rotate(-35deg);
+}
+.s2_line_inet {
+  position: absolute;
+  left: 2px;
+  bottom: 22px;
+  width: 0;
+  height: 2px;
+  background: #06B6D4;
+  border-radius: 1px;
+  transform-origin: bottom left;
+  transform: rotate(-8deg);
+}
+.s2_legend {
+  position: absolute;
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0;
+  white-space: nowrap;
+}
+.s2_legend_ai {
+  color: #F97316;
+  right: 20px;
+  top: 10px;
+}
+.s2_legend_inet {
+  color: #06B6D4;
+  right: 20px;
+  top: 26px;
+}
+
+/* --- Bottom label --- */
+.s2_conclusion {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #F97316;
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+/* === KEYFRAMES === */
+@keyframes s2_scaleIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s2_fadeIn {
+  to { opacity: 1; }
+}
+@keyframes s2_tagIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s2_chartIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s2_lineGrow {
+  to { width: 200px; }
+}
+@keyframes s2_lineGrowShort {
+  to { width: 200px; }
+}
+@keyframes s2_labelIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s2_dim {
+  to { opacity: 0.35; }
+}
+@keyframes s2_brighten {
+  to {
+    background: #F97316;
+    color: #fff;
+    border-color: #F97316;
+    box-shadow: 0 0 16px rgba(249,115,22,0.3);
+  }
+}
+
+/* === TRIGGERED SEQUENCE === */
+.s2_stage.visible .s2_artist {
+  animation: s2_scaleIn 0.5s 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+.s2_stage.visible .s2_vs {
+  animation: s2_fadeIn 0.3s 0.6s ease forwards;
+}
+.s2_stage.visible .s2_normal {
+  animation: s2_scaleIn 0.5s 0.9s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+
+/* Left tags appear */
+.s2_stage.visible .s2_tag_l1 {
+  animation: s2_tagIn 0.35s 1.5s ease forwards;
+}
+.s2_stage.visible .s2_tag_l2 {
+  animation: s2_tagIn 0.35s 1.9s ease forwards;
+}
+.s2_stage.visible .s2_tag_l3 {
+  animation: s2_tagIn 0.35s 2.3s ease forwards;
+}
+
+/* Right tags appear */
+.s2_stage.visible .s2_tag_r1 {
+  animation: s2_tagIn 0.35s 2.8s ease forwards;
+}
+.s2_stage.visible .s2_tag_r2 {
+  animation: s2_tagIn 0.35s 3.2s ease forwards;
+}
+.s2_stage.visible .s2_tag_r3 {
+  animation: s2_tagIn 0.35s 3.6s ease forwards;
+}
+
+/* Artist dims, Normal brightens */
+.s2_stage.visible .s2_artist_circle {
+  animation: s2_dim 0.6s 4.2s ease forwards;
+}
+.s2_stage.visible .s2_normal_circle {
+  animation: s2_brighten 0.6s 4.2s ease forwards;
+}
+
+/* Chart area */
+.s2_stage.visible .s2_chart {
+  animation: s2_chartIn 0.5s 5.0s ease forwards;
+}
+.s2_stage.visible .s2_line_ai {
+  animation: s2_lineGrow 0.8s 5.6s ease-out forwards;
+}
+.s2_stage.visible .s2_line_inet {
+  animation: s2_lineGrowShort 0.8s 6.0s ease-out forwards;
+}
+.s2_stage.visible .s2_legend_ai {
+  animation: s2_fadeIn 0.3s 6.2s ease forwards;
+}
+.s2_stage.visible .s2_legend_inet {
+  animation: s2_fadeIn 0.3s 6.5s ease forwards;
+}
+
+/* Conclusion */
+.s2_stage.visible .s2_conclusion {
+  animation: s2_labelIn 0.4s 7.0s ease forwards;
+}
+</style>
+
+<div class="s2_stage">
+  <!-- Left: Artist -->
+  <div class="s2_artist">
+    <div class="s2_artist_circle">艺术家</div>
+  </div>
+
+  <!-- VS -->
+  <div class="s2_vs">VS</div>
+
+  <!-- Right: Normal person -->
+  <div class="s2_normal">
+    <div class="s2_normal_circle">正常人</div>
+  </div>
+
+  <!-- Left tags (gray) -->
+  <div class="s2_tag s2_tag_gray s2_tag_l1">偏执</div>
+  <div class="s2_tag s2_tag_gray s2_tag_l2">深夜发癫</div>
+  <div class="s2_tag s2_tag_gray s2_tag_l3">不切实际</div>
+
+  <!-- Right tags (orange) -->
+  <div class="s2_tag s2_tag_orange s2_tag_r1">稳定</div>
+  <div class="s2_tag s2_tag_orange s2_tag_r2">理性</div>
+  <div class="s2_tag s2_tag_orange s2_tag_r3">经营</div>
+
+  <!-- Cost curve -->
+  <div class="s2_chart">
+    <div class="s2_chart_box">
+      <div class="s2_axis_y"></div>
+      <div class="s2_axis_x"></div>
+      <span class="s2_axis_label s2_label_y">成本</span>
+      <span class="s2_axis_label s2_label_x">用户量</span>
+      <div class="s2_line_ai"></div>
+      <div class="s2_line_inet"></div>
+      <span class="s2_legend s2_legend_ai">AI = 线性增长</span>
+      <span class="s2_legend s2_legend_inet">互联网 = 边际趋零</span>
+    </div>
+  </div>
+
+  <!-- Conclusion -->
+  <div class="s2_conclusion">AI ≈ 制造业</div>
+</div>
+    </div>
+    <div class="deep-dive-trigger reveal" onclick="toggleDeepDive(2)">↓ 深入了解：AI 制造业与 GPA 决策框架</div>
+  </div>
+</div>
+
+<!-- ========== ACT II ========== -->
+<div class="act-transition reveal" style="background: var(--bg-act2);">
+  <div class="content-width">
+    <p class="act-num">ACT II</p>
+    <p class="act-title">手的觉醒</p>
+  </div>
+</div>
+
+<!-- ===== S3: 浏览器之死与 Manus 诞生 ===== -->
+<div class="section" style="background: var(--bg-act2);">
+  <div class="content-width">
+    <p class="section-label reveal">03 — 浏览器之死</p>
+    <h2 class="big-statement reveal reveal-delay-1">「当你觉得一款产品不酷的时候，就别发。你都觉得不酷，没人会觉得酷。」然后他们放弃了做了四个月的 AI 浏览器。</h2>
+    <p class="body-text reveal reveal-delay-2">AI 浏览器有三个致命问题：端侧模型追求离线但浏览器本身联网；AI 接管用户电脑就像<span class="hl">「两个人抢一台电脑」</span>；长任务需要电脑一直开着。Arc 浏览器创始人宣布放弃验证了他们的判断。放弃后两周半的「无所事事」孕育了真正的 idea：公司非工程师在用 Cursor 写博客、做数据分析——<span class="hl-danger">编程不是垂直能力，而是通用能力</span>。把 AI 浏览器搬到云端，代码作为工具而非主要呈现，面向 Prosumers 而非程序员。项目代号 Airbnb——Browser in the air。MIT 校训 Mens et Manus（心与手），别人做心智，<span class="hl">他们要做那只手</span>。</p>
+    <div id="s3-anim" class="reveal reveal-delay-3">
+<style>
+/* === S3: 浏览器之死与 Manus 诞生 === */
+.s3_stage {
+  position: relative;
+  width: 340px;
+  height: 420px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* Browser box at top */
+.s3_browser_box {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 48px;
+  border: 3px solid #CBD5E1;
+  border-radius: 10px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #94A3B8;
+  opacity: 0;
+}
+
+/* Three problem tags */
+.s3_problem {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 600;
+  color: #EF4444;
+  background: #FEF2F2;
+  border: 1.5px solid #FECACA;
+  border-radius: 14px;
+  padding: 4px 12px;
+  white-space: nowrap;
+  opacity: 0;
+}
+.s3_p1 { top: 76px; }
+.s3_p2 { top: 100px; }
+.s3_p3 { top: 124px; }
+
+/* Shatter / gray-out of browser */
+.s3_crack1, .s3_crack2 {
+  position: absolute;
+  top: 30px;
+  background: #CBD5E1;
+  height: 3px;
+  opacity: 0;
+}
+.s3_crack1 { left: 100px; width: 50px; transform: rotate(25deg); }
+.s3_crack2 { left: 160px; width: 40px; transform: rotate(-20deg); }
+
+/* Middle blank + spark */
+.s3_spark_group {
+  position: absolute;
+  top: 185px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+}
+.s3_spark_circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 3px solid #06B6D4;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.s3_spark_icon {
+  font-size: 22px;
+  line-height: 1;
+}
+.s3_spark_label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #06B6D4;
+}
+
+/* Manus box at bottom */
+.s3_manus_box {
+  position: absolute;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 120px;
+  height: 48px;
+  border: 3px solid #F97316;
+  border-radius: 10px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #F97316;
+  opacity: 0;
+}
+
+/* Three keyword tags around Manus */
+.s3_kw {
+  position: absolute;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 3px 10px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(6px);
+}
+.s3_kw1 {
+  bottom: 55px;
+  left: 28px;
+  color: #F97316;
+  background: #FFF7ED;
+  border: 1.5px solid #FDBA74;
+}
+.s3_kw2 {
+  bottom: 55px;
+  right: 28px;
+  color: #F97316;
+  background: #FFF7ED;
+  border: 1.5px solid #FDBA74;
+}
+.s3_kw3 {
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  color: #06B6D4;
+  background: #F0FDFA;
+  border: 1.5px solid #99F6E4;
+}
+
+/* Connecting line spark -> manus */
+.s3_connect {
+  position: absolute;
+  top: 250px;
+  left: 50%;
+  width: 2px;
+  height: 0;
+  background: #06B6D4;
+  transform: translateX(-50%);
+  border-radius: 1px;
+}
+
+/* Narration */
+.s3_narration {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 13px;
+  color: #94A3B8;
+  min-height: 32px;
+}
+.s3_narr {
+  position: absolute;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s3_narr.s3_show { opacity: 1; }
+
+/* === KEYFRAMES === */
+@keyframes s3_fade_in {
+  to { opacity: 1; }
+}
+@keyframes s3_problem_in {
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes s3_crack_strike {
+  0% { opacity: 0; width: 0; }
+  100% { opacity: 1; }
+}
+@keyframes s3_dim_out {
+  to { opacity: 0.25; filter: grayscale(1); }
+}
+@keyframes s3_spark_pop {
+  0% { opacity: 0; transform: translateX(-50%) scale(0); }
+  60% { opacity: 1; transform: translateX(-50%) scale(1.15); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+@keyframes s3_pulse_ring {
+  0% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.4); }
+  70% { box-shadow: 0 0 0 12px rgba(6, 182, 212, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0); }
+}
+@keyframes s3_connect_grow {
+  to { height: 44px; }
+}
+@keyframes s3_manus_pop {
+  0% { opacity: 0; transform: translateX(-50%) scale(0); }
+  60% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+@keyframes s3_kw_in {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s3_kw3_in {
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* === TRIGGERED SEQUENCE (.visible) === */
+.s3_stage.visible .s3_browser_box {
+  animation: s3_fade_in 0.5s 0.3s ease forwards;
+}
+
+/* Problems appear one by one */
+.s3_stage.visible .s3_p1 {
+  animation: s3_fade_in 0.4s 1.0s ease forwards;
+}
+.s3_stage.visible .s3_p2 {
+  animation: s3_fade_in 0.4s 1.5s ease forwards;
+}
+.s3_stage.visible .s3_p3 {
+  animation: s3_fade_in 0.4s 2.0s ease forwards;
+}
+
+/* Cracks appear */
+.s3_stage.visible .s3_crack1 {
+  animation: s3_crack_strike 0.3s 2.8s ease forwards;
+}
+.s3_stage.visible .s3_crack2 {
+  animation: s3_crack_strike 0.3s 3.0s ease forwards;
+}
+
+/* Browser dims */
+.s3_stage.visible .s3_browser_box.s3_will_dim {
+  animation: s3_fade_in 0.5s 0.3s ease forwards,
+             s3_dim_out 0.6s 3.3s ease forwards;
+}
+.s3_stage.visible .s3_p1.s3_will_dim {
+  animation: s3_fade_in 0.4s 1.0s ease forwards,
+             s3_dim_out 0.5s 3.3s ease forwards;
+}
+.s3_stage.visible .s3_p2.s3_will_dim {
+  animation: s3_fade_in 0.4s 1.5s ease forwards,
+             s3_dim_out 0.5s 3.3s ease forwards;
+}
+.s3_stage.visible .s3_p3.s3_will_dim {
+  animation: s3_fade_in 0.4s 2.0s ease forwards,
+             s3_dim_out 0.5s 3.3s ease forwards;
+}
+
+/* Spark appears */
+.s3_stage.visible .s3_spark_group {
+  animation: s3_spark_pop 0.6s 4.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s3_stage.visible .s3_spark_circle {
+  animation: s3_pulse_ring 1.5s 4.6s ease infinite;
+}
+
+/* Connect line grows */
+.s3_stage.visible .s3_connect {
+  animation: s3_connect_grow 0.4s 5.0s ease forwards;
+}
+
+/* Manus box pops */
+.s3_stage.visible .s3_manus_box {
+  animation: s3_manus_pop 0.5s 5.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Keywords appear */
+.s3_stage.visible .s3_kw1 {
+  animation: s3_kw_in 0.4s 6.2s ease forwards;
+}
+.s3_stage.visible .s3_kw2 {
+  animation: s3_kw_in 0.4s 6.6s ease forwards;
+}
+.s3_stage.visible .s3_kw3 {
+  animation: s3_kw3_in 0.4s 7.0s ease forwards;
+}
+</style>
+
+<div class="s3_stage">
+  <!-- Browser box -->
+  <div class="s3_browser_box s3_will_dim">浏览器</div>
+
+  <!-- Three fatal problems -->
+  <div class="s3_problem s3_p1 s3_will_dim">端侧离线 vs 天然联网</div>
+  <div class="s3_problem s3_p2 s3_will_dim">两个人抢一台电脑</div>
+  <div class="s3_problem s3_p3 s3_will_dim">长任务锁住用户电脑</div>
+
+  <!-- Cracks -->
+  <div class="s3_crack1"></div>
+  <div class="s3_crack2"></div>
+
+  <!-- Cursor spark -->
+  <div class="s3_spark_group">
+    <div class="s3_spark_circle">
+      <span class="s3_spark_icon">💡</span>
+    </div>
+    <div class="s3_spark_label">Cursor 启示</div>
+  </div>
+
+  <!-- Connecting line -->
+  <div class="s3_connect"></div>
+
+  <!-- Manus box -->
+  <div class="s3_manus_box">Manus</div>
+
+  <!-- Keywords around Manus -->
+  <div class="s3_kw s3_kw1">云端</div>
+  <div class="s3_kw s3_kw2">通用</div>
+  <div class="s3_kw s3_kw3">Prosumers</div>
+
+  <!-- Narration -->
+  <div class="s3_narration">
+    <div class="s3_narr" data-start="300" data-end="1400">四月起，全力做AI原生浏览器</div>
+    <div class="s3_narr" data-start="1400" data-end="2800">三个致命问题逐一浮现</div>
+    <div class="s3_narr" data-start="2800" data-end="3800">Arc也放弃了，验证了判断</div>
+    <div class="s3_narr" data-start="3800" data-end="5000">无所事事中，Cursor带来启示</div>
+    <div class="s3_narr" data-start="5000" data-end="6200">编程不是垂直能力，是通用能力</div>
+    <div class="s3_narr" data-start="6200" data-end="9999">别人做心智，他们要做那只手</div>
+  </div>
+</div>
+    </div>
+    <div class="deep-dive-trigger reveal" onclick="toggleDeepDive(3)">↓ 深入了解：Monica 的战略价值与放弃的勇气</div>
+  </div>
+</div>
+
+<!-- ===== S4: 三个 Bet：壳的艺术 ===== -->
+<div class="section" style="background: var(--bg-act2);">
+  <div class="content-width">
+    <p class="section-label reveal">04 — 三个 Bet</p>
+    <h2 class="big-statement reveal reveal-delay-1">Monica 是生鱼片——原材料好就行。Manus 是水煮鱼——厚壳才是价值所在。</h2>
+    <p class="body-text reveal reveal-delay-2">第一个 Bet：相信通用 Agent 能被制造出来。第二个：不训模型，信赖 context engineering。第三个：不做中国版 Cursor，面向 prosumers 做差异化。Agent 与 Chatbot 的根本区别在于第三个元素——<span class="hl">环境</span>。每个 Manus 会话背后是独立的 Firecracker 虚拟机沙盒，为 Agent 设计了专门的 Linux 发行版。通用 Agent 真正的价值在长尾——<span class="hl">「Google 之所以赢，是因为永远能在长尾 query 中给你惊喜。」</span>Manus 本质上是一款个人云计算产品——让不会编程的人也能操作云计算。</p>
+    <div id="s4-anim" class="reveal reveal-delay-3">
+<style>
+/* === S4: 三个 Bet：壳的艺术 === */
+.s4_stage {
+  position: relative;
+  width: 340px;
+  height: 440px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* --- Top: Three Bet boxes --- */
+.s4_bets {
+  position: absolute;
+  top: 12px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+.s4_bet {
+  width: 96px;
+  height: 48px;
+  border-radius: 8px;
+  border: 2.5px solid #CBD5E1;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #94A3B8;
+  opacity: 0;
+  transform: translateY(-10px);
+}
+.s4_bet1 { border-color: #F97316; color: #F97316; }
+.s4_bet2 { border-color: #06B6D4; color: #06B6D4; }
+.s4_bet3 { border-color: #CBD5E1; color: #94A3B8; }
+
+/* --- Middle: Agent triangle --- */
+.s4_tri_wrap {
+  position: absolute;
+  top: 90px;
+  left: 0;
+  right: 0;
+  height: 180px;
+}
+
+.s4_tri_line {
+  position: absolute;
+  background: #CBD5E1;
+  border-radius: 1px;
+  opacity: 0;
+}
+.s4_line_um { top: 60px; left: 90px; width: 160px; height: 2px; }
+.s4_line_ue { top: 60px; left: 90px; width: 2px; height: 100px; transform-origin: top left; transform: rotate(0deg); opacity: 0; }
+.s4_line_me { top: 60px; left: 248px; width: 2px; height: 100px; transform-origin: top right; transform: rotate(0deg); opacity: 0; }
+
+/* SVG triangle for cleaner lines */
+.s4_tri_svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+
+.s4_node {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2.5px solid #CBD5E1;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #94A3B8;
+  opacity: 0;
+  transform: scale(0);
+}
+.s4_node_user { top: 30px; left: 62px; }
+.s4_node_model { top: 30px; right: 62px; }
+.s4_node_env {
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  border-color: #F97316;
+  color: #F97316;
+  width: 64px;
+  height: 64px;
+  font-size: 16px;
+}
+
+/* Pulse ring on environment node */
+.s4_env_pulse {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid #F97316;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* --- Bottom: Sashimi vs Boiled Fish comparison --- */
+.s4_compare {
+  position: absolute;
+  bottom: 44px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 48px;
+  align-items: center;
+}
+
+.s4_sashimi {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  transform: scale(0);
+}
+.s4_sashimi_circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid #CBD5E1;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #94A3B8;
+}
+.s4_sashimi_label {
+  font-size: 11px;
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+.s4_boiled {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  transform: scale(0);
+}
+.s4_boiled_outer {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  border: 3px solid #F97316;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.s4_boiled_mid {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #F9731688;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.s4_boiled_inner {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #F97316;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+.s4_boiled_label {
+  font-size: 11px;
+  color: #F97316;
+  font-weight: 600;
+}
+
+/* Narration */
+.s4_narration {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 13px;
+  color: #94A3B8;
+  min-height: 32px;
+}
+.s4_narr {
+  position: absolute;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s4_narr.s4_show { opacity: 1; }
+
+/* === KEYFRAMES === */
+@keyframes s4_slide_down {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s4_scale_in {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s4_scale_in_center {
+  to { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+@keyframes s4_fade_in {
+  to { opacity: 1; }
+}
+@keyframes s4_pulse {
+  0% { transform: translateX(-50%) scale(1); opacity: 0.6; }
+  100% { transform: translateX(-50%) scale(1.8); opacity: 0; }
+}
+@keyframes s4_bet3_activate {
+  0% { border-color: #CBD5E1; color: #94A3B8; }
+  100% { border-color: #F97316; color: #F97316; }
+}
+
+/* === TRIGGERED SEQUENCE === */
+
+/* Bet boxes appear one by one */
+.s4_stage.visible .s4_bet1 {
+  animation: s4_slide_down 0.4s 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.s4_stage.visible .s4_bet2 {
+  animation: s4_slide_down 0.4s 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.s4_stage.visible .s4_bet3 {
+  animation: s4_slide_down 0.4s 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+/* Bet3 activates orange */
+.s4_stage.visible .s4_bet3.s4_will_activate {
+  animation: s4_slide_down 0.4s 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+             s4_bet3_activate 0.5s 1.9s ease forwards;
+}
+
+/* Triangle nodes */
+.s4_stage.visible .s4_node_user {
+  animation: s4_scale_in 0.4s 2.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s4_stage.visible .s4_node_model {
+  animation: s4_scale_in 0.4s 3.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s4_stage.visible .s4_node_env {
+  animation: s4_scale_in_center 0.5s 3.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s4_stage.visible .s4_env_pulse {
+  animation: s4_pulse 0.8s 4.2s ease-out forwards;
+}
+
+/* Triangle SVG lines */
+.s4_stage.visible .s4_tri_svg {
+  animation: s4_fade_in 0.6s 3.4s ease forwards;
+}
+
+/* Bottom comparison */
+.s4_stage.visible .s4_sashimi {
+  animation: s4_scale_in 0.4s 5.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s4_stage.visible .s4_boiled {
+  animation: s4_scale_in 0.5s 5.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+</style>
+
+<div class="s4_stage">
+  <!-- Top: Three Bets -->
+  <div class="s4_bets">
+    <div class="s4_bet s4_bet1">通用Agent</div>
+    <div class="s4_bet s4_bet2">不训模型</div>
+    <div class="s4_bet s4_bet3 s4_will_activate">Prosumers</div>
+  </div>
+
+  <!-- Middle: Agent Triangle -->
+  <div class="s4_tri_wrap">
+    <!-- SVG triangle lines -->
+    <svg class="s4_tri_svg" viewBox="0 0 340 180" fill="none">
+      <line x1="90" y1="58" x2="250" y2="58" stroke="#CBD5E1" stroke-width="2"/>
+      <line x1="90" y1="58" x2="170" y2="152" stroke="#CBD5E1" stroke-width="2"/>
+      <line x1="250" y1="58" x2="170" y2="152" stroke="#CBD5E1" stroke-width="2"/>
+    </svg>
+    <!-- Nodes -->
+    <div class="s4_node s4_node_user">用户</div>
+    <div class="s4_node s4_node_model">模型</div>
+    <div class="s4_node s4_node_env">环境</div>
+    <div class="s4_env_pulse"></div>
+  </div>
+
+  <!-- Bottom: Sashimi vs Boiled Fish -->
+  <div class="s4_compare">
+    <div class="s4_sashimi">
+      <div class="s4_sashimi_circle">生鱼片</div>
+      <span class="s4_sashimi_label">薄壳 / 透传</span>
+    </div>
+    <div class="s4_boiled">
+      <div class="s4_boiled_outer">
+        <div class="s4_boiled_mid">
+          <div class="s4_boiled_inner">鱼</div>
+        </div>
+      </div>
+      <span class="s4_boiled_label">水煮鱼 / 地壳级</span>
+    </div>
+  </div>
+
+  <!-- Narration -->
+  <div class="s4_narration">
+    <div class="s4_narr" data-start="400" data-end="1300">Bet 1: 相信通用Agent能被造出来</div>
+    <div class="s4_narr" data-start="1300" data-end="2200">Bet 2: 不自己训模型，赌框架能带来提升</div>
+    <div class="s4_narr" data-start="2200" data-end="3200">Bet 3: 服务Prosumers，不做中国版某某</div>
+    <div class="s4_narr" data-start="3200" data-end="4400">Chatbot只有用户和模型，Agent多了环境</div>
+    <div class="s4_narr" data-start="4400" data-end="5400">环境是关键差异 -- Runtime决定边界</div>
+    <div class="s4_narr" data-start="5400" data-end="6200">套壳也分厚薄：生鱼片 vs 水煮鱼</div>
+    <div class="s4_narr" data-start="6200" data-end="9999">Manus是地壳一样厚的壳</div>
+  </div>
+</div>
+    </div>
+    <div class="deep-dive-trigger reveal" onclick="toggleDeepDive(4)">↓ 深入了解：沙盒架构与 Token 消耗结构</div>
+  </div>
+</div>
+
+<!-- ===== S5: Agent 的灵魂：对齐冲突 ===== -->
+<div class="section" style="background: var(--bg-act2);">
+  <div class="content-width">
+    <p class="section-label reveal">05 — 灵魂冲突</p>
+    <h2 class="big-statement reveal reveal-delay-1">所有大模型都在为 Chatbot 做对齐——但 Agent 的工况和 Chatbot 完全不同。这是当前最被忽视的矛盾。</h2>
+    <p class="body-text reveal reveal-delay-2">Chatbot 的 input:output 比是 3:1，Agent 是 100:1 到 1000:1。模型被训练成「一次回答完毕」，但 Agent 需要基于 ReAct 逐步尝试。<span class="hl">200K 以上的 context 不重要</span>，更重要的是让模型学会 compression awareness。Interleaved thinking 优于纯脑内 reasoning。应用公司做综合，模型公司做垂直——这个反直觉的分工正在发生。Manus 用不同场景的最佳模型组合：Anthropic 做 coding、Gemini 做多模态、OpenAI 做 reasoning。<span class="hl">「好像全世界都在帮我们一起训模型。」</span></p>
+    <div id="s5-anim" class="reveal reveal-delay-3">
+<style>
+/* === S5: Agent 的灵魂：对齐冲突 === */
+.s5_stage {
+  position: relative;
+  width: 340px;
+  height: 420px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* --- Ratio Bars --- */
+.s5_ratio_group {
+  position: absolute;
+  top: 16px;
+  left: 24px;
+  right: 24px;
+}
+.s5_ratio_row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  opacity: 0;
+  transform: translateX(-12px);
+}
+.s5_ratio_label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #94A3B8;
+  width: 62px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.s5_bar_track {
+  flex: 1;
+  height: 18px;
+  background: #E2E8F0;
+  border-radius: 9px;
+  overflow: hidden;
+  position: relative;
+}
+.s5_bar_fill {
+  height: 100%;
+  border-radius: 9px;
+  width: 0;
+}
+.s5_bar_chatbot {
+  background: #CBD5E1;
+}
+.s5_bar_agent {
+  background: #F97316;
+}
+.s5_ratio_tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748B;
+  width: 48px;
+  flex-shrink: 0;
+}
+.s5_ratio_tag_orange {
+  color: #F97316;
+  font-weight: 800;
+}
+
+/* --- Conflict Zone --- */
+.s5_conflict_zone {
+  position: absolute;
+  top: 110px;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+.s5_box {
+  width: 108px;
+  height: 64px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0;
+  transform: scale(0.6);
+}
+.s5_box_gray {
+  border: 2.5px solid #CBD5E1;
+  background: #fff;
+  color: #94A3B8;
+}
+.s5_box_orange {
+  border: 2.5px solid #F97316;
+  background: #fff;
+  color: #F97316;
+}
+.s5_conflict_icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 900;
+  color: #EF4444;
+  opacity: 0;
+  transform: scale(0);
+  flex-shrink: 0;
+}
+.s5_conflict_bolt {
+  display: inline-block;
+  width: 20px;
+  height: 28px;
+  position: relative;
+}
+.s5_conflict_bolt::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 4px;
+  width: 14px; height: 16px;
+  background: #EF4444;
+  clip-path: polygon(50% 0%, 100% 60%, 55% 60%, 70% 100%, 0% 40%, 45% 40%);
+}
+
+/* --- Compression Awareness callout --- */
+.s5_compress_callout {
+  position: absolute;
+  top: 200px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: #06B6D4;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 20px;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+/* --- Model Convergence --- */
+.s5_model_zone {
+  position: absolute;
+  top: 252px;
+  left: 0;
+  right: 0;
+  height: 130px;
+}
+.s5_brand {
+  position: absolute;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2.5px solid #CBD5E1;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748B;
+  opacity: 0;
+  transform: scale(0);
+}
+.s5_brand_anthropic { left: 36px; top: 0; }
+.s5_brand_gemini { left: 144px; top: 0; }
+.s5_brand_openai { left: 252px; top: 0; }
+
+/* Arrows from brands to center */
+.s5_arrow_line {
+  position: absolute;
+  top: 52px;
+  height: 0;
+  width: 2px;
+  background: #CBD5E1;
+  border-radius: 1px;
+  transform-origin: top center;
+}
+.s5_arrow_l { left: 62px; transform: rotate(28deg); }
+.s5_arrow_c { left: 170px; transform: rotate(0deg); }
+.s5_arrow_r { left: 278px; transform: rotate(-28deg); }
+
+/* Center Manus circle */
+.s5_manus {
+  position: absolute;
+  left: 50%;
+  top: 80px;
+  transform: translateX(-50%) scale(0);
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid #F97316;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: #F97316;
+}
+.s5_manus_pulse {
+  position: absolute;
+  left: 50%;
+  top: 80px;
+  transform: translateX(-50%) scale(0);
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid #F97316;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Narration */
+.s5_narration {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 13px;
+  color: #94A3B8;
+  min-height: 32px;
+}
+.s5_narr {
+  position: absolute;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s5_narr.s5_show { opacity: 1; }
+
+/* === KEYFRAMES === */
+@keyframes s5_fade_slide {
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes s5_bar_chatbot_fill {
+  to { width: 25%; }
+}
+@keyframes s5_bar_agent_fill {
+  to { width: 95%; }
+}
+@keyframes s5_scale_in {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s5_conflict_flash {
+  0% { opacity: 0; transform: scale(0); }
+  40% { opacity: 1; transform: scale(1.3); }
+  60% { opacity: 1; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes s5_callout_in {
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes s5_brand_in {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s5_manus_in {
+  to { transform: translateX(-50%) scale(1); }
+}
+@keyframes s5_arrow_grow {
+  to { height: 32px; }
+}
+@keyframes s5_pulse_ring {
+  0% { transform: translateX(-50%) scale(1); opacity: 0.5; }
+  100% { transform: translateX(-50%) scale(1.6); opacity: 0; }
+}
+@keyframes s5_conflict_shake {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  20% { transform: scale(1.1) rotate(-4deg); }
+  40% { transform: scale(1.05) rotate(3deg); }
+  60% { transform: scale(1.08) rotate(-2deg); }
+  80% { transform: scale(1.03) rotate(1deg); }
+}
+
+/* === TRIGGERED SEQUENCE === */
+
+/* Step 1: Ratio bars appear */
+.s5_stage.visible .s5_ratio_row:nth-child(1) {
+  animation: s5_fade_slide 0.5s 0.4s ease forwards;
+}
+.s5_stage.visible .s5_ratio_row:nth-child(2) {
+  animation: s5_fade_slide 0.5s 0.9s ease forwards;
+}
+
+/* Step 2: Bars fill */
+.s5_stage.visible .s5_bar_chatbot {
+  animation: s5_bar_chatbot_fill 0.6s 1.0s ease forwards;
+}
+.s5_stage.visible .s5_bar_agent {
+  animation: s5_bar_agent_fill 0.8s 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Step 3: Conflict boxes */
+.s5_stage.visible .s5_box_gray {
+  animation: s5_scale_in 0.4s 2.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s5_stage.visible .s5_box_orange {
+  animation: s5_scale_in 0.4s 3.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Step 4: Conflict icon */
+.s5_stage.visible .s5_conflict_icon {
+  animation: s5_conflict_flash 0.5s 3.6s ease forwards,
+             s5_conflict_shake 0.6s 4.1s ease;
+}
+
+/* Step 5: Compression callout */
+.s5_stage.visible .s5_compress_callout {
+  animation: s5_callout_in 0.5s 4.8s ease forwards;
+}
+
+/* Step 6: Brand circles */
+.s5_stage.visible .s5_brand_anthropic {
+  animation: s5_brand_in 0.4s 5.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s5_stage.visible .s5_brand_gemini {
+  animation: s5_brand_in 0.4s 5.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s5_stage.visible .s5_brand_openai {
+  animation: s5_brand_in 0.4s 6.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Step 7: Arrow lines */
+.s5_stage.visible .s5_arrow_l {
+  animation: s5_arrow_grow 0.4s 6.6s ease forwards;
+}
+.s5_stage.visible .s5_arrow_c {
+  animation: s5_arrow_grow 0.4s 6.8s ease forwards;
+}
+.s5_stage.visible .s5_arrow_r {
+  animation: s5_arrow_grow 0.4s 7.0s ease forwards;
+}
+
+/* Step 8: Manus center */
+.s5_stage.visible .s5_manus {
+  animation: s5_manus_in 0.5s 7.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s5_stage.visible .s5_manus_pulse {
+  animation: s5_pulse_ring 0.8s 7.9s ease-out forwards;
+}
+</style>
+
+<div class="s5_stage">
+  <!-- Ratio comparison -->
+  <div class="s5_ratio_group">
+    <div class="s5_ratio_row">
+      <div class="s5_ratio_label">Chatbot</div>
+      <div class="s5_bar_track"><div class="s5_bar_fill s5_bar_chatbot"></div></div>
+      <div class="s5_ratio_tag">3:1</div>
+    </div>
+    <div class="s5_ratio_row">
+      <div class="s5_ratio_label">Agent</div>
+      <div class="s5_bar_track"><div class="s5_bar_fill s5_bar_agent"></div></div>
+      <div class="s5_ratio_tag s5_ratio_tag_orange">100:1</div>
+    </div>
+  </div>
+
+  <!-- Conflict zone -->
+  <div class="s5_conflict_zone">
+    <div class="s5_box s5_box_gray">Chatbot对齐</div>
+    <div class="s5_conflict_icon"><div class="s5_conflict_bolt"></div></div>
+    <div class="s5_box s5_box_orange">Agent工况</div>
+  </div>
+
+  <!-- Compression Awareness -->
+  <div class="s5_compress_callout">Compression Awareness</div>
+
+  <!-- Model convergence -->
+  <div class="s5_model_zone">
+    <div class="s5_brand s5_brand_anthropic">Claude</div>
+    <div class="s5_brand s5_brand_gemini">Gemini</div>
+    <div class="s5_brand s5_brand_openai">OpenAI</div>
+
+    <div class="s5_arrow_line s5_arrow_l"></div>
+    <div class="s5_arrow_line s5_arrow_c"></div>
+    <div class="s5_arrow_line s5_arrow_r"></div>
+
+    <div class="s5_manus">Manus</div>
+    <div class="s5_manus_pulse"></div>
+  </div>
+
+  <!-- Narration -->
+  <div class="s5_narration">
+    <div class="s5_narr" data-start="400" data-end="1500">Chatbot的输入输出比是3:1</div>
+    <div class="s5_narr" data-start="1500" data-end="2600">Agent的比例是100:1到1000:1</div>
+    <div class="s5_narr" data-start="2600" data-end="3600">模型为Chatbot做的对齐...</div>
+    <div class="s5_narr" data-start="3600" data-end="4800">...和Agent工况天然冲突</div>
+    <div class="s5_narr" data-start="4800" data-end="5600">200K以上context不重要，压缩意识才重要</div>
+    <div class="s5_narr" data-start="5600" data-end="7400">三家头部模型，各有所长</div>
+    <div class="s5_narr" data-start="7400" data-end="9999">全世界都在帮我们一起训模型</div>
+  </div>
+</div>
+    </div>
+    <div class="deep-dive-trigger reveal" onclick="toggleDeepDive(5)">↓ 深入了解：Agent 数据飞轮与 RLI Benchmark</div>
+  </div>
+</div>
+
+<!-- ========== ACT III ========== -->
+<div class="act-transition act-transition-dark reveal" style="background: var(--bg-act3);">
+  <div class="content-width">
+    <p class="act-num">ACT III</p>
+    <p class="act-title">纯血与克制</p>
+  </div>
+</div>
+
+<!-- ===== S6: 发布风暴与算力危机 ===== -->
+<div class="section section-dark" style="background: var(--bg-act3);">
+  <div class="content-width">
+    <p class="section-label reveal">06 — 发布风暴</p>
+    <h2 class="big-statement reveal reveal-delay-1">「世界上能够在第二天立即到位的算力比想象中少太多了。」上线第一天烧几十万美金，Anthropic 说：千万别放开，你放开我们会挂。</h2>
+    <p class="body-text reveal reveal-delay-2">邀请码不是饥饿营销——云厂商和模型厂商的算力完全没准备好 Agent 级别的消耗。GCP「物理层面去搬卡插在机柜上」才解了燃眉之急。Manus 追求的不是 DAU 而是营收，高价值用户问的是<span class="hl">「能不能付 200 美金让效果更好？」</span>。a16z 数据：装了所有 Chatbot 的用户，最大异常值全是 Manus。Agent 的未来方向是 Proactiveness——主动性才是 agency 的本意：面试完自动把记录填到 Ashby，<span class="hl">7×24 小时推理</span>。</p>
+    <div id="s6-anim" class="reveal reveal-delay-3">
+<style>
+/* --- S6 Stage --- */
+.s6_stage {
+  position: relative;
+  width: 340px;
+  max-width: 90vw;
+  height: 420px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* --- Server rack icon (top) --- */
+.s6_rack {
+  position: absolute;
+  top: 16px;
+  left: 44px;
+  width: 56px;
+  height: 72px;
+  border: 2.5px solid #CBD5E1;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  opacity: 0;
+  transform: scale(0);
+}
+.s6_rack_slot {
+  width: 36px;
+  height: 6px;
+  border-radius: 2px;
+  background: #CBD5E1;
+}
+.s6_rack_label {
+  position: absolute;
+  top: 80px;
+  left: 44px;
+  width: 56px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #E2E8F0;
+  opacity: 0;
+}
+
+/* --- Arrow from rack to usage bar --- */
+.s6_arrow1 {
+  position: absolute;
+  top: 44px;
+  left: 112px;
+  width: 0;
+  height: 2px;
+  background: #CBD5E1;
+  border-radius: 1px;
+}
+.s6_arrow1_head {
+  position: absolute;
+  top: 38px;
+  left: 148px;
+  width: 0; height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 7px solid #CBD5E1;
+  opacity: 0;
+}
+
+/* --- Usage bar (exploding, orange) --- */
+.s6_usage_wrap {
+  position: absolute;
+  top: 20px;
+  left: 164px;
+  width: 150px;
+  height: 56px;
+  opacity: 0;
+}
+.s6_usage_label {
+  font-size: 11px;
+  color: #94A3B8;
+  margin-bottom: 4px;
+}
+.s6_usage_track {
+  width: 100%;
+  height: 24px;
+  background: rgba(203,213,225,0.15);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.s6_usage_fill {
+  height: 100%;
+  width: 8%;
+  background: #F97316;
+  border-radius: 4px;
+  transition: width 2s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 0 12px rgba(249,115,22,0.5);
+}
+.s6_usage_pct {
+  font-size: 12px;
+  color: #F97316;
+  font-weight: 600;
+  margin-top: 2px;
+  text-align: right;
+}
+
+/* --- Number cascade (middle) --- */
+.s6_numbers {
+  position: absolute;
+  top: 120px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  height: 80px;
+}
+.s6_num {
+  position: absolute;
+  left: 0; right: 0;
+  font-size: 32px;
+  font-weight: 700;
+  opacity: 0;
+  transform: translateY(12px);
+}
+.s6_num_1 { color: #CBD5E1; }
+.s6_num_2 { color: #F97316; }
+.s6_num_3 { color: #06B6D4; font-size: 36px; }
+
+/* --- Number sub-label --- */
+.s6_num_sub {
+  position: absolute;
+  top: 50px;
+  left: 0; right: 0;
+  text-align: center;
+  font-size: 12px;
+  color: #94A3B8;
+  opacity: 0;
+}
+
+/* --- Proactiveness: passive -> active --- */
+.s6_pro_row {
+  position: absolute;
+  top: 240px;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  opacity: 0;
+  transform: translateY(16px);
+}
+.s6_passive {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2.5px solid #CBD5E1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #94A3B8;
+  line-height: 1.3;
+}
+.s6_pro_arrow {
+  font-size: 20px;
+  color: #F97316;
+}
+.s6_active {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2.5px solid #F97316;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #F97316;
+  line-height: 1.3;
+  position: relative;
+}
+.s6_active_pulse {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid #F97316;
+  opacity: 0;
+  animation: none;
+}
+.s6_pro_note {
+  position: absolute;
+  top: 336px;
+  left: 0; right: 0;
+  text-align: center;
+  font-size: 12px;
+  color: #06B6D4;
+  font-weight: 500;
+  opacity: 0;
+}
+
+/* --- Bottom narration --- */
+.s6_narration {
+  position: absolute;
+  bottom: 0;
+  left: 0; right: 0;
+  text-align: center;
+  font-size: 13px;
+  color: #94A3B8;
+  min-height: 56px;
+  padding: 0 12px;
+  line-height: 1.6;
+}
+.s6_narr {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: 0;
+  padding: 0 12px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s6_narr.s6_show { opacity: 1; }
+
+/* === KEYFRAMES === */
+@keyframes s6_scaleIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s6_fadeIn {
+  to { opacity: 1; }
+}
+@keyframes s6_slideUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s6_drawRight {
+  to { width: 36px; }
+}
+@keyframes s6_numFlash {
+  0% { opacity: 0; transform: translateY(12px); }
+  15% { opacity: 1; transform: translateY(0); }
+  85% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+@keyframes s6_numStay {
+  0% { opacity: 0; transform: translateY(12px); }
+  20% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes s6_pulse {
+  0% { opacity: 0.6; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+
+/* === TRIGGERED SEQUENCE (via .visible) === */
+.s6_stage.visible .s6_rack {
+  animation: s6_scaleIn 0.4s 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+.s6_stage.visible .s6_rack_label {
+  animation: s6_fadeIn 0.3s 0.6s ease forwards;
+}
+.s6_stage.visible .s6_arrow1 {
+  animation: s6_drawRight 0.3s 1.0s ease forwards;
+}
+.s6_stage.visible .s6_arrow1_head {
+  animation: s6_fadeIn 0.2s 1.25s ease forwards;
+}
+.s6_stage.visible .s6_usage_wrap {
+  animation: s6_fadeIn 0.3s 1.5s ease forwards;
+}
+
+/* Number cascade */
+.s6_stage.visible .s6_num_1 {
+  animation: s6_numFlash 1.2s 3.0s ease forwards;
+}
+.s6_stage.visible .s6_num_2 {
+  animation: s6_numFlash 1.2s 4.0s ease forwards;
+}
+.s6_stage.visible .s6_num_3 {
+  animation: s6_numStay 0.8s 5.0s ease forwards;
+}
+.s6_stage.visible .s6_num_sub {
+  animation: s6_fadeIn 0.3s 5.6s ease forwards;
+}
+
+/* Proactiveness row */
+.s6_stage.visible .s6_pro_row {
+  animation: s6_slideUp 0.5s 6.2s ease forwards;
+}
+.s6_stage.visible .s6_pro_note {
+  animation: s6_fadeIn 0.4s 7.0s ease forwards;
+}
+</style>
+
+<div class="s6_stage" id="s6_stage">
+
+  <!-- 1. Server rack -->
+  <div class="s6_rack">
+    <div class="s6_rack_slot"></div>
+    <div class="s6_rack_slot"></div>
+    <div class="s6_rack_slot"></div>
+    <div class="s6_rack_slot"></div>
+  </div>
+  <div class="s6_rack_label">算力</div>
+
+  <!-- 2. Arrow -->
+  <div class="s6_arrow1"></div>
+  <div class="s6_arrow1_head"></div>
+
+  <!-- 3. Usage bar -->
+  <div class="s6_usage_wrap" id="s6_usage_wrap">
+    <div class="s6_usage_label">用量</div>
+    <div class="s6_usage_track">
+      <div class="s6_usage_fill" id="s6_usage_fill"></div>
+    </div>
+    <div class="s6_usage_pct" id="s6_usage_pct">8%</div>
+  </div>
+
+  <!-- 4. Number cascade -->
+  <div class="s6_numbers">
+    <div class="s6_num s6_num_1">$0</div>
+    <div class="s6_num s6_num_2">$几十万/天</div>
+    <div class="s6_num s6_num_3">$1亿 ARR</div>
+    <div class="s6_num_sub">从零到1亿美金年化收入</div>
+  </div>
+
+  <!-- 5. Proactiveness -->
+  <div class="s6_pro_row">
+    <div class="s6_passive">被动<br>响应</div>
+    <div class="s6_pro_arrow">→</div>
+    <div class="s6_active" id="s6_active">
+      主动<br>推理
+      <div class="s6_active_pulse" id="s6_pulse_ring"></div>
+    </div>
+  </div>
+  <div class="s6_pro_note">7 × 24 小时推理</div>
+
+  <!-- 6. Narration -->
+  <div class="s6_narration">
+    <div class="s6_narr" data-start="0" data-end="1400">发布当天，算力瞬间被打爆</div>
+    <div class="s6_narr" data-start="1400" data-end="3000">云厂商物理搬卡，插在机柜上给他们用</div>
+    <div class="s6_narr" data-start="3000" data-end="4200">一天烧几十万美金，但觉得一定能成</div>
+    <div class="s6_narr" data-start="4200" data-end="5200">从$0到$几十万/天</div>
+    <div class="s6_narr" data-start="5200" data-end="6200">ARR 突破 1 亿美金</div>
+    <div class="s6_narr" data-start="6200" data-end="7200">Agent 的本意：能动性、主动性</div>
+    <div class="s6_narr" data-start="7200" data-end="9999">不追求DAU，要把高价值task做到最好</div>
+  </div>
+</div>
+    </div>
+    <div class="deep-dive-trigger reveal" onclick="toggleDeepDive(6)">↓ 深入了解：GCP 雪中送炭与定价策略</div>
+  </div>
+</div>
+
+<!-- ===== S7: 纯血 Agent 与网络效应 ===== -->
+<div class="section section-dark" style="background: var(--bg-act3);">
+  <div class="content-width">
+    <p class="section-label reveal">07 — 纯血 Agent</p>
+    <h2 class="big-statement reveal reveal-delay-1">「不要把人因为生而为人的限制，颁给 Agent。你应该站在模型的角度去思考问题。」</h2>
+    <p class="body-text reveal reveal-delay-2">纯血 Agent 意味着完成任务的方式由智能本身决定——没有人为约束、不模仿人类分工。Workflow 只是规则主导的自动化，不是 Agent。Bitter Lesson 的信仰：<span class="hl">用通用方法 + 更大算力</span>，不加人为知识。每增加一个原子能力都必须产生网络效应——加了看图能力后 Agent 自动学会检查网页渲染是否正确。对 MCP 保守：<span class="hl">Everything added dilutes everything else</span>。做 Agent 跟训模型很像——更重要的是做对一千件小事，而不是做对三个大事。</p>
+    <div id="s7-anim" class="reveal reveal-delay-3">
+<style>
+/* === S7: 纯血 Agent 与网络效应 === */
+.s7_stage {
+  position: relative;
+  width: 340px;
+  height: 460px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* Fork point at top */
+.s7_fork {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid #CBD5E1;
+  background: #1E293B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #CBD5E1;
+}
+
+/* Fork lines going left and right */
+.s7_fork_line {
+  position: absolute;
+  top: 68px;
+  width: 2px;
+  height: 0;
+  border-radius: 1px;
+  transform-origin: top center;
+}
+.s7_fork_left {
+  left: 170px;
+  background: #CBD5E1;
+  transform: rotate(-30deg);
+}
+.s7_fork_right {
+  left: 170px;
+  background: #F97316;
+  transform: rotate(30deg);
+}
+
+/* Left path: Workflow */
+.s7_wf_label {
+  position: absolute;
+  top: 118px;
+  left: 22px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #CBD5E1;
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* Rule boxes (workflow path) */
+.s7_rules {
+  position: absolute;
+  top: 146px;
+  left: 12px;
+  width: 100px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  opacity: 0;
+}
+.s7_rule {
+  width: 22px;
+  height: 10px;
+  border-radius: 2px;
+  background: #475569;
+  border: 1px solid #64748B;
+}
+
+/* Workflow annotation */
+.s7_wf_note {
+  position: absolute;
+  top: 218px;
+  left: 18px;
+  font-size: 11px;
+  color: #64748B;
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+/* Right path: 纯血 Agent */
+.s7_agent_label {
+  position: absolute;
+  top: 118px;
+  right: 22px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #F97316;
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* Agent circle (pulsing) */
+.s7_agent_circle {
+  position: absolute;
+  top: 148px;
+  right: 36px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid #F97316;
+  background: rgba(249, 115, 22, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #F97316;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.s7_agent_note {
+  position: absolute;
+  top: 218px;
+  right: 18px;
+  font-size: 11px;
+  color: #F97316;
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+/* Dim effect on workflow side */
+.s7_dim_overlay {
+  position: absolute;
+  top: 110px;
+  left: 0;
+  width: 140px;
+  height: 140px;
+  background: transparent;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+/* Network effect section */
+.s7_net_divider {
+  position: absolute;
+  top: 260px;
+  left: 30px;
+  right: 30px;
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+  transform: scaleX(0);
+  transform-origin: center;
+}
+
+/* Center capability circle */
+.s7_center {
+  position: absolute;
+  top: 284px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 3px solid #06B6D4;
+  background: rgba(6, 182, 212, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #06B6D4;
+}
+
+/* Radiating lines from center to satellites */
+.s7_ray {
+  position: absolute;
+  top: 312px;
+  left: 170px;
+  width: 2px;
+  height: 0;
+  background: #06B6D4;
+  border-radius: 1px;
+  transform-origin: top center;
+  opacity: 0.6;
+}
+.s7_ray1 { transform: rotate(-60deg); }
+.s7_ray2 { transform: rotate(-30deg); }
+.s7_ray3 { transform: rotate(0deg); }
+.s7_ray4 { transform: rotate(30deg); }
+.s7_ray5 { transform: rotate(60deg); }
+
+/* Satellite ability circles */
+.s7_sat {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transform: scale(0);
+}
+.s7_sat_dot {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #06B6D4;
+  background: rgba(6, 182, 212, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #06B6D4;
+}
+.s7_sat_label {
+  font-size: 10px;
+  color: #64748B;
+  white-space: nowrap;
+}
+.s7_sat1 { top: 354px; left: 6px; }
+.s7_sat2 { top: 344px; left: 72px; }
+.s7_sat3 { top: 354px; left: 140px; }
+.s7_sat4 { top: 344px; left: 210px; }
+.s7_sat5 { top: 354px; right: 6px; }
+
+/* Narration */
+.s7_narration {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 13px;
+  color: #94A3B8;
+  min-height: 32px;
+}
+.s7_narr {
+  position: absolute;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s7_narr.s7_show { opacity: 1; }
+
+/* === KEYFRAMES === */
+@keyframes s7_scale_in {
+  to { transform: translateX(-50%) scale(1); }
+}
+@keyframes s7_fork_grow {
+  to { height: 70px; }
+}
+@keyframes s7_fade_slide {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s7_agent_pop {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s7_rules_in {
+  to { opacity: 1; }
+}
+@keyframes s7_divider_grow {
+  to { transform: scaleX(1); }
+}
+@keyframes s7_center_pop {
+  to { transform: translateX(-50%) scale(1); }
+}
+@keyframes s7_ray_grow {
+  to { height: 56px; }
+}
+@keyframes s7_sat_pop {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s7_pulse_agent {
+  0%, 100% { box-shadow: 0 0 12px rgba(249, 115, 22, 0.3); }
+  50% { box-shadow: 0 0 28px rgba(249, 115, 22, 0.7); }
+}
+@keyframes s7_pulse_center {
+  0%, 100% { box-shadow: 0 0 12px rgba(6, 182, 212, 0.3); }
+  50% { box-shadow: 0 0 28px rgba(6, 182, 212, 0.6); }
+}
+@keyframes s7_dim {
+  to { opacity: 0.35; filter: grayscale(0.8); }
+}
+
+/* === TRIGGERED SEQUENCE (.visible) === */
+/* Step 1: Fork point appears */
+.s7_stage.visible .s7_fork {
+  animation: s7_scale_in 0.4s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Step 2: Fork lines grow */
+.s7_stage.visible .s7_fork_left {
+  animation: s7_fork_grow 0.5s 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.s7_stage.visible .s7_fork_right {
+  animation: s7_fork_grow 0.5s 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Step 3: Path labels */
+.s7_stage.visible .s7_wf_label {
+  animation: s7_fade_slide 0.4s 1.6s ease forwards;
+}
+.s7_stage.visible .s7_agent_label {
+  animation: s7_fade_slide 0.4s 1.6s ease forwards;
+}
+
+/* Step 4: Rule boxes (left) */
+.s7_stage.visible .s7_rules {
+  animation: s7_rules_in 0.5s 2.2s ease forwards;
+}
+
+/* Step 5: Agent circle (right) */
+.s7_stage.visible .s7_agent_circle {
+  animation: s7_agent_pop 0.5s 2.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Step 6: Annotations */
+.s7_stage.visible .s7_wf_note {
+  animation: s7_fade_slide 0.4s 2.8s ease forwards;
+}
+.s7_stage.visible .s7_agent_note {
+  animation: s7_fade_slide 0.4s 2.8s ease forwards;
+}
+
+/* Step 7: Dim workflow side, pulse agent */
+.s7_stage.visible .s7_rules {
+  animation: s7_rules_in 0.5s 2.2s ease forwards,
+             s7_dim 0.8s 3.4s ease forwards;
+}
+.s7_stage.visible .s7_wf_label {
+  animation: s7_fade_slide 0.4s 1.6s ease forwards,
+             s7_dim 0.8s 3.4s ease forwards;
+}
+.s7_stage.visible .s7_wf_note {
+  animation: s7_fade_slide 0.4s 2.8s ease forwards,
+             s7_dim 0.8s 3.4s ease forwards;
+}
+.s7_stage.visible .s7_agent_circle {
+  animation: s7_agent_pop 0.5s 2.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+             s7_pulse_agent 1.5s 3.6s ease infinite;
+}
+
+/* Step 8: Divider line */
+.s7_stage.visible .s7_net_divider {
+  animation: s7_divider_grow 0.5s 4.2s ease forwards;
+}
+
+/* Step 9: Center circle */
+.s7_stage.visible .s7_center {
+  animation: s7_center_pop 0.5s 4.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+             s7_pulse_center 2s 5.6s ease infinite;
+}
+
+/* Step 10: Rays */
+.s7_stage.visible .s7_ray1 { animation: s7_ray_grow 0.3s 5.4s ease forwards; }
+.s7_stage.visible .s7_ray2 { animation: s7_ray_grow 0.3s 5.6s ease forwards; }
+.s7_stage.visible .s7_ray3 { animation: s7_ray_grow 0.3s 5.8s ease forwards; }
+.s7_stage.visible .s7_ray4 { animation: s7_ray_grow 0.3s 6.0s ease forwards; }
+.s7_stage.visible .s7_ray5 { animation: s7_ray_grow 0.3s 6.2s ease forwards; }
+
+/* Step 11: Satellite circles */
+.s7_stage.visible .s7_sat1 { animation: s7_sat_pop 0.35s 5.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.s7_stage.visible .s7_sat2 { animation: s7_sat_pop 0.35s 6.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.s7_stage.visible .s7_sat3 { animation: s7_sat_pop 0.35s 6.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.s7_stage.visible .s7_sat4 { animation: s7_sat_pop 0.35s 6.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.s7_stage.visible .s7_sat5 { animation: s7_sat_pop 0.35s 6.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+</style>
+
+<div class="s7_stage">
+  <!-- Fork point -->
+  <div class="s7_fork">分叉</div>
+
+  <!-- Fork lines -->
+  <div class="s7_fork_line s7_fork_left"></div>
+  <div class="s7_fork_line s7_fork_right"></div>
+
+  <!-- Left path: Workflow -->
+  <div class="s7_wf_label">Workflow</div>
+  <div class="s7_rules">
+    <div class="s7_rule"></div><div class="s7_rule"></div><div class="s7_rule"></div><div class="s7_rule"></div>
+    <div class="s7_rule"></div><div class="s7_rule"></div><div class="s7_rule"></div><div class="s7_rule"></div>
+    <div class="s7_rule"></div><div class="s7_rule"></div><div class="s7_rule"></div><div class="s7_rule"></div>
+    <div class="s7_rule"></div><div class="s7_rule"></div><div class="s7_rule"></div><div class="s7_rule"></div>
+  </div>
+  <div class="s7_wf_note">规则主导</div>
+
+  <!-- Right path: 纯血 Agent -->
+  <div class="s7_agent_label">纯血Agent</div>
+  <div class="s7_agent_circle">智能</div>
+  <div class="s7_agent_note">智能驱动</div>
+
+  <!-- Network effect divider -->
+  <div class="s7_net_divider"></div>
+
+  <!-- Center: 看图 capability -->
+  <div class="s7_center">看图</div>
+
+  <!-- Radiating lines -->
+  <div class="s7_ray s7_ray1"></div>
+  <div class="s7_ray s7_ray2"></div>
+  <div class="s7_ray s7_ray3"></div>
+  <div class="s7_ray s7_ray4"></div>
+  <div class="s7_ray s7_ray5"></div>
+
+  <!-- Satellite circles -->
+  <div class="s7_sat s7_sat1">
+    <div class="s7_sat_dot">网页</div>
+    <span class="s7_sat_label">检查渲染</span>
+  </div>
+  <div class="s7_sat s7_sat2">
+    <div class="s7_sat_dot">图表</div>
+    <span class="s7_sat_label">分析数据</span>
+  </div>
+  <div class="s7_sat s7_sat3">
+    <div class="s7_sat_dot">截图</div>
+    <span class="s7_sat_label">自我验证</span>
+  </div>
+  <div class="s7_sat s7_sat4">
+    <div class="s7_sat_dot">字体</div>
+    <span class="s7_sat_label">检测乱码</span>
+  </div>
+  <div class="s7_sat s7_sat5">
+    <div class="s7_sat_dot">重叠</div>
+    <span class="s7_sat_label">修复布局</span>
+  </div>
+
+  <!-- Narration -->
+  <div class="s7_narration">
+    <div class="s7_narr" data-start="300" data-end="1600">做 Agent，先过这个分叉点</div>
+    <div class="s7_narr" data-start="1600" data-end="2800">左边 Workflow：规则越多，天花板越低</div>
+    <div class="s7_narr" data-start="2800" data-end="3800">右边纯血 Agent：由智能本身决定</div>
+    <div class="s7_narr" data-start="3800" data-end="5000">Workflow 逐渐暗淡，智能持续脉冲</div>
+    <div class="s7_narr" data-start="5000" data-end="6200">加一个「看图」能力...</div>
+    <div class="s7_narr" data-start="6200" data-end="9999">五个场景自动涌现——这就是网络效应</div>
+  </div>
+</div>
+    </div>
+    <div class="deep-dive-trigger reveal" onclick="toggleDeepDive(7)">↓ 深入了解：弱到强衡量方法与 Reasoning 陷阱</div>
+  </div>
+</div>
+
+<!-- ===== S8: 前瞻：隐忧与终局 ===== -->
+<div class="section section-dark" style="background: var(--bg-act3);">
+  <div class="content-width">
+    <p class="section-label reveal">08 — 隐忧与终局</p>
+    <h2 class="big-statement reveal reveal-delay-1">「Manus 更大的可能性不是因为竞争而输掉，而是因为失去了独有的价值。」</h2>
+    <p class="body-text reveal reveal-delay-2">最大隐忧是失去特色和变得复杂。四点给模型厂商的建议：compression awareness 优于无限扩 context、tool integrated reasoning、异步交互（用户随时插嘴）、error resilience。当前像 2018 年——Transformer 出来了，GPT-3 还没来。<span class="hl">Scaling Law 没有停止</span>，但涌现不确定。Agent 已经爆发但每个场景差一口质量。最乐观预期：所有白领获得 7×24 小时 AI 伙伴。<span class="hl-danger">「AI 接下来的进步需要用户的参与。」</span></p>
+    <div id="s8-anim" class="reveal reveal-delay-3">
+<style>
+/* === S8: 前瞻：隐忧与终局 === */
+.s8_stage {
+  position: relative;
+  width: 340px;
+  height: 420px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* --- Top: Manus circle with threat arrows --- */
+.s8_manus {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid #F97316;
+  background: rgba(249,115,22,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #F97316;
+}
+
+/* Threat arrows */
+.s8_threat {
+  position: absolute;
+  top: 36px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  transform: translateX(0);
+}
+.s8_threat_left {
+  left: 10px;
+  flex-direction: row;
+}
+.s8_threat_right {
+  right: 10px;
+  flex-direction: row-reverse;
+}
+.s8_threat_arrow {
+  font-size: 16px;
+  color: #EF4444;
+  font-weight: 700;
+}
+.s8_threat_label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #FCA5A5;
+  white-space: nowrap;
+}
+
+/* --- Middle: four suggestion boxes on timeline --- */
+.s8_suggest_track {
+  position: absolute;
+  top: 120px;
+  left: 30px;
+  right: 30px;
+  height: 3px;
+  background: #334155;
+  border-radius: 2px;
+}
+.s8_suggest_line {
+  height: 100%;
+  width: 0;
+  background: #06B6D4;
+  border-radius: 2px;
+}
+
+.s8_box {
+  position: absolute;
+  top: 138px;
+  width: 120px;
+  padding: 8px 6px;
+  border: 2px solid #06B6D4;
+  border-radius: 8px;
+  background: rgba(6,182,212,0.08);
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #06B6D4;
+  opacity: 0;
+  transform: translateY(8px);
+  line-height: 1.3;
+}
+.s8_box1 { left: 10px; }
+.s8_box2 { left: 10px; top: 188px; }
+.s8_box3 { right: 10px; top: 138px; }
+.s8_box4 { right: 10px; top: 188px; }
+
+.s8_box_num {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #06B6D4;
+  color: #0F172A;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+/* --- Bottom: Timeline 2018 -> now -> ? --- */
+.s8_era_track {
+  position: absolute;
+  top: 280px;
+  left: 30px;
+  right: 30px;
+  height: 3px;
+  background: #334155;
+  border-radius: 2px;
+}
+.s8_era_fill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #CBD5E1, #F97316, #06B6D4);
+  border-radius: 2px;
+}
+
+.s8_era_mark {
+  position: absolute;
+  top: 270px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  transform: translateY(6px);
+}
+.s8_era_dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-bottom: 6px;
+}
+.s8_era_text {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.s8_mark_2018 { left: 30px; }
+.s8_mark_2018 .s8_era_dot { background: #CBD5E1; }
+.s8_mark_2018 .s8_era_text { color: #CBD5E1; }
+
+.s8_mark_now { left: 50%; transform: translateX(-50%) translateY(6px); }
+.s8_mark_now .s8_era_dot { background: #F97316; }
+.s8_mark_now .s8_era_text { color: #F97316; }
+
+.s8_mark_future { right: 30px; }
+.s8_mark_future .s8_era_dot { background: #06B6D4; }
+.s8_mark_future .s8_era_text { color: #06B6D4; font-size: 18px; }
+
+/* Pulse on "now" dot */
+.s8_now_pulse {
+  position: absolute;
+  top: 270px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #F97316;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Final big text */
+.s8_final {
+  position: absolute;
+  top: 340px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 800;
+  color: #F97316;
+  opacity: 0;
+  transform: translateY(12px);
+  letter-spacing: 2px;
+}
+
+/* Narration */
+.s8_narration {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 13px;
+  color: #94A3B8;
+  min-height: 32px;
+}
+.s8_narr {
+  position: absolute;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s8_narr.s8_show { opacity: 1; }
+
+/* === KEYFRAMES === */
+@keyframes s8_scale_in {
+  to { transform: translateX(-50%) scale(1); }
+}
+@keyframes s8_threat_left_in {
+  0% { opacity: 0; transform: translateX(-20px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+@keyframes s8_threat_right_in {
+  0% { opacity: 0; transform: translateX(20px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+@keyframes s8_line_grow {
+  to { width: 100%; }
+}
+@keyframes s8_box_in {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s8_era_in {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s8_era_now_in {
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes s8_pulse {
+  0% { transform: translateX(-50%) scale(1); opacity: 0.7; }
+  100% { transform: translateX(-50%) scale(2.5); opacity: 0; }
+}
+@keyframes s8_final_in {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === TRIGGERED SEQUENCE (.visible) === */
+.s8_stage.visible .s8_manus {
+  animation: s8_scale_in 0.5s 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+
+.s8_stage.visible .s8_threat_left {
+  animation: s8_threat_left_in 0.5s 1.2s ease forwards;
+}
+.s8_stage.visible .s8_threat_right {
+  animation: s8_threat_right_in 0.5s 1.5s ease forwards;
+}
+
+/* Suggestion track line */
+.s8_stage.visible .s8_suggest_line {
+  animation: s8_line_grow 1.0s 2.2s ease-out forwards;
+}
+
+/* Four boxes */
+.s8_stage.visible .s8_box1 {
+  animation: s8_box_in 0.4s 2.6s ease forwards;
+}
+.s8_stage.visible .s8_box2 {
+  animation: s8_box_in 0.4s 3.0s ease forwards;
+}
+.s8_stage.visible .s8_box3 {
+  animation: s8_box_in 0.4s 3.4s ease forwards;
+}
+.s8_stage.visible .s8_box4 {
+  animation: s8_box_in 0.4s 3.8s ease forwards;
+}
+
+/* Era timeline fill */
+.s8_stage.visible .s8_era_fill {
+  animation: s8_line_grow 1.2s 4.4s ease-out forwards;
+}
+
+/* Era marks */
+.s8_stage.visible .s8_mark_2018 {
+  animation: s8_era_in 0.4s 4.6s ease forwards;
+}
+.s8_stage.visible .s8_mark_now {
+  animation: s8_era_now_in 0.4s 5.0s ease forwards;
+}
+.s8_stage.visible .s8_now_pulse {
+  animation: s8_pulse 1.2s 5.4s ease-out infinite;
+}
+.s8_stage.visible .s8_mark_future {
+  animation: s8_era_in 0.4s 5.6s ease forwards;
+}
+
+/* Final text */
+.s8_stage.visible .s8_final {
+  animation: s8_final_in 0.8s 6.4s ease forwards;
+}
+</style>
+
+<div class="s8_stage">
+  <!-- Manus circle -->
+  <div class="s8_manus">Manus</div>
+
+  <!-- Threat arrows -->
+  <div class="s8_threat s8_threat_left">
+    <span class="s8_threat_label">失去特色</span>
+    <span class="s8_threat_arrow">&#9654;</span>
+  </div>
+  <div class="s8_threat s8_threat_right">
+    <span class="s8_threat_label">变得复杂</span>
+    <span class="s8_threat_arrow">&#9664;</span>
+  </div>
+
+  <!-- Suggestion track -->
+  <div class="s8_suggest_track">
+    <div class="s8_suggest_line"></div>
+  </div>
+
+  <!-- Four suggestion boxes -->
+  <div class="s8_box s8_box1">
+    <span class="s8_box_num">1</span>Compression<br>Awareness
+  </div>
+  <div class="s8_box s8_box2">
+    <span class="s8_box_num">2</span>Tool Integrated<br>Reasoning
+  </div>
+  <div class="s8_box s8_box3">
+    <span class="s8_box_num">3</span>异步交互
+  </div>
+  <div class="s8_box s8_box4">
+    <span class="s8_box_num">4</span>Error<br>Resilience
+  </div>
+
+  <!-- Era timeline -->
+  <div class="s8_era_track">
+    <div class="s8_era_fill"></div>
+  </div>
+
+  <div class="s8_era_mark s8_mark_2018">
+    <div class="s8_era_dot"></div>
+    <div class="s8_era_text">2018</div>
+  </div>
+  <div class="s8_era_mark s8_mark_now">
+    <div class="s8_era_dot"></div>
+    <div class="s8_era_text">现在</div>
+  </div>
+  <div class="s8_now_pulse"></div>
+  <div class="s8_era_mark s8_mark_future">
+    <div class="s8_era_dot"></div>
+    <div class="s8_era_text">?</div>
+  </div>
+
+  <!-- Final statement -->
+  <div class="s8_final">「用户参与」</div>
+
+  <!-- Narration -->
+  <div class="s8_narration">
+    <div class="s8_narr" data-start="400" data-end="1200">Manus 站在聚光灯下</div>
+    <div class="s8_narr" data-start="1200" data-end="2200">两大隐忧从两侧逼近</div>
+    <div class="s8_narr" data-start="2200" data-end="3000">四点给模型厂商的建议</div>
+    <div class="s8_narr" data-start="3000" data-end="4400">每一口质量，都差一步</div>
+    <div class="s8_narr" data-start="4400" data-end="5600">当前像2018年，GPT-3还没来</div>
+    <div class="s8_narr" data-start="5600" data-end="6400">Scaling没有停止，但涌现不确定</div>
+    <div class="s8_narr" data-start="6400" data-end="9999">AI的进步，需要用户的参与</div>
+  </div>
+</div>
+    </div>
+    <div class="deep-dive-trigger reveal" onclick="toggleDeepDive(8)">↓ 深入了解：各模型厂商点评与 Online Learning</div>
+  </div>
+</div>
+
+<!-- === INLINE GAP: 快问快答 === -->
+<div class="coverage-gap-inline reveal" style="background: var(--bg-act3);">
+  <div class="gap-line" style="background: var(--dim);"></div>
+  <span class="gap-text">~ 3min 快问快答已跳过 ~</span>
+  <div class="gap-line" style="background: var(--dim);"></div>
+</div>
+
+<!-- ========== TAKEAWAY ========== -->
+<div class="takeaway">
+  <div class="content-width">
+    <h2 class="big-statement reveal">从猛犸到 Manus，三次创业被技术浪潮淹没，最终做出了那只手——不是因为他比别人更聪明，而是因为他每次都选择重新开始。</h2>
+    <p class="body-text reveal reveal-delay-1" style="color: #94A3B8;">通用 Agent · 纯血哲学 · Context Engineering · 长尾价值 · 用户参与——这不是一个 AI 创业故事，而是一部关于放弃、等待和重新出发的个人史。</p>
+  </div>
+</div>
+
+<!-- ========== FOOTER ========== -->
+<div class="footer">
+  <p>基于 Zhang Xiaojun Podcast「Manus' Final Interview Before the Acquisition」· 可视化叙事</p>
+</div>
+
+</div><!-- /.main-scroll -->
+
+<div class="detail-scroll" id="detailScroll">
+  <div class="detail-header" id="detailBack">&larr; 返回</div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+</div><!-- /.space -->
+
+<!-- Source Horizon -->
+<div class="source-horizon" id="sourceHorizon">
+  <div class="horizon-track" id="horizonTrack"></div>
+  <div class="horizon-detail" id="horizonDetail"></div>
+</div>
+
+<script>
+/* ========== COVERAGE DATA ========== */
+var coverageData = {
+  sourceType: "video",
+  totalLength: "3:31:00",
+  segments: [
+    { start: "0:00:00", end: "0:01:30", section: null, reason: "片花/开场" },
+    { start: "0:01:30", end: "0:15:00", section: 1, reason: null },
+    { start: "0:15:00", end: "0:30:00", section: 1, reason: null, deepDive: true },
+    { start: "0:30:00", end: "0:45:00", section: 2, reason: null },
+    { start: "0:45:00", end: "0:56:00", section: 2, reason: null, deepDive: true },
+    { start: "0:56:00", end: "1:12:00", section: 3, reason: null },
+    { start: "1:12:00", end: "1:17:30", section: 3, reason: null, deepDive: true },
+    { start: "1:17:30", end: "1:30:00", section: 4, reason: null },
+    { start: "1:30:00", end: "1:33:00", section: 4, reason: null, deepDive: true },
+    { start: "1:33:00", end: "1:45:00", section: 5, reason: null },
+    { start: "1:45:00", end: "1:54:00", section: 5, reason: null, deepDive: true },
+    { start: "1:54:00", end: "2:15:00", section: 6, reason: null },
+    { start: "2:15:00", end: "2:30:00", section: 6, reason: null, deepDive: true },
+    { start: "2:30:00", end: "2:45:00", section: 7, reason: null },
+    { start: "2:45:00", end: "2:53:00", section: 7, reason: null, deepDive: true },
+    { start: "2:53:00", end: "3:15:00", section: 8, reason: null },
+    { start: "3:15:00", end: "3:28:00", section: 8, reason: null, deepDive: true },
+    { start: "3:28:00", end: "3:31:00", section: null, reason: "快问快答" }
+  ]
+};
+
+/* ========== TOPIC DATA ========== */
+var topicData = {
+  1: [
+    { name: "猛犸浏览器创业", status: "included", excerpt: "App Store当时的出现给了我一个契机，就是说我可以向我的父母、同学乃至于老师证明说我瞎搞的这个东西是能产生经济价值的。" },
+    { name: "移动互联网 vs AI 平台论", status: "included", excerpt: "AI虽然是一个新的一个技术突破，但是实际上没有一个全新的一个平台出现。所以这回没有存在那个蛮荒期。" },
+    { name: "NLP 与知识图谱方向", status: "included", excerpt: "距离一个石破天惊的paper...2013年Word2Vec...头一次能让我们比较方便地把自然语言文本变成稠密向量。" },
+    { name: "Magi 项目技术细节", status: "deep-dive", excerpt: "我们从零训的模型...从2014年底一直做到2018年才把这事做完。我把我这辈子想试的技术，都以合理的方式花投资人的钱给搞定了。" },
+    { name: "GPT-3 冲击", status: "included", excerpt: "拿到GPT-3的时候，我觉得天要塌了。我随便写了个prompt...发现它要跟我们自己训的端到端模型五五开。" },
+    { name: "打工经历与反思", status: "deep-dive", excerpt: "你没有乔布斯的命，却得了乔布斯的病。那段经历是特别开心的...一个人能囤好几十张卡。" },
+    { name: "真格投资细节", status: "compressed", reason: "背景铺垫", excerpt: "真格给了我一个承诺...他们不会管我干什么，我爱干嘛干嘛。" }
+  ],
+  2: [
+    { name: "Monica 产品洞察", status: "included", excerpt: "Everything added dilutes everything else——你每增加一个东西都会稀释所有的价值。Monica不改变用户习惯，功能分发基于context。" },
+    { name: "选择肖红的理由", status: "included", excerpt: "她很正常，她身心健全，没有任何不良嗜好，没有任何极端的思想。这已经很难得了。" },
+    { name: "AI 时代 = 制造业", status: "included", excerpt: "AI不是这样...你随着用户量的增加，你的成本是线性提升的...整个事对经营的操作能力的要求是比上一代移动互联网创业要高很多的。" },
+    { name: "大模型公司走向", status: "deep-dive", excerpt: "做出一款好的应用，且被大家喜欢的应用，其实比做出一款够好的模型难得多。训大模型最痛苦的是什么？一个SOTA模型，你的保质期只有一到一个半月。" },
+    { name: "GPA 决策框架", status: "deep-dive", excerpt: "Goal用专制模式，Priority用专制加民主，Alternatives用充分民主。与其悬而未决，不如赶紧试试。" },
+    { name: "品味是唯一护城河", status: "compressed", reason: "概念简述", excerpt: "品味可能体现在你的evaluation或者你内部的benchmark上...这可能是所有AI公司唯一的护城河。" }
+  ],
+  3: [
+    { name: "AI 浏览器三大致命问题", status: "included", excerpt: "好比你有一个特别聪明的实习生，但你好像非要把你跟这个实习生一起共用一个电脑。真正有价值的应该是那种long horizon task。" },
+    { name: "放弃的勇气", status: "included", excerpt: "如果一个产品做完，你觉得不太酷，就别发，你都觉得不酷，没人会觉得酷。" },
+    { name: "Cursor 启示录", status: "included", excerpt: "编程不是一个垂直能力，编程其实是一个通用能力，它是解决通用任务的一个媒介。" },
+    { name: "Manus 名字由来", status: "included", excerpt: "MIT校训Mens et Manus（心与手），别人都在做心智，我们要做那只手。" },
+    { name: "Monica 的战略价值", status: "deep-dive", excerpt: "一个团队如果有一个正向现金流的产品，你在做第二个曲线的决策的时候，你会变得非常的理智。" },
+    { name: "Arc 浏览器验证", status: "compressed", reason: "外部验证", excerpt: "Arc浏览器创始人说连他的家人和朋友都说服不了从Chrome换过来。浏览器迁移靠的是分发渠道。" }
+  ],
+  4: [
+    { name: "三个关键 Bet", status: "included", excerpt: "Bet1-相信通用Agent能被制造；Bet2-不训模型而是信赖context engineering；Bet3-不做中国版Cursor而是面向prosumers做差异化。" },
+    { name: "壳的类比：生鱼片 vs 水煮鱼", status: "included", excerpt: "Monica是生鱼片，Manus是水煮鱼。Manus是一个地壳一样厚的壳。" },
+    { name: "通用 vs 垂直 Agent", status: "included", excerpt: "Google永远能在你的长尾query中给你惊喜。Manus是一个完全由用户所塑造的产品。" },
+    { name: "沙盒与虚拟化架构", status: "deep-dive", excerpt: "每个Manus会话背后是独立一次性沙盒。基于Firecracker全虚拟化（非Docker），支持Windows。为Agent设计的Linux发行版。" },
+    { name: "Token 消耗与成本结构", status: "included", excerpt: "Chatbot的input:output=3:1，Agent的是100:1到1000:1。我们以消耗更多的token为荣。" },
+    { name: "个人云计算定义", status: "compressed", reason: "概念简述", excerpt: "Manus本质上是一款个人云计算产品——让不会编程的人也能操作云计算。" }
+  ],
+  5: [
+    { name: "Chatbot vs Agent 对齐冲突", status: "included", excerpt: "现在大部分模型仍然是为Chatbot场景而进行后训练的。Agent的工况跟Chatbot是不align的。" },
+    { name: "Compression Awareness", status: "included", excerpt: "200K以上的context就不重要了...更重要的应该是让模型具备compression awareness。" },
+    { name: "模型厂商竞合关系", status: "included", excerpt: "好像全世界都在帮我们一起训模型。如果都直觉的事，我觉得也轮不到我们做。" },
+    { name: "做人而非做工具", status: "included", excerpt: "Manus作为一个通用Agent...我们在设计时一直是这样一个类比：我是一个人，一个普通的人，能做很多事，是因为我有一个电脑。" },
+    { name: "Agent 数据飞轮", status: "deep-dive", excerpt: "在Agent的场景下，用户他会教这个Agent...这两个数据是非常非常困难的，以前在Chatbot的时代。" },
+    { name: "RLI Benchmark 细节", status: "compressed", reason: "技术指标", excerpt: "Scale AI的RLI benchmark——完成率2.5%。远程劳动力指标：AI完成的工作能否让客户愿意付款且无法区分人/AI。" }
+  ],
+  6: [
+    { name: "算力危机真相", status: "included", excerpt: "世界上能够在第二天立即到位的算力比想象中少太多了。我们说我们今天下午要。然后他说但这没办法。" },
+    { name: "邀请码争议", status: "included", excerpt: "如果我们在三月份发布的时候，如果没有任何付费的宣传，我死全家。" },
+    { name: "Proactiveness 方向", status: "included", excerpt: "Agent的本意其实来自于agency，就是能动性、主动性。面试完自动把记录填到Ashby。" },
+    { name: "ARR 与商业指标", status: "included", excerpt: "Manus追求的不是DAU...而是把最有高要求的用户的高价值task做到最好。" },
+    { name: "GCP 雪中送炭", status: "deep-dive", excerpt: "GCP对我们来说是雪中送炭——他们真的是物理层面上去搬卡插在机柜上给我们用。" },
+    { name: "定价策略", status: "compressed", reason: "运营细节", excerpt: "定价逻辑是拍脑袋——ChatGPT 20美金锚点，Manus选40美金。" },
+    { name: "宣传片保洁阿姨", status: "compressed", reason: "花絮", excerpt: "中间那块发生了一个很傻的事...背后有一个保洁阿姨走进来了。" }
+  ],
+  7: [
+    { name: "纯血 Agent 定义", status: "included", excerpt: "纯血Agent...完成一个任务的所有过程和方式是由智能本身决定的，无人为约束。" },
+    { name: "Bitter Lesson 信仰", status: "included", excerpt: "你应该从打鸭子...变成让智能的泛化性帮你解决更多你还未发现的问题。" },
+    { name: "原子能力的网络效应", status: "included", excerpt: "我们每次都要保证，就是这个能力能跟别的能力形成组合拳。加了看图能力后Agent自动学会检查网页渲染。" },
+    { name: "对 MCP 的保守态度", status: "included", excerpt: "Everything added dilutes everything else。MCP会污染action space、降低缓存命中率。" },
+    { name: "弱到强衡量方法", status: "deep-dive", excerpt: "锁定框架，用同源模型弱版/强版对比，最大化delta。做Agent跟训模型很像——你更重要的是做对一千件小事。" },
+    { name: "Reasoning 模型陷阱", status: "compressed", reason: "技术细节", excerpt: "没有盲追Reasoning——会导致instruction following下降。我们所有的bet都不会有那么重的bet。" }
+  ],
+  8: [
+    { name: "四点模型厂商建议", status: "included", excerpt: "compression awareness优于无限扩context、tool integrated reasoning、异步交互、error resilience。" },
+    { name: "当前像 2018 年", status: "included", excerpt: "Agent已经爆发了...每个场景可能都还差一口质量。Scaling Law没有停止。" },
+    { name: "最大隐忧", status: "included", excerpt: "Manus更大的可能性不是因为竞争而输掉，而是因为失去了独有的价值。变得复杂是最大的内部隐忧。" },
+    { name: "各模型厂商点评", status: "deep-dive", excerpt: "OpenAI的bottom-up创新文化。Anthropic关注高经济价值任务。Gemini证明pre-training可继续。" },
+    { name: "Online Learning 辨析", status: "deep-dive", excerpt: "三件事不要混淆：狭义online learning、mass personalization、continuous/lifelong learning。" },
+    { name: "AI Bubble 观点", status: "compressed", reason: "简短观点", excerpt: "AI bubble一定是客观存在的...但我们人类历史上干的比这个疯狂的事多得多。" },
+    { name: "终极判断", status: "included", excerpt: "AI接下来的进步需要用户的参与。" }
+  ]
+};
+
+/* ========== DEEP DIVE DATA (placeholder for assembler) ========== */
+var deepDiveData = {};
+deepDiveData[1] = { title: "少年极客到GPT-3：三次被浪潮淹没", sections: [{heading: "猛犸浏览器：高中生的第一桶金", body: "2009年，App Store刚上线第二年，还在北大附中读高中的Peak做了一款付费iOS浏览器「猛犸」。这是中国最早一批软件出海的尝试，靠最朴素的买断制(buy copy)，一份一份卖，最终赚了30多万美金。对一个高二学生来说，App Store的意义远不止收入——它第一次证明了「瞎搞的东西能产生经济价值」。那个年代，移动互联网还处于蛮荒期，巨头和个人开发者众生平等，都在一个全新的平台上摸索。真格基金的徐老师找到他说「小伙不错，你想创业吗？」——他拿了term sheet，决定大学不上了。但随着市场成熟、巨头回过味来，朴素的买断模式不再成立，浏览器自然死亡。Peak说，这段经历最幸运的是：人生第一个产品就同时踩中了出海、AI和变现。"}, {heading: "Magi与知识图谱的六年长征", body: "做浏览器的过程中，Peak因为想预测用户的下一次点击而一头扎进了NLP。2013年Word2Vec论文让他看到新世界的大门。他开始构想：如果未来的交互界面是手表或语音，十个蓝色链接的搜索模式就不再成立，需要一种更紧凑的知识表达——知识图谱。于是团队选了最苦的一条路：从零训练模型，自己写爬虫、索引引擎，做开放式信息抽取(Open IE)，不用任何第三方搜索。从依存句法分析到Word2Vec，再到LSTM+Attention，再到BERT长上下文——每一次技术迭代，过去几年的积累几乎推倒重来。他们做到了最高置信度下89%的准确率，超过Google的Knowledge Vault，还支持多语言。Peak说这段经历是他智力和工程能力的巅峰，把这辈子想试的技术「都以合理的方式花投资人的钱给搞定了」。但产品层面，他们低估了搜索引擎的非技术壁垒，也没等到期望中的可穿戴新平台。早一步是先驱，早十步是先烈——他们先烈了。"}, {heading: "GPT-3的冲击与卖掉公司", body: "2019年末，Peak拿到了GPT-3的early access。他随手写了一个prompt，发现GPT-3在他们的核心任务上直接和自己训了六年的端到端模型五五开。「天要塌了」——这是他的原话。更让他恐惧的不是当前的水平，而是GPT-3代表的方向：这是一个通解，不同的NLP子任务可以被大一统。过去几年里，做信息抽取的、做机器翻译的、做客服的大家泾渭分明互相学习——GPT-3出来后，所有人的护城河同时消失。Peak的第一反应是赶紧卖掉公司，然后他真的卖了。之后去了一家独角兽工作了一年半，靠打榜拿显卡、霸榜第一的经历度过了从ChatGPT出现前到出现后的转折期。等他再出来的时候，心态已经变了：不再想证明自己，不再做垂直整合，而是用一种更轻松的状态去找下一件事。"}], originalText: "App Store给了我一个契机...证明瞎搞的东西能产生经济价值\n\n拿到GPT-3的时候，我觉得天要塌了。我随便写了个prompt，发现它要跟我们自己训的端到端模型五五开\n\n我把我这辈子想试的技术，都以合理的方式花投资人的钱给搞定了" };
+deepDiveData[2] = {
+  title: "正常人联盟与AI制造业：深入解读",
+  sections: [
+    {
+      heading: "Monica的产品洞察：浏览器插件是最好的观察窗口",
+      body: "Pick加入蝴蝶效应，是因为Monica这款Chrome插件戳中了他。浏览器插件的绝妙之处在于两点：第一，它不改变用户的任何习惯，用户还是在用Gmail、看YouTube，AI没有侵入生活，所以你观测到的用户行为是无偏的。第二，插件的功能分发是基于context的——视频理解只在YouTube出现，文档编辑只在Google Docs出现——这消解了功能增加带来的复杂度爆炸问题。Pick把它定义为一个「空的画布」而非一个成型产品，是进入AI应用时代的最佳观察窗口。他引用GitHub的话说：Everything added dilutes everything else，而插件的context分发机制恰好绕开了这个问题。"
+    },
+    {
+      heading: "选择合伙人的标准：身心健康比天才更稀缺",
+      body: "Pick在选择合伙人时，最看重的特质不是技术能力或商业嗅觉，而是「正常」。他说小红「身心健全，没有任何不良嗜好，没有任何极端思想——这已经很难得了」。他见过几乎所有AI创始人，评价是「别的创始人都太艺术家了」——偏执、多少有点抑郁、深夜发癫。这些在移动互联网时代也许是优点，因为边际成本低，可以赌一把大的。但AI时代不同，成本是线性增长的，对经营能力的要求远高于上一代。身心健康的创始人「打不死」，能一次次谦卑地站起来，冷静面对外界变化。整个六人合伙团队都是连续创业者，且全部身心健康、无不良嗜好、观念不极端。"
+    },
+    {
+      heading: "AI制造业属性：为什么经营能力比品味更重要",
+      body: "Pick提出了一个关键洞察：AI行业更像传统制造业而非互联网。互联网的边际成本趋近于零，所以你可以赌一把搞个大的，找一群共振的用户再逐渐做大。但AI不是这样——即使inference cost一直在降，如果没有任何优化，随着用户量增加，成本是线性提升的。这意味着对经营的操作能力的要求比上一代移动互联网创业高很多。他还指出，品味（taste）在AI时代不是虚无缥缈的概念，而是体现在你的evaluation和内部benchmark上——这可能是所有AI公司唯一的护城河。做出一款好的应用，比做出一款够好的模型难得多，因为训模型的知识流通极快（「一个老公在OpenAI，老婆在Google，没有什么秘密」），而应用竞争才是终局。"
+    }
+  ],
+  originalText: "别的创始人都太艺术家了...她很正常，她身心健全，没有任何不良嗜好，没有任何极端思想。这不是一个正常的指标，这已经很难得了。\n\n就是你没有乔布斯的命，却得了乔布斯的病。\n\nAI这个行业...其实我们心中隐隐觉得它更像传统的制造业。他一直有一个固定的成本在那。你如果没有任何的优化的话，其实你随着你用户量的增加，你的成本是线性提去提升的。所以这整个事对经营的操作能力的要求是比上一代移动互联网创业要高很多的。\n\n品味可能体现在你的evaluation或者你内部的benchmark上。甚至我觉得这可能是创业公司...所有AI公司唯一的护城河。\n\n做出一款好的应用，且被大家喜欢的应用，其实比做出一款够好的模型难得多。"
+};
+deepDiveData[3] = { title: "浏览器之死与Manus诞生", sections: [{heading: "AI浏览器的三大致命问题", body: "2024年4月到8月，团队全力开发一款AI原生浏览器，产品形态和后来的ChatGPT Atlas、Dia已经很像。但做的过程中暴露了三个致命问题。\n\n第一，端侧模型追求离线运行，但浏览器天生就是联网的产品，追求离线本身就自相矛盾。而且当时Apple Silicon最多只能跑3B左右的模型，用户会拿它跟云端旗舰模型对比，效果必然打折扣。\n\n第二，让AI接管用户浏览器完成自动化工作流，体验极其怪异。Peak的原话是「好比你有一个特别聪明的实习生，但你好像非要共用一个电脑」。用户一滚屏幕就会打断Agent的observation，Agent又把页面拉回来，两个人在抢一个系统。\n\n第三，真正有价值的是长任务(long horizon task)，但长任务意味着AI要持续操纵你的电脑，你不能合上笔记本，不能干别的事。短任务用户点几下就完成了，AI反而更慢。这个窘境无解。"}, {heading: "Cursor启示录：编程是通用能力", body: "放弃浏览器后，团队处于大约两周半的「无所事事」状态。Peak说「当一群不太笨的人无所事事的时候，就会产生很多很好的想法」。\n\n关键转折来自一个意外发现：公司里很多非工程师都在用Cursor——运营同事用它写博客，数据分析同事用它做可视化。他们根本不看左边的代码区，只跟右边的AI聊天窗口交流，让AI通过编程完成非编码任务。\n\n这让团队意识到一个根本性的认知转变：编程不是一个垂直能力，而是一个通用能力，是解决通用任务的媒介。Cursor的形态对这些非技术用户并不友好——代码带来天然的紧张感，在本地运行有安全风险(有朋友的网卡驱动被Cursor卸载了)，而且不能解放用户的注意力。\n\nMonica的正向现金流在这个关键时刻发挥了巨大价值——团队不焦虑，可以大胆又理性地做决策。正如Peak反复强调的：有一个正向现金流的产品，你在做第二个曲线的决策时会变得非常理智。"}, {heading: "Manus的诞生：心与手", body: "思路清晰后，团队做了三个关键设计决定。第一，把浏览器搬到云端，异步执行，让用户可以关掉电脑去干别的，还能并发执行多任务。第二，代码作为工具而非主要呈现——包装技术复杂度，不让用户看到代码。第三，面向Prosumers(脑力工作者但非程序员)，而不是去卷已经饱和的程序员市场。\n\n项目内部代号叫Airbnb——Browser in browser in the air(浏览器里运行的浏览器，且跑在云上)。做浏览器期间积累的Chrome内核经验和Agent调度系统直接复用，并没有浪费。\n\nManus这个名字来自MIT校训Mens et Manus(拉丁语，心与手)。Peak的判断是：所有模型公司都在做心智(Mens)的探索，而他们要做的是那只手(Manus)——让智能真正触及现实世界。从2024年9月底开始正式开发，2025年1月中旬基本做完，但为了等Claude 3.7发布对齐模型迭代，又花了一个半月打磨，最终3月发布。Peak说：「如果一个产品做完，你觉得不太酷，就别发。」"}], originalText: "好比你有一个特别聪明的实习生，但你好像非要共用一个电脑\n\n如果一个产品做完，你觉得不太酷，就别发，你都觉得不酷，没人会觉得酷\n\n编程不是一个垂直能力，编程其实是一个通用能力\n\n别人都在做心智，我们要做那只手\n\n当一群不太笨的人无所事事的时候，就会产生很多很好的想法" };
+deepDiveData[4] = { title: "三个Bet与壳的艺术", sections: [{heading: "三个关键赌注：不做什么比做什么更难", body: "Manus团队在早期做了三个关键判断，且三个都对了。Bet 1是相信「通用Agent」这种产品形态能被造出来——当时没有先例，五个人从北京开始做实验，每看到好苗头就从Monica团队调人，渐进加码。Bet 2是不自己训模型。虽然当时的基座模型（GPT-3.5、Sonnet V2）用起来很难受，团队犹豫过要不要自己训，但Peak判断技术在快速上升（Claude 3.5 V1到V2的跃升就是证据），应该赌在agent框架而非模型训练上——这在context engineering这个词出现之前就做出的决策。Bet 3是不做「中国版Cursor」，而是面向Prosumers做有差异化的产品。Peak说他创业获得的正反馈都来自创新，而不是跟别人卷。最有趣的是，这三个bet本质上都是「不做什么」的决定——AI时代生产力太强，机会太多，每天都要回答不做什么。Manus到现在都是一款克制的产品：别人每月在想加什么工具，他们每月在想能删掉什么。"}, {heading: "Agent三元素模型：环境才是关键差异", body: "Peak提出了一个清晰的框架来区分Agent和Chatbot。Chatbot系统里只有两个元素：用户和模型，以往复对话的形式交互。Agent多了第三个元素——环境（Runtime）。这个第三元素让Agent的「壳」和Chatbot完全不是一个厚度。Manus每个会话背后都有一个独立的、一次性的虚拟机沙盒（不是Docker容器，而是基于Firecracker的全虚拟化），理论上是图灵完备的，能运行任何算法。环境决定了Agent与外界接触的边界：虚拟机内的预装软件扩展了动作空间，wide research功能可以并行启动上百个sandbox完成大规模任务。Peak开玩笑说Manus其实是一款「个人云计算产品」——让不会编程的人也能操作云计算。团队还在维护一个专门为Agent设计的Linux发行版，里面有很多只有Manus才知道怎么用的工具。环境的边界不断被拓宽：从Linux到Windows，从单沙盒到并行scale-out。"}, {heading: "通用vs垂直：长尾query才是护城河", body: "为什么做通用而不是垂直？Peak从技术和产品两个维度回答。技术上，Agent底层的两个供给（通用模型+图灵完备虚拟机）本身就是通用的，走垂直其实是在上面加约束——而且他上一次创业亲历了专有模型被大一统模型吃掉的过程。产品上有三层逻辑。第一，通用架构让用户按自己的想象力使用产品，团队通过观察集体行为模式捕获头部场景再做最后一公里优化——PPT、网页、批量文件处理都是这样浮现的。第二，Google vs Bing的启示：头部query大家差不多，但Google永远能在长尾query中给你惊喜。分子生物学家上传小众实验数据格式，别的AI做不了，Manus自己去GitHub下载开源项目解析后再分析——这种长尾场景的aha moment才是留存的关键。而且长尾不等于低频，对那个用户来说这是每天的工作。第三，通用产品解决频次问题：垂直Agent如旅行规划一年用三四次，用户记不住你；通用产品服务方方面面，频次天然更高。更重要的是，Manus是一个unified agent框架，不同任务间上下文和记忆自由流转——它能在垂直场景的基础上永远多做一步（先deep research再做网页再分析流量再发邮件），产生内部网络效应。"}], originalText: "壳这个词严格意义上来说，你可以从操作系统概念叫shell，shell可不是一个低技术门槛的事。壳跟壳也有高低...Monica它明显是一个套壳，它其实是像生鱼片，生鱼片的好坏基本完全取决于原材料。但是像Manus这种东西，它不是生鱼片，它也许是什么水煮鱼...Agent和Chatbot的最大区别是什么？Chatbot整个系统里只有两个元素，用户以及模型。但其实Agent有一个第三个元素是环境，或者叫Runtime。这个东西其实很重，所以agent这个壳可能跟Chatbot相比，完全就不是一个厚度的壳，它是地壳一样厚的一个壳...Google永远能在你的长尾query中给你惊喜...Manus是一个完全由用户所塑造的产品" };
+deepDiveData[5] = { title: "Agent的灵魂：对齐冲突", sections: [{heading: "Chatbot vs Agent：对齐方向的根本冲突", body: "从GPT-3到InstructGPT，后训练让模型学会了一件事：无论问题多复杂，都倾向于在一轮内回答完毕。这对Chatbot来说是正确的行为，但对Agent来说恰恰相反。Agent的基础假设来自ReAct范式：每一步基于环境观测(observation)选择下一个动作(action)，逐步推进，而不是急于一次性输出。\n\nChatbot的input:output比是3:1，Agent是100:1到1000:1。模型在Chatbot数据上训练形成的「上下文压力」(context pressure)会让它在长链路任务中越来越着急——输出质量逐步下降，开始疯狂用bullet point，拼命缩短回答。本质上，模型在训练数据的分布中学到了一种隐含的「该结束了」的感觉，这种感觉在Agent场景下是有害的。\n\nReasoning模型直接平移到Agent场景也有问题：instruction following能力下降，幻觉和幻觉工具调用概率上升。正确的方向应该是interleaved thinking（交错式思考）——在每次observation后做一段简短的reasoning，而不是像解数学题那样一次性在脑内想几千个token。"}, {heading: "Compression Awareness为何比200K Context更重要", body: "Peak有一个暴论：200K以上的context就不重要了。原因很简单——即使有KV cache和各种efficient attention，上下文无限增长带来的延迟和成本增长是不值得的。\n\n更重要的是让模型具备compression awareness——对压缩这件事的意识。就像人类一样：工作记忆很差，但知道把东西整理成文档放在Notion里，下次知道该去哪里拿回来。模型也应该学会把不再需要的context外化(offload)到文件系统，把中间历史做compaction压缩成紧凑表达。\n\n关键在于：模型要明白这段信息不是凭空消失了，而是被压缩了。让模型意识到「被压缩」这件事是需要专门训练的，而目前为Chatbot设计的模型完全没有这方面的训练。这属于现代context engineering的核心能力缺口——模型公司们在Peak的持续「洗脑」下已经开始改进，但仍有很大空间。"}, {heading: "模型竞合：为什么全世界都在帮Manus训模型", body: "Manus跟不同模型厂商的合作非常均匀，因为各家已经高度分化：Anthropic在agentic coding领域最强；Gemini在多模态理解上断层领先，且独占Google索引和YouTube视频理解；OpenAI在纯推理方面投入最大，刷榜首选。\n\n这种分化对Manus恰恰是优势：因为使用不同场景的不同模型，Manus永远能为用户提供所有人中最好的体验。而模型公司一旦垂直整合做产品，迭代速度一定没有Manus快。应用公司做综合，模型公司走垂直——这个反直觉的局面，正是Peak所说的「如果都直觉的事，我觉得也轮不到我们做」。\n\n更关键的是数据飞轮：用户的使用轨迹和feedback留存在应用层，不会流到模型层。Manus通过用户获得影响力，影响模型公司帮它改进模型；用户越多，通用的失败模式(failure pattern)越多地变成系统原生能力，完成同样任务的轮次开销越低——这是一种不碰参数的self-evolving。"}], originalText: "现在大部分模型仍然是为Chatbot场景而进行后训练的\n\n200K以上的context就不重要了...更重要的应该是compression awareness\n\n好像全世界都在帮我们一起训模型\n\nChatbot的input:output=3:1，Agent的是100:1到1000:1\n\n如果都直觉的事，我觉得也轮不到我们做" };
+deepDiveData[6] = {
+  title: "发布风暴与算力危机：完整解读",
+  sections: [
+    {
+      heading: "算力危机真相",
+      body: "Manus发布前，团队跟所有云厂商和推理供应商确认后，惊讶地发现一个事实：世界上能够在第二天立即到位的算力比想象中少太多了。Cloud直接跟他们说「你们千万别放开，如果放开我们会挂」。所以邀请码不是营销策略，而是唯一的控量手段——不是不想放开，是物理层面上没有那么多卡。GCP对他们是「雪中送炭」级别的支持——真的是工程师去物理搬卡、插在机柜上给Manus用，甚至从别的项目的可用区临时调资源过来。发布当天打电话说「今天下午要」加算力，对方回答「你们是要下个月还是下下个月？」这不是段子，是真实发生的事。Agent的workload跟Chatbot完全不同——prefill和decoding的比例从3:1变成100:1，没有人提前预料到2025年初token消耗量会指数级增长。"
+    },
+    {
+      heading: "从被动到主动：Proactiveness方向",
+      body: "Agent这个词的本意来自agency——能动性、主动性。Manus的联合创始人张涛有一个梦想：做一个7×24小时推理的机器。团队接下来重点投入的方向叫Proactiveness（主动性）。现在无论Agent多智能，它的起点还是一个prompt，但输入prompt对用户来说是个很闹心的事，而且很多context没能带入进来。他们内部已经有prototype——比如Manus可以每天早晨在你醒来之前，主动去看你的Notion记录，帮你把面试评价填到Ashby里，然后只问你是否接受。这不是ChatGPT那种每天推很多东西占用户时间的模式，而是真正解放用户输入这层瓶颈，让Agent的能动性逐渐发挥出来。真正为Manus付钱的用户需要的是生产力效率提升，不是消遣。"
+    },
+    {
+      heading: "ARR与商业逻辑",
+      body: "Manus的定价逻辑非常朴素——「拍的」。ChatGPT好像是20美金一个月，他们也不知道为什么是20，后来听说ChatGPT也是拍脑袋定的。于是就从20和40开始，延续至今。一天烧几十万美金，但团队对产品极有信心——「绝对没问题，使劲烧」。ARR在大约一个月前突破了1亿美金。关于是否过度营销，创始人的回应是：「如果我们在三月份发布的时候有任何付费的宣传，我死全家」。在海外，Patrick Collison、Jack Dorsey这些硅谷精英先用起来再自上而下传播，国内和海外的传播链路基本完全不重叠。Manus追求的不是DAU——Agent消耗算力的模式更像工业生产而非边际为零的互联网产品。他们要服务的是那些有最高质量需求的用户群，让最高效的人获得工具后产能进一步提升，而非跟ChatGPT抢最广的底层用户。"
+    }
+  ],
+  originalText: "世界上能够在第二天立即到位的算力比想象中少太多了。\n\n如果我们在三月份发布的时候有任何付费的宣传，我死全家。\n\nGCP对我们来说是雪中送炭——他们真的是物理层面上去搬卡插在机柜上给我们用。\n\nAgent的本意其实来自于agency，就是能动性、主动性。\n\nManus追求的不是DAU...而是把最有高要求的用户的高价值task做到最好。"
+};
+deepDiveData[7] = {
+  title: "纯血 Agent、原子能力的网络效应与 Bitter Lesson",
+  sections: [
+    {
+      heading: "纯血 Agent 的定义与信仰",
+      body: "Peak 对 Agent 的定义非常明确：大部分人把 agential workflow 和 agent 混为一谈。Workflow 本质上是规则主导的自动化——你为每个场景写 prompt、加 guardrail、做 sub-agent as tool，每增加一条约束就在减小模型的多样性。而「纯血 Agent」意味着<span class=\"hl\">完成一个任务的所有过程和方式是由智能本身决定的</span>，没有人为加的约束。\n\n这不是理想主义。Manus 在实际工作中每天都在做这样的选择。比如数据可视化中的中文字体乱码问题——产品驱动的做法是写一堆 guardrail 告诉模型遇到中文要注意什么。Manus 的做法是加入「看图」能力，让模型自己检查渲染结果、自己发现问题、自己修复。\n\n「你应该从打鸭子——在堵所有漏洞，变成一种你在让智能的泛化性帮你解决更多你还未发现的问题。」\n\n更深层的信念是：<span class=\"hl\">不要把人因为生而为人的限制，颁给 Agent</span>。人类有分工是因为人类有认知局限，一个人不可能精通所有领域。但 LLM 是通用的——你给它赋予「你是设计师」「你是程序员」这种人格，这个假设本身就是错的。应该通过 context engineering（可约束解码、action space 设计）来减小它犯糊涂的概率，而不是限制它的全能性。"
+    },
+    {
+      heading: "原子能力的网络效应",
+      body: "这是 Manus 最独特的方法论之一。Peak 称之为「原子能力的网络效应」——每增加一个基础能力，都必须能和已有能力形成<span class=\"hl\">组合拳</span>。\n\n最经典的例子是「看图」能力。最初加入看图只是为了让 Manus 能检查自己生成的图片质量。但加了多模态输入之后，Manus 开始自动学会：检查自己做的网页是否正常渲染、发现图表中元素重叠、检测中文字体乱码——这些都不是人为编程的，而是<span class=\"hl\">一个能力与其他能力产生交互后自然涌现的</span>。\n\n这就是为什么 Manus 对新功能极其节制。从 Monica 时代的「用户有需求就做」，变成了现在「每增加的一个新能力都不能是单点——它必须让系统整体获得收益」。放弃的 feature 非常多：语音输出、主动调用、生图和生视频的深度优化——如果通用 Agent 靠泛化能力就能解决，就不需要专门做。\n\n对 MCP 也同理。虽然业界非常兴奋，但 Manus 的判断是：MCP 会<span class=\"hl-warn\">严重污染 action space</span>，动态发现和卸载工具会导致缓存命中率下降、成本上升。所以他们研究了一套不在原生 action space 内的 MCP 调用方法——后来 Anthropic 把这个写成了博客。核心原则：<span class=\"hl\">Everything added dilutes everything else</span>。"
+    },
+    {
+      heading: "Bitter Lesson 的实践",
+      body: "The Bitter Lesson 是 Rich Sutton 2019 年的经典文章，核心观点是：<span class=\"hl\">用通用方法 + 更大算力解决问题，永远优于加入更多人为知识</span>。Peak 把这条原则贯穿到了 Manus 的每一个决策中。\n\n他们的 agent team 有一套「弱到强衡量」的方法论：锁定当前 agent 框架版本，选一个同源模型家族（比如都用 Claude），拿弱版本和强版本跑同样的 benchmark，不断调整框架来最大化两者之间的 delta。这样就能保证：当下一代模型变强时，框架获得的增幅最大。\n\n「做 Agent 跟训模型很像——你更重要的是做对一千件小事，而不是做对三个大事。」\n\n没有盲追 Reasoning 模型——因为朴素意义上的 reasoning model 会导致 instruction following 和多轮 hallucination 增加。他们用了一个另类方法：单独的 planning stage，而不是端到端的 reasoning。\n\n这种克制也体现在竞争观上。Peak 反复强调 Manus 跟所有人都不是竞争关系——与其自己做一个比不过别人的东西，不如让大家一起做。Manus 自己串接 Notion、Granola、Ashby 三个服务，产生 synergy 而不是硬碰硬。这是从 Monica 时代学到的最重要的教训：做很多单独 feature 一时爽，维护并保证长期竞争力是很累很累的事。"
+    }
+  ],
+  originalText: "纯血Agent...完成一个任务的所有过程和方式是由智能本身决定的\n\n不要把人因为生而为人的限制，颁给Agent\n\nEverything added dilutes everything else\n\n做Agent跟训模型很像——你更重要的是做对一千件小事\n\n我们每次都要保证，就是这个能力能跟别的能力形成组合拳"
+};
+deepDiveData[8] = { title: "前瞻：隐忧与终局", sections: [{ heading: "最大隐忧：失去特色与变得复杂", body: "Peak对Manus最大的隐忧并不是竞争。他说「Manus更大的可能性不是因为竞争而输掉，而是因为失去了独有的价值」。从外部看，最怕失去特色；从内部看，最怕变得复杂。产品增长过程中有一条便捷路径是不断加功能，但「每增加一个东西都在稀释所有别的东西」。他引用GitHub的这句话来提醒自己保持克制。但克制又不能影响持续增长，这对矛盾是他心中真正的隐忧。\n\n被问到Manus是否会死于竞争时，Peak的回答很微妙：如果你的产品好到能被大厂考虑断供，说明产品已经非常好了。真正的风险不是被打败，而是自己丧失了独特价值——某种意义上这也是竞争，只不过对手是自己。" }, { heading: "四点模型厂商建议", body: "Peak向模型厂商提出了四个具体方向：\n\n第一，Compression Awareness——与其无限扩展context window，不如让模型学会「意识到自己的上下文可能会被压缩」，更好地利用文件系统做offload和retrieve。这直接来自Manus在超长任务中的实战经验。\n\n第二，Tool Integrated Reasoning(TIR)——推理的优化目标不应该只是「缸中之脑」式的纯思考。模型应该学会结合observation，在有工具参与的条件下做推理。这跟靠ROVR解竞赛题完全不同。\n\n第三，异步交互——chatbot场景下用户和模型永远是你等我、我等你。Manus上线时让大家惊艳的体验是：Agent在持续工作的过程中，用户可以随时「插嘴」——改变目标、补充信息甚至终止任务。这种异步交互模式很多模型还没掌握。\n\n第四，Error Resilience——在真实环境中，错误是常态。环境会报错、资源会受限、文件处理会遇到意外。有些模型会放弃或陷入死循环，但最好的模型应该「永远能找到一条别的路去尝试」。这需要专门训练。" }, { heading: "当前时刻与终极判断", body: "Peak把当前AI浪潮比作他上一次AI创业的2018年——Transformer出来了，BERT带来了第一批应用落地，但大家在期待下一次阶跃性变化（他心中是2019年的GPT-3）。Scaling Law没有停止，狭义上loss曲线还在降，但涌现新能力不确定。\n\n他认为Agent已经爆发了，只是没看到想象中「勃勃生机万物竞发」的场面。原因是：每个场景都还差一口质量。这一口气可能是完成度、是模型能力、是环境适配，也可能是整个ecosystem共同进步才能补上的——比如Cloudflare人机验证拦住Agent，比如支付等基础设施还没打通。\n\n关于AI bubble，他承认客观存在，「但我们人类历史上干的比这个疯狂的事多得多」。他引用杨志林的话说「只要问题能够被定义，问题一定能解决」，这是他做任何事的信心来源。\n\n最终他给出了一个判断：AI接下来的进步需要用户的参与。不是恐惧AI，而是学会和AI共处——就像学会用汽车去更远的地方、学会用电脑找更好的工作一样。最乐观的预期是让所有白领获得一个7x24小时不断推理的AI伙伴。" }], originalText: "Manus更大的可能性不是因为竞争而输掉，而是因为失去了独有的价值。\n\nAgent已经爆发了...每个场景可能都还差一口质量。\n\nAI接下来的进步需要用户的参与。\n\nAI bubble一定是客观存在的...但我们人类历史上干的比这个疯狂的事多得多。\n\n只要问题能够被定义，问题一定能解决。" };
+
+/* ========== DEEP DIVE LOGIC ========== */
+var ddCurrentN = null;
+
+function toggleDeepDive(n) {
+  if (document.body.classList.contains('dd-active') && ddCurrentN === n) { closeDeepDive(); return; }
+  ddCurrentN = n;
+  var body = document.getElementById('detailBody');
+  if (deepDiveData[n]) {
+    var d = deepDiveData[n];
+    var html = '<h4>' + d.title + '</h4>';
+    d.sections.forEach(function(s) {
+      if (s.heading) html += '<h4>' + s.heading + '</h4>';
+      if (s.diagram) html += s.diagram;
+      html += s.body.split('\n\n').map(function(p) { return '<p>' + p + '</p>'; }).join('');
+    });
+    if (d.originalText) html += '<div class="original-text"><p><strong>原文：</strong>' + d.originalText + '</p></div>';
+
+    /* Coverage Footnote */
+    if (topicData[n]) {
+      html += '<div class="coverage-map"><div class="coverage-map-title">话题覆盖</div><div class="coverage-bars">';
+      topicData[n].forEach(function(t, i) {
+        var cls = t.status === 'deep-dive' ? 'deep-dive' : (t.status === 'compressed' ? 'compressed' : 'included');
+        var fillCls = t.status === 'deep-dive' ? 'deep-dive-bar' : (t.status === 'compressed' ? 'compressed-bar' : 'included');
+        var pct = t.status === 'compressed' ? 40 : (t.status === 'deep-dive' ? 60 : 80 + Math.random()*20);
+        html += '<div class="cbar-row ' + cls + '" onclick="toggleExcerpt(this)"><div class="cbar-label">' + t.name + ' <span class="cbar-expand-hint">\u25B6</span></div><div class="cbar-track"><div class="cbar-fill ' + fillCls + '" style="width:' + pct.toFixed(0) + '%"></div></div></div>';
+        html += '<div class="cbar-excerpt" id="excerpt-' + n + '-' + i + '"><div class="cbar-excerpt-inner">' + (t.excerpt || '') + (t.reason ? ' <span class="omit-reason">' + t.reason + '</span>' : '') + '</div></div>';
+      });
+      html += '</div></div>';
+    }
+
+    body.innerHTML = html;
+  }
+  document.getElementById('detailScroll').scrollTop = 0;
+  document.body.classList.add('dd-active');
+}
+
+function closeDeepDive() {
+  document.body.classList.remove('dd-active');
+  document.getElementById('space').style.transform = '';
+  document.getElementById('mainScroll').style.transform = '';
+  ddCurrentN = null;
+}
+
+function toggleExcerpt(row) {
+  var excerpt = row.nextElementSibling;
+  if (excerpt && excerpt.classList.contains('cbar-excerpt')) {
+    excerpt.classList.toggle('open');
+    var hint = row.querySelector('.cbar-expand-hint');
+    if (hint) hint.textContent = excerpt.classList.contains('open') ? '\u25BC' : '\u25B6';
+  }
+}
+
+document.getElementById('detailBack').addEventListener('click', closeDeepDive);
+document.getElementById('mainScroll').addEventListener('click', function(e) {
+  if (document.body.classList.contains('dd-active') && !e.target.closest('.deep-dive-trigger')) closeDeepDive();
+});
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && document.body.classList.contains('dd-active')) closeDeepDive(); });
+
+/* ========== SCROLL REVEAL ========== */
+var mainScrollRoot = document.getElementById('mainScroll');
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+}, { threshold: 0.15, root: mainScrollRoot });
+document.querySelectorAll('.reveal, [class*=\"_stage\"]').forEach(function(el) { observer.observe(el); });
+document.querySelectorAll('.s1_stage, .s2_stage, .s3_stage, .s4_stage, .s5_stage, .s6_stage, .s7_stage, .s8_stage').forEach(function(el) { observer.observe(el); });
+
+/* ========== NARRATION TIMERS ========== */
+(function() {
+  var stageConfigs = [
+    { sel: '.s1_stage', prefix: 's1' },
+    { sel: '.s2_stage', prefix: 's2' },
+    { sel: '.s3_stage', prefix: 's3' },
+    { sel: '.s4_stage', prefix: 's4' },
+    { sel: '.s5_stage', prefix: 's5' },
+    { sel: '.s6_stage', prefix: 's6' },
+    { sel: '.s7_stage', prefix: 's7' },
+    { sel: '.s8_stage', prefix: 's8' }
+  ];
+
+  stageConfigs.forEach(function(cfg) {
+    var stage = document.querySelector(cfg.sel);
+    if (!stage) return;
+    var narrs = stage.querySelectorAll('.' + cfg.prefix + '_narr');
+    var timers = [];
+    var showClass = cfg.prefix + '_show';
+
+    function startNarration() {
+      timers.forEach(clearTimeout);
+      timers = [];
+      narrs.forEach(function(n) {
+        var start = parseInt(n.dataset.start);
+        var end = parseInt(n.dataset.end);
+        timers.push(setTimeout(function() { n.classList.add(showClass); }, start));
+        if (end < 9999) {
+          timers.push(setTimeout(function() { n.classList.remove(showClass); }, end));
+        }
+      });
+    }
+
+    var mo = new MutationObserver(function(mutations) {
+      mutations.forEach(function(m) {
+        if (m.type === 'attributes' && stage.classList.contains('visible')) {
+          startNarration();
+        }
+      });
+    });
+    mo.observe(stage, { attributes: true, attributeFilter: ['class'] });
+
+    if (stage.classList.contains('visible')) {
+      startNarration();
+    }
+  });
+
+  /* S6 special: usage bar growth + pulse animation */
+  var s6Stage = document.getElementById('s6_stage');
+  if (s6Stage) {
+    var s6Started = false;
+    var s6mo = new MutationObserver(function(mutations) {
+      mutations.forEach(function(m) {
+        if (m.type === 'attributes' && s6Stage.classList.contains('visible') && !s6Started) {
+          s6Started = true;
+          setTimeout(function() {
+            var fill = document.getElementById('s6_usage_fill');
+            var pct = document.getElementById('s6_usage_pct');
+            if (fill) fill.style.width = '95%';
+            if (pct) pct.textContent = '95%';
+          }, 1800);
+          setTimeout(function() {
+            var ring = document.getElementById('s6_pulse_ring');
+            if (ring) ring.style.animation = 's6_pulse 1s ease-out infinite';
+          }, 6800);
+        }
+      });
+    });
+    s6mo.observe(s6Stage, { attributes: true, attributeFilter: ['class'] });
+  }
+})();
+
+/* ========== SOURCE HORIZON ========== */
+(function() {
+  if (typeof coverageData === 'undefined') return;
+  var horizon = document.getElementById('sourceHorizon');
+  var track = document.getElementById('horizonTrack');
+  var detail = document.getElementById('horizonDetail');
+  if (!horizon || !track || !coverageData.segments) return;
+
+  function toNum(v) {
+    if (typeof v === 'number') return v;
+    var parts = String(v).split(':').map(Number);
+    return parts.length === 3 ? parts[0]*3600+parts[1]*60+parts[2]
+         : parts.length === 2 ? parts[0]*60+parts[1] : parts[0];
+  }
+  var total = toNum(coverageData.totalLength);
+  var coveredLen = 0;
+
+  coverageData.segments.forEach(function(seg) {
+    var s = toNum(seg.start), e = toNum(seg.end);
+    var leftPct = (s / total * 100).toFixed(2) + '%';
+    var widthPct = ((e - s) / total * 100).toFixed(2) + '%';
+    var div = document.createElement('div');
+    div.className = 'horizon-seg ' + (seg.section ? (seg.deepDive ? 'covered deep-dive' : 'covered') : 'gap');
+    div.style.left = leftPct; div.style.width = widthPct;
+    track.appendChild(div);
+    if (seg.section) coveredLen += (e - s);
+    if (!seg.section && seg.reason) {
+      var gz = document.createElement('div');
+      gz.className = 'horizon-gap-zone';
+      gz.style.left = leftPct; gz.style.width = widthPct;
+      gz.innerHTML = '<div class="gap-pattern"></div><div class="gap-tooltip">' + seg.reason + ' (' + seg.start + '-' + seg.end + ')</div>';
+      detail.appendChild(gz);
+    }
+    if (seg.section && !seg.deepDive) {
+      var mk = document.createElement('div');
+      mk.className = 'horizon-marker';
+      mk.style.left = ((s + (e-s)/2) / total * 100).toFixed(2) + '%';
+      mk.innerHTML = '<div class="marker-tick"></div><div class="marker-label">S' + seg.section + '</div>';
+      mk.addEventListener('click', function(ev) {
+        ev.stopPropagation();
+        var target = document.getElementById('s' + seg.section + '-anim');
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+      detail.appendChild(mk);
+    }
+  });
+
+  var pct = document.createElement('div');
+  pct.className = 'horizon-pct';
+  pct.textContent = Math.round(coveredLen / total * 100) + '%';
+  detail.appendChild(pct);
+
+  horizon.addEventListener('click', function() { horizon.classList.toggle('expanded'); });
+  var collapseTimer;
+  mainScrollRoot.addEventListener('scroll', function() {
+    clearTimeout(collapseTimer);
+    var markers = detail.querySelectorAll('.marker-tick');
+    markers.forEach(function(m) { m.classList.remove('active'); });
+    var scrollTop = mainScrollRoot.scrollTop;
+    var closest = null, closestDist = Infinity;
+    coverageData.segments.forEach(function(seg) {
+      if (!seg.section || seg.deepDive) return;
+      var el = document.getElementById('s' + seg.section + '-anim');
+      if (!el) return;
+      var dist = Math.abs(el.offsetTop - scrollTop - window.innerHeight/2);
+      if (dist < closestDist) { closestDist = dist; closest = seg.section; }
+    });
+    if (closest) {
+      var ticks = detail.querySelectorAll('.horizon-marker');
+      ticks.forEach(function(mk) {
+        if (mk.querySelector('.marker-label').textContent === 'S' + closest)
+          mk.querySelector('.marker-tick').classList.add('active');
+      });
+    }
+    collapseTimer = setTimeout(function() { horizon.classList.remove('expanded'); }, 2000);
+  });
+})();
+</script>
+</body>
+</html>

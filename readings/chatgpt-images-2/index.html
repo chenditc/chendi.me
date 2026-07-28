@@ -1,0 +1,2333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ChatGPT Images 2.0 — 图像生成的新纪元</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-act1: #FFFBF5;
+  --bg-act2: #F0F7FF;
+  --bg-act3: #FFF5EB;
+  --bg-dark: #0F172A;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --dim: #94A3B8;
+  --accent: #F97316;
+  --accent2: #0EA5E9;
+  --warm: #F59E0B;
+  --danger: #EF4444;
+  --neutral: #CBD5E1;
+  --card-bg: #FFFFFF;
+}
+
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Noto Sans SC', -apple-system, 'PingFang SC', sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; background: var(--bg-act1); }
+
+/* ── Typography ── */
+.big-statement { font-family: 'Noto Serif SC', serif; font-size: clamp(22px, 5.5vw, 32px); font-weight: 700; line-height: 1.5; margin-bottom: 32px; }
+.body-text { font-size: 16px; line-height: 1.9; color: var(--text); margin-bottom: 28px; }
+.body-text .hl { color: var(--accent); font-weight: 500; }
+.body-text .hl2 { color: var(--accent2); font-weight: 500; }
+.body-text .hl-danger { color: var(--danger); font-weight: 500; }
+
+/* ── Layer system ── */
+.layer {
+  position: fixed; inset: 0; overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  visibility: hidden; opacity: 0;
+  will-change: transform, opacity;
+  scroll-snap-type: y proximity;
+}
+.layer.active { visibility: visible; opacity: 1; }
+.layer.transitioning {
+  transition-property: transform, opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Section ── */
+.feed-section {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 80px 24px;
+  scroll-snap-align: start;
+}
+.feed-section.s-light { background: var(--bg-act1); }
+.feed-section.s-light2 { background: var(--bg-act2); }
+.feed-section.s-light3 { background: var(--bg-act3); }
+.feed-section.dark { background: var(--bg-dark); color: #F1F5F9; }
+.feed-section.dark .body-text { color: #94A3B8; }
+.feed-section.dark .big-statement { color: #F1F5F9; }
+.section-inner { max-width: 600px; width: 100%; }
+
+/* ── Reveal ── */
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-d1 { transition-delay: 0.15s; }
+.reveal-d2 { transition-delay: 0.3s; }
+.reveal-d3 { transition-delay: 0.45s; }
+.reveal-d4 { transition-delay: 0.6s; }
+
+/* ── Anim stage ── */
+.anim-stage {
+  margin: 32px 0; padding: 32px 24px; border-radius: 16px;
+  background: rgba(249,115,22,0.06); position: relative; overflow: hidden;
+  min-height: 200px;
+}
+.anim-stage > div{ width:100%; }
+.dark .anim-stage { background: rgba(14,165,233,0.1); }
+
+/* ── Breadcrumb ── */
+.breadcrumb {
+  position: fixed; top: 16px; left: 16px; z-index: 1000;
+  display: flex; align-items: center; gap: 4px;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+  padding: 8px 14px; border-radius: 10px; box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+  font-size: 13px; font-weight: 500;
+}
+.breadcrumb span { color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
+.breadcrumb span:hover { color: var(--accent); }
+.breadcrumb span.current { color: var(--text); cursor: default; }
+.breadcrumb .sep { color: #CBD5E1; margin: 0 2px; cursor: default; }
+
+/* ── Back button ── */
+.back-btn {
+  position: fixed; top: 16px; left: 16px; z-index: 1001;
+  width: 38px; height: 38px; border-radius: 10px; border: none;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  font-size: 18px; cursor: pointer; display: none; align-items: center; justify-content: center;
+  color: var(--text); transition: all 0.2s;
+}
+.back-btn:hover { background: var(--accent); color: #fff; }
+
+/* ── Depth dots ── */
+.depth-dots {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1000;
+  display: flex; gap: 8px; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px);
+  padding: 8px 14px; border-radius: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #CBD5E1; transition: all 0.3s; }
+.dot.active { background: var(--accent); box-shadow: 0 0 8px rgba(249,115,22,0.5); transform: scale(1.2); }
+
+/* ── Drill button ── */
+.drill-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border: 1.5px solid rgba(249,115,22,0.3); border-radius: 10px;
+  background: transparent; color: var(--accent); font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.25s;
+}
+.drill-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(249,115,22,0.3); }
+.dark .drill-btn { border-color: rgba(14,165,233,0.4); color: var(--accent2); }
+.dark .drill-btn:hover { background: var(--accent2); color: #fff; border-color: var(--accent2); box-shadow: 0 4px 12px rgba(14,165,233,0.3); }
+
+/* ── Source panel ── */
+.source-panel {
+  margin-top: 24px; border-radius: 12px; overflow: hidden;
+  border: 1px solid rgba(249,115,22,0.15); background: rgba(249,115,22,0.03);
+}
+.dark .source-panel { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
+.source-toggle {
+  width: 100%; padding: 12px 16px; border: none; background: none;
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 600; color: var(--accent);
+}
+.dark .source-toggle { color: var(--accent2); }
+.source-toggle:hover { background: rgba(249,115,22,0.06); }
+.source-toggle .arrow { transition: transform 0.3s; font-size: 11px; }
+.source-toggle.open .arrow { transform: rotate(90deg); }
+.source-body {
+  max-height: 0; overflow: hidden; transition: max-height 0.4s ease; padding: 0 16px;
+}
+.source-body.open { max-height: 2000px; padding: 0 16px 16px; overflow-y: auto; }
+.source-body p { font-size: 13px; line-height: 1.8; color: var(--text-muted); margin: 0 0 12px; white-space: pre-wrap; }
+.dark .source-body p { color: #94A3B8; }
+.source-body .source-label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--accent); margin-bottom: 8px; display: block;
+}
+.dark .source-body .source-label { color: var(--accent2); }
+
+/* ── Image gallery (drill layers) ── */
+.img-gallery { display: grid; gap: 16px; margin: 24px 0; }
+.img-gallery.cols-2 { grid-template-columns: 1fr 1fr; }
+.img-gallery.cols-1 { grid-template-columns: 1fr; }
+.img-card {
+  border-radius: 12px; overflow: hidden;
+  background: var(--card-bg); box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+.dark .img-card { background: #1E293B; }
+.img-card img {
+  width: 100%; display: block; max-height: 500px; object-fit: contain; background: #f1f1f1;
+}
+.dark .img-card img { background: #0F172A; }
+.img-card .caption {
+  padding: 12px 14px; font-size: 13px; line-height: 1.6; color: var(--text-muted);
+}
+.dark .img-card .caption { color: #94A3B8; }
+.img-card.wide { grid-column: 1 / -1; }
+
+/* ── Hook line ── */
+.hook-line {
+  font-size: 14px; color: var(--accent); font-weight: 500; margin-top: 16px;
+  opacity: 0.85;
+}
+.dark .hook-line { color: var(--accent2); }
+
+/* ── Section label ── */
+.section-label {
+  font-size: 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--accent); margin-bottom: 16px;
+}
+.dark .section-label { color: var(--accent2); }
+
+/* ── Responsive ── */
+@media (max-width: 420px) {
+  .img-gallery.cols-2 { grid-template-columns: 1fr; }
+  .feed-section { padding: 60px 16px; }
+  .big-statement { margin-bottom: 24px; }
+}
+</style>
+
+<meta name="description" content="2026 年 4 月，OpenAI 发布了 ChatGPT Images 2.0。这不是又一次参数升级——而是图像生成从「大致像」到 精确到像素 的跨越。从一粒米上刻字到跨越十种语言的排版，从 35mm 胶片质感到完整的品牌设计系统，GPT Image 2 展示的不只是技术进步，而是一种全新的创作方式：AI 不再只是执行指令的工具，它开始理解创意意图、做出设">
+<link rel="canonical" href="https://chendi.me/readings/chatgpt-images-2/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<!-- ── Breadcrumb ── -->
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+
+<!-- ── Back button ── -->
+<button class="back-btn" id="backBtn" onclick="goBack()">&#8592;</button>
+
+<!-- ── Depth dots ── -->
+<div class="depth-dots" id="depthDots">
+  <div class="dot active"></div>
+  <div class="dot"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     LAYER: Overview (概览层)
+     ═══════════════════════════════════════════════════ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+  <!-- S1: Hero -->
+  <section class="feed-section s-light">
+    <div class="section-inner">
+      <div class="section-label reveal">ChatGPT Images 2.0</div>
+      <h2 class="big-statement reveal reveal-d1">当 AI 开始「看懂」图像，一切都变了</h2>
+      <p class="body-text reveal reveal-d2">2026 年 4 月，OpenAI 发布了 ChatGPT Images 2.0。这不是又一次参数升级——而是图像生成从「大致像」到<span class="hl">精确到像素</span>的跨越。从一粒米上刻字到跨越十种语言的排版，从 35mm 胶片质感到完整的品牌设计系统，GPT Image 2 展示的不只是技术进步，而是一种全新的创作方式：AI 不再只是执行指令的工具，它开始理解创意意图、做出设计决策、成为真正的<span class="hl2">视觉思维伙伴</span>。</p>
+      <div class="anim-stage reveal reveal-d3" id="s1-anim">
+        <style>
+/* === S1 Stage === */
+.s1_stage {
+  position: relative;
+  width: 340px;
+  max-width: 90vw;
+  height: 330px;
+  margin: 0 auto;
+}
+
+/* Blurry circle (left) - center at (82, 62) */
+.s1_blur {
+  position: absolute;
+  top: 30px; left: 50px;
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: #CBD5E1;
+  filter: blur(3px);
+  opacity: 0;
+  transform: scale(0);
+}
+.s1_blur_label {
+  position: absolute;
+  top: 100px; left: 58px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #94A3B8;
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+/* Arrow line + head */
+.s1_arrow_line {
+  position: absolute;
+  top: 61px; left: 120px;
+  width: 0; height: 2px;
+  background: #94A3B8;
+  border-radius: 1px;
+}
+.s1_arrow_head {
+  position: absolute;
+  top: 55px; left: 220px;
+  width: 0; height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 8px solid #94A3B8;
+  opacity: 0;
+}
+
+/* Precise circle (right) - center at (258, 62) */
+.s1_precise {
+  position: absolute;
+  top: 30px; left: 226px;
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: #F97316;
+  opacity: 0;
+  transform: scale(0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.3);
+}
+.s1_precise_text {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+
+/* SVG connector lines from precise circle to children */
+.s1_connectors {
+  position: absolute;
+  top: 0; left: 0;
+  width: 340px;
+  height: 330px;
+  pointer-events: none;
+}
+.s1_conn_line {
+  stroke: #F97316;
+  stroke-width: 2;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  opacity: 0.5;
+}
+
+/* Three child circles - centers at (66, 210), (170, 210), (274, 210) */
+.s1_children {
+  position: absolute;
+  top: 186px; left: 42px;
+  width: 256px;
+  display: flex;
+  justify-content: space-between;
+}
+.s1_child {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transform: scale(0);
+}
+.s1_child_circle {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: 2.5px solid #F97316;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #F97316;
+}
+
+/* Bottom label */
+.s1_bottom_label {
+  position: absolute;
+  bottom: 10px; left: 0; right: 0;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1E293B;
+  opacity: 0;
+  transform: translateY(10px);
+  letter-spacing: 1px;
+}
+
+/* === Keyframes === */
+@keyframes s1_scaleIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s1_labelIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s1_drawRight {
+  to { width: 104px; }
+}
+@keyframes s1_fadeIn {
+  to { opacity: 1; }
+}
+@keyframes s1_drawLine {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes s1_childIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s1_bottomIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === Triggered sequence via .visible === */
+.s1_stage.visible .s1_blur {
+  animation: s1_scaleIn 0.5s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s1_stage.visible .s1_blur_label {
+  animation: s1_labelIn 0.4s 0.6s ease forwards;
+}
+
+.s1_stage.visible .s1_arrow_line {
+  animation: s1_drawRight 0.5s 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.s1_stage.visible .s1_arrow_head {
+  animation: s1_fadeIn 0.2s 1.65s ease forwards;
+}
+
+.s1_stage.visible .s1_precise {
+  animation: s1_scaleIn 0.5s 2.1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* SVG lines draw in sequence */
+.s1_stage.visible .s1_conn_line:nth-child(1) {
+  animation: s1_drawLine 0.5s 2.9s ease-out forwards;
+}
+.s1_stage.visible .s1_conn_line:nth-child(2) {
+  animation: s1_drawLine 0.5s 3.1s ease-out forwards;
+}
+.s1_stage.visible .s1_conn_line:nth-child(3) {
+  animation: s1_drawLine 0.5s 3.3s ease-out forwards;
+}
+
+.s1_stage.visible .s1_child:nth-child(1) {
+  animation: s1_childIn 0.35s 3.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s1_stage.visible .s1_child:nth-child(2) {
+  animation: s1_childIn 0.35s 3.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s1_stage.visible .s1_child:nth-child(3) {
+  animation: s1_childIn 0.35s 4.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.s1_stage.visible .s1_bottom_label {
+  animation: s1_bottomIn 0.5s 5.0s ease forwards;
+}
+</style>
+        <div class="s1_stage">
+          <!-- 1. Blurry circle -->
+          <div class="s1_blur"></div>
+          <div class="s1_blur_label">模糊</div>
+
+          <!-- 2. Arrow -->
+          <div class="s1_arrow_line"></div>
+          <div class="s1_arrow_head"></div>
+
+          <!-- 3. Precise circle -->
+          <div class="s1_precise"><span class="s1_precise_text">精确</span></div>
+
+          <!-- 4. SVG connector lines: from precise bottom (258,94) to child tops -->
+          <svg class="s1_connectors" viewBox="0 0 340 330">
+            <line class="s1_conn_line" x1="258" y1="94" x2="66" y2="186"/>
+            <line class="s1_conn_line" x1="258" y1="94" x2="170" y2="186"/>
+            <line class="s1_conn_line" x1="258" y1="94" x2="274" y2="186"/>
+          </svg>
+
+          <!-- 5. Three child circles -->
+          <div class="s1_children">
+            <div class="s1_child">
+              <div class="s1_child_circle">文字</div>
+            </div>
+            <div class="s1_child">
+              <div class="s1_child_circle">排版</div>
+            </div>
+            <div class="s1_child">
+              <div class="s1_child_circle">风格</div>
+            </div>
+          </div>
+
+          <!-- 6. Bottom label -->
+          <div class="s1_bottom_label">GPT Image 2.0</div>
+        </div>
+      </div>
+      <p class="hook-line reveal reveal-d4">它到底精确到什么程度？往下看——</p>
+    </div>
+  </section>
+
+  <!-- S2: Precision -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="section-label reveal">Greater Precision &amp; Control</div>
+      <h2 class="big-statement reveal reveal-d1">一粒米上刻出「GPT Image 2」——这就是精确控制</h2>
+      <p class="body-text reveal reveal-d2">GPT Image 2 最直观的突破是精确度。在之前的模型里，让 AI 在特定位置放置特定文字几乎是不可能的任务——文字会变形、错位、甚至变成乱码。但现在，你可以让它<span class="hl">在一粒米上刻字</span>，生成完整可读的杂志版面，甚至模拟一份带咖啡渍的手写笔记。这种精确不是凭空而来的，因为它来自模型对图像结构更深层次的理解——不只是「画像素」，而是「理解布局」。</p>
+      <div class="anim-stage reveal reveal-d2" id="s2-anim">
+        <style>
+/* === S2: Precision Control (Dark Background) === */
+.s2_stage {
+  position: relative;
+  width: 340px;
+  max-width: 90vw;
+  height: 280px;
+  margin: 0 auto;
+  font-family: -apple-system, 'PingFang SC', sans-serif;
+}
+
+/* Top circle: 精确 */
+.s2_main {
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: #F97316;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* Three vertical lines from main circle to boxes */
+.s2_lines {
+  position: absolute;
+  top: 64px; left: 0; right: 0;
+  height: 80px;
+}
+.s2_line {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 0;
+  background: rgba(255,255,255,0.3);
+  border-radius: 1px;
+  transform-origin: top center;
+}
+.s2_line:nth-child(1) { left: 170px; transform: rotate(-28deg); }
+.s2_line:nth-child(2) { left: 170px; transform: rotate(0deg); }
+.s2_line:nth-child(3) { left: 170px; transform: rotate(28deg); }
+
+/* Three rounded boxes */
+.s2_boxes {
+  position: absolute;
+  top: 160px; left: 0; right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 10px;
+}
+.s2_box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px; height: 40px;
+  border-radius: 10px;
+  border: 2px solid rgba(255,255,255,0.3);
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: #F1F5F9;
+  opacity: 0;
+  transform: scale(0);
+  transition: border-color 0.5s ease, box-shadow 0.5s ease, color 0.5s ease;
+}
+
+/* Bottom narration */
+.s2_narration {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  text-align: center;
+  font-size: 13px;
+  color: #94A3B8;
+  min-height: 36px;
+}
+.s2_narr {
+  position: absolute;
+  left: 0; right: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s2_narr.s2_show { opacity: 1; }
+
+/* === S2 KEYFRAMES === */
+@keyframes s2_scaleIn {
+  to { transform: translateX(-50%) scale(1); }
+}
+@keyframes s2_lineGrow {
+  to { height: 80px; }
+}
+@keyframes s2_boxIn {
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* === S2 ANIMATION SEQUENCE triggered by .visible === */
+.s2_stage.visible .s2_main {
+  animation: s2_scaleIn 0.5s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.s2_stage.visible .s2_line:nth-child(1) { animation: s2_lineGrow 0.4s 1.0s ease-out forwards; }
+.s2_stage.visible .s2_line:nth-child(2) { animation: s2_lineGrow 0.4s 1.2s ease-out forwards; }
+.s2_stage.visible .s2_line:nth-child(3) { animation: s2_lineGrow 0.4s 1.4s ease-out forwards; }
+
+.s2_stage.visible .s2_box:nth-child(1) { animation: s2_boxIn 0.4s 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.s2_stage.visible .s2_box:nth-child(2) { animation: s2_boxIn 0.4s 2.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.s2_stage.visible .s2_box:nth-child(3) { animation: s2_boxIn 0.4s 2.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+</style>
+        <div class="s2_stage">
+          <!-- 1. Main circle -->
+          <div class="s2_main">精确</div>
+
+          <!-- 2. Three lines -->
+          <div class="s2_lines">
+            <div class="s2_line"></div>
+            <div class="s2_line"></div>
+            <div class="s2_line"></div>
+          </div>
+
+          <!-- 3. Three boxes -->
+          <div class="s2_boxes">
+            <div class="s2_box" id="s2_b1">米粒刻字</div>
+            <div class="s2_box" id="s2_b2">杂志排版</div>
+            <div class="s2_box" id="s2_b3">手写笔记</div>
+          </div>
+
+          <!-- Narration -->
+          <div class="s2_narration">
+            <div class="s2_narr" data-start="0" data-end="1000">从「大致像」到「像素级精确」</div>
+            <div class="s2_narr" data-start="1000" data-end="1800">精确度向下分解为三个层次</div>
+            <div class="s2_narr" data-start="1800" data-end="3000">每个层次，对应不同的精度要求</div>
+            <div class="s2_narr" data-start="3000" data-end="9999">三种精度，三种生成策略</div>
+          </div>
+        </div>
+
+        <script>
+(function() {
+  var stage = document.querySelector('.s2_stage');
+  if (!stage) return;
+
+  var narrs = stage.querySelectorAll('.s2_narr');
+  var timers = [];
+
+  function runS2() {
+    // Narration
+    narrs.forEach(function(n) {
+      var start = parseInt(n.dataset.start);
+      var end = parseInt(n.dataset.end);
+      timers.push(setTimeout(function() { n.classList.add('s2_show'); }, start + 300));
+      if (end < 9999) {
+        timers.push(setTimeout(function() { n.classList.remove('s2_show'); }, end + 300));
+      }
+    });
+
+    // Highlight boxes one by one (orange border + glow)
+    var boxes = [
+      { id: 's2_b1', time: 3200 },
+      { id: 's2_b2', time: 3800 },
+      { id: 's2_b3', time: 4400 }
+    ];
+    boxes.forEach(function(b) {
+      timers.push(setTimeout(function() {
+        var el = document.getElementById(b.id);
+        el.style.borderColor = '#F97316';
+        el.style.color = '#F97316';
+        el.style.boxShadow = '0 0 16px rgba(249,115,22,0.35)';
+      }, b.time));
+    });
+  }
+
+  // Observe .visible class
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      if (m.type === 'attributes' && m.attributeName === 'class') {
+        if (stage.classList.contains('visible')) {
+          runS2();
+        }
+      }
+    });
+  });
+  observer.observe(stage, { attributes: true });
+
+  // If already visible, run immediately
+  if (stage.classList.contains('visible')) {
+    runS2();
+  }
+})();
+</script>
+      </div>
+      <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-precision', this)">看看实际生成效果 ↓</button>
+    </div>
+  </section>
+
+  <!-- S3: Languages -->
+  <section class="feed-section s-light2">
+    <div class="section-inner">
+      <div class="section-label reveal">Stronger Across Languages</div>
+      <h2 class="big-statement reveal reveal-d1">用韩文写广告、用日文画漫画、用印地语排书架</h2>
+      <p class="body-text reveal reveal-d2">多语言一直是图像生成模型的软肋。之前的模型对非拉丁语系的文字几乎束手无策——日文假名会写错、中文笔画会缺失、韩文间距会混乱。GPT Image 2 在这个方向上实现了质的飞跃：因为它不只是「画字形」，而是<span class="hl">理解了每种语言的排版规范</span>，所以能生成包含日文、韩文、中文、印地语、阿拉伯语等多种语言的完整排版作品——而且每种语言都保持了正确的字形结构和视觉层次。</p>
+      <div class="anim-stage reveal reveal-d2" id="s3-anim">
+        <style>
+/* S3 - Multi-language capability */
+.s3_stage {
+  position: relative;
+  width: 340px;
+  max-width: 90vw;
+  height: 350px;
+  margin: 0 auto;
+  font-family: -apple-system, 'PingFang SC', sans-serif;
+  overflow: visible;
+}
+
+/* Center AI circle */
+.s3_center {
+  position: absolute;
+  top: 130px; left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: #0EA5E9;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+/* Language boxes */
+.s3_lang {
+  position: absolute;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 2.5px solid #CBD5E1;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1E293B;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0);
+  z-index: 2;
+}
+.s3_lang_top    { top: 30px;  left: 50%; transform: translateX(-50%) scale(0); }
+.s3_lang_bottom { top: 230px; left: 50%; transform: translateX(-50%) scale(0); }
+.s3_lang_left   { top: 130px; left: 24px; transform: scale(0); }
+.s3_lang_right  { top: 130px; right: 24px; left: auto; transform: scale(0); }
+
+/* Connection lines */
+.s3_line {
+  position: absolute;
+  background: #CBD5E1;
+  border-radius: 1px;
+  z-index: 1;
+}
+.s3_line_top {
+  left: 50%; top: 68px;
+  width: 2px; height: 0;
+  transform: translateX(-50%);
+}
+.s3_line_bottom {
+  left: 50%; top: 178px;
+  width: 2px; height: 0;
+  transform: translateX(-50%);
+}
+.s3_line_left {
+  top: 154px; left: 82px;
+  height: 2px; width: 0;
+}
+.s3_line_right {
+  top: 154px; right: 82px;
+  height: 2px; width: 0;
+  left: auto;
+}
+
+/* Bottom label */
+.s3_label {
+  position: absolute;
+  bottom: 10px; left: 0; right: 0;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #64748B;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* === Keyframes === */
+@keyframes s3_scaleInCenter {
+  to { transform: translateX(-50%) scale(1); }
+}
+@keyframes s3_scaleIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s3_scaleInX {
+  to { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+@keyframes s3_lineGrowV {
+  to { height: 62px; }
+}
+@keyframes s3_lineGrowH {
+  to { width: 68px; }
+}
+@keyframes s3_labelIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s3_activateBorder {
+  0% { border-color: #CBD5E1; }
+  100% { border-color: #F97316; }
+}
+
+/* === Animation sequence triggered by .visible === */
+
+.s3_stage.visible .s3_center {
+  animation: s3_scaleInCenter 0.4s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Lines grow */
+.s3_stage.visible .s3_line_top    { animation: s3_lineGrowV 0.35s 1.0s ease-out forwards; }
+.s3_stage.visible .s3_line_bottom { animation: s3_lineGrowV 0.35s 1.4s ease-out forwards; }
+.s3_stage.visible .s3_line_left   { animation: s3_lineGrowH 0.35s 1.8s ease-out forwards; }
+.s3_stage.visible .s3_line_right  { animation: s3_lineGrowH 0.35s 2.2s ease-out forwards; }
+
+/* Language boxes appear */
+.s3_stage.visible .s3_lang_top    { animation: s3_scaleInX 0.35s 1.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.s3_stage.visible .s3_lang_bottom { animation: s3_scaleInX 0.35s 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.s3_stage.visible .s3_lang_left   { animation: s3_scaleIn  0.35s 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.s3_stage.visible .s3_lang_right  { animation: s3_scaleIn  0.35s 2.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+/* Activate borders sequentially - orange */
+.s3_stage.visible .s3_lang_top    { animation: s3_scaleInX 0.35s 1.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, s3_activateBorder 0.4s 3.0s ease forwards; }
+.s3_stage.visible .s3_lang_right  { animation: s3_scaleIn  0.35s 2.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, s3_activateBorder 0.4s 3.5s ease forwards; }
+.s3_stage.visible .s3_lang_bottom { animation: s3_scaleInX 0.35s 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, s3_activateBorder 0.4s 4.0s ease forwards; }
+.s3_stage.visible .s3_lang_left   { animation: s3_scaleIn  0.35s 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, s3_activateBorder 0.4s 4.5s ease forwards; }
+
+/* Bottom label */
+.s3_stage.visible .s3_label {
+  animation: s3_labelIn 0.4s 5.2s ease forwards;
+}
+</style>
+        <div class="s3_stage">
+          <!-- Center AI circle -->
+          <div class="s3_center">AI</div>
+
+          <!-- Connection lines -->
+          <div class="s3_line s3_line_top"></div>
+          <div class="s3_line s3_line_bottom"></div>
+          <div class="s3_line s3_line_left"></div>
+          <div class="s3_line s3_line_right"></div>
+
+          <!-- Language boxes (rounded rectangles for 3+ chars) -->
+          <div class="s3_lang s3_lang_top">日本語</div>
+          <div class="s3_lang s3_lang_bottom">한국어</div>
+          <div class="s3_lang s3_lang_left">中文</div>
+          <div class="s3_lang s3_lang_right">हिन्दी</div>
+
+          <!-- Bottom label -->
+          <div class="s3_label">一个模型，多种语言</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文 Prompts</button>
+        <div class="source-body">
+          <span class="source-label">Japanese Manga Prompt</span>
+          <p>Make a sample page of a colorized Japanese shonen adventure manga. The page should vividly depict our main character found a magical quill. The name of the quill is called the Quill of GPT Image. Make it dramatic. The magical quill has strong power sealed inside it.
+
+Additional instructions: Aspect ratio: Portrait 1440x2560. The pen should have an OpenAI logo on it. The language throughout the manga should be Japanese.</p>
+          <span class="source-label">Hindi Bookstore Prompt</span>
+          <p>I want to create a magazine page that features a professional realistic photography in an Indian bookstore that selling indian books in different languages used in India. The photography should feature book covers in Hindi, Bengali, Marathi, Telugu, Tamil, Urdu, Gujarati, Kannada, Odia. The books must be made-up books with title related to "art" in these languages, but looks like actual book covers rather than a set. The publisher must be "OpenAI". All text must be clearly visible.</p>
+          <span class="source-label">Korean Ad Prompt</span>
+          <p>프리미엄 한옥 스테이 예약 유도용 카드 이미지, 고즈넉한 골목을 지나 체크인하는 순간, 마당이 보이는 창가에서 차를 마시는 순간, 따뜻한 조명 아래 객실에서 쉬는 순간의 3장면이 한 화면 안에서 자연스럽게 이어지는 구성</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S4: Styles -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="section-label reveal">Stylistic Sophistication &amp; Realism</div>
+      <h2 class="big-statement reveal reveal-d1">35mm 胶片的颗粒感、少年漫画的分镜张力——一个模型全搞定</h2>
+      <p class="body-text reveal reveal-d2">风格多样性是 GPT Image 2 的另一个核心能力。它不是简单地套滤镜，而是真正理解了每种视觉风格背后的「语法」。因为 35mm 胶片摄影的特征不只是颗粒感，还包括自然的曝光偏差、不完美的构图、以及那种<span class="hl">「被真实生活捕捉到」的即兴感</span>。同样，日本少年漫画的关键不在于线条风格，而在于分镜节奏、动态线和情感表达的整套体系。所以 GPT Image 2 的突破在于——它学会的是<span class="hl2">风格的本质</span>，不是表面的模仿。</p>
+      <div class="anim-stage reveal reveal-d2" id="s4-anim">
+        <style>
+/* S4 — Style Diversity (dark background) */
+.s4_stage {
+  position: relative;
+  width: 340px;
+  height: 300px;
+  margin: 0 auto;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.s4_stage.visible {
+  opacity: 1;
+}
+
+/* Prompt box — left side */
+.s4_prompt {
+  position: absolute;
+  top: 120px;
+  left: 16px;
+  width: 80px;
+  height: 44px;
+  border: 2px solid #0EA5E9;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #F1F5F9;
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* Scan line — horizontal */
+.s4_scanline {
+  position: absolute;
+  top: 142px;
+  left: 96px;
+  width: 0;
+  height: 2px;
+  background: #0EA5E9;
+  border-radius: 1px;
+}
+
+/* Scan dot at tip */
+.s4_scandot {
+  position: absolute;
+  top: 138px;
+  left: 96px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #0EA5E9;
+  box-shadow: 0 0 12px rgba(14, 165, 233, 0.6);
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* Right side style boxes */
+.s4_style_box {
+  position: absolute;
+  right: 24px;
+  width: 72px;
+  height: 40px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #F1F5F9;
+  opacity: 0;
+  transform: scale(0);
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+}
+.s4_style_box:nth-child(1) { top: 56px; }
+.s4_style_box:nth-child(2) { top: 124px; }
+.s4_style_box:nth-child(3) { top: 192px; }
+
+/* Tags that appear beside activated boxes */
+.s4_tag {
+  position: absolute;
+  right: 106px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #F97316;
+  opacity: 0;
+  transform: translateX(8px);
+  white-space: nowrap;
+}
+.s4_tag:nth-child(1) { top: 66px; }
+.s4_tag:nth-child(2) { top: 134px; }
+.s4_tag:nth-child(3) { top: 202px; }
+
+/* Keyframes */
+@keyframes s4_scaleIn {
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s4_scanGrow {
+  to { width: 148px; }
+}
+
+@keyframes s4_dotAppear {
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s4_dotMove {
+  0%   { left: 96px; }
+  100% { left: 236px; }
+}
+
+@keyframes s4_boxActivate_border {
+  to {
+    border-color: #F97316;
+    box-shadow: 0 0 16px rgba(249, 115, 22, 0.35);
+  }
+}
+
+@keyframes s4_tagIn {
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Animation sequence triggered by .visible */
+.s4_stage.visible .s4_prompt {
+  animation: s4_scaleIn 0.4s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.s4_stage.visible .s4_scandot {
+  animation:
+    s4_dotAppear 0.2s 0.9s ease forwards,
+    s4_dotMove 1.2s 1.0s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.s4_stage.visible .s4_scanline {
+  animation: s4_scanGrow 1.2s 1.0s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Style boxes appear sequentially */
+.s4_stage.visible .s4_styles .s4_style_box:nth-child(1) {
+  animation: s4_scaleIn 0.35s 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s4_stage.visible .s4_styles .s4_style_box:nth-child(2) {
+  animation: s4_scaleIn 0.35s 1.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s4_stage.visible .s4_styles .s4_style_box:nth-child(3) {
+  animation: s4_scaleIn 0.35s 2.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Boxes activate (turn orange) sequentially */
+.s4_stage.visible .s4_styles .s4_style_box:nth-child(1) {
+  animation:
+    s4_scaleIn 0.35s 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+    s4_boxActivate_border 0.4s 3.0s ease forwards;
+}
+.s4_stage.visible .s4_styles .s4_style_box:nth-child(2) {
+  animation:
+    s4_scaleIn 0.35s 1.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+    s4_boxActivate_border 0.4s 3.5s ease forwards;
+}
+.s4_stage.visible .s4_styles .s4_style_box:nth-child(3) {
+  animation:
+    s4_scaleIn 0.35s 2.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+    s4_boxActivate_border 0.4s 4.0s ease forwards;
+}
+
+/* Tags appear after each box activates */
+.s4_stage.visible .s4_tags .s4_tag:nth-child(1) {
+  animation: s4_tagIn 0.35s 3.3s ease forwards;
+}
+.s4_stage.visible .s4_tags .s4_tag:nth-child(2) {
+  animation: s4_tagIn 0.35s 3.8s ease forwards;
+}
+.s4_stage.visible .s4_tags .s4_tag:nth-child(3) {
+  animation: s4_tagIn 0.35s 4.3s ease forwards;
+}
+</style>
+        <div class="s4_stage">
+          <!-- Prompt box -->
+          <div class="s4_prompt">Prompt</div>
+
+          <!-- Scan line -->
+          <div class="s4_scanline"></div>
+          <div class="s4_scandot"></div>
+
+          <!-- Style boxes -->
+          <div class="s4_styles">
+            <div class="s4_style_box">&#33014;&#29255;</div>
+            <div class="s4_style_box">&#28459;&#30011;</div>
+            <div class="s4_style_box">&#28023;&#25253;</div>
+          </div>
+
+          <!-- Tags -->
+          <div class="s4_tags">
+            <div class="s4_tag">&#39063;&#31890;&#24863;</div>
+            <div class="s4_tag">&#20998;&#38236;</div>
+            <div class="s4_tag">&#25340;&#36148;</div>
+          </div>
+        </div>
+      </div>
+      <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-styles', this)">探索风格画廊 ↓</button>
+    </div>
+  </section>
+
+  <!-- S5: Aspect Ratios -->
+  <section class="feed-section s-light3">
+    <div class="section-inner">
+      <div class="section-label reveal">Flexible Aspect Ratios</div>
+      <h2 class="big-statement reveal reveal-d1">3:1 超宽全景、1:3 窄长书签——任何比例都是画布</h2>
+      <p class="body-text reveal reveal-d2">传统的图像生成模型通常只擅长正方形或标准横竖比，但现实世界的设计需求远不止于此——Instagram Stories 需要 9:16，Twitter 横幅需要 3:1，印刷书签可能是 1:3 的极窄比例。GPT Image 2 能灵活适应<span class="hl">任何宽高比</span>，而且不是简单地裁切或拉伸。因为模型理解了不同比例对构图的影响，所以它会根据比例重新编排画面元素的位置和大小——横幅强调水平叙事，窄长画面则利用垂直节奏引导视线。</p>
+      <div class="anim-stage reveal reveal-d2" id="s5-anim">
+        <style>
+/* S5 — 灵活比例 */
+.s5_stage {
+  position: relative;
+  width: 340px;
+  height: 320px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* Shared rect style */
+.s5_rect {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2.5px solid #CBD5E1;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  color: #64748B;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.8);
+}
+
+.s5_rect--1x1 {
+  width: 100px;
+  height: 100px;
+  border-color: #CBD5E1;
+  color: #94A3B8;
+}
+
+.s5_rect--3x1 {
+  width: 300px;
+  height: 100px;
+  border-color: #0EA5E9;
+  color: #0EA5E9;
+}
+
+.s5_rect--1x3 {
+  width: 80px;
+  height: 240px;
+  border-color: #F97316;
+  color: #F97316;
+}
+
+.s5_rect--16x9 {
+  width: 288px;
+  height: 162px;
+  border-color: #0EA5E9;
+  color: #0EA5E9;
+}
+
+.s5_caption {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: #94A3B8;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* Keyframes */
+@keyframes s5_rectIn {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes s5_rectOut {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+}
+
+@keyframes s5_captionIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Animation sequence triggered by .visible */
+.s5_stage.visible .s5_rect--1x1 {
+  animation: s5_rectIn 0.5s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+             s5_rectOut 0.3s 1.2s ease forwards;
+}
+
+.s5_stage.visible .s5_rect--3x1 {
+  animation: s5_rectIn 0.5s 1.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+             s5_rectOut 0.3s 2.5s ease forwards;
+}
+
+.s5_stage.visible .s5_rect--1x3 {
+  animation: s5_rectIn 0.5s 2.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+             s5_rectOut 0.3s 3.8s ease forwards;
+}
+
+.s5_stage.visible .s5_rect--16x9 {
+  animation: s5_rectIn 0.5s 4.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.s5_stage.visible .s5_caption {
+  animation: s5_captionIn 0.4s 5.0s ease forwards;
+}
+</style>
+        <div class="s5_stage">
+          <div class="s5_rect s5_rect--1x1">1:1</div>
+          <div class="s5_rect s5_rect--3x1">3:1</div>
+          <div class="s5_rect s5_rect--1x3">1:3</div>
+          <div class="s5_rect s5_rect--16x9">16:9</div>
+          <div class="s5_caption">根据比例重新构图</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文 Prompts</button>
+        <div class="source-body">
+          <span class="source-label">Basketball Ultrawide 3:1</span>
+          <p>"japanese-manga-style disassembly" of a basketball dunk shoot motion like a time lapse. Tell the most story through visuals rather than text. 3:1 ultrawide aspect ratio. prefer light background rather than dark. do not use japanese</p>
+          <span class="source-label">iPhone Panorama</span>
+          <p>create a photorealistic panorama shot as if taken on iphone of a busy asian city. make it a bit jaggedy like my hand shook while taking the panorama shot; there should be fault lines where the image breaks from my hand shaking or not keeping a straight line</p>
+          <span class="source-label">Art Deco Bookmark</span>
+          <p>i'm opening a bookstore called 'tangerine books' in toronto and would like to make a bookmark to print, that i give my shoppers. the aesthetic should be gorgeous art deco - colorful, retro, joyful, elegant. include print dimensions and margins.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S6: Intelligence -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="section-label reveal">Enhanced Real-World Intelligence</div>
+      <h2 class="big-statement reveal reveal-d1">它不只是画画——它先理解，再创作</h2>
+      <p class="body-text reveal reveal-d2">GPT Image 2 最让人意外的能力是它对现实世界知识的运用。当你让它画一张<span class="hl">康托尔对角线证明的信息图</span>时，它不只是「画出好看的数学符号」——它真正理解了证明的逻辑结构，然后用视觉方式把推理过程呈现出来。同样，当你让它分析 2025 年的设计趋势时，它能基于真实的行业知识生成准确、有洞察力的内容。这正说明 GPT Image 2 的底层不只是图像模型，而是<span class="hl2">通用智能模型的视觉输出层</span>——它画的每一张图背后，都有一个「思考过程」。</p>
+      <div class="anim-stage reveal reveal-d2" id="s6-anim">
+        <style>
+/* S6 — 现实世界智能 (暗色背景) */
+.s6_stage {
+  position: relative;
+  width: 340px;
+  max-width: 90vw;
+  height: 280px;
+  margin: 0 auto;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.s6_stage.visible { opacity: 1; }
+
+/* 圆角方框：4字以上 */
+.s6_box {
+  position: absolute;
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: 2.5px solid;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 600;
+  color: #F1F5F9;
+  opacity: 0;
+  transform: scale(0);
+  white-space: nowrap;
+}
+
+/* 知识方框 — 左侧 */
+.s6_knowledge {
+  top: 60px; left: 10px;
+  border-color: #0EA5E9;
+}
+
+/* 思考圆 — 中间，2字用48px */
+.s6_think {
+  position: absolute;
+  top: 52px; left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  border: 2.5px solid #0EA5E9;
+  background: rgba(14, 165, 233, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0EA5E9;
+  opacity: 0;
+}
+
+/* 图像方框 — 右侧 */
+.s6_image {
+  top: 60px; right: 28px;
+  border-color: #F97316;
+}
+
+/* 箭头线 */
+.s6_arrow_line {
+  position: absolute;
+  top: 84px;
+  height: 2px;
+  width: 0;
+  background: rgba(255,255,255,0.3);
+  border-radius: 1px;
+}
+.s6_arrow1 {
+  left: 72px;
+}
+.s6_arrow2 {
+  left: 207px;
+}
+
+/* 箭头头部 */
+.s6_arrow_head {
+  position: absolute;
+  top: 79px;
+  width: 0; height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 7px solid rgba(255,255,255,0.3);
+  opacity: 0;
+}
+.s6_arrowhead1 { left: 110px; }
+.s6_arrowhead2 { left: 245px; }
+
+/* 底部标签 */
+.s6_tags {
+  position: absolute;
+  bottom: 20px; left: 0; right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+.s6_tag {
+  padding: 6px 14px;
+  border-radius: 16px;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  background: rgba(249, 115, 22, 0.1);
+  font-size: 13px;
+  font-weight: 500;
+  color: #F97316;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* === KEYFRAMES === */
+@keyframes s6_boxIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s6_circleIn {
+  to { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+@keyframes s6_lineGrow1 {
+  to { width: 42px; }
+}
+@keyframes s6_lineGrow2 {
+  to { width: 42px; }
+}
+@keyframes s6_fadeIn {
+  to { opacity: 1; }
+}
+@keyframes s6_tagIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === ANIMATION SEQUENCE === */
+/* Step 1: 知识方框 @ 0.3s */
+.s6_stage.visible .s6_knowledge {
+  animation: s6_boxIn 0.4s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Step 2: 第一条箭头 @ 1.0s */
+.s6_stage.visible .s6_arrow1 {
+  animation: s6_lineGrow1 0.4s 1.0s ease-out forwards;
+}
+.s6_stage.visible .s6_arrowhead1 {
+  animation: s6_fadeIn 0.2s 1.35s ease forwards;
+}
+
+/* Step 3: 思考圆 @ 1.7s */
+.s6_stage.visible .s6_think {
+  animation: s6_circleIn 0.4s 1.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Step 4: 第二条箭头 @ 2.4s */
+.s6_stage.visible .s6_arrow2 {
+  animation: s6_lineGrow2 0.4s 2.4s ease-out forwards;
+}
+.s6_stage.visible .s6_arrowhead2 {
+  animation: s6_fadeIn 0.2s 2.75s ease forwards;
+}
+
+/* Step 5: 图像方框 @ 3.1s */
+.s6_stage.visible .s6_image {
+  animation: s6_boxIn 0.4s 3.1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Step 6: 底部标签 @ 3.8s 4.2s 4.6s */
+.s6_stage.visible .s6_tag:nth-child(1) {
+  animation: s6_tagIn 0.35s 3.8s ease-out forwards;
+}
+.s6_stage.visible .s6_tag:nth-child(2) {
+  animation: s6_tagIn 0.35s 4.2s ease-out forwards;
+}
+.s6_stage.visible .s6_tag:nth-child(3) {
+  animation: s6_tagIn 0.35s 4.6s ease-out forwards;
+}
+</style>
+        <div class="s6_stage">
+          <!-- 知识方框 -->
+          <div class="s6_box s6_knowledge">知识</div>
+
+          <!-- 第一条箭头 -->
+          <div class="s6_arrow_line s6_arrow1"></div>
+          <div class="s6_arrow_head s6_arrowhead1"></div>
+
+          <!-- 思考圆 -->
+          <div class="s6_think">思考</div>
+
+          <!-- 第二条箭头 -->
+          <div class="s6_arrow_line s6_arrow2"></div>
+          <div class="s6_arrow_head s6_arrowhead2"></div>
+
+          <!-- 图像方框 -->
+          <div class="s6_box s6_image">图像</div>
+
+          <!-- 底部标签 -->
+          <div class="s6_tags">
+            <div class="s6_tag">数学证明</div>
+            <div class="s6_tag">设计趋势</div>
+            <div class="s6_tag">色彩分析</div>
+          </div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文 Prompts</button>
+        <div class="source-body">
+          <span class="source-label">Cantor's Proof</span>
+          <p>cantor's diagonalization proof, infographic</p>
+          <span class="source-label">Design Trends</span>
+          <p>make an wheatpaste poster of the 6 biggest design trends in 2025. make sure each pane is the same size.</p>
+          <span class="source-label">Color Analysis</span>
+          <p>Using this portrait, create a diagram-first personal color analysis. Show which clothing colors suit the subject through visual comparison. Keep text minimal and avoid paragraphs.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S7: Thought Partner -->
+  <section class="feed-section s-light">
+    <div class="section-inner">
+      <div class="section-label reveal">Visual Thought Partner</div>
+      <h2 class="big-statement reveal reveal-d1">一句话需求，全套品牌输出——AI 成了创意总监</h2>
+      <p class="body-text reveal reveal-d2">视觉思维伙伴是 GPT Image 2 最具颠覆性的应用场景。一个用户只说了「我要在布鲁克林开一家叫 Kizuki 的抹茶店，要日式极简风」，模型就自动产出了适配 Twitter、Instagram Stories、IG Feed 和 LinkedIn <span class="hl">四种平台的完整广告套件</span>。这不是四次独立的图片生成——模型在内部进行了品牌策略推理：因为它理解了跨平台一致性的重要性，所以自动统一了配色、字体和构图语言。另一个例子是 Spud &amp; Garlic 四页漫画——用户只写了一句 prompt，模型就输出了<span class="hl2">完整的角色设计、叙事弧线和视觉风格</span>。</p>
+      <div class="anim-stage reveal reveal-d2" id="s7-anim">
+        <style>
+/* S7 — 视觉思维伙伴 */
+.s7_stage {
+  position: relative;
+  width: 340px;
+  height: 320px;
+  margin: 0 auto;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.s7_stage.visible {
+  opacity: 1;
+}
+
+/* 顶部 Prompt 方框 */
+.s7_prompt {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-12px);
+  border: 2.5px solid #0EA5E9;
+  border-radius: 12px;
+  background: #fff;
+  padding: 8px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0EA5E9;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+/* 主干线 */
+.s7_trunk {
+  position: absolute;
+  top: 52px;
+  left: 50%;
+  width: 2px;
+  height: 0;
+  background: #CBD5E1;
+  transform: translateX(-50%);
+  border-radius: 1px;
+}
+
+/* 分叉点 */
+.s7_fork_dot {
+  position: absolute;
+  top: 104px;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #CBD5E1;
+  transform: translate(-50%, -50%) scale(0);
+}
+
+/* 分支线 — 从分叉点到各平台方框 */
+.s7_branches {
+  position: absolute;
+  top: 108px;
+  left: 0;
+  right: 0;
+  height: 80px;
+}
+.s7_branch {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 0;
+  background: #CBD5E1;
+  border-radius: 1px;
+  transform-origin: top center;
+}
+/* 4条分支从中心(170px)向各目标角度展开 */
+.s7_branch:nth-child(1) { left: 170px; transform: rotate(-36deg); }
+.s7_branch:nth-child(2) { left: 170px; transform: rotate(-12deg); }
+.s7_branch:nth-child(3) { left: 170px; transform: rotate(12deg); }
+.s7_branch:nth-child(4) { left: 170px; transform: rotate(36deg); }
+
+/* 平台方框容器 */
+.s7_platforms {
+  position: absolute;
+  top: 190px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-around;
+  padding: 0 12px;
+}
+.s7_platform {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  opacity: 0;
+  transform: scale(0);
+}
+.s7_platform_box {
+  position: relative;
+  border: 2px solid #F97316;
+  border-radius: 10px;
+  background: #fff;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #F97316;
+  white-space: nowrap;
+  min-width: 56px;
+  text-align: center;
+}
+
+/* 品牌一致小橙点 */
+.s7_brand_dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #F97316;
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* 底部标签 */
+.s7_label {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: #94A3B8;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* === KEYFRAMES === */
+@keyframes s7_fadeSlideIn {
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes s7_drawDown {
+  to { height: 54px; }
+}
+@keyframes s7_dotIn {
+  to { transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes s7_branchGrow {
+  to { height: 80px; }
+}
+@keyframes s7_platformIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s7_brandDotIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s7_labelIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === ANIMATION SEQUENCE (triggered by .visible) === */
+.s7_stage.visible .s7_prompt {
+  animation: s7_fadeSlideIn 0.5s 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.s7_stage.visible .s7_trunk {
+  animation: s7_drawDown 0.4s 1.0s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.s7_stage.visible .s7_fork_dot {
+  animation: s7_dotIn 0.3s 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* 分支线依次展开 */
+.s7_stage.visible .s7_branch:nth-child(1) { animation: s7_branchGrow 0.35s 1.8s ease-out forwards; }
+.s7_stage.visible .s7_branch:nth-child(2) { animation: s7_branchGrow 0.35s 2.0s ease-out forwards; }
+.s7_stage.visible .s7_branch:nth-child(3) { animation: s7_branchGrow 0.35s 2.2s ease-out forwards; }
+.s7_stage.visible .s7_branch:nth-child(4) { animation: s7_branchGrow 0.35s 2.4s ease-out forwards; }
+
+/* 平台方框依次出现 */
+.s7_stage.visible .s7_platform:nth-child(1) { animation: s7_platformIn 0.35s 2.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.s7_stage.visible .s7_platform:nth-child(2) { animation: s7_platformIn 0.35s 2.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.s7_stage.visible .s7_platform:nth-child(3) { animation: s7_platformIn 0.35s 3.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.s7_stage.visible .s7_platform:nth-child(4) { animation: s7_platformIn 0.35s 3.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+/* 品牌一致小橙点同时出现 */
+.s7_stage.visible .s7_brand_dot {
+  animation: s7_brandDotIn 0.3s 4.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* 底部标签 */
+.s7_stage.visible .s7_label {
+  animation: s7_labelIn 0.4s 4.8s ease forwards;
+}
+</style>
+        <div class="s7_stage">
+          <!-- 1. 顶部 Prompt -->
+          <div class="s7_prompt">一句 Prompt</div>
+
+          <!-- 2. 主干线 -->
+          <div class="s7_trunk"></div>
+
+          <!-- 3. 分叉点 -->
+          <div class="s7_fork_dot"></div>
+
+          <!-- 4. 分支线 -->
+          <div class="s7_branches">
+            <div class="s7_branch"></div>
+            <div class="s7_branch"></div>
+            <div class="s7_branch"></div>
+            <div class="s7_branch"></div>
+          </div>
+
+          <!-- 5. 平台方框 -->
+          <div class="s7_platforms">
+            <div class="s7_platform">
+              <div class="s7_platform_box">Twitter<span class="s7_brand_dot"></span></div>
+            </div>
+            <div class="s7_platform">
+              <div class="s7_platform_box">Stories<span class="s7_brand_dot"></span></div>
+            </div>
+            <div class="s7_platform">
+              <div class="s7_platform_box">Feed<span class="s7_brand_dot"></span></div>
+            </div>
+            <div class="s7_platform">
+              <div class="s7_platform_box">LinkedIn<span class="s7_brand_dot"></span></div>
+            </div>
+          </div>
+
+          <!-- 6. 底部标签 -->
+          <div class="s7_label">跨平台品牌一致性</div>
+        </div>
+      </div>
+      <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-thought', this)">看看完整案例 ↓</button>
+    </div>
+  </section>
+
+  <!-- S8: Partners -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="section-label reveal">Partner Ecosystem</div>
+      <h2 class="big-statement reveal reveal-d1">Canva、Figma、Adobe——创意工具链集体拥抱</h2>
+      <p class="body-text reveal reveal-d2">GPT Image 2 不是一个孤立的产品，而是正在成为整个创意工具生态的底层引擎。Canva 的创意策略师 Dwayne Koh 说，最让他们惊讶的不是图像质量，而是模型的<span class="hl">「创意推理能力和设计品味」</span>——模型会主动加入「TikTok 爆款」贴纸这样的创意元素，这不是渲染，而是理解受众。Figma 的首席设计官强调它「从文字到照片级场景」的全栈能力。Adobe Firefly 将它纳入全能创意 AI 工作室。OpenArt 则直接用它做 Smart Shot 功能的<span class="hl2">「创意总监」</span>——用户输入简单 prompt，GPT Image 2 设计角色、搭建场景、规划镜头、设定运镜。</p>
+      <div class="anim-stage reveal reveal-d2" id="s8-anim">
+        <style>
+/* S8 — Partner Ecosystem (Dark Background) */
+.s8_stage {
+  position: relative;
+  width: 340px;
+  height: 300px;
+  margin: 0 auto;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.s8_stage.visible {
+  opacity: 1;
+}
+
+/* Center box: GPT Image 2 */
+.s8_center {
+  position: absolute;
+  top: 130px; left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 120px; height: 40px;
+  border-radius: 8px;
+  background: #F97316;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+/* SVG for connection lines */
+.s8_svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 340px;
+  height: 300px;
+  z-index: 1;
+}
+.s8_svg line {
+  stroke: rgba(255,255,255,0.3);
+  stroke-width: 2;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+}
+
+/* Partner boxes */
+.s8_partner {
+  position: absolute;
+  width: 80px; height: 36px;
+  border-radius: 8px;
+  border: 2px solid rgba(255,255,255,0.3);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #F1F5F9;
+  opacity: 0;
+  transform: scale(0);
+  z-index: 2;
+  transition: border-color 0.5s ease, box-shadow 0.5s ease;
+}
+.s8_p1 { top: 24px; left: 24px; }
+.s8_p2 { top: 24px; right: 24px; }
+.s8_p3 { top: 240px; left: 24px; }
+.s8_p4 { top: 240px; right: 24px; }
+
+/* Bottom text */
+.s8_caption {
+  position: absolute;
+  bottom: 4px; left: 0; right: 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: #F1F5F9;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* === Keyframes === */
+@keyframes s8_scaleInCenter {
+  to { transform: translateX(-50%) scale(1); }
+}
+@keyframes s8_lineReveal {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes s8_partnerIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s8_captionIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === Animation Sequence === */
+/* Step 1: Center box (0.3s) */
+.s8_stage.visible .s8_center {
+  animation: s8_scaleInCenter 0.5s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Step 2: Lines draw out (1.0s-1.6s) */
+.s8_stage.visible .s8_l1 { animation: s8_lineReveal 0.5s 1.0s ease-out forwards; }
+.s8_stage.visible .s8_l2 { animation: s8_lineReveal 0.5s 1.2s ease-out forwards; }
+.s8_stage.visible .s8_l3 { animation: s8_lineReveal 0.5s 1.4s ease-out forwards; }
+.s8_stage.visible .s8_l4 { animation: s8_lineReveal 0.5s 1.6s ease-out forwards; }
+
+/* Step 3: Partners appear (2.0s-3.2s) */
+.s8_stage.visible .s8_p1 { animation: s8_partnerIn 0.4s 2.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.s8_stage.visible .s8_p2 { animation: s8_partnerIn 0.4s 2.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.s8_stage.visible .s8_p3 { animation: s8_partnerIn 0.4s 2.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.s8_stage.visible .s8_p4 { animation: s8_partnerIn 0.4s 3.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+/* Step 4: Blue activation handled by JS */
+.s8_partner.s8_active {
+  border-color: #0EA5E9 !important;
+  box-shadow: 0 0 12px rgba(14,165,233,0.4);
+}
+
+/* Step 5: Caption (5.0s) */
+.s8_stage.visible .s8_caption {
+  animation: s8_captionIn 0.4s 5.0s ease forwards;
+}
+</style>
+        <div class="s8_stage">
+          <!-- SVG lines from center to four corners -->
+          <svg class="s8_svg" viewBox="0 0 340 300">
+            <!-- Center point: 170, 150 -->
+            <!-- P1 Canva center: 64, 42 -->
+            <line class="s8_l1" x1="170" y1="150" x2="64" y2="42" />
+            <!-- P2 Figma center: 276, 42 -->
+            <line class="s8_l2" x1="170" y1="150" x2="276" y2="42" />
+            <!-- P3 Adobe center: 64, 258 -->
+            <line class="s8_l3" x1="170" y1="150" x2="64" y2="258" />
+            <!-- P4 OpenArt center: 276, 258 -->
+            <line class="s8_l4" x1="170" y1="150" x2="276" y2="258" />
+          </svg>
+
+          <!-- Center: GPT Image 2 -->
+          <div class="s8_center">GPT Image 2</div>
+
+          <!-- Partner boxes -->
+          <div class="s8_partner s8_p1" id="s8_p1">Canva</div>
+          <div class="s8_partner s8_p2" id="s8_p2">Figma</div>
+          <div class="s8_partner s8_p3" id="s8_p3">Adobe</div>
+          <div class="s8_partner s8_p4" id="s8_p4">OpenArt</div>
+
+          <!-- Caption -->
+          <div class="s8_caption">创意工具链的底层引擎</div>
+        </div>
+
+        <script>
+(function() {
+  var partners = ["s8_p1", "s8_p2", "s8_p3", "s8_p4"];
+  var delays = [3800, 4000, 4200, 4400];
+
+  partners.forEach(function(id, i) {
+    setTimeout(function() {
+      var el = document.getElementById(id);
+      if (el) el.classList.add("s8_active");
+    }, delays[i]);
+  });
+})();
+</script>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 合作伙伴原文</button>
+        <div class="source-body">
+          <span class="source-label">Canva — Dwayne Koh, Creative Strategist</span>
+          <p>What surprised us most was the detail GPT Image 2 added. It introduced elements we hadn't considered, like a "viral on TikTok" sticker--a smart creative choice designed to build hype. The model wasn't just rendering images. It was interpreting briefs, understanding audiences, and making creative decisions behind the scenes. We've been measuring AI on technical outputs. The real shift is creative reasoning and design taste--and that shift just happened.</p>
+          <span class="source-label">Figma — Loredana Crisan, Chief Design Officer</span>
+          <p>GPT Image 2 helps teams in Figma generate everything from text-rich visuals to photorealistic scenes, with major improvements in editing and aesthetics that give designers far more ways to shape and evolve the final result.</p>
+          <span class="source-label">Adobe Firefly — Mike Folgner, Senior Director, Product</span>
+          <p>Firefly is the all-in-one creative AI studio that brings together the industry's leading AI models and Adobe's powerful creative tools, and we're excited to expand that choice with the addition of GPT Image 2. GPT Image 2 in Firefly raises the bar for photorealism and prompt precision from one-shot image generation to structured visual content, giving creators even more freedom to explore and push their work further.</p>
+          <span class="source-label">OpenArt — Chloe Fang, Head of Partnerships</span>
+          <p>We use GPT Image 2 as the creative director behind Smart Shot--our cinematic video production feature that produces studio quality videos with very basic prompts. Users enter a simple prompt, and GPT Image 2 does the rest: it designs the characters, builds the environments, plans the shots, maps the camera movements. All of that then drives our video generation in Smart Shot.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /layer-overview -->
+
+
+<!-- ═══════════════════════════════════════════════════
+     LAYER: Precision (精确控制 — S2 drill)
+     ═══════════════════════════════════════════════════ -->
+<div class="layer" id="layer-precision" data-depth="1">
+
+  <!-- P1: Complex Scenes -->
+  <section class="feed-section s-light">
+    <div class="section-inner">
+      <div class="section-label reveal">精确控制 · 复杂场景</div>
+      <h2 class="big-statement reveal reveal-d1">一个 macOS 桌面——每个窗口都是真的</h2>
+      <p class="body-text reveal reveal-d2">这张生成图模拟了一个完整的 macOS 工作空间：ChatGPT 在前景窗口画了一只 ASCII 狗，背景散落着终端、音乐播放器、文件夹、便签——每个 UI 元素都<span class="hl">精确到像素级别</span>。之前的模型连「在截图里写一行可读的英文」都做不到，而现在它能同时处理多层窗口叠加、正确的阴影关系、以及每个窗口里不同的内容样式。</p>
+      <div class="img-gallery cols-1 reveal reveal-d2">
+        <div class="img-card">
+          <img src="https://images.ctfassets.net/kftzwdyauwt9/2NrxFDyv49oLAbaFtaLzD8/ca488767d16a07fbe4151ae905717458/screenshot.png?w=700&q=75" alt="macOS workspace with ChatGPT generating ASCII art" loading="lazy">
+          <div class="caption">Prompt: a screenshot of chatgpt, in a browser, in macosx. the user types "draw me a dog" chatgpt draws an ascii dog</div>
+        </div>
+      </div>
+      <div class="img-gallery cols-1 reveal reveal-d3">
+        <div class="img-card">
+          <img src="https://images.ctfassets.net/kftzwdyauwt9/4kfiu5SCWgIC47NrMO0hrc/fe754bdc922b44a18ff597ed1cafe38d/images-2-visual-polyglot.png?w=700&q=75" alt="Create Everything at Once collage poster" loading="lazy">
+          <div class="caption">Prompt: Create a beautifully designed set of studio artifacts for the launch of GPT Image 2</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- P2: Micro to Macro -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="section-label reveal">精确控制 · 从微观到宏观</div>
+      <h2 class="big-statement reveal reveal-d1">米粒上的刻字、杂志上的排版、笔记上的咖啡渍</h2>
+      <p class="body-text reveal reveal-d2">精确控制的另一面是<span class="hl">跨越尺度的一致性</span>。在微观层面，模型能在一粒真实大小的米上刻出「GPT Image 2」的文字，而且这粒米和周围的其他米完全融为一体。在宏观层面，它能生成一整本狼科普杂志的双页跨版——包含照片、统计图、地图、文字排版，所有元素都遵循真实杂志的版面规范。最令人惊叹的是那份手写笔记：不规则的铅笔力度、微微倾斜的行距、右上角的咖啡渍——每一个细节都在说「这是一个真人写的」。</p>
+      <div class="img-gallery cols-1 reveal reveal-d2">
+        <div class="img-card">
+          <img src="https://images.ctfassets.net/kftzwdyauwt9/1d8pOvm6qK9XSIwGPkki5Q/00ebd3d1f96d0c944a2abca8ede320eb/rice.png?w=700&q=75" alt="Rice mound with GPT Image 2 etched on one grain" loading="lazy">
+          <div class="caption">一粒米上刻出「GPT Image 2」——精确控制的极致展示</div>
+        </div>
+      </div>
+      <div class="img-gallery cols-2 reveal reveal-d3">
+        <div class="img-card">
+          <img src="https://images.ctfassets.net/kftzwdyauwt9/1NVKBVrPzgqnkZZwaRU2NY/cc55db889337c593624f6eb161cb3237/images-2-wolf-magazine.png?w=500&q=75" alt="Wolf magazine spread" loading="lazy">
+          <div class="caption">狼科普杂志——完整的编辑排版</div>
+        </div>
+        <div class="img-card">
+          <img src="https://images.ctfassets.net/kftzwdyauwt9/3bzFMXhknmq5TZvVL7Bm6D/59ca869b957cc52f0b22c239a08029dc/images-2-wbaseball-note.png?w=500&q=75" alt="Handwritten baseball note" loading="lazy">
+          <div class="caption">手写笔记——连咖啡渍都有</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文 Prompts</button>
+        <div class="source-body">
+          <span class="source-label">Rice Grain</span>
+          <p>Mound of rice with thousands of grains, zoomed out. One of those grains has "GPT Image 2" etched onto it, just big enough to fit on that single grain. This rice grain is exactly the same size as the others, not any bigger or smaller, and blends into the rice mound well so it cannot be spotted at a glance.</p>
+          <span class="source-label">Wolf Magazine</span>
+          <p>an editorial magazine page about wolves in north america and how they're more harmless than we think. make it look like a glossy, smooth, well laid out widely distributed science magazine.</p>
+          <span class="source-label">Handwritten Note</span>
+          <p>a photorealistic, taken by phone photo of a handwritten essay in pencil, bold but elegant handwriting, but messy and somewhat uneven, on an 8.5x11 piece of lined paper, about the history of baseball in toronto. make sure there is variance in the writing in a very human way. give it a slight coffee stain on the top right corner</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /layer-precision -->
+
+
+<!-- ═══════════════════════════════════════════════════
+     LAYER: Styles (风格画廊 — S4 drill)
+     ═══════════════════════════════════════════════════ -->
+<div class="layer" id="layer-styles" data-depth="1">
+
+  <!-- ST1: Photography -->
+  <section class="feed-section s-light2">
+    <div class="section-inner">
+      <div class="section-label reveal">风格画廊 · 胶片摄影</div>
+      <h2 class="big-statement reveal reveal-d1">颗粒感、闪光灯、不完美构图——胶片的灵魂</h2>
+      <p class="body-text reveal reveal-d2">这组生成图展示了 GPT Image 2 对胶片摄影「灵魂」的理解。从海岸边的旅行随拍到深夜街头的闪光灯快照，从超现实主义的人物肖像到讲堂递归幻觉——每张图都不只是「看起来像照片」，而是<span class="hl">捕捉到了特定摄影传统的内在逻辑</span>。因为 35mm 胶片的特征是意外和不完美，所以模型学会了刻意引入轻微的运动模糊、偏色和非对称构图。</p>
+      <div class="img-gallery cols-2 reveal reveal-d2">
+        <div class="img-card">
+          <img src="https://images.ctfassets.net/kftzwdyauwt9/6xvpGcclxpKI8LxTBvsrRB/fa483614f27623d3bee1bd3fdb35bc67/images-2-candid-people-1.png?w=500&q=75" alt="Candid coastal travel scene" loading="lazy">
+          <div class="caption">35mm 海岸旅行——自然光、胶片颗粒、风中的衣角</div>
+        </div>
+        <div class="img-card">
+          <img src="https://images.ctfassets.net/kftzwdyauwt9/4dwQqstABTMhoGAGJFrf3Q/4e9f462c9223275697ae7903a5fc6ec8/images-2-candid-people-2.png?w=500&q=75" alt="Night flash portrait" loading="lazy">
+          <div class="caption">夜拍闪光灯——2000年代的派对快照</div>
+        </div>
+      </div>
+      <div class="img-gallery cols-2 reveal reveal-d3">
+        <div class="img-card">
+          <img src="https://images.ctfassets.net/kftzwdyauwt9/mbb7bDGY0mh5UHm1IaPxk/b2bf6e96c07a8a79a772e1b87ecc81e2/dc02fe03-ac6f-46cf-802e-fa6e0847242f.png?w=500&q=75" alt="Surreal portrait with poodle" loading="lazy">
+          <div class="caption">超现实肖像——中画幅彩色胶片 + 诡异美学</div>
+        </div>
+        <div class="img-card">
+          <img src="https://images.ctfassets.net/kftzwdyauwt9/3xautZyecyR6UmGw8Vkynb/771d250d772932db469fb9b4f071b68d/images-2-aliens.png?w=500&q=75" alt="Two aliens at a cafe" loading="lazy">
+          <div class="caption">外星人下午茶——iPhone 随手拍的质感</div>
+        </div>
+      </div>
+      <div class="img-gallery cols-2 reveal reveal-d4">
+        <div class="img-card">
+          <img src="https://images.ctfassets.net/kftzwdyauwt9/4m2Gvq5bciRsEIMudUnKcF/8193787c6a48bd35b1c875f02f7a42dc/images-2-lecture-hall.png?w=500&q=75" alt="Recursive lecture hall" loading="lazy">
+          <div class="caption">递归讲堂——幻灯片里还有幻灯片</div>
+        </div>
+        <div class="img-card">
+          <img src="https://images.ctfassets.net/kftzwdyauwt9/5JeYTlBJ78xCcsANi5ktl2/605eccad62ad1ef1e679e0e8381cbfd5/images-2-high-fashion.png?w=500&q=75" alt="High fashion book spread" loading="lazy">
+          <div class="caption">高定时尚画册——雕塑感礼服 + 极简摄影</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ST2: Manga & Posters -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="section-label reveal">风格画廊 · 漫画与海报</div>
+      <h2 class="big-statement reveal reveal-d1">Seinen 漫画、法国新浪潮、捷克超现实——风格无边界</h2>
+      <p class="body-text reveal reveal-d2">从日本青年漫画的城市孤独感，到法国新浪潮海报的拼贴张力，再到捷克电影海报的超现实隐喻——GPT Image 2 展示了跨越文化和时代的风格掌控力。因为每种视觉传统都有自己的「设计语法」——漫画用分镜和对白框叙事，海报用排版和色彩冲突制造戏剧感——模型需要理解这些语法才能产出<span class="hl">看起来「对」的作品</span>。</p>
+      <div class="img-gallery cols-2 reveal reveal-d2">
+        <div class="img-card">
+          <img src="https://images.ctfassets.net/kftzwdyauwt9/481LFZ4eKWcrfwFGogeFzD/45da93bffa9ba79636cb81d4d14726df/shonenfinal.png?w=500&q=75" alt="Seinen manga page" loading="lazy">
+          <div class="caption">Seinen 漫画——城市夜景中的内省独白</div>
+        </div>
+        <div class="img-card">
+          <img src="https://images.ctfassets.net/kftzwdyauwt9/4AyC30cxPyoYBfFvfdqhRp/e1f7be38c0824d427585f3e05965d568/images-2-miami-comic.png?w=500&q=75" alt="Miami retro comic" loading="lazy">
+          <div class="caption">复古漫画——迈阿密博物馆之旅</div>
+        </div>
+      </div>
+      <div class="img-gallery cols-2 reveal reveal-d3">
+        <div class="img-card">
+          <img src="https://images.ctfassets.net/kftzwdyauwt9/2Kq5RY9pfpebx8KGtPncM8/e0dd81257a5830f16c2d55cad12c5ef5/images-2-french-poster.png?w=500&q=75" alt="French New Wave poster" loading="lazy">
+          <div class="caption">法国新浪潮——拼贴 + 错版油墨 + 街头能量</div>
+        </div>
+        <div class="img-card">
+          <img src="https://images.ctfassets.net/kftzwdyauwt9/22ol9nmZrQy2Xsw4XjI1vM/22be03ab391d67728c126a2150daff05/images-2-Czech-poster.png?w=500&q=75" alt="Czech film poster" loading="lazy">
+          <div class="caption">捷克超现实——意识的海洋与阶梯</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文 Prompts</button>
+        <div class="source-body">
+          <span class="source-label">Seinen Manga</span>
+          <p>a page of a comic book in the style of Japanese Seinen manga</p>
+          <span class="source-label">French New Wave Poster</span>
+          <p>1960s French New Wave theatrical poster, bold photomontage composition, torn-paper collage sensibility, pop-art color bursts, high-contrast black-and-white imagery with selective red blue and yellow accents, hand-made offset-print texture, slightly off-register ink, expressive asymmetry, art-house poster cool, graphic spontaneity, street-poster energy, adventurous typography-led design.</p>
+          <span class="source-label">Czech Film Poster</span>
+          <p>1960s Czechoslovak film poster, surreal metaphor-driven composition, collage sensibility, painterly photomontage feel, symbolic central imagery, art-house theatrical mood, muted but slightly acidic color palette, hand-made print texture, off-register ink, distressed paper surface, unusual visual juxtapositions, elegant tension between abstraction and narrative, vintage gallery-poster sophistication.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /layer-styles -->
+
+
+<!-- ═══════════════════════════════════════════════════
+     LAYER: Thought Partner (视觉思维伙伴 — S7 drill)
+     ═══════════════════════════════════════════════════ -->
+<div class="layer" id="layer-thought" data-depth="1">
+
+  <!-- TP1: Branding System -->
+  <section class="feed-section s-light">
+    <div class="section-inner">
+      <div class="section-label reveal">思维伙伴 · 品牌系统</div>
+      <h2 class="big-statement reveal reveal-d1">一句 prompt，四个平台的完整广告套件</h2>
+      <p class="body-text reveal reveal-d2">用户只说了「我要在布鲁克林开一家叫 Kizuki 的抹茶店，要日式极简风 + 草莓抹茶」，GPT Image 2 就自动产出了适配不同平台比例的完整品牌视觉系统。这些不是同一张图的裁切——模型根据每个平台的特点<span class="hl">重新编排了构图</span>：横幅版突出品牌名和地址信息，竖版强调产品特写和氛围感，方形版平衡了两者。配色、字体、视觉风格在所有版本中保持了完美一致。</p>
+      <div class="img-gallery cols-1 reveal reveal-d2">
+        <div class="img-card wide">
+          <img src="https://images.ctfassets.net/kftzwdyauwt9/58nJ56zIF7MdCHlmWe1oPF/89ed5c8d4c0b6c5cf142203393f7267b/imagegen_call_001_image_002.png?w=700&q=75" alt="Kizuki matcha wide banner" loading="lazy">
+          <div class="caption">Twitter / LinkedIn 横幅版——突出品牌名与地址</div>
+        </div>
+      </div>
+      <div class="img-gallery cols-2 reveal reveal-d3">
+        <div class="img-card">
+          <img src="https://images.ctfassets.net/kftzwdyauwt9/5EfRow9gTQXv2IQXl7iSca/76a78c9e4dcb80459d08a92733f82691/imagegen_call_000_image_000.png?w=400&q=75" alt="Kizuki matcha square" loading="lazy">
+          <div class="caption">Instagram Feed 方形版</div>
+        </div>
+        <div class="img-card">
+          <img src="https://images.ctfassets.net/kftzwdyauwt9/13OzIXVn60jxMA1eIXRY63/f77db9f979f2dbc9e89163ccfd839c80/imagegen_call_001_image_001.png?w=400&q=75" alt="Kizuki matcha stories" loading="lazy">
+          <div class="caption">Instagram Stories 竖版</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TP2: Academic & Search -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="section-label reveal">思维伙伴 · 研究与思考工具</div>
+      <h2 class="big-statement reveal reveal-d1">把论文变成海报、把搜索变成视觉——思维可视化</h2>
+      <p class="body-text reveal reveal-d2">GPT Image 2 的「思维伙伴」能力不限于商业设计。在学术场景中，它能把一篇 PDF 论文转化为<span class="hl">专业的会议海报</span>——自动提取摘要、方法、结果和关键图表，按学术海报的排版规范组织。在「Thinking Mode」下，模型还能先上网搜索信息，再将搜索结果转化为精美的视觉输出——比如搜索 OpenAI 官方商城的产品，然后自动生成一张产品展示海报。这正说明图像生成不再是孤立的功能，而是<span class="hl2">与推理和搜索能力深度整合</span>的端到端系统。</p>
+      <div class="img-gallery cols-1 reveal reveal-d2">
+        <div class="img-card">
+          <img src="https://images.ctfassets.net/kftzwdyauwt9/1yUBt67WDGTElK8TIdPKFM/395367811dbcc013a22141b2f05a2382/images-2-academic-poster.png?w=700&q=75" alt="Academic poster from GPT-1 paper" loading="lazy">
+          <div class="caption">GPT-1 论文 → 学术会议海报（自动提取关键内容）</div>
+        </div>
+      </div>
+      <div class="img-gallery cols-2 reveal reveal-d3">
+        <div class="img-card">
+          <img src="https://images.ctfassets.net/kftzwdyauwt9/4oLLvXIdqb8hp4LkNdyF1s/d5afba069ac6b4b6f3f927efb4322898/images-2-thinking-mode-searches.png?w=500&q=75" alt="Thinking Mode merch poster" loading="lazy">
+          <div class="caption">Thinking Mode 搜索 → 产品展示海报</div>
+        </div>
+        <div class="img-card">
+          <img src="https://images.ctfassets.net/kftzwdyauwt9/lWzKbsn0BQFKD4aMpemJ9/994e37ed952c31435db8781e4577dac9/image__12_.png?w=500&q=75" alt="Blackboard math proof" loading="lazy">
+          <div class="caption">黑板数学证明——视觉化推理过程</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文 Prompts</button>
+        <div class="source-body">
+          <span class="source-label">Academic Poster</span>
+          <p>Please make a landscape academic paper poster based on the uploaded PDF file. Remember to include important charts/diagrams/plots from the source.</p>
+          <span class="source-label">Thinking Mode Search</span>
+          <p>Search for the merch in OpenAI supply co website and make a professional poster displaying our merch in a nice layout. The title of the poster should be "Thinking Mode Searches". Along the title there is a subtitle "With thinking mode, the model can automatically browse the internet and find relevant contents for reference."</p>
+          <span class="source-label">Blackboard Proof</span>
+          <p>a 35mm film photograph of a blackboard in a classroom, and on the blackboard is a visual proof of sum of odd numbers is a square. there is a title "Thinking Mode On" before the math proof. Aspect Ratio: 4:5 portrait.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /layer-thought -->
+
+
+<!-- ═══════════════════════════════════════════════════
+     SCRIPTS
+     ═══════════════════════════════════════════════════ -->
+<script>
+// ── State ──
+var layerStack = ['layer-overview'];
+var transitioning = false;
+
+var layerNames = {
+  'layer-overview': '概览',
+  'layer-precision': '精确控制',
+  'layer-styles': '风格画廊',
+  'layer-thought': '思维伙伴'
+};
+
+// ── Coverage Data ──
+var coverageData = {
+  sourceType: "text",
+  totalLength: "约60000字（含图片prompts和alt描述）",
+  segments: [
+    { start: 0, end: 200, section: 1, reason: null },
+    { start: 200, end: 8000, section: 2, reason: null },
+    { start: 8000, end: 15000, section: 3, reason: null },
+    { start: 15000, end: 25000, section: 4, reason: null },
+    { start: 25000, end: 32000, section: 5, reason: null },
+    { start: 32000, end: 38000, section: 6, reason: null },
+    { start: 38000, end: 48000, section: 7, reason: null },
+    { start: 48000, end: 55000, section: 8, reason: null },
+    { start: 55000, end: 60000, section: null, reason: "重复prompt数据（页面RSC双写）" }
+  ]
+};
+
+// ── Topic Data ──
+var topicData = {
+  1: [
+    { name: "产品定位与发布", status: "included" },
+    { name: "六大能力维度", status: "included" },
+    { name: "视觉思维伙伴定义", status: "included" },
+    { name: "发布视频介绍", status: "compressed", reason: "视频内容无法文字化", excerpt: "Video introducing Images 2.0 in ChatGPT" }
+  ],
+  2: [
+    { name: "macOS桌面截图", status: "deep-dive" },
+    { name: "创意工作室拼贴", status: "deep-dive" },
+    { name: "米粒刻字精度", status: "included" },
+    { name: "杂志版面生成", status: "deep-dive" },
+    { name: "手写笔记模拟", status: "deep-dive" }
+  ],
+  3: [
+    { name: "日本少年漫画", status: "included" },
+    { name: "印度多语言书店", status: "included" },
+    { name: "韩国韩屋广告", status: "included" },
+    { name: "多语言排版海报", status: "included" },
+    { name: "中文漫画页面", status: "compressed", reason: "与日本漫画示例相似", excerpt: "Additional instructions: Aspect ratio: Portrait 1440x2560. The pen should have an OpenAI logo on it. The language throughout the manga should be Japanese." }
+  ],
+  4: [
+    { name: "35mm胶片人像", status: "deep-dive" },
+    { name: "夜拍闪光灯快照", status: "deep-dive" },
+    { name: "超现实肖像摄影", status: "deep-dive" },
+    { name: "递归讲堂幻觉", status: "deep-dive" },
+    { name: "外星人日常快照", status: "deep-dive" },
+    { name: "高定时尚画册", status: "deep-dive" },
+    { name: "Seinen漫画", status: "deep-dive" },
+    { name: "法国新浪潮海报", status: "deep-dive" },
+    { name: "捷克超现实海报", status: "deep-dive" },
+    { name: "怀旧电脑室", status: "compressed", reason: "与摄影示例类似", excerpt: "Create one photorealistic candid disposable-camera snapshot from a fictional early 2000s American high school computer lab, alternate-history/anachronistic premise: every student is using ChatGPT on old beige CRT monitors and bulky desktop towers." }
+  ],
+  5: [
+    { name: "篮球动作超宽分解", status: "included" },
+    { name: "城市全景iPhone模拟", status: "included" },
+    { name: "Art Deco书签", status: "included" },
+    { name: "绘本蜿蜒路径", status: "included" },
+    { name: "中国山水画长卷", status: "compressed", reason: "与全景比例示例重叠", excerpt: "Traditional long Chinese 山水画. Aspect ratio: Landscape 3:1" }
+  ],
+  6: [
+    { name: "康托尔对角线证明", status: "included" },
+    { name: "2025设计趋势信息图", status: "included" },
+    { name: "设计趋势街头海报版", status: "included" },
+    { name: "个人色彩分析", status: "included" }
+  ],
+  7: [
+    { name: "Kizuki抹茶品牌系统", status: "deep-dive" },
+    { name: "Spud&Garlic四页漫画", status: "included" },
+    { name: "学术论文海报化", status: "deep-dive" },
+    { name: "Thinking Mode搜索", status: "deep-dive" },
+    { name: "黑板数学证明", status: "deep-dive" },
+    { name: "动漫角色设定页", status: "compressed", reason: "个性化功能展示", excerpt: "Based on everything you know about me, make a character sheet of shonen-style anime character of me, name is adele" }
+  ],
+  8: [
+    { name: "Canva创意推理评价", status: "included" },
+    { name: "Figma设计工具整合", status: "included" },
+    { name: "Adobe Firefly集成", status: "included" },
+    { name: "OpenArt Smart Shot", status: "included" },
+    { name: "模型局限性", status: "compressed", reason: "展示用图无详细文字说明", excerpt: "The page includes 3 limitation example images showing areas where the model still has room for improvement." }
+  ]
+};
+
+// ── IntersectionObserver management ──
+var observers = new Map();
+
+function setupObserver(layerId) {
+  if (observers.has(layerId)) return;
+  var layer = document.getElementById(layerId);
+  if (!layer) return;
+  var reveals = layer.querySelectorAll('.reveal, [class*=\"_stage\"]');
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        // Propagate .visible to _stage children (animation trigger)
+        var stage = e.target.querySelector('[class*="_stage"]');
+        if (stage) stage.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.15, root: layer });
+  reveals.forEach(function(el) { obs.observe(el); });
+  observers.set(layerId, obs);
+}
+
+function resetReveals(layerId) {
+  var layer = document.getElementById(layerId);
+  if (!layer) return;
+  layer.querySelectorAll('.reveal').forEach(function(el) { el.classList.remove('visible'); });
+  layer.querySelectorAll('[class*="_stage"]').forEach(function(el) { el.classList.remove('visible'); });
+}
+
+function activateReveals(layerId) {
+  resetReveals(layerId);
+  if (observers.has(layerId)) { observers.get(layerId).disconnect(); observers.delete(layerId); }
+  requestAnimationFrame(function() { setupObserver(layerId); });
+}
+
+// ── Breadcrumb ──
+function updateBreadcrumb() {
+  var bc = document.getElementById('breadcrumb');
+  bc.innerHTML = '';
+  layerStack.forEach(function(id, i) {
+    if (i > 0) {
+      var sep = document.createElement('span');
+      sep.className = 'sep'; sep.textContent = '>';
+      bc.appendChild(sep);
+    }
+    var span = document.createElement('span');
+    span.textContent = layerNames[id] || id;
+    if (i === layerStack.length - 1) { span.className = 'current'; }
+    else {
+      (function(idx) {
+        span.addEventListener('click', function() { goBackTo(idx); });
+      })(i);
+    }
+    bc.appendChild(span);
+  });
+
+  var backBtn = document.getElementById('backBtn');
+  backBtn.style.display = layerStack.length > 1 ? 'flex' : 'none';
+  bc.style.left = layerStack.length > 1 ? '60px' : '16px';
+
+  var dots = document.getElementById('depthDots');
+  var depth = layerStack.length - 1;
+  dots.querySelectorAll('.dot').forEach(function(d, i) {
+    d.classList.toggle('active', i === depth);
+  });
+}
+
+// ── Drill Down ──
+function drillDown(targetId, btnEl) {
+  if (transitioning) return;
+  transitioning = true;
+  var currentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var targetLayer = document.getElementById(targetId);
+
+  targetLayer.scrollTop = 0;
+  resetReveals(targetId);
+  targetLayer.style.visibility = 'visible';
+
+  var duration = 600;
+  currentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  currentLayer.style.transformOrigin = 'center center';
+  currentLayer.style.transform = 'scale(1.3)';
+  currentLayer.style.opacity = '0';
+
+  targetLayer.classList.add('active');
+  targetLayer.style.opacity = '0';
+  targetLayer.style.transform = 'scale(0.85)';
+  targetLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      targetLayer.style.opacity = '1';
+      targetLayer.style.transform = 'scale(1)';
+    });
+  });
+
+  setTimeout(function() {
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition = ''; currentLayer.style.transform = ''; currentLayer.style.opacity = '';
+    targetLayer.style.transition = ''; targetLayer.style.transform = '';
+    activateReveals(targetId);
+    transitioning = false;
+  }, duration + 50);
+
+  layerStack.push(targetId);
+  updateBreadcrumb();
+}
+
+// ── Go Back ──
+function goBack() {
+  if (layerStack.length <= 1 || transitioning) return;
+  transitioning = true;
+  var currentId = layerStack.pop();
+  var parentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var parentLayer = document.getElementById(parentId);
+
+  var duration = 600;
+  currentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  currentLayer.style.transform = 'scale(0.85)';
+  currentLayer.style.opacity = '0';
+
+  parentLayer.classList.add('active');
+  parentLayer.style.transform = 'scale(1.3)';
+  parentLayer.style.opacity = '0';
+  parentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      parentLayer.style.transform = 'scale(1)';
+      parentLayer.style.opacity = '1';
+    });
+  });
+
+  setTimeout(function() {
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition = ''; currentLayer.style.transform = '';
+    currentLayer.style.opacity = ''; currentLayer.style.visibility = '';
+    parentLayer.style.transition = ''; parentLayer.style.transform = '';
+    transitioning = false;
+  }, duration + 50);
+
+  updateBreadcrumb();
+}
+
+function goBackTo(targetIndex) {
+  if (transitioning) return;
+  while (layerStack.length - 1 > targetIndex) {
+    if (layerStack.length <= 1) break;
+    goBack(); return;
+  }
+}
+
+// ── Source panel ──
+function toggleSource(btn) {
+  btn.classList.toggle('open');
+  btn.nextElementSibling.classList.toggle('open');
+}
+
+// ── Init ──
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+
+</body>
+</html>

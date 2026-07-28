@@ -1,0 +1,2465 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>GPT-Image-2 从业者评测</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-act1: #FDF2F8; --bg-act2: #F0FDFA; --bg-act3: #FFF7ED;
+  --bg-dark: #0F172A;
+  --text: #1E293B; --text-muted: #64748B; --dim: #94A3B8;
+  --accent: #EC4899; --accent2: #14B8A6;
+  --warm: #F59E0B; --danger: #E11D48;
+  --neutral: #CBD5E1;
+  --card-bg: #FFFFFF;
+}
+
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Noto Sans SC', -apple-system, 'PingFang SC', sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; }
+
+/* ── Core framework ── */
+.content-width { max-width: 640px; margin: 0 auto; padding: 0 28px; }
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-d1 { transition-delay: 0.15s; }
+.reveal-d2 { transition-delay: 0.3s; }
+.reveal-d3 { transition-delay: 0.45s; }
+.reveal-d4 { transition-delay: 0.6s; }
+
+/* ── Typography ── */
+.big-statement { font-family: 'Noto Serif SC', serif; font-size: clamp(22px, 5.5vw, 32px); font-weight: 700; line-height: 1.5; margin-bottom: 32px; }
+.body-text { font-size: 16px; line-height: 1.9; color: var(--text); margin-bottom: 28px; }
+.body-text .hl { color: var(--accent); font-weight: 500; }
+.body-text .hl2 { color: var(--accent2); font-weight: 500; }
+.body-text .hl-danger { color: var(--danger); font-weight: 500; }
+.section-label { font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+.dark .section-label { color: #F9A8D4; }
+.hook-line { font-size: 15px; color: var(--accent); font-weight: 500; margin-top: 16px; margin-bottom: 16px; }
+.dark .hook-line { color: #F9A8D4; }
+
+/* ── Image showcase ── */
+.showcase-img { width: 100%; border-radius: 12px; margin: 16px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+.showcase-img-caption { font-size: 13px; color: var(--text-muted); text-align: center; margin-top: -8px; margin-bottom: 20px; }
+.img-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+.img-grid img { width: 100%; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+.img-compare { display: flex; gap: 12px; margin: 16px 0; align-items: flex-start; }
+.img-compare img { flex: 1; min-width: 0; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+
+/* ── Layer system ── */
+.layer {
+  position: fixed; inset: 0; overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  visibility: hidden; opacity: 0;
+  will-change: transform, opacity;
+  scroll-snap-type: y proximity;
+}
+.layer.active { visibility: visible; opacity: 1; }
+.layer.transitioning {
+  transition-property: transform, opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.feed-section {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 80px 24px;
+  scroll-snap-align: start;
+}
+.feed-section.dark { background: var(--bg-dark); color: #F1F5F9; }
+.feed-section.dark .body-text { color: #94A3B8; }
+.feed-section.dark .big-statement { color: #F1F5F9; }
+.section-inner { max-width: 600px; width: 100%; }
+
+/* ── Breadcrumb ── */
+.breadcrumb {
+  position: fixed; top: 16px; left: 16px; z-index: 1000;
+  display: flex; align-items: center; gap: 4px;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+  padding: 8px 14px; border-radius: 10px; box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+  font-size: 13px; font-weight: 500;
+}
+.breadcrumb span { color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
+.breadcrumb span:hover { color: var(--accent); }
+.breadcrumb span.current { color: var(--text); cursor: default; }
+.breadcrumb .sep { color: #CBD5E1; margin: 0 2px; cursor: default; }
+
+/* ── Back button ── */
+.back-btn {
+  position: fixed; top: 16px; left: 16px; z-index: 1001;
+  width: 38px; height: 38px; border-radius: 10px; border: none;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  font-size: 18px; cursor: pointer; display: none; align-items: center; justify-content: center;
+  color: var(--text); transition: all 0.2s;
+}
+.back-btn:hover { background: var(--accent); color: #fff; }
+
+/* ── Depth dots ── */
+.depth-dots {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1000;
+  display: flex; gap: 8px; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px);
+  padding: 8px 14px; border-radius: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #CBD5E1; transition: all 0.3s; }
+.dot.active { background: var(--accent); box-shadow: 0 0 8px rgba(236,72,153,0.5); transform: scale(1.2); }
+
+/* ── Drill button ── */
+.drill-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border: 1.5px solid rgba(236,72,153,0.3); border-radius: 10px;
+  background: transparent; color: var(--accent); font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.25s;
+}
+.drill-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(236,72,153,0.3); }
+.dark .drill-btn { border-color: rgba(236,72,153,0.4); color: #F9A8D4; }
+.dark .drill-btn:hover { background: var(--accent); color: #fff; }
+
+/* ── Source panel ── */
+.source-panel {
+  margin-top: 24px; border-radius: 12px; overflow: hidden;
+  border: 1px solid rgba(236,72,153,0.15); background: rgba(236,72,153,0.03);
+}
+.dark .source-panel { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
+.source-toggle {
+  width: 100%; padding: 12px 16px; border: none; background: none;
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 600; color: var(--accent);
+}
+.dark .source-toggle { color: #F9A8D4; }
+.source-toggle:hover { background: rgba(236,72,153,0.06); }
+.source-toggle .arrow { transition: transform 0.3s; font-size: 11px; }
+.source-toggle.open .arrow { transform: rotate(90deg); }
+.source-body {
+  max-height: 0; overflow: hidden; transition: max-height 0.4s ease; padding: 0 16px;
+}
+.source-body.open { max-height: 2000px; padding: 0 16px 16px; overflow-y: auto; }
+.source-body p { font-size: 13px; line-height: 1.8; color: var(--text-muted); margin: 0 0 12px; white-space: pre-wrap; }
+.dark .source-body p { color: #94A3B8; }
+.source-body .source-label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--accent); margin-bottom: 8px; display: block;
+}
+.dark .source-body .source-label { color: #F9A8D4; }
+
+/* ── Responsive ── */
+@media (max-width: 420px) {
+  .big-statement { font-size: clamp(20px, 5vw, 28px); }
+  .img-grid { grid-template-columns: 1fr; }
+  .img-compare { flex-direction: column; }
+}
+
+/* === S1: Evolution Stage === */
+.s1_stage {
+  position: relative;
+  width: 340px;
+  max-width: 90vw;
+  height: 280px;
+  margin: 0 auto;
+}
+
+/* Shared circle base */
+.s1_circle {
+  position: absolute;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* Step 1: DALL-E - small rough circle */
+.s1_dalle {
+  width: 56px;
+  height: 56px;
+  background: #94A3B8;
+  font-size: 12px;
+  left: 36px;
+  top: 112px;
+}
+
+/* Step 2: Image 1 - medium circle */
+.s1_img1 {
+  width: 72px;
+  height: 72px;
+  background: #CBD5E1;
+  font-size: 13px;
+  left: 134px;
+  top: 104px;
+}
+
+/* Step 3: Image 2 - large pink circle */
+.s1_img2 {
+  width: 96px;
+  height: 96px;
+  background: #EC4899;
+  font-size: 15px;
+  left: 224px;
+  top: 92px;
+}
+
+/* Step 4: Brain icon - small teal circle with "dendrites" */
+.s1_brain {
+  position: absolute;
+  left: 256px;
+  top: 36px;
+  width: 32px;
+  height: 32px;
+  opacity: 0;
+  transform: scale(0);
+}
+.s1_brain_core {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #14B8A6;
+  position: relative;
+}
+/* Dendrite lines radiating from brain */
+.s1_brain_core::before,
+.s1_brain_core::after {
+  content: '';
+  position: absolute;
+  background: #14B8A6;
+  border-radius: 2px;
+}
+.s1_brain_core::before {
+  width: 2px;
+  height: 10px;
+  top: -8px;
+  left: 15px;
+}
+.s1_brain_core::after {
+  width: 10px;
+  height: 2px;
+  top: 6px;
+  left: -7px;
+}
+/* Extra dendrite via box-shadow */
+.s1_brain_dendrite {
+  position: absolute;
+  width: 2px;
+  height: 10px;
+  background: #14B8A6;
+  border-radius: 2px;
+  top: -5px;
+  left: 6px;
+  transform: rotate(-35deg);
+}
+.s1_brain_dendrite2 {
+  position: absolute;
+  width: 2px;
+  height: 10px;
+  background: #14B8A6;
+  border-radius: 2px;
+  top: -5px;
+  right: 4px;
+  transform: rotate(35deg);
+}
+
+/* Connector line from brain to Image 2 circle */
+.s1_connector {
+  position: absolute;
+  left: 271px;
+  top: 68px;
+  width: 2px;
+  height: 0;
+  background: #14B8A6;
+  border-radius: 1px;
+}
+
+/* Step 5: Bottom label */
+.s1_label {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #475569;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* === S1 KEYFRAMES === */
+@keyframes s1_popIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s1_drawDown {
+  to { height: 24px; }
+}
+@keyframes s1_fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === S1 ANIMATION SEQUENCE triggered by .visible === */
+.s1_stage.visible .s1_dalle {
+  animation: s1_popIn 0.5s 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s1_stage.visible .s1_img1 {
+  animation: s1_popIn 0.5s 1.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s1_stage.visible .s1_img2 {
+  animation: s1_popIn 0.5s 1.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s1_stage.visible .s1_brain {
+  animation: s1_popIn 0.4s 2.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s1_stage.visible .s1_connector {
+  animation: s1_drawDown 0.35s 2.9s ease-out forwards;
+}
+.s1_stage.visible .s1_label {
+  animation: s1_fadeUp 0.5s 3.5s ease forwards;
+}
+
+/* S2 — Text Rendering: from misspelled to zero errors */
+
+.s2_stage {
+  position: relative;
+  width: 340px;
+  height: 260px;
+  margin: 0 auto;
+}
+
+/* Shared box style */
+.s2_box {
+  position: absolute;
+  top: 40px;
+  width: 140px;
+  height: 64px;
+  border-radius: 12px;
+  border: 2.5px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* Old box — gray */
+.s2_box_old {
+  left: 20px;
+  border-color: #CBD5E1;
+  background: rgba(203, 213, 225, 0.15);
+  color: #CBD5E1;
+}
+
+/* New box — pink */
+.s2_box_new {
+  right: 20px;
+  border-color: #EC4899;
+  background: rgba(236, 72, 153, 0.15);
+  color: #EC4899;
+}
+
+/* Labels above boxes */
+.s2_label {
+  position: absolute;
+  top: 18px;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(6px);
+}
+.s2_label_old {
+  left: 62px;
+  color: #94A3B8;
+}
+.s2_label_new {
+  right: 58px;
+  color: #EC4899;
+}
+
+/* Cross mark — pure CSS */
+.s2_cross {
+  position: absolute;
+  top: 28px;
+  left: 130px;
+  width: 28px;
+  height: 28px;
+  opacity: 0;
+  transform: scale(0);
+}
+.s2_cross::before,
+.s2_cross::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 22px;
+  height: 3px;
+  background: #EF4444;
+  border-radius: 2px;
+}
+.s2_cross::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.s2_cross::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+/* Check mark — pure CSS */
+.s2_check {
+  position: absolute;
+  top: 28px;
+  right: 130px;
+  width: 28px;
+  height: 28px;
+  opacity: 0;
+  transform: scale(0);
+}
+.s2_check::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 9px;
+  border-left: 3px solid #14B8A6;
+  border-bottom: 3px solid #14B8A6;
+  transform: translate(-50%, -60%) rotate(-45deg);
+}
+
+/* Bottom line */
+.s2_line {
+  position: absolute;
+  bottom: 52px;
+  left: 30px;
+  right: 30px;
+  height: 2px;
+  background: #334155;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+/* Bottom label */
+.s2_bottom_label {
+  position: absolute;
+  bottom: 24px;
+  right: 34px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #14B8A6;
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+/* === S2 Keyframes === */
+@keyframes s2_boxIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s2_markIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s2_fadeSlideUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s2_lineGrow {
+  to { transform: scaleX(1); }
+}
+
+/* === S2 Triggered sequence via .visible === */
+.s2_stage.visible .s2_box_old {
+  animation: s2_boxIn 0.45s 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s2_stage.visible .s2_label_old {
+  animation: s2_fadeSlideUp 0.35s 0.5s ease forwards;
+}
+
+.s2_stage.visible .s2_cross {
+  animation: s2_markIn 0.35s 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.s2_stage.visible .s2_box_new {
+  animation: s2_boxIn 0.45s 2.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s2_stage.visible .s2_label_new {
+  animation: s2_fadeSlideUp 0.35s 2.1s ease forwards;
+}
+
+.s2_stage.visible .s2_check {
+  animation: s2_markIn 0.35s 2.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.s2_stage.visible .s2_line {
+  animation: s2_lineGrow 0.5s 3.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.s2_stage.visible .s2_bottom_label {
+  animation: s2_fadeSlideUp 0.4s 4.2s ease forwards;
+}
+
+/* S3 — 设计排版：杂志级布局 */
+.s3_stage {
+  position: relative;
+  width: 340px;
+  height: 300px;
+  margin: 0 auto;
+  font-family: -apple-system, 'Helvetica Neue', 'PingFang SC', sans-serif;
+}
+
+/* 页面框 */
+.s3_page {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 240px;
+  height: 220px;
+  border: 2.5px solid #CBD5E1;
+  border-radius: 6px;
+  background: #fff;
+  opacity: 0;
+  transition: border-color 0.6s ease;
+}
+
+/* 标题色块 */
+.s3_title_block {
+  position: absolute;
+  top: 26px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 28px;
+  background: #EC4899;
+  border-radius: 4px;
+  opacity: 0;
+}
+
+/* 副标题色块 */
+.s3_subtitle_block {
+  position: absolute;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 140px;
+  height: 16px;
+  background: #CBD5E1;
+  border-radius: 3px;
+  opacity: 0;
+}
+
+/* 图片区域（正方形） */
+.s3_image_box {
+  position: absolute;
+  top: 96px;
+  left: 70px;
+  width: 64px;
+  height: 64px;
+  background: #EC4899;
+  border-radius: 4px;
+  opacity: 0;
+}
+
+/* 正文线条容器 */
+.s3_text_lines {
+  position: absolute;
+  top: 96px;
+  left: 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.s3_text_line {
+  height: 6px;
+  background: #CBD5E1;
+  border-radius: 3px;
+  opacity: 0;
+}
+.s3_text_line:nth-child(1) { width: 100px; }
+.s3_text_line:nth-child(2) { width: 88px; }
+.s3_text_line:nth-child(3) { width: 96px; }
+.s3_text_line:nth-child(4) { width: 72px; }
+
+/* 底部标签 */
+.s3_label {
+  position: absolute;
+  top: 248px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #EC4899;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* === S3 KEYFRAMES === */
+@keyframes s3_fadeIn {
+  to { opacity: 1; }
+}
+
+@keyframes s3_fadeSlideUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s3_pageIn {
+  to { opacity: 1; }
+}
+
+@keyframes s3_blockIn {
+  from { opacity: 0; transform: translateX(-50%) scaleX(0); }
+  to   { opacity: 1; transform: translateX(-50%) scaleX(1); }
+}
+
+@keyframes s3_boxIn {
+  from { opacity: 0; transform: scale(0); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s3_lineIn {
+  from { opacity: 0; width: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes s3_borderGlow {
+  to { border-color: #EC4899; box-shadow: 0 0 16px rgba(236, 72, 153, 0.2); }
+}
+
+/* === S3 ANIMATION SEQUENCE triggered by .visible === */
+
+/* Step 1: page frame appears (0.3s) */
+.s3_stage.visible .s3_page {
+  animation: s3_pageIn 0.5s 0.3s ease forwards;
+}
+
+/* Step 2: title block (0.9s) */
+.s3_stage.visible .s3_title_block {
+  animation: s3_blockIn 0.4s 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Step 3: subtitle block (1.5s) */
+.s3_stage.visible .s3_subtitle_block {
+  animation: s3_blockIn 0.4s 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Step 4: image box + text lines (2.1s) */
+.s3_stage.visible .s3_image_box {
+  animation: s3_boxIn 0.4s 2.1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s3_stage.visible .s3_text_line:nth-child(1) {
+  animation: s3_fadeIn 0.3s 2.3s ease forwards;
+}
+.s3_stage.visible .s3_text_line:nth-child(2) {
+  animation: s3_fadeIn 0.3s 2.5s ease forwards;
+}
+.s3_stage.visible .s3_text_line:nth-child(3) {
+  animation: s3_fadeIn 0.3s 2.7s ease forwards;
+}
+.s3_stage.visible .s3_text_line:nth-child(4) {
+  animation: s3_fadeIn 0.3s 2.9s ease forwards;
+}
+
+/* Step 5: border glow + label (3.5s) */
+.s3_stage.visible .s3_page {
+  animation: s3_pageIn 0.5s 0.3s ease forwards,
+             s3_borderGlow 0.6s 3.5s ease forwards;
+}
+.s3_stage.visible .s3_label {
+  animation: s3_fadeSlideUp 0.5s 3.8s ease forwards;
+}
+
+/* S4 — 双模式：闪电 vs 思考 */
+
+.s4_stage {
+  position: relative;
+  width: 340px;
+  height: 280px;
+  margin: 0 auto;
+}
+
+/* Prompt 方框 */
+.s4_prompt {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-12px);
+  background: #CBD5E1;
+  color: #0F172A;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 10px 28px;
+  border-radius: 10px;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+/* 竖线 */
+.s4_vline {
+  position: absolute;
+  top: 56px;
+  left: 50%;
+  width: 2px;
+  height: 0;
+  background: #CBD5E1;
+  transform: translateX(-50%);
+  border-radius: 1px;
+}
+
+/* 左分叉线 */
+.s4_fork_left {
+  position: absolute;
+  top: 116px;
+  left: 50%;
+  width: 2px;
+  height: 0;
+  background: #CBD5E1;
+  transform-origin: top center;
+  transform: translateX(-50%) rotate(-35deg);
+  border-radius: 1px;
+}
+
+/* 右分叉线 */
+.s4_fork_right {
+  position: absolute;
+  top: 116px;
+  left: 50%;
+  width: 2px;
+  height: 0;
+  background: #CBD5E1;
+  transform-origin: top center;
+  transform: translateX(-50%) rotate(35deg);
+  border-radius: 1px;
+}
+
+/* 左方框：闪电 */
+.s4_box_left {
+  position: absolute;
+  top: 168px;
+  left: 46px;
+  transform: translateX(-50%) scale(0);
+  background: #EC4899;
+  color: #F1F5F9;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 10px 24px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+/* 右方框：思考 */
+.s4_box_right {
+  position: absolute;
+  top: 168px;
+  right: 46px;
+  transform: translateX(50%) scale(0);
+  background: #14B8A6;
+  color: #F1F5F9;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 10px 24px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+/* 左标签 */
+.s4_label_left {
+  position: absolute;
+  top: 218px;
+  left: 46px;
+  transform: translateX(-50%);
+  font-size: 13px;
+  color: #94A3B8;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+/* 右标签 */
+.s4_label_right {
+  position: absolute;
+  top: 218px;
+  right: 46px;
+  transform: translateX(50%);
+  font-size: 13px;
+  color: #94A3B8;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+/* 分叉点小圆 */
+.s4_fork_dot {
+  position: absolute;
+  top: 112px;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #CBD5E1;
+  transform: translateX(-50%) scale(0);
+}
+
+/* === S4 KEYFRAMES === */
+
+@keyframes s4_fadeIn {
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes s4_drawDown {
+  to { height: 60px; }
+}
+
+@keyframes s4_forkGrow {
+  to { height: 70px; }
+}
+
+@keyframes s4_dotIn {
+  to { transform: translateX(-50%) scale(1); }
+}
+
+@keyframes s4_boxLeftIn {
+  to { transform: translateX(-50%) scale(1); }
+}
+
+@keyframes s4_boxRightIn {
+  to { transform: translateX(50%) scale(1); }
+}
+
+@keyframes s4_labelFade {
+  to { opacity: 1; }
+}
+
+/* === S4 ANIMATION SEQUENCE (triggered by .visible) === */
+
+.s4_stage.visible .s4_prompt {
+  animation: s4_fadeIn 0.5s 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.s4_stage.visible .s4_vline {
+  animation: s4_drawDown 0.5s 1.0s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.s4_stage.visible .s4_fork_dot {
+  animation: s4_dotIn 0.3s 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.s4_stage.visible .s4_fork_left {
+  animation: s4_forkGrow 0.5s 2.0s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.s4_stage.visible .s4_fork_right {
+  animation: s4_forkGrow 0.5s 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.s4_stage.visible .s4_box_left {
+  animation: s4_boxLeftIn 0.4s 2.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.s4_stage.visible .s4_box_right {
+  animation: s4_boxRightIn 0.4s 3.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.s4_stage.visible .s4_label_left {
+  animation: s4_labelFade 0.4s 3.8s ease forwards;
+}
+
+.s4_stage.visible .s4_label_right {
+  animation: s4_labelFade 0.4s 4.2s ease forwards;
+}
+
+/* S5 — 视觉理解：不只生成，还能看懂 */
+.s5_stage {
+  position: relative;
+  width: 340px;
+  height: 200px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* 照片圆（灰色，56px） */
+.s5_photo {
+  position: absolute;
+  top: 50px;
+  left: 30px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #CBD5E1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* 第一条横线：照片 → 理解 */
+.s5_line1 {
+  position: absolute;
+  top: 76px;
+  left: 86px;
+  width: 0;
+  height: 2px;
+  background: #CBD5E1;
+  border-radius: 1px;
+}
+
+/* 理解圆（青绿色，64px） */
+.s5_understand {
+  position: absolute;
+  top: 46px;
+  left: 138px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #14B8A6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* 第二条横线：理解 → 生成 */
+.s5_line2 {
+  position: absolute;
+  top: 76px;
+  left: 202px;
+  width: 0;
+  height: 2px;
+  background: #CBD5E1;
+  border-radius: 1px;
+}
+
+/* 生成圆（玫红色，64px） */
+.s5_generate {
+  position: absolute;
+  top: 46px;
+  left: 250px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #EC4899;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* 底部标签 */
+.s5_label {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: #94A3B8;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* === S5 Keyframes === */
+@keyframes s5_circleIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s5_drawRight {
+  to { width: 52px; }
+}
+@keyframes s5_drawRight2 {
+  to { width: 48px; }
+}
+@keyframes s5_labelIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === S5 Animation sequence triggered by .visible === */
+.s5_stage.visible .s5_photo {
+  animation: s5_circleIn 0.4s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s5_stage.visible .s5_line1 {
+  animation: s5_drawRight 0.4s 1.0s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.s5_stage.visible .s5_understand {
+  animation: s5_circleIn 0.4s 1.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s5_stage.visible .s5_line2 {
+  animation: s5_drawRight2 0.4s 2.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.s5_stage.visible .s5_generate {
+  animation: s5_circleIn 0.4s 3.1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s5_stage.visible .s5_label {
+  animation: s5_labelIn 0.4s 3.8s ease forwards;
+}
+
+/* S6 — 多语言：全球文字零错误 */
+.s6_stage {
+  position: relative;
+  width: 340px;
+  height: 320px;
+  margin: 0 auto;
+}
+
+.s6_svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 340px;
+  height: 320px;
+  z-index: 1;
+}
+
+.s6_svg line {
+  stroke: #CBD5E1;
+  stroke-width: 2;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+}
+
+/* Center circle */
+.s6_center {
+  position: absolute;
+  top: 120px; left: 130px;
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  border: 3px solid #EC4899;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #EC4899;
+  z-index: 2;
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* Language boxes — unified size */
+.s6_lang {
+  position: absolute;
+  width: 80px; height: 36px;
+  border-radius: 8px;
+  border: 2px solid #CBD5E1;
+  background: rgba(203,213,225,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #CBD5E1;
+  opacity: 0;
+  transform: scale(0);
+  z-index: 2;
+}
+
+.s6_lang:nth-child(2) { top: 32px;  left: 130px; } /* English - top */
+.s6_lang:nth-child(3) { top: 108px; left: 225px; } /* 日本語 - right-top */
+.s6_lang:nth-child(4) { top: 231px; left: 190px; } /* 한국어 - right-bottom */
+.s6_lang:nth-child(5) { top: 231px; left: 70px;  } /* 中文 - left-bottom */
+.s6_lang:nth-child(6) { top: 108px; left: 35px;  } /* हिंदी - left-top */
+
+/* === S6 KEYFRAMES === */
+
+@keyframes s6_scaleIn {
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s6_drawLine {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes s6_activate_box {
+  to { border-color: #14B8A6; color: #14B8A6; background: rgba(20,184,166,0.15); box-shadow: 0 0 16px rgba(20,184,166,0.3); }
+}
+
+@keyframes s6_activate_center {
+  to { border-color: #14B8A6; color: #14B8A6; box-shadow: 0 0 24px rgba(20,184,166,0.3); }
+}
+
+@keyframes s6_line_activate {
+  to { stroke: #14B8A6; }
+}
+
+/* === S6 ANIMATION SEQUENCE (triggered by .visible) === */
+
+/* Step 1: Center circle */
+.s6_stage.visible .s6_center {
+  animation: s6_scaleIn 0.5s 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards,
+             s6_activate_center 0.5s 4.6s ease forwards;
+}
+
+/* Step 2: English + line */
+.s6_stage.visible .s6_lang:nth-child(2) {
+  animation: s6_scaleIn 0.4s 1.0s cubic-bezier(0.34,1.56,0.64,1) forwards,
+             s6_activate_box 0.5s 4.6s ease forwards;
+}
+.s6_stage.visible .s6_svg line:nth-child(1) {
+  animation: s6_drawLine 0.35s 1.1s ease-out forwards,
+             s6_line_activate 0.4s 4.6s ease forwards;
+}
+
+/* Step 3: 日本語 + line */
+.s6_stage.visible .s6_lang:nth-child(3) {
+  animation: s6_scaleIn 0.4s 1.6s cubic-bezier(0.34,1.56,0.64,1) forwards,
+             s6_activate_box 0.5s 4.6s ease forwards;
+}
+.s6_stage.visible .s6_svg line:nth-child(2) {
+  animation: s6_drawLine 0.35s 1.7s ease-out forwards,
+             s6_line_activate 0.4s 4.6s ease forwards;
+}
+
+/* Step 4: 한국어 + line */
+.s6_stage.visible .s6_lang:nth-child(4) {
+  animation: s6_scaleIn 0.4s 2.2s cubic-bezier(0.34,1.56,0.64,1) forwards,
+             s6_activate_box 0.5s 4.6s ease forwards;
+}
+.s6_stage.visible .s6_svg line:nth-child(3) {
+  animation: s6_drawLine 0.35s 2.3s ease-out forwards,
+             s6_line_activate 0.4s 4.6s ease forwards;
+}
+
+/* Step 5: 中文 + line */
+.s6_stage.visible .s6_lang:nth-child(5) {
+  animation: s6_scaleIn 0.4s 2.8s cubic-bezier(0.34,1.56,0.64,1) forwards,
+             s6_activate_box 0.5s 4.6s ease forwards;
+}
+.s6_stage.visible .s6_svg line:nth-child(4) {
+  animation: s6_drawLine 0.35s 2.9s ease-out forwards,
+             s6_line_activate 0.4s 4.6s ease forwards;
+}
+
+/* Step 6: हिंदी + line */
+.s6_stage.visible .s6_lang:nth-child(6) {
+  animation: s6_scaleIn 0.4s 3.4s cubic-bezier(0.34,1.56,0.64,1) forwards,
+             s6_activate_box 0.5s 4.6s ease forwards;
+}
+.s6_stage.visible .s6_svg line:nth-child(5) {
+  animation: s6_drawLine 0.35s 3.5s ease-out forwards,
+             s6_line_activate 0.4s 4.6s ease forwards;
+}
+
+/* S7 — 照片级真实感：比例尺展示 */
+.s7_stage {
+  position: relative;
+  width: 340px;
+  height: 260px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* 比例框 */
+.s7_frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  transform: translate(-50%, -50%);
+  border: 3px solid #CBD5E1;
+  border-radius: 4px;
+  opacity: 0;
+}
+
+/* 比例标签 */
+.s7_ratio {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+.s7_ratio_1 { color: #CBD5E1; }
+.s7_ratio_2 { color: #CBD5E1; }
+.s7_ratio_3 { color: #CBD5E1; }
+
+/* 360度标记 */
+.s7_pano {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 36px;
+  height: 36px;
+  opacity: 0;
+}
+
+.s7_pano_arc {
+  position: absolute;
+  top: 0; left: 0;
+  width: 36px;
+  height: 36px;
+  border: 3px solid #EC4899;
+  border-radius: 50%;
+  border-right-color: transparent;
+}
+
+.s7_pano_arrow {
+  position: absolute;
+  top: -2px;
+  right: 2px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 7px solid #EC4899;
+  transform: rotate(45deg);
+}
+
+.s7_pano_text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 9px;
+  font-weight: 700;
+  color: #EC4899;
+}
+
+/* 底部标签 */
+.s7_label {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #94A3B8;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* === S7 Keyframes === */
+
+/* 框体形变：单一时间线 */
+@keyframes s7_morphAll {
+  0%   { width: 120px; height: 120px; border-color: #CBD5E1; opacity: 0; }
+  6%   { width: 120px; height: 120px; border-color: #CBD5E1; opacity: 1; }
+  19%  { width: 120px; height: 120px; border-color: #CBD5E1; opacity: 1; }
+  30%  { width: 60px;  height: 180px; border-color: #CBD5E1; opacity: 1; }
+  41%  { width: 60px;  height: 180px; border-color: #CBD5E1; opacity: 1; }
+  52%  { width: 240px; height: 80px;  border-color: #CBD5E1; opacity: 1; }
+  63%  { width: 240px; height: 80px;  border-color: #CBD5E1; opacity: 1; }
+  70%  { width: 240px; height: 80px;  border-color: #EC4899; opacity: 1; }
+  100% { width: 240px; height: 80px;  border-color: #EC4899; opacity: 1; }
+}
+
+@keyframes s7_fadeIn {
+  to { opacity: 1; }
+}
+
+@keyframes s7_fadeInOut {
+  0%   { opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes s7_labelIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === S7 动画编排 === */
+
+/* 框体：5.4s 总时长 */
+.s7_stage.visible .s7_frame {
+  animation: s7_morphAll 5.4s 0.0s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* 比例标签依次显隐 */
+.s7_stage.visible .s7_ratio_1 {
+  animation: s7_fadeInOut 1.0s 0.3s ease forwards;
+}
+.s7_stage.visible .s7_ratio_2 {
+  animation: s7_fadeInOut 1.0s 1.4s ease forwards;
+}
+.s7_stage.visible .s7_ratio_3 {
+  animation: s7_fadeInOut 1.0s 2.6s ease forwards;
+}
+
+/* 360标记 */
+.s7_stage.visible .s7_pano {
+  animation: s7_fadeIn 0.4s 4.0s ease forwards;
+}
+
+/* 底部标签 */
+.s7_stage.visible .s7_label {
+  animation: s7_labelIn 0.4s 4.6s ease forwards;
+}
+
+/* S8 — 语义冲突 → 智能规避 */
+.s8_stage {
+  position: relative;
+  width: 340px;
+  height: 260px;
+  margin: 0 auto;
+}
+
+/* Prompt 方框 */
+.s8_prompt {
+  position: absolute;
+  top: 12px;
+  left: 20px;
+  padding: 8px 20px;
+  border-radius: 10px;
+  border: 2px solid #CBD5E1;
+  background: rgba(203,213,225,0.12);
+  color: #CBD5E1;
+  font-size: 15px;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(-12px);
+}
+
+/* 冲突标签 - 绝对定位，左侧纵向排列 */
+.s8_tag_a {
+  position: absolute;
+  top: 62px;
+  left: 20px;
+  padding: 5px 12px;
+  border-radius: 7px;
+  border: 1.5px solid #CBD5E1;
+  background: rgba(203,213,225,0.10);
+  color: #CBD5E1;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.s8_tag_b {
+  position: absolute;
+  top: 100px;
+  left: 20px;
+  padding: 5px 12px;
+  border-radius: 7px;
+  border: 1.5px solid #CBD5E1;
+  background: rgba(203,213,225,0.10);
+  color: #CBD5E1;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* 闪电 zigzag - 在两个标签右侧中间 */
+.s8_lightning {
+  position: absolute;
+  top: 64px;
+  left: 118px;
+  width: 28px;
+  height: 40px;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.s8_lightning svg {
+  width: 28px;
+  height: 40px;
+}
+
+/* 连线：从闪电到规避框 */
+.s8_arrow_line {
+  position: absolute;
+  top: 84px;
+  left: 150px;
+  width: 0;
+  height: 2px;
+  background: #14B8A6;
+  border-radius: 1px;
+}
+
+/* 规避方框 */
+.s8_avoid {
+  position: absolute;
+  top: 30px;
+  right: 24px;
+  padding: 8px 20px;
+  border-radius: 10px;
+  border: 2px solid #14B8A6;
+  background: rgba(20,184,166,0.12);
+  color: #14B8A6;
+  font-size: 15px;
+  font-weight: 600;
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* 结果标签 */
+.s8_result {
+  position: absolute;
+  top: 82px;
+  right: 12px;
+  padding: 5px 12px;
+  border-radius: 7px;
+  border: 1.5px solid #14B8A6;
+  background: rgba(20,184,166,0.08);
+  color: #14B8A6;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* 冲突标签变红 */
+.s8_tag_a.s8_conflicted,
+.s8_tag_b.s8_conflicted {
+  border-color: #EC4899;
+  color: #EC4899;
+}
+
+/* 叙事旁白 */
+.s8_narration {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 13px;
+  color: #94A3B8;
+  min-height: 36px;
+}
+
+.s8_narr_step {
+  position: absolute;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.s8_narr_step.s8_show {
+  opacity: 1;
+}
+
+/* === S8 KEYFRAMES === */
+
+@keyframes s8_fadeSlideDown {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s8_scaleIn {
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s8_fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s8_lineGrow {
+  to { width: 58px; }
+}
+
+@keyframes s8_flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* === S8 ANIMATION SEQUENCE (triggered by .visible) === */
+
+.s8_stage.visible .s8_prompt {
+  animation: s8_fadeSlideDown 0.45s 0.3s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+
+.s8_stage.visible .s8_tag_a {
+  animation: s8_scaleIn 0.35s 1.0s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+
+.s8_stage.visible .s8_tag_b {
+  animation: s8_scaleIn 0.35s 1.5s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+
+.s8_stage.visible .s8_lightning {
+  animation: s8_scaleIn 0.3s 2.1s cubic-bezier(0.34,1.56,0.64,1) forwards,
+             s8_flash 0.5s 2.4s ease 3;
+}
+
+.s8_stage.visible .s8_arrow_line {
+  animation: s8_lineGrow 0.4s 3.2s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+
+.s8_stage.visible .s8_avoid {
+  animation: s8_scaleIn 0.4s 3.6s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+
+.s8_stage.visible .s8_result {
+  animation: s8_fadeUp 0.4s 4.4s ease forwards;
+}
+
+/* S9 — 总评：从生图工具到视觉思考伙伴 */
+.s9_stage {
+  position: relative;
+  width: 340px;
+  height: 280px;
+  margin: 0 auto;
+  font-family: -apple-system, 'Helvetica Neue', 'PingFang SC', sans-serif;
+  overflow: hidden;
+}
+
+/* 顶部四个灰色方框 */
+.s9_boxes {
+  position: absolute;
+  top: 16px;
+  left: 0; right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+.s9_box {
+  width: 68px;
+  height: 34px;
+  border-radius: 8px;
+  border: 2px solid #CBD5E1;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #94A3B8;
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* 连线用 SVG */
+.s9_svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 340px;
+  height: 280px;
+  pointer-events: none;
+}
+.s9_svg line {
+  stroke: #CBD5E1;
+  stroke-width: 2;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+}
+
+/* 中间大方框 */
+.s9_center {
+  position: absolute;
+  top: 130px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 160px;
+  height: 48px;
+  border-radius: 12px;
+  border: 2.5px solid #EC4899;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+/* Pulse 光环 */
+.s9_pulse {
+  position: absolute;
+  top: 130px;
+  left: 50%;
+  transform: translateX(-50%) scale(1);
+  width: 160px;
+  height: 48px;
+  border-radius: 12px;
+  border: 2.5px solid #EC4899;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 底部标签 */
+.s9_label {
+  position: absolute;
+  bottom: 20px;
+  left: 0; right: 0;
+  text-align: center;
+  font-size: 14px;
+  color: #94A3B8;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* === S9 KEYFRAMES === */
+@keyframes s9_boxIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s9_drawLine {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes s9_centerIn {
+  to { transform: translateX(-50%) scale(1); }
+}
+@keyframes s9_pulse {
+  0% { transform: translateX(-50%) scale(1); opacity: 0.7; }
+  100% { transform: translateX(-50%) scale(1.3, 1.7); opacity: 0; }
+}
+@keyframes s9_labelIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s9_borderShift {
+  0% { border-color: #EC4899; }
+  100% { border-color: #14B8A6; }
+}
+
+/* === S9 ANIMATION SEQUENCE (triggered by .visible) === */
+
+/* Step 1: boxes appear — staggered */
+.s9_stage.visible .s9_box:nth-child(1) { animation: s9_boxIn 0.4s 0.3s cubic-bezier(0.22,1,0.36,1) forwards; }
+.s9_stage.visible .s9_box:nth-child(2) { animation: s9_boxIn 0.4s 0.5s cubic-bezier(0.22,1,0.36,1) forwards; }
+.s9_stage.visible .s9_box:nth-child(3) { animation: s9_boxIn 0.4s 0.7s cubic-bezier(0.22,1,0.36,1) forwards; }
+.s9_stage.visible .s9_box:nth-child(4) { animation: s9_boxIn 0.4s 0.9s cubic-bezier(0.22,1,0.36,1) forwards; }
+
+/* Step 2: lines draw down — staggered */
+.s9_stage.visible .s9_line1 { animation: s9_drawLine 0.5s 1.4s ease-out forwards; }
+.s9_stage.visible .s9_line2 { animation: s9_drawLine 0.5s 1.5s ease-out forwards; }
+.s9_stage.visible .s9_line3 { animation: s9_drawLine 0.5s 1.6s ease-out forwards; }
+.s9_stage.visible .s9_line4 { animation: s9_drawLine 0.5s 1.7s ease-out forwards; }
+
+/* Step 3: center box scales in + border color shift */
+.s9_stage.visible .s9_center {
+  animation:
+    s9_centerIn 0.5s 2.4s cubic-bezier(0.34,1.56,0.64,1) forwards,
+    s9_borderShift 1.2s 2.9s ease forwards;
+}
+
+/* Step 4: pulse */
+.s9_stage.visible .s9_pulse {
+  animation: s9_pulse 0.9s 3.6s ease-out forwards;
+}
+
+/* Step 5: label */
+.s9_stage.visible .s9_label {
+  animation: s9_labelIn 0.5s 4.6s ease forwards;
+}
+.anim-stage > div{ width:100%; }
+</style>
+
+<meta name="description" content="OpenAI 发布会上 Sam Altman 说了一句很猛的话：如果 DALL·E 是洞穴壁画，GPT-Image 1 是古代艺术，那 GPT-Image 2.0 就是文艺复兴 。这话听着像营销，但看完整场发布会和实际测试之后，我觉得这次确实不是在吹——因为这个模型最核心的变化不是「画得更好看」，而是 它在生成图片之前，会先思考 。">
+<link rel="canonical" href="https://chendi.me/readings/gpt-image-2-eval/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<!-- 面包屑 -->
+<div class="breadcrumb" id="breadcrumb">
+  <span class="current">评测总览</span>
+</div>
+
+<!-- 返回按钮 -->
+<button class="back-btn" id="backBtn" onclick="goBack()">←</button>
+
+<!-- 深度圆点 -->
+<div class="depth-dots" id="depthDots">
+  <div class="dot active"></div>
+  <div class="dot"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 概览层 (Layer 0) -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+  <!-- S1: 开场 — 代际跃迁 -->
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <p class="section-label reveal">ACT 1 · 代际定位</p>
+      <h2 class="big-statement reveal reveal-d1">从洞穴壁画到文艺复兴</h2>
+      <p class="body-text reveal reveal-d2">OpenAI 发布会上 Sam Altman 说了一句很猛的话：如果 DALL·E 是洞穴壁画，GPT-Image 1 是古代艺术，那 <span class="hl">GPT-Image 2.0 就是文艺复兴</span>。这话听着像营销，但看完整场发布会和实际测试之后，我觉得这次确实不是在吹——因为这个模型最核心的变化不是「画得更好看」，而是<span class="hl2">它在生成图片之前，会先思考</span>。</p>
+      <div class="anim-stage reveal reveal-d3" id="s1-anim">
+        <div class="s1_stage">
+          <!-- Step 1: DALL-E -->
+          <div class="s1_circle s1_dalle">DALL-E</div>
+          <!-- Step 2: Image 1 -->
+          <div class="s1_circle s1_img1">Image 1</div>
+          <!-- Step 3: Image 2 -->
+          <div class="s1_circle s1_img2">Image 2</div>
+          <!-- Step 4: Brain icon + connector -->
+          <div class="s1_brain">
+            <div class="s1_brain_dendrite"></div>
+            <div class="s1_brain_dendrite2"></div>
+            <div class="s1_brain_core"></div>
+          </div>
+          <div class="s1_connector"></div>
+          <!-- Step 5: Label -->
+          <div class="s1_label">不只是生成，是在思考</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">视频转写</span><p>Today we are launching IMAGen 2.0. If we think of Dalia as cave drawings and IMAG gen 1 as ancient art, then I imag 2.0 is the Renaissance. Image Gen 2.0 is the smartest image generation model ever built with the ability to generate complex, polished, and productionready visuals with accurate text and structured design. You see, this model isn't just generating images, it's thinking.
+
+That's right. Image Gen 2.0 is thinking and researching. And it can even search the web to generate images with the most accurate information available. And with that information, the model is able to generate infographics that explain complex systems and images that solve math problems with proofs. And with new multilingual capabilities, you can create visuals with multiple languages for the entire world.
+
+And now, for the first time in image generation, you can create multiple distinct images at once. So you can generate entire magazines with structured typography and photorealistic photos, full renovation plans for every room in your house, or manga comics with recurring characters and evolving story lines. And you can now generate images with 2K resolution across multiple aspect ratios with extraordinary micro details. You see, we are no longer generating images to marvel at. With Images 2.0, we are generating images to discover and navigate, to invent and build, to dream and explore the world and bring ideas to life.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S2: 文字渲染 -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <p class="section-label reveal">ACT 2 · 核心能力评测</p>
+      <h2 class="big-statement reveal reveal-d1">文字渲染：从拼错到零错误</h2>
+      <p class="body-text reveal reveal-d2">Gabe 在发布会上回忆说，他还记得图片生成模型连一个单词都拼不对的时代。而现在，<span class="hl">想找到一个错别字都很难</span>。不只是英文——整段文字、整页杂志排版，甚至手写体笔记，都能做到几乎零错误。但这个能力有一个有趣的边界：当你给的文字内容太多时，模型不会硬撑，而是会主动建议你换个方式——比如改成手写笔记风格。</p>
+      <div class="anim-stage reveal reveal-d3" id="s2-anim">
+        <div class="s2_stage">
+          <!-- Step 1: Old box -->
+          <span class="s2_label s2_label_old">以前</span>
+          <div class="s2_box s2_box_old">Helo Wrld</div>
+          <!-- Step 2: Cross mark -->
+          <div class="s2_cross"></div>
+          <!-- Step 3: New box -->
+          <span class="s2_label s2_label_new">现在</span>
+          <div class="s2_box s2_box_new">Hello World</div>
+          <!-- Step 4: Check mark -->
+          <div class="s2_check"></div>
+          <!-- Step 5: Bottom line + label -->
+          <div class="s2_line"></div>
+          <div class="s2_bottom_label">整页零错误</div>
+        </div>
+      </div>
+      <p class="hook-line reveal reveal-d4">文字零错误只是表面，背后的设计排版能力才是真正的大招 ↓</p>
+      <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-s2-detail', this)">看看文字能力的边界 ↓</button>
+    </div>
+  </section>
+
+  <!-- S3: 设计排版 -->
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">设计排版：杂志级布局</h2>
+      <p class="body-text reveal reveal-d1">发布会上最让我惊讶的一个 demo 是：拿一张四人合照，一句话就生成了一张完整的杂志封面——标题位置、文字排版、版式设计，全都是「刻意的」（deliberate）。Gabe 用了这个词好几次，意思是模型不是随机把文字丢到图上，而是<span class="hl">真的在做设计决策</span>：标题放哪、副标题怎么排、留白多少。</p>
+      <div class="anim-stage reveal reveal-d2" id="s3-anim">
+        <div class="s3_stage">
+          <!-- Page frame -->
+          <div class="s3_page"></div>
+          <!-- Title block -->
+          <div class="s3_title_block"></div>
+          <!-- Subtitle block -->
+          <div class="s3_subtitle_block"></div>
+          <!-- Image area -->
+          <div class="s3_image_box"></div>
+          <!-- Text lines -->
+          <div class="s3_text_lines">
+            <div class="s3_text_line"></div>
+            <div class="s3_text_line"></div>
+            <div class="s3_text_line"></div>
+            <div class="s3_text_line"></div>
+          </div>
+          <!-- Label -->
+          <div class="s3_label">刻意的设计决策</div>
+        </div>
+      </div>
+      <p class="hook-line reveal reveal-d3">杂志封面只是开胃菜，信息图和科普海报才是真本事 ↓</p>
+      <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-s3-detail', this)">深入设计能力 ↓</button>
+    </div>
+  </section>
+
+  <!-- S4: 双模式 -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">双模式：闪电 vs 思考</h2>
+      <p class="body-text reveal reveal-d1">GPT-Image 2.0 有两种模式。<span class="hl">Instant 模式</span>面向所有用户，响应快、质量已经比上一代好很多。<span class="hl2">Thinking 模式</span>是付费用户专属，模型会在生成前「深思熟虑」——它可以搜索网络、规划多张图片的一致性、甚至自我检查再输出。这就像是 GPT-4 和 GPT-4o 的关系：一个快但够用，一个慢但更强。</p>
+      <div class="anim-stage reveal reveal-d2" id="s4-anim">
+        <div class="s4_stage">
+          <!-- Step 1: Prompt -->
+          <div class="s4_prompt">Prompt</div>
+          <!-- Step 2: Vertical line -->
+          <div class="s4_vline"></div>
+          <!-- Fork dot -->
+          <div class="s4_fork_dot"></div>
+          <!-- Step 3: Fork lines -->
+          <div class="s4_fork_left"></div>
+          <div class="s4_fork_right"></div>
+          <!-- Step 4: Mode boxes -->
+          <div class="s4_box_left">闪电</div>
+          <div class="s4_box_right">思考</div>
+          <!-- Step 5: Labels -->
+          <div class="s4_label_left">快 · 所有人</div>
+          <div class="s4_label_right">深 · 付费</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">视频转写</span><p>So we'll be releasing two versions of the model. There was the instant version of the model which is what you're seeing here and there is a thinking version of the model. So the thinking version of the model is something that you can toggle using the thinking mode and it will be available to paid users. And what it does is it deliberates a little bit before it actually generates an image. So it winds up a really good prompt and it can search the web. It can do a lot.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S5: 视觉理解 -->
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">视觉理解：不只生成，还能看懂</h2>
+      <p class="body-text reveal reveal-d1">Kwan 在发布会上做了一个特别有意思的 demo：上传一张自拍照，让模型推荐八套夏装搭配。这个任务需要两种完全不同的视觉智能——首先是<span class="hl">视觉理解</span>，模型要「看懂」你长什么样、什么风格适合你；然后是<span class="hl2">视觉生成</span>，把规划好的搭配方案变成一张清晰的、有组织的图片。以前的图片生成模型只有后一种能力，而 GPT-Image 2.0 把两者打通了。</p>
+      <div class="anim-stage reveal reveal-d2" id="s5-anim">
+        <div class="s5_stage">
+          <div class="s5_photo">照片</div>
+          <div class="s5_line1"></div>
+          <div class="s5_understand">理解</div>
+          <div class="s5_line2"></div>
+          <div class="s5_generate">生成</div>
+          <div class="s5_label">先看懂，再创作</div>
+        </div>
+      </div>
+      <p class="hook-line reveal reveal-d3">理解+生成只是起点，个人色彩分析才见真章 ↓</p>
+      <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-s5-detail', this)">深入视觉理解 ↓</button>
+    </div>
+  </section>
+
+  <!-- S6: 多语言 -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">多语言：全球文字零错误</h2>
+      <p class="body-text reveal reveal-d1">Nitant 在发布会上说了一句让我很有感触的话：「我们是旧金山的公司，日常用英语，但我们希望全世界的人都能享受同样的兴奋感。」之前的模型在非拉丁文字上问题很大，因为中日韩等语言有几千个字符，模型很难全部记住。而 GPT-Image 2.0 可以<span class="hl">用纯日语生成海报、用中文画漫画、用印地语写食谱</span>——而且文字渲染质量和英语一样好。</p>
+      <div class="anim-stage reveal reveal-d2" id="s6-anim">
+        <div class="s6_stage">
+          <!-- Center circle -->
+          <div class="s6_center">文字</div>
+          <!-- Language boxes (order matches nth-child 2-6) -->
+          <div class="s6_lang">English</div>
+          <div class="s6_lang">日本語</div>
+          <div class="s6_lang">한국어</div>
+          <div class="s6_lang">中文</div>
+          <div class="s6_lang">हिंदी</div>
+          <!-- SVG connector lines from each box center to stage center (170, 160) -->
+          <svg class="s6_svg" viewBox="0 0 340 320">
+            <line x1="170" y1="160" x2="170" y2="50" />
+            <line x1="170" y1="160" x2="265" y2="126" />
+            <line x1="170" y1="160" x2="230" y2="249" />
+            <line x1="170" y1="160" x2="110" y2="249" />
+            <line x1="170" y1="160" x2="75"  y2="126" />
+          </svg>
+        </div>
+      </div>
+      <p class="hook-line reveal reveal-d3">看看日韩中印四种语言的实际表现 ↓</p>
+      <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-s6-detail', this)">深入多语言能力 ↓</button>
+    </div>
+  </section>
+
+  <!-- S7: 照片级真实感 -->
+  <section class="feed-section" style="background: var(--bg-act3);">
+    <div class="section-inner">
+      <p class="section-label reveal">ACT 3 · 极限与边界</p>
+      <h2 class="big-statement reveal reveal-d1">照片级真实感</h2>
+      <p class="body-text reveal reveal-d2">Alex 在发布会上展示了一个让人印象深刻的能力：加上「photorealistic」这个关键词，模型生成的图片就不像「AI 生成的」了——它能复刻胶片的颗粒感、讲堂的灯光瑕疵、甚至街拍的随机感。更厉害的是<span class="hl">宽幅和超长图</span>支持，最高 3:1 比例；还有 <span class="hl2">360° 全景图</span>，Alex 用一个 vibe coded 的全景查看器展示了月球登陆的 360 全景，连太阳和阴影方向都是对的。</p>
+      <div class="anim-stage reveal reveal-d3" id="s7-anim">
+        <div class="s7_stage">
+          <!-- 变形框 -->
+          <div class="s7_frame"></div>
+          <!-- 比例标签 -->
+          <div class="s7_ratio s7_ratio_1">1:1</div>
+          <div class="s7_ratio s7_ratio_2">1:3</div>
+          <div class="s7_ratio s7_ratio_3">3:1</div>
+          <!-- 360度标记 -->
+          <div class="s7_pano">
+            <div class="s7_pano_arc"></div>
+            <div class="s7_pano_arrow"></div>
+            <div class="s7_pano_text">360</div>
+          </div>
+          <!-- 底部标签 -->
+          <div class="s7_label">从方图到全景</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">视频转写</span><p>So we've also made a lot of improvements in naturalness. And let me just kick off a few prompts. So like Gabe said earlier, our outputs can now just look like natural images. And you can actually trigger this by adding something like photorealistic or also there are other variations like professional photography and shot on iPhone or disposable camera. So in like in this first example I'm just pretending we are back in 2015 was when open was founded and but somehow there's images too. So and then basically as you can see the model is actually able to replicate the tiny imperfections graininess and the lighting of the lecture hall. even all the text on the slide and the lecture plan that the model came up with are quite coherent and beyond these like photo realism I'm also very excited the model is much more flexible now and in particular we can make really wide and really tall images up to three one by three and 3x one.
+
+I also have this I asked the model to make a 360 image of the moon landing and I think it looks like a 360 photo panorama. As you can see, it's actually a very consistent 360 image. you can also see this the sun and the shadows are are also in the right direction.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S8: 思考深水区 + 提示词污染 -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">思考模式深水区 + 提示词污染规避</h2>
+      <p class="body-text reveal reveal-d1">Thinking 模式最疯的 demo 是什么？搜索社交媒体对「duct tape」模型的评价，然后把这些真实评论合成到一张图里，<span class="hl">还附带一个能扫出来的 QR 码</span>。这意味着模型在一次生成中同时完成了 web search + 信息综合 + 视觉编排 + 二维码编码。另一个中国用户发现的能力更有趣：当你给的 prompt 包含语义冲突时，模型会<span class="hl2">智能规避提示词污染</span>——比如画一个「在地铁上玩王者荣耀的男孩」，游戏画面不会画出来，但会巧妙地出现在手机背面。</p>
+      <div class="anim-stage reveal reveal-d2" id="s8-anim">
+        <div class="s8_stage" id="s8_stage">
+          <!-- Step 1: Prompt box -->
+          <div class="s8_prompt">Prompt</div>
+          <!-- Step 2: Conflict tags (vertically stacked) -->
+          <div class="s8_tag_a">王者荣耀</div>
+          <div class="s8_tag_b">面对镜头</div>
+          <!-- Step 3: Lightning bolt between tags -->
+          <div class="s8_lightning">
+            <svg viewBox="0 0 28 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M16 2 L9 16 L15 16 L11 38 L19 22 L13 22 L16 2Z"
+                    fill="#EC4899" stroke="#EC4899" stroke-width="0.5"
+                    stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <!-- Arrow line from conflict zone to avoid box -->
+          <div class="s8_arrow_line"></div>
+          <!-- Step 4: Avoid box -->
+          <div class="s8_avoid">规避</div>
+          <!-- Step 5: Result tag -->
+          <div class="s8_result">游戏 → 手机背面</div>
+          <!-- Narration -->
+          <div class="s8_narration">
+            <div class="s8_narr_step" data-start="0" data-end="1000">一条 Prompt 进入思考模式</div>
+            <div class="s8_narr_step" data-start="1000" data-end="2100">两个语义在上下文中相遇</div>
+            <div class="s8_narr_step" data-start="2100" data-end="3200">检测到潜在的提示词污染</div>
+            <div class="s8_narr_step" data-start="3200" data-end="4400">启动智能规避策略</div>
+            <div class="s8_narr_step" data-start="4400" data-end="9999">冲突语义被安全替换</div>
+          </div>
+        </div>
+      </div>
+      <p class="hook-line reveal reveal-d3">更多提示词污染规避的精彩案例 ↓</p>
+      <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-s8-detail', this)">深入思考模式 ↓</button>
+    </div>
+  </section>
+
+  <!-- S9: 总评 -->
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">总评：从生图工具到视觉思考伙伴</h2>
+      <p class="body-text reveal reveal-d1">说实话，看完整场发布会加上自己测试之后，我觉得 GPT-Image 2.0 最大的变化不是某个单项能力的提升，而是<span class="hl">整个范式的转变</span>：它不再是一个「你给 prompt，它出图」的工具，而是一个能理解、能思考、能搜索、能规划的<span class="hl2">视觉思考伙伴</span>。文字零错误、杂志级排版、多语言支持、提示词污染规避——这些能力单独拿出来都很强，但组合在一起，意味着你可以拿它来做真正有用的事情：设计海报、做信息图、画漫画、生成产品展示图。Sam 说的那句「we are no longer generating images to marvel at」，这次我觉得不是空话。</p>
+      <div class="anim-stage reveal reveal-d2" id="s9-anim">
+        <div class="s9_stage">
+          <!-- Step 1: Four capability boxes -->
+          <div class="s9_boxes">
+            <div class="s9_box">文字</div>
+            <div class="s9_box">设计</div>
+            <div class="s9_box">理解</div>
+            <div class="s9_box">多语言</div>
+          </div>
+          <!-- Step 2: Connecting lines (SVG for diagonal) -->
+          <svg class="s9_svg" viewBox="0 0 340 280">
+            <line class="s9_line1" x1="50"  y1="50" x2="130" y2="130" />
+            <line class="s9_line2" x1="130" y1="50" x2="150" y2="130" />
+            <line class="s9_line3" x1="210" y1="50" x2="190" y2="130" />
+            <line class="s9_line4" x1="290" y1="50" x2="210" y2="130" />
+          </svg>
+          <!-- Step 3: Center convergence box -->
+          <div class="s9_center">视觉思考伙伴</div>
+          <!-- Step 4: Pulse ring -->
+          <div class="s9_pulse"></div>
+          <!-- Step 5: Bottom label -->
+          <div class="s9_label">不再只是看看，而是真的能用</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">视频转写</span><p>This was really amazing. I can't wait to see what people will do with this. The beauty of the images will come through right away. The intelligence is very deep and we hope you all have fun exploring this. As we mentioned, this is live today in Chat GBT and the API. So proud of the team on what they've created here and we hope you will have as much fun using it as we did getting to build it. Thank you very much.</p></div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /layer-overview -->
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- S2 展开层: 文字能力边界 -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="layer" id="layer-s2-detail" data-depth="1">
+
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">手写笔记：草书级别的中文</h2>
+      <p class="body-text reveal reveal-d1">中国用户实测发现，GPT-Image 2.0 的手写体能力已经到了一个相当惊艳的水平。下面这张图是模型生成的中文手写笔记——注意看，这不是印刷体模拟手写，而是真正有笔锋、有连笔、有墨水浓淡变化的草书风格。每一行字都有自然的倾斜和间距变化，甚至连笔记本的纸张纹理都很真实。</p>
+      <img class="showcase-img reveal reveal-d2" src="assets/gpt-image-2/02-handwritten-draft-cursive.png" alt="GPT-Image-2 生成的中文手写草书笔记">
+      <p class="showcase-img-caption reveal reveal-d2">GPT-Image-2 生成的中文手写草书笔记</p>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">视频转写</span><p>I remember a time where image generation could barely generate a single word without making typos. And now typos are very rare. In fact, it's very hard to even find a single typo. That's been one of the things that surprised me about the new model is things that I just never thought were possible about cohesion and not making a typo and complex text and a ton of detail in one image. It's rare to find a mistake. You can do a whole paragraph or full page of text without making a mistake or the full layout of the magazine.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">智能边界：太多文字时怎么办？</h2>
+      <p class="body-text reveal reveal-d1">但这个能力有一个有趣的边界。当你让模型生成包含大段逐字文本的图片时，它不会硬着头皮去做（那样很可能出错），而是会<span class="hl">主动拒绝并给出替代方案</span>：比如提炼成手写笔记风格、改写成摘要、或者只保留核心句子。这说明模型有了「知道自己做不到什么」的元认知能力——这比盲目尝试然后出错要聪明得多。</p>
+      <img class="showcase-img reveal reveal-d2" src="assets/gpt-image-2/01-too-much-text-content.png" alt="文字过多时模型的智能拒绝">
+      <p class="showcase-img-caption reveal reveal-d2">给太多文字时，模型会建议换成手写笔记风格</p>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">中文用户实测</span><p>当 GPT-Image-2 给的文字内容过多时，模型会拒绝生成并建议替代方案：1. 提炼成一页笔记风的摘要版手写内容；2. 改写成不逐字复制的手写摘录；3. 设计同样氛围的桌面笔记本图片，并放入简短核心句子。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">米粒上的文字：4K 微细节</h2>
+      <p class="body-text reveal reveal-d1">发布会最后一个炸场的 demo 是 Nitant 展示的实验性 4K API 能力：一大堆米粒的照片，其中有一颗米粒上写着「GPT image 2」。这个 demo 看着像是炫技，但它背后的意义是——模型在 4K 分辨率下，对微小细节的控制能力已经到了像素级。这对做产品展示图、微距摄影风格的内容来说是个巨大的利好。</p>
+      <img class="showcase-img reveal reveal-d2" src="https://images.ctfassets.net/kftzwdyauwt9/1d8pOvm6qK9XSIwGPkki5Q/00ebd3d1f96d0c944a2abca8ede320eb/rice.png?w=1920&q=90&fm=webp" alt="米粒上的GPT image 2文字">
+      <p class="showcase-img-caption reveal reveal-d2">4K 分辨率下，一颗米粒上清晰地写着「GPT image 2」</p>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">视频转写</span><p>And just to show everyone how far we can go with our image generation model. So this is an image I generated with our experimental 4K API. This is just a pile of rice, but this is also not just one pile of rice. What if I tell you there's one single grain in it with the text GPT image on it? Can you find it? Look at this. Let's zoom in. GPT image 2 on one single grain of rice among the entire pile this big. This is how far we can go with our latest model.</p></div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /layer-s2-detail -->
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- S3 展开层: 设计能力深入 -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="layer" id="layer-s3-detail" data-depth="1">
+
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">杂志信息图：狼群科普</h2>
+      <p class="body-text reveal reveal-d1">这张「北美狼群」信息图是官方 showcase 里最能体现设计能力的案例之一。注意它的信息层次：主标题用特大号衬线体、副标题用无衬线体、正文用小号字、还有地图、统计数据、真相vs谣言对比栏——这不是「把文字丢到图上」，而是一个完整的杂志编辑排版。</p>
+      <img class="showcase-img reveal reveal-d2" src="https://images.ctfassets.net/kftzwdyauwt9/1NVKBVrPzgqnkZZwaRU2NY/cc55db889337c593624f6eb161cb3237/images-2-wolf-magazine.png?w=1920&q=90&fm=webp" alt="狼群科普杂志信息图">
+      <p class="showcase-img-caption reveal reveal-d2">杂志级排版的狼群科普信息图</p>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">官方博客 alt text</span><p>Generated with ChatGPT Images 2.0, this magazine-style infographic spread about wolves in North America features a wildlife photo of three gray wolves in snow, bold editorial headlines, myth-versus-fact callouts, maps, statistics, and educational illustrations about wolf behavior and coexistence.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">数学证明也能做信息图</h2>
+      <p class="body-text reveal reveal-d1">这个案例更让我吃惊——模型把康托尔对角线证明做成了一张优雅的教育信息图。它不只是画了个表格，而是用可视化的方式展示了「为什么实数是不可数的」：先假设所有实数可以列成清单，然后沿对角线构造一个不在清单上的新数。整个推理过程通过图表和箭头清晰呈现。这意味着 GPT-Image 2.0 不只是在「画图」，它在用图像做结构化推理。</p>
+      <img class="showcase-img reveal reveal-d2" src="https://images.ctfassets.net/kftzwdyauwt9/6467MdNRAwtJKPXL775AYs/4b80480b239e35d4f901f03ea6c68c4e/images-2-cantor.png?w=1920&q=90&fm=webp" alt="康托尔对角线证明信息图">
+      <p class="showcase-img-caption reveal reveal-d2">康托尔对角线证明的教育信息图</p>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">创意排版：食材拼字</h2>
+      <p class="body-text reveal reveal-d1">最后看这张——用食材拼出「GPT IMAGE」几个字母，下面还有品牌设计 mood board。这种创意排版需要模型同时理解字母形状、食材质感和整体构图的平衡。这不是随机拼凑，每个字母用的食材都有视觉区分度。对做品牌设计、创意提案的人来说，这种能力直接就能用到工作里。</p>
+      <img class="showcase-img reveal reveal-d2" src="https://images.ctfassets.net/kftzwdyauwt9/4GouOkCV9cBBhnHsXlhvCn/309381970120541ea8326f8dec1fe6dd/gpt_img__1___1_.png?w=1920&q=90&fm=webp" alt="食材拼出GPT IMAGE的创意排版">
+      <p class="showcase-img-caption reveal reveal-d2">食材拼字 + 品牌 mood board 创意排版</p>
+    </div>
+  </section>
+
+</div><!-- /layer-s3-detail -->
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- S5 展开层: 视觉理解深入 -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="layer" id="layer-s5-detail" data-depth="1">
+
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">个人色彩分析</h2>
+      <p class="body-text reveal reveal-d1">这张「个人色彩分析板」是视觉理解能力的完美展示。模型不只是生成了一组好看的色卡——它先「看懂」了照片中人物的肤色、发色和气质，判断出属于「Deep Autumn」色系，然后列出适合的颜色（橄榄绿、驼色、深青）和不适合的颜色（冷粉、荧光、纯白）。这种「先理解再生成」的能力，是纯图片生成模型完全做不到的。</p>
+      <img class="showcase-img reveal reveal-d2" src="https://images.ctfassets.net/kftzwdyauwt9/1oC7gk3hsWrlBHUDNcJOSB/dedfd9aa90fe31adcb94797a18c887a5/images-2-color-analysis.png?w=1920&q=90&fm=webp" alt="个人色彩分析板">
+      <p class="showcase-img-caption reveal reveal-d2">先理解肤色气质，再生成个性化色彩分析</p>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">视频转写</span><p>So through this demo, I just want to highlight that this new model is no more like an AI image generator that you just gives a prompt and it returns an image. It's more like an AI that you just interactively talk to and it's just going to respond you using images that are very much understandable like this.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">穿搭顾问的完整链路</h2>
+      <p class="body-text reveal reveal-d1">回到 Kwan 的穿搭 demo——模型生成的八套搭配图里，每件衣服都有对应的文字标注（sneakers、fitted tee 等），整个布局像一本时尚杂志的搭配页。更厉害的是，Kwan 可以挑一套说「放大这套，给我多角度展示」，模型就生成了一张多角度试穿效果图。Kwan 自己说：「这就像走进一家店试衣服一样。」</p>
+      <div class="source-panel reveal reveal-d2">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">视频转写</span><p>I'm asking this model for some help to buy new clothes for my upcoming summer vacation after this launch. So in this prompt I'm giving it a portrait image of me and asking it to suggest me like eight different nice summer outfits. And in this task the model needs two different kinds of visual intelligence. One is visual understanding where it actually looks at my image and understand how it look like and come up with some plans for nice outfits for me. And another axis is visual generation where it actually turns that planned layout into coherent and organized image.
+
+So now we have the detailed view of myself where you can see me in this outfit and also from like many different angles. It's really like an experience of just going to a store and actually trying this thing.</p></div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /layer-s5-detail -->
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- S6 展开层: 多语言深入 -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="layer" id="layer-s6-detail" data-depth="1">
+
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">日语漫画：文字 + 叙事 + 风格</h2>
+      <p class="body-text reveal reveal-d1">这张日语漫画页是多语言能力最有说服力的案例之一。注意看——不只是日文假名和汉字渲染正确，整个漫画的叙事节奏、分镜构图、光影效果都是专业级的。对比一下一年前的模型，日文基本上是乱码或者只对了一半。现在这个水平，说是人类漫画家画的也完全可信。</p>
+      <img class="showcase-img reveal reveal-d2" src="https://images.ctfassets.net/kftzwdyauwt9/3qjs0ayPyz6j281GtxjEaH/ad25ae8c0b33164f65604070a02e2725/japanese.png?w=1920&q=90&fm=webp" alt="日语漫画页">
+      <p class="showcase-img-caption reveal reveal-d2">日语漫画：假名、汉字、拟声词全部正确</p>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">Typography 海报：十种文字体系</h2>
+      <p class="body-text reveal reveal-d1">这张 Typography 海报放在一起展示了日语、阿拉伯语、韩语、天城文、西里尔字母、孟加拉语、希腊语、中文、拉丁字母等十种文字体系。每种文字不只是「显示出来了」，而且字形优美、大小协调、构图平衡。这对做全球化设计的团队来说是个巨大的生产力工具。</p>
+      <img class="showcase-img reveal reveal-d2" src="https://images.ctfassets.net/kftzwdyauwt9/5RWCfDR1gGxcsPOoAOeSCC/4c7e17931fe5e33424d4f790ece35a54/images-2-typography.png?w=1920&q=90&fm=webp" alt="多语言Typography海报">
+      <p class="showcase-img-caption reveal reveal-d2">十种文字体系的 Typography 海报</p>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">韩语广告：文化美学一致性</h2>
+      <p class="body-text reveal reveal-d1">最后看这个韩语韩屋民宿广告——这不只是「把文字翻译成韩语」那么简单。模型理解了韩国传统民宿的美学风格，用了与之匹配的摄影构图、排版方式和色调。Nitant 在发布会上说「之前的模型很难记住几千个字符的亚洲语言」，而现在的模型不只记住了字符，还理解了每种语言背后的文化语境。</p>
+      <img class="showcase-img reveal reveal-d2" src="https://images.ctfassets.net/kftzwdyauwt9/1kNaLg0vlVeJ2koFI4muYm/5297d8c292d1a440092f15f6c4003951/images-2-korean-advertisement.png?w=1920&q=90&fm=webp" alt="韩语韩屋民宿广告">
+      <p class="showcase-img-caption reveal reveal-d2">韩语韩屋民宿广告：文字 + 文化美学一致</p>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">视频转写</span><p>I think mostly the Asian languages, let's say Hindi, Chinese, Korean, and Japanese. That's because those languages traditionally have thousands of characters in the alphabet unlike the 26 in English. So previously our model had a hard time memorizing these characters but now just prompted and generate entire pages of text in these languages without errors.</p></div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /layer-s6-detail -->
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- S8 展开层: 思考模式 + 提示词污染 -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="layer" id="layer-s8-detail" data-depth="1">
+
+  <section class="feed-section" style="background: var(--bg-act3);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">提示词污染规避：王者荣耀案例</h2>
+      <p class="body-text reveal reveal-d1">这个案例特别有意思。Prompt 是「画一个男孩在地铁上打王者荣耀，男孩面对镜头」。按道理，模型需要同时画出男孩的正面和手机上的游戏画面——但这两者有冲突：男孩面对镜头的话，手机屏幕应该朝向远方，观众看不到。GPT-Image 2.0 的处理方式非常聪明：它<span class="hl">把王者荣耀的元素放到了手机背面</span>，既满足了「打王者荣耀」的语义，又避免了正面手机屏幕的渲染冲突。</p>
+      <img class="showcase-img reveal reveal-d2" src="assets/gpt-image-2/03-prompt-pollution-avoidance-phone-back.png" alt="提示词污染规避 - 手机背面">
+      <p class="showcase-img-caption reveal reveal-d2">王者荣耀出现在手机背面——巧妙的语义冲突规避</p>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">提示词污染规避：宇航员面部</h2>
+      <p class="body-text reveal reveal-d1">第二个案例更微妙。Prompt 是「一个宇航员站在月球上，看向地球」。这里的语义冲突在于：「看向」这个动词容易「污染」面部绘画——模型可能会为了表现「看向」的动作而画出不戴头盔的脸。但 GPT-Image 2.0 选择了<span class="hl2">不画出宇航员面部</span>，让他戴着头盔背对镜头望向地球。「看向」的语义通过身体朝向传达，而不是通过面部表情。这种对语义冲突的精准处理，说明模型在生成前确实做了深层的理解和规划。</p>
+      <img class="showcase-img reveal reveal-d2" src="assets/gpt-image-2/04-prompt-pollution-avoidance-face-preserved.png" alt="提示词污染规避 - 宇航员面部">
+      <p class="showcase-img-caption reveal reveal-d2">「看向」通过身体朝向传达，面部不受动词污染</p>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background: var(--bg-act3);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">漫画一致性：多页角色保持</h2>
+      <p class="body-text reveal reveal-d1">Thinking 模式最让漫画创作者兴奋的能力是多页一致性。Gabe 用一张自拍和 Sam 的合照，让模型直接生成了三页漫画——第一页的角色长相建立之后，后面两页的角色<span class="hl">依然长得像他们</span>，而且风格也保持一致。Kenji 补充说，之前的模型第二页就认不出是同一个人了。这背后是 Thinking 模式在生成前做的「规划」——先确定角色设计，再逐页展开。</p>
+      <img class="showcase-img reveal reveal-d2" src="https://images.ctfassets.net/kftzwdyauwt9/4lDqqqLf44WwG5kgwVKxcq/be95e60a76114c926b5472d5376cb910/ChatGPT_Image_Apr_20__2026__09_39_01_PM__1_.png?w=1920&q=90&fm=webp" alt="多页漫画角色一致性">
+      <p class="showcase-img-caption reveal reveal-d2">多页漫画中角色形象保持一致</p>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">视频转写</span><p>We can actually generate an entire manga from a single prompt. So we can generate like three pages of a manga from a single prompt. But I think what's even cooler about it is that if you look at the follow-up images, they still look like Dave and Sam and they still look like in the style that was originally maintained in the first page. And even better is that the story should be very consistent among pages one, two, and three.</p></div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /layer-s8-detail -->
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Coverage + Topic data -->
+<!-- ═══════════════════════════════════════════ -->
+<script>
+var coverageData = {
+  sourceType: "video",
+  totalLength: "21:53",
+  segments: [
+    { start: "00:00", end: "01:30", section: 1, reason: null },
+    { start: "01:30", end: "03:30", section: 1, reason: null },
+    { start: "03:30", end: "05:00", section: null, reason: "过渡寒暄" },
+    { start: "05:00", end: "07:00", section: 3, reason: null },
+    { start: "07:00", end: "08:30", section: 2, reason: null },
+    { start: "08:30", end: "09:30", section: 4, reason: null },
+    { start: "09:30", end: "10:30", section: 4, reason: null, deepDive: true },
+    { start: "10:30", end: "12:30", section: 5, reason: null },
+    { start: "12:30", end: "14:00", section: 5, reason: null },
+    { start: "14:00", end: "15:30", section: 8, reason: null },
+    { start: "15:30", end: "16:30", section: 8, reason: null },
+    { start: "16:30", end: "18:00", section: 7, reason: null },
+    { start: "18:00", end: "19:30", section: 6, reason: null },
+    { start: "19:30", end: "21:00", section: 6, reason: null, deepDive: true },
+    { start: "21:00", end: "21:53", section: null, reason: "结尾寒暄" }
+  ]
+};
+
+var topicData = {
+  1: [
+    { name: "代际定位隐喻", status: "included" },
+    { name: "核心变化：会思考", status: "included" },
+    { name: "web 搜索能力", status: "included" },
+    { name: "多语言概述", status: "compressed", reason: "后续 S6 详述",
+      excerpt: "And with new multilingual capabilities, you can create visuals with multiple languages for the entire world." },
+    { name: "多图同时生成", status: "included" },
+    { name: "2K 分辨率", status: "compressed", reason: "技术参数",
+      excerpt: "And you can now generate images with 2K resolution across multiple aspect ratios with extraordinary micro details." }
+  ],
+  2: [
+    { name: "文字零错误", status: "included" },
+    { name: "整页文本无错", status: "included" },
+    { name: "手写体中文", status: "deep-dive" },
+    { name: "文字过多的边界", status: "deep-dive" },
+    { name: "4K 米粒文字", status: "deep-dive" }
+  ],
+  3: [
+    { name: "杂志封面 demo", status: "included" },
+    { name: "设计决策的刻意性", status: "included" },
+    { name: "狼群信息图", status: "deep-dive" },
+    { name: "康托尔证明信息图", status: "deep-dive" },
+    { name: "食材拼字创意", status: "deep-dive" }
+  ],
+  4: [
+    { name: "instant 模式", status: "included" },
+    { name: "thinking 模式", status: "included" },
+    { name: "付费用户专属", status: "included" },
+    { name: "漫画多页生成", status: "compressed", reason: "S8 详述",
+      excerpt: "So we can generate like three pages of a manga from a single prompt." }
+  ],
+  5: [
+    { name: "穿搭建议 demo", status: "included" },
+    { name: "视觉理解+生成双轴", status: "included" },
+    { name: "个人色彩分析", status: "deep-dive" },
+    { name: "多角度试穿", status: "deep-dive" },
+    { name: "交互式对话生图", status: "compressed", reason: "概念重复",
+      excerpt: "This new model is no more like an AI image generator that you just gives a prompt and it returns an image. It's more like an AI that you just interactively talk to." }
+  ],
+  6: [
+    { name: "多语言文字渲染", status: "included" },
+    { name: "亚洲语言突破", status: "included" },
+    { name: "日语漫画", status: "deep-dive" },
+    { name: "Typography 海报", status: "deep-dive" },
+    { name: "韩语广告", status: "deep-dive" },
+    { name: "印地语食谱", status: "compressed", reason: "与日韩案例类似",
+      excerpt: "I'm asking it to create a recipe in Hindi. The new model is significantly better at understanding and rendering text in lots of languages including many Indian ones that I've tried like Hindi, Telugu, Canada, Tamil, Marathi and so on." }
+  ],
+  7: [
+    { name: "photorealistic 关键词", status: "included" },
+    { name: "胶片颗粒感复刻", status: "included" },
+    { name: "宽幅图 3:1", status: "included" },
+    { name: "360 全景图", status: "included" },
+    { name: "vibe coded 查看器", status: "compressed", reason: "工具演示",
+      excerpt: "I also have this I asked the model to make a 360 image of the moon landing. As you can see, it's actually a very consistent 360 image. you can also see the sun and the shadows are in the right direction. You said you vibe coded this part of it. Yeah, I just made it with codex very quickly." }
+  ],
+  8: [
+    { name: "duct tape 社交反应图", status: "included" },
+    { name: "QR 码生成", status: "included" },
+    { name: "提示词污染-手机", status: "deep-dive" },
+    { name: "提示词污染-面部", status: "deep-dive" },
+    { name: "漫画多页一致性", status: "deep-dive" }
+  ],
+  9: [
+    { name: "范式转变总结", status: "included" },
+    { name: "实用性评价", status: "included" }
+  ]
+};
+
+// ── 状态 ──
+var layerStack = ['layer-overview'];
+var transitioning = false;
+
+var layerNames = {
+  'layer-overview': '评测总览',
+  'layer-s2-detail': '文字能力边界',
+  'layer-s3-detail': '设计能力深入',
+  'layer-s5-detail': '视觉理解深入',
+  'layer-s6-detail': '多语言深入',
+  'layer-s8-detail': '思考模式深入'
+};
+
+// ── IntersectionObserver ──
+var observers = new Map();
+
+function setupObserver(layerId) {
+  if (observers.has(layerId)) return;
+  var layer = document.getElementById(layerId);
+  var reveals = layer.querySelectorAll('.reveal, [class*=\"_stage\"]');
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        var stage = e.target.querySelector('[class*="_stage"]');
+        if (stage) stage.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.15, root: layer });
+  reveals.forEach(function(el) { obs.observe(el); });
+  observers.set(layerId, obs);
+}
+
+function resetReveals(layerId) {
+  var layer = document.getElementById(layerId);
+  layer.querySelectorAll('.reveal').forEach(function(el) { el.classList.remove('visible'); });
+  layer.querySelectorAll('[class*="_stage"]').forEach(function(el) { el.classList.remove('visible'); });
+}
+
+function activateReveals(layerId) {
+  resetReveals(layerId);
+  if (observers.has(layerId)) { observers.get(layerId).disconnect(); observers.delete(layerId); }
+  requestAnimationFrame(function() { setupObserver(layerId); });
+}
+
+// ── 面包屑 ──
+function updateBreadcrumb() {
+  var bc = document.getElementById('breadcrumb');
+  bc.innerHTML = '';
+  layerStack.forEach(function(id, i) {
+    if (i > 0) {
+      var sep = document.createElement('span');
+      sep.className = 'sep'; sep.textContent = '>';
+      bc.appendChild(sep);
+    }
+    var span = document.createElement('span');
+    span.textContent = layerNames[id] || id;
+    if (i === layerStack.length - 1) { span.className = 'current'; }
+    else { span.addEventListener('click', function() { goBackTo(i); }); }
+    bc.appendChild(span);
+  });
+
+  var backBtn = document.getElementById('backBtn');
+  backBtn.style.display = layerStack.length > 1 ? 'flex' : 'none';
+  bc.style.left = layerStack.length > 1 ? '60px' : '16px';
+
+  var dots = document.getElementById('depthDots');
+  var depth = layerStack.length - 1;
+  dots.querySelectorAll('.dot').forEach(function(d, i) {
+    d.classList.toggle('active', i === depth);
+  });
+}
+
+// ── 转场 ──
+function drillDown(targetId, btnEl) {
+  if (transitioning) return;
+  transitioning = true;
+  var currentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var targetLayer = document.getElementById(targetId);
+
+  targetLayer.scrollTop = 0;
+  resetReveals(targetId);
+  targetLayer.style.visibility = 'visible';
+
+  var duration = 600;
+  currentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  currentLayer.style.transformOrigin = 'center center';
+  currentLayer.style.transform = 'scale(1.3)';
+  currentLayer.style.opacity = '0';
+
+  targetLayer.classList.add('active');
+  targetLayer.style.opacity = '0';
+  targetLayer.style.transform = 'scale(0.85)';
+  targetLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      targetLayer.style.opacity = '1';
+      targetLayer.style.transform = 'scale(1)';
+    });
+  });
+
+  setTimeout(function() {
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition = ''; currentLayer.style.transform = ''; currentLayer.style.opacity = '';
+    targetLayer.style.transition = ''; targetLayer.style.transform = '';
+    activateReveals(targetId);
+    transitioning = false;
+  }, duration + 50);
+
+  layerStack.push(targetId);
+  updateBreadcrumb();
+}
+
+function goBack() {
+  if (layerStack.length <= 1 || transitioning) return;
+  transitioning = true;
+  var currentId = layerStack.pop();
+  var parentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var parentLayer = document.getElementById(parentId);
+
+  var duration = 600;
+  currentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  currentLayer.style.transform = 'scale(0.85)';
+  currentLayer.style.opacity = '0';
+
+  parentLayer.classList.add('active');
+  parentLayer.style.transform = 'scale(1.3)';
+  parentLayer.style.opacity = '0';
+  parentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      parentLayer.style.transform = 'scale(1)';
+      parentLayer.style.opacity = '1';
+    });
+  });
+
+  setTimeout(function() {
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition = ''; currentLayer.style.transform = '';
+    currentLayer.style.opacity = ''; currentLayer.style.visibility = '';
+    parentLayer.style.transition = ''; parentLayer.style.transform = '';
+    transitioning = false;
+  }, duration + 50);
+
+  updateBreadcrumb();
+}
+
+function goBackTo(targetIndex) {
+  if (transitioning) return;
+  while (layerStack.length - 1 > targetIndex) {
+    if (layerStack.length <= 1) break;
+    goBack(); return;
+  }
+}
+
+// ── 原文对照 ──
+function toggleSource(btn) {
+  btn.classList.toggle('open');
+  btn.nextElementSibling.classList.toggle('open');
+}
+
+// ── S8 叙事旁白控制 ──
+(function() {
+  var stage = document.getElementById('s8_stage');
+  var narrs = stage.querySelectorAll('.s8_narr_step');
+  var timers = [];
+
+  function playNarration() {
+    narrs.forEach(function(n) {
+      var start = parseInt(n.dataset.start);
+      var end = parseInt(n.dataset.end);
+      timers.push(setTimeout(function() { n.classList.add('s8_show'); }, start + 300));
+      if (end < 9999) {
+        timers.push(setTimeout(function() { n.classList.remove('s8_show'); }, end + 300));
+      }
+    });
+
+    // Step 3: add conflict styling to tags when lightning appears
+    timers.push(setTimeout(function() {
+      stage.querySelector('.s8_tag_a').classList.add('s8_conflicted');
+      stage.querySelector('.s8_tag_b').classList.add('s8_conflicted');
+    }, 2400));
+  }
+
+  playNarration();
+})();
+
+// ── 初始化 ──
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+
+</body>
+</html>

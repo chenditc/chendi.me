@@ -1,0 +1,3361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>vLLM 解剖：高吞吐 LLM 推理系统的内部构造</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #EFF6FF;
+  --bg-act2: #FEF2F2;
+  --bg-act3: #F0FDF4;
+  --bg-dark: #0F172A;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --dim: #94A3B8;
+  --accent: #1D4ED8;
+  --accent2: #B91C1C;
+  --warm: #D97706;
+  --danger: #DC2626;
+  --neutral: #94A3B8;
+  --card-bg: #FFFFFF;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Noto Sans SC',sans-serif;color:var(--text);-webkit-font-smoothing:antialiased;}
+.reveal{opacity:0;transform:translateY(40px);transition:opacity 0.8s ease,transform 0.8s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-delay-1{transition-delay:0.15s;}
+.reveal-delay-2{transition-delay:0.3s;}
+.reveal-delay-3{transition-delay:0.45s;}
+.reveal-delay-4{transition-delay:0.6s;}
+.big-statement{font-family:'Noto Serif SC',serif;font-size:clamp(22px,5.5vw,32px);font-weight:700;line-height:1.5;margin-bottom:32px;}
+.body-text{font-size:16px;line-height:1.9;color:var(--text);margin-bottom:28px;}
+.body-text .hl{color:var(--accent);font-weight:500;}
+.body-text .hl2{color:var(--accent2);font-weight:500;}
+.body-text .hl-danger{color:var(--danger);font-weight:500;}
+.layer{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;visibility:hidden;opacity:0;will-change:transform,opacity;scroll-snap-type:y proximity;}
+.layer.active{visibility:visible;opacity:1;}
+.feed-section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;scroll-snap-align:start;}
+.feed-section.dark{background:var(--bg-dark);color:#F1F5F9;}
+.feed-section.dark .body-text{color:#94A3B8;}
+.feed-section.dark .big-statement{color:#F1F5F9;}
+.section-inner{max-width:600px;width:100%;}
+.breadcrumb{position:fixed;top:16px;left:16px;z-index:1000;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);padding:8px 14px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,0.1);font-size:13px;font-weight:500;}
+.breadcrumb span{color:var(--text-muted);cursor:pointer;transition:color 0.2s;}
+.breadcrumb span:hover{color:var(--accent);}
+.breadcrumb span.current{color:var(--text);cursor:default;}
+.breadcrumb .sep{color:#CBD5E1;margin:0 2px;cursor:default;}
+.back-btn{position:fixed;top:16px;left:16px;z-index:1001;width:38px;height:38px;border-radius:10px;border:none;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(0,0,0,0.1);font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--text);transition:all 0.2s;}
+.back-btn:hover{background:var(--accent);color:#fff;}
+.depth-dots{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;gap:8px;background:rgba(255,255,255,0.9);backdrop-filter:blur(8px);padding:8px 14px;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,0.1);}
+.dot{width:10px;height:10px;border-radius:50%;background:#CBD5E1;transition:all 0.3s;}
+.dot.active{background:var(--accent);box-shadow:0 0 8px rgba(29,78,216,0.5);transform:scale(1.2);}
+.drill-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:1.5px solid rgba(29,78,216,0.3);border-radius:10px;background:transparent;color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.25s;}
+.drill-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(29,78,216,0.3);}
+.dark .drill-btn{border-color:rgba(29,78,216,0.4);}
+.source-panel{margin-top:24px;border-radius:12px;overflow:hidden;border:1px solid rgba(29,78,216,0.15);background:rgba(29,78,216,0.03);}
+.dark .source-panel{border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);}
+.source-toggle{width:100%;padding:12px 16px;border:none;background:none;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);}
+.dark .source-toggle{color:#93C5FD;}
+.source-toggle:hover{background:rgba(29,78,216,0.06);}
+.source-toggle .arrow{transition:transform 0.3s;font-size:11px;}
+.source-toggle.open .arrow{transform:rotate(90deg);}
+.source-body{max-height:0;overflow:hidden;transition:max-height 0.4s ease;padding:0 16px;}
+.source-body.open{max-height:2000px;padding:0 16px 16px;overflow-y:auto;}
+.source-body p{font-size:13px;line-height:1.8;color:var(--text-muted);margin:0 0 12px 0;white-space:pre-wrap;}
+.dark .source-body p{color:#94A3B8;}
+.source-body .source-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--accent);margin-bottom:8px;display:block;}
+.dark .source-body .source-label{color:#93C5FD;}
+.anim-stage{width:100%;display:flex;justify-content:center;margin:28px 0;min-height:180px;}
+.anim-stage>div{width:100%;}
+.hook-line{font-size:14px;color:var(--accent);font-weight:500;margin:16px 0;line-height:1.7;}
+.dark .hook-line{color:#93C5FD;}
+
+/* === S1 Animation === */
+
+.s1_stage {
+  width: 340px;
+  margin: 0 auto;
+  padding: 30px 0;
+  font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+  color: #1E293B;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.s1_engine_box {
+  width: 310px;
+  border: 3px solid #1D4ED8;
+  border-radius: 18px;
+  padding: 20px 18px 24px;
+  position: relative;
+  background: #EFF6FF;
+  opacity: 0;
+  transform: scale(0.92);
+}
+
+.s1_stage.visible .s1_engine_box {
+  animation: s1_box_in 0.6s ease-out 0.2s forwards;
+}
+
+@keyframes s1_box_in {
+  to { opacity: 1; transform: scale(1); }
+}
+
+.s1_engine_label {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1D4ED8;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 3px 16px;
+  border-radius: 8px;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+}
+
+.s1_components {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.s1_comp {
+  width: 220px;
+  text-align: center;
+  padding: 12px 0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(16px) scale(0.9);
+  position: relative;
+}
+
+.s1_comp_scheduler {
+  background: #1D4ED8;
+  color: #fff;
+}
+
+.s1_comp_kvcache {
+  background: #B91C1C;
+  color: #fff;
+}
+
+.s1_comp_executor {
+  background: #1D4ED8;
+  color: #fff;
+}
+
+.s1_stage.visible .s1_comp_scheduler {
+  animation: s1_comp_in 0.5s ease-out 0.8s forwards;
+}
+
+.s1_stage.visible .s1_comp_kvcache {
+  animation: s1_comp_in 0.5s ease-out 1.2s forwards;
+}
+
+.s1_stage.visible .s1_comp_executor {
+  animation: s1_comp_in 0.5s ease-out 1.6s forwards;
+}
+
+@keyframes s1_comp_in {
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Arrows between components */
+.s1_arrow_zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  width: 100%;
+  position: relative;
+}
+
+.s1_arrow_down {
+  width: 2px;
+  height: 0;
+  background: #1E293B;
+  position: relative;
+  opacity: 0;
+}
+
+.s1_arrow_down::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid #1E293B;
+}
+
+.s1_stage.visible .s1_arrow1 {
+  animation: s1_arrow_grow 0.4s ease-out 2.0s forwards;
+}
+
+.s1_stage.visible .s1_arrow2 {
+  animation: s1_arrow_grow 0.4s ease-out 2.4s forwards;
+}
+
+@keyframes s1_arrow_grow {
+  to { height: 18px; opacity: 1; }
+}
+
+/* Side connection: KV Cache <-> Scheduler and KV Cache <-> Executor */
+.s1_side_lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.s1_side_line {
+  position: absolute;
+  background: #B91C1C;
+  opacity: 0;
+}
+
+.s1_side_line_top {
+  width: 2px;
+  height: 0;
+  right: 16px;
+  top: 48px;
+}
+
+.s1_side_line_bottom {
+  width: 2px;
+  height: 0;
+  right: 16px;
+  top: 114px;
+}
+
+.s1_side_line_vert {
+  width: 0;
+  height: 2px;
+  right: 16px;
+  top: 48px;
+}
+
+.s1_stage.visible .s1_side_line_top {
+  animation: s1_vline_grow 0.3s ease-out 2.8s forwards;
+}
+
+.s1_stage.visible .s1_side_line_bottom {
+  animation: s1_vline_grow 0.3s ease-out 2.8s forwards;
+}
+
+@keyframes s1_vline_grow {
+  to { height: 20px; opacity: 0.6; }
+}
+
+/* Dot decorations for the side connections */
+.s1_dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #B91C1C;
+  right: 13px;
+  opacity: 0;
+}
+
+.s1_dot_top {
+  top: 44px;
+}
+
+.s1_dot_mid_top {
+  top: 82px;
+}
+
+.s1_dot_mid_bot {
+  top: 112px;
+}
+
+.s1_dot_bottom {
+  top: 148px;
+}
+
+.s1_stage.visible .s1_dot {
+  animation: s1_dot_in 0.3s ease-out 3.1s forwards;
+}
+
+@keyframes s1_dot_in {
+  to { opacity: 0.7; }
+}
+
+/* Bracket on the right side connecting dots */
+.s1_bracket {
+  position: absolute;
+  right: 10px;
+  top: 47px;
+  width: 10px;
+  height: 104px;
+  border: 2px solid #B91C1C;
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  opacity: 0;
+}
+
+.s1_stage.visible .s1_bracket {
+  animation: s1_bracket_in 0.5s ease-out 2.8s forwards;
+}
+
+@keyframes s1_bracket_in {
+  to { opacity: 0.45; }
+}
+
+/* Label for the bracket */
+.s1_bracket_label {
+  position: absolute;
+  right: -8px;
+  top: 86px;
+  font-size: 10px;
+  color: #B91C1C;
+  opacity: 0;
+  white-space: nowrap;
+  transform: rotate(90deg);
+  transform-origin: left center;
+  font-weight: 600;
+}
+
+.s1_stage.visible .s1_bracket_label {
+  animation: s1_dot_in 0.4s ease-out 3.2s forwards;
+}
+
+/* Flow label */
+.s1_flow_label {
+  font-size: 11px;
+  color: #1D4ED8;
+  opacity: 0;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.s1_stage.visible .s1_flow_label {
+  animation: s1_dot_in 0.4s ease-out 3.4s forwards;
+}
+
+/* Sub-detail text inside KV cache */
+.s1_detail {
+  font-size: 10px;
+  font-weight: 400;
+  opacity: 0.85;
+  display: block;
+  margin-top: 2px;
+}
+
+/* === S2 Animation === */
+
+.s2_stage {
+  width: 340px;
+  margin: 0 auto;
+  padding: 32px 0 24px;
+  background: #0F172A;
+  font-family: "SF Pro Display", "PingFang SC", sans-serif;
+  color: #E2E8F0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* --- prompt input box at top --- */
+.s2_prompt {
+  width: 160px;
+  margin: 0 auto 0;
+  padding: 10px 0;
+  border: 2px solid #1D4ED8;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #93C5FD;
+  background: rgba(29,78,216,0.12);
+  opacity: 0;
+  transform: translateY(-18px);
+}
+.s2_stage.visible .s2_prompt {
+  animation: s2_fadeDown 0.5s 0.4s ease both;
+}
+
+/* --- vertical connector lines --- */
+.s2_pipe {
+  width: 2px;
+  height: 32px;
+  margin: 0 auto;
+  background: #334155;
+  position: relative;
+  opacity: 0;
+}
+.s2_pipe::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #1D4ED8;
+  transform: scaleY(0);
+  transform-origin: top;
+}
+.s2_stage.visible .s2_pipe { opacity: 1; }
+.s2_stage.visible .s2_pipe1::after {
+  animation: s2_pipeGrow 0.35s 0.9s ease both;
+}
+.s2_stage.visible .s2_pipe2::after {
+  animation: s2_pipeGrow 0.35s 1.9s ease both;
+}
+.s2_stage.visible .s2_pipe3::after {
+  animation: s2_pipeGrow 0.35s 2.9s ease both;
+}
+.s2_stage.visible .s2_pipe4::after {
+  animation: s2_pipeGrow 0.35s 3.9s ease both;
+}
+
+/* --- chevron arrow on pipes --- */
+.s2_chevron {
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 7px solid #334155;
+  margin: 0 auto;
+  opacity: 0;
+}
+.s2_stage.visible .s2_chev1 {
+  animation: s2_fadeIn 0.2s 1.2s ease both;
+}
+.s2_stage.visible .s2_chev2 {
+  animation: s2_fadeIn 0.2s 2.2s ease both;
+}
+.s2_stage.visible .s2_chev3 {
+  animation: s2_fadeIn 0.2s 3.2s ease both;
+}
+.s2_stage.visible .s2_chev4 {
+  animation: s2_fadeIn 0.2s 4.2s ease both;
+}
+
+/* --- step() loop wrapper --- */
+.s2_loopWrap {
+  position: relative;
+  margin: 0 auto;
+  width: 280px;
+  padding: 0 0 4px;
+}
+
+/* loop bracket - left side */
+.s2_loopBracket {
+  position: absolute;
+  left: -4px;
+  top: 0;
+  bottom: 0;
+  width: 28px;
+  pointer-events: none;
+  opacity: 0;
+}
+.s2_stage.visible .s2_loopBracket {
+  animation: s2_fadeIn 0.4s 1.3s ease both;
+}
+.s2_loopBracketLine {
+  position: absolute;
+  background: #B91C1C;
+  border-radius: 1px;
+}
+.s2_lbl_top {
+  left: 0; top: 0; width: 2px; height: 100%;
+}
+.s2_lbl_topCap {
+  left: 0; top: 0; height: 2px; width: 18px;
+}
+.s2_lbl_botCap {
+  left: 0; bottom: 0; height: 2px; width: 18px;
+}
+
+/* loop label */
+.s2_loopLabel {
+  position: absolute;
+  left: -58px;
+  top: 50%;
+  transform: translateY(-50%) rotate(-90deg);
+  font-size: 10px;
+  color: #B91C1C;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+  opacity: 0;
+}
+.s2_stage.visible .s2_loopLabel {
+  animation: s2_fadeIn 0.4s 1.5s ease both;
+}
+
+/* --- the 3 processing boxes --- */
+.s2_box {
+  width: 200px;
+  margin: 0 auto;
+  padding: 12px 0;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0;
+  transform: scale(0.92);
+  position: relative;
+}
+
+.s2_box_schedule {
+  background: rgba(29,78,216,0.18);
+  border: 1.5px solid #1D4ED8;
+  color: #93C5FD;
+}
+.s2_box_forward {
+  background: rgba(29,78,216,0.18);
+  border: 1.5px solid #1D4ED8;
+  color: #93C5FD;
+}
+.s2_box_output {
+  background: rgba(29,78,216,0.18);
+  border: 1.5px solid #1D4ED8;
+  color: #93C5FD;
+}
+
+.s2_stage.visible .s2_box_schedule {
+  animation: s2_boxIn 0.45s 1.3s ease both;
+}
+.s2_stage.visible .s2_box_forward {
+  animation: s2_boxIn 0.45s 2.3s ease both;
+}
+.s2_stage.visible .s2_box_output {
+  animation: s2_boxIn 0.45s 3.3s ease both;
+}
+
+/* sub-label under each box */
+.s2_sublabel {
+  font-size: 10px;
+  color: #64748B;
+  font-weight: 400;
+  margin-top: 3px;
+}
+
+/* --- loop arrow (right side, bottom to top) --- */
+.s2_loopArrow {
+  position: absolute;
+  right: -4px;
+  top: 0;
+  bottom: 0;
+  width: 28px;
+  pointer-events: none;
+  opacity: 0;
+}
+.s2_stage.visible .s2_loopArrow {
+  animation: s2_fadeIn 0.5s 3.8s ease both;
+}
+.s2_arrowLine {
+  position: absolute;
+  background: #B91C1C;
+  border-radius: 1px;
+}
+.s2_al_right {
+  right: 0; top: 0; width: 2px; height: 100%;
+}
+.s2_al_bot {
+  right: 0; bottom: 0; height: 2px; width: 18px;
+}
+.s2_al_topArr {
+  right: 0; top: 0; height: 2px; width: 18px;
+}
+/* arrowhead pointing left at top-right */
+.s2_arrowHead {
+  position: absolute;
+  top: -4px;
+  left: -1px;
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-right: 7px solid #B91C1C;
+}
+
+/* --- travelling dot through pipeline --- */
+.s2_dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1D4ED8;
+  box-shadow: 0 0 8px rgba(29,78,216,0.6);
+  position: absolute;
+  left: 50%;
+  margin-left: -4px;
+  opacity: 0;
+  top: 0;
+}
+.s2_stage.visible .s2_dot {
+  animation: s2_dotTravel 4.0s 0.7s ease-in-out both;
+}
+
+/* --- token output box at bottom --- */
+.s2_token {
+  width: 160px;
+  margin: 0 auto;
+  padding: 10px 0;
+  border: 2px solid #B91C1C;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #FCA5A5;
+  background: rgba(185,28,28,0.12);
+  opacity: 0;
+  transform: translateY(12px);
+}
+.s2_stage.visible .s2_token {
+  animation: s2_fadeUp 0.5s 4.3s ease both;
+}
+
+/* --- pulse highlight on active box --- */
+.s2_stage.visible .s2_box_schedule::before,
+.s2_stage.visible .s2_box_forward::before,
+.s2_stage.visible .s2_box_output::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 10px;
+  border: 2px solid #1D4ED8;
+  opacity: 0;
+}
+.s2_stage.visible .s2_box_schedule::before {
+  animation: s2_pulse 0.6s 1.5s ease both;
+}
+.s2_stage.visible .s2_box_forward::before {
+  animation: s2_pulse 0.6s 2.5s ease both;
+}
+.s2_stage.visible .s2_box_output::before {
+  animation: s2_pulse 0.6s 3.5s ease both;
+}
+
+/* ======================== keyframes ======================== */
+
+@keyframes s2_fadeDown {
+  from { opacity: 0; transform: translateY(-18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes s2_fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes s2_fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes s2_pipeGrow {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+@keyframes s2_boxIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes s2_pulse {
+  0%   { opacity: 0; transform: scale(1); }
+  50%  { opacity: 0.7; transform: scale(1.04); }
+  100% { opacity: 0; transform: scale(1.08); }
+}
+@keyframes s2_dotTravel {
+  0%   { top: 46px;  opacity: 0; }
+  4%   { top: 46px;  opacity: 1; }
+  18%  { top: 100px; opacity: 1; }
+  25%  { top: 140px; opacity: 0.4; }
+  32%  { top: 140px; opacity: 1; }
+  46%  { top: 200px; opacity: 1; }
+  53%  { top: 240px; opacity: 0.4; }
+  60%  { top: 240px; opacity: 1; }
+  74%  { top: 300px; opacity: 1; }
+  82%  { top: 340px; opacity: 0.4; }
+  88%  { top: 370px; opacity: 1; }
+  96%  { top: 410px; opacity: 1; }
+  100% { top: 410px; opacity: 0; }
+}
+
+/* === S3 Animation === */
+
+.s3_stage {
+  width: 340px;
+  height: 320px;
+  background: #FEF2F2;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  font-family: system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 12px;
+}
+
+.s3_title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1D4ED8;
+  margin-bottom: 10px;
+  letter-spacing: 0.5px;
+}
+
+.s3_body {
+  display: flex;
+  justify-content: space-between;
+  width: 300px;
+  position: relative;
+}
+
+.s3_queue {
+  width: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.s3_qlabel {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  white-space: nowrap;
+}
+
+.s3_qlabel_decode {
+  background: #1D4ED8;
+  color: #fff;
+}
+
+.s3_qlabel_prefill {
+  background: #B91C1C;
+  color: #fff;
+}
+
+.s3_priority {
+  font-size: 9px;
+  color: #1D4ED8;
+  font-weight: 600;
+  margin-bottom: 4px;
+  opacity: 0;
+}
+
+.s3_stage.visible .s3_priority {
+  animation: s3_fadeIn 0.4s 0.4s both;
+}
+
+.s3_qbox {
+  width: 80px;
+  min-height: 90px;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 4px;
+  gap: 4px;
+}
+
+.s3_item {
+  width: 64px;
+  height: 22px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.s3_item_d {
+  background: #1D4ED8;
+}
+
+.s3_item_p {
+  background: #B91C1C;
+}
+
+.s3_stage.visible .s3_item_d1 { animation: s3_popIn 0.35s 0.6s both; }
+.s3_stage.visible .s3_item_d2 { animation: s3_popIn 0.35s 0.8s both; }
+.s3_stage.visible .s3_item_d3 { animation: s3_popIn 0.35s 1.0s both; }
+.s3_stage.visible .s3_item_p1 { animation: s3_popIn 0.35s 0.7s both; }
+.s3_stage.visible .s3_item_p2 { animation: s3_popIn 0.35s 0.9s both; }
+.s3_stage.visible .s3_item_p3 { animation: s3_popIn 0.35s 1.1s both; }
+
+.s3_center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 16px;
+  width: 100px;
+}
+
+.s3_stepbox {
+  width: 88px;
+  min-height: 100px;
+  border: 2px solid #374151;
+  border-radius: 10px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 4px;
+  gap: 4px;
+  position: relative;
+  opacity: 0;
+}
+
+.s3_stage.visible .s3_stepbox {
+  animation: s3_fadeIn 0.4s 0.4s both;
+}
+
+.s3_steplabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 2px;
+}
+
+.s3_slot {
+  width: 68px;
+  height: 20px;
+  border-radius: 4px;
+  opacity: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.s3_slot_d {
+  background: #1D4ED8;
+}
+
+.s3_slot_p {
+  background: #B91C1C;
+}
+
+.s3_stage.visible .s3_slot_d1 { animation: s3_slideIn 0.4s 2.0s both; }
+.s3_stage.visible .s3_slot_d2 { animation: s3_slideIn 0.4s 2.3s both; }
+.s3_stage.visible .s3_slot_d3 { animation: s3_slideIn 0.4s 2.6s both; }
+.s3_stage.visible .s3_slot_p1 { animation: s3_slideIn 0.4s 3.2s both; }
+
+.s3_arrow_l, .s3_arrow_r {
+  position: absolute;
+  font-size: 16px;
+  color: #374151;
+  opacity: 0;
+}
+
+.s3_arrow_l {
+  left: 90px;
+  top: 60px;
+}
+
+.s3_arrow_r {
+  right: 90px;
+  top: 60px;
+}
+
+.s3_stage.visible .s3_arrow_l {
+  animation: s3_arrowPulse 0.6s 1.6s both;
+}
+
+.s3_stage.visible .s3_arrow_r {
+  animation: s3_arrowPulse 0.6s 2.9s both;
+}
+
+.s3_budget {
+  width: 280px;
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+}
+
+.s3_stage.visible .s3_budget {
+  animation: s3_fadeIn 0.4s 1.4s both;
+}
+
+.s3_budgetlabel {
+  font-size: 10px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+.s3_bar {
+  width: 260px;
+  height: 16px;
+  background: #E5E7EB;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+}
+
+.s3_bar_d {
+  height: 100%;
+  width: 0;
+  background: #1D4ED8;
+  border-radius: 8px 0 0 8px;
+}
+
+.s3_bar_p {
+  height: 100%;
+  width: 0;
+  background: #B91C1C;
+}
+
+.s3_bar_remain {
+  flex: 1;
+}
+
+.s3_stage.visible .s3_bar_d {
+  animation: s3_fillDecode 0.8s 2.0s both;
+}
+
+.s3_stage.visible .s3_bar_p {
+  animation: s3_fillPrefill 0.6s 3.2s both;
+}
+
+.s3_bar_labels {
+  width: 260px;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 3px;
+  font-size: 9px;
+  color: #6B7280;
+  font-weight: 500;
+}
+
+.s3_tag_first {
+  font-size: 9px;
+  color: #1D4ED8;
+  font-weight: 700;
+  opacity: 0;
+  margin-top: 2px;
+}
+
+.s3_stage.visible .s3_tag_first {
+  animation: s3_fadeIn 0.3s 1.8s both;
+}
+
+.s3_tag_then {
+  font-size: 9px;
+  color: #B91C1C;
+  font-weight: 700;
+  opacity: 0;
+  margin-top: 2px;
+}
+
+.s3_stage.visible .s3_tag_then {
+  animation: s3_fadeIn 0.3s 3.0s both;
+}
+
+@keyframes s3_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes s3_popIn {
+  from { opacity: 0; transform: scale(0.5); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s3_slideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s3_arrowPulse {
+  0% { opacity: 0; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s3_fillDecode {
+  from { width: 0; }
+  to { width: 45%; }
+}
+
+@keyframes s3_fillPrefill {
+  from { width: 0; }
+  to { width: 20%; }
+}
+
+/* === S4 Animation === */
+
+.s4_stage {
+  width: 340px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  background: #0F172A;
+  border-radius: 12px;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  overflow: hidden;
+}
+
+.s4_title {
+  text-align: center;
+  color: #E2E8F0;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 18px;
+  opacity: 0;
+}
+
+.s4_grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.s4_card {
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(29, 78, 216, 0.3);
+  border-radius: 10px;
+  padding: 14px 10px 12px;
+  text-align: center;
+  opacity: 0;
+  transform: scale(0.3) translateY(20px);
+}
+
+.s4_icon {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.s4_card:nth-child(1) .s4_icon { background: rgba(29, 78, 216, 0.2); }
+.s4_card:nth-child(2) .s4_icon { background: rgba(185, 28, 28, 0.2); }
+.s4_card:nth-child(3) .s4_icon { background: rgba(185, 28, 28, 0.2); }
+.s4_card:nth-child(4) .s4_icon { background: rgba(29, 78, 216, 0.2); }
+
+.s4_label {
+  color: #E2E8F0;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  white-space: nowrap;
+}
+
+.s4_desc {
+  color: rgba(148, 163, 184, 0.9);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+/* Icon shapes via SVG-in-CSS */
+.s4_ico_chunk {
+  width: 20px; height: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+.s4_ico_chunk span {
+  background: #1D4ED8;
+  border-radius: 2px;
+}
+
+.s4_ico_hash {
+  color: #B91C1C;
+  font-size: 20px;
+  font-weight: 800;
+  font-family: monospace;
+}
+
+.s4_ico_mask {
+  width: 18px; height: 18px;
+  border: 2px solid #B91C1C;
+  border-radius: 4px;
+  position: relative;
+}
+.s4_ico_mask::after {
+  content: "";
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 8px; height: 8px;
+  background: #B91C1C;
+  border-radius: 2px;
+  opacity: 0.6;
+}
+
+.s4_ico_fast {
+  color: #1D4ED8;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+/* Animations */
+@keyframes s4_popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) translateY(20px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.08) translateY(-2px);
+  }
+  80% {
+    transform: scale(0.96) translateY(1px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes s4_fadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s4_glowPulse {
+  0%, 100% { border-color: rgba(29, 78, 216, 0.3); }
+  50%      { border-color: rgba(29, 78, 216, 0.6); }
+}
+
+.s4_stage.visible .s4_title {
+  animation: s4_fadeIn 0.5s ease-out 0.4s forwards;
+}
+
+.s4_stage.visible .s4_card:nth-child(1) {
+  animation: s4_popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.7s forwards;
+}
+.s4_stage.visible .s4_card:nth-child(2) {
+  animation: s4_popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 1.0s forwards;
+}
+.s4_stage.visible .s4_card:nth-child(3) {
+  animation: s4_popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 1.3s forwards;
+}
+.s4_stage.visible .s4_card:nth-child(4) {
+  animation: s4_popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 1.6s forwards;
+}
+
+.s4_stage.visible .s4_card {
+  animation-fill-mode: forwards;
+}
+
+.s4_stage.visible .s4_card:nth-child(1),
+.s4_stage.visible .s4_card:nth-child(4) {
+  animation: s4_popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+             s4_glowPulse 2.5s ease-in-out 2.2s infinite;
+}
+.s4_stage.visible .s4_card:nth-child(1) {
+  animation-delay: 0.7s, 2.2s;
+}
+.s4_stage.visible .s4_card:nth-child(4) {
+  animation-delay: 1.6s, 2.8s;
+}
+
+/* === S5 Animation === */
+
+.s5_stage {
+  width: 340px;
+  min-height: 420px;
+  background: #EFF6FF;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 20px 16px 24px;
+  position: relative;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, sans-serif;
+  box-sizing: border-box;
+}
+
+/* --- API endpoint at top --- */
+.s5_api_box {
+  width: 100%;
+  background: #1D4ED8;
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px 0;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  margin-bottom: 12px;
+  opacity: 0;
+  transform: translateY(-12px);
+}
+.s5_stage.visible .s5_api_box {
+  animation: s5_fadeDown 0.5s ease forwards;
+  animation-delay: 2.6s;
+}
+
+/* --- Layer wrapper --- */
+.s5_layers {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* --- Shared layer card --- */
+.s5_layer {
+  width: 100%;
+  border-radius: 8px;
+  border: 2px solid #1D4ED8;
+  background: #fff;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.s5_layer_header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.s5_layer_badge {
+  background: #1D4ED8;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.s5_layer_title {
+  font-size: 12px;
+  color: #1D4ED8;
+  font-weight: 600;
+}
+
+/* --- Layer 1: TP --- */
+.s5_tp_row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+.s5_node_box {
+  border: 1.5px dashed #B91C1C;
+  border-radius: 6px;
+  padding: 6px 8px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.s5_node_label {
+  font-size: 9px;
+  color: #B91C1C;
+  font-weight: 600;
+  position: absolute;
+  margin-top: -22px;
+}
+.s5_gpu {
+  width: 28px;
+  height: 22px;
+  background: #B91C1C;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: #fff;
+  font-weight: 700;
+}
+.s5_shard_arrow {
+  color: #1D4ED8;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* --- Layer 2: PP --- */
+.s5_pp_row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+.s5_pp_node {
+  border: 1.5px dashed #B91C1C;
+  border-radius: 6px;
+  padding: 6px 8px;
+  text-align: center;
+  position: relative;
+}
+.s5_pp_node_tag {
+  font-size: 8px;
+  color: #B91C1C;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.s5_pp_layers {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.s5_pp_block {
+  background: #1D4ED8;
+  color: #fff;
+  font-size: 8px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 3px;
+  text-align: center;
+}
+.s5_pp_arrow {
+  color: #1D4ED8;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* --- Layer 3: DP --- */
+.s5_dp_row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  justify-content: center;
+}
+.s5_replica {
+  border: 1.5px solid #1D4ED8;
+  border-radius: 6px;
+  padding: 6px 10px;
+  text-align: center;
+  background: #EFF6FF;
+}
+.s5_replica_tag {
+  font-size: 8px;
+  color: #1D4ED8;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+.s5_replica_icon {
+  font-size: 16px;
+}
+.s5_lb_label {
+  font-size: 10px;
+  color: #B91C1C;
+  font-weight: 600;
+  text-align: center;
+  margin-top: 6px;
+}
+
+/* --- Interface bar --- */
+.s5_interface {
+  width: 100%;
+  text-align: center;
+  font-size: 10px;
+  color: #1D4ED8;
+  font-weight: 600;
+  padding: 4px 0;
+  border-top: 1.5px dashed #1D4ED8;
+  border-bottom: 1.5px dashed #1D4ED8;
+  margin-top: 2px;
+  opacity: 0;
+}
+.s5_stage.visible .s5_interface {
+  animation: s5_fadeIn 0.4s ease forwards;
+  animation-delay: 2.2s;
+}
+
+/* --- Animations --- */
+.s5_stage.visible .s5_layer_tp {
+  animation: s5_buildUp 0.5s ease forwards;
+  animation-delay: 0.4s;
+}
+.s5_stage.visible .s5_layer_pp {
+  animation: s5_buildUp 0.5s ease forwards;
+  animation-delay: 1.0s;
+}
+.s5_stage.visible .s5_layer_dp {
+  animation: s5_buildUp 0.5s ease forwards;
+  animation-delay: 1.6s;
+}
+
+/* GPU shimmer inside TP layer */
+.s5_stage.visible .s5_gpu {
+  animation: s5_gpuPulse 1.2s ease infinite;
+}
+.s5_stage.visible .s5_gpu:nth-child(1) { animation-delay: 0.8s; }
+.s5_stage.visible .s5_gpu:nth-child(2) { animation-delay: 1.0s; }
+.s5_stage.visible .s5_gpu:nth-child(3) { animation-delay: 1.2s; }
+.s5_stage.visible .s5_gpu:nth-child(4) { animation-delay: 1.4s; }
+
+@keyframes s5_buildUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes s5_fadeDown {
+  0% { opacity: 0; transform: translateY(-12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes s5_fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes s5_gpuPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; background: #1D4ED8; }
+}
+
+/* === S6 Animation === */
+
+.s6_stage {
+  width: 340px;
+  height: 280px;
+  background: #0F172A;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #94A3B8;
+  padding: 20px 20px 20px 48px;
+  box-sizing: border-box;
+}
+
+/* Axes */
+.s6_axis_y {
+  position: absolute;
+  left: 48px;
+  top: 20px;
+  width: 2px;
+  height: 0;
+  background: #94A3B8;
+  transform-origin: top;
+}
+.s6_stage.visible .s6_axis_y {
+  animation: s6_grow_y 0.5s ease-out 0.4s forwards;
+}
+@keyframes s6_grow_y {
+  to { height: 200px; }
+}
+
+.s6_axis_x {
+  position: absolute;
+  left: 48px;
+  top: 220px;
+  height: 2px;
+  width: 0;
+  background: #94A3B8;
+}
+.s6_stage.visible .s6_axis_x {
+  animation: s6_grow_x 0.5s ease-out 0.4s forwards;
+}
+@keyframes s6_grow_x {
+  to { width: 268px; }
+}
+
+/* Axis labels */
+.s6_label_x {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  opacity: 0;
+  white-space: nowrap;
+}
+.s6_stage.visible .s6_label_x {
+  animation: s6_fade 0.4s ease 0.8s forwards;
+}
+
+.s6_label_y_left {
+  position: absolute;
+  left: 6px;
+  top: 110px;
+  font-size: 11px;
+  color: #B91C1C;
+  opacity: 0;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+.s6_stage.visible .s6_label_y_left {
+  animation: s6_fade 0.4s ease 0.8s forwards;
+}
+
+.s6_label_y_right {
+  position: absolute;
+  right: 6px;
+  top: 110px;
+  font-size: 11px;
+  color: #1D4ED8;
+  opacity: 0;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+.s6_stage.visible .s6_label_y_right {
+  animation: s6_fade 0.4s ease 0.8s forwards;
+}
+
+@keyframes s6_fade {
+  to { opacity: 1; }
+}
+
+/* Chart area — SVG lines */
+.s6_chart {
+  position: absolute;
+  left: 50px;
+  top: 20px;
+  width: 266px;
+  height: 200px;
+}
+
+/* Latency line: flat then rises */
+.s6_line_latency {
+  fill: none;
+  stroke: #B91C1C;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 340;
+  stroke-dashoffset: 340;
+}
+.s6_stage.visible .s6_line_latency {
+  animation: s6_draw_line 1.2s ease-in-out 1.2s forwards;
+}
+
+/* Throughput line: rises then flat */
+.s6_line_throughput {
+  fill: none;
+  stroke: #1D4ED8;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 340;
+  stroke-dashoffset: 340;
+}
+.s6_stage.visible .s6_line_throughput {
+  animation: s6_draw_line 1.2s ease-in-out 1.8s forwards;
+}
+
+@keyframes s6_draw_line {
+  to { stroke-dashoffset: 0; }
+}
+
+/* B_sat dashed marker */
+.s6_bsat_line {
+  position: absolute;
+  left: calc(50px + 106px);
+  top: 20px;
+  width: 0;
+  height: 200px;
+  border-left: 2px dashed #94A3B8;
+  opacity: 0;
+}
+.s6_stage.visible .s6_bsat_line {
+  animation: s6_bsat_appear 0.5s ease 2.6s forwards;
+}
+@keyframes s6_bsat_appear {
+  0% { opacity: 0; transform: scaleY(0); }
+  100% { opacity: 0.7; transform: scaleY(1); }
+}
+
+.s6_bsat_label {
+  position: absolute;
+  left: calc(50px + 96px);
+  top: 224px;
+  font-size: 10px;
+  color: #94A3B8;
+  opacity: 0;
+  white-space: nowrap;
+}
+.s6_stage.visible .s6_bsat_label {
+  animation: s6_fade 0.4s ease 2.8s forwards;
+}
+
+/* Legend */
+.s6_legend {
+  position: absolute;
+  top: 6px;
+  right: 12px;
+  display: flex;
+  gap: 12px;
+  opacity: 0;
+}
+.s6_stage.visible .s6_legend {
+  animation: s6_fade 0.4s ease 3.0s forwards;
+}
+.s6_legend_item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+}
+.s6_legend_dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.s6_legend_dot--latency { background: #B91C1C; }
+.s6_legend_dot--throughput { background: #1D4ED8; }
+
+/* Tick labels on X axis */
+.s6_tick {
+  position: absolute;
+  top: 224px;
+  font-size: 9px;
+  color: #94A3B8;
+  opacity: 0;
+}
+.s6_stage.visible .s6_tick {
+  animation: s6_fade 0.3s ease 0.9s forwards;
+}
+.s6_tick--start { left: 48px; }
+.s6_tick--end { right: 18px; }
+
+/* === A1 Animation === */
+
+.a1_stage {
+  width: 340px;
+  background: #EFF6FF;
+  border-radius: 12px;
+  padding: 20px 16px;
+  font-family: system-ui, -apple-system, sans-serif;
+  position: relative;
+  overflow: hidden;
+  color: #1D4ED8;
+}
+
+.a1_title {
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 16px;
+  color: #1D4ED8;
+}
+
+.a1_phase_label {
+  font-size: 11px;
+  font-weight: 700;
+  margin: 10px 0 6px 0;
+  color: #B91C1C;
+  opacity: 0;
+}
+
+.a1_stage.visible .a1_phase_label_r1 {
+  animation: a1_fadeIn 0.4s ease forwards;
+  animation-delay: 0.4s;
+}
+
+.a1_stage.visible .a1_phase_label_r2 {
+  animation: a1_fadeIn 0.4s ease forwards;
+  animation-delay: 5.6s;
+}
+
+/* --- Token Blocks Row --- */
+.a1_blocks_row {
+  display: flex;
+  gap: 6px;
+  margin: 6px 0;
+  align-items: center;
+}
+
+.a1_token_block {
+  width: 56px;
+  height: 32px;
+  border-radius: 6px;
+  background: #1D4ED8;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.a1_stage.visible .a1_token_block {
+  animation: a1_slideUp 0.35s ease forwards;
+}
+
+.a1_stage.visible .a1_tb1 { animation-delay: 0.8s; }
+.a1_stage.visible .a1_tb2 { animation-delay: 1.0s; }
+.a1_stage.visible .a1_tb3 { animation-delay: 1.2s; }
+
+/* --- Hash Arrow --- */
+.a1_hash_arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 4px 0;
+  opacity: 0;
+  font-size: 10px;
+  font-weight: 600;
+  color: #1D4ED8;
+}
+
+.a1_stage.visible .a1_hash_arrow_r1 {
+  animation: a1_fadeIn 0.3s ease forwards;
+  animation-delay: 1.5s;
+}
+
+.a1_stage.visible .a1_hash_arrow_r2 {
+  animation: a1_fadeIn 0.3s ease forwards;
+  animation-delay: 6.4s;
+}
+
+/* --- Hash Values Row --- */
+.a1_hash_row {
+  display: flex;
+  gap: 6px;
+  margin: 6px 0;
+  align-items: center;
+}
+
+.a1_hash_val {
+  width: 56px;
+  height: 26px;
+  border-radius: 4px;
+  border: 2px solid #1D4ED8;
+  background: #fff;
+  color: #1D4ED8;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  font-family: monospace;
+}
+
+.a1_stage.visible .a1_hv1 { animation: a1_popIn 0.35s ease forwards; animation-delay: 1.8s; }
+.a1_stage.visible .a1_hv2 { animation: a1_popIn 0.35s ease forwards; animation-delay: 2.0s; }
+.a1_stage.visible .a1_hv3 { animation: a1_popIn 0.35s ease forwards; animation-delay: 2.2s; }
+
+/* --- Cache Map --- */
+.a1_cache_box {
+  border: 2px solid #1D4ED8;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 8px 0;
+  background: #fff;
+  opacity: 0;
+}
+
+.a1_stage.visible .a1_cache_box {
+  animation: a1_fadeIn 0.4s ease forwards;
+  animation-delay: 2.6s;
+}
+
+.a1_cache_title {
+  font-size: 10px;
+  font-weight: 700;
+  color: #1D4ED8;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.a1_cache_entries {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.a1_cache_entry {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-family: monospace;
+  font-weight: 600;
+  opacity: 0;
+}
+
+.a1_cache_key {
+  background: #EFF6FF;
+  border: 1px solid #1D4ED8;
+  border-radius: 3px;
+  padding: 2px 6px;
+  color: #1D4ED8;
+}
+
+.a1_cache_arrow_txt {
+  color: #B91C1C;
+}
+
+.a1_cache_value {
+  background: #1D4ED8;
+  color: #fff;
+  border-radius: 3px;
+  padding: 2px 6px;
+}
+
+.a1_stage.visible .a1_ce1 { animation: a1_slideRight 0.3s ease forwards; animation-delay: 3.0s; }
+.a1_stage.visible .a1_ce2 { animation: a1_slideRight 0.3s ease forwards; animation-delay: 3.3s; }
+.a1_stage.visible .a1_ce3 { animation: a1_slideRight 0.3s ease forwards; animation-delay: 3.6s; }
+
+/* --- Miss / Hit labels --- */
+.a1_lookup_row {
+  display: flex;
+  gap: 6px;
+  margin: 4px 0;
+  align-items: center;
+}
+
+.a1_miss_tag {
+  width: 56px;
+  height: 22px;
+  border-radius: 4px;
+  background: #B91C1C;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+}
+
+.a1_stage.visible .a1_miss1 { animation: a1_popIn 0.3s ease forwards; animation-delay: 2.5s; }
+.a1_stage.visible .a1_miss2 { animation: a1_popIn 0.3s ease forwards; animation-delay: 2.6s; }
+.a1_stage.visible .a1_miss3 { animation: a1_popIn 0.3s ease forwards; animation-delay: 2.7s; }
+
+.a1_hit_tag {
+  width: 56px;
+  height: 22px;
+  border-radius: 4px;
+  background: #1D4ED8;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+}
+
+.a1_stage.visible .a1_hit1 { animation: a1_hitBounce 0.5s ease forwards; animation-delay: 7.0s; }
+.a1_stage.visible .a1_hit2 { animation: a1_hitBounce 0.5s ease forwards; animation-delay: 7.3s; }
+.a1_stage.visible .a1_hit3 { animation: a1_hitBounce 0.5s ease forwards; animation-delay: 7.6s; }
+
+/* --- Request 2 token blocks --- */
+.a1_stage.visible .a1_tb4 { animation: a1_slideUp 0.35s ease forwards; animation-delay: 5.9s; }
+.a1_stage.visible .a1_tb5 { animation: a1_slideUp 0.35s ease forwards; animation-delay: 6.1s; }
+.a1_stage.visible .a1_tb6 { animation: a1_slideUp 0.35s ease forwards; animation-delay: 6.3s; }
+
+/* --- Request 2 hash values --- */
+.a1_stage.visible .a1_hv4 { animation: a1_popIn 0.35s ease forwards; animation-delay: 6.7s; }
+.a1_stage.visible .a1_hv5 { animation: a1_popIn 0.35s ease forwards; animation-delay: 6.8s; }
+.a1_stage.visible .a1_hv6 { animation: a1_popIn 0.35s ease forwards; animation-delay: 6.9s; }
+
+/* --- Reuse banner --- */
+.a1_reuse_banner {
+  margin: 8px 0 0 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #1D4ED8;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  opacity: 0;
+}
+
+.a1_stage.visible .a1_reuse_banner {
+  animation: a1_bannerSlide 0.6s ease forwards;
+  animation-delay: 8.2s;
+}
+
+/* --- Divider --- */
+.a1_divider {
+  height: 1px;
+  background: #1D4ED8;
+  opacity: 0.2;
+  margin: 12px 0;
+  opacity: 0;
+}
+
+.a1_stage.visible .a1_divider {
+  animation: a1_fadeIn 0.3s ease forwards;
+  animation-delay: 5.0s;
+}
+
+/* --- Step labels --- */
+.a1_step_label {
+  font-size: 9px;
+  color: #1D4ED8;
+  opacity: 0.6;
+  margin: 2px 0;
+  opacity: 0;
+}
+
+.a1_stage.visible .a1_sl1 { animation: a1_fadeIn 0.3s ease forwards; animation-delay: 0.6s; }
+.a1_stage.visible .a1_sl2 { animation: a1_fadeIn 0.3s ease forwards; animation-delay: 1.4s; }
+.a1_stage.visible .a1_sl3 { animation: a1_fadeIn 0.3s ease forwards; animation-delay: 2.4s; }
+.a1_stage.visible .a1_sl4 { animation: a1_fadeIn 0.3s ease forwards; animation-delay: 2.8s; }
+.a1_stage.visible .a1_sl5 { animation: a1_fadeIn 0.3s ease forwards; animation-delay: 5.8s; }
+.a1_stage.visible .a1_sl6 { animation: a1_fadeIn 0.3s ease forwards; animation-delay: 6.5s; }
+.a1_stage.visible .a1_sl7 { animation: a1_fadeIn 0.3s ease forwards; animation-delay: 6.9s; }
+
+/* ==================== Keyframes ==================== */
+@keyframes a1_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes a1_slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes a1_popIn {
+  0% { opacity: 0; transform: scale(0.5); }
+  70% { transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes a1_slideRight {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes a1_hitBounce {
+  0% { opacity: 0; transform: scale(0.3); }
+  50% { opacity: 1; transform: scale(1.25); }
+  70% { transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes a1_bannerSlide {
+  0% { opacity: 0; transform: translateY(6px) scaleX(0.8); }
+  60% { opacity: 1; transform: translateY(-2px) scaleX(1.02); }
+  100% { opacity: 1; transform: translateY(0) scaleX(1); }
+}
+
+/* === A2 Animation === */
+
+.a2_stage {
+  width: 340px;
+  padding: 18px 14px;
+  background: #FEF2F2;
+  border-radius: 12px;
+  font-family: system-ui, sans-serif;
+  overflow: hidden;
+}
+
+.a2_title {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1D4ED8;
+  margin-bottom: 14px;
+}
+
+.a2_row {
+  margin-bottom: 14px;
+}
+
+.a2_label {
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.a2_label_trad { color: #B91C1C; }
+.a2_label_spec { color: #1D4ED8; }
+
+.a2_speed {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 700;
+}
+
+.a2_speed_slow {
+  background: #B91C1C;
+  color: #fff;
+}
+
+.a2_speed_fast {
+  background: #1D4ED8;
+  color: #fff;
+}
+
+.a2_track {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  min-height: 38px;
+}
+
+/* Traditional heavy blocks */
+.a2_heavy {
+  width: 44px;
+  height: 34px;
+  background: #B91C1C;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #fff;
+  font-weight: 600;
+  opacity: 0;
+  transform: scale(0.3);
+}
+
+.a2_stage.visible .a2_h1 {
+  animation: a2_heavy_in 0.5s ease-out 0.6s forwards;
+}
+.a2_stage.visible .a2_h2 {
+  animation: a2_heavy_in 0.5s ease-out 1.4s forwards;
+}
+.a2_stage.visible .a2_h3 {
+  animation: a2_heavy_in 0.5s ease-out 2.2s forwards;
+}
+.a2_stage.visible .a2_h4 {
+  animation: a2_heavy_in 0.5s ease-out 3.0s forwards;
+}
+
+.a2_arrow_trad {
+  font-size: 12px;
+  color: #B91C1C;
+  opacity: 0;
+}
+
+.a2_stage.visible .a2_at1 {
+  animation: a2_fade 0.3s ease-out 1.1s forwards;
+}
+.a2_stage.visible .a2_at2 {
+  animation: a2_fade 0.3s ease-out 1.9s forwards;
+}
+.a2_stage.visible .a2_at3 {
+  animation: a2_fade 0.3s ease-out 2.7s forwards;
+}
+
+/* Speculative: draft block */
+.a2_draft {
+  display: flex;
+  gap: 3px;
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.a2_stage.visible .a2_draft {
+  animation: a2_slide_in 0.35s ease-out 3.6s forwards;
+}
+
+.a2_draft_tok {
+  width: 22px;
+  height: 26px;
+  background: #1D4ED8;
+  opacity: 0.45;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: #fff;
+  font-weight: 600;
+}
+
+.a2_draft_label {
+  font-size: 8px;
+  color: #1D4ED8;
+  writing-mode: vertical-rl;
+  font-weight: 600;
+  margin-right: 2px;
+  opacity: 0;
+}
+
+.a2_stage.visible .a2_draft_label {
+  animation: a2_fade 0.3s ease-out 3.5s forwards;
+}
+
+.a2_arrow_spec {
+  font-size: 14px;
+  color: #1D4ED8;
+  opacity: 0;
+  margin: 0 2px;
+}
+
+.a2_stage.visible .a2_arrow_spec {
+  animation: a2_fade 0.3s ease-out 4.1s forwards;
+}
+
+/* Verify block */
+.a2_verify {
+  width: 52px;
+  height: 34px;
+  background: #B91C1C;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #fff;
+  font-weight: 600;
+  opacity: 0;
+  transform: scale(0.3);
+}
+
+.a2_stage.visible .a2_verify {
+  animation: a2_heavy_in 0.4s ease-out 4.4s forwards;
+}
+
+/* Result tokens after verify */
+.a2_results {
+  display: flex;
+  gap: 3px;
+  margin-left: 4px;
+  opacity: 0;
+}
+
+.a2_stage.visible .a2_results {
+  animation: a2_fade 0.3s ease-out 5.0s forwards;
+}
+
+.a2_tok_ok {
+  width: 22px;
+  height: 26px;
+  background: #1D4ED8;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #fff;
+}
+
+.a2_tok_rej {
+  width: 22px;
+  height: 26px;
+  background: #B91C1C;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #fff;
+  opacity: 0.7;
+}
+
+/* Divider */
+.a2_divider {
+  height: 1px;
+  background: #1D4ED8;
+  opacity: 0.2;
+  margin: 10px 0;
+}
+
+/* Summary bar */
+.a2_summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  opacity: 0;
+}
+
+.a2_stage.visible .a2_summary {
+  animation: a2_fade 0.4s ease-out 5.4s forwards;
+}
+
+.a2_sum_trad {
+  color: #B91C1C;
+  font-weight: 600;
+}
+
+.a2_sum_spec {
+  color: #1D4ED8;
+  font-weight: 700;
+}
+
+/* Schemes footer */
+.a2_schemes {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 10px;
+  opacity: 0;
+}
+
+.a2_stage.visible .a2_schemes {
+  animation: a2_fade 0.4s ease-out 5.8s forwards;
+}
+
+.a2_chip {
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 8px;
+  background: #1D4ED8;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Keyframes */
+@keyframes a2_heavy_in {
+  0% { opacity: 0; transform: scale(0.3); }
+  60% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes a2_fade {
+  to { opacity: 1; }
+}
+
+@keyframes a2_slide_in {
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* === A3 Animation === */
+
+.a3_stage {
+  width: 340px;
+  margin: 0 auto;
+  padding: 24px 16px 20px;
+  background: #EFF6FF;
+  border-radius: 12px;
+  font-family: system-ui, -apple-system, sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+.a3_engine {
+  width: 120px;
+  margin: 0 auto;
+  padding: 10px 0;
+  background: #1D4ED8;
+  color: #fff;
+  text-align: center;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(-12px);
+}
+.a3_stage.visible .a3_engine {
+  animation: a3_fadeDown 0.5s 0.4s ease both;
+}
+
+.a3_call {
+  width: 2px;
+  height: 0;
+  margin: 0 auto;
+  background: #1D4ED8;
+  position: relative;
+}
+.a3_stage.visible .a3_call {
+  animation: a3_growLine 0.4s 0.9s ease both;
+}
+
+.a3_callLabel {
+  position: absolute;
+  left: 8px;
+  top: 4px;
+  font-size: 11px;
+  color: #1D4ED8;
+  font-family: monospace;
+  white-space: nowrap;
+  opacity: 0;
+}
+.a3_stage.visible .a3_callLabel {
+  animation: a3_fadeIn 0.3s 1.1s ease both;
+}
+
+.a3_callArrow {
+  width: 0;
+  height: 0;
+  margin: 0 auto;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid #1D4ED8;
+  opacity: 0;
+}
+.a3_stage.visible .a3_callArrow {
+  animation: a3_fadeIn 0.2s 1.3s ease both;
+}
+
+.a3_interface {
+  margin: 6px 20px;
+  border: 2px dashed #1D4ED8;
+  border-radius: 8px;
+  padding: 6px 0;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1D4ED8;
+  opacity: 0;
+  position: relative;
+}
+.a3_stage.visible .a3_interface {
+  animation: a3_fadeIn 0.5s 1.5s ease both;
+}
+
+.a3_interfaceTag {
+  display: inline-block;
+  background: #EFF6FF;
+  padding: 0 8px;
+  position: relative;
+}
+
+.a3_below {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding: 0 8px;
+  gap: 12px;
+}
+
+.a3_branch {
+  flex: 1;
+  opacity: 0;
+  transform: translateY(10px);
+}
+.a3_stage.visible .a3_branchLeft {
+  animation: a3_fadeUp 0.5s 2.1s ease both;
+}
+.a3_stage.visible .a3_branchRight {
+  animation: a3_fadeUp 0.5s 2.4s ease both;
+}
+
+.a3_branchTitle {
+  text-align: center;
+  font-size: 12px;
+  color: #1D4ED8;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.a3_connUp {
+  width: 2px;
+  height: 14px;
+  margin: 0 auto 4px;
+  background: #1D4ED8;
+  opacity: 0.5;
+}
+
+.a3_singleBox {
+  width: 100%;
+  padding: 10px 0;
+  background: #fff;
+  border: 2px solid #1D4ED8;
+  border-radius: 8px;
+  text-align: center;
+}
+.a3_singleLabel {
+  font-size: 12px;
+  color: #1D4ED8;
+  font-weight: 600;
+}
+.a3_singleSub {
+  font-size: 10px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.a3_gpuRow {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+.a3_gpu {
+  width: 36px;
+  height: 36px;
+  background: #fff;
+  border: 2px solid #B91C1C;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #B91C1C;
+  font-weight: 600;
+}
+
+.a3_gpuIcon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.a3_stage.visible .a3_gpu {
+  animation: a3_gpuPulse 1.2s 3.0s ease both;
+}
+.a3_stage.visible .a3_gpu:nth-child(2) {
+  animation-delay: 3.15s;
+}
+.a3_stage.visible .a3_gpu:nth-child(3) {
+  animation-delay: 3.3s;
+}
+.a3_stage.visible .a3_gpu:nth-child(4) {
+  animation-delay: 3.45s;
+}
+
+.a3_multiLabel {
+  font-size: 11px;
+  text-align: center;
+  color: #B91C1C;
+  margin-top: 6px;
+  font-weight: 600;
+}
+.a3_multiSub {
+  font-size: 10px;
+  color: #888;
+  text-align: center;
+  margin-top: 1px;
+}
+
+.a3_steps {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.a3_step {
+  font-size: 8px;
+  padding: 2px 4px;
+  background: #FEF2F2;
+  border: 1px solid #B91C1C;
+  border-radius: 3px;
+  color: #B91C1C;
+  opacity: 0;
+}
+.a3_stage.visible .a3_step:nth-child(1) {
+  animation: a3_fadeIn 0.3s 3.6s ease both;
+}
+.a3_stage.visible .a3_step:nth-child(2) {
+  animation: a3_fadeIn 0.3s 3.8s ease both;
+}
+.a3_stage.visible .a3_step:nth-child(3) {
+  animation: a3_fadeIn 0.3s 4.0s ease both;
+}
+
+.a3_note {
+  margin-top: 14px;
+  padding: 6px 10px;
+  background: rgba(29,78,216,0.06);
+  border-radius: 6px;
+  font-size: 10px;
+  color: #1D4ED8;
+  text-align: center;
+  opacity: 0;
+}
+.a3_stage.visible .a3_note {
+  animation: a3_fadeIn 0.5s 4.3s ease both;
+}
+
+@keyframes a3_fadeDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes a3_fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes a3_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes a3_growLine {
+  from { height: 0; }
+  to { height: 28px; }
+}
+@keyframes a3_gpuPulse {
+  0% { opacity: 0; transform: scale(0.7); }
+  50% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* === A4 Animation === */
+
+.a4_stage {
+  width: 340px;
+  min-height: 200px;
+  background: #FEF2F2;
+  border-radius: 12px;
+  padding: 18px 12px 14px;
+  font-family: system-ui, -apple-system, sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+.a4_title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1D4ED8;
+  text-align: center;
+  margin-bottom: 14px;
+  letter-spacing: 0.5px;
+}
+
+.a4_flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  position: relative;
+  padding: 8px 0;
+}
+
+.a4_node {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 600;
+  color: #1D4ED8;
+  background: #fff;
+  border: 1.5px solid #1D4ED8;
+  border-radius: 6px;
+  padding: 4px 5px;
+  white-space: nowrap;
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  min-height: 28px;
+  opacity: 0;
+}
+
+.a4_node_curl {
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 7px;
+  min-height: auto;
+}
+
+.a4_node_token {
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 7px;
+  color: #fff;
+  background: #B91C1C;
+  border-color: #B91C1C;
+  min-height: auto;
+}
+
+.a4_node_engine {
+  padding: 3px 4px;
+  min-height: 36px;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.a4_engine_label {
+  font-size: 8px;
+  font-weight: 700;
+  color: #1D4ED8;
+}
+
+.a4_engine_threads {
+  display: flex;
+  gap: 2px;
+}
+
+.a4_thread {
+  font-size: 5.5px;
+  background: #FEF2F2;
+  border: 1px solid #1D4ED8;
+  border-radius: 2px;
+  padding: 1px 2px;
+  color: #1D4ED8;
+  font-weight: 500;
+}
+
+.a4_arrow {
+  width: 14px;
+  height: 2px;
+  background: #1D4ED8;
+  position: relative;
+  flex-shrink: 0;
+  opacity: 0;
+}
+
+.a4_arrow::after {
+  content: "";
+  position: absolute;
+  right: -3px;
+  top: -3px;
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 5px solid #1D4ED8;
+}
+
+/* Traveling dot */
+.a4_dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #B91C1C;
+  border-radius: 50%;
+  top: 50%;
+  margin-top: -4px;
+  left: 6px;
+  z-index: 10;
+  opacity: 0;
+  box-shadow: 0 0 6px rgba(185, 28, 28, 0.5);
+}
+
+/* Detail labels below */
+.a4_details {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.a4_detail {
+  font-size: 6.5px;
+  color: #B91C1C;
+  background: #fff;
+  border: 1px solid #B91C1C;
+  border-radius: 3px;
+  padding: 2px 4px;
+  opacity: 0;
+}
+
+/* Animations - only when visible */
+.a4_stage.visible .a4_node {
+  animation: a4_fadeNode 0.4s ease-out forwards;
+}
+.a4_stage.visible .a4_node:nth-child(1) { animation-delay: 0.4s; }
+.a4_stage.visible .a4_node:nth-child(3) { animation-delay: 0.7s; }
+.a4_stage.visible .a4_node:nth-child(5) { animation-delay: 1.0s; }
+.a4_stage.visible .a4_node:nth-child(7) { animation-delay: 1.3s; }
+.a4_stage.visible .a4_node:nth-child(9) { animation-delay: 1.6s; }
+.a4_stage.visible .a4_node:nth-child(11) { animation-delay: 1.9s; }
+
+.a4_stage.visible .a4_arrow {
+  animation: a4_fadeArrow 0.3s ease-out forwards;
+}
+.a4_stage.visible .a4_arrow:nth-child(2) { animation-delay: 0.55s; }
+.a4_stage.visible .a4_arrow:nth-child(4) { animation-delay: 0.85s; }
+.a4_stage.visible .a4_arrow:nth-child(6) { animation-delay: 1.15s; }
+.a4_stage.visible .a4_arrow:nth-child(8) { animation-delay: 1.45s; }
+.a4_stage.visible .a4_arrow:nth-child(10) { animation-delay: 1.75s; }
+
+.a4_stage.visible .a4_dot {
+  animation: a4_travel 2.4s ease-in-out 2.4s forwards;
+}
+
+.a4_stage.visible .a4_detail {
+  animation: a4_fadeNode 0.3s ease-out forwards;
+}
+.a4_stage.visible .a4_detail:nth-child(1) { animation-delay: 3.0s; }
+.a4_stage.visible .a4_detail:nth-child(2) { animation-delay: 3.2s; }
+.a4_stage.visible .a4_detail:nth-child(3) { animation-delay: 3.4s; }
+
+@keyframes a4_fadeNode {
+  0% { opacity: 0; transform: scale(0.7); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes a4_fadeArrow {
+  0% { opacity: 0; }
+  100% { opacity: 0.6; }
+}
+
+@keyframes a4_travel {
+  0% { left: 6px; opacity: 0.9; }
+  15% { left: 52px; opacity: 1; }
+  30% { left: 104px; opacity: 1; }
+  50% { left: 156px; opacity: 1; }
+  70% { left: 218px; opacity: 1; }
+  85% { left: 278px; opacity: 1; }
+  95% { left: 306px; opacity: 1; }
+  100% { left: 306px; opacity: 0; }
+}
+
+</style>
+
+<meta name="description" content="这篇 41 分钟的深度解析从最基础的 LLM Engine 开始，逐层构建出一个完整的在线、异步、多GPU、多节点推理系统。LLM Engine 是 vLLM 的基本构建单元——它本身就已经支持高吞吐离线推理，但还不能对外提供 API 服务。Engine 内部由三个核心组件构成： 调度器 （决定哪些请求参与当前 step）、 KV Cache 管理器 （维护">
+<link rel="canonical" href="https://chendi.me/readings/anatomy-vllm/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">&#8592;</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ Layer 0: 概览 ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <p class="reveal" style="font-size:12px;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent);font-weight:600;margin-bottom:16px;">vLLM Blog · Aleksa Gordic · 2025.09.05</p>
+      <h2 class="big-statement reveal reveal-delay-1">vLLM 解剖：<br>一个<span style="color:var(--accent)">高吞吐推理系统</span>的全部内脏</h2>
+      <p class="body-text reveal reveal-delay-2">这篇 41 分钟的深度解析从最基础的 <span class="hl">LLM Engine</span> 开始，逐层构建出一个完整的在线、异步、多GPU、多节点推理系统。LLM Engine 是 vLLM 的基本构建单元——它本身就已经支持高吞吐离线推理，但还不能对外提供 API 服务。Engine 内部由三个核心组件构成：<span class="hl2">调度器</span>（决定哪些请求参与当前 step）、<span class="hl">KV Cache 管理器</span>（维护一个包含数十万个可用 block 的 free_block_queue，在 paged attention 中按需分配和回收）、以及<span class="hl2">模型执行器</span>（负责实际的前向传播计算）。从这个基础出发，文章依次叠加了调度策略、prefix caching、speculative decoding、tensor parallelism、data parallelism，最终抵达一个能用一条 curl 命令调用的完整分布式推理服务。</p>
+      <div class="anim-stage reveal reveal-delay-3" id="s1-anim"><div class="s1_stage">
+  <div class="s1_engine_box">
+    <div class="s1_engine_label">LLM Engine</div>
+    <div class="s1_components">
+      <div class="s1_comp s1_comp_scheduler">
+        调度器 Scheduler
+      </div>
+      <div class="s1_arrow_down s1_arrow1"></div>
+      <div class="s1_comp s1_comp_kvcache">
+        KV Cache 管理器
+        <span class="s1_detail">free_block_queue | Paged Attention</span>
+      </div>
+      <div class="s1_arrow_down s1_arrow2"></div>
+      <div class="s1_comp s1_comp_executor">
+        模型执行器 Executor
+      </div>
+    </div>
+    <div class="s1_bracket"></div>
+    <div class="s1_bracket_label">blocks</div>
+  </div>
+  <div class="s1_flow_label">scheduler --> cache --> executor --> output</div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>The LLM engine is the fundamental building block of vLLM. On its own, it already enables high-throughput inference - but only in an offline setting. You can't serve it to customers over the web yet.</p>
+          <p>Engine core itself is made up of several sub components: The KV-cache manager maintains a free_block_queue - a pool of available KV-cache blocks (often on the order of hundreds of thousands, depending on VRAM size and block size).</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">请求的一生：<br><span style="color:#93C5FD">从 prompt 到 token</span></h2>
+      <p class="body-text reveal reveal-delay-1">每个请求在 vLLM 中经历一段完整的旅程。首先是<span class="hl">输入验证与注入</span>：对每个 prompt 进行 tokenize、创建请求对象并分配唯一 ID，然后喂入引擎。接下来引擎进入主循环——只要还有待处理的请求，就反复调用 <span class="hl2">step() 函数</span>。每个 step 包含三个阶段：第一步调度器决定哪些请求参与这一步（包括 prefill 和 decode 请求的混合），第二步将调度结果送入模型执行器执行前向传播，第三步处理输出——检查停止条件、更新采样状态、收集已完成的请求。因为前向传播会把整个 batch 展平成单一序列，由定制 kernel 高效处理，所以<span class="hl">连续批处理（continuous batching）从架构层面被自然支持</span>——即使在同步引擎中也是如此。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s2-anim"><div class="s2_stage">
+  <!-- travelling dot -->
+  <div class="s2_dot"></div>
+
+  <!-- prompt input -->
+  <div class="s2_prompt">Prompt</div>
+
+  <!-- pipe down -->
+  <div class="s2_pipe s2_pipe1"></div>
+  <div class="s2_chevron s2_chev1"></div>
+
+  <!-- loop region -->
+  <div class="s2_loopWrap">
+    <!-- left bracket -->
+    <div class="s2_loopBracket">
+      <div class="s2_loopBracketLine s2_lbl_top"></div>
+      <div class="s2_loopBracketLine s2_lbl_topCap"></div>
+      <div class="s2_loopBracketLine s2_lbl_botCap"></div>
+    </div>
+    <div class="s2_loopLabel">step() 循环</div>
+
+    <!-- right loop arrow -->
+    <div class="s2_loopArrow">
+      <div class="s2_arrowLine s2_al_right"></div>
+      <div class="s2_arrowLine s2_al_bot"></div>
+      <div class="s2_arrowLine s2_al_topArr"></div>
+      <div class="s2_arrowHead"></div>
+    </div>
+
+    <!-- schedule -->
+    <div class="s2_box s2_box_schedule">
+      调度 Schedule
+      <div class="s2_sublabel">选择请求 &amp; 分配 KV 块</div>
+    </div>
+
+    <div class="s2_pipe s2_pipe2"></div>
+    <div class="s2_chevron s2_chev2"></div>
+
+    <!-- forward -->
+    <div class="s2_box s2_box_forward">
+      前向传播 Forward
+      <div class="s2_sublabel">连续批处理 &rarr; 单序列执行</div>
+    </div>
+
+    <div class="s2_pipe s2_pipe3"></div>
+    <div class="s2_chevron s2_chev3"></div>
+
+    <!-- output -->
+    <div class="s2_box s2_box_output">
+      处理输出 Output
+      <div class="s2_sublabel">采样 token &amp; 更新状态</div>
+    </div>
+  </div>
+
+  <!-- pipe down to token -->
+  <div class="s2_pipe s2_pipe4"></div>
+  <div class="s2_chevron s2_chev4"></div>
+
+  <!-- token output -->
+  <div class="s2_token">Token</div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>The first step is to validate and feed requests into the engine. For each prompt we: tokenize, create request objects and assign unique IDs, then feed into the engine.</p>
+          <p>Next, as long as there are requests to process, the engine repeatedly calls its step() function. Each step has three stages: schedule, execute forward pass, process output.</p>
+          <p>Because the forward pass flattens the batch into a single sequence and custom kernels handle it efficiently, continuous batching is fundamentally supported even in the synchronous engine.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background:var(--bg-act2)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">调度器的博弈：<br><span style="color:var(--accent2)">Prefill vs Decode</span></h2>
+      <p class="body-text reveal reveal-delay-1">推理引擎处理两种截然不同的工作负载。<span class="hl2">Prefill</span> 是处理新到的完整 prompt——计算密集型，一次性处理所有输入 token 并填充 KV cache。<span class="hl">Decode</span> 是逐个生成输出 token——内存带宽受限，每步只处理一个新 token 但需要读取已有的完整 KV cache。V1 调度器的关键创新是能在同一个 step 中<span class="hl2">混合两种请求</span>（V0 只能二选一）。调度优先级是 decode 优先：先处理正在运行队列中的 decode 请求，为每个请求分配新的 KV cache block 和采样参数；然后处理等待队列中的 prefill 请求，根据剩余 token 预算决定能接纳多少新请求。allocate_slots 函数负责在 KV cache 管理器中实际分配 block——如果新 token 跨越了 block 边界就追加新 block，否则复用当前 block 的剩余空间。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s3-anim"><div class="s3_stage">
+  <div class="s3_title">Prefill vs Decode 调度</div>
+  <div class="s3_body">
+    <div class="s3_queue">
+      <div class="s3_qlabel s3_qlabel_decode">Decode 队列</div>
+      <div class="s3_priority">&#9650; 高优先级</div>
+      <div class="s3_qbox">
+        <div class="s3_item s3_item_d s3_item_d1">D-1</div>
+        <div class="s3_item s3_item_d s3_item_d2">D-2</div>
+        <div class="s3_item s3_item_d s3_item_d3">D-3</div>
+      </div>
+    </div>
+    <div class="s3_arrow_l">&#10132;</div>
+    <div class="s3_center">
+      <div class="s3_stepbox">
+        <div class="s3_steplabel">Step</div>
+        <div class="s3_slot s3_slot_d s3_slot_d1">D-1</div>
+        <div class="s3_slot s3_slot_d s3_slot_d2">D-2</div>
+        <div class="s3_slot s3_slot_d s3_slot_d3">D-3</div>
+        <div class="s3_slot s3_slot_p s3_slot_p1">P-1</div>
+      </div>
+      <div class="s3_tag_first">&#9312; Decode 先入</div>
+      <div class="s3_tag_then">&#9313; Prefill 补余量</div>
+    </div>
+    <div class="s3_arrow_r">&#10132;</div>
+    <div class="s3_queue">
+      <div class="s3_qlabel s3_qlabel_prefill">Prefill 队列</div>
+      <div class="s3_priority" style="color:#B91C1C">&#9660; 低优先级</div>
+      <div class="s3_qbox">
+        <div class="s3_item s3_item_p s3_item_p1">P-1</div>
+        <div class="s3_item s3_item_p s3_item_p2">P-2</div>
+        <div class="s3_item s3_item_p s3_item_p3">P-3</div>
+      </div>
+    </div>
+  </div>
+  <div class="s3_budget">
+    <div class="s3_budgetlabel">Token Budget (预算条)</div>
+    <div class="s3_bar">
+      <div class="s3_bar_d"></div>
+      <div class="s3_bar_p"></div>
+      <div class="s3_bar_remain"></div>
+    </div>
+    <div class="s3_bar_labels">
+      <span>Decode: 45%</span>
+      <span>Prefill: 20%</span>
+      <span>剩余: 35%</span>
+    </div>
+  </div>
+</div></div>
+      <p class="hook-line reveal reveal-delay-3">Prefix Caching 和 Speculative Decoding 的内部机制是什么？</p>
+      <button class="drill-btn reveal reveal-delay-4" onclick="drillDown('layer-features',this)">深入高级特性 ↓</button>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">四大进阶能力：<br><span style="color:#93C5FD">在核心循环上叠加</span></h2>
+      <p class="body-text reveal reveal-delay-1">在基础引擎之上，vLLM 叠加了四种关键的高级特性，每种都正交于主流程。<span class="hl">Chunked Prefill</span> 把超长 prompt 切成固定大小的 chunk，防止单个长请求垄断一整个 step——实现很简洁：限制每步新 token 数上限，底层索引逻辑自动处理。<span class="hl2">Prefix Caching</span> 对 KV cache block 计算哈希值，相同前缀的请求可以直接复用已有的 KV block，避免重复计算。<span class="hl">Guided Decoding</span> 在每个解码步用基于语法的有限状态机约束 logits，确保输出符合指定的正则或上下文无关文法——一个 bitmask 编码哪些 token 被允许。<span class="hl2">Speculative Decoding</span> 用小模型快速提议 k 个 token，然后用大模型一次性验证——数学上证明等价于从大模型直接采样。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s4-anim"><div class="s4_stage">
+  <div class="s4_title">四大进阶能力</div>
+  <div class="s4_grid">
+    <div class="s4_card">
+      <div class="s4_icon">
+        <div class="s4_ico_chunk"><span></span><span></span><span></span><span></span></div>
+      </div>
+      <div class="s4_label">分块Prefill</div>
+      <div class="s4_desc">长提示切为固定块,逐块填入KV缓存</div>
+    </div>
+    <div class="s4_card">
+      <div class="s4_icon">
+        <div class="s4_ico_hash">#</div>
+      </div>
+      <div class="s4_label">前缀缓存</div>
+      <div class="s4_desc">哈希KV块,相同前缀直接复用</div>
+    </div>
+    <div class="s4_card">
+      <div class="s4_icon">
+        <div class="s4_ico_mask"></div>
+      </div>
+      <div class="s4_label">引导解码</div>
+      <div class="s4_desc">FSM按语法规则用掩码约束logits</div>
+    </div>
+    <div class="s4_card">
+      <div class="s4_icon">
+        <div class="s4_ico_fast">&raquo;</div>
+      </div>
+      <div class="s4_label">投机解码</div>
+      <div class="s4_desc">小模型猜k个词,大模型一次验证</div>
+    </div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>Chunked prefill is a technique for handling long prompts by splitting their prefill step into smaller chunks. Without it, we could end up with a single very long request monopolizing one engine step.</p>
+          <p>Guided decoding is a technique where, at each decoding step, the logits are constrained by a grammar-based finite state machine.</p>
+          <p>Speculative decoding speeds this up by introducing a smaller draft LM. The draft proposes k tokens cheaply. The accept/reject rule guarantees that in expectation the sequence is distributed exactly as if we had sampled token by token from the full model.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">从单 GPU 到集群：<br><span style="color:var(--accent)">三层扩展</span>架构</h2>
+      <p class="body-text reveal reveal-delay-1">当模型权重超出单 GPU 显存时，vLLM 提供三层递进的扩展方案。第一层是<span class="hl">张量并行（TP）</span>：将模型分片到同一节点的多个 GPU 上（如 TP=8）。如果还不够，第二层是<span class="hl2">流水线并行（PP）</span>：跨节点的不同 GPU 处理模型的不同层。这两层通过 MultiProcExecutor 协调——从引擎视角看，所有多进程复杂度都被 execute_model 调用抽象掉了。第三层是<span class="hl">数据并行（DP）</span>：复制整个模型到多个副本，加上轻量级的 DP 协调层和负载均衡。最终，一个 FastAPI 服务器挂载 OpenAI 兼容的 /completion 和 /chat/completion 端点，整个分布式架构被封装在一条 curl 命令的背后。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s5-anim"><div class="s5_stage">
+  <!-- API endpoint -->
+  <div class="s5_api_box">FastAPI /v1/completions</div>
+
+  <div class="s5_layers">
+    <!-- Layer 3 (top): Data Parallelism -->
+    <div class="s5_layer s5_layer_dp">
+      <div class="s5_layer_header">
+        <span class="s5_layer_badge">DP</span>
+        <span class="s5_layer_title">数据并行</span>
+      </div>
+      <div class="s5_dp_row">
+        <div class="s5_replica">
+          <div class="s5_replica_tag">副本 1</div>
+          <div class="s5_replica_icon">&#9638;</div>
+        </div>
+        <div class="s5_replica">
+          <div class="s5_replica_tag">副本 2</div>
+          <div class="s5_replica_icon">&#9638;</div>
+        </div>
+        <div class="s5_replica">
+          <div class="s5_replica_tag">副本 3</div>
+          <div class="s5_replica_icon">&#9638;</div>
+        </div>
+      </div>
+      <div class="s5_lb_label">&#8644; 负载均衡</div>
+    </div>
+
+    <!-- Layer 2 (middle): Pipeline Parallelism -->
+    <div class="s5_layer s5_layer_pp">
+      <div class="s5_layer_header">
+        <span class="s5_layer_badge">PP</span>
+        <span class="s5_layer_title">流水线并行</span>
+      </div>
+      <div class="s5_pp_row">
+        <div class="s5_pp_node">
+          <div class="s5_pp_node_tag">Node 0</div>
+          <div class="s5_pp_layers">
+            <div class="s5_pp_block">Layer 0-15</div>
+          </div>
+        </div>
+        <span class="s5_pp_arrow">&#8594;</span>
+        <div class="s5_pp_node">
+          <div class="s5_pp_node_tag">Node 1</div>
+          <div class="s5_pp_layers">
+            <div class="s5_pp_block">Layer 16-31</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Layer 1 (bottom): Tensor Parallelism -->
+    <div class="s5_layer s5_layer_tp">
+      <div class="s5_layer_header">
+        <span class="s5_layer_badge">TP</span>
+        <span class="s5_layer_title">张量并行</span>
+      </div>
+      <div class="s5_tp_row">
+        <div class="s5_node_box">
+          <div class="s5_gpu">G0</div>
+          <div class="s5_shard_arrow">&#8596;</div>
+          <div class="s5_gpu">G1</div>
+          <div class="s5_shard_arrow">&#8596;</div>
+          <div class="s5_gpu">G2</div>
+          <div class="s5_shard_arrow">&#8596;</div>
+          <div class="s5_gpu">G3</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interface bar -->
+    <div class="s5_interface">&#9650; execute_model() &#9650;</div>
+  </div>
+</div></div>
+      <p class="hook-line reveal reveal-delay-3">多节点部署和请求全生命周期的完整架构是什么样？</p>
+      <button class="drill-btn reveal reveal-delay-4" onclick="drillDown('layer-distributed',this)">深入分布式架构 ↓</button>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">延迟 vs 吞吐：<br><span style="color:#FCA5A5">不可兼得</span>的 roofline</h2>
+      <p class="body-text reveal reveal-delay-1">在系统层面，两个指标永远在博弈。<span class="hl2">延迟</span>对交互式应用至关重要——用户在等待回复。<span class="hl">吞吐</span>对离线工作负载更重要——合成数据生成、数据清洗、批量推理。它们的矛盾来自 batch size：batch size 减小时，每步延迟降低（ITL 更短，单个 token 不用和其他请求竞争）；batch size 增大时，GPU 利用率更高，吞吐飙升。<span class="hl2">Roofline 模型</span>解释了这背后的物理限制：在饱和 batch size B_sat 之下，步延迟由 HBM 带宽主导（逐层搬运权重到片上内存），步时间几乎不变；超过 B_sat 后，计算成为瓶颈，步时间线性增长。vLLM 提供了 auto-tune 脚本，在给定 SLO 约束下（如 p99 端到端延迟 < 500ms）自动搜索最优配置参数。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="s6-anim"><div class="s6_stage">
+  <!-- Y axis labels -->
+  <div class="s6_label_y_left">延迟</div>
+  <div class="s6_label_y_right">吞吐</div>
+
+  <!-- Axes -->
+  <div class="s6_axis_y"></div>
+  <div class="s6_axis_x"></div>
+
+  <!-- X axis label -->
+  <div class="s6_label_x">批大小 (Batch Size)</div>
+
+  <!-- Tick marks -->
+  <span class="s6_tick s6_tick--start">1</span>
+  <span class="s6_tick s6_tick--end">大</span>
+
+  <!-- Chart lines via SVG -->
+  <svg class="s6_chart" viewBox="0 0 266 200" preserveAspectRatio="none">
+    <!-- Latency: flat from (0,160) to B_sat (106,160), then rises to (266,40) -->
+    <polyline class="s6_line_latency"
+      points="0,160 106,155 266,40" />
+    <!-- Throughput: rises from (0,180) to B_sat (106,60), then flattens to (266,55) -->
+    <polyline class="s6_line_throughput"
+      points="0,180 106,60 266,55" />
+  </svg>
+
+  <!-- B_sat marker -->
+  <div class="s6_bsat_line"></div>
+  <div class="s6_bsat_label">B_sat</div>
+
+  <!-- Legend -->
+  <div class="s6_legend">
+    <div class="s6_legend_item">
+      <div class="s6_legend_dot s6_legend_dot--latency"></div>
+      <span>延迟</span>
+    </div>
+    <div class="s6_legend_item">
+      <div class="s6_legend_dot s6_legend_dot--throughput"></div>
+      <span>吞吐</span>
+    </div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>At the highest level there are two competing metrics: latency and throughput. Latency matters most for interactive applications. Throughput matters in offline workloads.</p>
+          <p>The tradeoff becomes clear when looking at how batch size B affects a single decode step. As B decreases toward 1, ITL drops. As B increases toward B_sat, throughput improves.</p>
+          <p>A roofline model helps: below B_sat, step time is dominated by HBM bandwidth (streaming weights layer-by-layer), so step latency is nearly constant regardless of B.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ Layer 1: 高级特性 ═══ -->
+<div class="layer" id="layer-features" data-depth="1">
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">Prefix Caching：<br><span style="color:var(--accent)">哈希一次，复用无数次</span></h2>
+      <p class="body-text reveal reveal-delay-1">Prefix Caching 的核心思想是：如果两个请求有相同的前缀，第二个请求不需要重新计算前缀的 KV cache。实现分三步走。第一步<span class="hl">哈希</span>：在调度阶段，对请求 token 按 block 大小（默认 16）分块，每块计算一个 BlockHash（包含 token 内容、可选的多模态哈希、LoRA ID、cache salt）。第二步<span class="hl2">查找</span>：用 find_longest_cache_hit 在 cached_block_hash_to_block 映射中线性搜索匹配——首次请求无命中。第三步<span class="hl">缓存</span>：allocate_slots 中调用 coordinator.cache_blocks，将新分配的 KV block 与其哈希关联起来存入映射表。前向传播后这些 block 就填满了实际的 KV 值。当第二个相同前缀的请求到来时，find_longest_cache_hit 找到所有 n 个 block 的匹配，直接复用——只需计算新增的 token。KV block 只有在被从 free_block_queue 中弹出重新分配时才会失效。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a1-anim"><div class="a1_stage">
+  <div class="a1_title">Prefix Caching: 哈希一次，复用无数次</div>
+
+  <!-- ===== Request 1 ===== -->
+  <div class="a1_phase_label a1_phase_label_r1">Request 1 — 首次请求</div>
+
+  <div class="a1_step_label a1_sl1">1. 分块 (每16 tokens一块)</div>
+  <div class="a1_blocks_row">
+    <div class="a1_token_block a1_tb1">Block 1</div>
+    <div class="a1_token_block a1_tb2">Block 2</div>
+    <div class="a1_token_block a1_tb3">Block 3</div>
+  </div>
+
+  <div class="a1_step_label a1_sl2">2. 计算哈希</div>
+  <div class="a1_hash_arrow a1_hash_arrow_r1">BlockHash( ) ↓</div>
+  <div class="a1_hash_row">
+    <div class="a1_hash_val a1_hv1">0xa3f1</div>
+    <div class="a1_hash_val a1_hv2">0x7c2e</div>
+    <div class="a1_hash_val a1_hv3">0xd904</div>
+  </div>
+
+  <div class="a1_step_label a1_sl3">3. 查找缓存 — 全部未命中</div>
+  <div class="a1_lookup_row">
+    <div class="a1_miss_tag a1_miss1">MISS</div>
+    <div class="a1_miss_tag a1_miss2">MISS</div>
+    <div class="a1_miss_tag a1_miss3">MISS</div>
+  </div>
+
+  <div class="a1_step_label a1_sl4">4. 计算 KV 并写入缓存</div>
+  <div class="a1_cache_box">
+    <div class="a1_cache_title">cached_block_hash_to_block</div>
+    <div class="a1_cache_entries">
+      <div class="a1_cache_entry a1_ce1">
+        <span class="a1_cache_key">0xa3f1</span>
+        <span class="a1_cache_arrow_txt">-></span>
+        <span class="a1_cache_value">KV-1</span>
+      </div>
+      <div class="a1_cache_entry a1_ce2">
+        <span class="a1_cache_key">0x7c2e</span>
+        <span class="a1_cache_arrow_txt">-></span>
+        <span class="a1_cache_value">KV-2</span>
+      </div>
+      <div class="a1_cache_entry a1_ce3">
+        <span class="a1_cache_key">0xd904</span>
+        <span class="a1_cache_arrow_txt">-></span>
+        <span class="a1_cache_value">KV-3</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="a1_divider"></div>
+
+  <!-- ===== Request 2 ===== -->
+  <div class="a1_phase_label a1_phase_label_r2">Request 2 — 相同前缀</div>
+
+  <div class="a1_step_label a1_sl5">1. 相同分块</div>
+  <div class="a1_blocks_row">
+    <div class="a1_token_block a1_tb4">Block 1</div>
+    <div class="a1_token_block a1_tb5">Block 2</div>
+    <div class="a1_token_block a1_tb6">Block 3</div>
+  </div>
+
+  <div class="a1_step_label a1_sl6">2. 计算哈希</div>
+  <div class="a1_hash_arrow a1_hash_arrow_r2">BlockHash( ) ↓</div>
+  <div class="a1_hash_row">
+    <div class="a1_hash_val a1_hv4">0xa3f1</div>
+    <div class="a1_hash_val a1_hv5">0x7c2e</div>
+    <div class="a1_hash_val a1_hv6">0xd904</div>
+  </div>
+
+  <div class="a1_step_label a1_sl7">3. 查找缓存 — 全部命中!</div>
+  <div class="a1_lookup_row">
+    <div class="a1_hit_tag a1_hit1">HIT ✓</div>
+    <div class="a1_hit_tag a1_hit2">HIT ✓</div>
+    <div class="a1_hit_tag a1_hit3">HIT ✓</div>
+  </div>
+
+  <div class="a1_reuse_banner">跳过 Prefill — 直接复用 KV 缓存</div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>During the first generate call, in the scheduling stage, the engine invokes hash_request_tokens. The list is stored in self.req_to_block_hashes[request_id].</p>
+          <p>Next, the engine calls find_longest_cache_hit to check if any of these hashes already exist in cached_block_hash_to_block. On the first request, no hits are found.</p>
+          <p>On a second generate call with the same prefix, find_longest_cache_hit finds matches for all n blocks. The engine can reuse those KV blocks directly.</p>
+          <p>KV-cache blocks become invalid only when they're about to be reallocated from the free_block_queue.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background:var(--bg-act2)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">Speculative Decoding：<br><span style="color:var(--accent2)">小模型提议，大模型验证</span></h2>
+      <p class="body-text reveal reveal-delay-1">自回归生成的瓶颈在于每生成一个 token 都需要一次完整的前向传播——每步都要重新加载和应用所有模型权重，只为计算一个 token。<span class="hl2">Speculative Decoding</span> 的解法是引入一个小型 draft 模型：它快速提议 k 个候选 token，然后大模型<span class="hl">一次前向传播同时验证所有 k 个</span>。接受/拒绝规则保证了最终序列的分布在数学期望上与直接从大模型逐 token 采样完全等价。vLLM V1 实现了三种不依赖独立 draft 模型的方案：<span class="hl2">N-gram</span> 在已有上下文中查找匹配的 n-gram 作为提议（零额外计算）；<span class="hl">EAGLE</span> 对大模型做手术——保留 embedding 和 LM head，用轻量 MLP 替换 transformer stack 作为 draft；<span class="hl2">Medusa</span> 在大模型的 embedding 层顶部训练辅助线性 head，并行预测后续 k 个 token。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a2-anim"><div class="a2_stage">
+  <div class="a2_title">Token 生成对比</div>
+
+  <!-- Traditional row -->
+  <div class="a2_row">
+    <div class="a2_label a2_label_trad">
+      传统自回归 <span class="a2_speed a2_speed_slow">慢</span>
+    </div>
+    <div class="a2_track">
+      <div class="a2_heavy a2_h1">前向1</div>
+      <div class="a2_arrow_trad a2_at1">&#8594;</div>
+      <div class="a2_heavy a2_h2">前向2</div>
+      <div class="a2_arrow_trad a2_at2">&#8594;</div>
+      <div class="a2_heavy a2_h3">前向3</div>
+      <div class="a2_arrow_trad a2_at3">&#8594;</div>
+      <div class="a2_heavy a2_h4">前向4</div>
+    </div>
+  </div>
+
+  <div class="a2_divider"></div>
+
+  <!-- Speculative row -->
+  <div class="a2_row">
+    <div class="a2_label a2_label_spec">
+      投机解码 <span class="a2_speed a2_speed_fast">快</span>
+    </div>
+    <div class="a2_track">
+      <span class="a2_draft_label">草稿</span>
+      <div class="a2_draft">
+        <div class="a2_draft_tok">t1</div>
+        <div class="a2_draft_tok">t2</div>
+        <div class="a2_draft_tok">t3</div>
+        <div class="a2_draft_tok">t4</div>
+      </div>
+      <div class="a2_arrow_spec">&#8594;</div>
+      <div class="a2_verify">验证</div>
+      <div class="a2_results">
+        <div class="a2_tok_ok">&#10003;</div>
+        <div class="a2_tok_ok">&#10003;</div>
+        <div class="a2_tok_ok">&#10003;</div>
+        <div class="a2_tok_rej">&#10007;</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="a2_divider"></div>
+
+  <div class="a2_summary">
+    <span class="a2_sum_trad">4次前向 = 4 token</span>
+    <span class="a2_sum_spec">2次前向 = 3 token &#9889;</span>
+  </div>
+
+  <div class="a2_schemes">
+    <span class="a2_chip">N-gram</span>
+    <span class="a2_chip">EAGLE</span>
+    <span class="a2_chip">Medusa</span>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>In autoregressive generation, each new token requires a forward pass of the large LM. This is expensive — every step reloads and applies all model weights just to compute a single token!</p>
+          <p>Speculative decoding speeds this up by introducing a smaller draft LM. The draft proposes k tokens cheaply. The accept/reject rule guarantees that in expectation the sequence is distributed exactly as if we had sampled token by token from the full model.</p>
+          <p>vLLM V1 implements n-gram, EAGLE, and Medusa proposal schemes.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ═══ Layer 1: 分布式架构 ═══ -->
+<div class="layer" id="layer-distributed" data-depth="1">
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">多 GPU 编排：<br><span style="color:var(--accent)">MultiProcExecutor</span></h2>
+      <p class="body-text reveal reveal-delay-1">当需要 TP > 1 或 PP > 1 时，vLLM 启用 MultiProcExecutor 来协调多个 GPU worker。每个 worker 进程独立执行三个关键步骤：<span class="hl">load_model</span>（加载分片后的模型权重）、<span class="hl2">determine_available_memory</span>（通过 profile 确定可用 KV cache 内存）、<span class="hl">initialize_cache</span>（按 block 大小分配 KV cache 内存池）。关键的设计抽象是：从 engine 的视角，MultiProcExecutor 和单进程的 UniprocExecutor 有完全相同的接口——都是调用 execute_model。所有多进程通信、模型分片、梯度同步的复杂度都被封装在 executor 内部。这意味着上层的调度逻辑、prefix caching、speculative decoding 等特性完全不需要知道底层跑了几个 GPU，实现了真正的关注点分离。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a3-anim"><div class="a3_stage">
+  <div class="a3_engine">Engine</div>
+  <div class="a3_call">
+    <span class="a3_callLabel">execute_model()</span>
+  </div>
+  <div class="a3_callArrow"></div>
+  <div class="a3_interface">
+    <span class="a3_interfaceTag">Executor 接口</span>
+  </div>
+  <div class="a3_below">
+    <div class="a3_branch a3_branchLeft">
+      <div class="a3_branchTitle">单进程</div>
+      <div class="a3_connUp"></div>
+      <div class="a3_singleBox">
+        <div class="a3_singleLabel">UniprocExecutor</div>
+        <div class="a3_singleSub">1 GPU</div>
+      </div>
+    </div>
+    <div class="a3_branch a3_branchRight">
+      <div class="a3_branchTitle">多进程</div>
+      <div class="a3_connUp"></div>
+      <div class="a3_gpuRow">
+        <div class="a3_gpu"><span class="a3_gpuIcon">&#9632;</span>W0</div>
+        <div class="a3_gpu"><span class="a3_gpuIcon">&#9632;</span>W1</div>
+        <div class="a3_gpu"><span class="a3_gpuIcon">&#9632;</span>W2</div>
+        <div class="a3_gpu"><span class="a3_gpuIcon">&#9632;</span>W3</div>
+      </div>
+      <div class="a3_multiLabel">MultiProcExecutor</div>
+      <div class="a3_multiSub">4 GPU Workers</div>
+      <div class="a3_steps">
+        <span class="a3_step">load_model</span>
+        <span class="a3_step">profile_mem</span>
+        <span class="a3_step">init_cache</span>
+      </div>
+    </div>
+  </div>
+  <div class="a3_note">Engine 视角: 同一接口, 无需关心单/多进程</div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>Suppose your model weights no longer fit into a single GPU's VRAM. The first option is to shard the model across multiple GPUs on the same node using tensor parallelism (e.g., TP=8).</p>
+          <p>From the engine's perspective, nothing has changed — all of this multiprocessing complexity is abstracted away through a call to model executor's execute_model.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section" style="background:var(--bg-act2)">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">请求全生命周期：<br><span style="color:var(--accent2)">curl 到 token 的完整路径</span></h2>
+      <p class="body-text reveal reveal-delay-1">在完整的分布式部署中，一条 curl 请求经历的完整路径是这样的。请求首先到达 <span class="hl">FastAPI 服务器</span>（挂载了 OpenAI 兼容端点 /v1/completions），被路由到 AsyncLLM（异步引擎包装器）。AsyncLLM 内部创建了 DPLBAsyncMPClient（数据并行、负载均衡、异步、多进程客户端），它通过 <span class="hl2">DP 协调器</span>与各引擎核心通信。DP 协调器是前端和后端之间的中介——它感知每个副本的缓存状态以做 cache-aware 路由、在 DP 副本之间同步 scheduling 状态以保证 lockstep 执行、并向前端报告引擎统计信息。每个 DP 副本内部，EngineCoreProc 运行主线程（scheduler + executor）、输入线程（接收新请求）和输出线程（发送结果），最终 token 通过 SSE（Server-Sent Events）流式返回给用户。</p>
+      <div class="anim-stage reveal reveal-delay-2" id="a4-anim"><div class="a4_stage">
+  <div class="a4_title">请求全生命周期: curl 到 token</div>
+  <div class="a4_flow">
+    <div class="a4_node a4_node_curl">curl</div>
+    <div class="a4_arrow"></div>
+    <div class="a4_node">FastAPI</div>
+    <div class="a4_arrow"></div>
+    <div class="a4_node">AsyncLLM</div>
+    <div class="a4_arrow"></div>
+    <div class="a4_node">DP协调器</div>
+    <div class="a4_arrow"></div>
+    <div class="a4_node a4_node_engine">
+      <span class="a4_engine_label">引擎核心</span>
+      <span class="a4_engine_threads">
+        <span class="a4_thread">输入</span>
+        <span class="a4_thread">调度</span>
+        <span class="a4_thread">输出</span>
+      </span>
+    </div>
+    <div class="a4_arrow"></div>
+    <div class="a4_node a4_node_token">Token</div>
+    <div class="a4_dot"></div>
+  </div>
+  <div class="a4_details">
+    <div class="a4_detail">缓存感知路由</div>
+    <div class="a4_detail">同步调度</div>
+    <div class="a4_detail">SSE流式返回</div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-delay-3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+          <p>We instantiate an AsyncLLM object (an asyncio wrapper around the LLM engine). Internally this creates a DPLBAsyncMPClient (data-parallel, load-balancing, asynchronous, multiprocessing client).</p>
+          <p>The DP coordinator mediates between the frontend (API server) and backend (engine cores). It: provides cache-aware routing, synchronizes scheduling state, and reports engine statistics.</p>
+          <p>Finally, the main server process creates a FastAPI app and mounts endpoints such as OpenAIServingCompletion and OpenAIServingChat.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+var layerStack=['layer-overview'];
+var transitioning=false;
+var layerNames={'layer-overview':'概览','layer-features':'高级特性','layer-distributed':'分布式架构'};
+var observers=new Map();
+function setupObserver(layerId){if(observers.has(layerId))return;var layer=document.getElementById(layerId);var reveals=layer.querySelectorAll('.reveal, [class*="_stage"]');var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.15,root:layer});reveals.forEach(function(el){obs.observe(el);});observers.set(layerId,obs);}
+function resetReveals(layerId){var layer=document.getElementById(layerId);layer.querySelectorAll('.reveal').forEach(function(el){el.classList.remove('visible');});layer.querySelectorAll('[class*="_stage"]').forEach(function(el){el.classList.remove('visible');});}
+function activateReveals(layerId){resetReveals(layerId);if(observers.has(layerId)){observers.get(layerId).disconnect();observers.delete(layerId);}requestAnimationFrame(function(){setupObserver(layerId);});}
+function updateBreadcrumb(){var bc=document.getElementById('breadcrumb');bc.innerHTML='';layerStack.forEach(function(id,i){if(i>0){var sep=document.createElement('span');sep.className='sep';sep.textContent='>';bc.appendChild(sep);}var span=document.createElement('span');span.textContent=layerNames[id]||id;if(i===layerStack.length-1){span.className='current';}else{span.addEventListener('click',function(){goBackTo(i);});}bc.appendChild(span);});var backBtn=document.getElementById('backBtn');backBtn.style.display=layerStack.length>1?'flex':'none';bc.style.left=layerStack.length>1?'60px':'16px';var dots=document.getElementById('depthDots');var depth=layerStack.length-1;dots.querySelectorAll('.dot').forEach(function(d,i){d.classList.toggle('active',i===depth);});}
+function drillDown(targetId,btnEl){if(transitioning)return;transitioning=true;var currentId=layerStack[layerStack.length-1];var currentLayer=document.getElementById(currentId);var targetLayer=document.getElementById(targetId);targetLayer.scrollTop=0;resetReveals(targetId);targetLayer.style.visibility='visible';var duration=600;currentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';currentLayer.style.transformOrigin='center center';currentLayer.style.transform='scale(1.3)';currentLayer.style.opacity='0';targetLayer.classList.add('active');targetLayer.style.opacity='0';targetLayer.style.transform='scale(0.85)';targetLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){targetLayer.style.opacity='1';targetLayer.style.transform='scale(1)';});});setTimeout(function(){currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';targetLayer.style.transition='';targetLayer.style.transform='';activateReveals(targetId);transitioning=false;},duration+50);layerStack.push(targetId);updateBreadcrumb();}
+function goBack(){if(layerStack.length<=1||transitioning)return;transitioning=true;var currentId=layerStack.pop();var parentId=layerStack[layerStack.length-1];var currentLayer=document.getElementById(currentId);var parentLayer=document.getElementById(parentId);var duration=600;currentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';currentLayer.style.transform='scale(0.85)';currentLayer.style.opacity='0';parentLayer.classList.add('active');parentLayer.style.transform='scale(1.3)';parentLayer.style.opacity='0';parentLayer.style.transition='transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';requestAnimationFrame(function(){requestAnimationFrame(function(){parentLayer.style.transform='scale(1)';parentLayer.style.opacity='1';});});setTimeout(function(){currentLayer.classList.remove('active');currentLayer.style.transition='';currentLayer.style.transform='';currentLayer.style.opacity='';currentLayer.style.visibility='';parentLayer.style.transition='';parentLayer.style.transform='';transitioning=false;},duration+50);updateBreadcrumb();}
+function goBackTo(targetIndex){if(transitioning)return;while(layerStack.length-1>targetIndex){if(layerStack.length<=1)break;goBack();return;}}
+function toggleSource(btn){btn.classList.toggle('open');btn.nextElementSibling.classList.toggle('open');}
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+</body>
+</html>

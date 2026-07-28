@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>治理不是刹车，是油门</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&family=Noto+Serif+SC:wght@700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --c1: #F97316;
+  --c2: #0EA5E9;
+  --bg-act1: #FFF7ED;
+  --bg-act2: #F0F9FF;
+  --bg-act3: #FFFBEB;
+  --bg-act4: #F0FDF4;
+  --bg-act5: #FEF2F2;
+  --accent: #F97316;
+  --accent2: #0EA5E9;
+  --warm: #EA580C;
+  --danger: #DC2626;
+  --neutral: #94A3B8;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --font: 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  --font-serif: 'Noto Serif SC', serif;
+}
+*{ margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; overflow:hidden; }
+body{ font-family:var(--font); background:#111; -webkit-font-smoothing:antialiased; }
+
+/* Layer system */
+.layer{ position:fixed; inset:0; overflow-y:auto; overflow-x:hidden; visibility:hidden; opacity:0; will-change:transform,opacity; scroll-snap-type:y proximity; -webkit-overflow-scrolling:touch; }
+.layer.active{ visibility:visible; opacity:1; }
+
+/* Breadcrumb */
+.breadcrumb{ position:fixed; top:16px; left:16px; z-index:1000; display:flex; align-items:center; gap:4px; background:rgba(255,255,255,.92); backdrop-filter:blur(12px); padding:8px 14px; border-radius:10px; box-shadow:0 2px 16px rgba(0,0,0,.1); font-size:13px; font-weight:500; }
+.breadcrumb span{ color:var(--text-muted); cursor:pointer; transition:color .2s; }
+.breadcrumb span:hover{ color:var(--accent); }
+.breadcrumb span.current{ color:var(--text); cursor:default; }
+.breadcrumb .sep{ color:#CBD5E1; margin:0 2px; cursor:default; }
+
+/* Back button */
+.back-btn{ position:fixed; top:16px; left:16px; z-index:1001; width:38px; height:38px; border-radius:10px; border:none; background:rgba(255,255,255,.92); backdrop-filter:blur(12px); box-shadow:0 2px 12px rgba(0,0,0,.1); font-size:18px; cursor:pointer; display:none; align-items:center; justify-content:center; color:var(--text); transition:all .2s; }
+.back-btn:hover{ background:var(--accent); color:#fff; }
+
+/* Depth dots */
+.depth-dots{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:1000; display:flex; gap:8px; background:rgba(255,255,255,.9); backdrop-filter:blur(8px); padding:8px 14px; border-radius:20px; box-shadow:0 2px 12px rgba(0,0,0,.1); }
+.dot{ width:10px; height:10px; border-radius:50%; background:#CBD5E1; transition:all .3s; }
+.dot.active{ background:var(--accent); box-shadow:0 0 8px rgba(249,115,22,.5); transform:scale(1.2); }
+
+/* Section */
+.feed-section{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:80px 24px; scroll-snap-align:start; }
+.feed-section.dark{ background:#0F172A; color:#F1F5F9; }
+.feed-section.dark .body-text{ color:#94A3B8; }
+.feed-section.dark .big-statement{ color:#F1F5F9; }
+.feed-section.dark .hl{ color:#FB923C; }
+.feed-section.dark .hl2{ color:#38BDF8; }
+.feed-section.dark .hook-line{ color:#FB923C; }
+.section-inner{ max-width:600px; width:100%; }
+
+/* Typography */
+.act-label{ font-size:12px; letter-spacing:4px; text-transform:uppercase; color:var(--c1); margin-bottom:12px; font-weight:700; }
+.big-statement{ font-family:var(--font-serif); font-size:clamp(22px,5.5vw,32px); font-weight:700; line-height:1.5; margin-bottom:32px; color:#1E293B; }
+.body-text{ font-size:16px; line-height:1.9; color:var(--text); margin-bottom:28px; }
+.hl{ color:var(--c1); font-weight:700; }
+.hl2{ color:var(--c2); font-weight:700; }
+.hook-line{ font-size:14px; color:var(--c1); margin-bottom:16px; font-weight:700; }
+
+/* Animation stage */
+.anim-stage{ width:100%; display:flex; justify-content:center; margin:28px 0; min-height:180px; }
+.anim-stage > div{ width:100%; }
+
+/* Reveal */
+.reveal{ opacity:0; transform:translateY(30px); transition:opacity .6s ease, transform .6s ease; }
+.reveal.visible{ opacity:1; transform:translateY(0); }
+.reveal-d1{ transition-delay:.15s; }
+.reveal-d2{ transition-delay:.3s; }
+.reveal-d3{ transition-delay:.45s; }
+.reveal-d4{ transition-delay:.6s; }
+
+/* Source panel */
+.source-panel{ margin-top:24px; border-radius:12px; overflow:hidden; border:1px solid rgba(249,115,22,.15); background:rgba(249,115,22,.03); }
+.dark .source-panel{ border-color:rgba(255,255,255,.1); background:rgba(255,255,255,.04); }
+.source-toggle{ width:100%; padding:12px 16px; border:none; background:none; display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:600; color:var(--accent); font-family:var(--font); }
+.dark .source-toggle{ color:#FB923C; }
+.source-toggle:hover{ background:rgba(249,115,22,.06); }
+.source-toggle .arrow{ transition:transform .3s; font-size:11px; }
+.source-toggle.open .arrow{ transform:rotate(90deg); }
+.source-body{ max-height:0; overflow:hidden; transition:max-height .4s ease; padding:0 16px; }
+.source-body.open{ max-height:2000px; padding:0 16px 16px; overflow-y:auto; }
+.source-body p{ font-size:13px; line-height:1.8; color:var(--text-muted); margin:0 0 12px; white-space:pre-wrap; }
+.dark .source-body p{ color:#94A3B8; }
+.source-body .source-label{ font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--accent); margin-bottom:8px; display:block; }
+.dark .source-body .source-label{ color:#FB923C; }
+
+/* Drill button */
+.drill-btn{ display:inline-flex; align-items:center; gap:6px; padding:10px 20px; border:1.5px solid rgba(249,115,22,.3); border-radius:10px; background:transparent; color:var(--accent); font-size:14px; font-weight:600; cursor:pointer; transition:all .25s; font-family:var(--font); }
+.drill-btn:hover{ background:var(--accent); color:#fff; border-color:var(--accent); transform:translateY(-1px); box-shadow:0 4px 12px rgba(249,115,22,.3); }
+.dark .drill-btn{ border-color:rgba(251,146,60,.4); color:#FB923C; }
+.dark .drill-btn:hover{ background:#FB923C; color:#fff; }
+
+/* S1-S9, A1-A2 animation styles will be injected */
+
+/* === S1 Animation === */
+
+.s1_stage {
+  max-width: 360px;
+  margin: 0 auto;
+  position: relative;
+  height: 420px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.s1_stage.visible {
+  opacity: 1;
+}
+
+/* Center AI circle */
+.s1_ai {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #F97316;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+.s1_stage.visible .s1_ai {
+  animation: s1_pop 0.5s 0.2s forwards;
+}
+
+/* Shared box style */
+.s1_box {
+  position: absolute;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  white-space: nowrap;
+  transform: scale(0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  text-align: center;
+}
+
+/* Step 2 boxes */
+.s1_fear {
+  top: 120px;
+  left: 24px;
+  background: #FEE2E2;
+  color: #DC2626;
+  border: 2px solid #DC2626;
+}
+.s1_stage.visible .s1_fear {
+  animation: s1_pop 0.5s 0.8s forwards;
+}
+
+.s1_guardrail {
+  top: 120px;
+  right: 24px;
+  background: #FFF7ED;
+  color: #F97316;
+  border: 2px solid #F97316;
+}
+.s1_stage.visible .s1_guardrail {
+  animation: s1_pop 0.5s 1.2s forwards;
+}
+
+/* Step 3 boxes */
+.s1_stall {
+  top: 220px;
+  left: 24px;
+  background: #F1F5F9;
+  color: #94A3B8;
+  border: 2px solid #94A3B8;
+}
+.s1_stage.visible .s1_stall {
+  animation: s1_pop 0.5s 1.8s forwards;
+}
+
+.s1_confidence {
+  top: 220px;
+  right: 24px;
+  background: #EFF6FF;
+  color: #0EA5E9;
+  border: 2px solid #0EA5E9;
+}
+.s1_stage.visible .s1_confidence {
+  animation: s1_pop 0.5s 2.2s forwards;
+}
+
+/* Step 4 arrows (SVG paths) */
+.s1_arrows {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.s1_arrow_left line,
+.s1_arrow_right line {
+  stroke-width: 2;
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+}
+.s1_arrow_left line {
+  stroke: #94A3B8;
+}
+.s1_arrow_right line {
+  stroke: #0EA5E9;
+}
+.s1_stage.visible .s1_arrow_left line {
+  animation: s1_draw 0.5s 2.8s forwards;
+}
+.s1_stage.visible .s1_arrow_right line {
+  animation: s1_draw 0.5s 3.0s forwards;
+}
+
+/* Arrow markers */
+.s1_arrow_left polygon { fill: #94A3B8; }
+.s1_arrow_right polygon { fill: #0EA5E9; }
+
+.s1_arrowhead {
+  opacity: 0;
+}
+.s1_stage.visible .s1_arrow_left .s1_arrowhead {
+  animation: s1_fadein 0.3s 3.3s forwards;
+}
+.s1_stage.visible .s1_arrow_right .s1_arrowhead {
+  animation: s1_fadein 0.3s 3.5s forwards;
+}
+
+/* Step 5: launch box */
+.s1_launch {
+  top: 340px;
+  right: 10px;
+  background: #F97316;
+  color: #fff;
+  border: 2px solid #F97316;
+  font-size: 18px;
+  padding: 10px 20px;
+  border-radius: 10px;
+}
+.s1_stage.visible .s1_launch {
+  animation: s1_pop 0.4s 3.8s forwards, s1_pulse 0.8s 4.2s 2;
+}
+
+/* Arrow from confidence to launch */
+.s1_stage.visible .s1_arrow_launch line {
+  animation: s1_draw 0.5s 3.6s forwards;
+}
+.s1_arrow_launch line {
+  stroke: #F97316;
+  stroke-width: 2;
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+}
+.s1_arrow_launch .s1_arrowhead {
+  opacity: 0;
+}
+.s1_stage.visible .s1_arrow_launch .s1_arrowhead {
+  animation: s1_fadein 0.3s 4.1s forwards;
+}
+.s1_arrow_launch polygon { fill: #F97316; }
+
+/* Keyframes */
+@keyframes s1_pop {
+  0% { transform: scale(0); }
+  70% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+@keyframes s1_draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes s1_fadein {
+  to { opacity: 1; }
+}
+@keyframes s1_pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+/* Left side label */
+.s1_label {
+  position: absolute;
+  font-size: 13px;
+  color: #94A3B8;
+  font-weight: 600;
+  opacity: 0;
+  letter-spacing: 1px;
+}
+.s1_label_left {
+  top: 96px;
+  left: 30px;
+}
+.s1_label_right {
+  top: 96px;
+  right: 30px;
+}
+.s1_stage.visible .s1_label_left {
+  animation: s1_fadein 0.4s 0.6s forwards;
+}
+.s1_stage.visible .s1_label_right {
+  animation: s1_fadein 0.4s 1.0s forwards;
+}
+
+/* === S2 Animation === */
+
+.s2_stage {
+  max-width: 360px;
+  margin: 0 auto;
+  position: relative;
+  height: 420px;
+  opacity: 0;
+}
+.s2_stage.visible {
+  opacity: 1;
+}
+
+/* Step 1: 用户查询 */
+.s2_query {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #94A3B8;
+  color: #0F172A;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 12px 28px;
+  border-radius: 12px;
+  opacity: 0;
+  white-space: nowrap;
+}
+.s2_stage.visible .s2_query {
+  animation: s2_fadeIn 0.5s 0.4s forwards;
+}
+
+/* Step 2: 前台圆 */
+.s2_triage {
+  position: absolute;
+  top: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: #F97316;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 48px;
+  font-weight: 700;
+  opacity: 0;
+}
+.s2_stage.visible .s2_triage {
+  animation: s2_fadeIn 0.5s 0.8s forwards;
+}
+
+/* Step 3: 箭头 用户查询 -> 前台 */
+.s2_arrow_down {
+  position: absolute;
+  top: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 0;
+  background: #94A3B8;
+  opacity: 0;
+}
+.s2_arrow_down::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: -5px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid #94A3B8;
+}
+.s2_stage.visible .s2_arrow_down {
+  animation: s2_growDown 0.4s 1.2s forwards;
+}
+
+/* Step 4: 三个专家方框 */
+.s2_experts {
+  position: absolute;
+  top: 310px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 10px;
+}
+.s2_expert {
+  width: 88px;
+  height: 52px;
+  border-radius: 10px;
+  background: #0EA5E9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity 0.4s, background 0.4s, filter 0.4s;
+}
+.s2_stage.visible .s2_expert {
+  animation: s2_fadeIn 0.5s 1.6s forwards;
+}
+
+/* Step 5: 扇形箭头 前台 -> 三个专家 */
+.s2_fan_arrows {
+  position: absolute;
+  top: 216px;
+  left: 0;
+  right: 0;
+  height: 94px;
+}
+.s2_fan_line {
+  position: absolute;
+  top: 0;
+  height: 2px;
+  background: #94A3B8;
+  transform-origin: left center;
+  opacity: 0;
+}
+.s2_fan_line::after {
+  content: '';
+  position: absolute;
+  right: -4px;
+  top: -4px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid #94A3B8;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+}
+
+/* SVG arrows for fan */
+.s2_fan_svg {
+  position: absolute;
+  top: 218px;
+  left: 0;
+  width: 100%;
+  height: 92px;
+  opacity: 0;
+}
+.s2_stage.visible .s2_fan_svg {
+  animation: s2_fadeIn 0.4s 2.0s forwards;
+}
+.s2_fan_svg line {
+  stroke: #94A3B8;
+  stroke-width: 2;
+}
+.s2_fan_svg polygon {
+  fill: #94A3B8;
+}
+
+/* Step 6: 高亮组合 */
+.s2_stage.visible .s2_expert.s2_selected {
+  animation: s2_fadeIn 0.5s 1.6s forwards, s2_highlight 0.5s 2.4s forwards;
+}
+.s2_stage.visible .s2_expert.s2_dimmed {
+  animation: s2_fadeIn 0.5s 1.6s forwards, s2_dim 0.5s 2.4s forwards;
+}
+
+@keyframes s2_fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes s2_growDown {
+  from { opacity: 1; height: 0; }
+  to   { opacity: 1; height: 68px; }
+}
+
+@keyframes s2_highlight {
+  to {
+    background: #F97316;
+    box-shadow: 0 0 20px rgba(249,115,22,0.5);
+  }
+}
+
+@keyframes s2_dim {
+  to {
+    opacity: 0.35;
+  }
+}
+
+/* === S3 Animation === */
+
+.s3_stage{max-width:360px;margin:0 auto;opacity:0;transition:opacity .3s}
+.s3_stage.visible{opacity:1}
+
+.s3_timeline{position:relative;padding:0 0 0 60px;min-height:360px}
+
+/* 顶部查询方框 */
+.s3_query{
+  position:absolute;top:0;left:20px;
+  width:80px;height:36px;line-height:36px;text-align:center;
+  background:#0EA5E9;color:#fff;border-radius:6px;
+  font-size:15px;font-weight:700;
+  opacity:0;transform:scale(.7);
+}
+.s3_stage.visible .s3_query{
+  animation:s3_pop .4s .4s both;
+}
+
+/* 垂直线 */
+.s3_vline{
+  position:absolute;top:36px;left:56px;width:3px;height:0;
+  background:#94A3B8;border-radius:2px;
+}
+.s3_stage.visible .s3_vline{
+  animation:s3_grow .6s .8s both;
+}
+
+/* 节点通用 */
+.s3_node{
+  position:absolute;left:32px;
+  width:48px;height:48px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:700;color:#fff;
+  opacity:0;transform:scale(.5);
+}
+
+/* LLM 节点 - 蓝 */
+.s3_node_llm{top:60px;background:#0EA5E9;}
+.s3_stage.visible .s3_node_llm{animation:s3_pop .4s 1.4s both;}
+
+/* 工具节点 - 橙 */
+.s3_node_tool{top:120px;background:#F97316;}
+.s3_stage.visible .s3_node_tool{animation:s3_pop .4s 1.8s both;}
+
+/* 护栏节点 - 橙 */
+.s3_node_guard{top:180px;background:#F97316;}
+.s3_stage.visible .s3_node_guard{animation:s3_pop .4s 2.2s both;}
+
+/* 连接短线 */
+.s3_conn{position:absolute;left:56px;width:3px;height:12px;background:#94A3B8;opacity:0}
+.s3_conn1{top:48px}.s3_conn2{top:108px}.s3_conn3{top:168px}
+.s3_stage.visible .s3_conn1{animation:s3_fade .3s 1.3s both}
+.s3_stage.visible .s3_conn2{animation:s3_fade .3s 1.7s both}
+.s3_stage.visible .s3_conn3{animation:s3_fade .3s 2.1s both}
+
+/* 右侧 Trace 方框 */
+.s3_trace{
+  position:absolute;top:60px;left:120px;
+  width:180px;padding:14px 16px;
+  border:2.5px solid #0EA5E9;border-radius:8px;
+  background:#fff;
+  opacity:0;transform:translateX(20px);
+}
+.s3_stage.visible .s3_trace{
+  animation:s3_slide .5s 2.6s both;
+}
+.s3_trace_title{
+  font-size:14px;font-weight:700;color:#0EA5E9;margin:0 0 10px;
+}
+.s3_trace_row{
+  font-size:13px;color:#334155;line-height:1.8;
+  padding-left:12px;position:relative;
+}
+.s3_trace_row::before{
+  content:'';position:absolute;left:0;top:9px;
+  width:6px;height:6px;border-radius:50%;background:#94A3B8;
+}
+
+/* 虚线连接 时间线→Trace框 */
+.s3_dash{
+  position:absolute;top:83px;left:80px;width:40px;height:2px;
+  border-top:2px dashed #94A3B8;opacity:0;
+}
+.s3_stage.visible .s3_dash{animation:s3_fade .3s 2.5s both}
+
+@keyframes s3_pop{
+  from{opacity:0;transform:scale(.5)}
+  to{opacity:1;transform:scale(1)}
+}
+@keyframes s3_grow{
+  from{height:0}
+  to{height:180px}
+}
+@keyframes s3_fade{
+  from{opacity:0}to{opacity:1}
+}
+@keyframes s3_slide{
+  from{opacity:0;transform:translateX(20px)}
+  to{opacity:1;transform:translateX(0)}
+}
+
+/* === S4 Animation === */
+
+.s4_stage{max-width:360px;margin:0 auto;position:relative;height:420px;opacity:0;transition:opacity .3s}
+.s4_stage.visible{opacity:1}
+
+/* boxes */
+.s4_query,.s4_shield,.s4_pass,.s4_reject,.s4_agent,.s4_block{
+  position:absolute;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;
+  text-align:center;opacity:0;transform:translateY(12px);color:#fff;white-space:nowrap}
+
+.s4_query{left:24px;top:30px;border:2px solid #0EA5E9;color:#0EA5E9;background:rgba(14,165,233,.1)}
+.s4_shield{left:140px;top:26px;border:2px solid #F97316;color:#F97316;background:rgba(249,115,22,.1);
+  border-radius:12px 12px 40% 40%;padding:12px 22px 20px}
+.s4_pass{left:40px;top:200px;border:2px solid #34D399;color:#34D399;background:rgba(52,211,153,.1)}
+.s4_reject{left:230px;top:200px;border:2px solid #94A3B8;color:#94A3B8;background:rgba(148,163,184,.1)}
+.s4_agent{left:40px;top:310px;border:2px solid #0EA5E9;color:#0EA5E9;background:rgba(14,165,233,.1)}
+.s4_block{left:230px;top:310px;border:2px solid #94A3B8;color:#475569;background:rgba(148,163,184,.05);opacity:0}
+
+/* arrows via SVG for clean connections */
+.s4_svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+.s4_svg line,.s4_svg polyline{fill:none;stroke-width:2}
+
+/* arrow groups */
+.s4_g_in,.s4_g_fork,.s4_g_down{opacity:0}
+
+.s4_stage.visible .s4_g_in{animation:s4_fade .3s 1.3s both}
+.s4_stage.visible .s4_g_fork{animation:s4_fade .3s 1.7s both}
+.s4_stage.visible .s4_g_down{animation:s4_fade .3s 2.5s both}
+
+/* label */
+.s4_label{position:absolute;font-size:11px;color:#64748B;opacity:0;transform:translateY(8px)}
+.s4_label_title{left:50%;top:0;transform:translateX(-50%) translateY(8px);font-size:14px;font-weight:700;color:#F97316;letter-spacing:.5px}
+
+/* animation triggers */
+.s4_stage.visible .s4_label_title{animation:s4_in .5s .1s both}
+.s4_stage.visible .s4_query{animation:s4_in .4s .5s both}
+.s4_stage.visible .s4_shield{animation:s4_in .4s .9s both}
+.s4_stage.visible .s4_pass{animation:s4_in .4s 2.1s both}
+.s4_stage.visible .s4_reject{animation:s4_in .4s 2.1s both}
+.s4_stage.visible .s4_agent{animation:s4_in .4s 2.9s both}
+.s4_stage.visible .s4_block{animation:s4_in_dim .4s 2.9s both}
+
+@keyframes s4_in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes s4_fade{from{opacity:0}to{opacity:1}}
+@keyframes s4_in_dim{from{opacity:0;transform:translateY(12px)}to{opacity:.4;transform:translateY(0)}}
+
+/* === S5 Animation === */
+
+.s5_stage{position:relative;max-width:360px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:0;font-family:sans-serif;}
+.s5_box{padding:10px 28px;border-radius:8px;font-size:15px;font-weight:700;text-align:center;opacity:0;transform:translateY(-12px);transition:opacity .5s,transform .5s;}
+.s5_gate{padding:12px 24px;border-radius:10px;font-size:16px;font-weight:700;text-align:center;opacity:0;transform:scale(.85);transition:opacity .5s,transform .5s;}
+.s5_gate_sub{font-size:12px;font-weight:400;margin-top:2px;letter-spacing:1px;opacity:.8;}
+.s5_arrow{width:2px;height:28px;background:#94A3B8;opacity:0;transition:opacity .5s;margin:0 auto;}
+.s5_circle{width:72px;height:72px;border-radius:50%;background:#94A3B8;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;opacity:0;transform:scale(.7);transition:opacity .5s,transform .5s;}
+.s5_req_circle{width:56px;height:56px;border-radius:50%;background:#94A3B8;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;opacity:0;transform:translateY(-12px);transition:opacity .5s,transform .5s;}
+.s5_preflight{background:#F97316;color:#fff;}
+.s5_input{background:#0EA5E9;color:#fff;}
+.s5_output{background:#F97316;color:#fff;}
+.s5_resp{background:#0EA5E9;color:#fff;}
+
+.s5_stage.visible .s5_d0{opacity:1;transform:translateY(0) scale(1);transition-delay:0s;}
+.s5_stage.visible .s5_d1{opacity:1;transition-delay:.4s;}
+.s5_stage.visible .s5_d2{opacity:1;transform:scale(1);transition-delay:.8s;}
+.s5_stage.visible .s5_d3{opacity:1;transition-delay:1.2s;}
+.s5_stage.visible .s5_d4{opacity:1;transform:scale(1);transition-delay:1.6s;}
+.s5_stage.visible .s5_d5{opacity:1;transition-delay:2.0s;}
+.s5_stage.visible .s5_d6{opacity:1;transform:scale(1);transition-delay:2.4s;}
+.s5_stage.visible .s5_d7{opacity:1;transition-delay:2.8s;}
+.s5_stage.visible .s5_d8{opacity:1;transform:scale(1);transition-delay:3.2s;}
+.s5_stage.visible .s5_d9{opacity:1;transition-delay:3.6s;}
+.s5_stage.visible .s5_d10{opacity:1;transform:translateY(0);transition-delay:4.0s;}
+
+/* === S6 Animation === */
+
+.s6_stage{position:relative;width:360px;max-width:360px;height:400px;margin:0 auto;opacity:1;}
+
+/* Package box - center */
+.s6_pkg{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);width:120px;height:64px;border:2px solid #F97316;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#F97316;font-size:13px;font-family:sans-serif;opacity:0;transition:opacity 0.5s ease;gap:2px;}
+.s6_pkg_title{font-size:13px;font-weight:bold;}
+.s6_pkg_sub{font-size:11px;font-family:monospace;opacity:0.7;}
+.s6_stage.visible .s6_pkg{opacity:1;transition-delay:0.0s;}
+
+/* GitHub box - top center */
+.s6_gh{position:absolute;left:50%;top:10%;transform:translateX(-50%);width:100px;height:44px;border:2px solid #94A3B8;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#94A3B8;font-size:13px;font-family:sans-serif;opacity:0;transition:opacity 0.5s ease;}
+.s6_stage.visible .s6_gh{opacity:1;transition-delay:0.5s;}
+
+/* Arrow up: package -> GitHub */
+.s6_arrow_up{position:absolute;left:50%;top:28%;transform:translateX(-50%);width:2px;height:50px;background:#94A3B8;opacity:0;transition:opacity 0.5s ease;transform-origin:bottom center;}
+.s6_arrow_up::after{content:'';position:absolute;top:-6px;left:-5px;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:8px solid #94A3B8;}
+.s6_stage.visible .s6_arrow_up{opacity:1;transition-delay:1.0s;}
+
+/* Team boxes - bottom row */
+.s6_team{position:absolute;bottom:60px;width:80px;height:40px;border:2px solid #0EA5E9;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#0EA5E9;font-size:12px;font-family:sans-serif;opacity:0;transition:opacity 0.5s ease;}
+.s6_team_a{left:16px;}
+.s6_team_b{left:50%;transform:translateX(-50%);}
+.s6_team_c{right:16px;}
+.s6_stage.visible .s6_team{opacity:1;transition-delay:1.5s;}
+
+/* Arrows down: GitHub -> teams */
+.s6_arrow_down{position:absolute;width:2px;background:#0EA5E9;opacity:0;transition:opacity 0.5s ease;}
+.s6_arrow_down::after{content:'';position:absolute;bottom:-6px;left:-5px;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid #0EA5E9;}
+
+.s6_arrow_d1{left:56px;top:56%;height:60px;}
+.s6_arrow_d2{left:50%;transform:translateX(-50%);top:56%;height:60px;}
+.s6_arrow_d3{right:56px;top:56%;height:60px;}
+
+.s6_stage.visible .s6_arrow_down{opacity:1;transition-delay:2.0s;}
+
+/* Compliance labels */
+.s6_label{position:absolute;bottom:38px;font-size:11px;color:#22C55E;font-family:sans-serif;opacity:0;transition:opacity 0.5s ease;text-align:center;}
+.s6_label_a{left:16px;width:80px;}
+.s6_label_b{left:50%;transform:translateX(-50%);width:80px;}
+.s6_label_c{right:16px;width:80px;}
+.s6_stage.visible .s6_label{opacity:1;transition-delay:2.5s;}
+
+/* === S7 Animation === */
+
+.s7_stage{max-width:360px;margin:0 auto;position:relative;height:340px;font-family:sans-serif;opacity:1;}
+
+/* Step 1: Title box */
+.s7_title{position:absolute;top:0;left:50%;transform:translateX(-50%);background:#fff;border:2px solid #94A3B8;border-radius:8px;padding:8px 24px;font-size:15px;font-weight:700;color:#334155;letter-spacing:1px;opacity:0;transition:opacity 0.5s ease;}
+.s7_stage.visible .s7_title{opacity:1;transition-delay:0s;}
+
+/* Step 2: P circle */
+.s7_circle_p{position:absolute;top:80px;left:60px;width:56px;height:56px;border-radius:50%;background:#F97316;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;opacity:0;transform:scale(0.3);transition:opacity 0.4s ease,transform 0.4s ease;}
+.s7_stage.visible .s7_circle_p{opacity:1;transform:scale(1);transition-delay:0.4s;}
+.s7_label_p{position:absolute;top:142px;left:48px;font-size:12px;color:#F97316;font-weight:600;opacity:0;transition:opacity 0.4s ease;white-space:nowrap;}
+.s7_stage.visible .s7_label_p{opacity:1;transition-delay:0.5s;}
+
+/* Step 3: R circle */
+.s7_circle_r{position:absolute;top:80px;right:60px;width:56px;height:56px;border-radius:50%;background:#0EA5E9;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;opacity:0;transform:scale(0.3);transition:opacity 0.4s ease,transform 0.4s ease;}
+.s7_stage.visible .s7_circle_r{opacity:1;transform:scale(1);transition-delay:0.8s;}
+.s7_label_r{position:absolute;top:142px;right:48px;font-size:12px;color:#0EA5E9;font-weight:600;opacity:0;transition:opacity 0.4s ease;white-space:nowrap;}
+.s7_stage.visible .s7_label_r{opacity:1;transition-delay:0.9s;}
+
+/* Step 4: Balance beam */
+.s7_beam_wrap{position:absolute;top:100px;left:50%;transform:translateX(-50%);width:200px;height:20px;opacity:0;transition:opacity 0.4s ease;}
+.s7_stage.visible .s7_beam_wrap{opacity:1;transition-delay:1.2s;}
+.s7_beam{width:100%;height:3px;background:#94A3B8;border-radius:2px;position:absolute;top:50%;transform:translateY(-50%);transform-origin:center center;}
+.s7_pivot{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:10px;height:10px;background:#94A3B8;border-radius:50%;}
+
+/* Step 5: Tilt animation */
+.s7_stage.visible .s7_beam{animation:s7_tilt 2.4s ease-in-out 1.6s forwards;}
+@keyframes s7_tilt{
+  0%{transform:translateY(-50%) rotate(0deg);}
+  30%{transform:translateY(-50%) rotate(-12deg);}
+  60%{transform:translateY(-50%) rotate(8deg);}
+  100%{transform:translateY(-50%) rotate(0deg);}
+}
+
+/* Step 6: Threshold box */
+.s7_threshold{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;border:2px solid #F97316;border-radius:8px;padding:8px 18px;background:#fff;opacity:0;transition:opacity 0.5s ease,transform 0.5s ease;}
+.s7_stage.visible .s7_threshold{opacity:1;transition-delay:2.8s;}
+.s7_threshold_text{font-size:13px;font-weight:700;color:#334155;}
+.s7_arrow{font-size:16px;color:#F97316;font-weight:700;}
+
+/* F1 badge */
+.s7_f1{position:absolute;top:170px;left:50%;transform:translateX(-50%);font-size:13px;font-weight:700;color:#94A3B8;opacity:0;transition:opacity 0.4s ease;letter-spacing:1px;}
+.s7_stage.visible .s7_f1{opacity:1;transition-delay:2.2s;}
+
+/* === S8 Animation === */
+
+.s8_stage{max-width:360px;margin:0 auto;position:relative;height:380px;font-family:sans-serif;opacity:1;}
+
+/* Step 1: Attack box */
+.s8_atk{position:absolute;top:30px;left:20px;border:2px solid #DC2626;border-radius:8px;padding:8px 20px;font-size:15px;font-weight:700;color:#DC2626;background:rgba(220,38,38,0.08);opacity:0;transform:translateX(-20px);transition:opacity 0.5s ease,transform 0.5s ease;}
+.s8_stage.visible .s8_atk{opacity:1;transform:translateX(0);transition-delay:0s;}
+
+/* Step 2: Three attack tags (vertical) */
+.s8_tags{position:absolute;top:80px;left:28px;display:flex;flex-direction:column;gap:8px;}
+.s8_tag{font-size:12px;font-weight:600;color:#DC2626;border:1.5px solid #DC2626;border-radius:4px;padding:3px 10px;opacity:0;transform:translateY(10px);transition:opacity 0.4s ease,transform 0.4s ease;background:rgba(220,38,38,0.06);}
+.s8_stage.visible .s8_tag:nth-child(1){opacity:1;transform:translateY(0);transition-delay:0.4s;}
+.s8_stage.visible .s8_tag:nth-child(2){opacity:1;transform:translateY(0);transition-delay:0.6s;}
+.s8_stage.visible .s8_tag:nth-child(3){opacity:1;transform:translateY(0);transition-delay:0.8s;}
+
+/* Step 3: Agent box with guardrail border */
+.s8_guard{position:absolute;top:50px;right:30px;width:130px;height:140px;border:3px solid #F97316;border-radius:14px;opacity:0;transform:translateX(20px);transition:opacity 0.5s ease,transform 0.5s ease;display:flex;align-items:center;justify-content:center;}
+.s8_stage.visible .s8_guard{opacity:1;transform:translateX(0);transition-delay:1.2s;}
+.s8_agent{border:2px solid #0EA5E9;border-radius:8px;padding:10px 18px;font-size:14px;font-weight:700;color:#0EA5E9;background:rgba(14,165,233,0.08);}
+.s8_guard_label{position:absolute;top:32px;right:60px;font-size:11px;color:#F97316;font-weight:600;opacity:0;transition:opacity 0.4s ease;letter-spacing:0.5px;}
+.s8_stage.visible .s8_guard_label{opacity:1;transition-delay:1.4s;}
+
+/* Step 4: Three arrows */
+.s8_arrows{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;}
+.s8_arrows svg{position:absolute;top:0;left:0;width:100%;height:100%;}
+.s8_arrow_line{stroke:#DC2626;stroke-width:2;stroke-dasharray:6 4;fill:none;opacity:0;}
+.s8_stage.visible .s8_al1{animation:s8_shoot 0.6s ease 1.8s forwards,s8_fade 0.4s ease 2.6s forwards;}
+.s8_stage.visible .s8_al2{animation:s8_shoot 0.6s ease 2.0s forwards,s8_fade 0.4s ease 2.8s forwards;}
+.s8_stage.visible .s8_al3{animation:s8_shoot 0.6s ease 2.2s forwards,s8_fade 0.4s ease 3.0s forwards;}
+@keyframes s8_shoot{
+  0%{opacity:0;stroke-dashoffset:80;}
+  30%{opacity:1;stroke-dashoffset:40;}
+  100%{opacity:1;stroke-dashoffset:0;}
+}
+@keyframes s8_fade{
+  0%{opacity:1;}
+  100%{opacity:0.15;}
+}
+
+/* Step 5: Block marks */
+.s8_blocks{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2;}
+.s8_block{position:absolute;font-size:20px;font-weight:900;color:#F97316;opacity:0;transform:translate(-50%,-50%) scale(0.3);transition:opacity 0.3s ease,transform 0.3s ease;}
+.s8_stage.visible .s8_bk1{opacity:1;transform:translate(-50%,-50%) scale(1);transition-delay:2.6s;}
+.s8_stage.visible .s8_bk2{opacity:1;transform:translate(-50%,-50%) scale(1);transition-delay:2.8s;}
+.s8_stage.visible .s8_bk3{opacity:1;transform:translate(-50%,-50%) scale(1);transition-delay:3.0s;}
+
+/* Step 6: Result box */
+.s8_result{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);border:2px solid #22C55E;border-radius:8px;padding:10px 24px;font-size:15px;font-weight:700;color:#22C55E;background:rgba(34,197,94,0.08);opacity:0;transition:opacity 0.5s ease;white-space:nowrap;}
+.s8_stage.visible .s8_result{opacity:1;transition-delay:3.4s;}
+
+/* === S9 Animation === */
+
+.s9_stage{position:relative;max-width:360px;height:320px;margin:0 auto;}
+.s9_box{position:absolute;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:600;color:#fff;opacity:0;transform:translateY(20px);white-space:nowrap;}
+.s9_box--orange{background:#F97316;}
+.s9_box--blue{background:#0EA5E9;}
+.s9_line{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;opacity:0;}
+.s9_line polyline{stroke:#94A3B8;stroke-width:2;fill:none;stroke-dasharray:600;stroke-dashoffset:600;}
+
+.s9_stage.visible .s9_b1{animation:s9_fadeUp .5s .4s forwards;}
+.s9_stage.visible .s9_b2{animation:s9_fadeUp .5s .8s forwards;}
+.s9_stage.visible .s9_b3{animation:s9_fadeUp .5s 1.2s forwards;}
+.s9_stage.visible .s9_b4{animation:s9_fadeUp .5s 1.6s forwards;}
+.s9_stage.visible .s9_b5{animation:s9_fadeUp .5s 2.0s forwards;}
+.s9_stage.visible .s9_line{animation:s9_fadeIn .3s 2.5s forwards;}
+.s9_stage.visible .s9_line polyline{animation:s9_draw 1s 2.5s forwards;}
+
+@keyframes s9_fadeUp{
+  to{opacity:1;transform:translateY(0);}
+}
+@keyframes s9_fadeIn{
+  to{opacity:1;}
+}
+@keyframes s9_draw{
+  to{stroke-dashoffset:0;}
+}
+
+/* === A1 Animation === */
+
+.a1_wrap{position:relative;max-width:360px;margin:0 auto;height:280px;font-family:sans-serif;font-size:13px}
+.a1_box{position:absolute;text-align:center;border-radius:6px;padding:6px 14px;opacity:0;transform:translateY(12px);transition:opacity .5s,transform .5s}
+.a1_stage.visible .a1_s1{opacity:1;transform:translateY(0);transition-delay:0s}
+.a1_stage.visible .a1_s2{opacity:1;transform:translateY(0);transition-delay:.4s}
+.a1_stage.visible .a1_s3{opacity:1;transform:translateY(0);transition-delay:.8s}
+.a1_stage.visible .a1_s4{opacity:1;transform:translateY(0);transition-delay:1.2s}
+.a1_stage.visible .a1_s5{opacity:1;transform:translateX(0);transition-delay:1.6s}
+.a1_stage.visible .a1_s6{opacity:1;transform:translateX(0);transition-delay:2.0s}
+
+/* Step 1: User box */
+.a1_user{left:50%;transform:translateX(-50%) translateY(12px);top:0;background:#fff;border:2px solid #94A3B8;color:#334155;font-weight:600}
+.a1_stage.visible .a1_user{transform:translateX(-50%) translateY(0)}
+
+/* Arrow from user to guard */
+.a1_arrow{position:absolute;left:50%;width:2px;height:18px;background:#94A3B8;opacity:0;transition:opacity .5s;transition-delay:.3s;top:36px;transform:translateX(-50%)}
+.a1_stage.visible .a1_arrow{opacity:1}
+.a1_arrow::after{content:'';position:absolute;bottom:0;left:-4px;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid #94A3B8}
+
+/* Step 2: GuardrailAgent wrapper */
+.a1_guard{position:absolute;left:50px;right:50px;top:56px;height:130px;border:2px dashed #F97316;border-radius:12px;opacity:0;transition:opacity .5s}
+.a1_stage.visible .a1_guard{opacity:1;transition-delay:.4s}
+.a1_guard_label{position:absolute;top:-10px;right:12px;background:#FFF7ED;padding:0 6px;color:#F97316;font-size:11px;font-weight:600;letter-spacing:.5px}
+
+/* Step 3: PEConcierge */
+.a1_concierge{top:72px;left:50%;transform:translateX(-50%) translateY(12px);background:#F97316;color:#fff;font-weight:600;white-space:nowrap}
+.a1_stage.visible .a1_concierge{transform:translateX(-50%) translateY(0)}
+
+/* Arrow from concierge to specialists */
+.a1_arrow2{position:absolute;left:50%;width:2px;height:16px;background:#94A3B8;opacity:0;transition:opacity .5s;top:108px;transform:translateX(-50%)}
+.a1_stage.visible .a1_arrow2{opacity:1;transition-delay:1.0s}
+.a1_arrow2::after{content:'';position:absolute;bottom:0;left:-4px;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid #94A3B8}
+
+/* Step 4: Three specialists */
+.a1_spec{display:flex;gap:8px;position:absolute;top:130px;left:50%;transform:translateX(-50%) translateY(12px);opacity:0;transition:opacity .5s,transform .5s}
+.a1_stage.visible .a1_spec{opacity:1;transform:translateX(-50%) translateY(0);transition-delay:1.2s}
+.a1_spec_item{background:#0EA5E9;color:#fff;border-radius:6px;padding:5px 14px;font-weight:600;font-size:12px;white-space:nowrap}
+
+/* Step 5: Tools (right side, outside guard) */
+.a1_tools{position:absolute;top:68px;right:0;display:flex;flex-direction:column;gap:6px;opacity:0;transform:translateX(12px);transition:opacity .5s,transform .5s}
+.a1_tool_item{background:#fff;color:#64748B;border:1.5px solid #94A3B8;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:500;text-align:center;white-space:nowrap}
+
+/* Step 6: Rails (left side, outside guard) */
+.a1_rails{position:absolute;top:68px;left:0;display:flex;flex-direction:column;gap:6px;opacity:0;transform:translateX(-12px);transition:opacity .5s,transform .5s}
+.a1_rail_item{color:#F97316;font-size:10px;font-weight:600;padding:2px 7px;border:1.5px solid #F97316;border-radius:10px;text-align:center;white-space:nowrap;background:#fff}
+
+/* Connector dots: guard to tools */
+.a1_dot{position:absolute;width:24px;height:1.5px;opacity:0;transition:opacity .5s}
+.a1_dot_r{border-top:1.5px dashed #94A3B8;top:100px;right:28px;width:18px}
+.a1_dot_l{border-top:1.5px dashed #F97316;top:100px;left:28px;width:18px}
+.a1_stage.visible .a1_dot_r{opacity:.6;transition-delay:1.8s}
+.a1_stage.visible .a1_dot_l{opacity:.6;transition-delay:2.2s}
+
+/* Caption */
+.a1_cap{position:absolute;bottom:30px;left:0;right:0;text-align:center;font-size:11px;color:#94A3B8;opacity:0;transition:opacity .5s}
+.a1_stage.visible .a1_cap{opacity:1;transition-delay:2.4s}
+
+/* === A2 Animation === */
+
+.a2_stage{position:relative;width:360px;height:300px;margin:0 auto;opacity:0;transition:opacity .3s}
+.a2_stage.visible{opacity:1}
+.a2_box{position:absolute;width:90px;height:44px;border-radius:8px;border:2px solid;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;opacity:0;transform:scale(.7);color:#fff}
+.a2_box--orange{border-color:#F97316;color:#F97316}
+.a2_box--blue{border-color:#0EA5E9;color:#0EA5E9}
+.a2_arrow{position:absolute;opacity:0}
+.a2_arrow line{stroke-width:2;stroke-linecap:round}
+.a2_arrow polygon{stroke:none}
+.a2_center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(0);font-size:15px;font-weight:700;color:#94A3B8;opacity:0;white-space:nowrap}
+
+/* step triggers */
+.a2_stage.visible .a2_b1{animation:a2_popIn .4s .4s both}
+.a2_stage.visible .a2_b2{animation:a2_popIn .4s .8s both}
+.a2_stage.visible .a2_b3{animation:a2_popIn .4s 1.2s both}
+.a2_stage.visible .a2_b4{animation:a2_popIn .4s 1.6s both}
+.a2_stage.visible .a2_a1{animation:a2_fadeIn .4s 2.0s both}
+.a2_stage.visible .a2_a2{animation:a2_fadeIn .4s 2.4s both}
+.a2_stage.visible .a2_a3{animation:a2_fadeIn .4s 2.8s both}
+.a2_stage.visible .a2_a4{animation:a2_fadeIn .4s 3.2s both}
+.a2_stage.visible .a2_center{animation:a2_scaleIn .5s 3.8s both}
+
+@keyframes a2_popIn{
+  0%{opacity:0;transform:scale(.7)}
+  100%{opacity:1;transform:scale(1)}
+}
+@keyframes a2_fadeIn{
+  0%{opacity:0}
+  100%{opacity:1}
+}
+@keyframes a2_scaleIn{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(0)}
+  100%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+}
+
+</style>
+
+<meta name="description" content="每个企业都面临同样的张力：采用 AI 的压力巨大，但搞砸的恐惧同样巨大。团队想要构建，法务想要审查，安全想要审计——结果大有前途的试点项目停滞不前，因为 没有人能回答「这东西部署安全吗？」 。那些在 AI 竞赛中胜出的组织发现了一个反直觉的真相： 治理驱动交付 。因为当护栏清晰且自动化时，团队可以充满信心地构建；当策略随代码一起旅行时，安全审查从「审讯」变成">
+<link rel="canonical" href="https://chendi.me/readings/agentic-governance/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<!-- Back button -->
+<button class="back-btn" id="backBtn" onclick="goBack()">←</button>
+<!-- Depth dots -->
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ Layer: Overview (9 sections) ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+  <!-- S1: 治理不是刹车，是油门 -->
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT I — 起点</p>
+      <h2 class="big-statement reveal">治理不是刹车<br>是油门</h2>
+      <p class="body-text reveal reveal-d1">每个企业都面临同样的张力：采用 AI 的压力巨大，但搞砸的恐惧同样巨大。团队想要构建，法务想要审查，安全想要审计——结果大有前途的试点项目停滞不前，因为<span class="hl">没有人能回答「这东西部署安全吗？」</span>。那些在 AI 竞赛中胜出的组织发现了一个反直觉的真相：<span class="hl2">治理驱动交付</span>。因为当护栏清晰且自动化时，团队可以充满信心地构建；当策略随代码一起旅行时，安全审查从「审讯」变成了「批准」；当合规变成基础设施而不是检查，试点项目能在数周内而不是数季度内上线。</p>
+      <div class="anim-stage reveal reveal-d2" id="s1-anim"><div class="s1_stage"><div class="s1_stage">
+  <!-- Step 1: AI circle -->
+  <div class="s1_ai">AI</div>
+
+  <!-- Labels -->
+  <div class="s1_label s1_label_left">无治理</div>
+  <div class="s1_label s1_label_right">有治理</div>
+
+  <!-- Step 2 -->
+  <div class="s1_box s1_fear">恐惧</div>
+  <div class="s1_box s1_guardrail">护栏</div>
+
+  <!-- Step 3 -->
+  <div class="s1_box s1_stall">停滞</div>
+  <div class="s1_box s1_confidence">信心</div>
+
+  <!-- Step 4: arrows -->
+  <svg class="s1_arrows" viewBox="0 0 360 420" preserveAspectRatio="xMidYMid meet">
+    <!-- Left path: fear -> stall -->
+    <g class="s1_arrow_left">
+      <line x1="60" y1="168" x2="60" y2="215"/>
+      <polygon class="s1_arrowhead" points="54,212 60,222 66,212"/>
+    </g>
+    <!-- Right path: guardrail -> confidence -->
+    <g class="s1_arrow_right">
+      <line x1="300" y1="168" x2="300" y2="215"/>
+      <polygon class="s1_arrowhead" points="294,212 300,222 306,212"/>
+    </g>
+    <!-- Right path: confidence -> launch -->
+    <g class="s1_arrow_launch">
+      <line x1="300" y1="268" x2="300" y2="335"/>
+      <polygon class="s1_arrowhead" points="294,332 300,342 306,332"/>
+    </g>
+  </svg>
+
+  <!-- Step 5 -->
+  <div class="s1_box s1_launch">加速上线</div>
+</div></div></div>
+      <p class="hook-line reveal reveal-d3">他们具体搭了什么架构？一个 PE 基金的 AI 助手...</p>
+      <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-architecture')">深入：PE 助手完整架构 ↓</button>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>Every enterprise faces the same tension: the pressure to adopt AI is immense, but so is the fear of getting it wrong. Teams want to build, legal wants to review, security wants to audit, and promising pilots stall because no one can answer: "Is this safe to deploy?"</p><p>Organizations have moved past "Should we experiment with AI?" and now ask "How do we get this into production safely?" The prototypes worked, the demos impressed the board, and now there's real pressure to deliver AI that touches real customers and handles real data. But production demands answers that pilots never required: What happens when it fails? Who's accountable? How do we prove it's compliant?</p><p>The organizations winning at AI have discovered something counterintuitive: governance drives delivery. When guardrails are clear and automated, teams build with confidence. When policies travel with the code, security reviews become approvals instead of interrogations. When compliance is infrastructure rather than inspection, pilots graduate to production in weeks, not quarters.</p><p>The goal is to build the scaffolding that lets you move fast because you're safe.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S2: 多 Agent 分工 + Handoff -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT I — 架构</p>
+      <h2 class="big-statement reveal">一个人干不了<br>所有的活</h2>
+      <p class="body-text reveal reveal-d1">现实世界的任务很少能被单个 agent 搞定。以 PE 基金为例：<span class="hl">deal 问题</span>需要投资标准知识，<span class="hl2">portfolio 问题</span>需要运营指标专长，<span class="hl">LP 问题</span>需要合规意识和基金知识。你可以造一个什么都懂的超级 agent，但指令会变得难以维护，agent 很难保持「角色」，而且你没法在不影响其他领域的情况下更新某一块。所以需要 <span class="hl2">Handoff</span>——让 agent 把问题委托给专家。用户看到的是一段无缝对话，但幕后是对的专家在回答。</p>
+      <div class="anim-stage reveal reveal-d2" id="s2-anim"><div class="s2_stage"><div class="s2_stage">
+  <!-- Step 1: 用户查询 -->
+  <div class="s2_query">用户查询</div>
+
+  <!-- Step 3: 箭头 -->
+  <div class="s2_arrow_down"></div>
+
+  <!-- Step 2: 前台 -->
+  <div class="s2_triage">前台</div>
+
+  <!-- Step 5: 扇形箭头 (SVG) -->
+  <svg class="s2_fan_svg" viewBox="0 0 360 92" preserveAspectRatio="xMidYMid meet">
+    <line x1="180" y1="0" x2="54" y2="80"/>
+    <polygon points="50,72 62,80 50,86"/>
+    <line x1="180" y1="0" x2="180" y2="80"/>
+    <polygon points="174,80 180,90 186,80"/>
+    <line x1="180" y1="0" x2="306" y2="80"/>
+    <polygon points="310,72 298,80 310,86"/>
+  </svg>
+
+  <!-- Step 4: 三个专家 -->
+  <div class="s2_experts">
+    <div class="s2_expert s2_dimmed">交易</div>
+    <div class="s2_expert s2_selected">组合</div>
+    <div class="s2_expert s2_dimmed">IR</div>
+  </div>
+</div></div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>Real-world tasks rarely fit into a single agent's expertise. Consider a PE firm: Deal questions need investment criteria knowledge. Portfolio questions need operational metrics expertise. LP questions need compliance awareness and fund knowledge.</p><p>You could build one massive agent with all this knowledge, but instructions become unwieldy, the agent struggles to stay "in character", and you can't easily update one domain without affecting others.</p><p>Handoffs solve this by letting agents delegate to specialists. The user sees one seamless conversation, but behind the scenes, the right expert is answering.</p><p>An agent is an AI system that can: Receive instructions that define its role and behavior. Use tools to take actions (search databases, create records, call APIs). Hand off to other agents when a task is outside its expertise. Maintain context across a conversation.</p><p>Think of agents like employees with specific job descriptions. A receptionist (triage agent) knows who to route calls to, while specialists (domain agents) have deep expertise in specific areas.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S3: Tracing 全链路可观测 -->
+  <section class="feed-section" style="background:var(--bg-act2)">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT II — 基础设施</p>
+      <h2 class="big-statement reveal">出了问题<br>你能看到全链路</h2>
+      <p class="body-text reveal reveal-d1">在多 agent 系统中，一个用户查询可能触发多次 LLM 调用、工具执行、agent 间 handoff 和护栏检查。<span class="hl">Tracing</span> 以结构化的方式捕获所有这些，给你提供调试能力（出错时看到完整发生了什么）、性能分析（找到慢步骤）、审计记录（回顾 agent 做了什么以及为什么），还有优化机会（发现改进 prompt 或减少调用的空间）。但对于有 <span class="hl2">Zero Data Retention</span> 要求的组织来说，内置的 tracing dashboard 不能用——因为它把 trace 存在 OpenAI 系统中。解决方案是用自定义 trace processor 把数据流到你自己的内部系统。</p>
+      <div class="anim-stage reveal reveal-d2" id="s3-anim"><div class="s3_stage"><div class="s3_stage">
+  <div class="s3_timeline">
+    <div class="s3_query">查询</div>
+    <div class="s3_vline"></div>
+    <div class="s3_conn s3_conn1"></div>
+    <div class="s3_node s3_node_llm">LLM</div>
+    <div class="s3_conn s3_conn2"></div>
+    <div class="s3_node s3_node_tool">工具</div>
+    <div class="s3_conn s3_conn3"></div>
+    <div class="s3_node s3_node_guard">护栏</div>
+    <div class="s3_dash"></div>
+    <div class="s3_trace">
+      <div class="s3_trace_title">Trace 完整记录</div>
+      <div class="s3_trace_row">调试</div>
+      <div class="s3_trace_row">性能</div>
+      <div class="s3_trace_row">审计</div>
+    </div>
+  </div>
+</div></div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>With multi-agent systems, a single user query can trigger multiple LLM calls, tool executions, handoffs between agents, and guardrail checks. Tracing captures all of this in a structured way, giving you: Debugging — See exactly what happened when something goes wrong. Performance — Identify slow steps in your agent workflows. Auditing — Review what agents did and why. Optimization — Find opportunities to improve prompts or reduce calls.</p><p>Some organizations have Zero Data Retention (ZDR) agreements with OpenAI, meaning: Data is not stored or retained after processing. The built-in tracing dashboard cannot be used (it stores traces in OpenAI's systems). This is common in financial services, healthcare (HIPAA), government, and organizations with strict data residency rules.</p><p>If you need observability but can't use OpenAI's dashboard, you can export traces to your own systems. This keeps traces: Within your infrastructure. Under your data retention policies. Integrated with your existing monitoring stack.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S4: 内置护栏 Agent 级防线 -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT II — 防线</p>
+      <h2 class="big-statement reveal">第一道防线<br>装在 Agent 身上</h2>
+      <p class="body-text reveal reveal-d1">Agents SDK 内置了在 agent 级别运行的护栏，适合做<span class="hl">特定领域的验证</span>。比如你可以给 triage agent 加一个 InputGuardrail，确保所有进来的查询都跟 PE 业务相关——如果有人问「纽约最好的披萨在哪」，护栏会在 LLM 处理之前就把它拦下来。实现方式是定义一个 guardrail agent，用 Pydantic schema 输出 is_valid + reasoning，然后把这个检查函数挂到主 agent 的 input_guardrails 参数上。问题是，<span class="hl2">这种方式需要在每个 agent 上逐一配置</span>——如果你有几十个 agent，每个都要手动加护栏，维护成本会爆炸。</p>
+      <div class="anim-stage reveal reveal-d2" id="s4-anim"><div class="s4_stage"><div class="s4_stage">
+  <div class="s4_label s4_label_title">InputGuardrail</div>
+  <div class="s4_query">查询</div>
+  <div class="s4_shield">护栏</div>
+  <div class="s4_pass">PE 相关</div>
+  <div class="s4_reject">无关</div>
+  <div class="s4_agent">Agent 处理</div>
+  <div class="s4_block">拦截</div>
+
+  <svg class="s4_svg" viewBox="0 0 360 420" preserveAspectRatio="xMidYMid meet">
+    <!-- query -> shield -->
+    <g class="s4_g_in">
+      <line x1="90" y1="48" x2="135" y2="48" stroke="#94A3B8"/>
+      <polygon points="133,44 141,48 133,52" fill="#94A3B8"/>
+    </g>
+    <!-- shield fork: down then split left/right -->
+    <g class="s4_g_fork">
+      <!-- center stem from shield bottom -->
+      <line x1="175" y1="82" x2="175" y2="120" stroke="#94A3B8"/>
+      <!-- left branch (green/pass) -->
+      <polyline points="175,120 90,120 90,196" stroke="#34D399"/>
+      <polygon points="86,193 90,201 94,193" fill="#34D399"/>
+      <!-- right branch (gray/reject) -->
+      <polyline points="175,120 268,120 268,196" stroke="#94A3B8"/>
+      <polygon points="264,193 268,201 272,193" fill="#94A3B8"/>
+    </g>
+    <!-- pass -> agent, reject -> block -->
+    <g class="s4_g_down">
+      <line x1="90" y1="236" x2="90" y2="306" stroke="#0EA5E9"/>
+      <polygon points="86,303 90,311 94,303" fill="#0EA5E9"/>
+      <line x1="268" y1="236" x2="268" y2="306" stroke="#475569"/>
+      <polygon points="264,303 268,311 272,303" fill="#475569"/>
+    </g>
+  </svg>
+</div></div></div>
+      <p class="hook-line reveal reveal-d3">有没有办法定义一次、全局生效？</p>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>The Agents SDK has built-in guardrails that run at the agent level. These are useful for agent-specific validation.</p><p>Let's add a guardrail that ensures queries are relevant to PE operations.</p><p>The guardrail agent checks if queries are PE-related. Valid topics include: deal screening, portfolio companies, due diligence, investor relations, fund performance, and M&A activities. Return is_valid=True for valid PE queries; otherwise False with reasoning.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S5: 集中治理 -->
+  <section class="feed-section" style="background:var(--bg-act3)">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT III — 核心</p>
+      <h2 class="big-statement reveal">定义一次<br>全局生效</h2>
+      <p class="body-text reveal reveal-d1">内置护栏的问题是需要在每个 agent 上逐一配置。对于组织级治理，你需要：<span class="hl">在一个中心位置定义策略</span>，自动应用到所有 OpenAI 调用，像代码一样版本控制，通过 pip install 在任何项目中安装。这就是 <span class="hl2">OpenAI Guardrails 库</span>的价值——它在 client 层面而非 agent 层面工作。你创建一个 GuardrailsOpenAI client，传入一个 JSON config，配置三个阶段：pre-flight（PII 检测 + 内容审核，在请求发出前执行）、input（Jailbreak 检测 + 跑题过滤，在 LLM 处理前执行）、output（输出中的 PII 脱敏，在响应返回前执行）。所有经过这个 client 的调用都自动受治理保护。</p>
+      <div class="anim-stage reveal reveal-d2" id="s5-anim"><div class="s5_stage"><div class="s5_stage">
+  <div class="s5_req_circle s5_d0">请求</div>
+  <div class="s5_arrow s5_d1"></div>
+  <div class="s5_gate s5_preflight s5_d2">Pre-flight<div class="s5_gate_sub">PII &middot; 审核</div></div>
+  <div class="s5_arrow s5_d3"></div>
+  <div class="s5_gate s5_input s5_d4">Input<div class="s5_gate_sub">Jailbreak &middot; 跑题</div></div>
+  <div class="s5_arrow s5_d5"></div>
+  <div class="s5_circle s5_d6">LLM</div>
+  <div class="s5_arrow s5_d7"></div>
+  <div class="s5_gate s5_output s5_d8">Output<div class="s5_gate_sub">PII脱敏</div></div>
+  <div class="s5_arrow s5_d9"></div>
+  <div class="s5_box s5_resp s5_d10">安全响应</div>
+</div></div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>Built-in guardrails are great, but they require configuration on each agent. For organization-wide governance, we want to: Define policy once in a central location. Apply automatically to all OpenAI calls. Version control the policy like code. Install via pip in any project.</p><p>This is where the OpenAI Guardrails library comes in.</p><p>The config has two stages: input: Runs BEFORE the LLM call (block bad inputs). output: Runs AFTER the LLM response (redact sensitive outputs).</p><p>The GuardrailsOpenAI client wraps the standard OpenAI client and automatically applies guardrails.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S6: Policy as Package -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT III — 分发</p>
+      <h2 class="big-statement reveal">pip install<br>即刻合规</h2>
+      <p class="body-text reveal reveal-d1">最妙的一步：<span class="hl">把策略打包成一个 Python package</span>，推到 GitHub repo，任何团队只需要 <code>pip install git+https://github.com/yourorg/policies.git</code>，然后在代码里两行搞定：<code>from your_policies import GUARDRAILS_CONFIG</code> 加上 <code>client = GuardrailsOpenAI(config=GUARDRAILS_CONFIG)</code>——所有调用就都受治理保护了。这带来的好处是：<span class="hl2">跨项目一致性</span>（所有团队用同一套策略）、通过 pip upgrade 轻松更新策略、通过 Git 历史获得完整审计追踪、以及一个单一的合规参考点。策略变更走 PR 流程，像代码一样 review 和部署。</p>
+      <div class="anim-stage reveal reveal-d2" id="s6-anim"><div class="s6_stage"><div class="s6_stage">
+  <div class="s6_pkg"><span class="s6_pkg_title">策略包</span><span class="s6_pkg_sub">config.json</span></div>
+  <div class="s6_gh">GitHub</div>
+  <div class="s6_arrow_up"></div>
+  <div class="s6_team s6_team_a">Team A</div>
+  <div class="s6_team s6_team_b">Team B</div>
+  <div class="s6_team s6_team_c">Team C</div>
+  <div class="s6_arrow_down s6_arrow_d1"></div>
+  <div class="s6_arrow_down s6_arrow_d2"></div>
+  <div class="s6_arrow_down s6_arrow_d3"></div>
+  <div class="s6_label s6_label_a">-- compliant --</div>
+  <div class="s6_label s6_label_b">-- compliant --</div>
+  <div class="s6_label s6_label_c">-- compliant --</div>
+</div></div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>Package your policy for organization-wide use. Any team can: pip install git+https://github.com/yourorg/policies.git</p><p>And immediately have governance: from your_policies import GUARDRAILS_CONFIG; client = GuardrailsOpenAI(config=GUARDRAILS_CONFIG). All calls are now governed!</p><p>Key benefits: consistency across projects, easy updates via pip upgrade, full audit trail via Git history, and a single compliance reference point.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S7: 用数据验证护栏 -->
+  <section class="feed-section" style="background:var(--bg-act4)">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT IV — 验证</p>
+      <h2 class="big-statement reveal">护栏装了<br>你怎么知道它有效？</h2>
+      <p class="body-text reveal reveal-d1">建护栏只是一半的战斗——你需要知道它们真的有效。OpenAI Guardrails 库内置了评估框架，用 <span class="hl">precision、recall 和 F1</span> 来衡量护栏的表现。Precision 衡量「被拦截的请求中有多少确实应该被拦」（高 precision = 少误杀合法请求），Recall 衡量「所有坏请求中我们抓到了多少」（高 recall = 少漏网之鱼）。权衡在于：<span class="hl2">高 precision 低 recall 意味着威胁溜过去了</span>；高 recall 低 precision 则会拦住合法请求。而 confidence_threshold 参数就是调这个平衡的旋钮——但手动调太痛苦了，所以有了自动反馈闭环。</p>
+      <div class="anim-stage reveal reveal-d2" id="s7-anim"><div class="s7_stage"><div class="s7_stage">
+  <div class="s7_title">护栏评估</div>
+  <div class="s7_circle_p">P</div>
+  <div class="s7_label_p">Precision / 少误杀</div>
+  <div class="s7_circle_r">R</div>
+  <div class="s7_label_r">Recall / 少漏网</div>
+  <div class="s7_beam_wrap">
+    <div class="s7_beam"></div>
+    <div class="s7_pivot"></div>
+  </div>
+  <div class="s7_f1">F1 = Balance</div>
+  <div class="s7_threshold">
+    <span class="s7_arrow">&larr;</span>
+    <span class="s7_threshold_text">阈值调节</span>
+    <span class="s7_arrow">&rarr;</span>
+  </div>
+</div></div></div>
+      <p class="hook-line reveal reveal-d3">手动调阈值太痛苦？看看自动调参闭环怎么做</p>
+      <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-feedback-loop')">深入：自动调参闭环 ↓</button>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>Building guardrails is only half the battle - you need to know they actually work. The OpenAI Guardrails library includes a built-in evaluation framework that measures precision, recall, and F1 scores against labeled test data.</p><p>Precision: Of all blocked queries, how many should have been blocked? High precision = few false positives (legitimate queries blocked). Recall: Of all bad queries, how many did we catch? High recall = few false negatives (threats getting through). F1 Score: Harmonic mean of precision and recall. Balanced measure of overall performance.</p><p>The trade-off: high precision with low recall means threats slip through; high recall with low precision blocks legitimate queries. Adjust confidence_threshold to find the right balance.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S8: Red Team -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT IV — 对抗</p>
+      <h2 class="big-statement reveal">让攻击者<br>帮你找漏洞</h2>
+      <p class="body-text reveal reveal-d1">Eval 衡量的是护栏的<span class="hl">检测准确率</span>——「护栏在已知测试用例上是否正确触发？」但还有一个更难的问题：<span class="hl2">「攻击者能绕过你的护栏吗？」</span> Promptfoo 是一个开源 red teaming 工具，它能自动生成数百个对抗性输入，覆盖 50+ 种漏洞类型——jailbreak、prompt injection、PII 提取、跑题劫持等等。它不是让你手写测试用例，而是创建复杂的、自适应的攻击来测试你的实际应用。Eval 和 Red Team 合在一起形成完整的测试策略：eval 确保检测质量，red team 确保对抗真实攻击的韧性。在这个 cookbook 的案例中，GuardrailAgent 配合 PE_FIRM_POLICY 拦截了 <span class="hl">100% 的对抗性输入</span>——33/33 测试全部防住。</p>
+      <div class="anim-stage reveal reveal-d2" id="s8-anim"><div class="s8_stage"><div class="s8_stage">
+  <!-- Step 1: Attack box -->
+  <div class="s8_atk">攻击</div>
+
+  <!-- Step 2: Attack tags -->
+  <div class="s8_tags">
+    <div class="s8_tag">Jailbreak</div>
+    <div class="s8_tag">注入</div>
+    <div class="s8_tag">PII</div>
+  </div>
+
+  <!-- Step 3: Agent with guardrail -->
+  <div class="s8_guard">
+    <div class="s8_agent">Agent</div>
+  </div>
+  <div class="s8_guard_label">护栏</div>
+
+  <!-- Step 4: Arrows (SVG) -->
+  <div class="s8_arrows">
+    <svg viewBox="0 0 360 380" preserveAspectRatio="xMidYMid meet">
+      <line class="s8_arrow_line s8_al1" x1="115" y1="95" x2="172" y2="88"/>
+      <line class="s8_arrow_line s8_al2" x1="105" y1="118" x2="172" y2="118"/>
+      <line class="s8_arrow_line s8_al3" x1="95" y1="141" x2="172" y2="148"/>
+    </svg>
+  </div>
+
+  <!-- Step 5: Block marks at guardrail edge -->
+  <div class="s8_blocks">
+    <div class="s8_block s8_bk1" style="top:88px;left:170px;">&#10007;</div>
+    <div class="s8_block s8_bk2" style="top:118px;left:170px;">&#10007;</div>
+    <div class="s8_block s8_bk3" style="top:148px;left:170px;">&#10007;</div>
+  </div>
+
+  <!-- Step 6: Result -->
+  <div class="s8_result">33/33 已防御</div>
+</div></div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>Evals measured guardrail detection accuracy — "Did the guardrail fire correctly on known test cases?" But there's a harder question: "Can an attacker bypass your guardrails?"</p><p>Promptfoo is an open-source red teaming tool that auto-generates hundreds of adversarial inputs across 50+ vulnerability types — jailbreaks, prompt injections, PII extraction, off-topic hijacking, and more. Instead of writing test cases by hand, Promptfoo creates sophisticated, adaptive attacks and tests them against your actual application.</p><p>Together they form a complete testing strategy: guardrails eval ensures detection quality, Promptfoo ensures resilience against real-world attacks.</p><p>Here's what a successful red team report looks like -- 0 vulnerabilities across all categories, 33/33 tests defended. The report breaks results into Risk Categories (Security & Access Control, Brand) and individual tests (Resource Hijacking, System Prompt Override, PII via Direct Exposure, Off-Topic Manipulation). Our GuardrailAgent with PE_FIRM_POLICY blocked 100% of the adversarial inputs.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S9: 从 Pilot 到 Production -->
+  <section class="feed-section" style="background:var(--bg-act5)">
+    <div class="section-inner">
+      <p class="act-label reveal">ACT V — 落地</p>
+      <h2 class="big-statement reveal">从试点到生产<br>治理是加速器</h2>
+      <p class="body-text reveal reveal-d1">这篇 cookbook 最终传达的五个关键认知：第一，<span class="hl">治理推动采用</span>——当护栏清晰且自动化，团队构建起来更有信心。第二，<span class="hl2">用 handoff 做专业化分工</span>——不要造一个什么都干的超级 agent，让专家 agent 协作。第三，<span class="hl">分层防御</span>——OpenAI Guardrails 在 client 级做通用策略，Agents SDK guardrails 在 agent 级做领域验证。第四，<span class="hl2">trace 一切</span>——或者对 ZDR 环境完全禁用。第五，<span class="hl">集中策略、分布能力</span>——policy-as-package 模式让你在一个地方维护治理，通过 pip 分发到所有项目。落地时还要按风险分级控制：低风险（内部工具）走快速通道，中等风险（面客应用）用标准护栏，高风险（PII/金融/合规）要增强日志和人工审核。</p>
+      <div class="anim-stage reveal reveal-d2" id="s9-anim"><div class="s9_stage"><div class="s9_stage">
+  <div class="s9_box s9_box--orange s9_b1" style="left:20px;bottom:30px;">①治理=信心</div>
+  <div class="s9_box s9_box--blue s9_b2" style="left:75px;bottom:90px;">②专家协作</div>
+  <div class="s9_box s9_box--orange s9_b3" style="left:130px;bottom:150px;">③分层防御</div>
+  <div class="s9_box s9_box--blue s9_b4" style="left:185px;bottom:210px;">④全链路追踪</div>
+  <div class="s9_box s9_box--orange s9_b5" style="left:240px;bottom:270px;">⑤策略即代码</div>
+  <svg class="s9_line" viewBox="0 0 360 320" preserveAspectRatio="xMidYMid meet">
+    <polyline points="68,278 123,218 178,158 233,98 288,38"/>
+  </svg>
+</div></div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>1. Governance enables adoption: By establishing clear guardrails upfront, you remove the fear and uncertainty that slows AI adoption. Teams can build confidently knowing policies are enforced automatically. Governance becomes an execution system that keeps adoption moving securely and at scale.</p><p>2. Use handoffs for specialization: Avoid one massive agent. Create specialists and let them collaborate. The handoff_description is key to good routing.</p><p>3. Layer your defenses: OpenAI Guardrails (client-level): Universal policies for all calls. Agents SDK guardrails (agent-level): Domain-specific validation.</p><p>4. Trace everything (or nothing, for ZDR): Use trace() to group operations for debugging. For ZDR compliance: disable tracing or use custom processors.</p><p>5. Centralize policy, distribute capability: The policy-as-a-package pattern lets you: Maintain governance in one place. Update policies without changing application code. Audit compliance across all projects.</p><p>Not all AI use cases carry the same risk. Differentiate your controls: Low-risk (internal productivity, non-sensitive data): Fast-track approval, minimal logging. Moderate-risk (customer-facing, operational data): Standard guardrails, audit trails. High-risk (PII, financial, regulated): Enhanced logging, human-in-the-loop, isolated environments.</p></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ Layer: PE Architecture Drill-down (A1) ═══ -->
+<div class="layer" id="layer-architecture" data-depth="1">
+
+  <section class="feed-section" style="background:var(--bg-act1)">
+    <div class="section-inner">
+      <p class="act-label reveal">深入 — PE 助手架构</p>
+      <h2 class="big-statement reveal">前台 + 三个专家<br>+ 全链路治理</h2>
+      <p class="body-text reveal reveal-d1">这个 cookbook 构建的完整系统包含：一个 <span class="hl">Triage Agent</span>（PEConcierge）作为前台，接收所有用户查询并路由到合适的专家；三个 <span class="hl2">Specialist Agent</span>——DealScreeningAgent 负责交易筛选和初步评估、PortfolioAgent 负责现有投资组合的绩效和运营改进、InvestorRelationsAgent 负责 LP 问询和基金表现。每个 specialist 都有自己的 handoff_description（告诉 triage agent 什么时候路由到这里）和 instructions（定义 agent 的行为方式）。三个 tool 函数——search_deal_database、get_portfolio_metrics、create_deal_memo——给 agent 提供超越文本生成的行动能力。最终用 <span class="hl">GuardrailAgent</span> 替换普通 triage agent，同时接入 PE_FIRM_POLICY 的三阶段护栏（pre-flight PII + moderation / input jailbreak + off-topic / output PII redaction），实现单一入口的全面治理。</p>
+      <div class="anim-stage reveal reveal-d2" id="a1-anim"><div class="a1_stage"><div class="a1_stage">
+<div class="a1_wrap">
+  <div class="a1_box a1_s1 a1_user">用户</div>
+  <div class="a1_arrow a1_s1"></div>
+  <div class="a1_guard a1_s2">
+    <span class="a1_guard_label">GuardrailAgent</span>
+  </div>
+  <div class="a1_box a1_s3 a1_concierge">PEConcierge</div>
+  <div class="a1_arrow2 a1_s3"></div>
+  <div class="a1_spec a1_s4">
+    <div class="a1_spec_item">Deal</div>
+    <div class="a1_spec_item">Portfolio</div>
+    <div class="a1_spec_item">IR</div>
+  </div>
+  <div class="a1_tools a1_s5">
+    <div class="a1_tool_item">搜索</div>
+    <div class="a1_tool_item">指标</div>
+    <div class="a1_tool_item">备忘</div>
+  </div>
+  <div class="a1_rails a1_s6">
+    <div class="a1_rail_item">PII</div>
+    <div class="a1_rail_item">Jailbreak</div>
+    <div class="a1_rail_item">脱敏</div>
+  </div>
+  <div class="a1_dot a1_dot_r"></div>
+  <div class="a1_dot a1_dot_l"></div>
+  <div class="a1_cap">Triage → Specialist → Tool / 三阶段护栏</div>
+</div>
+</div></div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>We'll create a Private Equity firm AI assistant with: Multiple specialist agents that handle different domains. A triage agent that routes queries via handoffs. Built-in guardrails that validate queries before processing. Tracing for full observability of agent behavior. Centralized policy enforcement via an installable package. Eval-driven system design for reliability & scalability.</p><p>The pipeline treats red team (adversarial) inputs the same way as user queries: they flow through pre-flight, input guardrails, orchestration, and output guardrails. GuardrailEval and the feedback loop use results from both normal and adversarial runs to tune policy and harden defenses.</p><p>Tools extend what agents can do beyond just generating text. Important: OpenAI doesn't execute tools for you - it tells your application which tools to call and with what parameters. Your code executes the actual logic.</p><p>Each specialist has: name: Identifier for the agent. handoff_description: Tells the triage agent WHEN to route here (critical!). instructions: Defines HOW the agent should behave.</p></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ Layer: Feedback Loop Drill-down (A2) ═══ -->
+<div class="layer" id="layer-feedback-loop" data-depth="1">
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <p class="act-label reveal">深入 — 自动调参闭环</p>
+      <h2 class="big-statement reveal">机器调阈值<br>比人快 10 倍</h2>
+      <p class="body-text reveal reveal-d1">手动调 confidence_threshold 既费时又容易出错。<span class="hl">GuardrailFeedbackLoop</span> 把这件事自动化了：它先运行初始评估获取基线指标，然后对比 precision/recall 和目标值（比如各 90%），根据哪个指标不达标来调整阈值，再重新跑 eval 看效果，反复迭代直到目标达成或到达最大迭代次数。在 cookbook 的演示中，初始阈值被故意设得很高（0.95）以展示效果——<span class="hl2">初始 eval 会显示 recall 很低</span>（护栏漏掉了一些 jailbreak 尝试），然后 tuner 检测到这一点并自动降低阈值，直到 recall 达到 90% 目标。整个过程还包含<span class="hl">振荡预防机制</span>——如果阈值调整反复来回翻转，它会减小步长并最终停止调优该护栏。调优完成后，配置自动保存为 tuned config 用于生产。</p>
+      <div class="anim-stage reveal reveal-d2" id="a2-anim"><div class="a2_stage"><div class="a2_stage">
+  <!-- boxes: four corners -->
+  <div class="a2_box a2_box--orange a2_b1" style="left:40px;top:30px">评估</div>
+  <div class="a2_box a2_box--blue a2_b2" style="right:40px;top:30px">对比</div>
+  <div class="a2_box a2_box--orange a2_b3" style="right:40px;bottom:30px">调阈值</div>
+  <div class="a2_box a2_box--blue a2_b4" style="left:40px;bottom:30px">验证</div>
+
+  <!-- arrows: clockwise  top-left→top-right, top-right→bottom-right, bottom-right→bottom-left, bottom-left→top-left -->
+  <svg class="a2_arrow a2_a1" style="left:134px;top:44px" width="92" height="20" viewBox="0 0 92 20">
+    <line x1="0" y1="10" x2="78" y2="10" stroke="#F97316"/>
+    <polygon points="78,4 92,10 78,16" fill="#F97316"/>
+  </svg>
+  <svg class="a2_arrow a2_a2" style="right:72px;top:80px" width="20" height="110" viewBox="0 0 20 110">
+    <line x1="10" y1="0" x2="10" y2="96" stroke="#0EA5E9"/>
+    <polygon points="4,96 10,110 16,96" fill="#0EA5E9"/>
+  </svg>
+  <svg class="a2_arrow a2_a3" style="left:134px;bottom:44px" width="92" height="20" viewBox="0 0 92 20">
+    <line x1="92" y1="10" x2="14" y2="10" stroke="#F97316"/>
+    <polygon points="14,4 0,10 14,16" fill="#F97316"/>
+  </svg>
+  <svg class="a2_arrow a2_a4" style="left:72px;top:80px" width="20" height="110" viewBox="0 0 20 110">
+    <line x1="10" y1="110" x2="10" y2="14" stroke="#0EA5E9"/>
+    <polygon points="4,14 10,0 16,14" fill="#0EA5E9"/>
+  </svg>
+
+  <!-- center label -->
+  <div class="a2_center">达标即停</div>
+</div></div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">原文</span><p>Manually tuning confidence_threshold values based on eval results is tedious. The Guardrail Feedback Loop automates this: it runs evals, analyzes precision/recall gaps, adjusts thresholds, re-validates, and saves the tuned config when metrics improve.</p><p>The loop includes oscillation prevention — if threshold adjustments keep flip-flopping, it reduces step size and eventually stops tuning that guardrail.</p><p>With our intentionally high threshold (0.95), the initial eval will show low recall (the guardrail misses some jailbreak attempts). The tuner will detect this and decrease the threshold until recall meets the 90% target.</p><p>LLM-based guardrails like Jailbreak and Off Topic Prompts use confidence thresholds to decide when to trigger. The threshold controls the trade-off: Higher threshold (e.g., 0.95): More conservative, fewer false positives, but may miss some threats. Lower threshold (e.g., 0.5): More sensitive, catches more threats, but may block legitimate queries.</p></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+var layerStack = ['layer-overview'];
+var transitioning = false;
+var observers = new Map();
+var layerNames = {
+  'layer-overview': '概览',
+  'layer-architecture': 'PE 助手架构',
+  'layer-feedback-loop': '自动调参闭环'
+};
+
+function setupObserver(layerId) {
+  if (observers.has(layerId)) return;
+  var layer = document.getElementById(layerId);
+  var reveals = layer.querySelectorAll('.reveal, [class*="_stage"]');
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) e.target.classList.add('visible');
+    });
+  }, { threshold: 0.15, root: layer });
+  reveals.forEach(function(el) { obs.observe(el); });
+  observers.set(layerId, obs);
+}
+
+function resetReveals(layerId) {
+  var layer = document.getElementById(layerId);
+  layer.querySelectorAll('.reveal').forEach(function(el) { el.classList.remove('visible'); });
+  layer.querySelectorAll('[class*="_stage"]').forEach(function(el) { el.classList.remove('visible'); });
+}
+
+function activateReveals(layerId) {
+  resetReveals(layerId);
+  if (observers.has(layerId)) { observers.get(layerId).disconnect(); observers.delete(layerId); }
+  requestAnimationFrame(function() { setupObserver(layerId); });
+}
+
+function updateBreadcrumb() {
+  var bc = document.getElementById('breadcrumb');
+  bc.innerHTML = '';
+  layerStack.forEach(function(id, i) {
+    if (i > 0) {
+      var sep = document.createElement('span');
+      sep.className = 'sep'; sep.textContent = '›';
+      bc.appendChild(sep);
+    }
+    var span = document.createElement('span');
+    span.textContent = layerNames[id] || id;
+    if (i === layerStack.length - 1) { span.className = 'current'; }
+    else { span.addEventListener('click', function() { goBackTo(i); }); }
+    bc.appendChild(span);
+  });
+  var backBtn = document.getElementById('backBtn');
+  backBtn.style.display = layerStack.length > 1 ? 'flex' : 'none';
+  bc.style.left = layerStack.length > 1 ? '60px' : '16px';
+  var dots = document.getElementById('depthDots');
+  var depth = layerStack.length - 1;
+  dots.querySelectorAll('.dot').forEach(function(d, i) { d.classList.toggle('active', i === depth); });
+}
+
+function drillDown(targetId) {
+  if (transitioning) return;
+  transitioning = true;
+  var currentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var targetLayer = document.getElementById(targetId);
+  targetLayer.scrollTop = 0;
+  resetReveals(targetId);
+  targetLayer.style.visibility = 'visible';
+  var duration = 600;
+  currentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  currentLayer.style.transformOrigin = 'center center';
+  currentLayer.style.transform = 'scale(1.3)';
+  currentLayer.style.opacity = '0';
+  targetLayer.classList.add('active');
+  targetLayer.style.opacity = '0';
+  targetLayer.style.transform = 'scale(0.85)';
+  targetLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      targetLayer.style.opacity = '1';
+      targetLayer.style.transform = 'scale(1)';
+    });
+  });
+  setTimeout(function() {
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition = ''; currentLayer.style.transform = ''; currentLayer.style.opacity = '';
+    targetLayer.style.transition = ''; targetLayer.style.transform = '';
+    activateReveals(targetId);
+    transitioning = false;
+  }, duration + 50);
+  layerStack.push(targetId);
+  updateBreadcrumb();
+}
+
+function goBack() {
+  if (layerStack.length <= 1 || transitioning) return;
+  transitioning = true;
+  var currentId = layerStack.pop();
+  var parentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var parentLayer = document.getElementById(parentId);
+  var duration = 600;
+  currentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  currentLayer.style.transform = 'scale(0.85)';
+  currentLayer.style.opacity = '0';
+  parentLayer.classList.add('active');
+  parentLayer.style.transform = 'scale(1.3)';
+  parentLayer.style.opacity = '0';
+  parentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      parentLayer.style.transform = 'scale(1)';
+      parentLayer.style.opacity = '1';
+    });
+  });
+  setTimeout(function() {
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition = ''; currentLayer.style.transform = '';
+    currentLayer.style.opacity = ''; currentLayer.style.visibility = '';
+    parentLayer.style.transition = ''; parentLayer.style.transform = '';
+    transitioning = false;
+  }, duration + 50);
+  updateBreadcrumb();
+}
+
+function goBackTo(targetIndex) {
+  if (transitioning) return;
+  while (layerStack.length - 1 > targetIndex) {
+    if (layerStack.length <= 1) break;
+    goBack(); return;
+  }
+}
+
+function toggleSource(btn) {
+  btn.classList.toggle('open');
+  btn.nextElementSibling.classList.toggle('open');
+}
+
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+</body>
+</html>

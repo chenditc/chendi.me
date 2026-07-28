@@ -1,0 +1,2339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Context Engineering 的新规则 — Claude 5 代模型</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&family=Noto+Sans+SC:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #FFF7ED; --bg-act2: #F0FDF4; --bg-act3: #FEF3C7;
+  --bg-dark: #0F172A; --bg-close: #1E293B;
+  --text: #1E293B; --text-muted: #64748B; --dim: #94A3B8;
+  --accent: #9A3412; --accent2: #047857;
+  --warm: #D97706; --danger: #DC2626;
+  --card-bg: #FFFFFF;
+  --neutral: #94A3B8;
+}
+
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Noto Sans SC', -apple-system, sans-serif; }
+.layer { position: fixed; inset: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; visibility: hidden; opacity: 0; will-change: transform, opacity; scroll-snap-type: y proximity; }
+.layer.active { visibility: visible; opacity: 1; }
+.feed-section { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 80px 24px; scroll-snap-align: start; }
+.feed-section.dark { background: var(--bg-dark); color: #F1F5F9; }
+.feed-section.dark .body-text { color: #94A3B8; }
+.feed-section.dark .big-statement { color: #F1F5F9; }
+.section-inner { max-width: 600px; width: 100%; }
+.big-statement { font-family: 'Noto Serif SC', serif; font-size: clamp(22px, 5.5vw, 32px); font-weight: 700; line-height: 1.5; margin-bottom: 32px; }
+.body-text { font-size: 16px; line-height: 1.9; color: var(--text); margin-bottom: 28px; }
+.body-text .hl { color: var(--accent); font-weight: 600; }
+.body-text .hl2 { color: var(--accent2); font-weight: 600; }
+.body-text .hl-danger { color: var(--danger); font-weight: 600; }
+.body-text code { background: rgba(154,52,18,0.08); padding: 2px 6px; border-radius: 4px; font-size: 14px; font-family: 'SF Mono', 'Fira Code', monospace; }
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-d1 { transition-delay: 0.15s; }
+.reveal-d2 { transition-delay: 0.3s; }
+.reveal-d3 { transition-delay: 0.45s; }
+.anim-stage { width: 100%; display: flex; justify-content: center; margin: 28px 0; min-height: 180px; }
+.anim-stage > div { width: 100%; }
+
+.breadcrumb { position: fixed; top: 16px; left: 16px; z-index: 1000; display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.92); backdrop-filter: blur(12px); padding: 8px 14px; border-radius: 10px; box-shadow: 0 2px 16px rgba(0,0,0,0.1); font-size: 13px; font-weight: 500; }
+.breadcrumb span { color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
+.breadcrumb span:hover { color: var(--accent); }
+.breadcrumb span.current { color: var(--text); cursor: default; }
+.breadcrumb .sep { color: #CBD5E1; margin: 0 2px; cursor: default; }
+.back-btn { position: fixed; top: 16px; left: 16px; z-index: 1001; width: 38px; height: 38px; border-radius: 10px; border: none; background: rgba(255,255,255,0.92); backdrop-filter: blur(12px); box-shadow: 0 2px 12px rgba(0,0,0,0.1); font-size: 18px; cursor: pointer; display: none; align-items: center; justify-content: center; color: var(--text); transition: all 0.2s; }
+.back-btn:hover { background: var(--accent); color: #fff; }
+.depth-dots { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1000; display: flex; gap: 8px; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px); padding: 8px 14px; border-radius: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #CBD5E1; transition: all 0.3s; }
+.dot.active { background: var(--accent); box-shadow: 0 0 8px rgba(154,52,18,0.5); transform: scale(1.2); }
+
+.drill-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border: 1.5px solid rgba(154,52,18,0.3); border-radius: 10px; background: transparent; color: var(--accent); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.25s; }
+.drill-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(154,52,18,0.3); }
+.dark .drill-btn { border-color: rgba(154,52,18,0.4); color: #F59E0B; }
+.dark .drill-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.source-panel { margin-top: 24px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(154,52,18,0.15); background: rgba(154,52,18,0.03); }
+.dark .source-panel { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
+.source-toggle { width: 100%; padding: 12px 16px; border: none; background: none; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--accent); }
+.dark .source-toggle { color: #F59E0B; }
+.source-toggle:hover { background: rgba(154,52,18,0.06); }
+.source-toggle .arrow { transition: transform 0.3s; font-size: 11px; }
+.source-toggle.open .arrow { transform: rotate(90deg); }
+.source-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; padding: 0 16px; }
+.source-body.open { max-height: 2000px; padding: 0 16px 16px; overflow-y: auto; }
+.source-body p { font-size: 13px; line-height: 1.8; color: var(--text-muted); margin: 0 0 12px 0; white-space: pre-wrap; }
+.dark .source-body p { color: #94A3B8; }
+.source-body .source-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 8px; display: block; }
+.dark .source-body .source-label { color: #F59E0B; }
+
+.hook-line { font-size: 15px; font-weight: 600; color: var(--accent); margin-top: 20px; padding: 14px 18px; border-left: 3px solid var(--accent); background: rgba(154,52,18,0.04); border-radius: 0 8px 8px 0; }
+.dark .hook-line { color: #F59E0B; background: rgba(245,158,11,0.08); border-left-color: #F59E0B; }
+
+/* === Section Animations === */
+/* ── S1 Stage ── */
+.s1_stage {
+  position: relative;
+  width: 100%;
+  max-width: 390px;
+  height: 400px;
+  margin: 0 auto;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  overflow: hidden;
+  background: #fafaf9;
+}
+.s1_stage.visible {
+  opacity: 1;
+}
+
+/* ── Prompt Box (border container) ── */
+.s1_prompt_box {
+  position: absolute;
+  left: 20px;
+  top: 28px;
+  width: 210px;
+  height: 310px;
+  border: 3px solid #9A3412;
+  border-radius: 12px;
+  background: #fff;
+  opacity: 0;
+  transition: height 0.8s cubic-bezier(0.4,0,0.2,1), width 0.8s cubic-bezier(0.4,0,0.2,1);
+}
+.s1_stage.visible .s1_prompt_box {
+  animation: s1_fadeIn 0.5s ease 0.2s forwards;
+}
+.s1_prompt_box.s1_shrunk {
+  height: 120px;
+  width: 116px;
+}
+
+.s1_prompt_label {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #9A3412;
+  letter-spacing: 1px;
+  opacity: 0;
+  white-space: nowrap;
+}
+.s1_stage.visible .s1_prompt_label {
+  animation: s1_fadeIn 0.4s ease 0.6s forwards;
+}
+
+/* ── Rules container (positioned same as box, holds the blocks) ── */
+.s1_rules_area {
+  position: absolute;
+  left: 20px;
+  top: 28px;
+  width: 210px;
+  height: 310px;
+  pointer-events: none;
+}
+
+/* ── Rule blocks ── */
+.s1_rule {
+  position: absolute;
+  width: 88px;
+  height: 38px;
+  background: #9A3412;
+  border-radius: 6px;
+  opacity: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* 2 columns x 5 rows: col1 left:10, col2 left:112, each row +48px */
+.s1_rule:nth-child(1)  { left: 10px;  top: 38px; }
+.s1_rule:nth-child(2)  { left: 112px; top: 38px; }
+.s1_rule:nth-child(3)  { left: 10px;  top: 84px; }
+.s1_rule:nth-child(4)  { left: 112px; top: 84px; }
+.s1_rule:nth-child(5)  { left: 10px;  top: 130px; }
+.s1_rule:nth-child(6)  { left: 112px; top: 130px; }
+.s1_rule:nth-child(7)  { left: 10px;  top: 176px; }
+.s1_rule:nth-child(8)  { left: 112px; top: 176px; }
+.s1_rule:nth-child(9)  { left: 10px;  top: 222px; }
+.s1_rule:nth-child(10) { left: 112px; top: 222px; }
+
+/* Staggered fade-in for all rules */
+.s1_stage.visible .s1_rule:nth-child(1)  { animation: s1_fadeIn 0.3s ease 1.0s forwards; }
+.s1_stage.visible .s1_rule:nth-child(2)  { animation: s1_fadeIn 0.3s ease 1.15s forwards; }
+.s1_stage.visible .s1_rule:nth-child(3)  { animation: s1_fadeIn 0.3s ease 1.3s forwards; }
+.s1_stage.visible .s1_rule:nth-child(4)  { animation: s1_fadeIn 0.3s ease 1.45s forwards; }
+.s1_stage.visible .s1_rule:nth-child(5)  { animation: s1_fadeIn 0.3s ease 1.6s forwards; }
+.s1_stage.visible .s1_rule:nth-child(6)  { animation: s1_fadeIn 0.3s ease 1.75s forwards; }
+.s1_stage.visible .s1_rule:nth-child(7)  { animation: s1_fadeIn 0.3s ease 1.9s forwards; }
+.s1_stage.visible .s1_rule:nth-child(8)  { animation: s1_fadeIn 0.3s ease 2.05s forwards; }
+.s1_stage.visible .s1_rule:nth-child(9)  { animation: s1_fadeIn 0.3s ease 2.2s forwards; }
+.s1_stage.visible .s1_rule:nth-child(10) { animation: s1_fadeIn 0.3s ease 2.35s forwards; }
+
+/* Override: deleted rules fade in then out */
+.s1_stage.visible .s1_rule.s1_del:nth-child(1) { animation: s1_fadeIn 0.3s ease 1.0s forwards, s1_ruleOut 0.35s ease 3.0s forwards; }
+.s1_stage.visible .s1_rule.s1_del:nth-child(2) { animation: s1_fadeIn 0.3s ease 1.15s forwards, s1_ruleOut 0.35s ease 3.15s forwards; }
+.s1_stage.visible .s1_rule.s1_del:nth-child(3) { animation: s1_fadeIn 0.3s ease 1.3s forwards, s1_ruleOut 0.35s ease 3.3s forwards; }
+.s1_stage.visible .s1_rule.s1_del:nth-child(4) { animation: s1_fadeIn 0.3s ease 1.45s forwards, s1_ruleOut 0.35s ease 3.45s forwards; }
+.s1_stage.visible .s1_rule.s1_del:nth-child(5) { animation: s1_fadeIn 0.3s ease 1.6s forwards, s1_ruleOut 0.35s ease 3.6s forwards; }
+.s1_stage.visible .s1_rule.s1_del:nth-child(6) { animation: s1_fadeIn 0.3s ease 1.75s forwards, s1_ruleOut 0.35s ease 3.75s forwards; }
+.s1_stage.visible .s1_rule.s1_del:nth-child(7) { animation: s1_fadeIn 0.3s ease 1.9s forwards, s1_ruleOut 0.35s ease 3.9s forwards; }
+.s1_stage.visible .s1_rule.s1_del:nth-child(8) { animation: s1_fadeIn 0.3s ease 2.05s forwards, s1_ruleOut 0.35s ease 4.05s forwards; }
+
+/* Override: surviving rules fade in then move up */
+.s1_stage.visible .s1_rule.s1_surv:nth-child(9) {
+  animation: s1_fadeIn 0.3s ease 2.2s forwards, s1_moveUp9 0.6s ease 4.6s forwards;
+}
+.s1_stage.visible .s1_rule.s1_surv:nth-child(10) {
+  animation: s1_fadeIn 0.3s ease 2.35s forwards, s1_moveUp10 0.6s ease 4.6s forwards;
+}
+
+/* ── "-80%" label ── */
+.s1_annotation_minus {
+  position: absolute;
+  left: 24px;
+  bottom: 18px;
+  font-size: 30px;
+  font-weight: 900;
+  color: #9A3412;
+  opacity: 0;
+  letter-spacing: -1px;
+}
+.s1_stage.visible .s1_annotation_minus {
+  animation: s1_popIn 0.5s ease 5.4s forwards;
+}
+
+/* ── Right: Performance Bar ── */
+.s1_perf_wrapper {
+  position: absolute;
+  right: 44px;
+  top: 28px;
+  width: 56px;
+  height: 310px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+}
+.s1_stage.visible .s1_perf_wrapper {
+  animation: s1_fadeIn 0.5s ease 0.4s forwards;
+}
+
+.s1_perf_label {
+  font-size: 15px;
+  font-weight: 700;
+  color: #94A3B8;
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+
+.s1_perf_track {
+  position: relative;
+  width: 40px;
+  flex: 1;
+  background: #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.s1_perf_fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 85%;
+  background: #047857;
+  border-radius: 8px;
+  opacity: 0;
+}
+.s1_stage.visible .s1_perf_fill {
+  animation: s1_barGrow 0.8s ease 1.0s forwards;
+}
+
+/* Performance bar slight boost after deletion */
+.s1_perf_fill_boost {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 90%;
+  background: #047857;
+  border-radius: 8px;
+  opacity: 0;
+}
+.s1_stage.visible .s1_perf_fill_boost {
+  animation: s1_fadeIn 0.6s ease 5.2s forwards;
+}
+
+/* ── Checkmark ── */
+.s1_checkmark {
+  position: absolute;
+  right: 52px;
+  bottom: 18px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #047857;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+}
+.s1_stage.visible .s1_checkmark {
+  animation: s1_popIn 0.5s ease 5.7s forwards;
+}
+.s1_checkmark_icon {
+  color: #fff;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+/* ── Keyframes ── */
+@keyframes s1_fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes s1_ruleOut {
+  0%   { opacity: 1; transform: scale(1); }
+  50%  { opacity: 0.4; transform: scale(0.75); }
+  100% { opacity: 0; transform: scale(0.3); }
+}
+
+@keyframes s1_barGrow {
+  0%   { opacity: 0; height: 0%; }
+  100% { opacity: 1; height: 85%; }
+}
+
+@keyframes s1_popIn {
+  0%   { opacity: 0; transform: scale(0.3); }
+  70%  { opacity: 1; transform: scale(1.15); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Rule 9: top 222 -> 38, stay left:10 */
+@keyframes s1_moveUp9 {
+  from { top: 222px; left: 10px; }
+  to   { top: 38px; left: 10px; }
+}
+
+/* Rule 10: top 222, left 112 -> top 84, left 10 (stack below rule 9) */
+@keyframes s1_moveUp10 {
+  from { top: 222px; left: 112px; }
+  to   { top: 84px; left: 10px; }
+}
+/* === S2: Before/After rule comparison === */
+
+.s2_stage {
+  position: relative;
+  width: 100%;
+  max-width: 390px;
+  height: 380px;
+  margin: 0 auto;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.s2_stage.visible {
+  opacity: 1;
+}
+
+/* --- Layout columns --- */
+.s2_col_before {
+  position: absolute;
+  left: 24px;
+  top: 0;
+  width: 150px;
+}
+
+.s2_col_after {
+  position: absolute;
+  right: 24px;
+  top: 100px;
+  width: 150px;
+}
+
+/* --- Labels --- */
+.s2_label {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-align: center;
+  opacity: 0;
+}
+
+.s2_label_before {
+  color: #94A3B8;
+}
+
+.s2_label_after {
+  color: #94A3B8;
+}
+
+/* --- Rule boxes (Before) --- */
+.s2_rule {
+  position: relative;
+  width: 150px;
+  height: 48px;
+  margin-top: 16px;
+  background: rgba(148, 163, 184, 0.15);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: #CBD5E1;
+  opacity: 0;
+}
+
+/* --- Strikethrough line --- */
+.s2_strike {
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  width: 0;
+  height: 2px;
+  background: #9A3412;
+  border-radius: 1px;
+  transform: translateY(-50%);
+}
+
+/* --- After box (green) --- */
+.s2_result {
+  width: 150px;
+  height: 48px;
+  margin-top: 16px;
+  background: rgba(4, 120, 87, 0.12);
+  border: 2px solid #047857;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  color: #34D399;
+  opacity: 0;
+}
+
+/* --- Vertical divider --- */
+.s2_divider {
+  position: absolute;
+  left: 50%;
+  top: 30px;
+  width: 1px;
+  height: 0;
+  background: rgba(148, 163, 184, 0.2);
+  transform: translateX(-50%);
+}
+
+/* --- Arrow from Before to After --- */
+.s2_arrow_line {
+  position: absolute;
+  top: 140px;
+  left: 182px;
+  width: 0;
+  height: 2px;
+  background: #047857;
+}
+
+.s2_arrow_head {
+  position: absolute;
+  top: 134px;
+  left: 218px;
+  width: 0;
+  height: 0;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-left: 10px solid #047857;
+  opacity: 0;
+}
+
+/* ============ ANIMATIONS ============ */
+
+/* Step 1: Before label (delay 0.2s) */
+.s2_stage.visible .s2_label_before {
+  animation: s2_fadeIn 0.5s ease 0.2s forwards;
+}
+
+/* Step 2: Rules appear one by one (0.7s, 1.2s, 1.7s) */
+.s2_stage.visible .s2_rule_1 {
+  animation: s2_fadeIn 0.4s ease 0.7s forwards;
+}
+
+.s2_stage.visible .s2_rule_2 {
+  animation: s2_fadeIn 0.4s ease 1.2s forwards;
+}
+
+.s2_stage.visible .s2_rule_3 {
+  animation: s2_fadeIn 0.4s ease 1.7s forwards;
+}
+
+/* Step 3: Strikethroughs (2.3s, 2.7s, 3.1s) */
+.s2_stage.visible .s2_rule_1 .s2_strike {
+  animation: s2_strikeThrough 0.4s ease 2.3s forwards;
+}
+
+.s2_stage.visible .s2_rule_2 .s2_strike {
+  animation: s2_strikeThrough 0.4s ease 2.7s forwards;
+}
+
+.s2_stage.visible .s2_rule_3 .s2_strike {
+  animation: s2_strikeThrough 0.4s ease 3.1s forwards;
+}
+
+/* Step 3b: Dim rules after strike */
+.s2_stage.visible .s2_rule_1 {
+  animation: s2_fadeIn 0.4s ease 0.7s forwards, s2_dimRule 0.4s ease 2.5s forwards;
+}
+
+.s2_stage.visible .s2_rule_2 {
+  animation: s2_fadeIn 0.4s ease 1.2s forwards, s2_dimRule 0.4s ease 2.9s forwards;
+}
+
+.s2_stage.visible .s2_rule_3 {
+  animation: s2_fadeIn 0.4s ease 1.7s forwards, s2_dimRule 0.4s ease 3.3s forwards;
+}
+
+/* Step 4: Divider grows */
+.s2_stage.visible .s2_divider {
+  animation: s2_growDivider 0.6s ease 3.4s forwards;
+}
+
+/* Step 5: Arrow */
+.s2_stage.visible .s2_arrow_line {
+  animation: s2_growArrow 0.4s ease 3.6s forwards;
+}
+
+.s2_stage.visible .s2_arrow_head {
+  animation: s2_fadeIn 0.2s ease 4.0s forwards;
+}
+
+/* Step 6: After label (4.0s) */
+.s2_stage.visible .s2_label_after {
+  animation: s2_fadeIn 0.5s ease 4.0s forwards;
+}
+
+/* Step 7: Green result box (4.4s) */
+.s2_stage.visible .s2_result {
+  animation: s2_fadeIn 0.4s ease 4.4s forwards, s2_pulse 1.2s ease 5.0s 1;
+}
+
+/* ============ KEYFRAMES ============ */
+
+@keyframes s2_fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s2_strikeThrough {
+  from { width: 0; }
+  to { width: calc(100% - 16px); }
+}
+
+@keyframes s2_dimRule {
+  from { opacity: 1; }
+  to { opacity: 0.45; }
+}
+
+@keyframes s2_growDivider {
+  from { height: 0; }
+  to { height: 280px; }
+}
+
+@keyframes s2_growArrow {
+  from { width: 0; }
+  to { width: 36px; }
+}
+
+@keyframes s2_pulse {
+  0% { box-shadow: 0 0 0 0 rgba(4, 120, 87, 0.5); }
+  50% { box-shadow: 0 0 0 12px rgba(4, 120, 87, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(4, 120, 87, 0); }
+}
+/* === S3 STAGE CONTAINER === */
+.s3_stage {
+  width: 100%;
+  padding: 48px 20px 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.s3_stage.visible {
+  opacity: 1;
+}
+
+/* === OLD WAY: "示例" BOX === */
+.s3_example_box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 160px;
+  height: 56px;
+  border: 2px solid #94A3B8;
+  border-radius: 8px;
+  background: #F0EDE8;
+  opacity: 0;
+  transform: scale(0.85);
+}
+.s3_example_text {
+  font-size: 22px;
+  font-weight: 600;
+  color: #94A3B8;
+  letter-spacing: 2px;
+}
+.s3_stage.visible .s3_example_box {
+  animation: s3_fadeScaleIn 0.5s ease 0.3s both;
+}
+
+/* Strikethrough line */
+.s3_strike {
+  position: absolute;
+  top: 50%;
+  left: -4px;
+  width: calc(100% + 8px);
+  height: 3px;
+  background: #9A3412;
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+.s3_stage.visible .s3_strike {
+  animation: s3_strikeThrough 0.4s ease 1.0s both;
+}
+
+/* Down arrow between old and new */
+.s3_down_arrow {
+  margin: 16px 0;
+  opacity: 0;
+}
+.s3_down_arrow_line {
+  width: 2px;
+  height: 24px;
+  background: #94A3B8;
+  margin: 0 auto;
+}
+.s3_down_arrow_head {
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid #94A3B8;
+  margin: 0 auto;
+}
+.s3_stage.visible .s3_down_arrow {
+  animation: s3_fadeIn 0.4s ease 1.5s both;
+}
+
+/* === TOOL CARD === */
+.s3_card {
+  width: 320px;
+  max-width: 100%;
+  border: 2px solid #94A3B8;
+  border-radius: 12px;
+  background: #FFFFFF;
+  padding: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(12px);
+}
+.s3_stage.visible .s3_card {
+  animation: s3_cardAppear 0.5s ease 1.9s both;
+}
+
+/* Card header */
+.s3_card_header {
+  padding: 14px 20px;
+  border-bottom: 1px solid #E8E4DF;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.s3_card_icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #9A3412;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0;
+}
+.s3_card_icon_text {
+  font-size: 14px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+.s3_stage.visible .s3_card_icon {
+  animation: s3_fadeScaleIn 0.4s ease 2.4s both;
+}
+.s3_tool_name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #9A3412;
+  letter-spacing: 1px;
+  opacity: 0;
+}
+.s3_stage.visible .s3_tool_name {
+  animation: s3_fadeIn 0.4s ease 2.4s both;
+}
+
+/* Card body */
+.s3_card_body {
+  padding: 16px 20px 20px;
+}
+
+/* Parameter label */
+.s3_param_row {
+  margin-bottom: 12px;
+}
+.s3_param_label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94A3B8;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  opacity: 0;
+}
+.s3_stage.visible .s3_param_label {
+  animation: s3_fadeIn 0.3s ease 2.9s both;
+}
+
+/* Enum tags */
+.s3_enum_row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.s3_enum_tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0;
+  transform: scale(0.8);
+  white-space: nowrap;
+}
+.s3_tag_pending {
+  background: #FEF3E2;
+  color: #92400E;
+  border: 1.5px solid #FBBF24;
+}
+.s3_tag_progress {
+  background: #DBEAFE;
+  color: #1E40AF;
+  border: 1.5px solid #60A5FA;
+}
+.s3_tag_completed {
+  background: #D1FAE5;
+  color: #065F46;
+  border: 1.5px solid #34D399;
+}
+.s3_stage.visible .s3_tag_pending {
+  animation: s3_tagPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 3.3s both;
+}
+.s3_stage.visible .s3_tag_progress {
+  animation: s3_tagPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 3.7s both;
+}
+.s3_stage.visible .s3_tag_completed {
+  animation: s3_tagPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 4.1s both;
+}
+
+/* Constraint line */
+.s3_constraint {
+  margin-top: 16px;
+  padding: 10px 14px;
+  background: #F8F5F1;
+  border-radius: 8px;
+  border-left: 3px solid #9A3412;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4A3728;
+  line-height: 1.5;
+  opacity: 0;
+  transform: translateX(-8px);
+}
+.s3_stage.visible .s3_constraint {
+  animation: s3_slideIn 0.5s ease 4.6s both;
+}
+
+/* Card border activation */
+.s3_stage.visible .s3_card {
+  animation: s3_cardAppear 0.5s ease 1.9s both, s3_borderActivate 0.6s ease 5.2s both;
+}
+
+/* === KEYFRAMES === */
+@keyframes s3_fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes s3_fadeScaleIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s3_strikeThrough {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes s3_cardAppear {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s3_tagPop {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s3_slideIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes s3_borderActivate {
+  from { border-color: #94A3B8; }
+  to { border-color: #047857; }
+}
+/* ===== S4: System Prompt → On-Demand Skills ===== */
+
+.s4_stage {
+  width: 100%;
+  padding: 48px 20px 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #0F172A;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.s4_stage.visible {
+  opacity: 1;
+}
+
+/* ---- Title ---- */
+.s4_title {
+  font-family: 'Noto Serif SC', serif;
+  font-size: clamp(16px, 4vw, 22px);
+  font-weight: 700;
+  color: #E2E8F0;
+  text-align: center;
+  margin-bottom: 36px;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s4_stage.visible .s4_title {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.1s;
+}
+
+/* ---- Layout container ---- */
+.s4_canvas {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  height: 240px;
+}
+
+/* ---- Big source box (system prompt) ---- */
+.s4_big_box {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 52px;
+  border: 2px solid #94A3B8;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #94A3B8;
+  letter-spacing: 0.04em;
+  opacity: 0;
+  transition: opacity 0.5s ease, width 0.6s ease, height 0.6s ease, top 0.6s ease, border-color 0.6s ease, color 0.6s ease;
+}
+.s4_stage.visible .s4_big_box {
+  opacity: 1;
+  transition-delay: 0.4s;
+}
+
+/* After shrink: becomes "core prompt" */
+.s4_stage.visible .s4_big_box.s4_shrunk {
+  width: 130px;
+  height: 42px;
+  top: 4px;
+  border-color: #64748B;
+  color: #CBD5E1;
+}
+
+/* ---- Label inside big box (swaps text) ---- */
+.s4_big_label_full {
+  transition: opacity 0.3s ease;
+}
+.s4_shrunk .s4_big_label_full {
+  opacity: 0;
+}
+.s4_big_label_core {
+  position: absolute;
+  opacity: 0;
+  font-size: 0.82rem;
+  transition: opacity 0.3s ease 0.3s;
+}
+.s4_shrunk .s4_big_label_core {
+  opacity: 1;
+}
+
+/* ---- Skill modules row ---- */
+.s4_modules_row {
+  position: absolute;
+  top: 150px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.s4_module {
+  width: 104px;
+  height: 42px;
+  border-radius: 8px;
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  opacity: 0;
+  transform: translateY(-30px);
+  transition: opacity 0.5s ease, transform 0.6s ease;
+  flex-shrink: 0;
+}
+
+/* Green border skills */
+.s4_mod_green {
+  border-color: #047857;
+  color: #6EE7B7;
+}
+/* Orange border tool */
+.s4_mod_orange {
+  border-color: #9A3412;
+  color: #FDBA74;
+}
+
+/* Triggered visibility — staggered */
+.s4_stage.visible .s4_module_1 {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 1.2s;
+}
+.s4_stage.visible .s4_module_2 {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 1.7s;
+}
+.s4_stage.visible .s4_module_3 {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 2.2s;
+}
+
+/* ---- Connection beam (core prompt → middle skill) ---- */
+.s4_beam_line {
+  position: absolute;
+  top: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 98px;
+  background: linear-gradient(to bottom, #64748B, #047857);
+  opacity: 0;
+  transform-origin: top center;
+  transition: opacity 0.5s ease;
+}
+.s4_stage.visible .s4_beam_line {
+  opacity: 0;
+}
+.s4_stage.visible .s4_beam_line.s4_beam_active {
+  opacity: 1;
+  animation: s4_beam_glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes s4_beam_glow {
+  0%   { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* ---- Traveling dot on the beam ---- */
+.s4_dot {
+  position: absolute;
+  top: 52px;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6EE7B7;
+  box-shadow: 0 0 10px #047857, 0 0 20px #04785744;
+  transform: translate(-50%, 0);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.s4_stage.visible .s4_dot.s4_dot_active {
+  opacity: 1;
+  animation: s4_dot_travel 1.4s ease-in-out infinite;
+}
+
+@keyframes s4_dot_travel {
+  0%   { top: 52px; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { top: 142px; opacity: 0; }
+}
+
+/* ---- Bottom label ---- */
+.s4_bottom_label {
+  font-size: 0.82rem;
+  color: #94A3B8;
+  letter-spacing: 0.06em;
+  text-align: center;
+  margin-top: 16px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s4_stage.visible .s4_bottom_label {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 4.0s;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 360px) {
+  .s4_module {
+    width: 90px;
+    font-size: 0.65rem;
+  }
+  .s4_modules_row {
+    gap: 6px;
+  }
+}
+.s5_stage {
+  position: relative;
+  width: 100%;
+  max-width: 390px;
+  height: 280px;
+  margin: 0 auto;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  font-family: -apple-system, "Microsoft YaHei", sans-serif;
+  overflow: hidden;
+}
+
+.s5_stage.visible {
+  opacity: 1;
+}
+
+/* === Row layout === */
+.s5_row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.s5_row_top {
+  top: 24px;
+  height: 110px;
+}
+
+.s5_row_bottom {
+  top: 158px;
+  height: 110px;
+}
+
+/* === Shared box styles === */
+.s5_box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0.7);
+}
+
+.s5_box_gray {
+  width: 96px;
+  height: 48px;
+  background: #F1F5F9;
+  border: 2px solid #94A3B8;
+  color: #64748B;
+}
+
+.s5_box_green {
+  width: 108px;
+  height: 48px;
+  background: #ECFDF5;
+  border: 2px solid #047857;
+  color: #047857;
+}
+
+.s5_box_md {
+  width: 80px;
+  height: 48px;
+  background: #F1F5F9;
+  border: 2px solid #94A3B8;
+  color: #64748B;
+  font-size: 18px;
+}
+
+/* === Small tag styles === */
+.s5_tag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0.7);
+}
+
+.s5_tag_html {
+  background: #FFF7ED;
+  border: 2px solid #9A3412;
+  color: #9A3412;
+}
+
+.s5_tag_code {
+  background: #ECFDF5;
+  border: 2px solid #047857;
+  color: #047857;
+}
+
+.s5_tag_rubrics {
+  background: #F1F5F9;
+  border: 2px solid #64748B;
+  color: #475569;
+}
+
+.s5_tags_group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* === Arrow === */
+.s5_arrow {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  opacity: 0;
+  flex-shrink: 0;
+}
+
+.s5_arrow svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* === Row labels === */
+.s5_label {
+  position: absolute;
+  font-size: 12px;
+  color: #94A3B8;
+  letter-spacing: 1px;
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+.s5_label_top {
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+}
+
+.s5_label_bottom {
+  top: 140px;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+}
+
+/* === Animations === */
+@keyframes s5_fadeScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes s5_arrowIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes s5_labelIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 0.7;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes s5_labelInBottom {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 0.7;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes s5_greenPulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+    box-shadow: 0 0 0 0 rgba(4, 120, 87, 0);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.05);
+    box-shadow: 0 0 0 6px rgba(4, 120, 87, 0.15);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(4, 120, 87, 0);
+  }
+}
+
+/* === Trigger animations on .visible === */
+.s5_stage.visible .s5_label_top {
+  animation: s5_labelIn 0.4s ease forwards;
+  animation-delay: 0s;
+}
+
+.s5_stage.visible .s5_box_manual {
+  animation: s5_fadeScaleIn 0.5s ease forwards;
+  animation-delay: 0.4s;
+}
+
+.s5_stage.visible .s5_arrow_top {
+  animation: s5_arrowIn 0.4s ease forwards;
+  animation-delay: 1.0s;
+}
+
+.s5_stage.visible .s5_box_auto {
+  animation: s5_greenPulse 0.6s ease forwards;
+  animation-delay: 1.5s;
+}
+
+.s5_stage.visible .s5_label_bottom {
+  animation: s5_labelInBottom 0.4s ease forwards;
+  animation-delay: 2.1s;
+}
+
+.s5_stage.visible .s5_box_dotmd {
+  animation: s5_fadeScaleIn 0.5s ease forwards;
+  animation-delay: 2.5s;
+}
+
+.s5_stage.visible .s5_arrow_bottom {
+  animation: s5_arrowIn 0.4s ease forwards;
+  animation-delay: 3.1s;
+}
+
+.s5_stage.visible .s5_tag_first {
+  animation: s5_fadeScaleIn 0.4s ease forwards;
+  animation-delay: 3.6s;
+}
+
+.s5_stage.visible .s5_tag_second {
+  animation: s5_fadeScaleIn 0.4s ease forwards;
+  animation-delay: 4.1s;
+}
+
+.s5_stage.visible .s5_tag_third {
+  animation: s5_fadeScaleIn 0.4s ease forwards;
+  animation-delay: 4.6s;
+}
+/* ===== S6 Context Engineering Layers ===== */
+.s6_stage {
+  position: relative;
+  width: 100%;
+  padding: 20px 0 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: -apple-system, 'Noto Sans SC', 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* ── Layers container ── */
+.s6_layers {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ── Each layer block ── */
+.s6_item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+}
+
+/* The box */
+.s6_box {
+  height: 42px;
+  border-radius: 8px;
+  border-width: 2px;
+  border-style: solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #E2E8F0;
+  background: rgba(255,255,255,0.04);
+  position: relative;
+  z-index: 1;
+}
+
+/* Widths: narrowest to widest */
+.s6_box--sp   { width: 150px; border-color: #9A3412; }
+.s6_box--cmd  { width: 200px; border-color: #9A3412; }
+.s6_box--sk   { width: 255px; border-color: #047857; }
+.s6_box--ref  { width: 310px; border-color: #047857; }
+
+/* Annotation below box */
+.s6_anno {
+  font-size: 11px;
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+.s6_anno--orange { color: #D97706; }
+.s6_anno--green  { color: #34D399; }
+
+/* ── Vertical connecting line ── */
+.s6_vline {
+  position: absolute;
+  left: 50%;
+  top: 21px;
+  width: 2px;
+  margin-left: -1px;
+  /* 4 items: each 42px box + 4px anno-margin + ~15px anno + 16px gap = ~77px per item
+     total height approx: 4*42 + 3*16 + 4*19 = 168+48+76 = 292; line from first center to last center */
+  height: 0;
+  background: linear-gradient(to bottom, #9A3412, #047857);
+  border-radius: 1px;
+  z-index: 0;
+  opacity: 0;
+}
+
+/* ── Bottom label ── */
+.s6_bottom {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+}
+
+.s6_bottom-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #94A3B8;
+  letter-spacing: 1px;
+}
+
+.s6_bottom-arrow {
+  font-size: 16px;
+  color: #64748B;
+}
+
+/* ══════ Animations triggered by .visible ══════ */
+
+/* Row 1: System Prompt — delay 0.4s */
+.s6_stage.visible .s6_item--1 {
+  animation: s6_row_in 0.5s ease-out 0.4s both;
+}
+/* Row 2: CLAUDE.md — delay 0.9s */
+.s6_stage.visible .s6_item--2 {
+  animation: s6_row_in 0.5s ease-out 0.9s both;
+}
+/* Row 3: Skills — delay 1.4s */
+.s6_stage.visible .s6_item--3 {
+  animation: s6_row_in 0.5s ease-out 1.4s both;
+}
+/* Row 4: References — delay 1.9s */
+.s6_stage.visible .s6_item--4 {
+  animation: s6_row_in 0.5s ease-out 1.9s both;
+}
+
+/* Vertical line: appears + grows after all 4 rows — delay 2.5s */
+.s6_stage.visible .s6_vline {
+  animation: s6_vline_grow 0.9s ease-out 2.5s both;
+}
+
+/* Bottom label — delay 3.7s */
+.s6_stage.visible .s6_bottom {
+  animation: s6_fade_up 0.6s ease-out 3.7s both;
+}
+
+/* ══════ Keyframes ══════ */
+
+@keyframes s6_row_in {
+  0%   { opacity: 0; transform: translateY(-14px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s6_vline_grow {
+  0%   { opacity: 0; height: 0; }
+  100% { opacity: 0.45; height: calc(100% - 42px); }
+}
+
+@keyframes s6_fade_up {
+  0%   { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+/* === A1: Skills 按需加载 + 工具延迟定义 === */
+
+/* Stage container */
+.a1_stage {
+  position: relative;
+  width: 100%;
+  max-width: 390px;
+  height: 380px;
+  margin: 0 auto;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.a1_stage.visible {
+  opacity: 1;
+}
+
+/* Tree lines (SVG layer) */
+.a1_tree_svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.a1_line {
+  stroke: #94A3B8;
+  stroke-width: 2;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  opacity: 0;
+}
+.a1_stage.visible .a1_line_1 {
+  animation: a1_draw_line 0.5s ease 0.8s forwards;
+}
+.a1_stage.visible .a1_line_2 {
+  animation: a1_draw_line 0.5s ease 1.0s forwards;
+}
+.a1_stage.visible .a1_line_3 {
+  animation: a1_draw_line 0.5s ease 1.2s forwards;
+}
+@keyframes a1_draw_line {
+  0%   { opacity: 1; stroke-dashoffset: 200; }
+  100% { opacity: 1; stroke-dashoffset: 0; }
+}
+
+/* Activation glow line */
+.a1_line_glow {
+  stroke: #047857;
+  stroke-width: 3;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  opacity: 0;
+  filter: drop-shadow(0 0 4px rgba(4,120,87,0.4));
+}
+.a1_stage.visible .a1_line_glow {
+  animation: a1_draw_line 0.5s ease 4.0s forwards;
+}
+
+/* Base node style */
+.a1_node {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Noto Sans SC', -apple-system, sans-serif;
+  opacity: 0;
+}
+
+/* Root node: CLAUDE.md */
+.a1_root {
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.7);
+  width: 120px;
+  height: 44px;
+  border-radius: 10px;
+  background: #9A3412;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.a1_stage.visible .a1_root {
+  animation: a1_pop_root 0.5s ease 0.2s forwards;
+}
+@keyframes a1_pop_root {
+  0%   { opacity: 0; transform: translateX(-50%) scale(0.7); }
+  70%  { opacity: 1; transform: translateX(-50%) scale(1.05); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+/* Child nodes: dormant rounded rects */
+.a1_child {
+  top: 200px;
+  width: 100px;
+  height: 44px;
+  border-radius: 10px;
+  background: #D1D5DB;
+  color: #6B7280;
+  font-size: 13px;
+  font-weight: 500;
+}
+.a1_child_1 { left: 18px; }
+.a1_child_2 { left: 145px; }
+.a1_child_3 { left: 272px; }
+
+.a1_stage.visible .a1_child_1 {
+  animation: a1_pop_child 0.4s ease 1.5s forwards;
+}
+.a1_stage.visible .a1_child_2 {
+  animation: a1_pop_child 0.4s ease 1.9s forwards;
+}
+.a1_stage.visible .a1_child_3 {
+  animation: a1_pop_child 0.4s ease 2.3s forwards;
+}
+@keyframes a1_pop_child {
+  0%   { opacity: 0; transform: scale(0.7); }
+  70%  { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Light dot traveling from root to child 1 */
+.a1_dot {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #047857;
+  box-shadow: 0 0 12px 4px rgba(4,120,87,0.5);
+  opacity: 0;
+}
+.a1_stage.visible .a1_dot {
+  animation: a1_dot_travel 1.0s ease-in-out 3.0s forwards;
+}
+@keyframes a1_dot_travel {
+  0%   { opacity: 1; top: 72px;  left: 189px; }
+  50%  { opacity: 1; top: 140px; left: 120px; }
+  100% { opacity: 0; top: 200px; left: 62px; }
+}
+
+/* Activated overlay: replaces gray child 1 with green */
+.a1_child_activated {
+  position: absolute;
+  top: 200px;
+  left: 18px;
+  width: 100px;
+  height: 44px;
+  border-radius: 10px;
+  background: #047857;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 16px 4px rgba(4,120,87,0.3);
+  opacity: 0;
+  font-family: 'Noto Sans SC', -apple-system, sans-serif;
+}
+.a1_stage.visible .a1_child_activated {
+  animation: a1_activate 0.5s ease 4.0s forwards;
+}
+@keyframes a1_activate {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Bottom label */
+.a1_label {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  font-weight: 500;
+  color: #047857;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  opacity: 0;
+  font-family: 'Noto Sans SC', -apple-system, sans-serif;
+}
+.a1_stage.visible .a1_label {
+  animation: a1_fade_up 0.6s ease 4.6s forwards;
+}
+@keyframes a1_fade_up {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+/* ---- variables ---- */
+.a2_stage {
+  --a2-primary: #9A3412;
+  --a2-active:  #047857;
+  --a2-neutral: #94A3B8;
+  --a2-bg:      #FAFAF9;
+  --a2-text:    #1E293B;
+  --a2-muted:   #64748B;
+}
+
+/* ---- stage wrapper ---- */
+.a2_stage {
+  position: relative;
+  width: 100%;
+  height: 340px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--a2-bg);
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.a2_stage.visible {
+  opacity: 1;
+}
+
+/* ---- layout: cards left, gradient bar right ---- */
+.a2_body {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  height: 288px;
+}
+
+/* ---- card column ---- */
+.a2_cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ---- each row ---- */
+.a2_row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+@keyframes a2_rowIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.a2_stage.visible .a2_row--1 {
+  animation: a2_rowIn 0.5s ease 0.4s forwards;
+}
+.a2_stage.visible .a2_row--2 {
+  animation: a2_rowIn 0.5s ease 0.9s forwards;
+}
+.a2_stage.visible .a2_row--3 {
+  animation: a2_rowIn 0.5s ease 1.4s forwards;
+}
+.a2_stage.visible .a2_row--4 {
+  animation: a2_rowIn 0.5s ease 1.9s forwards;
+}
+
+/* ---- card box (rounded rectangle for 4+ chars) ---- */
+.a2_box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 140px;
+  height: 44px;
+  border-radius: 8px;
+  border: 2px solid var(--a2-primary);
+  background: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--a2-primary);
+  letter-spacing: 0.3px;
+  padding: 0 16px;
+  white-space: nowrap;
+}
+
+/* ---- label text ---- */
+.a2_label {
+  font-size: 13px;
+  color: var(--a2-muted);
+  white-space: nowrap;
+}
+
+.a2_label b {
+  font-weight: 700;
+  color: var(--a2-active);
+}
+
+/* ---- gradient bar ---- */
+.a2_gradient_wrap {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  height: 256px;
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+@keyframes a2_gradIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.a2_stage.visible .a2_gradient_wrap {
+  animation: a2_gradIn 0.6s ease 2.5s forwards;
+}
+
+.a2_gradient_bar {
+  width: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to bottom, var(--a2-neutral), var(--a2-primary));
+}
+
+.a2_gradient_labels {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+
+.a2_gradient_label {
+  font-size: 11px;
+  color: var(--a2-muted);
+  white-space: nowrap;
+  line-height: 1;
+}
+</style>
+
+<meta name="description" content="Anthropic在为Claude Opus 5和Claude Fable 5适配Claude Code时发现，之前的系统提示词 过度约束了模型 。他们删掉了超过80%的系统提示词，在编码评测上没有出现任何可衡量的性能下降。问题在于，系统提示词、Skills和用户请求之间经常产生冲突——比如系统提示词说「在合适的地方加文档」，同时又说「不要加注释」。虽然Cl">
+<link rel="canonical" href="https://chendi.me/readings/context-engineering-rules/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">&#8592;</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══ Layer: Overview (S1-S6) ═══ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+  <!-- S1: Core Finding -->
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">Claude Code删掉了80%的系统提示词，性能没有下降</h2>
+      <p class="body-text reveal reveal-d1">Anthropic在为Claude Opus 5和Claude Fable 5适配Claude Code时发现，之前的系统提示词<span class="hl">过度约束了模型</span>。他们删掉了超过80%的系统提示词，在编码评测上没有出现任何可衡量的性能下降。问题在于，系统提示词、Skills和用户请求之间经常产生冲突——比如系统提示词说「在合适的地方加文档」，同时又说「不要加注释」。虽然Claude通常能理解用户意图并给出正确答案，但这些矛盾迫使模型花更多精力去权衡冲突指令，而不是专注于任务本身。随着模型能力的提升，许多曾经必要的约束已经可以删除，让模型用自身的判断力来替代。</p>
+      <div class="anim-stage reveal reveal-d2" id="s1-anim"><div class="s1_stage">
+  <!-- Prompt box border -->
+  <div class="s1_prompt_box" id="s1_promptBox">
+    <div class="s1_prompt_label">系统提示词</div>
+  </div>
+
+  <!-- Rules (own container so nth-child works) -->
+  <div class="s1_rules_area">
+    <div class="s1_rule s1_del">规则 1</div>
+    <div class="s1_rule s1_del">规则 2</div>
+    <div class="s1_rule s1_del">规则 3</div>
+    <div class="s1_rule s1_del">规则 4</div>
+    <div class="s1_rule s1_del">规则 5</div>
+    <div class="s1_rule s1_del">规则 6</div>
+    <div class="s1_rule s1_del">规则 7</div>
+    <div class="s1_rule s1_del">规则 8</div>
+    <div class="s1_rule s1_surv">规则 9</div>
+    <div class="s1_rule s1_surv">规则 10</div>
+  </div>
+
+  <!-- Right: Performance Bar -->
+  <div class="s1_perf_wrapper">
+    <div class="s1_perf_label">性能</div>
+    <div class="s1_perf_track">
+      <div class="s1_perf_fill"></div>
+      <div class="s1_perf_fill_boost"></div>
+    </div>
+  </div>
+
+  <!-- Bottom Annotations -->
+  <div class="s1_annotation_minus">-80%</div>
+  <div class="s1_checkmark"><span class="s1_checkmark_icon">&#10003;</span></div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>I've written previously about how to best prompt the newest generation of Claude 5 models and work with them iteratively to discover what you want to build.</p>
+<p>But when you send a message to Claude, the prompt is only a small part of the context it gets. Much of your context is assembled from your system prompt, Skills, CLAUDE.md files, memory, and other sources. We call this context engineering, and it makes a big impact on the results you generate when using Claude Code or in building your own agents.</p>
+<p>Unlike a prompt, context is used generally across many requests, so it cannot be as specific. How do you build these general prompts and guidance for Claude, especially when you don't know what a user's prompt might be?</p>
+<p>This can be surprisingly difficult as Claude's own capabilities evolve. Most recently, we noticed a large jump in the way we prompt the newest generation of Claude models. We removed over 80% of Claude Code's system prompt for models like Claude Opus 5 and Claude Fable 5 with no measurable loss on our coding evaluations.</p>
+<p>Overall, we found that we were overconstraining Claude Code, both through our system prompt and in our CLAUDE.md files and skills.</p>
+<p>For example, when we read transcripts of our own internal usage of Claude Code, we see several conflicting messages in a single request like "leave documentation as appropriate," or "DO NOT add comments" as our system prompt, skills, and user requests clash with each other.</p>
+<p>Generally, Claude can interpret the user's intent to get to the right answer, but Claude must think more carefully about these overlapping and conflicting messages before deciding what to do.</p>
+<p>And while these constraints were once needed to avoid worst case scenarios, we have since found we can delete many of them and let the model use surrounding context and judgement instead.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S2: Rules → Judgment -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">从给规则，到让模型自己判断</h2>
+      <p class="body-text reveal reveal-d1">Claude Code早期为了避免最差情况（比如删文件），系统提示词会给出非常强的约束。比如以前的提示词写着：「代码中默认不写注释。永远不要写多段docstring或多行注释块——最多一行简短注释。不要创建规划、决策或分析文档。」但对于某些场景，这些规则是错的——用户可能有自己的文档偏好，或者复杂代码确实需要多行注释。以前的模型没有这些guardrail会频繁出错，所以Anthropic不得不接受这个tradeoff。但<span class="hl">新一代模型有更好的判断力</span>，不需要显式规则也能做好这些决策。新的系统提示词只说：<span class="hl2">「写出和周围代码风格一致的代码：匹配它的注释密度、命名和惯用法。」</span></p>
+      <div class="anim-stage reveal reveal-d2" id="s2-anim"><div class="s2_stage">
+  <!-- Vertical divider -->
+  <div class="s2_divider"></div>
+
+  <!-- Arrow from left to right -->
+  <div class="s2_arrow_line"></div>
+  <div class="s2_arrow_head"></div>
+
+  <!-- Left column: Before -->
+  <div class="s2_col_before">
+    <div class="s2_label s2_label_before">BEFORE</div>
+
+    <div class="s2_rule s2_rule_1">
+      不写注释
+      <div class="s2_strike"></div>
+    </div>
+
+    <div class="s2_rule s2_rule_2">
+      不写docstring
+      <div class="s2_strike"></div>
+    </div>
+
+    <div class="s2_rule s2_rule_3">
+      不建文档
+      <div class="s2_strike"></div>
+    </div>
+  </div>
+
+  <!-- Right column: After -->
+  <div class="s2_col_after">
+    <div class="s2_label s2_label_after">AFTER</div>
+
+    <div class="s2_result">
+      匹配周围风格
+    </div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>Then: Give Claude rules
+Now: Let Claude use judgement</p>
+<p>When we first rolled out Claude Code, we needed to be sure that Claude avoided worst case scenarios, such as deleting files. This meant we would give particularly strong guidance that might not always be true, For example, in the system prompt we used to say:</p>
+<p>In code: default to writing no comments. Never write multi-paragraph docstrings or multi-line comment blocks — one short line max. Don't create planning, decision, or analysis documents unless the user asks for them — work from conversation context, not intermediate files.</p>
+<p>But for a certain subset of prompts, this guidance would be wrong. In the case of documentation, the user may have their own preferences, or specific parts of very complex code might need multi-line comment blocks.</p>
+<p>Still, without these guardrails for older models, the comments Claude wrote would be incorrect in many cases and we had to accept this tradeoff. But newer models have better judgement and can handle these decisions well without explicit rules.</p>
+<p>In the new system prompt we say: Write code that reads like the surrounding code: match its comment density, naming, and idiom.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S3: Examples → Interface Design -->
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">不要给示例，要设计表达力强的工具接口</h2>
+      <p class="body-text reveal reveal-d1">以前工具使用的第一原则是「给Claude示例」。但Anthropic发现，对新一代模型来说，<span class="hl">给示例反而会把模型限制在一个特定的探索空间里</span>。更有效的做法是把精力放在工具接口的设计上——让参数本身更有表达力。比如在Todo工具中，只需要把status定义为<code>pending | in_progress | completed</code>这样的枚举，就足以让模型理解怎么使用。加上一句「保持同一时间只有一个in_progress」就定义了期望的行为模式。工具接口的设计比使用示例更能引导模型的行为。</p>
+      <div class="anim-stage reveal reveal-d2" id="s3-anim"><div class="s3_stage">
+  <!-- Step 1: Old approach "示例" box -->
+  <div class="s3_example_box">
+    <span class="s3_example_text">示例</span>
+    <div class="s3_strike"></div>
+  </div>
+
+  <!-- Arrow down -->
+  <div class="s3_down_arrow">
+    <div class="s3_down_arrow_line"></div>
+    <div class="s3_down_arrow_head"></div>
+  </div>
+
+  <!-- Step 2: Tool interface card -->
+  <div class="s3_card">
+    <div class="s3_card_header">
+      <div class="s3_card_icon">
+        <span class="s3_card_icon_text">T</span>
+      </div>
+      <span class="s3_tool_name">Todo</span>
+    </div>
+    <div class="s3_card_body">
+      <div class="s3_param_row">
+        <div class="s3_param_label">status</div>
+        <div class="s3_enum_row">
+          <span class="s3_enum_tag s3_tag_pending">pending</span>
+          <span class="s3_enum_tag s3_tag_progress">in_progress</span>
+          <span class="s3_enum_tag s3_tag_completed">completed</span>
+        </div>
+      </div>
+      <div class="s3_constraint">同时只保持 1 个 in_progress</div>
+    </div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>Then: Give Claude examples
+Now: Design interfaces</p>
+<p>The number one rule for tool usage was to give Claude examples on how to use them. With our newest models, we've found that giving examples actually constrains them to a certain exploration space.</p>
+<p>Instead of using examples, think more about the design of your tools, scripts and files- what parameters does Claude have and how can they be more expressive?</p>
+<p>For example, in the Todo tool example, just listing status as an enumeration between pending, in_progress, and completed, hints to Claude about how to use it. The instruction on keeping one item in_progress helps define our requested behavior.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S4: Progressive Disclosure (DRILL) -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">把信息从系统提示词移到按需加载的Skills和工具里</h2>
+      <p class="body-text reveal reveal-d1">Claude Code以前把代码审查和验证的详细说明直接放在系统提示词里——这些信息不是每次都需要，但在需要时又至关重要。现在Claude Code已经擅长在<span class="hl">正确的时机加载正确的上下文</span>。比如，验证和代码审查的指令被移到了独立的Skills中，Claude Code在需要时才会调用。同样的思路也用在了工具上：部分工具采用延迟加载（deferred loading），Agent必须先用ToolSearch搜索完整定义才能使用。之前的另一个误区是在系统提示词和工具描述中<span class="hl">重复同样的指令</span>。Anthropic发现可以删掉这些重复，只在工具描述中保留使用说明。</p>
+      <div class="anim-stage reveal reveal-d2" id="s4-anim"><div class="s4_stage" id="s4_stage">
+  <div class="s4_title">从巨型提示词到按需加载</div>
+
+  <div class="s4_canvas">
+    <!-- Big box: System Prompt → Core Prompt -->
+    <div class="s4_big_box" id="s4_big_box">
+      <span class="s4_big_label_full">系统提示词</span>
+      <span class="s4_big_label_core">核心提示</span>
+    </div>
+
+    <!-- Connection beam + dot -->
+    <div class="s4_beam_line" id="s4_beam"></div>
+    <div class="s4_dot" id="s4_dot"></div>
+
+    <!-- Three skill/tool modules in a flex row -->
+    <div class="s4_modules_row">
+      <div class="s4_module s4_module_1 s4_mod_green">代码审查 Skill</div>
+      <div class="s4_module s4_module_2 s4_mod_green">验证 Skill</div>
+      <div class="s4_module s4_module_3 s4_mod_orange">延迟工具</div>
+    </div>
+  </div>
+
+  <div class="s4_bottom_label">需要时才加载</div>
+</div></div>
+      <p class="hook-line reveal reveal-d3">实际案例：延迟加载工具和Skills分层的具体做法。</p>
+      <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-disclosure', this)" style="margin-top:12px;">逐个拆解 &#8595;</button>
+    </div>
+  </section>
+
+  <!-- S5: Auto-memory + Rich References -->
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">记忆自动沉淀，规格说明从Markdown进化到代码和HTML</h2>
+      <p class="body-text reveal reveal-d1">两个相关的变化。第一，Anthropic以前鼓励用户手动把信息保存到CLAUDE.md作为记忆，现在Claude会<span class="hl2">自动保存</span>与工作相关的记忆，不需要用户手动操作。第二，Claude Code以前主要依赖Markdown文件作为规格说明和计划。但Anthropic发现新模型可以处理<span class="hl">更丰富的引用格式</span>：HTML artifacts（通过新的artifacts功能创建）、代码形式的规格说明（比如详细的测试套件，或者另一个代码库中的函数作为移植参考），以及Rubrics——评判标准文档，让Claude可以启动验证Agent来检验你在某个领域的taste（比如「好的API设计是什么样的」）。</p>
+      <div class="anim-stage reveal reveal-d2" id="s5-anim"><div class="s5_stage">
+  <!-- Row label: top -->
+  <div class="s5_label s5_label_top">记忆演化</div>
+
+  <!-- Top row: manual -> auto memory -->
+  <div class="s5_row s5_row_top">
+    <div class="s5_box s5_box_gray s5_box_manual">手动 #</div>
+    <div class="s5_arrow s5_arrow_top">
+      <svg viewBox="0 0 48 48" fill="none">
+        <line x1="6" y1="24" x2="36" y2="24" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="30,17 38,24 30,31" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </div>
+    <div class="s5_box s5_box_green s5_box_auto">自动记忆</div>
+  </div>
+
+  <!-- Row label: bottom -->
+  <div class="s5_label s5_label_bottom">引用演化</div>
+
+  <!-- Bottom row: .md -> HTML, code, Rubrics -->
+  <div class="s5_row s5_row_bottom">
+    <div class="s5_box s5_box_md s5_box_dotmd">.md</div>
+    <div class="s5_arrow s5_arrow_bottom">
+      <svg viewBox="0 0 48 48" fill="none">
+        <line x1="6" y1="24" x2="36" y2="24" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline points="30,17 38,24 30,31" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </div>
+    <div class="s5_tags_group">
+      <div class="s5_tag s5_tag_html s5_tag_first">HTML</div>
+      <div class="s5_tag s5_tag_code s5_tag_second">代码</div>
+      <div class="s5_tag s5_tag_rubrics s5_tag_third">Rubrics</div>
+    </div>
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>Then: Memory in CLAUDE.md files
+Now: Auto-memory</p>
+<p>We used to encourage users to save things to Claude's memory, by using the # hotkey to write to their CLAUDE.md automatically. Instead, Claude now automatically saves memories that are relevant to the work and to you.</p>
+<p>Then: Simple specs
+Now: Rich references</p>
+<p>In plan mode, Claude Code has heavily relied on markdown files with plans. Storing these files as plans helped Claude refer to them when needed. Another similar best practice was to store specs in the codebase for Claude to refer to while working across longer projects.</p>
+<p>But we've found that Claude can handle increasingly more complicated references. Instead of simple markdown files, Claude can reference HTML artifacts created by our new artifacts feature.</p>
+<p>You may also give Claude references in the form of code. A spec may also be a detailed test suite, or a function in a different codebase that Claude might port.</p>
+<p>Rubrics are another form of references. Rubrics allow Claude to try and verify your taste in a particular field (e.g. what does a good API design look like) by using dynamic workflows and spinning up verifier agents with those rubrics.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S6: Applying It All (DRILL) -->
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">重新组织你的context工程</h2>
+      <p class="body-text reveal reveal-d1">把以上所有变化综合起来，Anthropic给出了context工程的实操框架。<span class="hl">System Prompt</span>紧密绑定产品上下文，告诉Claude它在什么产品中、要做什么。<span class="hl">CLAUDE.md</span>应该保持轻量，简要描述仓库用途，把大部分token花在代码库中的gotcha上，避免写Claude看文件系统就能知道的「显而易见」的信息。<span class="hl2">Skills</span>是按需加载的轻量指南，在关键领域可以详细，但要大量使用渐进式加载——拆成多个文件。<span class="hl2">References</span>可以通过@引用文件，优先使用代码形式（比如HTML mockup比设计描述或截图能产生更好的结果）。Anthropic还推出了<code>claude doctor</code>命令来帮助自动简化你的context。</p>
+      <div class="anim-stage reveal reveal-d2" id="s6-anim"><div class="s6_stage">
+  <div class="s6_layers">
+    <!-- Vertical connecting line (behind boxes) -->
+    <div class="s6_vline"></div>
+
+    <!-- Row 1: System Prompt -->
+    <div class="s6_item s6_item--1">
+      <div class="s6_box s6_box--sp">System Prompt</div>
+      <span class="s6_anno s6_anno--orange">产品上下文</span>
+    </div>
+
+    <!-- Row 2: CLAUDE.md -->
+    <div class="s6_item s6_item--2">
+      <div class="s6_box s6_box--cmd">CLAUDE.md</div>
+      <span class="s6_anno s6_anno--orange">仓库 gotcha</span>
+    </div>
+
+    <!-- Row 3: Skills -->
+    <div class="s6_item s6_item--3">
+      <div class="s6_box s6_box--sk">Skills</div>
+      <span class="s6_anno s6_anno--green">按需加载</span>
+    </div>
+
+    <!-- Row 4: References -->
+    <div class="s6_item s6_item--4">
+      <div class="s6_box s6_box--ref">References</div>
+      <span class="s6_anno s6_anno--green">代码 / HTML / Rubrics</span>
+    </div>
+  </div>
+
+  <!-- Bottom label -->
+  <div class="s6_bottom">
+    <span class="s6_bottom-text">轻量</span>
+    <span class="s6_bottom-arrow">&rarr;</span>
+    <span class="s6_bottom-text">丰富</span>
+  </div>
+</div></div>
+      <p class="hook-line reveal reveal-d3">System Prompt、CLAUDE.md、Skills、References——每层的定位和写法。</p>
+      <button class="drill-btn reveal reveal-d3" onclick="drillDown('layer-framework', this)" style="margin-top:12px;">逐个拆解 &#8595;</button>
+    </div>
+  </section>
+
+</div><!-- /layer-overview -->
+
+<!-- ═══ Layer: Disclosure (drill from S4) ═══ -->
+<div class="layer" id="layer-disclosure" data-depth="1">
+
+  <!-- A1: Progressive Disclosure Details -->
+  <section class="feed-section" style="background: var(--bg-act1);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">Skills按需加载 + 工具延迟定义</h2>
+      <p class="body-text reveal reveal-d1">Claude Code把代码审查和验证的指令从系统提示词中移出，放入独立的Skills。Claude Code在接到相关任务时才加载这些Skills，而不是每次都把它们塞进上下文。同样的思路也应用在了工具上：部分工具采用<span class="hl">延迟加载（deferred loading）</span>，Agent必须先用ToolSearch搜索完整定义才能使用。这让系统可以拥有更多工具（比如Task相关工具），而这些工具在不需要时不占用上下文。</p>
+      <p class="body-text reveal reveal-d2">这个原则也适用于你自己的CLAUDE.md和Skill.md文件。一个常见的误区是把它们当成「所有已知最佳实践的中央仓库」——因为担心Claude找不到信息。但更好的做法是构建一个<span class="hl2">可以在正确时机加载的文件树</span>，而不是把所有内容堆在一个文件里。</p>
+      <div class="anim-stage reveal reveal-d3" id="a1-anim"><div class="a1_stage">
+  <svg class="a1_tree_svg" viewBox="0 0 390 380" preserveAspectRatio="xMidYMid meet">
+    <line class="a1_line a1_line_1" x1="195" y1="72" x2="68" y2="200" />
+    <line class="a1_line a1_line_2" x1="195" y1="72" x2="195" y2="200" />
+    <line class="a1_line a1_line_3" x1="195" y1="72" x2="322" y2="200" />
+    <line class="a1_line_glow" x1="195" y1="72" x2="68" y2="200" />
+  </svg>
+
+  <div class="a1_node a1_root">CLAUDE.md</div>
+
+  <div class="a1_node a1_child a1_child_1">审查 Skill</div>
+  <div class="a1_node a1_child a1_child_2">验证 Skill</div>
+  <div class="a1_node a1_child a1_child_3">编码指南</div>
+
+  <div class="a1_child_activated">审查 Skill</div>
+
+  <div class="a1_dot"></div>
+
+  <div class="a1_label">按需激活，不占上下文</div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>Then: Put it all upfront
+Now: Use progressive disclosure</p>
+<p>Because Claude Code was focused on coding, our system prompt included detailed information on how to do code review and verification. These were not always needed, but when they were, it was crucial information.</p>
+<p>Since then, Claude Code has gotten very competent at using progressive disclosure- loading the right context at the right times. For example, we moved verification and code review into their own skills that Claude Code could selectively call.</p>
+<p>But progressive disclosure is not just for skills, we also use it for tools. Some of our tools are 'deferred loading,' which means the agent must search for their full definitions using ToolSearch before using them. This allows us to have more tools (such as our Task tools) that don't take up context until they're needed.</p>
+<p>The same can be applied to your own CLAUDE.md and Skill.md files. A common myth is that you want to make these a central repository for every known practice that you might run into, because Claude would not find it otherwise. Instead, consider having a tree of files that can be loaded at the right time.</p>
+<p>Then: Repeat yourself
+Now: Simple tool descriptions</p>
+<p>Earlier Claude models could sometimes need repeated instructions or be more likely to listen to instructions at the end of their context window than at the start. This meant our system prompt would sometimes have references to tools in the main system prompt as well as instructions in the tool description.</p>
+<p>We found we could delete these repeat examples and put instructions on how to use tools in the tool descriptions rather than the system prompt.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /layer-disclosure -->
+
+<!-- ═══ Layer: Framework (drill from S6) ═══ -->
+<div class="layer" id="layer-framework" data-depth="1">
+
+  <!-- A2: Framework Details -->
+  <section class="feed-section" style="background: var(--bg-act2);">
+    <div class="section-inner">
+      <h2 class="big-statement reveal">四层context，各有分工</h2>
+      <p class="body-text reveal reveal-d1"><span class="hl">System Prompt</span>紧密绑定产品上下文——它告诉Claude自己在什么产品中运行、要做什么。如果你在用Claude Code，你可能永远不会修改它；但如果你在构建自己的Agent harness，这是你应该花最多时间的地方。</p>
+      <p class="body-text reveal reveal-d2"><span class="hl">CLAUDE.md</span>应该保持轻量，简要描述仓库用途，但把大部分token花在代码库中的gotcha上（比如「我们把所有类型放在一个单独的文件里」）。避免写那些Claude看你的文件系统或代码库就能知道的「显而易见」的信息。大量使用渐进式加载——比如如果你有很多关于如何验证工作的特殊指令，就创建一个验证Skill并从CLAUDE.md引用它。</p>
+      <p class="body-text reveal reveal-d2"><span class="hl2">Skills</span>是让Claude在需要时找到信息的轻量指南。除了高度重要的领域外，避免过度约束。对于长Skills，尽量使用渐进式加载——拆分成多个文件。Skills最适合编码你或你的团队、产品特有的观点、知识或最佳实践。</p>
+      <p class="body-text reveal reveal-d3"><span class="hl2">References</span>可以通过@引用文件来提供深度信息。引用可以是规格说明文件、mockup，甚至整个代码库。一般来说，应该优先使用代码形式的文件——因为代码提供了清晰、高保真的指令，而Claude非常擅长理解代码。比如，一个HTML mockup通常比设计描述或截图能产生更好的结果。</p>
+      <div class="anim-stage reveal reveal-d3" id="a2-anim"><!-- ============================================================
+     A2: 四层 context 各有分工
+     ============================================================ -->
+
+
+<div class="a2_stage">
+  <div class="a2_body">
+
+    <!-- Four card rows -->
+    <div class="a2_cards">
+      <div class="a2_row a2_row--1">
+        <div class="a2_box">System Prompt</div>
+        <span class="a2_label"><b>固定</b> / 产品上下文</span>
+      </div>
+      <div class="a2_row a2_row--2">
+        <div class="a2_box">CLAUDE.md</div>
+        <span class="a2_label"><b>轻量</b> / gotcha优先</span>
+      </div>
+      <div class="a2_row a2_row--3">
+        <div class="a2_box">Skills</div>
+        <span class="a2_label"><b>按需</b> / 特有知识</span>
+      </div>
+      <div class="a2_row a2_row--4">
+        <div class="a2_box">References</div>
+        <span class="a2_label"><b>丰富</b> / 代码优先</span>
+      </div>
+    </div>
+
+    <!-- Gradient bar on the right -->
+    <div class="a2_gradient_wrap">
+      <div class="a2_gradient_bar"></div>
+      <div class="a2_gradient_labels">
+        <span class="a2_gradient_label">约束少</span>
+        <span class="a2_gradient_label">信息量大</span>
+      </div>
+    </div>
+
+  </div>
+</div></div>
+      <div class="source-panel reveal reveal-d3">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文对照</button>
+        <div class="source-body"><span class="source-label">Original</span>
+<p>System Prompt: A system prompt is heavily tied to the product context. It tells Claude what product it's operating in and what it's doing. For Claude Code, you will likely never modify this, but if you are building your own agent harness, this is where you should spend a lot of time.</p>
+<p>CLAUDE.md: Keep your CLAUDE.md lightweight and briefly describe what your repo is for, but spend most of the tokens on gotchas inside of the codebase. For example, you may organize your code to keep types in one monolithic file and nowhere else. Avoid stating 'the obvious' things Claude should know by looking at your file system or your repo.</p>
+<p>Use progressive disclosure heavily, for example if you have several unique instructions on how to verify your work, create a verification skill and reference it from your CLAUDE.md.</p>
+<p>Skills: Think of skills as lightweight guides to let Claude find information when needed. Avoid making them overconstrained, except in highly important areas.</p>
+<p>For long skills, try and use progressive disclosure as much as possible- divide it into many files and split them out.</p>
+<p>It's best when skills encode particular opinions, knowledge, or best practices that are particular to you, your team, or product.</p>
+<p>References: You can @ mention files to include them as references. References allow Claude to refer to in-depth information about the current plan.</p>
+<p>This might be in specs files, mockups, or even entire codebases. Generally you should prefer files that are in code as it provides clear, high-fidelity instructions to Claude in a language it knows very well. For example, a HTML mockup of a design will generally produce better results than a description of the design or a screenshot.</p>
+<p>Try simplifying: Across your system prompt, skills, and CLAUDE.md files, you may need to simplify just like we did. We rolled out a new command called claude doctor, which will help you do this automatically as well.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /layer-framework -->
+
+<script>
+var layerStack = ['layer-overview'];
+var transitioning = false;
+var layerNames = {
+  'layer-overview': '概览',
+  'layer-disclosure': '按需加载',
+  'layer-framework': '实操框架'
+};
+var observers = new Map();
+
+function setupObserver(layerId) {
+  if (observers.has(layerId)) return;
+  var layer = document.getElementById(layerId);
+  var reveals = layer.querySelectorAll('.reveal, [class*="_stage"]');
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.15, root: layer });
+  reveals.forEach(function(el) { obs.observe(el); });
+  observers.set(layerId, obs);
+}
+
+function resetReveals(layerId) {
+  var layer = document.getElementById(layerId);
+  layer.querySelectorAll('.reveal').forEach(function(el) { el.classList.remove('visible'); });
+  layer.querySelectorAll('[class*="_stage"]').forEach(function(el) { el.classList.remove('visible'); });
+}
+
+function activateReveals(layerId) {
+  resetReveals(layerId);
+  if (observers.has(layerId)) { observers.get(layerId).disconnect(); observers.delete(layerId); }
+  requestAnimationFrame(function() { setupObserver(layerId); });
+}
+
+function updateBreadcrumb() {
+  var bc = document.getElementById('breadcrumb');
+  bc.innerHTML = '';
+  layerStack.forEach(function(id, i) {
+    if (i > 0) { var sep = document.createElement('span'); sep.className = 'sep'; sep.textContent = '>'; bc.appendChild(sep); }
+    var span = document.createElement('span');
+    span.textContent = layerNames[id] || id;
+    if (i === layerStack.length - 1) { span.className = 'current'; }
+    else { span.addEventListener('click', function() { goBackTo(i); }); }
+    bc.appendChild(span);
+  });
+  var backBtn = document.getElementById('backBtn');
+  backBtn.style.display = layerStack.length > 1 ? 'flex' : 'none';
+  bc.style.left = layerStack.length > 1 ? '60px' : '16px';
+  var dots = document.getElementById('depthDots');
+  var depth = layerStack.length - 1;
+  dots.querySelectorAll('.dot').forEach(function(d, i) { d.classList.toggle('active', i === depth); });
+}
+
+function drillDown(targetId, btnEl) {
+  if (transitioning) return;
+  transitioning = true;
+  var currentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var targetLayer = document.getElementById(targetId);
+  targetLayer.scrollTop = 0;
+  resetReveals(targetId);
+  targetLayer.style.visibility = 'visible';
+  var duration = 600;
+  currentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  currentLayer.style.transformOrigin = 'center center';
+  currentLayer.style.transform = 'scale(1.3)';
+  currentLayer.style.opacity = '0';
+  targetLayer.classList.add('active');
+  targetLayer.style.opacity = '0';
+  targetLayer.style.transform = 'scale(0.85)';
+  targetLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  requestAnimationFrame(function() { requestAnimationFrame(function() {
+    targetLayer.style.opacity = '1'; targetLayer.style.transform = 'scale(1)';
+  }); });
+  setTimeout(function() {
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition = ''; currentLayer.style.transform = ''; currentLayer.style.opacity = '';
+    targetLayer.style.transition = ''; targetLayer.style.transform = '';
+    activateReveals(targetId);
+    transitioning = false;
+  }, duration + 50);
+  layerStack.push(targetId);
+  updateBreadcrumb();
+}
+
+function goBack() {
+  if (layerStack.length <= 1 || transitioning) return;
+  transitioning = true;
+  var currentId = layerStack.pop();
+  var parentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var parentLayer = document.getElementById(parentId);
+  var duration = 600;
+  currentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  currentLayer.style.transform = 'scale(0.85)'; currentLayer.style.opacity = '0';
+  parentLayer.classList.add('active');
+  parentLayer.style.transform = 'scale(1.3)'; parentLayer.style.opacity = '0';
+  parentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  requestAnimationFrame(function() { requestAnimationFrame(function() {
+    parentLayer.style.transform = 'scale(1)'; parentLayer.style.opacity = '1';
+  }); });
+  setTimeout(function() {
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition = ''; currentLayer.style.transform = ''; currentLayer.style.opacity = ''; currentLayer.style.visibility = '';
+    parentLayer.style.transition = ''; parentLayer.style.transform = '';
+    transitioning = false;
+  }, duration + 50);
+  updateBreadcrumb();
+}
+
+function goBackTo(targetIndex) {
+  if (transitioning) return;
+  while (layerStack.length - 1 > targetIndex) { if (layerStack.length <= 1) break; goBack(); return; }
+}
+
+function toggleSource(btn) { btn.classList.toggle('open'); btn.nextElementSibling.classList.toggle('open'); }
+
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+</body>
+</html>

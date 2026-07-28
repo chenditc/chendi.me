@@ -1,0 +1,3827 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Gaia2: AI Agent 的终极考场</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg-act1: #FFF7ED; --bg-act2: #F0F9FF; --bg-act3: #FFF7ED;
+  --bg-dark: #0F172A; --bg-close: #1E293B;
+  --text: #1E293B; --text-muted: #64748B; --dim: #94A3B8;
+  --accent: #F97316; --accent2: #0EA5E9;
+  --warm: #F59E0B; --danger: #EF4444;
+  --neutral: #94A3B8;
+  --card-bg: #FFFFFF;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Noto Sans SC', -apple-system, sans-serif; color: var(--text); }
+
+/* ── 层系统 ── */
+.layer {
+  position: fixed; inset: 0; overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  visibility: hidden; opacity: 0;
+  will-change: transform, opacity;
+  scroll-snap-type: y proximity;
+}
+.layer.active { visibility: visible; opacity: 1; }
+
+/* ── Section ── */
+.feed-section {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 80px 24px; scroll-snap-align: start;
+}
+.feed-section.dark { background: var(--bg-dark); color: #F1F5F9; }
+.feed-section.dark .body-text { color: #94A3B8; }
+.feed-section.dark .big-statement { color: #F1F5F9; }
+.feed-section.blue { background: var(--bg-act2); }
+.section-inner { max-width: 600px; width: 100%; }
+
+/* ── 排版 ── */
+.big-statement { font-family: 'Noto Serif SC', serif; font-size: clamp(22px, 5.5vw, 32px); font-weight: 700; line-height: 1.5; margin-bottom: 32px; }
+.body-text { font-size: 16px; line-height: 1.9; color: var(--text); margin-bottom: 28px; }
+.body-text .hl { color: var(--accent); font-weight: 500; }
+.body-text .hl2 { color: var(--accent2); font-weight: 500; }
+.body-text .hl-danger { color: var(--danger); font-weight: 500; }
+
+/* ── Reveal ── */
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-d1 { transition-delay: 0.15s; }
+.reveal-d2 { transition-delay: 0.3s; }
+.reveal-d3 { transition-delay: 0.45s; }
+.reveal-d4 { transition-delay: 0.6s; }
+
+/* ── 面包屑 ── */
+.breadcrumb {
+  position: fixed; top: 16px; left: 16px; z-index: 1000;
+  display: flex; align-items: center; gap: 4px;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+  padding: 8px 14px; border-radius: 10px; box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+  font-size: 13px; font-weight: 500;
+}
+.breadcrumb span { color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
+.breadcrumb span:hover { color: var(--accent); }
+.breadcrumb span.current { color: var(--text); cursor: default; }
+.breadcrumb .sep { color: #CBD5E1; margin: 0 2px; cursor: default; }
+
+/* ── 返回按钮 ── */
+.back-btn {
+  position: fixed; top: 16px; left: 16px; z-index: 1001;
+  width: 38px; height: 38px; border-radius: 10px; border: none;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  font-size: 18px; cursor: pointer; display: none; align-items: center; justify-content: center;
+  color: var(--text); transition: all 0.2s;
+}
+.back-btn:hover { background: var(--accent); color: #fff; }
+
+/* ── 深度圆点 ── */
+.depth-dots {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1000;
+  display: flex; gap: 8px; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px);
+  padding: 8px 14px; border-radius: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #CBD5E1; transition: all 0.3s; }
+.dot.active { background: var(--accent); box-shadow: 0 0 8px rgba(249,115,22,0.5); transform: scale(1.2); }
+
+/* ── Drill 按钮 ── */
+.drill-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border: 1.5px solid rgba(249,115,22,0.3); border-radius: 10px;
+  background: transparent; color: var(--accent); font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.25s; position: relative; z-index: 10;
+}
+.drill-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(249,115,22,0.3); }
+.dark .drill-btn { border-color: rgba(249,115,22,0.4); }
+
+/* ── Source Panel ── */
+.source-panel {
+  margin-top: 24px; border-radius: 12px; overflow: hidden;
+  border: 1px solid rgba(249,115,22,0.15); background: rgba(249,115,22,0.03);
+}
+.dark .source-panel { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
+.source-toggle {
+  width: 100%; padding: 12px 16px; border: none; background: none;
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 600; color: var(--accent);
+}
+.dark .source-toggle { color: #FB923C; }
+.source-toggle:hover { background: rgba(249,115,22,0.06); }
+.source-toggle .arrow { transition: transform 0.3s; font-size: 11px; }
+.source-toggle.open .arrow { transform: rotate(90deg); }
+.source-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; padding: 0 16px; }
+.source-body.open { max-height: 2000px; padding: 0 16px 16px; overflow-y: auto; }
+.source-body p { font-size: 13px; line-height: 1.8; color: var(--text-muted); margin: 0 0 12px; white-space: pre-wrap; }
+.dark .source-body p { color: #94A3B8; }
+.source-body .source-label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--accent); margin-bottom: 8px; display: block;
+}
+
+/* ── Anim Stage ── */
+.anim-stage { pointer-events: none; margin: 24px 0; min-height: 80px; }
+.anim-stage > div{ width:100%; }
+
+/* ── Hook Line ── */
+.hook-line { font-size: 15px; color: var(--accent); font-weight: 500; margin: 16px 0 8px; line-height: 1.6; }
+.dark .hook-line { color: #FB923C; }
+
+/* ── Section Tag ── */
+.section-tag { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+.dark .section-tag { color: #FB923C; }
+
+/* S1: Hero — 静态 vs 动态 */
+.s1_stage {
+  position: relative;
+  width: 340px;
+  height: 280px;
+  margin: 0 auto;
+  font-family: -apple-system, 'Helvetica Neue', 'PingFang SC', sans-serif;
+}
+
+/* === 左侧：静态世界 (x: 0–150) === */
+.s1_static-label {
+  position: absolute;
+  top: 10px; left: 28px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #94A3B8;
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+.s1_q-box {
+  position: absolute;
+  top: 60px; left: 10px;
+  width: 64px; height: 36px;
+  border: 2.5px solid #94A3B8;
+  border-radius: 8px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #94A3B8;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.s1_static-line {
+  position: absolute;
+  top: 78px; left: 74px;
+  width: 0;
+  height: 2px;
+  background: #94A3B8;
+}
+
+.s1_static-arrow {
+  position: absolute;
+  top: 72px; left: 102px;
+  width: 0; height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 8px solid #94A3B8;
+  opacity: 0;
+}
+
+.s1_a-box {
+  position: absolute;
+  top: 60px; left: 112px;
+  width: 64px; height: 36px;
+  border: 2.5px solid #94A3B8;
+  border-radius: 8px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #94A3B8;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.s1_bench-label {
+  position: absolute;
+  top: 36px; left: 22px;
+  font-size: 11px;
+  color: #94A3B8;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+/* 静态世界的 "不动" 省略号 */
+.s1_static-dots {
+  position: absolute;
+  top: 120px; left: 50px;
+  font-size: 16px;
+  letter-spacing: 4px;
+  color: #CBD5E1;
+  opacity: 0;
+}
+
+/* === 中间分隔线 (x: 170) === */
+.s1_divider {
+  position: absolute;
+  top: 10px; left: 170px;
+  width: 2px;
+  height: 0;
+  background: #CBD5E1;
+  border-radius: 1px;
+}
+
+.s1_vs-label {
+  position: absolute;
+  top: 152px; left: 161px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #94A3B8;
+  opacity: 0;
+}
+
+/* === 右侧：动态世界 (x: 186–340) === */
+.s1_dynamic-label {
+  position: absolute;
+  top: 10px; left: 228px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #F97316;
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* 事件圆点 — 用绝对定位而非 flex，每个 36x36 */
+.s1_events {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+}
+.s1_event {
+  position: absolute;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 2.5px solid #F97316;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #F97316;
+  opacity: 0;
+  transform: scale(0);
+}
+.s1_event-1 { top: 44px; left: 186px; }
+.s1_event-2 { top: 44px; left: 266px; }
+.s1_event-3 { top: 104px; left: 230px; }
+
+/* 动态连线：event1 中心(210,62) → event2 中心(314,62) */
+.s1_dyn-line {
+  position: absolute;
+  height: 2px;
+  background: #F97316;
+  transform-origin: left center;
+  opacity: 0;
+  width: 0;
+}
+/* line from event-1 right edge to event-2 left edge */
+.s1_dyn-line-1 {
+  top: 62px; left: 222px;
+}
+/* line from event-1 bottom to event-3 top-left */
+.s1_dyn-line-2 {
+  top: 78px; left: 204px;
+  transform: rotate(50deg);
+}
+
+/* 通知弹出 */
+.s1_notify {
+  position: absolute;
+  top: 152px; left: 200px;
+  background: #0EA5E9;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 10px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+/* 新事件闪烁出现 */
+.s1_event-new {
+  position: absolute;
+  top: 96px; left: 264px;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: #0EA5E9;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.s1_gaia2-label {
+  position: absolute;
+  top: 186px; left: 216px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #F97316;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+/* 底部总结 */
+.s1_summary {
+  position: absolute;
+  bottom: 10px; left: 0; right: 0;
+  text-align: center;
+  font-size: 13px;
+  color: #64748B;
+  opacity: 0;
+  transform: translateY(8px);
+}
+.s1_summary em {
+  font-style: normal;
+  color: #F97316;
+  font-weight: 600;
+}
+
+/* === Keyframes === */
+@keyframes s1_fadeSlideDown {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s1_scaleIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s1_fadeIn {
+  to { opacity: 1; }
+}
+@keyframes s1_drawRight {
+  to { width: 28px; opacity: 1; }
+}
+@keyframes s1_drawDown {
+  to { height: 200px; }
+}
+@keyframes s1_dynLine1Grow {
+  to { width: 54px; opacity: 1; }
+}
+@keyframes s1_dynLine2Grow {
+  to { width: 52px; opacity: 1; }
+}
+@keyframes s1_popIn {
+  0% { opacity: 0; transform: scale(0); }
+  70% { transform: scale(1.2); }
+  100% { opacity: 0.7; transform: scale(1); }
+}
+@keyframes s1_pulse {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.3); }
+}
+
+/* === Animation sequence triggered by .visible === */
+
+/* Step 1: 左侧标题 + 副标签 */
+.s1_stage.visible .s1_static-label {
+  animation: s1_fadeSlideDown 0.4s 0.3s ease forwards;
+}
+.s1_stage.visible .s1_bench-label {
+  animation: s1_fadeIn 0.3s 0.5s ease forwards;
+}
+
+/* Step 2: 问题方框 */
+.s1_stage.visible .s1_q-box {
+  animation: s1_scaleIn 0.4s 1.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Step 3: 连线 + 箭头 */
+.s1_stage.visible .s1_static-line {
+  animation: s1_drawRight 0.3s 1.5s ease forwards;
+}
+.s1_stage.visible .s1_static-arrow {
+  animation: s1_fadeIn 0.2s 1.8s ease forwards;
+}
+
+/* Step 4: 答案方框 */
+.s1_stage.visible .s1_a-box {
+  animation: s1_scaleIn 0.4s 2.1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Step 5: 省略号 */
+.s1_stage.visible .s1_static-dots {
+  animation: s1_fadeIn 0.4s 2.6s ease forwards;
+}
+
+/* Step 6: 分隔线 */
+.s1_stage.visible .s1_divider {
+  animation: s1_drawDown 0.5s 3.1s ease forwards;
+}
+.s1_stage.visible .s1_vs-label {
+  animation: s1_fadeIn 0.3s 3.5s ease forwards;
+}
+
+/* Step 7: 右侧标题 */
+.s1_stage.visible .s1_dynamic-label {
+  animation: s1_fadeSlideDown 0.4s 3.9s ease forwards;
+}
+
+/* Step 8-10: 事件圆点逐个出现 */
+.s1_stage.visible .s1_event-1 {
+  animation: s1_scaleIn 0.35s 4.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s1_stage.visible .s1_event-2 {
+  animation: s1_scaleIn 0.35s 4.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s1_stage.visible .s1_event-3 {
+  animation: s1_scaleIn 0.35s 5.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Step 11: 连线变化 */
+.s1_stage.visible .s1_dyn-line-1 {
+  animation: s1_dynLine1Grow 0.3s 5.6s ease forwards;
+}
+.s1_stage.visible .s1_dyn-line-2 {
+  animation: s1_dynLine2Grow 0.3s 5.8s ease forwards;
+}
+
+/* Step 12: 通知弹出 */
+.s1_stage.visible .s1_notify {
+  animation: s1_fadeSlideDown 0.3s 6.2s ease forwards;
+}
+
+/* Step 13: 新事件闪烁 */
+.s1_stage.visible .s1_event-new {
+  animation: s1_popIn 0.4s 6.6s ease forwards, s1_pulse 1.2s 7.0s ease infinite;
+}
+
+/* Step 14: Gaia2 标签 */
+.s1_stage.visible .s1_gaia2-label {
+  animation: s1_fadeIn 0.4s 7.0s ease forwards;
+}
+
+/* Step 15: 底部总结 */
+.s1_stage.visible .s1_summary {
+  animation: s1_fadeSlideDown 0.5s 7.5s ease forwards;
+}
+
+/* S2 — Static vs Dynamic Benchmark */
+.s2_stage {
+  position: relative;
+  width: 340px;
+  height: 300px;
+  margin: 0 auto;
+  font-family: -apple-system, 'Helvetica Neue', 'PingFang SC', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* --- Labels --- */
+.s2_label {
+  position: absolute;
+  font-size: 14px;
+  font-weight: 600;
+  color: #94A3B8;
+  opacity: 0;
+  transform: translateX(-10px);
+}
+.s2_label_static { top: 48px; left: 8px; }
+.s2_label_dynamic { top: 168px; left: 8px; }
+
+/* --- Static timeline (horizontal line between boxes) --- */
+.s2_timeline_static {
+  position: absolute;
+  top: 65px;
+  left: 112px;
+  height: 2px;
+  width: 0;
+  background: #475569;
+  border-radius: 1px;
+}
+
+/* --- Static: task & done boxes --- */
+.s2_box {
+  position: absolute;
+  width: 56px;
+  height: 34px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0;
+  transform: scale(0);
+}
+.s2_box_task {
+  top: 48px;
+  left: 56px;
+  border: 2px solid #475569;
+  color: #64748B;
+  background: rgba(71, 85, 105, 0.15);
+}
+.s2_box_done {
+  top: 48px;
+  left: 228px;
+  border: 2px solid #475569;
+  color: #64748B;
+  background: rgba(71, 85, 105, 0.15);
+}
+
+/* Static arrow on the line */
+.s2_static_arrow {
+  position: absolute;
+  top: 60px;
+  left: 168px;
+  width: 0; height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 7px solid #475569;
+  opacity: 0;
+}
+
+/* Frozen overlay for static timeline */
+.s2_frozen {
+  position: absolute;
+  top: 36px;
+  left: 48px;
+  width: 248px;
+  height: 58px;
+  border: 1.5px dashed #475569;
+  border-radius: 8px;
+  opacity: 0;
+}
+.s2_frozen_label {
+  position: absolute;
+  top: 98px;
+  left: 230px;
+  font-size: 11px;
+  color: #536178;
+  opacity: 0;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* --- Dynamic timeline (horizontal) --- */
+.s2_timeline_dynamic {
+  position: absolute;
+  top: 185px;
+  left: 60px;
+  height: 2px;
+  width: 0;
+  background: #F97316;
+  border-radius: 1px;
+}
+
+/* --- Dynamic: event circles --- */
+.s2_event {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2.5px solid #F97316;
+  background: rgba(249, 115, 22, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #F97316;
+  opacity: 0;
+  transform: scale(0);
+}
+.s2_event1 { top: 161px; left: 68px; }
+.s2_event2 { top: 161px; left: 152px; }
+.s2_event3 { top: 161px; left: 236px; }
+
+/* --- Dynamic: pulse rings --- */
+.s2_pulse {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #F97316;
+  opacity: 0;
+  pointer-events: none;
+}
+.s2_pulse1 { top: 161px; left: 68px; }
+.s2_pulse2 { top: 161px; left: 152px; }
+.s2_pulse3 { top: 161px; left: 236px; }
+
+/* --- Dynamic: crossing connection lines (SVG) --- */
+.s2_connections {
+  position: absolute;
+  top: 145px;
+  left: 0;
+  width: 340px;
+  height: 100px;
+  pointer-events: none;
+}
+.s2_connections line {
+  stroke: #0EA5E9;
+  stroke-width: 1.5;
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+}
+
+/* --- Divider --- */
+.s2_divider {
+  position: absolute;
+  top: 130px;
+  left: 30px;
+  width: 0;
+  height: 1px;
+  background: #334155;
+}
+
+/* --- Subtitle --- */
+.s2_subtitle {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 12px;
+  color: #94A3B8;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* ========== KEYFRAMES ========== */
+@keyframes s2_labelIn {
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes s2_drawLine120 {
+  to { width: 120px; }
+}
+@keyframes s2_drawLine260 {
+  to { width: 260px; }
+}
+@keyframes s2_boxIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s2_fadeIn {
+  to { opacity: 1; }
+}
+@keyframes s2_fadeInHalf {
+  to { opacity: 0.45; }
+}
+@keyframes s2_eventIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s2_pulse {
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+@keyframes s2_dividerGrow {
+  to { width: 280px; }
+}
+@keyframes s2_subtitleIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s2_strokeDraw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* ========== TRIGGERED SEQUENCE ========== */
+
+/* 0.3s — Static label */
+.s2_stage.visible .s2_label_static {
+  animation: s2_labelIn 0.4s 0.3s ease forwards;
+}
+
+/* 0.8s — Task box */
+.s2_stage.visible .s2_box_task {
+  animation: s2_boxIn 0.35s 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* 1.3s — Static timeline grows */
+.s2_stage.visible .s2_timeline_static {
+  animation: s2_drawLine120 0.5s 1.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* 1.5s — Arrow on line */
+.s2_stage.visible .s2_static_arrow {
+  animation: s2_fadeIn 0.2s 1.7s ease forwards;
+}
+
+/* 1.9s — Done box */
+.s2_stage.visible .s2_box_done {
+  animation: s2_boxIn 0.35s 1.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* 2.4s — Frozen border */
+.s2_stage.visible .s2_frozen {
+  animation: s2_fadeInHalf 0.4s 2.4s ease forwards;
+}
+.s2_stage.visible .s2_frozen_label {
+  animation: s2_fadeIn 0.3s 2.6s ease forwards;
+}
+
+/* 3.0s — Divider */
+.s2_stage.visible .s2_divider {
+  animation: s2_dividerGrow 0.4s 3.0s ease forwards;
+}
+
+/* 3.4s — Dynamic label */
+.s2_stage.visible .s2_label_dynamic {
+  animation: s2_labelIn 0.4s 3.4s ease forwards;
+}
+
+/* 3.8s — Dynamic timeline */
+.s2_stage.visible .s2_timeline_dynamic {
+  animation: s2_drawLine260 0.5s 3.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* 4.3s-5.3s — Events pop in */
+.s2_stage.visible .s2_event1 {
+  animation: s2_eventIn 0.35s 4.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s2_stage.visible .s2_event2 {
+  animation: s2_eventIn 0.35s 4.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s2_stage.visible .s2_event3 {
+  animation: s2_eventIn 0.35s 5.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Pulse rings */
+.s2_stage.visible .s2_pulse1 {
+  animation: s2_pulse 0.7s 4.5s ease-out forwards;
+}
+.s2_stage.visible .s2_pulse2 {
+  animation: s2_pulse 0.7s 5.0s ease-out forwards;
+}
+.s2_stage.visible .s2_pulse3 {
+  animation: s2_pulse 0.7s 5.5s ease-out forwards;
+}
+
+/* 5.6s — Crossing lines draw in */
+.s2_stage.visible .s2_conn1 {
+  animation: s2_strokeDraw 0.5s 5.6s ease forwards;
+}
+.s2_stage.visible .s2_conn2 {
+  animation: s2_strokeDraw 0.5s 5.9s ease forwards;
+}
+.s2_stage.visible .s2_conn3 {
+  animation: s2_strokeDraw 0.5s 6.2s ease forwards;
+}
+
+/* 6.5s — Subtitle */
+.s2_stage.visible .s2_subtitle {
+  animation: s2_subtitleIn 0.4s 6.5s ease forwards;
+}
+
+/* S3 — ARE: 一切皆事件 */
+.s3_stage {
+  position: relative;
+  width: 340px;
+  height: 320px;
+  margin: 0 auto;
+  background: #F0F9FF;
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: -apple-system, 'Helvetica Neue', 'PingFang SC', sans-serif;
+}
+
+/* Center box: ARE */
+.s3_center {
+  position: absolute;
+  top: 128px; left: 134px;
+  width: 72px; height: 40px;
+  border-radius: 8px;
+  border: 2.5px solid #F97316;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #F97316;
+  letter-spacing: 2px;
+  opacity: 0;
+  transform: scale(0);
+  z-index: 2;
+}
+
+/* Node boxes */
+.s3_node {
+  position: absolute;
+  width: 80px; height: 36px;
+  border-radius: 8px;
+  border: 2px solid #94A3B8;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #94A3B8;
+  opacity: 0;
+  transform: scale(0);
+  z-index: 2;
+}
+
+/* 5 node positions — spread around center (170,148) */
+/* App: top-left */
+.s3_node_1 { top: 24px; left: 16px; }
+/* Environment: top-right */
+.s3_node_2 { top: 24px; left: 244px; }
+/* Event: right */
+.s3_node_3 { top: 142px; left: 244px; }
+/* Notification: bottom-right — 4 chars, keep box */
+.s3_node_4 { top: 260px; left: 200px; }
+/* Scenario: bottom-left */
+.s3_node_5 { top: 260px; left: 60px; }
+
+/* Connector lines (SVG) */
+.s3_lines {
+  position: absolute;
+  top: 0; left: 0;
+  width: 340px; height: 320px;
+  z-index: 1;
+}
+.s3_line {
+  stroke: #94A3B8;
+  stroke-width: 2;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  fill: none;
+}
+
+/* Keyframes */
+@keyframes s3_centerIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s3_nodeIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s3_drawLine {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes s3_activateNode {
+  to {
+    border-color: #0EA5E9;
+    color: #0EA5E9;
+  }
+}
+
+/* Animation sequence triggered by .visible */
+.s3_stage.visible .s3_center {
+  animation: s3_centerIn 0.5s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Node 1: App */
+.s3_stage.visible .s3_node_1 {
+  animation: s3_nodeIn 0.4s 1.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s3_stage.visible .s3_line_1 {
+  animation: s3_drawLine 0.4s 1.0s ease-out forwards;
+}
+
+/* Node 2: Env */
+.s3_stage.visible .s3_node_2 {
+  animation: s3_nodeIn 0.4s 1.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s3_stage.visible .s3_line_2 {
+  animation: s3_drawLine 0.4s 1.6s ease-out forwards;
+}
+
+/* Node 3: Event */
+.s3_stage.visible .s3_node_3 {
+  animation: s3_nodeIn 0.4s 2.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s3_stage.visible .s3_line_3 {
+  animation: s3_drawLine 0.4s 2.2s ease-out forwards;
+}
+
+/* Node 4: Notification */
+.s3_stage.visible .s3_node_4 {
+  animation: s3_nodeIn 0.4s 2.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s3_stage.visible .s3_line_4 {
+  animation: s3_drawLine 0.4s 2.8s ease-out forwards;
+}
+
+/* Node 5: Scenario */
+.s3_stage.visible .s3_node_5 {
+  animation: s3_nodeIn 0.4s 3.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s3_stage.visible .s3_line_5 {
+  animation: s3_drawLine 0.4s 3.4s ease-out forwards;
+}
+
+/* Pulse on center after all nodes appear */
+.s3_pulse {
+  position: absolute;
+  top: 128px; left: 134px;
+  width: 72px; height: 40px;
+  border-radius: 8px;
+  border: 2px solid #F97316;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes s3_pulse {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+.s3_stage.visible .s3_pulse {
+  animation: s3_pulse 0.8s 4.0s ease-out forwards;
+}
+
+/* S4 — Virtual Phone: 12 Apps x 101 Tools */
+.s4_stage {
+  position: relative;
+  width: 340px;
+  height: 360px;
+  margin: 0 auto;
+  font-family: -apple-system, 'Helvetica Neue', 'PingFang SC', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Phone frame */
+.s4_phone {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.9);
+  width: 240px;
+  height: 296px;
+  border: 3px solid #94A3B8;
+  border-radius: 24px;
+  background: rgba(15, 23, 42, 0.6);
+  opacity: 0;
+}
+
+/* Notch */
+.s4_notch {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 6px;
+  border-radius: 3px;
+  background: #94A3B8;
+  opacity: 0;
+}
+
+/* App grid container */
+.s4_grid {
+  position: absolute;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 216px;
+  display: grid;
+  grid-template-columns: repeat(4, 48px);
+  grid-template-rows: repeat(3, 60px);
+  gap: 4px 4px;
+  justify-content: center;
+}
+
+/* Individual app icon */
+.s4_app {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  border: 2px solid #94A3B8;
+  background: rgba(148, 163, 184, 0.1);
+  font-size: 13px;
+  font-weight: 600;
+  color: #94A3B8;
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* Tool count label */
+.s4_label {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #94A3B8;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.s4_label em {
+  font-style: normal;
+  color: #F97316;
+  font-weight: 700;
+}
+
+/* === Keyframes === */
+@keyframes s4_phoneIn {
+  to { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+@keyframes s4_notchIn {
+  to { opacity: 1; }
+}
+
+@keyframes s4_appIn {
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s4_labelIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Row highlight on appear */
+@keyframes s4_appGlow {
+  0% { border-color: #F97316; box-shadow: 0 0 12px rgba(249,115,22,0.4); }
+  100% { border-color: #94A3B8; box-shadow: none; }
+}
+
+/* === Animation triggered by .visible === */
+
+.s4_stage.visible .s4_phone {
+  animation: s4_phoneIn 0.5s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.s4_stage.visible .s4_notch {
+  animation: s4_notchIn 0.3s 0.6s ease forwards;
+}
+
+/* Row 1: apps 1-4 */
+.s4_stage.visible .s4_app:nth-child(1),
+.s4_stage.visible .s4_app:nth-child(2),
+.s4_stage.visible .s4_app:nth-child(3),
+.s4_stage.visible .s4_app:nth-child(4) {
+  animation: s4_appIn 0.35s 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+             s4_appGlow 0.8s 1.2s ease forwards;
+}
+
+/* Row 2: apps 5-8 */
+.s4_stage.visible .s4_app:nth-child(5),
+.s4_stage.visible .s4_app:nth-child(6),
+.s4_stage.visible .s4_app:nth-child(7),
+.s4_stage.visible .s4_app:nth-child(8) {
+  animation: s4_appIn 0.35s 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+             s4_appGlow 0.8s 1.8s ease forwards;
+}
+
+/* Row 3: apps 9-12 */
+.s4_stage.visible .s4_app:nth-child(9),
+.s4_stage.visible .s4_app:nth-child(10),
+.s4_stage.visible .s4_app:nth-child(11),
+.s4_stage.visible .s4_app:nth-child(12) {
+  animation: s4_appIn 0.35s 2.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+             s4_appGlow 0.8s 2.4s ease forwards;
+}
+
+/* Label */
+.s4_stage.visible .s4_label {
+  animation: s4_labelIn 0.5s 3.2s ease forwards;
+}
+
+/* S5 — 七把标尺 */
+.s5_stage {
+  position: relative;
+  width: 340px;
+  height: 340px;
+  background: #FFF7ED;
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: -apple-system, 'Helvetica Neue', 'PingFang SC', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Center circle */
+.s5_center {
+  position: absolute;
+  top: 142px; left: 142px;
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: #F97316;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.5px;
+  opacity: 0;
+  transform: scale(0);
+  z-index: 5;
+}
+
+/* Dimension nodes — rounded rectangles for 2-char labels */
+.s5_node {
+  position: absolute;
+  width: 64px;
+  height: 34px;
+  border-radius: 17px;
+  border: 2.5px solid #F97316;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #F97316;
+  opacity: 0;
+  transform: scale(0);
+  z-index: 4;
+}
+
+/* 7 node positions around center (roughly circular, 120px radius from center 170,170) */
+.s5_node:nth-child(2)  { top: 20px;  left: 138px; }  /* 执行 — top */
+.s5_node:nth-child(3)  { top: 52px;  left: 235px; }  /* 检索 — top-right */
+.s5_node:nth-child(4)  { top: 135px; left: 264px; }  /* 歧义 — right */
+.s5_node:nth-child(5)  { top: 228px; left: 235px; }  /* 适应 — bottom-right */
+.s5_node:nth-child(6)  { top: 275px; left: 138px; }  /* 时间 — bottom */
+.s5_node:nth-child(7)  { top: 228px; left: 12px;  }  /* 噪声 — bottom-left */
+.s5_node:nth-child(8)  { top: 135px; left: 12px;  }  /* 协作 — left */
+
+/* Connector lines (SVG) */
+.s5_svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 340px;
+  height: 340px;
+  z-index: 1;
+}
+
+.s5_spoke {
+  stroke: #F97316;
+  stroke-width: 1.5;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  fill: none;
+  opacity: 0.3;
+}
+
+.s5_ring {
+  stroke: #94A3B8;
+  stroke-width: 1.2;
+  stroke-dasharray: 800;
+  stroke-dashoffset: 800;
+  fill: none;
+  opacity: 0.4;
+}
+
+/* Keyframes */
+@keyframes s5_centerIn {
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s5_nodeIn {
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s5_drawSpoke {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes s5_drawRing {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes s5_pulseCenter {
+  0% { box-shadow: 0 0 0 0 rgba(249,115,22,0.4); }
+  100% { box-shadow: 0 0 0 16px rgba(249,115,22,0); }
+}
+
+/* Animation triggered by .visible */
+.s5_stage.visible .s5_center {
+  animation: s5_centerIn 0.5s 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards,
+             s5_pulseCenter 0.8s 0.8s ease-out forwards;
+}
+
+/* Nodes appear one by one */
+.s5_stage.visible .s5_node:nth-child(2) { animation: s5_nodeIn 0.35s 1.2s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.s5_stage.visible .s5_node:nth-child(3) { animation: s5_nodeIn 0.35s 1.6s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.s5_stage.visible .s5_node:nth-child(4) { animation: s5_nodeIn 0.35s 2.0s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.s5_stage.visible .s5_node:nth-child(5) { animation: s5_nodeIn 0.35s 2.4s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.s5_stage.visible .s5_node:nth-child(6) { animation: s5_nodeIn 0.35s 2.8s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.s5_stage.visible .s5_node:nth-child(7) { animation: s5_nodeIn 0.35s 3.2s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.s5_stage.visible .s5_node:nth-child(8) { animation: s5_nodeIn 0.35s 3.6s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+
+/* Spokes appear with their nodes */
+.s5_stage.visible .s5_spoke:nth-child(1) { animation: s5_drawSpoke 0.4s 1.3s ease-out forwards; }
+.s5_stage.visible .s5_spoke:nth-child(2) { animation: s5_drawSpoke 0.4s 1.7s ease-out forwards; }
+.s5_stage.visible .s5_spoke:nth-child(3) { animation: s5_drawSpoke 0.4s 2.1s ease-out forwards; }
+.s5_stage.visible .s5_spoke:nth-child(4) { animation: s5_drawSpoke 0.4s 2.5s ease-out forwards; }
+.s5_stage.visible .s5_spoke:nth-child(5) { animation: s5_drawSpoke 0.4s 2.9s ease-out forwards; }
+.s5_stage.visible .s5_spoke:nth-child(6) { animation: s5_drawSpoke 0.4s 3.3s ease-out forwards; }
+.s5_stage.visible .s5_spoke:nth-child(7) { animation: s5_drawSpoke 0.4s 3.7s ease-out forwards; }
+
+/* Ring draws after all nodes */
+.s5_stage.visible .s5_ring { animation: s5_drawRing 1.2s 4.2s ease-out forwards; }
+
+/* S6 — Benchmark Bar Chart */
+.s6_stage {
+  position: relative;
+  width: 340px;
+  height: 280px;
+  background: #0F172A;
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: -apple-system, 'Helvetica Neue', 'PingFang SC', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding: 24px 20px;
+  box-sizing: border-box;
+}
+
+.s6_title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #94A3B8;
+  margin-bottom: 20px;
+  opacity: 0;
+  letter-spacing: 0.5px;
+}
+
+.s6_row {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  margin-bottom: 12px;
+}
+
+.s6_label {
+  width: 80px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #CBD5E1;
+  text-align: right;
+  padding-right: 12px;
+  flex-shrink: 0;
+  opacity: 0;
+}
+
+.s6_bar_track {
+  flex: 1;
+  height: 28px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.s6_bar {
+  height: 28px;
+  border-radius: 4px;
+  width: 0;
+  position: relative;
+}
+
+.s6_bar_1 { background: #F97316; }
+.s6_bar_2 { background: #0EA5E9; }
+.s6_bar_3 { background: #94A3B8; }
+.s6_bar_4 { background: #64748B; }
+
+.s6_pct {
+  position: absolute;
+  right: -40px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  font-weight: 600;
+  color: #E2E8F0;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+/* Animations */
+@keyframes s6_fadeIn {
+  to { opacity: 1; }
+}
+
+@keyframes s6_barGrow1 {
+  to { width: 42%; }
+}
+@keyframes s6_barGrow2 {
+  to { width: 35%; }
+}
+@keyframes s6_barGrow3 {
+  to { width: 28%; }
+}
+@keyframes s6_barGrow4 {
+  to { width: 21%; }
+}
+
+/* Triggered by .visible */
+.s6_stage.visible .s6_title {
+  animation: s6_fadeIn 0.4s 0.2s ease forwards;
+}
+
+.s6_stage.visible .s6_row:nth-child(2) .s6_label {
+  animation: s6_fadeIn 0.4s 0.6s ease forwards;
+}
+.s6_stage.visible .s6_row:nth-child(3) .s6_label {
+  animation: s6_fadeIn 0.4s 1.2s ease forwards;
+}
+.s6_stage.visible .s6_row:nth-child(4) .s6_label {
+  animation: s6_fadeIn 0.4s 1.8s ease forwards;
+}
+.s6_stage.visible .s6_row:nth-child(5) .s6_label {
+  animation: s6_fadeIn 0.4s 2.4s ease forwards;
+}
+
+.s6_stage.visible .s6_row:nth-child(2) .s6_bar {
+  animation: s6_barGrow1 0.6s 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.s6_stage.visible .s6_row:nth-child(3) .s6_bar {
+  animation: s6_barGrow2 0.6s 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.s6_stage.visible .s6_row:nth-child(4) .s6_bar {
+  animation: s6_barGrow3 0.6s 2.0s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.s6_stage.visible .s6_row:nth-child(5) .s6_bar {
+  animation: s6_barGrow4 0.6s 2.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.s6_stage.visible .s6_row:nth-child(2) .s6_pct {
+  animation: s6_fadeIn 0.3s 1.3s ease forwards;
+}
+.s6_stage.visible .s6_row:nth-child(3) .s6_pct {
+  animation: s6_fadeIn 0.3s 1.9s ease forwards;
+}
+.s6_stage.visible .s6_row:nth-child(4) .s6_pct {
+  animation: s6_fadeIn 0.3s 2.5s ease forwards;
+}
+.s6_stage.visible .s6_row:nth-child(5) .s6_pct {
+  animation: s6_fadeIn 0.3s 3.1s ease forwards;
+}
+
+.s6_footer {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 12px;
+  color: #64748B;
+  opacity: 0;
+}
+
+.s6_stage.visible .s6_footer {
+  animation: s6_fadeIn 0.4s 3.6s ease forwards;
+}
+
+/* S7 — 反直觉发现：时间陷阱 + A2A协作 */
+.s7_stage {
+  position: relative;
+  width: 340px;
+  height: 360px;
+  margin: 0 auto;
+  background: #FFF7ED;
+  font-family: -apple-system, 'Helvetica Neue', 'PingFang SC', sans-serif;
+  overflow: hidden;
+}
+
+/* === 上半部分：时间陷阱 === */
+.s7_section_title {
+  position: absolute;
+  font-size: 13px;
+  font-weight: 600;
+  color: #94A3B8;
+  letter-spacing: 1px;
+  opacity: 0;
+}
+.s7_title_top {
+  top: 8px; left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.s7_title_bottom {
+  top: 188px; left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+/* 强模型圆 */
+.s7_strong {
+  position: absolute;
+  top: 36px; left: 36px;
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  border: 2.5px solid #F97316;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #F97316;
+  opacity: 0;
+  transform: scale(0);
+}
+.s7_strong_label {
+  position: absolute;
+  top: 114px; left: 36px;
+  width: 72px;
+  text-align: center;
+  font-size: 11px;
+  color: #94A3B8;
+  opacity: 0;
+}
+
+/* 弱模型圆 */
+.s7_weak {
+  position: absolute;
+  top: 44px; right: 40px;
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  border: 2.5px solid #0EA5E9;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0EA5E9;
+  opacity: 0;
+  transform: scale(0);
+}
+.s7_weak_label {
+  position: absolute;
+  top: 114px; right: 40px;
+  width: 64px;
+  text-align: center;
+  font-size: 11px;
+  color: #94A3B8;
+  opacity: 0;
+}
+
+/* 时钟 */
+.s7_clock {
+  position: absolute;
+  top: 50px; left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 2.5px solid #94A3B8;
+  background: #fff;
+}
+.s7_clock_hand_m {
+  position: absolute;
+  top: 8px; left: 50%;
+  width: 2px; height: 12px;
+  background: #94A3B8;
+  transform: translateX(-50%);
+  transform-origin: bottom center;
+  border-radius: 1px;
+}
+.s7_clock_hand_h {
+  position: absolute;
+  top: 11px; left: 50%;
+  width: 2px; height: 9px;
+  background: #94A3B8;
+  transform: translateX(-50%) rotate(90deg);
+  transform-origin: bottom center;
+  border-radius: 1px;
+}
+
+/* 箭头：强模型向下 */
+.s7_arrow_down {
+  position: absolute;
+  top: 132px; left: 72px;
+  width: 2px; height: 0;
+  background: #F97316;
+  opacity: 0;
+}
+.s7_arrow_down_head {
+  position: absolute;
+  top: 158px; left: 72px;
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid #F97316;
+  opacity: 0;
+}
+
+/* 箭头：弱模型向上 */
+.s7_arrow_up {
+  position: absolute;
+  top: 30px; right: 70px;
+  width: 2px; height: 0;
+  background: #0EA5E9;
+  opacity: 0;
+}
+.s7_arrow_up_head {
+  position: absolute;
+  top: 24px; right: 70px;
+  transform: translateX(50%);
+  width: 0; height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 7px solid #0EA5E9;
+  opacity: 0;
+}
+
+/* === 分隔线 === */
+.s7_divider {
+  position: absolute;
+  top: 178px; left: 40px;
+  width: 0;
+  height: 1px;
+  background: #E2E8F0;
+}
+
+/* === 下半部分：协作增益 === */
+.s7_bar_group {
+  position: absolute;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  transform: translateY(10px);
+}
+.s7_bar_group_left {
+  left: 50px;
+}
+.s7_bar_group_right {
+  right: 50px;
+}
+
+.s7_bar_name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1E293B;
+  margin-bottom: 6px;
+}
+.s7_bar_container {
+  width: 80px;
+  height: 80px;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+}
+.s7_bar {
+  width: 28px;
+  border-radius: 4px 4px 0 0;
+  position: relative;
+}
+.s7_bar_before {
+  background: #94A3B8;
+  height: 0;
+}
+.s7_bar_after {
+  background: #0EA5E9;
+  height: 0;
+}
+.s7_bar_label {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+}
+.s7_bar_before .s7_bar_label { color: #94A3B8; }
+.s7_bar_after .s7_bar_label { color: #0EA5E9; }
+
+.s7_bar_delta {
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 6px;
+  opacity: 0;
+}
+.s7_bar_delta_small { color: #F97316; }
+.s7_bar_delta_big { color: #0EA5E9; }
+
+/* === KEYFRAMES === */
+@keyframes s7_fadeIn {
+  to { opacity: 1; }
+}
+@keyframes s7_scaleIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s7_clockIn {
+  to { transform: translateX(-50%) scale(1); }
+}
+@keyframes s7_arrowDownGrow {
+  to { height: 26px; opacity: 1; }
+}
+@keyframes s7_arrowUpGrow {
+  to { height: 14px; opacity: 1; }
+}
+@keyframes s7_dividerGrow {
+  to { width: 260px; }
+}
+@keyframes s7_groupIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s7_barGrow_gpt_before {
+  to { height: 52px; }
+}
+@keyframes s7_barGrow_gpt_after {
+  to { height: 56px; }
+}
+@keyframes s7_barGrow_llama_before {
+  to { height: 26px; }
+}
+@keyframes s7_barGrow_llama_after {
+  to { height: 38px; }
+}
+@keyframes s7_labelIn {
+  to { opacity: 1; }
+}
+
+/* === TRIGGERED SEQUENCE === */
+.s7_stage.visible .s7_title_top {
+  animation: s7_fadeIn 0.4s 0.3s ease forwards;
+}
+.s7_stage.visible .s7_strong {
+  animation: s7_scaleIn 0.4s 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s7_stage.visible .s7_strong_label {
+  animation: s7_fadeIn 0.3s 1.2s ease forwards;
+}
+.s7_stage.visible .s7_clock {
+  animation: s7_clockIn 0.4s 1.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s7_stage.visible .s7_weak {
+  animation: s7_scaleIn 0.4s 2.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s7_stage.visible .s7_weak_label {
+  animation: s7_fadeIn 0.3s 2.4s ease forwards;
+}
+.s7_stage.visible .s7_arrow_down {
+  animation: s7_arrowDownGrow 0.4s 2.8s ease forwards;
+}
+.s7_stage.visible .s7_arrow_down_head {
+  animation: s7_fadeIn 0.2s 3.2s ease forwards;
+}
+.s7_stage.visible .s7_arrow_up {
+  animation: s7_arrowUpGrow 0.4s 2.8s ease forwards;
+}
+.s7_stage.visible .s7_arrow_up_head {
+  animation: s7_fadeIn 0.2s 3.2s ease forwards;
+}
+
+/* Divider */
+.s7_stage.visible .s7_divider {
+  animation: s7_dividerGrow 0.5s 3.6s ease forwards;
+}
+
+/* Bottom section title */
+.s7_stage.visible .s7_title_bottom {
+  animation: s7_fadeIn 0.4s 4.0s ease forwards;
+}
+
+/* Bar groups */
+.s7_stage.visible .s7_bar_group_left {
+  animation: s7_groupIn 0.4s 4.4s ease forwards;
+}
+.s7_stage.visible .s7_bar_group_right {
+  animation: s7_groupIn 0.4s 4.8s ease forwards;
+}
+
+/* GPT-5 bars */
+.s7_stage.visible .s7_bar_group_left .s7_bar_before {
+  animation: s7_barGrow_gpt_before 0.5s 4.8s ease forwards;
+}
+.s7_stage.visible .s7_bar_group_left .s7_bar_after {
+  animation: s7_barGrow_gpt_after 0.5s 5.0s ease forwards;
+}
+.s7_stage.visible .s7_bar_group_left .s7_bar_before .s7_bar_label {
+  animation: s7_labelIn 0.3s 5.3s ease forwards;
+}
+.s7_stage.visible .s7_bar_group_left .s7_bar_after .s7_bar_label {
+  animation: s7_labelIn 0.3s 5.5s ease forwards;
+}
+.s7_stage.visible .s7_bar_group_left .s7_bar_delta {
+  animation: s7_labelIn 0.3s 5.4s ease forwards;
+}
+
+/* Llama bars */
+.s7_stage.visible .s7_bar_group_right .s7_bar_before {
+  animation: s7_barGrow_llama_before 0.5s 5.0s ease forwards;
+}
+.s7_stage.visible .s7_bar_group_right .s7_bar_after {
+  animation: s7_barGrow_llama_after 0.5s 5.2s ease forwards;
+}
+.s7_stage.visible .s7_bar_group_right .s7_bar_before .s7_bar_label {
+  animation: s7_labelIn 0.3s 5.4s ease forwards;
+}
+.s7_stage.visible .s7_bar_group_right .s7_bar_after .s7_bar_label {
+  animation: s7_labelIn 0.3s 5.6s ease forwards;
+}
+.s7_stage.visible .s7_bar_group_right .s7_bar_delta {
+  animation: s7_labelIn 0.3s 5.8s ease forwards;
+}
+
+/* S8 — ARE Verifier */
+.s8_stage {
+  position: relative;
+  width: 340px;
+  height: 260px;
+  margin: 0 auto;
+  background: #0F172A;
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: -apple-system, 'Helvetica Neue', 'PingFang SC', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Boxes: read tool and write tool */
+.s8_box {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 40px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.s8_read {
+  left: 24px;
+  top: 50px;
+  border: 2px solid #0EA5E9;
+  color: #0EA5E9;
+  background: rgba(14, 165, 233, 0.1);
+}
+
+.s8_write {
+  left: 24px;
+  top: 130px;
+  border: 2px solid #F97316;
+  color: #F97316;
+  background: rgba(249, 115, 22, 0.1);
+}
+
+/* Dim label under read box */
+.s8_dim_label {
+  position: absolute;
+  font-size: 11px;
+  color: #94A3B8;
+  opacity: 0;
+}
+.s8_dim_label.s8_read_label {
+  left: 34px;
+  top: 93px;
+}
+.s8_dim_label.s8_write_label {
+  left: 34px;
+  top: 173px;
+}
+
+/* Center circle: environment state */
+.s8_env {
+  position: absolute;
+  left: 148px;
+  top: 100px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2.5px solid #94A3B8;
+  background: rgba(148, 163, 184, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #E2E8F0;
+  line-height: 1.2;
+  text-align: center;
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* Right box: Verifier */
+.s8_verifier {
+  left: 250px;
+  top: 110px;
+  width: 72px;
+  height: 44px;
+  border: 2px solid #F97316;
+  color: #F97316;
+  background: rgba(249, 115, 22, 0.1);
+  font-size: 12px;
+}
+
+/* Arrows (SVG) */
+.s8_arrows {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.s8_arrow_line {
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+}
+
+.s8_arrow_head {
+  opacity: 0;
+}
+
+/* Big number */
+.s8_metric {
+  position: absolute;
+  left: 246px;
+  top: 165px;
+  font-size: 28px;
+  font-weight: 800;
+  color: #F97316;
+  opacity: 0;
+  transform: translateY(10px);
+  text-align: center;
+  width: 80px;
+}
+
+.s8_metric_sub {
+  position: absolute;
+  left: 246px;
+  top: 197px;
+  font-size: 11px;
+  color: #94A3B8;
+  opacity: 0;
+  transform: translateY(10px);
+  text-align: center;
+  width: 80px;
+}
+
+/* Cross mark on read box */
+.s8_cross {
+  position: absolute;
+  left: 24px;
+  top: 50px;
+  width: 72px;
+  height: 40px;
+  pointer-events: none;
+  opacity: 0;
+}
+.s8_cross line {
+  stroke: #EF4444;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+/* Keyframes */
+@keyframes s8_boxIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s8_fadeIn {
+  to { opacity: 1; }
+}
+@keyframes s8_envIn {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s8_drawLine {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes s8_metricIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes s8_crossIn {
+  to { opacity: 0.7; }
+}
+
+/* Animation sequence triggered by .visible */
+.s8_stage.visible .s8_read {
+  animation: s8_boxIn 0.4s 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s8_stage.visible .s8_read_label {
+  animation: s8_fadeIn 0.3s 0.7s ease forwards;
+}
+.s8_stage.visible .s8_write {
+  animation: s8_boxIn 0.4s 1.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.s8_stage.visible .s8_write_label {
+  animation: s8_fadeIn 0.3s 1.3s ease forwards;
+}
+
+/* Arrow from write -> env */
+.s8_stage.visible .s8_arrow1_line {
+  animation: s8_drawLine 0.5s 1.6s ease forwards;
+}
+.s8_stage.visible .s8_arrow1_head {
+  animation: s8_fadeIn 0.2s 2.0s ease forwards;
+}
+
+/* Env circle */
+.s8_stage.visible .s8_env {
+  animation: s8_envIn 0.4s 2.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Arrow from env -> verifier */
+.s8_stage.visible .s8_arrow2_line {
+  animation: s8_drawLine 0.5s 2.8s ease forwards;
+}
+.s8_stage.visible .s8_arrow2_head {
+  animation: s8_fadeIn 0.2s 3.2s ease forwards;
+}
+
+/* Verifier box */
+.s8_stage.visible .s8_verifier {
+  animation: s8_boxIn 0.4s 3.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Cross on read box */
+.s8_stage.visible .s8_cross {
+  animation: s8_crossIn 0.3s 4.0s ease forwards;
+}
+
+/* Metric */
+.s8_stage.visible .s8_metric {
+  animation: s8_metricIn 0.5s 4.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.s8_stage.visible .s8_metric_sub {
+  animation: s8_metricIn 0.5s 4.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* S9 — Events 生命周期 */
+.s9_stage {
+  width: 340px;
+  height: 250px;
+  background: #F0F9FF;
+  position: relative;
+  overflow: hidden;
+  font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Timeline base line */
+.s9_timeline {
+  position: absolute;
+  top: 100px;
+  left: 30px;
+  width: 280px;
+  height: 3px;
+  background: #94A3B8;
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+.s9_stage.visible .s9_timeline {
+  opacity: 1;
+  transform: scaleX(1);
+  transition: opacity 0.3s ease, transform 0.8s ease;
+}
+
+/* EventLoop label */
+.s9_eventloop {
+  position: absolute;
+  top: 190px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 15px;
+  font-weight: 600;
+  color: #94A3B8;
+  letter-spacing: 1px;
+  opacity: 0;
+}
+.s9_stage.visible .s9_eventloop {
+  opacity: 1;
+  transition: opacity 0.5s ease 0.6s;
+}
+
+/* Bracket under timeline */
+.s9_bracket {
+  position: absolute;
+  top: 110px;
+  left: 50px;
+  width: 240px;
+  height: 30px;
+  border: 2px solid #94A3B8;
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  opacity: 0;
+}
+.s9_stage.visible .s9_bracket {
+  opacity: 1;
+  transition: opacity 0.5s ease 0.6s;
+}
+
+/* Arrow from bracket to EventLoop */
+.s9_arrow {
+  position: absolute;
+  top: 142px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 30px;
+  background: #94A3B8;
+  opacity: 0;
+}
+.s9_arrow::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #94A3B8;
+}
+.s9_stage.visible .s9_arrow {
+  opacity: 1;
+  transition: opacity 0.5s ease 0.6s;
+}
+
+/* Shared node styles */
+.s9_node {
+  position: absolute;
+  top: 52px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* Connector line from node to timeline */
+.s9_connector {
+  position: absolute;
+  top: 96px;
+  width: 2px;
+  height: 7px;
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* Node 1: Scheduled (orange) */
+.s9_node_scheduled {
+  left: 30px;
+  background: #F97316;
+}
+.s9_conn_scheduled {
+  left: 61px;
+  background: #F97316;
+}
+.s9_stage.visible .s9_node_scheduled,
+.s9_stage.visible .s9_conn_scheduled {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.4s ease 1.2s, transform 0.4s ease 1.2s;
+}
+
+/* Node 2: Conditional (blue) */
+.s9_node_conditional {
+  left: 138px;
+  background: #0EA5E9;
+}
+.s9_conn_conditional {
+  left: 169px;
+  background: #0EA5E9;
+}
+.s9_stage.visible .s9_node_conditional,
+.s9_stage.visible .s9_conn_conditional {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.4s ease 1.8s, transform 0.4s ease 1.8s;
+}
+
+/* Node 3: Probability (gray, dashed border) */
+.s9_node_probability {
+  left: 246px;
+  background: transparent;
+  border: 3px dashed #94A3B8;
+  color: #94A3B8;
+}
+.s9_conn_probability {
+  left: 277px;
+  background: #94A3B8;
+}
+.s9_stage.visible .s9_node_probability,
+.s9_stage.visible .s9_conn_probability {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.4s ease 2.4s, transform 0.4s ease 2.4s;
+}
+
+/* Tick marks on timeline */
+.s9_tick {
+  position: absolute;
+  top: 95px;
+  width: 2px;
+  height: 13px;
+  opacity: 0;
+}
+.s9_tick1 { left: 61px; background: #F97316; }
+.s9_tick2 { left: 169px; background: #0EA5E9; }
+.s9_tick3 { left: 277px; background: #94A3B8; }
+.s9_stage.visible .s9_tick1 { opacity: 1; transition: opacity 0.3s ease 1.2s; }
+.s9_stage.visible .s9_tick2 { opacity: 1; transition: opacity 0.3s ease 1.8s; }
+.s9_stage.visible .s9_tick3 { opacity: 1; transition: opacity 0.3s ease 2.4s; }
+
+/* Sub-labels under nodes */
+.s9_sublabel {
+  position: absolute;
+  top: 28px;
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0;
+  white-space: nowrap;
+}
+.s9_sublabel_scheduled {
+  left: 62px;
+  transform: translateX(-50%);
+  color: #F97316;
+}
+.s9_sublabel_conditional {
+  left: 170px;
+  transform: translateX(-50%);
+  color: #0EA5E9;
+}
+.s9_sublabel_probability {
+  left: 278px;
+  transform: translateX(-50%);
+  color: #94A3B8;
+}
+.s9_stage.visible .s9_sublabel_scheduled { opacity: 1; transition: opacity 0.4s ease 1.4s; }
+.s9_stage.visible .s9_sublabel_conditional { opacity: 1; transition: opacity 0.4s ease 2.0s; }
+.s9_stage.visible .s9_sublabel_probability { opacity: 1; transition: opacity 0.4s ease 2.6s; }
+
+/* Title */
+.s9_title {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  opacity: 0;
+  white-space: nowrap;
+}
+.s9_stage.visible .s9_title {
+  opacity: 1;
+  transition: opacity 0.5s ease 0.2s;
+}
+
+/* S10 — Notification 系统 */
+.s10_stage {
+  width: 340px;
+  height: 260px;
+  position: relative;
+  overflow: hidden;
+  background: #0F172A;
+  border-radius: 12px;
+}
+
+/* Agent box - center */
+.s10_agent {
+  position: absolute;
+  top: 70px;
+  left: 95px;
+  width: 150px;
+  height: 80px;
+  border: 2.5px solid #0EA5E9;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: none;
+}
+
+.s10_agent_label {
+  color: #0EA5E9;
+  font-size: 22px;
+  font-weight: 700;
+  font-family: sans-serif;
+}
+
+.s10_agent_sub {
+  color: #94A3B8;
+  font-size: 13px;
+  font-family: sans-serif;
+  margin-top: 4px;
+}
+
+.s10_stage.visible .s10_agent {
+  animation: s10_agent_in 0.5s 0.3s ease-out forwards, s10_agent_flash 0.3s 3.2s ease-in-out 3;
+}
+
+@keyframes s10_agent_in {
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s10_agent_flash {
+  0%, 100% { border-color: #0EA5E9; }
+  50% { border-color: #F97316; box-shadow: 0 0 18px rgba(249,115,22,0.4); }
+}
+
+/* Notification bubbles */
+.s10_notif {
+  position: absolute;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: sans-serif;
+  white-space: nowrap;
+  opacity: 0;
+  transition: none;
+}
+
+/* 新短信 - left */
+.s10_notif_sms {
+  top: 50px;
+  left: -100px;
+  background: #F97316;
+  color: #fff;
+}
+
+.s10_stage.visible .s10_notif_sms {
+  animation: s10_slide_right 0.5s 1.2s ease-out forwards;
+}
+
+@keyframes s10_slide_right {
+  0% { opacity: 0; left: -100px; }
+  100% { opacity: 1; left: 10px; }
+}
+
+/* 日历提醒 - right */
+.s10_notif_cal {
+  top: 50px;
+  right: -110px;
+  background: #0EA5E9;
+  color: #fff;
+}
+
+.s10_stage.visible .s10_notif_cal {
+  animation: s10_slide_left 0.5s 1.8s ease-out forwards;
+}
+
+@keyframes s10_slide_left {
+  0% { opacity: 0; right: -110px; }
+  100% { opacity: 1; right: 10px; }
+}
+
+/* 来电 - bottom */
+.s10_notif_call {
+  bottom: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #94A3B8;
+  color: #0F172A;
+}
+
+.s10_stage.visible .s10_notif_call {
+  animation: s10_slide_up 0.5s 2.4s ease-out forwards;
+}
+
+@keyframes s10_slide_up {
+  0% { opacity: 0; bottom: -50px; }
+  100% { opacity: 1; bottom: 30px; }
+}
+
+/* Connecting lines */
+.s10_line {
+  position: absolute;
+  background: none;
+  opacity: 0;
+  transition: none;
+}
+
+.s10_line_left {
+  top: 108px;
+  left: 10px;
+  width: 85px;
+  height: 2px;
+  border-top: 2px dashed #F97316;
+}
+
+.s10_stage.visible .s10_line_left {
+  animation: s10_fade_in 0.3s 1.6s ease-out forwards;
+}
+
+.s10_line_right {
+  top: 108px;
+  right: 10px;
+  width: 85px;
+  height: 2px;
+  border-top: 2px dashed #0EA5E9;
+}
+
+.s10_stage.visible .s10_line_right {
+  animation: s10_fade_in 0.3s 2.2s ease-out forwards;
+}
+
+.s10_line_bottom {
+  bottom: 62px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 40px;
+  border-left: 2px dashed #94A3B8;
+}
+
+.s10_stage.visible .s10_line_bottom {
+  animation: s10_fade_in 0.3s 2.8s ease-out forwards;
+}
+
+@keyframes s10_fade_in {
+  to { opacity: 1; }
+}
+
+/* Title */
+.s10_title {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #94A3B8;
+  font-size: 13px;
+  font-family: sans-serif;
+  letter-spacing: 1px;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+.s10_stage.visible .s10_title {
+  animation: s10_fade_in 0.4s 0.1s ease-out forwards;
+}
+
+/* S11 — 12 Apps 四大分类 */
+.s11_stage {
+  width: 340px;
+  height: 300px;
+  background: #FFF7ED;
+  position: relative;
+  overflow: hidden;
+  font-family: sans-serif;
+  padding: 6px 8px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.s11_title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1E293B;
+  text-align: center;
+  margin-bottom: 6px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.s11_stage.visible .s11_title { opacity: 1; transition-delay: 0.1s; }
+
+.s11_grid {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.s11_row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.s11_stage.visible .s11_row:nth-child(1) { opacity: 1; transform: translateY(0); transition-delay: 0.4s; }
+.s11_stage.visible .s11_row:nth-child(2) { opacity: 1; transform: translateY(0); transition-delay: 1.2s; }
+.s11_stage.visible .s11_row:nth-child(3) { opacity: 1; transform: translateY(0); transition-delay: 2.0s; }
+.s11_stage.visible .s11_row:nth-child(4) { opacity: 1; transform: translateY(0); transition-delay: 2.8s; }
+
+.s11_label {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 2px;
+}
+
+.s11_label_comm { background: #F97316; }
+.s11_label_org  { background: #0EA5E9; }
+.s11_label_info { background: #64748B; }
+.s11_label_tool { background: #94A3B8; }
+
+.s11_apps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.s11_app {
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.s11_app_comm { background: #FB923C; }
+.s11_app_org  { background: #38BDF8; }
+.s11_app_info { background: #7C8FA8; }
+.s11_app_tool { background: #A8B8C8; }
+
+.s11_legend {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: #94A3B8;
+  text-align: center;
+  margin-top: 4px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.s11_stage.visible .s11_legend { opacity: 1; transition-delay: 3.6s; }
+
+/* S12 — Universe 生成 */
+.s12_stage {
+  width: 340px;
+  height: 300px;
+  position: relative;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* Hide all animated elements until .visible */
+.s12_stage .s12_step1,
+.s12_stage .s12_arrow1,
+.s12_stage .s12_step2,
+.s12_stage .s12_app1,
+.s12_stage .s12_app2,
+.s12_stage .s12_app3,
+.s12_stage .s12_arrow2,
+.s12_stage .s12_step3 {
+  opacity: 0;
+}
+
+.s12_stage.visible .s12_step1   { animation: s12_fadeIn 0.5s ease forwards 0.3s; }
+.s12_stage.visible .s12_arrow1  { animation: s12_fadeIn 0.5s ease forwards 0.8s; }
+.s12_stage.visible .s12_step2   { animation: s12_fadeIn 0.5s ease forwards 1.3s; }
+.s12_stage.visible .s12_app1    { animation: s12_fadeIn 0.4s ease forwards 1.8s; }
+.s12_stage.visible .s12_app2    { animation: s12_fadeIn 0.4s ease forwards 2.2s; }
+.s12_stage.visible .s12_app3    { animation: s12_fadeIn 0.4s ease forwards 2.6s; }
+.s12_stage.visible .s12_arrow2  { animation: s12_fadeIn 0.5s ease forwards 3.1s; }
+.s12_stage.visible .s12_step3   { animation: s12_fadeIn 0.5s ease forwards 3.6s; }
+
+@keyframes s12_fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Boxes */
+.s12_box {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: sans-serif;
+  color: #fff;
+}
+
+.s12_step1 {
+  width: 96px;
+  height: 44px;
+  left: 122px;
+  top: 10px;
+  background: #F97316;
+}
+
+.s12_step2 {
+  width: 96px;
+  height: 44px;
+  left: 122px;
+  top: 120px;
+  background: #0EA5E9;
+}
+
+.s12_step3 {
+  width: 112px;
+  height: 44px;
+  left: 114px;
+  top: 240px;
+  background: #94A3B8;
+}
+
+/* Small app blocks */
+.s12_appbox {
+  position: absolute;
+  width: 52px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: 1.5px solid #0EA5E9;
+  background: rgba(14, 165, 233, 0.15);
+  font-size: 13px;
+  font-family: sans-serif;
+  color: #0EA5E9;
+  font-weight: 500;
+}
+
+.s12_app1 {
+  left: 244px;
+  top: 108px;
+}
+.s12_app2 {
+  left: 244px;
+  top: 142px;
+}
+.s12_app3 {
+  left: 244px;
+  top: 176px;
+}
+
+/* Arrows — SVG lines */
+.s12_arrowsvg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 340px;
+  height: 300px;
+  pointer-events: none;
+}
+
+/* S13 — 基础四维 */
+.s13_stage {
+  position: relative;
+  width: 340px;
+  height: 280px;
+  background: #F0F9FF;
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+
+.s13_step {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.s13_stage.visible .s13_step { animation: s13_fadeUp 0.5s ease forwards; }
+.s13_stage.visible .s13_step1 { animation-delay: 0.2s; }
+.s13_stage.visible .s13_step2 { animation-delay: 0.6s; }
+.s13_stage.visible .s13_step3 { animation-delay: 1.0s; }
+.s13_stage.visible .s13_step4 { animation-delay: 1.4s; }
+
+@keyframes s13_fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.s13_box {
+  width: 72px;
+  height: 44px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.s13_box_orange { background: #F97316; }
+.s13_box_blue { background: #0EA5E9; }
+
+.s13_desc {
+  font-size: 13px;
+  color: #475569;
+  white-space: nowrap;
+}
+
+/* Staircase positions: left-bottom to right-top */
+.s13_step1 { left: 16px;  bottom: 20px; }
+.s13_step2 { left: 76px;  bottom: 82px; }
+.s13_step3 { left: 136px; bottom: 144px; }
+.s13_step4 { left: 196px; bottom: 206px; }
+
+/* Stair platform lines */
+.s13_stair_lines {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+
+.s13_stage.visible .s13_stair_lines { animation: s13_fadeUp 0.4s ease forwards; animation-delay: 0.1s; }
+
+.s13_stair_line {
+  position: absolute;
+  background: #CBD5E1;
+  height: 2px;
+}
+
+.s13_stair_riser {
+  position: absolute;
+  background: #CBD5E1;
+  width: 2px;
+}
+
+/* Horizontal treads */
+.s13_line1 { left: 12px; bottom: 18px; width: 80px; }
+.s13_line2 { left: 72px; bottom: 80px; width: 80px; }
+.s13_line3 { left: 132px; bottom: 142px; width: 80px; }
+.s13_line4 { left: 192px; bottom: 204px; width: 80px; }
+
+/* Vertical risers */
+.s13_riser1 { left: 72px; bottom: 18px; height: 62px; }
+.s13_riser2 { left: 132px; bottom: 80px; height: 62px; }
+.s13_riser3 { left: 192px; bottom: 142px; height: 62px; }
+
+/* S14 — 高级三维 */
+.s14_stage {
+  width: 340px;
+  height: 260px;
+  background: #0F172A;
+  position: relative;
+  overflow: hidden;
+  font-family: sans-serif;
+  border-radius: 8px;
+}
+
+/* Three columns */
+.s14_col {
+  position: absolute;
+  top: 0;
+  width: 113px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s14_col_time { left: 0; }
+.s14_col_noise { left: 113px; }
+.s14_col_collab { left: 226px; }
+
+.s14_stage.visible .s14_col_time { opacity: 1; transform: translateY(0); transition-delay: 0.0s; }
+.s14_stage.visible .s14_col_noise { opacity: 1; transform: translateY(0); transition-delay: 0.5s; }
+.s14_stage.visible .s14_col_collab { opacity: 1; transform: translateY(0); transition-delay: 1.0s; }
+
+/* Column titles */
+.s14_title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #CBD5E1;
+  margin-bottom: 14px;
+  letter-spacing: 1px;
+}
+
+/* --- Time column: clock circle --- */
+.s14_clock {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid #F97316;
+  position: relative;
+  box-sizing: border-box;
+}
+.s14_clock_hand1 {
+  position: absolute;
+  width: 2px;
+  height: 18px;
+  background: #F97316;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  transform-origin: bottom center;
+}
+.s14_clock_hand2 {
+  position: absolute;
+  width: 2px;
+  height: 14px;
+  background: #F97316;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100%) rotate(90deg);
+  transform-origin: bottom center;
+}
+.s14_clock_dot {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #F97316;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.s14_window_label {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #EF4444;
+  font-weight: 600;
+  padding: 2px 10px;
+  border: 1.5px solid #EF4444;
+  border-radius: 4px;
+}
+
+/* --- Noise column: signal + noise circles --- */
+.s14_noise_wrap {
+  width: 80px;
+  height: 80px;
+  position: relative;
+}
+.s14_signal {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #0EA5E9;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.4);
+}
+.s14_noise_dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #94A3B8;
+  position: absolute;
+  opacity: 0.5;
+}
+.s14_nd1 { top: 2px; left: 8px; }
+.s14_nd2 { top: 0; right: 10px; }
+.s14_nd3 { top: 22px; right: 0; }
+.s14_nd4 { bottom: 8px; right: 4px; }
+.s14_nd5 { bottom: 0; left: 18px; }
+.s14_nd6 { top: 26px; left: 0; }
+.s14_nd7 { bottom: 16px; left: 2px; }
+
+.s14_noise_label {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+/* --- Collab column: two agents + notes box --- */
+.s14_collab_wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.s14_agents_row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  position: relative;
+}
+.s14_agent {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #F97316;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #0F172A;
+  z-index: 2;
+}
+.s14_notes_box {
+  padding: 4px 10px;
+  border: 2px solid #0EA5E9;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0EA5E9;
+  background: rgba(14, 165, 233, 0.1);
+  margin-top: 2px;
+}
+.s14_conn_line {
+  width: 1.5px;
+  height: 12px;
+  background: #94A3B8;
+}
+.s14_conn_row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 46px;
+}
+</style>
+
+<meta name="description" content="当我们说「测试 AI Agent」的时候，我们到底在测什么？现有的 benchmark 让 Agent 做的事情是这样的：给一个固定的问题，等一个固定的答案，整个世界在 Agent 思考的时候是 静止 的。但真实世界不是这样运作的——你让 AI 帮你订下周的会议室，它查日历的时候别人可能已经把那个时段占了；你让它帮你回邮件，新邮件可能在它处理的过程中不断涌入">
+<link rel="canonical" href="https://chendi.me/readings/gaia2-benchmark/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<!-- ── 面包屑 ── -->
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<!-- ── 返回 ── -->
+<button class="back-btn" id="backBtn" onclick="goBack()">←</button>
+<!-- ── 深度圆点 ── -->
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- Layer 0: 概览 -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="layer active" id="layer-overview" data-depth="0">
+
+<!-- S1: Hero -->
+<section class="feed-section" style="background: var(--bg-act1);">
+<div class="section-inner">
+  <div class="section-tag reveal">GAIA2 · META SUPERINTELLIGENCE LABS · ICLR 2026</div>
+  <h2 class="big-statement reveal reveal-d1">当我们让 AI Agent 去订机票、查日历、发邮件——它真的能搞定吗？</h2>
+  <p class="body-text reveal reveal-d2">当我们说「测试 AI Agent」的时候，我们到底在测什么？现有的 benchmark 让 Agent 做的事情是这样的：给一个固定的问题，等一个固定的答案，整个世界在 Agent 思考的时候是<span class="hl">静止</span>的。但真实世界不是这样运作的——你让 AI 帮你订下周的会议室，它查日历的时候别人可能已经把那个时段占了；你让它帮你回邮件，新邮件可能在它处理的过程中不断涌入。因此 Meta 的研究团队提出了 Gaia2——一个在<span class="hl2">动态、异步</span>环境中测试 AI Agent 的 benchmark，包含 <span class="hl">1120 个场景</span>和 <span class="hl">7 个能力维度</span>。</p>
+  <div class="anim-stage reveal reveal-d3" id="s1-anim"><div class="s1_stage">
+  <!-- 左侧：静态世界 -->
+  <div class="s1_static-label">静态世界</div>
+  <div class="s1_bench-label">静态 Benchmark</div>
+  <div class="s1_q-box">问题</div>
+  <div class="s1_static-line"></div>
+  <div class="s1_static-arrow"></div>
+  <div class="s1_a-box">答案</div>
+  <div class="s1_static-dots">. . .</div>
+
+  <!-- 分隔线 -->
+  <div class="s1_divider"></div>
+  <div class="s1_vs-label">VS</div>
+
+  <!-- 右侧：动态世界 -->
+  <div class="s1_dynamic-label">动态世界</div>
+  <div class="s1_events">
+    <div class="s1_event s1_event-1">状态</div>
+    <div class="s1_event s1_event-2">操作</div>
+    <div class="s1_event s1_event-3">通知</div>
+  </div>
+  <div class="s1_dyn-line s1_dyn-line-1"></div>
+  <div class="s1_dyn-line s1_dyn-line-2"></div>
+  <div class="s1_notify">新消息到达</div>
+  <div class="s1_event-new"></div>
+  <div class="s1_gaia2-label">Gaia2 动态测试</div>
+
+  <!-- 底部总结 -->
+  <div class="s1_summary">真实世界<em>不会等你答完</em>才变化</div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Abstract</span><p>We introduce Gaia2, a benchmark for evaluating LLM agents in dynamic, asynchronous environments. Built on ARE (Agents Research Environments), a novel event-driven platform, Gaia2 features 1,120 scenarios spanning 7 capability splits—Execution, Search, Ambiguity, Adaptability, Time, Noise, and Agent-to-Agent—within a realistic Mobile environment of 12 apps and 101 tools.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S2: 静态 vs 动态 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <div class="section-tag reveal">ACT I · 问题</div>
+  <h2 class="big-statement reveal reveal-d1">静态考场测不出真本事</h2>
+  <p class="body-text reveal reveal-d2">过去几年涌现了很多 Agent benchmark：GAIA 让 Agent 回答需要多步推理的问题，AgentBench 让 Agent 在网页和代码环境中完成任务，SWE-bench 让 Agent 修复 GitHub issue。但这些 benchmark 有一个共同的假设——<span class="hl">环境是静态的</span>。Agent 看到的状态在它操作的过程中不会改变，没有新消息会弹出来打断它，也不需要跟别的 Agent 协调。这就像让学生在完全安静的教室里考试——但现实世界的「考场」是嘈杂的、变化的、多人同时在场的。Gaia2 打破了这个静态假设：在它的测试环境中，事件会按时间触发，通知会异步到达，其他 Agent 可能同时在修改共享状态。</p>
+  <div class="anim-stage reveal reveal-d3" id="s2-anim"><div class="s2_stage">
+  <!-- === STATIC SECTION (top half) === -->
+  <div class="s2_label s2_label_static">静态</div>
+  <div class="s2_box s2_box_task">任务</div>
+  <div class="s2_timeline_static"></div>
+  <div class="s2_static_arrow"></div>
+  <div class="s2_box s2_box_done">完成</div>
+  <div class="s2_frozen"></div>
+  <div class="s2_frozen_label">环境不变</div>
+
+  <!-- === DIVIDER === -->
+  <div class="s2_divider"></div>
+
+  <!-- === DYNAMIC SECTION (bottom half) === -->
+  <div class="s2_label s2_label_dynamic">动态</div>
+  <div class="s2_timeline_dynamic"></div>
+
+  <!-- Event circles -->
+  <div class="s2_event s2_event1">邮件</div>
+  <div class="s2_event s2_event2">通知</div>
+  <div class="s2_event s2_event3">变更</div>
+
+  <!-- Pulse rings -->
+  <div class="s2_pulse s2_pulse1"></div>
+  <div class="s2_pulse s2_pulse2"></div>
+  <div class="s2_pulse s2_pulse3"></div>
+
+  <!-- Crossing connection lines (SVG) -->
+  <svg class="s2_connections" viewBox="0 0 340 100">
+    <!-- event1 bottom -> event3 top (diagonal cross) -->
+    <line class="s2_conn1" x1="104" y1="60" x2="252" y2="24" />
+    <!-- event3 bottom -> event2 top (diagonal cross back) -->
+    <line class="s2_conn2" x1="252" y1="60" x2="188" y2="24" />
+    <!-- event2 bottom -> event1 top (diagonal cross back) -->
+    <line class="s2_conn3" x1="168" y1="60" x2="104" y2="24" />
+  </svg>
+
+  <!-- Subtitle -->
+  <div class="s2_subtitle">静态考场只有起点和终点，动态考场充满意外</div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Introduction</span><p>Existing agent benchmarks such as GAIA, AgentBench, and SWE-Bench evaluate agents in static environments where the world state does not change during execution. However, real-world tasks require agents to handle dynamic state changes, asynchronous notifications, and multi-agent coordination. Gaia2 addresses this gap by introducing an event-driven simulation platform where the environment evolves over time.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S3: ARE 架构 (drill) -->
+<section class="feed-section blue">
+<div class="section-inner">
+  <div class="section-tag reveal">ACT II · 平台</div>
+  <h2 class="big-statement reveal reveal-d1">ARE：一切皆事件</h2>
+  <p class="body-text reveal reveal-d2">Gaia2 的底座是一个叫 <span class="hl">ARE</span>（Agents Research Environments）的模拟平台。它的核心思想可以用一句话概括——「一切皆事件」。整个模拟世界由五个概念构成：<span class="hl2">App</span>（工具集合）、<span class="hl2">Environment</span>（全局状态）、<span class="hl2">Event</span>（定时或条件触发的状态变更）、<span class="hl2">Notification</span>（给 Agent 的异步通知）、<span class="hl2">Scenario</span>（一次完整的测试场景）。这五个概念组合起来，就能模拟从简单的「查个联系人」到复杂的「两个 Agent 协作完成跨应用任务」的所有场景。</p>
+  <div class="anim-stage reveal reveal-d3" id="s3-anim"><div class="s3_stage">
+  <!-- SVG connector lines -->
+  <svg class="s3_lines" viewBox="0 0 340 320">
+    <!-- Center: (170, 148). Lines go from center to each node center -->
+    <!-- Node 1 App: (56, 42) -->
+    <line class="s3_line s3_line_1" x1="170" y1="148" x2="56" y2="42" />
+    <!-- Node 2 Env: (284, 42) -->
+    <line class="s3_line s3_line_2" x1="170" y1="148" x2="284" y2="42" />
+    <!-- Node 3 Event: (284, 160) -->
+    <line class="s3_line s3_line_3" x1="170" y1="148" x2="284" y2="160" />
+    <!-- Node 4 Notification: (240, 278) -->
+    <line class="s3_line s3_line_4" x1="170" y1="148" x2="240" y2="278" />
+    <!-- Node 5 Scenario: (100, 278) -->
+    <line class="s3_line s3_line_5" x1="170" y1="148" x2="100" y2="278" />
+  </svg>
+
+  <!-- Center box -->
+  <div class="s3_center">ARE</div>
+  <div class="s3_pulse"></div>
+
+  <!-- 5 concept nodes -->
+  <div class="s3_node s3_node_1">App</div>
+  <div class="s3_node s3_node_2">Env</div>
+  <div class="s3_node s3_node_3">Event</div>
+  <div class="s3_node s3_node_4">Notify</div>
+  <div class="s3_node s3_node_5">Scenario</div>
+</div></div>
+  <p class="hook-line reveal reveal-d4">Events 到底是怎么让世界「活」起来的？</p>
+  <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-are', this)">深入 ARE 架构 ↓</button>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Section 3: ARE</span><p>ARE introduces five core primitives: Apps bundle related tools, Environments maintain global state, Events trigger state changes on schedules or conditions, Notifications deliver asynchronous messages to agents, and Scenarios define complete test cases with setup, instructions, and verification criteria.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S4: Mobile 环境 (drill) -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <div class="section-tag reveal">ACT II · 环境</div>
+  <h2 class="big-statement reveal reveal-d1">一部虚拟手机：12 App × 101 工具</h2>
+  <p class="body-text reveal reveal-d2">Gaia2 的第一个具体环境是一部「虚拟手机」—— Mobile 环境。它模拟了 <span class="hl">12 个</span>常见的手机 App：通讯录、短信、电话、Gmail、日历、备忘录、提醒事项、文件管理、地图、浏览器、时钟和音乐，共提供 <span class="hl">101 个</span>工具函数。更巧妙的是数据生成方式：系统先创建一个「宇宙」——包含虚拟用户的社交关系、工作背景、兴趣爱好，然后基于这些人设自动生成逼真的短信记录、邮件往来、日历安排等数据，因此所有 App 中的数据是<span class="hl2">内在一致</span>的。</p>
+  <div class="anim-stage reveal reveal-d3" id="s4-anim"><div class="s4_stage">
+  <!-- Phone frame -->
+  <div class="s4_phone">
+    <div class="s4_notch"></div>
+    <!-- App grid -->
+    <div class="s4_grid">
+      <div class="s4_app">通讯</div>
+      <div class="s4_app">短信</div>
+      <div class="s4_app">电话</div>
+      <div class="s4_app">邮件</div>
+      <div class="s4_app">日历</div>
+      <div class="s4_app">备忘</div>
+      <div class="s4_app">提醒</div>
+      <div class="s4_app">文件</div>
+      <div class="s4_app">地图</div>
+      <div class="s4_app">浏览</div>
+      <div class="s4_app">时钟</div>
+      <div class="s4_app">音乐</div>
+    </div>
+  </div>
+  <!-- Tool count -->
+  <div class="s4_label"><em>101</em> 工具</div>
+</div></div>
+  <p class="hook-line reveal reveal-d4">12 个 App 是如何生成逼真数据的？</p>
+  <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-mobile', this)">深入虚拟手机 ↓</button>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Section 4.1: Mobile Environment</span><p>The Mobile environment simulates a realistic smartphone with 12 apps: Contacts, Messages, Phone, Gmail, Calendar, Notes, Reminders, Files, Maps, Browser, Clock, and Music, providing 101 tools in total. Data is generated through a persona-based "universe" creation process that ensures consistency across all apps.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S5: 7 个维度 (drill) -->
+<section class="feed-section" style="background: var(--bg-act1);">
+<div class="section-inner">
+  <div class="section-tag reveal">ACT III · 测什么</div>
+  <h2 class="big-statement reveal reveal-d1">七把标尺，七个维度</h2>
+  <p class="body-text reveal reveal-d2">Gaia2 把 Agent 的能力拆成了七个维度来考察，就像高考分科一样——<span class="hl">Execution</span>（能不能正确调用工具）、<span class="hl2">Search</span>（能不能跨应用找信息）、<span class="hl">Ambiguity</span>（能不能处理模糊指令）、<span class="hl2">Adaptability</span>（条件变了能不能调整策略）、<span class="hl">Time</span>（能不能正确处理时间敏感的任务）、<span class="hl2">Noise</span>（能不能过滤无关通知的干扰）、<span class="hl">Agent2Agent</span>（两个 Agent 能不能协作）。这七个维度不是随意选的，而是对应了真实世界中 Agent 会遇到的七类典型挑战。1120 个场景按这七个维度分组，每个维度 100-200 个场景。</p>
+  <div class="anim-stage reveal reveal-d3" id="s5-anim"><div class="s5_stage">
+  <!-- Center -->
+  <div class="s5_center">Gaia2</div>
+
+  <!-- 7 dimension nodes -->
+  <div class="s5_node">执行</div>
+  <div class="s5_node">检索</div>
+  <div class="s5_node">歧义</div>
+  <div class="s5_node">适应</div>
+  <div class="s5_node">时间</div>
+  <div class="s5_node">噪声</div>
+  <div class="s5_node">协作</div>
+
+  <!-- SVG for spokes and ring -->
+  <svg class="s5_svg" viewBox="0 0 340 340">
+    <!-- Spokes from center (170,170) to each node center -->
+    <line class="s5_spoke" x1="170" y1="170" x2="170" y2="37" />
+    <line class="s5_spoke" x1="170" y1="170" x2="267" y2="69" />
+    <line class="s5_spoke" x1="170" y1="170" x2="296" y2="152" />
+    <line class="s5_spoke" x1="170" y1="170" x2="267" y2="245" />
+    <line class="s5_spoke" x1="170" y1="170" x2="170" y2="292" />
+    <line class="s5_spoke" x1="170" y1="170" x2="44"  y2="245" />
+    <line class="s5_spoke" x1="170" y1="170" x2="44"  y2="152" />
+
+    <!-- Ring connecting all nodes -->
+    <polygon class="s5_ring" points="170,37 267,69 296,152 267,245 170,292 44,245 44,152" />
+  </svg>
+</div></div>
+  <p class="hook-line reveal reveal-d4">每个维度到底在考什么？</p>
+  <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-splits', this)">深入七个维度 ↓</button>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Section 4.2: Capability Splits</span><p>Gaia2 organizes its 1,120 scenarios into 7 capability splits: Execution (correct tool usage), Search (cross-app information retrieval), Ambiguity (handling underspecified instructions), Adaptability (adjusting to changed conditions), Time (time-sensitive operations), Noise (filtering irrelevant notifications), and Agent-to-Agent (multi-agent collaboration through shared environments).</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S6: 成绩单 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <div class="section-tag reveal">ACT IV · 结果</div>
+  <h2 class="big-statement reveal reveal-d1">成绩单揭晓：最强的也只搞定了 42%</h2>
+  <p class="body-text reveal reveal-d2">论文测试了 11 个模型，结果颇有意思。<span class="hl">GPT-5</span>（高算力版）以 <span class="hl">42%</span> 的 pass@1 领跑，但这个分数本身就说明 Gaia2 有多难——最强的模型也只能搞定不到一半的场景。<span class="hl2">Claude-4-Sonnet</span> 紧随其后拿到 <span class="hl2">35%</span>，Gemini-2.5-Pro 拿到 28%。开源模型中 Kimi-K2 以 21% 领先。最关键的发现是：<span class="hl-danger">没有任何一个模型在所有七个维度上都是最强的</span>。GPT-5 在 Execution 和 Search 上碾压其他模型，但在 Time 维度上却不是第一名。</p>
+  <div class="anim-stage reveal reveal-d3" id="s6-anim"><div class="s6_stage">
+  <div class="s6_title">GAIA-2 综合通过率</div>
+
+  <div class="s6_row">
+    <div class="s6_label">GPT-5</div>
+    <div class="s6_bar_track">
+      <div class="s6_bar s6_bar_1">
+        <span class="s6_pct">42%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="s6_row">
+    <div class="s6_label">Claude-4</div>
+    <div class="s6_bar_track">
+      <div class="s6_bar s6_bar_2">
+        <span class="s6_pct">35%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="s6_row">
+    <div class="s6_label">Gemini</div>
+    <div class="s6_bar_track">
+      <div class="s6_bar s6_bar_3">
+        <span class="s6_pct">28%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="s6_row">
+    <div class="s6_label">Kimi-K2</div>
+    <div class="s6_bar_track">
+      <div class="s6_bar s6_bar_4">
+        <span class="s6_pct">21%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="s6_footer">没有模型在所有维度都最强</div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Section 5: Experiments</span><p>GPT-5 (high) achieves the highest overall pass@1 of 42%, followed by Claude-4-Sonnet at 35% and Gemini-2.5-Pro at 28%. Among open-source models, Kimi-K2 leads at 21%. No single model dominates across all seven capability splits, suggesting that different architectural choices excel at different agent capabilities.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S7: 反直觉发现 -->
+<section class="feed-section" style="background: var(--bg-act1);">
+<div class="section-inner">
+  <div class="section-tag reveal">ACT IV · 洞察</div>
+  <h2 class="big-statement reveal reveal-d1">越强的模型，越容易被时间绊倒</h2>
+  <p class="body-text reveal reveal-d2">论文中最有意思的发现来自 <span class="hl">Time</span> 维度：更强的模型反而表现更差。这听起来反直觉，但原因很合理——能力更强的模型倾向于「想太多」，在时间敏感的任务中花太多步骤去完善答案，反而<span class="hl-danger">错过了时间窗口</span>。另一个发现是关于 <span class="hl2">Agent2Agent</span> 协作的：协作对弱模型的帮助远大于强模型。GPT-5 从单 Agent 的 34% 只提升到 37%，但 Llama-4-Maverick 从 11% 跳到 16%——弱模型更能从「队友」身上获益，因为它们可以把自己不擅长的子任务分给搭档。</p>
+  <div class="anim-stage reveal reveal-d3" id="s7-anim"><div class="s7_stage">
+  <!-- 上半部分：时间陷阱 -->
+  <div class="s7_section_title s7_title_top">时间陷阱</div>
+
+  <!-- 强模型 -->
+  <div class="s7_strong">强模型</div>
+  <div class="s7_strong_label">想太多</div>
+
+  <!-- 时钟 -->
+  <div class="s7_clock">
+    <div class="s7_clock_hand_m"></div>
+    <div class="s7_clock_hand_h"></div>
+  </div>
+
+  <!-- 弱模型 -->
+  <div class="s7_weak">弱模型</div>
+  <div class="s7_weak_label">快决策</div>
+
+  <!-- 箭头 -->
+  <div class="s7_arrow_down"></div>
+  <div class="s7_arrow_down_head"></div>
+  <div class="s7_arrow_up"></div>
+  <div class="s7_arrow_up_head"></div>
+
+  <!-- 分隔线 -->
+  <div class="s7_divider"></div>
+
+  <!-- 下半部分：协作增益 -->
+  <div class="s7_section_title s7_title_bottom">协作增益</div>
+
+  <!-- GPT-5 组 -->
+  <div class="s7_bar_group s7_bar_group_left">
+    <div class="s7_bar_name">GPT-5</div>
+    <div class="s7_bar_container">
+      <div class="s7_bar s7_bar_before">
+        <div class="s7_bar_label">34%</div>
+      </div>
+      <div class="s7_bar s7_bar_after">
+        <div class="s7_bar_label">37%</div>
+      </div>
+    </div>
+    <div class="s7_bar_delta s7_bar_delta_small">+3pp</div>
+  </div>
+
+  <!-- Llama-4 组 -->
+  <div class="s7_bar_group s7_bar_group_right">
+    <div class="s7_bar_name">Llama-4</div>
+    <div class="s7_bar_container">
+      <div class="s7_bar s7_bar_before">
+        <div class="s7_bar_label">11%</div>
+      </div>
+      <div class="s7_bar s7_bar_after">
+        <div class="s7_bar_label">16%</div>
+      </div>
+    </div>
+    <div class="s7_bar_delta s7_bar_delta_big">+5pp</div>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Section 5: Analysis</span><p>The Time split reveals an inverse scaling phenomenon: stronger models tend to overthink time-sensitive tasks, spending too many steps refining their approach and missing critical time windows. For Agent-to-Agent, collaboration benefits weaker models disproportionately—GPT-5 improves from 34% to 37% (+3pp), while Llama-4-Maverick jumps from 11% to 16% (+5pp).</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S8: Verifier -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <div class="section-tag reveal">ACT V · 可信度</div>
+  <h2 class="big-statement reveal reveal-d1">裁判也要考核：0.98 的人机一致率</h2>
+  <p class="body-text reveal reveal-d2">一个 benchmark 的可信度取决于它的判题系统。Gaia2 的 <span class="hl">ARE Verifier</span> 采用了一个巧妙的设计：把 Agent 可以调用的工具分成「<span class="hl2">读工具</span>」（查询状态）和「<span class="hl2">写工具</span>」（修改状态）。验证时，Verifier 只需要检查环境的最终状态——Agent 是否通过写工具产生了<span class="hl">正确的副作用</span>。这种基于副作用的验证方式避免了判断 Agent「思考过程」的模糊性，达到了 <span class="hl">0.98</span> 的人机一致率和 <span class="hl">0.99</span> 的精确率。这意味着 ARE Verifier 的判断几乎和人类专家一样可靠。</p>
+  <div class="anim-stage reveal reveal-d3" id="s8-anim"><div class="s8_stage">
+  <!-- Left boxes -->
+  <div class="s8_box s8_read">读工具</div>
+  <div class="s8_dim_label s8_read_label">查询</div>
+
+  <div class="s8_box s8_write">写工具</div>
+  <div class="s8_dim_label s8_write_label">修改</div>
+
+  <!-- Center circle -->
+  <div class="s8_env">环境<br>状态</div>
+
+  <!-- Right box -->
+  <div class="s8_box s8_verifier">Verifier</div>
+
+  <!-- Arrows SVG -->
+  <svg class="s8_arrows" viewBox="0 0 340 260">
+    <!-- Arrow 1: write box (96, 150) -> env circle left edge (148, 132) -->
+    <line class="s8_arrow_line s8_arrow1_line"
+          x1="96" y1="150" x2="144" y2="135"
+          stroke="#F97316" stroke-width="2" stroke-linecap="round" />
+    <polygon class="s8_arrow_head s8_arrow1_head"
+             points="144,130 144,140 152,135"
+             fill="#F97316" />
+
+    <!-- Arrow 2: env circle right edge (212, 132) -> verifier left edge (250, 132) -->
+    <line class="s8_arrow_line s8_arrow2_line"
+          x1="216" y1="132" x2="246" y2="132"
+          stroke="#94A3B8" stroke-width="2" stroke-linecap="round" />
+    <polygon class="s8_arrow_head s8_arrow2_head"
+             points="246,127 246,137 254,132"
+             fill="#94A3B8" />
+  </svg>
+
+  <!-- Cross on read box -->
+  <svg class="s8_cross" viewBox="0 0 72 40">
+    <line x1="8" y1="8" x2="64" y2="32" />
+    <line x1="64" y1="8" x2="8" y2="32" />
+  </svg>
+
+  <!-- Metric -->
+  <div class="s8_metric">0.98</div>
+  <div class="s8_metric_sub">人机一致率</div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Section 5: Verification</span><p>The ARE Verifier separates agent tools into "read" tools (state queries) and "write" tools (state modifications). Verification checks only the final environment state—whether the agent produced the correct side effects through write tools. This approach achieves 0.98 agreement and 0.99 precision compared to human expert labels.</p></div>
+  </div>
+</div>
+</section>
+
+</div><!-- /layer-overview -->
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- Layer 1: ARE 架构详解 -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="layer" id="layer-are" data-depth="1">
+
+<!-- S9: Events 生命周期 -->
+<section class="feed-section" style="background: var(--bg-act2);">
+<div class="section-inner">
+  <div class="section-tag reveal">ARE 架构 · 事件系统</div>
+  <h2 class="big-statement reveal reveal-d1">Events：让世界「活」起来的心跳</h2>
+  <p class="body-text reveal reveal-d2">ARE 中的 Events 有三种触发方式：<span class="hl">Scheduled</span>（在指定时间触发，比如「上午 9 点发送一封邮件」）、<span class="hl2">Conditional</span>（满足特定条件时触发，比如「当 Agent 读取了某条消息后，对方开始打字回复」）、以及 <span class="hl">Probability</span>（以一定概率触发，模拟真实世界的随机性）。每个 Event 执行时可以修改 Environment 的状态，也可以触发新的 Notification 通知 Agent。EventLoop 按照时间轴严格调度所有 Events，确保因果关系正确——先发生的事件一定先被处理，后续事件看到的是更新后的状态。</p>
+  <div class="anim-stage reveal reveal-d3" id="s9-anim"><div class="s9_stage">
+  <div class="s9_title">Events 三种触发方式</div>
+
+  <!-- Sub-labels above circles -->
+  <div class="s9_sublabel s9_sublabel_scheduled">Scheduled</div>
+  <div class="s9_sublabel s9_sublabel_conditional">Conditional</div>
+  <div class="s9_sublabel s9_sublabel_probability">Probability</div>
+
+  <!-- Three trigger nodes -->
+  <div class="s9_node s9_node_scheduled">定时</div>
+  <div class="s9_node s9_node_conditional">条件</div>
+  <div class="s9_node s9_node_probability">概率</div>
+
+  <!-- Tick marks on timeline -->
+  <div class="s9_tick s9_tick1"></div>
+  <div class="s9_tick s9_tick2"></div>
+  <div class="s9_tick s9_tick3"></div>
+
+  <!-- Timeline -->
+  <div class="s9_timeline"></div>
+
+  <!-- Bracket and arrow to EventLoop -->
+  <div class="s9_bracket"></div>
+  <div class="s9_arrow"></div>
+
+  <!-- EventLoop label -->
+  <div class="s9_eventloop">EventLoop</div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Section 3.1 + Appendix A.1</span><p>Events in ARE can be triggered in three ways: scheduled (at a specific time), conditional (when a condition is met, such as the agent reading a message), and probability-based (with a given likelihood at each tick). The EventLoop processes events in chronological order, ensuring causal consistency. Each event can modify environment state and generate notifications.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S10: Notification 系统 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <div class="section-tag reveal">ARE 架构 · 异步通信</div>
+  <h2 class="big-statement reveal reveal-d1">Notification：打断你的「推送通知」</h2>
+  <p class="body-text reveal reveal-d2">Agent 不是在真空中工作的。当环境状态发生变化时——比如收到新短信、日历事件临近、有人给你打电话——ARE 会通过 <span class="hl">Notification</span> 系统通知 Agent。这模拟了真实手机上推送通知的机制。关键在于，Notification 是<span class="hl-danger">异步</span>到达的：Agent 正在处理任务 A 的时候，可能突然收到与任务 B 相关的通知。Agent 必须决定这条通知是否重要、是否需要中断当前工作去处理它。这正是 <span class="hl2">Noise</span> 维度测试的核心能力——在信息洪流中保持专注，同时不遗漏真正重要的信号。</p>
+  <div class="anim-stage reveal reveal-d3" id="s10-anim"><div class="s10_stage">
+  <div class="s10_title">Notification - 异步推送通知</div>
+  <div class="s10_agent">
+    <span class="s10_agent_label">Agent</span>
+    <span class="s10_agent_sub">处理中...</span>
+  </div>
+  <div class="s10_notif s10_notif_sms">新短信</div>
+  <div class="s10_line s10_line_left"></div>
+  <div class="s10_notif s10_notif_cal">日历提醒</div>
+  <div class="s10_line s10_line_right"></div>
+  <div class="s10_notif s10_notif_call">来电</div>
+  <div class="s10_line s10_line_bottom"></div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Section 3.1 + Appendix A.1.4</span><p>Notifications are asynchronous messages delivered to agents when environment state changes occur. They simulate real-world push notifications—new messages, calendar reminders, incoming calls. Agents must decide whether to act on, ignore, or defer processing each notification, testing their ability to manage attention in dynamic environments.</p></div>
+  </div>
+</div>
+</section>
+
+</div><!-- /layer-are -->
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- Layer 1: 虚拟手机详解 -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="layer" id="layer-mobile" data-depth="1">
+
+<!-- S11: 12 App 全景 -->
+<section class="feed-section" style="background: var(--bg-act1);">
+<div class="section-inner">
+  <div class="section-tag reveal">虚拟手机 · App 生态</div>
+  <h2 class="big-statement reveal reveal-d1">12 个 App，四大类能力</h2>
+  <p class="body-text reveal reveal-d2">Mobile 环境的 12 个 App 不是随意选择的，它们覆盖了手机使用的四大类场景：<span class="hl">通信</span>类（Messages、Phone、Gmail——用于发送和接收信息）、<span class="hl2">组织</span>类（Calendar、Notes、Reminders——用于安排和记录）、<span class="hl">信息</span>类（Contacts、Files、Maps、Browser——用于查找和获取信息）、以及<span class="hl2">工具</span>类（Clock、Music——辅助功能）。每个 App 都有明确的「读工具」和「写工具」划分：比如 Gmail 的读工具是 get_emails，写工具是 send_email。这种划分不仅让 Agent 的操作更结构化，也让 Verifier 能精确判断任务是否完成。</p>
+  <div class="anim-stage reveal reveal-d3" id="s11-anim"><div class="s11_stage">
+  <div class="s11_title">12 Apps -- 四大分类</div>
+
+  <div class="s11_grid">
+    <div class="s11_row">
+      <div class="s11_label s11_label_comm">通信</div>
+      <div class="s11_apps">
+        <div class="s11_app s11_app_comm">短信</div>
+        <div class="s11_app s11_app_comm">电话</div>
+        <div class="s11_app s11_app_comm">邮件</div>
+      </div>
+    </div>
+
+    <div class="s11_row">
+      <div class="s11_label s11_label_org">组织</div>
+      <div class="s11_apps">
+        <div class="s11_app s11_app_org">日历</div>
+        <div class="s11_app s11_app_org">备忘</div>
+        <div class="s11_app s11_app_org">提醒</div>
+      </div>
+    </div>
+
+    <div class="s11_row">
+      <div class="s11_label s11_label_info">信息</div>
+      <div class="s11_apps">
+        <div class="s11_app s11_app_info">通讯录</div>
+        <div class="s11_app s11_app_info">文件</div>
+        <div class="s11_app s11_app_info">地图</div>
+        <div class="s11_app s11_app_info">浏览器</div>
+      </div>
+    </div>
+
+    <div class="s11_row">
+      <div class="s11_label s11_label_tool">工具</div>
+      <div class="s11_apps">
+        <div class="s11_app s11_app_tool">时钟</div>
+        <div class="s11_app s11_app_tool">音乐</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="s11_legend">每个 App 均提供 读工具 + 写工具</div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Section 4.1</span><p>The Mobile environment provides 12 apps spanning communication (Messages, Phone, Gmail), organization (Calendar, Notes, Reminders), information (Contacts, Files, Maps, Browser), and utilities (Clock, Music). Each app exposes both read tools (state queries) and write tools (state modifications), totaling 101 tools.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S12: Universe 生成 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <div class="section-tag reveal">虚拟手机 · 数据生成</div>
+  <h2 class="big-statement reveal reveal-d1">先造人设，再造数据</h2>
+  <p class="body-text reveal reveal-d2">如何创造一个逼真的虚拟手机世界？Gaia2 的方法是先定义<span class="hl">角色设定</span>（persona）——用户叫什么名字、在哪里上班、有哪些朋友、兴趣爱好是什么。然后用 LLM 基于这些人设生成各 App 的数据：短信记录反映社交关系的亲疏远近，邮件内容与工作背景匹配，日历安排体现生活习惯。这确保了数据之间的<span class="hl2">内在一致性</span>——同一个联系人在短信、邮件和日历中的信息是连贯的，不会出现「短信里叫小明，邮件里变成 Mike」的穿帮。Scenario 的构建也遵循类似流程：先由人类标注员设计任务框架，再由 LLM 生成具体细节，最后由人类审核验证。</p>
+  <div class="anim-stage reveal reveal-d3" id="s12-anim"><div class="s12_stage">
+  <!-- Step 1: Persona -->
+  <div class="s12_box s12_step1">人设</div>
+
+  <!-- Arrow 1 -->
+  <svg class="s12_arrowsvg s12_arrow1" viewBox="0 0 340 300">
+    <defs>
+      <marker id="s12_ah1" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <path d="M0,0 L8,3 L0,6" fill="none" stroke="#94A3B8" stroke-width="1.5"/>
+      </marker>
+    </defs>
+    <line x1="170" y1="54" x2="170" y2="118" stroke="#94A3B8" stroke-width="2" marker-end="url(#s12_ah1)"/>
+  </svg>
+
+  <!-- Step 2: LLM Generate -->
+  <div class="s12_box s12_step2">LLM 生成</div>
+
+  <!-- App blocks beside step2 -->
+  <div class="s12_appbox s12_app1">短信</div>
+  <div class="s12_appbox s12_app2">邮件</div>
+  <div class="s12_appbox s12_app3">日历</div>
+
+  <!-- Arrow 2 -->
+  <svg class="s12_arrowsvg s12_arrow2" viewBox="0 0 340 300">
+    <defs>
+      <marker id="s12_ah2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <path d="M0,0 L8,3 L0,6" fill="none" stroke="#94A3B8" stroke-width="1.5"/>
+      </marker>
+    </defs>
+    <line x1="170" y1="164" x2="170" y2="238" stroke="#94A3B8" stroke-width="2" marker-end="url(#s12_ah2)"/>
+  </svg>
+
+  <!-- Step 3: Consistency Check -->
+  <div class="s12_box s12_step3">一致性验证</div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Appendix A.2-A.3</span><p>Universe generation begins with persona definition—name, workplace, social connections, hobbies—then uses LLMs to generate consistent data across all apps. Message histories reflect relationship dynamics, emails match professional contexts, and calendar entries align with lifestyle patterns. Scenario construction follows a human-design → LLM-generation → human-verification pipeline.</p></div>
+  </div>
+</div>
+</section>
+
+</div><!-- /layer-mobile -->
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- Layer 1: 七个维度详解 -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="layer" id="layer-splits" data-depth="1">
+
+<!-- S13: 基础四维 -->
+<section class="feed-section" style="background: var(--bg-act2);">
+<div class="section-inner">
+  <div class="section-tag reveal">七个维度 · 基础能力</div>
+  <h2 class="big-statement reveal reveal-d1">前四把标尺：从执行到应变</h2>
+  <p class="body-text reveal reveal-d2"><span class="hl">Execution</span> 是最基础的维度——给你明确的指令（「给张三发一条短信说明天开会」），你能不能正确调用对应的工具完成任务？<span class="hl2">Search</span> 把难度提升一档——信息分散在多个 App 中（联系人在通讯录、邮件地址在 Gmail、最近的聊天在 Messages），Agent 需要跨应用检索才能拼出完整答案。<span class="hl">Ambiguity</span> 测试的是模糊指令处理能力——「帮我联系那个人」，哪个人？Agent 需要根据上下文推断。<span class="hl2">Adaptability</span> 最有挑战——任务执行到一半条件变了（会议室被占了、航班取消了），Agent 能不能灵活调整计划而不是傻傻地执行原来的步骤？</p>
+  <div class="anim-stage reveal reveal-d3" id="s13-anim"><div class="s13_stage">
+  <div class="s13_stair_lines">
+    <div class="s13_stair_line s13_line1"></div>
+    <div class="s13_stair_riser s13_riser1"></div>
+    <div class="s13_stair_line s13_line2"></div>
+    <div class="s13_stair_riser s13_riser2"></div>
+    <div class="s13_stair_line s13_line3"></div>
+    <div class="s13_stair_riser s13_riser3"></div>
+    <div class="s13_stair_line s13_line4"></div>
+  </div>
+
+  <div class="s13_step s13_step1">
+    <div class="s13_box s13_box_orange">执行</div>
+    <span class="s13_desc">按指令做</span>
+  </div>
+  <div class="s13_step s13_step2">
+    <div class="s13_box s13_box_blue">检索</div>
+    <span class="s13_desc">跨应用找</span>
+  </div>
+  <div class="s13_step s13_step3">
+    <div class="s13_box s13_box_orange">歧义</div>
+    <span class="s13_desc">猜你意思</span>
+  </div>
+  <div class="s13_step s13_step4">
+    <div class="s13_box s13_box_blue">适应</div>
+    <span class="s13_desc">中途变招</span>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Section 4.2</span><p>Execution tests basic tool-calling correctness with explicit instructions. Search requires cross-app information retrieval where relevant data is distributed across multiple apps. Ambiguity presents underspecified instructions requiring contextual inference. Adaptability introduces mid-task condition changes that require agents to dynamically adjust their plans.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S14: 高级三维 -->
+<section class="feed-section dark">
+<div class="section-inner">
+  <div class="section-tag reveal">七个维度 · 高级能力</div>
+  <h2 class="big-statement reveal reveal-d1">后三把标尺：时间、噪声与协作</h2>
+  <p class="body-text reveal reveal-d2"><span class="hl">Time</span> 是最有挑战性的维度——Agent 必须在<span class="hl-danger">正确的时间</span>采取行动。比如「在会议开始前 15 分钟发送提醒」，太早或太晚都不算完成。这个维度暴露了一个反直觉的现象：更强的模型反而更容易超时，因为它们花太多步骤去「想清楚」。<span class="hl2">Noise</span> 模拟了信息过载——大量无关通知涌入（垃圾邮件、社交消息、天气推送），Agent 必须在噪声中识别真正需要处理的信号。<span class="hl">Agent2Agent</span> 是最新颖的维度——两个 Agent 必须通过共享的 Notes App 进行<span class="hl2">隐式协调</span>来完成一个需要双方配合的任务，没有直接通信通道，只能靠在笔记里留言来传递意图。</p>
+  <div class="anim-stage reveal reveal-d3" id="s14-anim"><div class="s14_stage">
+  <!-- Time column -->
+  <div class="s14_col s14_col_time">
+    <div class="s14_title">Time</div>
+    <div class="s14_clock">
+      <div class="s14_clock_hand1"></div>
+      <div class="s14_clock_hand2"></div>
+      <div class="s14_clock_dot"></div>
+    </div>
+    <div class="s14_window_label">窗口</div>
+  </div>
+
+  <!-- Noise column -->
+  <div class="s14_col s14_col_noise">
+    <div class="s14_title">Noise</div>
+    <div class="s14_noise_wrap">
+      <div class="s14_signal"></div>
+      <div class="s14_noise_dot s14_nd1"></div>
+      <div class="s14_noise_dot s14_nd2"></div>
+      <div class="s14_noise_dot s14_nd3"></div>
+      <div class="s14_noise_dot s14_nd4"></div>
+      <div class="s14_noise_dot s14_nd5"></div>
+      <div class="s14_noise_dot s14_nd6"></div>
+      <div class="s14_noise_dot s14_nd7"></div>
+    </div>
+    <div class="s14_noise_label">信号 vs 噪声</div>
+  </div>
+
+  <!-- Collab column -->
+  <div class="s14_col s14_col_collab">
+    <div class="s14_title">A2A</div>
+    <div class="s14_collab_wrap">
+      <div class="s14_agents_row">
+        <div class="s14_agent">A</div>
+        <div class="s14_agent">B</div>
+      </div>
+      <div class="s14_conn_row">
+        <div class="s14_conn_line"></div>
+        <div class="s14_conn_line"></div>
+      </div>
+      <div class="s14_notes_box">Notes</div>
+    </div>
+  </div>
+</div></div>
+  <div class="source-panel reveal reveal-d4">
+    <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 原文对照</button>
+    <div class="source-body"><span class="source-label">Section 4.2</span><p>Time requires agents to act within specific time windows—too early or too late counts as failure. This split reveals inverse scaling where stronger models overthink and miss deadlines. Noise introduces irrelevant notifications that agents must filter while maintaining focus. Agent2Agent requires two agents to coordinate through shared environments (e.g., Notes app) without direct communication channels.</p></div>
+  </div>
+</div>
+</section>
+
+</div><!-- /layer-splits -->
+
+<!-- ═══════════════════════════════════════════════════ -->
+<script>
+// ── 数据 ──
+var coverageData = {
+  sourceType: "text",
+  totalLength: "9100 words",
+  segments: [
+    { start: 0, end: 500, section: 1, reason: null },
+    { start: 500, end: 1800, section: 1, reason: null },
+    { start: 1800, end: 2300, section: 2, reason: null },
+    { start: 2300, end: 2700, section: 2, reason: null },
+    { start: 2700, end: 4200, section: 3, reason: null },
+    { start: 4200, end: 4700, section: 8, reason: null },
+    { start: 4700, end: 5100, section: null, reason: "GUI tool details" },
+    { start: 5100, end: 6100, section: 4, reason: null },
+    { start: 6100, end: 7100, section: 5, reason: null },
+    { start: 7100, end: 7600, section: 4, reason: null, deepDive: true },
+    { start: 7600, end: 8100, section: 6, reason: null },
+    { start: 8100, end: 8600, section: 7, reason: null },
+    { start: 8600, end: 9100, section: 8, reason: null }
+  ]
+};
+
+var topicData = {
+  1: [
+    { name: "静态benchmark局限", status: "included" },
+    { name: "动态异步需求", status: "included" },
+    { name: "Gaia2定位与规模", status: "included" },
+    { name: "贡献点列举", status: "compressed", reason: "学术格式",
+      excerpt: "Our key contributions include: (1) ARE, an event-driven platform for dynamic agent evaluation; (2) Gaia2, a benchmark of 1,120 scenarios across 7 capability splits; (3) comprehensive evaluation of 11 frontier models revealing that no single model dominates all capabilities." }
+  ],
+  2: [
+    { name: "GAIA对比", status: "included" },
+    { name: "AgentBench对比", status: "included" },
+    { name: "SWE-bench对比", status: "compressed", reason: "重复对比模式",
+      excerpt: "SWE-Bench evaluates agents on resolving GitHub issues, but operates in a static codebase snapshot without concurrent modifications or asynchronous events." },
+    { name: "tau-bench对比", status: "compressed", reason: "技术细节",
+      excerpt: "tau-bench introduces stateful tool-calling evaluation but lacks the event-driven dynamics and multi-agent scenarios that characterize real-world agent deployment." }
+  ],
+  3: [
+    { name: "五大核心概念", status: "included" },
+    { name: "Events三种触发", status: "deep-dive" },
+    { name: "EventLoop调度", status: "deep-dive" },
+    { name: "Notification异步机制", status: "deep-dive" },
+    { name: "Scenario定义", status: "included" }
+  ],
+  4: [
+    { name: "12个App分类", status: "deep-dive" },
+    { name: "101工具概览", status: "included" },
+    { name: "Universe生成", status: "deep-dive" },
+    { name: "Scenario构建流程", status: "deep-dive" },
+    { name: "读写工具划分", status: "deep-dive" }
+  ],
+  5: [
+    { name: "七维度概览", status: "included" },
+    { name: "基础四维详解", status: "deep-dive" },
+    { name: "高级三维详解", status: "deep-dive" },
+    { name: "场景数量分布", status: "included" }
+  ],
+  6: [
+    { name: "GPT-5领跑42%", status: "included" },
+    { name: "Claude-4第二35%", status: "included" },
+    { name: "开源模型排名", status: "included" },
+    { name: "无全能王发现", status: "included" },
+    { name: "各维度最强模型", status: "compressed", reason: "数据密集",
+      excerpt: "GPT-5 (high) leads in Execution (62%) and Search (49%), while Claude-4-Sonnet shows competitive performance in Ambiguity (38%) and Adaptability (33%). Kimi-K2 leads open-source models across most splits." }
+  ],
+  7: [
+    { name: "Time反直觉发现", status: "included" },
+    { name: "Noise降级分析", status: "included" },
+    { name: "A2A协作效果", status: "included" },
+    { name: "模型规模与效率", status: "compressed", reason: "分析细节",
+      excerpt: "Smaller models like GPT-5 (low) achieve 80% of GPT-5 (high) performance at significantly reduced compute, suggesting diminishing returns for scaling inference compute on agent tasks." }
+  ],
+  8: [
+    { name: "读写工具分离", status: "included" },
+    { name: "副作用验证", status: "included" },
+    { name: "0.98一致率", status: "included" },
+    { name: "与人类专家对比", status: "included" }
+  ]
+};
+
+// ── 状态 ──
+var layerStack = ['layer-overview'];
+var transitioning = false;
+var observers = new Map();
+
+var layerNames = {
+  'layer-overview': '概览',
+  'layer-are': 'ARE 架构',
+  'layer-mobile': '虚拟手机',
+  'layer-splits': '七个维度'
+};
+
+// ── Observer ──
+function setupObserver(layerId) {
+  if (observers.has(layerId)) return;
+  var layer = document.getElementById(layerId);
+  var reveals = layer.querySelectorAll('.reveal, [class*=\"_stage\"]');
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        var stage = e.target.querySelector('[class*="_stage"]');
+        if (stage) stage.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.15, root: layer });
+  reveals.forEach(function(el) { obs.observe(el); });
+  observers.set(layerId, obs);
+}
+
+function resetReveals(layerId) {
+  var layer = document.getElementById(layerId);
+  layer.querySelectorAll('.reveal').forEach(function(el) { el.classList.remove('visible'); });
+  layer.querySelectorAll('[class*="_stage"]').forEach(function(el) { el.classList.remove('visible'); });
+}
+
+function activateReveals(layerId) {
+  resetReveals(layerId);
+  if (observers.has(layerId)) { observers.get(layerId).disconnect(); observers.delete(layerId); }
+  requestAnimationFrame(function() { setupObserver(layerId); });
+}
+
+// ── 面包屑 ──
+function updateBreadcrumb() {
+  var bc = document.getElementById('breadcrumb');
+  bc.innerHTML = '';
+  layerStack.forEach(function(id, i) {
+    if (i > 0) {
+      var sep = document.createElement('span');
+      sep.className = 'sep'; sep.textContent = '>';
+      bc.appendChild(sep);
+    }
+    var span = document.createElement('span');
+    span.textContent = layerNames[id] || id;
+    if (i === layerStack.length - 1) { span.className = 'current'; }
+    else { span.addEventListener('click', function() { goBackTo(i); }); }
+    bc.appendChild(span);
+  });
+  var backBtn = document.getElementById('backBtn');
+  backBtn.style.display = layerStack.length > 1 ? 'flex' : 'none';
+  bc.style.left = layerStack.length > 1 ? '60px' : '16px';
+  var dots = document.getElementById('depthDots');
+  var depth = layerStack.length - 1;
+  dots.querySelectorAll('.dot').forEach(function(d, i) {
+    d.classList.toggle('active', i === depth);
+  });
+}
+
+// ── 转场 ──
+function drillDown(targetId, btnEl) {
+  if (transitioning) return;
+  transitioning = true;
+  var currentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var targetLayer = document.getElementById(targetId);
+  targetLayer.scrollTop = 0;
+  resetReveals(targetId);
+  targetLayer.style.visibility = 'visible';
+  var duration = 600;
+  currentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  currentLayer.style.transformOrigin = 'center center';
+  currentLayer.style.transform = 'scale(1.3)';
+  currentLayer.style.opacity = '0';
+  targetLayer.classList.add('active');
+  targetLayer.style.opacity = '0';
+  targetLayer.style.transform = 'scale(0.85)';
+  targetLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      targetLayer.style.opacity = '1';
+      targetLayer.style.transform = 'scale(1)';
+    });
+  });
+  setTimeout(function() {
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition = ''; currentLayer.style.transform = ''; currentLayer.style.opacity = '';
+    targetLayer.style.transition = ''; targetLayer.style.transform = '';
+    activateReveals(targetId);
+    transitioning = false;
+  }, duration + 50);
+  layerStack.push(targetId);
+  updateBreadcrumb();
+}
+
+function goBack() {
+  if (layerStack.length <= 1 || transitioning) return;
+  transitioning = true;
+  var currentId = layerStack.pop();
+  var parentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var parentLayer = document.getElementById(parentId);
+  var duration = 600;
+  currentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  currentLayer.style.transform = 'scale(0.85)';
+  currentLayer.style.opacity = '0';
+  parentLayer.classList.add('active');
+  parentLayer.style.transform = 'scale(1.3)';
+  parentLayer.style.opacity = '0';
+  parentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      parentLayer.style.transform = 'scale(1)';
+      parentLayer.style.opacity = '1';
+    });
+  });
+  setTimeout(function() {
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition = ''; currentLayer.style.transform = '';
+    currentLayer.style.opacity = ''; currentLayer.style.visibility = '';
+    parentLayer.style.transition = ''; parentLayer.style.transform = '';
+    transitioning = false;
+  }, duration + 50);
+  updateBreadcrumb();
+}
+
+function goBackTo(targetIndex) {
+  if (transitioning) return;
+  while (layerStack.length - 1 > targetIndex) {
+    if (layerStack.length <= 1) break;
+    goBack(); return;
+  }
+}
+
+// ── Source Panel ──
+function toggleSource(btn) {
+  btn.classList.toggle('open');
+  btn.nextElementSibling.classList.toggle('open');
+}
+
+// ── Scale Stages ──
+function scaleStages() {
+  document.querySelectorAll('.anim-stage').forEach(function(container) {
+    var stage = container.querySelector('[class*="_stage"], [class*="_wrap"], [class*="_container"]');
+    if (!stage) return;
+    var containerW = container.clientWidth - 48;
+    var cssW = getComputedStyle(stage).width;
+    if (cssW && parseInt(cssW) <= containerW) return;
+    var stageW = stage.scrollWidth || stage.offsetWidth;
+    var stageH = stage.scrollHeight || stage.offsetHeight;
+    if (stageW > containerW && stageW > 100) {
+      var scale = containerW / stageW;
+      stage.style.transform = 'scale(' + scale + ')';
+      stage.style.transformOrigin = 'top left';
+      stage.style.width = stageW + 'px';
+      container.style.height = (stageH * scale + 64) + 'px';
+    }
+  });
+}
+
+// ── Init ──
+setupObserver('layer-overview');
+updateBreadcrumb();
+window.addEventListener('load', function() { setTimeout(scaleStages, 500); });
+</script>
+</body>
+</html>

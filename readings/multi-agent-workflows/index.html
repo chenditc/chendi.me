@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>多 Agent 工作流为什么会失败</title>
+<style>
+:root {
+  --bg-act1: #F6F8FA;
+  --bg-act2: #ECFDF3;
+  --bg-act3: #F0F6FF;
+  --bg-close: #0D1117;
+  --bg-dark: #0D1117;
+  --text: #24292F;
+  --text-muted: #57606A;
+  --dim: #8C959F;
+  --accent: #2DA44E;
+  --accent2: #0969DA;
+  --warm: #BF8700;
+  --danger: #CF222E;
+  --neutral: #6E7781;
+  --card-bg: #FFFFFF;
+  --line: #D0D7DE;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+body {
+  font-family: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--bg-act1);
+}
+.content-width { max-width: 640px; margin: 0 auto; padding: 0 28px; }
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-d1 { transition-delay: 0.15s; }
+.reveal-d2 { transition-delay: 0.3s; }
+.reveal-d3 { transition-delay: 0.45s; }
+.reveal-d4 { transition-delay: 0.6s; }
+
+.layer {
+  position: fixed; inset: 0; overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  visibility: hidden; opacity: 0;
+  will-change: transform, opacity;
+  scroll-snap-type: y proximity;
+}
+.layer.active { visibility: visible; opacity: 1; }
+
+.feed-section {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 84px 24px 92px;
+  scroll-snap-align: start;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(45,164,78,0.12), transparent 28%),
+    linear-gradient(135deg, var(--bg-act1), #FFFFFF 55%, var(--bg-act3));
+}
+.feed-section.alt {
+  background:
+    linear-gradient(135deg, rgba(9,105,218,0.08), transparent 40%),
+    var(--bg-act2);
+}
+.feed-section.blue {
+  background:
+    radial-gradient(circle at 80% 20%, rgba(9,105,218,0.15), transparent 30%),
+    var(--bg-act3);
+}
+.feed-section.dark {
+  background:
+    radial-gradient(circle at 80% 18%, rgba(45,164,78,0.20), transparent 26%),
+    linear-gradient(145deg, #0D1117, #161B22 65%, #0D1117);
+  color: #F0F6FC;
+}
+.feed-section.dark .body-text { color: #C9D1D9; }
+.feed-section.dark .big-statement { color: #F0F6FC; }
+.feed-section.dark .eyebrow { color: #7EE787; }
+.section-inner { max-width: 600px; width: 100%; }
+.eyebrow {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase;
+  color: var(--accent2); margin-bottom: 14px;
+}
+.big-statement {
+  font-family: "Noto Serif SC", serif;
+  font-size: clamp(25px, 6vw, 38px);
+  font-weight: 900; line-height: 1.45; letter-spacing: 0;
+  margin: 0 0 26px;
+}
+.body-text {
+  font-size: 16px; line-height: 1.9; color: var(--text);
+  margin: 0 0 24px;
+}
+.body-text .hl { color: var(--accent); font-weight: 700; }
+.body-text .hl2 { color: var(--accent2); font-weight: 700; }
+.body-text .danger { color: var(--danger); font-weight: 700; }
+.hook-line {
+  font-size: 14px; line-height: 1.8; color: var(--text-muted);
+  border-left: 3px solid var(--accent);
+  padding-left: 14px; margin: 18px 0 0;
+}
+.dark .hook-line { color: #8B949E; }
+
+.breadcrumb {
+  position: fixed; top: 16px; left: 16px; z-index: 1000;
+  display: flex; align-items: center; gap: 4px;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+  padding: 8px 14px; border-radius: 10px; box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+  font-size: 13px; font-weight: 600;
+}
+.breadcrumb span { color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
+.breadcrumb span:hover { color: var(--accent); }
+.breadcrumb span.current { color: var(--text); cursor: default; }
+.breadcrumb .sep { color: #CBD5E1; margin: 0 2px; cursor: default; }
+.back-btn {
+  position: fixed; top: 16px; left: 16px; z-index: 1001;
+  width: 38px; height: 38px; border-radius: 10px; border: none;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  font-size: 18px; cursor: pointer; display: none; align-items: center; justify-content: center;
+  color: var(--text); transition: all 0.2s;
+}
+.back-btn:hover { background: var(--accent); color: #fff; }
+.depth-dots {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1000;
+  display: flex; gap: 8px; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px);
+  padding: 8px 14px; border-radius: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #CBD5E1; transition: all 0.3s; }
+.dot.active { background: var(--accent); box-shadow: 0 0 8px rgba(45,164,78,0.5); transform: scale(1.2); }
+.drill-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border: 1.5px solid rgba(45,164,78,0.35); border-radius: 10px;
+  background: transparent; color: var(--accent); font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: all 0.25s;
+}
+.drill-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(45,164,78,0.25); }
+.dark .drill-btn { border-color: rgba(126,231,135,0.35); color: #7EE787; }
+.dark .drill-btn:hover { color: #0D1117; background: #7EE787; }
+.source-panel {
+  margin-top: 24px; border-radius: 12px; overflow: hidden;
+  border: 1px solid rgba(45,164,78,0.16); background: rgba(255,255,255,0.48);
+}
+.dark .source-panel { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
+.source-toggle {
+  width: 100%; padding: 12px 16px; border: none; background: none;
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 700; color: var(--accent);
+}
+.source-toggle:hover { background: rgba(45,164,78,0.06); }
+.dark .source-toggle { color: #7EE787; }
+.source-toggle .arrow { transition: transform 0.3s; font-size: 11px; }
+.source-toggle.open .arrow { transform: rotate(90deg); }
+.source-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; padding: 0 16px; }
+.source-body.open { max-height: 2000px; padding: 0 16px 16px; overflow-y: auto; }
+.source-body p { font-size: 13px; line-height: 1.8; color: var(--text-muted); margin: 0 0 10px; white-space: pre-wrap; }
+.dark .source-body p { color: #8B949E; }
+.source-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--accent); margin-bottom: 8px; display: block;
+}
+.dark .source-label { color: #7EE787; }
+.anim-stage { width: 100%; display: flex; justify-content: center; margin: 28px 0; min-height: 190px; }
+.anim-stage > div { width: 100%; }
+
+.stage-card {
+  width: 100%; max-width: 340px; min-height: 210px; margin: 0 auto;
+  position: relative; border-radius: 18px; padding: 20px;
+  background: rgba(255,255,255,0.72);
+  box-shadow: 0 18px 60px rgba(31,35,40,0.12);
+  border: 1px solid rgba(208,215,222,0.7);
+  overflow: hidden;
+}
+.dark .stage-card { background: rgba(22,27,34,0.86); border-color: rgba(240,246,252,0.12); box-shadow: 0 18px 70px rgba(0,0,0,0.32); }
+.pill, .node, .box {
+  position: absolute; display: flex; align-items: center; justify-content: center;
+  font-weight: 800; text-align: center; letter-spacing: 0;
+}
+.pill { min-width: 74px; height: 34px; border-radius: 10px; padding: 0 11px; font-size: 13px; }
+.node { width: 58px; height: 58px; border-radius: 50%; font-size: 14px; }
+.box { border-radius: 12px; padding: 9px 10px; font-size: 13px; line-height: 1.25; }
+.green { background: var(--accent); color: #fff; }
+.blue { background: var(--accent2); color: #fff; }
+.gray { background: #EAEef2; color: var(--text); }
+.yellow { background: #FFF8C5; color: #7D4E00; border: 1px solid #F0B429; }
+.red { background: var(--danger); color: #fff; }
+.dark .gray { background: #30363D; color: #F0F6FC; }
+.line { position: absolute; height: 3px; background: var(--line); transform-origin: left center; opacity: 0; }
+.dark .line { background: #484F58; }
+.vline { position: absolute; width: 3px; background: var(--line); transform-origin: top center; opacity: 0; }
+.dark .vline { background: #484F58; }
+
+@keyframes popIn { from { opacity: 0; transform: scale(0.72); } to { opacity: 1; transform: scale(1); } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes drawX { from { opacity: 1; transform: scaleX(0); } to { opacity: 1; transform: scaleX(1); } }
+@keyframes drawY { from { opacity: 1; transform: scaleY(0); } to { opacity: 1; transform: scaleY(1); } }
+@keyframes warnPulse { 0%,100% { transform: scale(1); box-shadow: 0 0 0 rgba(207,34,46,0); } 50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(207,34,46,0.16); } }
+@keyframes driftRight { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes gateFlash { 0%,100% { box-shadow: 0 0 0 rgba(45,164,78,0); } 50% { box-shadow: 0 0 0 10px rgba(45,164,78,0.14); } }
+@keyframes checkPop { from { opacity: 0; transform: scale(0.2) rotate(-30deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+
+/* S1 */
+.s1_stage .s1_agent1 { left: 28px; top: 54px; opacity: 0; }
+.s1_stage .s1_agent2 { right: 28px; top: 54px; opacity: 0; }
+.s1_stage .s1_issue { left: 119px; top: 70px; opacity: 0; }
+.s1_stage .s1_pr { left: 42px; top: 145px; opacity: 0; }
+.s1_stage .s1_close { right: 42px; top: 145px; opacity: 0; }
+.s1_stage .s1_l1 { left: 86px; top: 86px; width: 70px; transform: rotate(12deg) scaleX(0); }
+.s1_stage .s1_l2 { left: 184px; top: 86px; width: 70px; transform: rotate(-12deg) scaleX(0); }
+.s1_stage .s1_collision { left: 139px; top: 139px; opacity: 0; }
+.s1_stage.visible .s1_agent1 { animation: popIn .45s .2s forwards; }
+.s1_stage.visible .s1_agent2 { animation: popIn .45s .7s forwards; }
+.s1_stage.visible .s1_issue { animation: popIn .45s 1.2s forwards; }
+.s1_stage.visible .s1_l1 { animation: drawX .35s 1.7s forwards; }
+.s1_stage.visible .s1_l2 { animation: drawX .35s 2.1s forwards; }
+.s1_stage.visible .s1_pr { animation: popIn .45s 2.6s forwards; }
+.s1_stage.visible .s1_close { animation: popIn .45s 3.1s forwards; }
+.s1_stage.visible .s1_collision { animation: popIn .35s 3.6s forwards, warnPulse 1.1s 4s infinite; }
+
+/* S2 */
+.s2_stage .s2_center { left: 134px; top: 76px; opacity: 0; }
+.s2_stage .s2_state { left: 20px; top: 24px; opacity: 0; }
+.s2_stage .s2_order { right: 20px; top: 24px; opacity: 0; }
+.s2_stage .s2_handoff { left: 20px; bottom: 24px; opacity: 0; }
+.s2_stage .s2_random { right: 20px; bottom: 24px; opacity: 0; }
+.s2_stage .s2_l1 { left: 88px; top: 55px; width: 64px; transform: rotate(22deg) scaleX(0); }
+.s2_stage .s2_l2 { right: 88px; top: 55px; width: 64px; transform: rotate(158deg) scaleX(0); }
+.s2_stage .s2_l3 { left: 88px; bottom: 61px; width: 64px; transform: rotate(-22deg) scaleX(0); }
+.s2_stage .s2_l4 { right: 88px; bottom: 61px; width: 64px; transform: rotate(202deg) scaleX(0); }
+.s2_stage.visible .s2_center { animation: popIn .45s .2s forwards; }
+.s2_stage.visible .s2_state { animation: popIn .45s .8s forwards; }
+.s2_stage.visible .s2_l1 { animation: drawX .3s 1.2s forwards; }
+.s2_stage.visible .s2_order { animation: popIn .45s 1.6s forwards; }
+.s2_stage.visible .s2_l2 { animation: drawX .3s 2s forwards; }
+.s2_stage.visible .s2_handoff { animation: popIn .45s 2.4s forwards; }
+.s2_stage.visible .s2_l3 { animation: drawX .3s 2.8s forwards; }
+.s2_stage.visible .s2_random { animation: popIn .45s 3.2s forwards; }
+.s2_stage.visible .s2_l4 { animation: drawX .3s 3.6s forwards; }
+
+/* S3 */
+.s3_stage .s3_step { left: 22px; opacity: 0; width: 104px; height: 38px; }
+.s3_stage .s3_a { top: 30px; }
+.s3_stage .s3_b { top: 86px; }
+.s3_stage .s3_c { top: 142px; }
+.s3_stage .s3_d { top: 198px; }
+.s3_stage .s3_guard { right: 36px; top: 86px; width: 120px; height: 86px; opacity: 0; border: 3px solid var(--accent); background: rgba(45,164,78,0.12); color: var(--accent); }
+.s3_stage .s3_v1 { left: 73px; top: 68px; height: 18px; transform: scaleY(0); }
+.s3_stage .s3_v2 { left: 73px; top: 124px; height: 18px; transform: scaleY(0); }
+.s3_stage .s3_v3 { left: 73px; top: 180px; height: 18px; transform: scaleY(0); }
+.s3_stage .s3_out { right: 58px; top: 195px; opacity: 0; }
+.s3_stage.visible .s3_a { animation: popIn .35s .2s forwards; }
+.s3_stage.visible .s3_v1 { animation: drawY .25s .7s forwards; }
+.s3_stage.visible .s3_b { animation: popIn .35s 1s forwards; }
+.s3_stage.visible .s3_v2 { animation: drawY .25s 1.5s forwards; }
+.s3_stage.visible .s3_c { animation: popIn .35s 1.8s forwards; }
+.s3_stage.visible .s3_v3 { animation: drawY .25s 2.3s forwards; }
+.s3_stage.visible .s3_d { animation: popIn .35s 2.6s forwards; }
+.s3_stage.visible .s3_guard { animation: popIn .45s 3.1s forwards, gateFlash 1.4s 3.7s infinite; }
+.s3_stage.visible .s3_out { animation: checkPop .35s 3.8s forwards; }
+
+/* S4 */
+.s4_stage .s4_msg { left: 20px; top: 24px; opacity: 0; width: 92px; height: 38px; }
+.s4_stage .s4_json { left: 20px; top: 82px; opacity: 0; width: 92px; height: 38px; }
+.s4_stage .s4_schema { left: 128px; top: 58px; opacity: 0; width: 86px; height: 86px; border: 3px solid var(--accent); background: rgba(45,164,78,0.12); color: var(--accent); }
+.s4_stage .s4_good { right: 24px; top: 28px; opacity: 0; width: 82px; height: 34px; }
+.s4_stage .s4_bad { right: 24px; top: 98px; opacity: 0; width: 82px; height: 34px; }
+.s4_stage .s4_l1 { left: 112px; top: 48px; width: 26px; transform: scaleX(0); }
+.s4_stage .s4_l2 { left: 112px; top: 106px; width: 26px; transform: scaleX(0); }
+.s4_stage .s4_l3 { right: 106px; top: 48px; width: 26px; transform: scaleX(0); }
+.s4_stage .s4_l4 { right: 106px; top: 116px; width: 26px; transform: scaleX(0); }
+.s4_stage .s4_bottom { left: 52px; bottom: 26px; opacity: 0; width: 236px; height: 36px; }
+.s4_stage.visible .s4_msg { animation: popIn .35s .2s forwards; }
+.s4_stage.visible .s4_json { animation: popIn .35s .7s forwards; }
+.s4_stage.visible .s4_l1 { animation: drawX .25s 1.1s forwards; }
+.s4_stage.visible .s4_l2 { animation: drawX .25s 1.35s forwards; }
+.s4_stage.visible .s4_schema { animation: popIn .45s 1.7s forwards, gateFlash 1.2s 2.2s infinite; }
+.s4_stage.visible .s4_l3 { animation: drawX .25s 2.3s forwards; }
+.s4_stage.visible .s4_good { animation: popIn .35s 2.7s forwards; }
+.s4_stage.visible .s4_l4 { animation: drawX .25s 3.1s forwards; }
+.s4_stage.visible .s4_bad { animation: popIn .35s 3.5s forwards; }
+.s4_stage.visible .s4_bottom { animation: fadeUp .45s 4s forwards; }
+
+/* S5 */
+.s5_stage .s5_log { left: 22px; top: 24px; opacity: 0; width: 88px; height: 34px; }
+.s5_stage .s5_guess { left: 22px; top: 82px; opacity: 0; width: 88px; height: 34px; }
+.s5_stage .s5_schema { right: 22px; top: 24px; opacity: 0; width: 128px; height: 34px; }
+.s5_stage .s5_fail { right: 22px; top: 82px; opacity: 0; width: 128px; height: 34px; }
+.s5_stage .s5_repair { left: 78px; top: 150px; opacity: 0; width: 184px; height: 38px; }
+.s5_stage .s5_l1 { left: 110px; top: 41px; width: 78px; transform: scaleX(0); }
+.s5_stage .s5_l2 { left: 110px; top: 99px; width: 78px; transform: scaleX(0); }
+.s5_stage .s5_v { left: 170px; top: 116px; height: 34px; transform: scaleY(0); }
+.s5_stage.visible .s5_log { animation: popIn .35s .2s forwards; }
+.s5_stage.visible .s5_guess { animation: popIn .35s .7s forwards; }
+.s5_stage.visible .s5_l1 { animation: drawX .25s 1.1s forwards; }
+.s5_stage.visible .s5_schema { animation: popIn .35s 1.45s forwards; }
+.s5_stage.visible .s5_l2 { animation: drawX .25s 1.85s forwards; }
+.s5_stage.visible .s5_fail { animation: popIn .35s 2.2s forwards, warnPulse 1.2s 2.8s infinite; }
+.s5_stage.visible .s5_v { animation: drawY .25s 3s forwards; }
+.s5_stage.visible .s5_repair { animation: popIn .45s 3.35s forwards; }
+
+/* S6 */
+.s6_stage .s6_prompt { left: 30px; top: 30px; opacity: 0; width: 280px; height: 42px; }
+.s6_stage .s6_a { left: 22px; top: 112px; opacity: 0; width: 66px; height: 34px; }
+.s6_stage .s6_b { left: 98px; top: 112px; opacity: 0; width: 66px; height: 34px; }
+.s6_stage .s6_c { left: 174px; top: 112px; opacity: 0; width: 66px; height: 34px; }
+.s6_stage .s6_d { left: 250px; top: 112px; opacity: 0; width: 66px; height: 34px; }
+.s6_stage .s6_pick { left: 97px; top: 176px; opacity: 0; width: 146px; height: 38px; }
+.s6_stage.visible .s6_prompt { animation: fadeUp .45s .2s forwards; }
+.s6_stage.visible .s6_a { animation: popIn .35s .9s forwards; }
+.s6_stage.visible .s6_b { animation: popIn .35s 1.3s forwards; }
+.s6_stage.visible .s6_c { animation: popIn .35s 1.7s forwards; }
+.s6_stage.visible .s6_d { animation: popIn .35s 2.1s forwards; }
+.s6_stage.visible .s6_pick { animation: popIn .45s 2.7s forwards, gateFlash 1.2s 3.2s infinite; }
+
+/* S7 */
+.s7_stage .s7_agent { left: 24px; top: 82px; opacity: 0; }
+.s7_stage .s7_mcp { left: 130px; top: 55px; opacity: 0; width: 80px; height: 112px; border: 3px solid var(--accent2); background: rgba(9,105,218,0.12); color: var(--accent2); }
+.s7_stage .s7_tool { right: 24px; top: 82px; opacity: 0; }
+.s7_stage .s7_bad { left: 44px; top: 30px; opacity: 0; width: 66px; height: 30px; }
+.s7_stage .s7_good { right: 44px; top: 30px; opacity: 0; width: 66px; height: 30px; }
+.s7_stage .s7_l1 { left: 82px; top: 111px; width: 48px; transform: scaleX(0); }
+.s7_stage .s7_l2 { left: 210px; top: 111px; width: 48px; transform: scaleX(0); }
+.s7_stage .s7_caption { left: 42px; bottom: 24px; opacity: 0; width: 256px; height: 34px; }
+.s7_stage.visible .s7_agent { animation: popIn .35s .2s forwards; }
+.s7_stage.visible .s7_bad { animation: popIn .35s .7s forwards; }
+.s7_stage.visible .s7_l1 { animation: drawX .25s 1.1s forwards; }
+.s7_stage.visible .s7_mcp { animation: popIn .45s 1.45s forwards, gateFlash 1.2s 1.95s infinite; }
+.s7_stage.visible .s7_good { animation: popIn .35s 2.1s forwards; }
+.s7_stage.visible .s7_l2 { animation: drawX .25s 2.5s forwards; }
+.s7_stage.visible .s7_tool { animation: popIn .35s 2.85s forwards; }
+.s7_stage.visible .s7_caption { animation: fadeUp .45s 3.35s forwards; }
+
+/* S8 */
+.s8_stage { min-height: 270px; }
+.s8_stage .s8_item { left: 32px; opacity: 0; width: 276px; height: 30px; justify-content: flex-start; padding-left: 14px; }
+.s8_stage .s8_i1 { top: 26px; }
+.s8_stage .s8_i2 { top: 64px; }
+.s8_stage .s8_i3 { top: 102px; }
+.s8_stage .s8_i4 { top: 140px; }
+.s8_stage .s8_i5 { top: 178px; }
+.s8_stage .s8_final { left: 80px; bottom: 18px; opacity: 0; width: 180px; height: 34px; }
+.s8_stage.visible .s8_i1 { animation: driftRight .35s .2s forwards; }
+.s8_stage.visible .s8_i2 { animation: driftRight .35s .65s forwards; }
+.s8_stage.visible .s8_i3 { animation: driftRight .35s 1.1s forwards; }
+.s8_stage.visible .s8_i4 { animation: driftRight .35s 1.55s forwards; }
+.s8_stage.visible .s8_i5 { animation: driftRight .35s 2s forwards; }
+.s8_stage.visible .s8_final { animation: popIn .45s 2.65s forwards; }
+
+/* S9-S12 detail layers */
+.s9_stage { min-height: 270px; }
+.s9_stage .s9_col { position:absolute; top:24px; width:92px; opacity:0; }
+.s9_stage .s9_c1 { left:22px; }
+.s9_stage .s9_c2 { left:124px; }
+.s9_stage .s9_c3 { left:226px; }
+.s9_stage .s9_cell { position:relative; height:32px; border-radius:8px; margin-bottom:10px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; }
+.s9_stage .s9_gate { left:84px; bottom:22px; opacity:0; width:172px; height:38px; }
+.s9_stage.visible .s9_c1 { animation: fadeUp .4s .2s forwards; }
+.s9_stage.visible .s9_c2 { animation: fadeUp .4s .8s forwards; }
+.s9_stage.visible .s9_c3 { animation: fadeUp .4s 1.4s forwards; }
+.s9_stage.visible .s9_gate { animation: popIn .45s 2.2s forwards, gateFlash 1.2s 2.8s infinite; }
+
+.s10_stage .s10_fail { left:20px; top:35px; opacity:0; width:122px; height:38px; }
+.s10_stage .s10_retry { left:109px; top:102px; opacity:0; width:122px; height:38px; }
+.s10_stage .s10_escalate { right:20px; top:169px; opacity:0; width:122px; height:38px; }
+.s10_stage .s10_l1 { left:142px; top:61px; width:54px; transform:rotate(37deg) scaleX(0); }
+.s10_stage .s10_l2 { left:230px; top:128px; width:54px; transform:rotate(37deg) scaleX(0); }
+.s10_stage.visible .s10_fail { animation: popIn .35s .2s forwards, warnPulse 1.2s .8s infinite; }
+.s10_stage.visible .s10_l1 { animation: drawX .3s 1.1s forwards; }
+.s10_stage.visible .s10_retry { animation: popIn .35s 1.5s forwards; }
+.s10_stage.visible .s10_l2 { animation: drawX .3s 2s forwards; }
+.s10_stage.visible .s10_escalate { animation: popIn .35s 2.4s forwards; }
+
+.s11_stage .s11_prompt { left:30px; top:24px; opacity:0; width:280px; height:38px; }
+.s11_stage .s11_union { left:48px; top:90px; opacity:0; width:244px; height:74px; border:3px solid var(--accent2); background:rgba(9,105,218,.1); color:var(--accent2); }
+.s11_stage { min-height: 235px; }
+.s11_stage .s11_valid { left:94px; bottom:18px; opacity:0; width:152px; height:36px; }
+.s11_stage.visible .s11_prompt { animation: fadeUp .35s .2s forwards; }
+.s11_stage.visible .s11_union { animation: popIn .45s .9s forwards; }
+.s11_stage.visible .s11_valid { animation: checkPop .4s 1.7s forwards; }
+
+.s12_stage .s12_agent { left:22px; top:82px; opacity:0; }
+.s12_stage .s12_in { left:102px; top:30px; opacity:0; width:66px; height:30px; }
+.s12_stage .s12_mcp { left:130px; top:82px; opacity:0; width:80px; height:58px; border:3px solid var(--accent); background:rgba(45,164,78,.1); color:var(--accent); }
+.s12_stage .s12_out { right:102px; top:154px; opacity:0; width:66px; height:30px; }
+.s12_stage .s12_prod { right:22px; top:82px; opacity:0; }
+.s12_stage .s12_l1 { left:80px; top:111px; width:50px; transform:scaleX(0); }
+.s12_stage .s12_l2 { left:210px; top:111px; width:50px; transform:scaleX(0); }
+.s12_stage.visible .s12_agent { animation: popIn .35s .2s forwards; }
+.s12_stage.visible .s12_in { animation: popIn .35s .7s forwards; }
+.s12_stage.visible .s12_l1 { animation: drawX .25s 1.1s forwards; }
+.s12_stage.visible .s12_mcp { animation: popIn .4s 1.45s forwards, gateFlash 1.2s 1.9s infinite; }
+.s12_stage.visible .s12_out { animation: popIn .35s 2.2s forwards; }
+.s12_stage.visible .s12_l2 { animation: drawX .25s 2.6s forwards; }
+.s12_stage.visible .s12_prod { animation: popIn .35s 2.95s forwards; }
+
+@media (max-width: 420px) {
+  .feed-section { padding-left: 18px; padding-right: 18px; }
+  .big-statement { font-size: clamp(23px, 7vw, 31px); }
+  .body-text { font-size: 15px; }
+  .stage-card { transform: scale(0.96); transform-origin: top center; }
+}
+</style>
+
+<meta name="description" content="这篇文章的核心判断很工程化：当多个 agent 开始分工处理 issue、PR、检查和代码变更时，它们就不再像聊天界面，而更像一套 分布式系统 。如果状态、顺序、校验和接口只靠自然语言约定，那么每个 agent 都会合理地猜，但整个系统会不可靠。">
+<link rel="canonical" href="https://chendi.me/readings/multi-agent-workflows/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">←</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<div class="layer active" id="layer-overview" data-depth="0">
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="eyebrow reveal">GitHub Blog · Agent Engineering</div>
+      <h1 class="big-statement reveal reveal-d1">多 Agent 工作流失败，通常不是模型不够聪明，而是系统没有结构。</h1>
+      <p class="body-text reveal reveal-d2">这篇文章的核心判断很工程化：当多个 agent 开始分工处理 issue、PR、检查和代码变更时，它们就不再像聊天界面，而更像一套<span class="hl">分布式系统</span>。如果状态、顺序、校验和接口只靠自然语言约定，那么每个 agent 都会合理地猜，但整个系统会不可靠。</p>
+      <div class="anim-stage reveal reveal-d3" id="s1-anim">
+        <div class="s1_stage stage-card">
+          <div class="node green s1_agent1">Agent A</div><div class="node blue s1_agent2">Agent B</div>
+          <div class="box yellow s1_issue">同一个 Issue</div>
+          <div class="line s1_l1"></div><div class="line s1_l2"></div>
+          <div class="pill green s1_pr">开 PR</div><div class="pill red s1_close">关闭</div>
+          <div class="node red s1_collision">冲突</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 来源定位</button>
+        <div class="source-body"><span class="source-label">GitHub Blog, Feb 24 2026</span><p>开头部分用 issue 被关闭、变更通过但下游检查失败等例子说明：多 agent 失败常来自状态、顺序和验证假设不一致。页面避免长段转载，仅保留中文转述和原文链接。</p><p>Source: https://github.blog/ai-and-ml/generative-ai/multi-agent-workflows-often-fail-heres-how-to-engineer-ones-that-dont/</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section">
+    <div class="section-inner">
+      <div class="eyebrow reveal">Failure Surface</div>
+      <h2 class="big-statement reveal reveal-d1">一旦从单 agent 变成多 agent，新增的不是“更多能力”，而是更多失败面。</h2>
+      <p class="body-text reveal reveal-d2">团队会在端到端问题太复杂时引入多 agent，例如代码库维护、依赖更新、质量检查、重构、按规格实现功能、issue 和 PR 分流。但这些场景只有在每一步都<span class="hl2">显式且受约束</span>时才可靠；否则共享状态、顺序假设、隐式交接和非确定性行为会一起放大。</p>
+      <div class="anim-stage reveal reveal-d3" id="s2-anim">
+        <div class="s2_stage stage-card">
+          <div class="node green s2_center">工作流</div>
+          <div class="box gray s2_state">共享状态</div><div class="box gray s2_order">顺序假设</div>
+          <div class="box gray s2_handoff">隐式交接</div><div class="box gray s2_random">非确定性</div>
+          <div class="line s2_l1"></div><div class="line s2_l2"></div><div class="line s2_l3"></div><div class="line s2_l4"></div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 来源定位</button>
+        <div class="source-body"><span class="source-label">What multi-agent systems are</span><p>文章列举了代码库维护、自动质量检查、重构、spec-driven implementation、issue/PR triage 等使用场景，并强调引入多个 agent 会同时引入共享状态、顺序和交接问题。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section alt">
+    <div class="section-inner">
+      <div class="eyebrow reveal">Three Contracts</div>
+      <h2 class="big-statement reveal reveal-d1">可靠性来自三层约束：数据格式、行动意图、工具接口。</h2>
+      <p class="body-text reveal reveal-d2">文章给出的解法不是“把 prompt 写得更长”，而是把 agent 间的软沟通改成硬边界。<span class="hl">typed schemas</span> 约束数据长什么样，<span class="hl2">action schemas</span> 约束下一步能做什么，MCP 或类似层负责在工具执行前把这些约束真正 enforce。</p>
+      <div class="anim-stage reveal reveal-d3" id="s3-anim">
+        <div class="s3_stage stage-card">
+          <div class="pill green s3_step s3_a">数据 schema</div><div class="vline s3_v1"></div>
+          <div class="pill blue s3_step s3_b">行动 schema</div><div class="vline s3_v2"></div>
+          <div class="pill yellow s3_step s3_c">MCP 接口</div><div class="vline s3_v3"></div>
+          <div class="pill gray s3_step s3_d">生产工具</div>
+          <div class="box s3_guard">边界验证</div><div class="pill green s3_out">通过后执行</div>
+        </div>
+      </div>
+      <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-contracts', this)">深入：契约怎么设计 ↓</button>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 来源定位</button>
+        <div class="source-body"><span class="source-label">Article structure</span><p>正文主体分成三节：typed schemas、action schemas、MCP。三节分别回答“传什么数据”“允许什么行动”“谁来执行前校验”。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section blue">
+    <div class="section-inner">
+      <div class="eyebrow reveal">Typed Schemas</div>
+      <h2 class="big-statement reveal reveal-d1">自然语言会漂移，typed schema 把交接变成机器可检查的合同。</h2>
+      <p class="body-text reveal reveal-d2">多 agent 早期失败常常很朴素：字段名变了、类型对不上、JSON 格式摇摆、下游步骤只能猜 payload 的意思。typed schema 的作用，是让每个边界都有可验证的数据形状；一旦数据无效，系统应该重试、修复或升级，而不是让坏状态继续传播。</p>
+      <div class="anim-stage reveal reveal-d3" id="s4-anim">
+        <div class="s4_stage stage-card">
+          <div class="box yellow s4_msg">自然语言</div><div class="box yellow s4_json">松散 JSON</div>
+          <div class="line s4_l1"></div><div class="line s4_l2"></div>
+          <div class="box s4_schema">Schema<br>Gate</div>
+          <div class="line s4_l3"></div><div class="line s4_l4"></div>
+          <div class="pill green s4_good">有效</div><div class="pill red s4_bad">拒绝</div>
+          <div class="box gray s4_bottom">调试从“猜日志”变成“查合同”</div>
+        </div>
+      </div>
+      <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-contracts', this)">深入：schema 边界 ↓</button>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 来源定位</button>
+        <div class="source-body"><span class="source-label">Section 1</span><p>文章把自然语言和不一致 JSON 看作早期失败源，并用 TypeScript 风格的 UserProfile 示例说明严格数据形状如何帮助 agent 间协作。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="eyebrow reveal">Debugging</div>
+      <h2 class="big-statement reveal reveal-d1">schema 的价值不只是防错，而是把调试问题改写成“哪个合同失败了”。</h2>
+      <p class="body-text reveal reveal-d2">没有结构时，工程师只能回看日志，猜 agent 当时为什么这么做。有 schema 后，错误能落到具体边界：某个 payload 违反了某个字段、类型或枚举。因为失败变得可定位，所以系统才能在坏状态进入下游前做 retry、repair 或 escalate。</p>
+      <div class="anim-stage reveal reveal-d3" id="s5-anim">
+        <div class="s5_stage stage-card">
+          <div class="pill gray s5_log">看日志</div><div class="pill yellow s5_guess">猜原因</div>
+          <div class="line s5_l1"></div><div class="line s5_l2"></div>
+          <div class="pill blue s5_schema">Schema X</div><div class="pill red s5_fail">字段失败</div>
+          <div class="vline s5_v"></div><div class="box green s5_repair">retry / repair / escalate</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 来源定位</button>
+        <div class="source-body"><span class="source-label">Contract failure framing</span><p>typed schemas 一节强调 schema violation 应被当作 contract failure，处理方式包括重试、修复或升级，目标是在坏状态传播前拦住它。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section">
+    <div class="section-inner">
+      <div class="eyebrow reveal">Action Schemas</div>
+      <h2 class="big-statement reveal reveal-d1">即使数据结构正确，行动意图仍然可能是模糊的。</h2>
+      <p class="body-text reveal reveal-d2">“分析这个 issue 并帮助团队采取行动”听起来合理，但对不同 agent 来说，关闭、分配、升级、不处理都可能合理。action schema 的意义，是把开放式意图收束成一小组<span class="hl">明确、互斥、可验证</span>的行动；最终结果必须落到其中一个合法 action。</p>
+      <div class="anim-stage reveal reveal-d3" id="s6-anim">
+        <div class="s6_stage stage-card">
+          <div class="box yellow s6_prompt">“帮团队采取行动”</div>
+          <div class="pill gray s6_a">关闭</div><div class="pill gray s6_b">分配</div><div class="pill gray s6_c">升级</div><div class="pill gray s6_d">不动</div>
+          <div class="box green s6_pick">必须返回一个合法 action</div>
+        </div>
+      </div>
+      <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-execution', this)">深入：行动与工具 ↓</button>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 来源定位</button>
+        <div class="source-body"><span class="source-label">Section 2</span><p>action schemas 一节用 issue 处理场景说明：开放指令会导致多个“看似合理但不可自动化”的结果，所以必须定义允许行动集合。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section alt">
+    <div class="section-inner">
+      <div class="eyebrow reveal">MCP Enforcement</div>
+      <h2 class="big-statement reveal reveal-d1">没有 enforce 的 schema 只是约定；MCP 把约定变成执行前的门。</h2>
+      <p class="body-text reveal reveal-d2">typed schemas 和 action schemas 只有被持续执行才有意义。文章把 MCP 描述为 enforce layer：每个 tool 和 resource 都有输入输出 schema，调用在执行前就被验证。这样 agent 不能随手发明字段、漏掉必填项，错误也不会先打到生产系统再被发现。</p>
+      <div class="anim-stage reveal reveal-d3" id="s7-anim">
+        <div class="s7_stage stage-card">
+          <div class="node blue s7_agent">Agent</div><div class="pill red s7_bad">乱字段</div>
+          <div class="line s7_l1"></div><div class="box s7_mcp">MCP<br>Gate</div>
+          <div class="pill green s7_good">合法参数</div><div class="line s7_l2"></div><div class="node green s7_tool">Tool</div>
+          <div class="box gray s7_caption">先验证，再执行</div>
+        </div>
+      </div>
+      <button class="drill-btn reveal reveal-d4" onclick="drillDown('layer-execution', this)">深入：MCP 如何拦截 ↓</button>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 来源定位</button>
+        <div class="source-body"><span class="source-label">Section 3</span><p>MCP 一节强调显式 input/output schema，以及执行前验证。它把结构和意图从“建议”升级成 agent 调工具时必须通过的契约。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="eyebrow reveal">Principles</div>
+      <h2 class="big-statement reveal reveal-d1">最后的原则很简单：把 agent 当代码，而不是当聊天窗口。</h2>
+      <p class="body-text reveal reveal-d2">文章收束成一组系统设计原则：先为失败设计，验证每个 agent 边界，在增加 agent 前先约束行动，记录中间状态，并预期重试和部分失败。因为多 agent 系统会像分布式系统一样失效，所以可靠性也必须用分布式系统的方式设计。</p>
+      <div class="anim-stage reveal reveal-d3" id="s8-anim">
+        <div class="s8_stage stage-card">
+          <div class="box green s8_item s8_i1">✓ 先为失败设计</div>
+          <div class="box green s8_item s8_i2">✓ 验证每个边界</div>
+          <div class="box green s8_item s8_i3">✓ 先约束行动</div>
+          <div class="box green s8_item s8_i4">✓ 记录中间状态</div>
+          <div class="box green s8_item s8_i5">✓ 预期部分失败</div>
+          <div class="pill blue s8_final">Agents as code</div>
+        </div>
+      </div>
+      <div class="hook-line reveal reveal-d4">这不是“多放几个 agent”的问题，而是先把边界、契约和可观测性补上，再让 agent 接管流程。</div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 来源定位</button>
+        <div class="source-body"><span class="source-label">Design principles & conclusion</span><p>文章最后列出可靠多 agent 工作流的原则，并用“treat agents like code, not chat interfaces”作为结论。这里只保留短语引用，其余用中文转述。</p></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="layer" id="layer-contracts" data-depth="1">
+  <section class="feed-section blue">
+    <div class="section-inner">
+      <div class="eyebrow reveal">Contract Design</div>
+      <h2 class="big-statement reveal reveal-d1">typed schema 要落在“边界”上，而不是只写在文档里。</h2>
+      <p class="body-text reveal reveal-d2">最关键的设计动作，是先画出 producer 和 consumer：哪个 agent 产出 profile、triage result、patch plan 或 check result，哪个下游步骤消费它。只要结果会被另一个组件读取，就应该有 schema、required field、enum、nullable 语义和错误形状，否则下游仍然会被迫猜。</p>
+      <div class="anim-stage reveal reveal-d3" id="s9-anim">
+        <div class="s9_stage stage-card">
+          <div class="s9_col s9_c1"><div class="s9_cell gray">Producer</div><div class="s9_cell yellow">id</div><div class="s9_cell yellow">email</div><div class="s9_cell yellow">plan?</div></div>
+          <div class="s9_col s9_c2"><div class="s9_cell blue">Schema</div><div class="s9_cell green">number</div><div class="s9_cell green">string</div><div class="s9_cell green">enum</div></div>
+          <div class="s9_col s9_c3"><div class="s9_cell gray">Consumer</div><div class="s9_cell gray">读取</div><div class="s9_cell gray">路由</div><div class="s9_cell gray">执行</div></div>
+          <div class="box green s9_gate">边界处机器校验</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 来源定位</button>
+        <div class="source-body"><span class="source-label">Typed interfaces</span><p>文章把 typed interfaces 类比为开发中的合同：合同越早建立，协作越少互相踩脚。这里把它转成边界设计方法。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="eyebrow reveal">Failure Handling</div>
+      <h2 class="big-statement reveal reveal-d1">schema 失败不是异常噪音，而是工作流的一条正式分支。</h2>
+      <p class="body-text reveal reveal-d2">如果 contract failure 只被记录但不改变流程，那么坏数据仍然会继续流动。更稳的做法是为每个边界定义 retry limit、repair prompt、升级路径和停止条件。这样系统遇到无效 payload 时，会进入可控的修复流程，而不是让下游 agent 拿着脏数据继续推理。</p>
+      <div class="anim-stage reveal reveal-d3" id="s10-anim">
+        <div class="s10_stage stage-card">
+          <div class="box red s10_fail">合同失败</div><div class="line s10_l1"></div>
+          <div class="box yellow s10_retry">重试 / 修复</div><div class="line s10_l2"></div>
+          <div class="box blue s10_escalate">升级 / 停止</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 来源定位</button>
+        <div class="source-body"><span class="source-label">Retry, repair, escalate</span><p>typed schemas 一节明确说 schema violations 应该在坏状态传播前重试、修复或升级。这里把它做成可执行的失败分支。</p></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="layer" id="layer-execution" data-depth="1">
+  <section class="feed-section">
+    <div class="section-inner">
+      <div class="eyebrow reveal">Action Union</div>
+      <h2 class="big-statement reveal reveal-d1">action schema 最好是小而硬的 discriminated union。</h2>
+      <p class="body-text reveal reveal-d2">文章示例里，行动不是自由文本，而是 request-more-info、assign、close-as-duplicate、no-action 这样的枚举分支。这个结构迫使 agent 选择一个动作，并携带该动作必需的字段。因为每个动作的字段不同，所以 discriminated union 比“一个大对象加可选字段”更不容易被误用。</p>
+      <div class="anim-stage reveal reveal-d3" id="s11-anim">
+        <div class="s11_stage stage-card">
+          <div class="box yellow s11_prompt">开放意图</div>
+          <div class="box s11_union">type = request-info | assign | close-duplicate | no-action</div>
+          <div class="box green s11_valid">Exactly one valid action</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 来源定位</button>
+        <div class="source-body"><span class="source-label">Action schema example</span><p>文章给出 z.discriminatedUnion 的示例。这里保留其设计思想：每次只能返回一个合法 action，其他结果都进入验证失败分支。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section dark">
+    <div class="section-inner">
+      <div class="eyebrow reveal">Tool Boundary</div>
+      <h2 class="big-statement reveal reveal-d1">MCP 最重要的时机，是工具执行之前。</h2>
+      <p class="body-text reveal reveal-d2">如果验证发生在工具已经修改 issue、发出评论或创建 PR 之后，错误就已经变成了外部状态。MCP 的价值在于把 input_schema 和 output_schema 放在调用门口：输入不合格就不执行，输出不合格就不进入下一步。于是“错误调用”不会先污染生产系统。</p>
+      <div class="anim-stage reveal reveal-d3" id="s12-anim">
+        <div class="s12_stage stage-card">
+          <div class="node blue s12_agent">Agent</div><div class="pill yellow s12_in">input</div>
+          <div class="line s12_l1"></div><div class="box s12_mcp">MCP</div>
+          <div class="pill green s12_out">output</div><div class="line s12_l2"></div><div class="node green s12_prod">Prod</div>
+        </div>
+      </div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">▶</span> 来源定位</button>
+        <div class="source-body"><span class="source-label">MCP section</span><p>MCP 一节强调它为工具和资源定义显式输入输出 schema，并在执行前验证调用，从而阻止字段漂移和缺失必填项。</p></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+var layerStack = ['layer-overview'];
+var transitioning = false;
+var layerNames = {
+  'layer-overview': '概览',
+  'layer-contracts': '契约层',
+  'layer-execution': '执行层'
+};
+
+var coverageData = {
+  sourceType: 'text',
+  totalLength: '约1350词',
+  segments: [
+    { start: 0, end: 220, section: 1, reason: null },
+    { start: 220, end: 410, section: 2, reason: null },
+    { start: 410, end: 575, section: 4, reason: null, deepDive: true },
+    { start: 575, end: 730, section: 6, reason: null, deepDive: true },
+    { start: 730, end: 895, section: 7, reason: null, deepDive: true },
+    { start: 895, end: 1040, section: 8, reason: null },
+    { start: 1040, end: 1350, section: null, reason: '作者介绍与站点推荐内容' }
+  ]
+};
+
+var topicData = {
+  1: [{ name: '隐式状态', status: 'included' }, { name: '分布式系统视角', status: 'included' }],
+  2: [{ name: '使用场景', status: 'included' }, { name: '新增失败面', status: 'included' }],
+  3: [{ name: '三层约束', status: 'included' }, { name: '执行前校验', status: 'deep-dive' }],
+  4: [{ name: '数据形状', status: 'included' }, { name: '失败快停', status: 'deep-dive' }],
+  5: [{ name: '合同失败', status: 'included' }, { name: '修复分支', status: 'included' }],
+  6: [{ name: '开放意图', status: 'included' }, { name: '动作集合', status: 'deep-dive' }],
+  7: [{ name: 'MCP', status: 'included' }, { name: '工具边界', status: 'deep-dive' }],
+  8: [{ name: '设计原则', status: 'included' }, { name: 'agents as code', status: 'included' }]
+};
+
+var observers = new Map();
+
+function setupObserver(layerId) {
+  if (observers.has(layerId)) return;
+  var layer = document.getElementById(layerId);
+  var reveals = layer.querySelectorAll('.reveal, [class*="_stage"]');
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) e.target.classList.add('visible');
+    });
+  }, { threshold: 0.15, root: layer });
+  reveals.forEach(function(el) { obs.observe(el); });
+  observers.set(layerId, obs);
+}
+
+function resetReveals(layerId) {
+  var layer = document.getElementById(layerId);
+  layer.querySelectorAll('.reveal').forEach(function(el) { el.classList.remove('visible'); });
+  layer.querySelectorAll('[class*="_stage"]').forEach(function(el) { el.classList.remove('visible'); });
+}
+
+function activateReveals(layerId) {
+  resetReveals(layerId);
+  if (observers.has(layerId)) { observers.get(layerId).disconnect(); observers.delete(layerId); }
+  requestAnimationFrame(function() { setupObserver(layerId); });
+}
+
+function updateBreadcrumb() {
+  var bc = document.getElementById('breadcrumb');
+  bc.innerHTML = '';
+  layerStack.forEach(function(id, i) {
+    if (i > 0) {
+      var sep = document.createElement('span');
+      sep.className = 'sep';
+      sep.textContent = '>';
+      bc.appendChild(sep);
+    }
+    var span = document.createElement('span');
+    span.textContent = layerNames[id] || id;
+    if (i === layerStack.length - 1) span.className = 'current';
+    else span.addEventListener('click', function() { goBackTo(i); });
+    bc.appendChild(span);
+  });
+  var backBtn = document.getElementById('backBtn');
+  backBtn.style.display = layerStack.length > 1 ? 'flex' : 'none';
+  bc.style.left = layerStack.length > 1 ? '60px' : '16px';
+  var depth = layerStack.length - 1;
+  document.querySelectorAll('#depthDots .dot').forEach(function(d, i) {
+    d.classList.toggle('active', i === depth);
+  });
+}
+
+function drillDown(targetId) {
+  if (transitioning) return;
+  transitioning = true;
+  var currentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var targetLayer = document.getElementById(targetId);
+  targetLayer.scrollTop = 0;
+  resetReveals(targetId);
+  targetLayer.style.visibility = 'visible';
+  var duration = 600;
+  currentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  currentLayer.style.transformOrigin = 'center center';
+  currentLayer.style.transform = 'scale(1.3)';
+  currentLayer.style.opacity = '0';
+  targetLayer.classList.add('active');
+  targetLayer.style.opacity = '0';
+  targetLayer.style.transform = 'scale(0.85)';
+  targetLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      targetLayer.style.opacity = '1';
+      targetLayer.style.transform = 'scale(1)';
+    });
+  });
+  setTimeout(function() {
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition = '';
+    currentLayer.style.transform = '';
+    currentLayer.style.opacity = '';
+    targetLayer.style.transition = '';
+    targetLayer.style.transform = '';
+    activateReveals(targetId);
+    transitioning = false;
+  }, duration + 50);
+  layerStack.push(targetId);
+  updateBreadcrumb();
+}
+
+function goBack() {
+  if (layerStack.length <= 1 || transitioning) return;
+  transitioning = true;
+  var currentId = layerStack.pop();
+  var parentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var parentLayer = document.getElementById(parentId);
+  var duration = 600;
+  currentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  currentLayer.style.transform = 'scale(0.85)';
+  currentLayer.style.opacity = '0';
+  parentLayer.classList.add('active');
+  parentLayer.style.transform = 'scale(1.3)';
+  parentLayer.style.opacity = '0';
+  parentLayer.style.transition = 'transform ' + duration + 'ms ease-out, opacity ' + duration + 'ms ease-out';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      parentLayer.style.transform = 'scale(1)';
+      parentLayer.style.opacity = '1';
+    });
+  });
+  setTimeout(function() {
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition = '';
+    currentLayer.style.transform = '';
+    currentLayer.style.opacity = '';
+    currentLayer.style.visibility = '';
+    parentLayer.style.transition = '';
+    parentLayer.style.transform = '';
+    transitioning = false;
+  }, duration + 50);
+  updateBreadcrumb();
+}
+
+function goBackTo(targetIndex) {
+  if (transitioning) return;
+  if (layerStack.length - 1 > targetIndex) goBack();
+}
+
+function toggleSource(btn) {
+  btn.classList.toggle('open');
+  btn.nextElementSibling.classList.toggle('open');
+}
+
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+</body>
+</html>

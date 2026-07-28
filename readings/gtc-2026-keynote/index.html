@@ -1,0 +1,3060 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GTC 2026 Keynote：AI 工厂时代</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-act1: #ECFDF5;
+  --bg-act2: #F5F3FF;
+  --bg-act3: #FFF7ED;
+  --bg-close: #0F172A;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --dim: #94A3B8;
+  --accent: #059669;
+  --accent2: #7C3AED;
+  --warm: #D97706;
+  --danger: #DC2626;
+  --neutral: #CBD5E1;
+  --card-bg: #FFFFFF;
+}
+
+html { font-size: 16px; overflow: hidden; height: 100%; }
+
+body {
+  background: var(--bg-act1);
+  color: var(--text);
+  font-family: 'Noto Sans SC', -apple-system, sans-serif;
+  line-height: 1.9;
+  overflow: hidden;
+  height: 100%;
+  -webkit-font-smoothing: antialiased;
+}
+
+.serif { font-family: 'Noto Serif SC', Georgia, serif; }
+.content-width { max-width: 640px; margin: 0 auto; padding: 0 28px; }
+
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.15s; }
+.reveal-delay-2 { transition-delay: 0.3s; }
+.reveal-delay-3 { transition-delay: 0.45s; }
+.reveal-delay-4 { transition-delay: 0.6s; }
+
+/* === HERO === */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  background: linear-gradient(160deg, #0F172A 0%, #064E3B 50%, #0F172A 100%);
+  padding: 40px 28px; text-align: center; position: relative;
+}
+.hero-title {
+  font-family: 'Noto Serif SC', serif;
+  font-size: clamp(28px, 7vw, 42px); font-weight: 700; line-height: 1.4;
+  max-width: 600px; margin-bottom: 24px; color: #ECFDF5;
+}
+.hero-subtitle { font-size: 15px; color: #94A3B8; max-width: 480px; line-height: 1.8; margin-bottom: 20px; }
+.hero-hook { font-size: 16px; color: #6EE7B7; max-width: 520px; line-height: 1.8; margin-bottom: 48px; font-weight: 400; }
+.hero-source { font-size: 13px; color: #475569; letter-spacing: 0.5px; }
+.hero-scroll-hint {
+  position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+  font-size: 13px; color: #475569; animation: gentleBounce 2s ease-in-out infinite;
+}
+@keyframes gentleBounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(8px); }
+}
+
+/* === ACT TRANSITIONS === */
+.act-transition {
+  min-height: 100vh; display: flex; flex-direction: column;
+  justify-content: center; align-items: center; text-align: center;
+  padding: 40px 28px; position: relative;
+}
+.act-number { font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: var(--dim); margin-bottom: 20px; }
+.act-title {
+  font-family: 'Noto Serif SC', serif;
+  font-size: clamp(26px, 6vw, 38px); font-weight: 700; line-height: 1.4; max-width: 500px;
+}
+
+/* === SECTION LAYOUT === */
+.section { min-height: 100vh; padding: 80px 0; position: relative; }
+.section-label { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; }
+
+/* === TYPOGRAPHY === */
+.big-statement {
+  font-family: 'Noto Serif SC', serif;
+  font-size: clamp(22px, 5.5vw, 32px); font-weight: 700; line-height: 1.5; margin-bottom: 32px;
+}
+.body-text { font-size: 16px; line-height: 1.9; color: var(--text); margin-bottom: 28px; }
+.body-text .hl { color: var(--accent); font-weight: 500; }
+.body-text .hl-violet { color: var(--accent2); font-weight: 500; }
+.body-text .hl-warm { color: var(--warm); font-weight: 500; }
+.body-text .hl-danger { color: var(--danger); font-weight: 500; }
+
+/* === BLOCKQUOTE === */
+.original-quote { border-left: 3px solid var(--accent); padding: 16px 0 16px 20px; margin: 40px 0; position: relative; }
+.original-quote p { font-family: 'Noto Serif SC', serif; font-size: 14.5px; font-style: italic; line-height: 1.8; color: var(--text-muted); }
+
+/* === TAKEAWAY CARDS === */
+.takeaway-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 580px; margin: 40px auto; padding: 0 28px; }
+.takeaway-card { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 24px 16px; text-align: center; }
+.takeaway-card .num { font-family: 'Noto Serif SC', serif; font-size: 32px; font-weight: 700; color: #6EE7B7; margin-bottom: 8px; }
+.takeaway-card p { font-size: 14px; line-height: 1.6; color: #CBD5E1; }
+
+/* === DRAMATIC BREAK === */
+.dramatic-break { min-height: 60vh; display: flex; justify-content: center; align-items: center; background: var(--bg-close); padding: 40px 28px; text-align: center; }
+.dramatic-break .big-statement { color: #E0F2FE; max-width: 500px; }
+
+/* === FOOTER === */
+.page-footer { padding: 60px 28px; text-align: center; background: var(--bg-close); }
+.page-footer p { font-size: 13px; color: #475569; line-height: 1.8; }
+
+/* === DEEP DIVE TRIGGER === */
+.deep-dive-trigger { text-align: center; color: var(--accent); font-size: 14px; padding: 16px 0; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; }
+.deep-dive-trigger:hover { opacity: 1; }
+
+/* === SOURCE HORIZON === */
+.source-horizon {
+  position: fixed; bottom: 0; left: 0; right: 0; height: 32px; z-index: 200;
+  background: transparent; transition: height 0.35s cubic-bezier(0.32,0.72,0,1), background 0.35s ease;
+  overflow: hidden; cursor: pointer; padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.source-horizon.expanded { height: 72px; background: rgba(15,23,42,0.95); backdrop-filter: blur(8px); }
+.horizon-track { position: absolute; bottom: 0; left: 8px; right: 8px; height: 3px; }
+.source-horizon.expanded .horizon-track { bottom: auto; top: 8px; height: 4px; }
+.horizon-seg { position: absolute; top: 0; height: 100%; border-radius: 2px; }
+.horizon-seg.covered { background: var(--accent, #059669); }
+.horizon-seg.covered.deep-dive { background: var(--accent, #059669); }
+.horizon-seg.gap { background: transparent; }
+.horizon-detail { position: absolute; top: 16px; left: 8px; right: 8px; bottom: 4px; opacity: 0; transition: opacity 0.25s ease 0.1s; pointer-events: none; }
+.source-horizon.expanded .horizon-detail { opacity: 1; pointer-events: auto; }
+.horizon-marker { position: absolute; top: 0; transform: translateX(-50%); text-align: center; cursor: pointer; }
+.marker-tick { width: 2px; height: 10px; background: rgba(255,255,255,0.5); margin: 0 auto 4px; border-radius: 1px; }
+.marker-tick.active { background: var(--accent2, #7C3AED); box-shadow: 0 0 6px var(--accent2, #7C3AED); }
+.marker-label { font-size: 9px; color: rgba(255,255,255,0.7); white-space: nowrap; font-family: 'Noto Sans SC', sans-serif; }
+.horizon-gap-zone { position: absolute; top: 0; height: 14px; cursor: help; }
+.horizon-gap-zone .gap-pattern { width: 100%; height: 100%; background: repeating-linear-gradient(-45deg, transparent, transparent 2px, rgba(251,146,60,0.35) 2px, rgba(251,146,60,0.35) 4px); border-radius: 2px; }
+.horizon-gap-zone .gap-tooltip { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: #1E293B; color: #F8FAFC; font-size: 11px; padding: 4px 10px; border-radius: 6px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 210; }
+.horizon-gap-zone:hover .gap-tooltip { opacity: 1; }
+.horizon-pct { position: absolute; right: 0; top: 2px; font-size: 11px; font-weight: 600; color: var(--accent, #059669); font-family: 'Noto Sans SC', sans-serif; }
+@keyframes markerPulse { 0%,100% { box-shadow: 0 0 4px var(--accent2); } 50% { box-shadow: 0 0 10px var(--accent2); } }
+.marker-tick.active { animation: markerPulse 2s ease-in-out infinite; }
+
+/* === INLINE GAP MARKER === */
+.coverage-gap-inline {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 28px; max-width: 640px; margin: 0 auto;
+}
+.coverage-gap-inline .gap-line { flex: 1; height: 1px; background: var(--dim, #94A3B8); opacity: 0.25; }
+.coverage-gap-inline .gap-text {
+  font-size: 12px; font-style: italic; color: var(--dim, #94A3B8);
+  white-space: nowrap; opacity: 0.5;
+}
+
+/* === COVERAGE FOOTNOTE === */
+.coverage-map { margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.06); }
+.coverage-map-title { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--dim); margin-bottom: 14px; }
+.coverage-bars { display: flex; flex-direction: column; gap: 6px; }
+.cbar-row { display: flex; align-items: center; gap: 10px; height: 28px; }
+.cbar-label { width: 120px; flex-shrink: 0; font-size: 12px; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cbar-track { flex: 1; height: 12px; background: rgba(0,0,0,0.03); border-radius: 6px; overflow: hidden; }
+.cbar-fill { height: 100%; border-radius: 6px; }
+.cbar-fill.included { background: var(--accent); }
+.cbar-fill.deep-dive-bar { background: repeating-linear-gradient(-45deg, var(--accent2), var(--accent2) 3px, rgba(124,58,237,0.5) 3px, rgba(124,58,237,0.5) 6px); }
+.cbar-fill.compressed-bar { background: var(--dim); opacity: 0.4; }
+.cbar-row.included .cbar-label { color: var(--text); }
+.cbar-row.deep-dive .cbar-label { color: var(--accent2); }
+.cbar-row.compressed .cbar-label { color: var(--dim); text-decoration: line-through; }
+.cbar-row { cursor: pointer; border-radius: 6px; padding: 4px 6px; margin: 0 -6px; transition: background 0.15s; }
+.cbar-row:hover { background: rgba(0,0,0,0.03); }
+.cbar-excerpt {
+  max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.22,1,0.36,1);
+  margin: 0 0 0 130px; /* align with bar track */
+}
+.cbar-excerpt.open { max-height: 300px; }
+.cbar-excerpt-inner {
+  font-size: 13px; line-height: 1.7; color: var(--text-muted, #64748B);
+  padding: 8px 12px; margin: 4px 0 8px;
+  background: rgba(0,0,0,0.02); border-radius: 8px;
+  border-left: 3px solid var(--accent);
+}
+.cbar-row.compressed + .cbar-excerpt .cbar-excerpt-inner { border-left-color: var(--dim); }
+.cbar-row.deep-dive + .cbar-excerpt .cbar-excerpt-inner { border-left-color: var(--accent2); }
+.cbar-expand-hint { font-size: 10px; color: var(--dim); opacity: 0.6; margin-left: 4px; }
+.coverage-omitted { margin-top: 14px; font-size: 13px; color: var(--text-muted); line-height: 1.7; }
+.coverage-omitted strong { color: var(--text); font-weight: 500; }
+.omit-reason { display: inline-block; font-size: 11px; background: rgba(0,0,0,0.04); padding: 1px 8px; border-radius: 4px; color: var(--dim); margin-left: 4px; }
+
+/* === SPATIAL CANVAS === */
+.space { display: flex; width: 200%; height: 100%; transition: transform 0.55s cubic-bezier(0.32, 0.72, 0, 1); will-change: transform; }
+.main-scroll { flex: 0 0 50%; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; transition: transform 0.55s cubic-bezier(0.32, 0.72, 0, 1); transform-origin: right center; }
+.detail-scroll { flex: 0 0 50%; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; background: #FAFAF8; visibility: hidden; transition: visibility 0s 0.55s; }
+body.dd-active .space { transform: translateX(calc(-50% + 24px)); }
+body.dd-active .main-scroll { transform: scale(0.96); pointer-events: none; border-radius: 12px; overflow: hidden; }
+body.dd-active .detail-scroll { visibility: visible; transition: visibility 0s 0s; }
+
+.detail-header { position: sticky; top: 0; background: rgba(250,250,248,0.88); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(0,0,0,0.06); padding: 14px 24px; display: flex; align-items: center; gap: 8px; z-index: 5; cursor: pointer; user-select: none; -webkit-user-select: none; font-size: 14px; color: var(--accent); font-weight: 500; }
+.detail-body { padding: 28px 24px 60px; max-width: 640px; }
+.detail-body h4 { font-family: 'Noto Serif SC', serif; font-size: 18px; font-weight: 700; margin: 24px 0 12px; color: var(--text); }
+.detail-body h4:first-child { margin-top: 0; }
+.detail-body p { font-size: 15px; line-height: 1.9; color: #4A4A52; margin-bottom: 14px; }
+.detail-body .original-text { margin-top: 24px; padding: 16px; border-left: 3px solid var(--accent2); background: rgba(124,58,237,0.05); border-radius: 0 8px 8px 0; }
+.detail-body .original-text p { font-size: 14px; font-style: italic; color: #64748B; line-height: 1.8; }
+
+.detail-scroll::before { content: ''; position: sticky; top: 0; display: block; width: 100%; height: 0; box-shadow: -8px 0 24px rgba(0,0,0,0.1); z-index: 4; pointer-events: none; }
+
+.dd-anim { opacity: 0; animation-fill-mode: forwards; animation-duration: 0.5s; }
+body.dd-active .dd-anim { animation-name: ddFadeIn; }
+.dd-slide { opacity: 0; transform: translateY(20px); animation-fill-mode: forwards; animation-duration: 0.5s; }
+body.dd-active .dd-slide { animation-name: ddSlideUp; }
+.dd-pop { opacity: 0; transform: scale(0.7); animation-fill-mode: forwards; animation-duration: 0.4s; }
+body.dd-active .dd-pop { animation-name: ddPop; }
+.dd-d1 { animation-delay: 0.3s !important; }
+.dd-d2 { animation-delay: 0.6s !important; }
+.dd-d3 { animation-delay: 0.9s !important; }
+.dd-d4 { animation-delay: 1.2s !important; }
+.dd-d5 { animation-delay: 1.5s !important; }
+
+@keyframes ddFadeIn { to { opacity: 1; } }
+@keyframes ddSlideUp { to { opacity: 1; transform: translateY(0); } }
+@keyframes ddPop { to { opacity: 1; transform: scale(1); } }
+
+@media (max-width: 420px) {
+  .takeaway-grid { grid-template-columns: 1fr; }
+  .hero-title { font-size: 26px; }
+  .big-statement { font-size: 22px; }
+}
+
+.anim-stage > div{ width:100%; }
+</style>
+
+<meta name="description" content="CUDA 不只是一个编程模型，它是一个用 二十年 建起的飞轮。安装基数越大，优化越多；优化越多，成本越低；成本越低，用户越多。这个正反馈循环让 NVIDIA 的加速计算平台从图形渲染扩展到了科学计算、AI、机器人——几乎每一个计算密集型领域。">
+<link rel="canonical" href="https://chendi.me/readings/gtc-2026-keynote/">
+<style id="reading-shell-style">
+.reading-shell-link{position:fixed;top:14px;right:14px;z-index:1200;text-decoration:none;background:rgba(255,255,255,.92);color:#1f2937;border:1px solid rgba(15,23,42,.1);border-radius:999px;padding:7px 12px;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(15,23,42,.12);backdrop-filter:blur(10px)}
+.reading-shell-link:hover{color:#be185d;border-color:rgba(190,24,93,.35)}
+@media(max-width:520px){.reading-shell-link{top:auto;right:12px;bottom:14px}}
+</style>
+</head>
+<body>
+<a class="reading-shell-link" href="/readings/">Reading</a>
+
+<div class="space" id="space">
+<div class="main-scroll" id="mainScroll">
+
+<!-- ==================== HERO ==================== -->
+<section class="hero">
+  <div class="hero-title reveal">AI 工厂时代</div>
+  <div class="hero-subtitle reveal reveal-delay-1">Jensen Huang &middot; GTC 2026 Keynote</div>
+  <div class="hero-hook reveal reveal-delay-2">从 CUDA 二十年到 Vera Rubin，从 Token 工厂到 Agent 革命——一场重新定义计算的演讲</div>
+  <div class="hero-scroll-hint">向下滑动</div>
+</section>
+
+<!-- ==================== ACT I: 基础设施 ==================== -->
+<section class="act-transition" style="background: var(--bg-act1);">
+  <div class="act-number reveal">Act I</div>
+  <div class="act-title reveal reveal-delay-1">加速计算的基石</div>
+</section>
+
+<!-- gap: 开场寒暄 -->
+<div class="coverage-gap-inline reveal" style="background: var(--bg-act1); padding-top: 0; padding-bottom: 0;">
+  <span class="gap-line"></span>
+  <span class="gap-text">~ 3:20 开场寒暄已跳过 ~</span>
+  <span class="gap-line"></span>
+</div>
+
+<!-- S1 — CUDA 二十年与加速计算飞轮 -->
+<section class="section" style="background: var(--bg-act1);">
+  <div class="content-width">
+    <div class="section-label reveal">01</div>
+    <h2 class="big-statement reveal reveal-delay-1">CUDA 二十年</h2>
+    <p class="body-text reveal reveal-delay-2">CUDA 不只是一个编程模型，它是一个用 <span class="hl">二十年</span>建起的飞轮。安装基数越大，优化越多；优化越多，成本越低；成本越低，用户越多。这个正反馈循环让 NVIDIA 的加速计算平台从图形渲染扩展到了科学计算、AI、机器人——几乎每一个计算密集型领域。</p>
+    <div id="s1-anim" class="reveal reveal-delay-3"><div class="s1_stage">
+<style>
+.s1_stage {
+  width: 340px;
+  height: 280px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Center CUDA circle */
+.s1_center {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #059669;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  left: 138px;
+  top: 108px;
+  opacity: 0;
+  z-index: 2;
+}
+
+.s1_stage.visible .s1_center {
+  animation: s1_fadeIn 0.5s ease forwards;
+  animation-delay: 0s;
+}
+
+/* Flywheel nodes — 4 nodes in a circle around center */
+.s1_node {
+  position: absolute;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #059669;
+  color: #1E293B;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  z-index: 2;
+}
+
+/* Node positions — arranged in a circle, radius ~100px from center(170,140) */
+/* Top: 安装基数 (4 chars -> use rounded rect instead) */
+.s1_node_install {
+  width: 80px;
+  height: 36px;
+  border-radius: 18px;
+  left: 130px;
+  top: 16px;
+}
+
+/* Right: 优化 (2 chars -> circle 56px) */
+.s1_node_optimize {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  left: 264px;
+  top: 112px;
+}
+
+/* Bottom: 降本 (2 chars -> circle 56px) */
+.s1_node_cost {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  left: 142px;
+  top: 216px;
+}
+
+/* Left: 用户增长 (4 chars -> rounded rect) */
+.s1_node_users {
+  width: 80px;
+  height: 36px;
+  border-radius: 18px;
+  left: 0px;
+  top: 112px;
+}
+
+.s1_stage.visible .s1_node_install {
+  animation: s1_fadeIn 0.4s ease forwards;
+  animation-delay: 0.5s;
+}
+.s1_stage.visible .s1_node_optimize {
+  animation: s1_fadeIn 0.4s ease forwards;
+  animation-delay: 0.9s;
+}
+.s1_stage.visible .s1_node_cost {
+  animation: s1_fadeIn 0.4s ease forwards;
+  animation-delay: 1.3s;
+}
+.s1_stage.visible .s1_node_users {
+  animation: s1_fadeIn 0.4s ease forwards;
+  animation-delay: 1.7s;
+}
+
+/* SVG arrows layer */
+.s1_svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 340px;
+  height: 280px;
+  z-index: 1;
+}
+
+.s1_arrow_path {
+  fill: none;
+  stroke: #CBD5E1;
+  stroke-width: 2.5;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  marker-end: url(#s1_arrowhead);
+}
+
+.s1_stage.visible .s1_arrow1 {
+  animation: s1_drawLine 0.5s ease forwards;
+  animation-delay: 2.2s;
+}
+.s1_stage.visible .s1_arrow2 {
+  animation: s1_drawLine 0.5s ease forwards;
+  animation-delay: 2.7s;
+}
+.s1_stage.visible .s1_arrow3 {
+  animation: s1_drawLine 0.5s ease forwards;
+  animation-delay: 3.2s;
+}
+.s1_stage.visible .s1_arrow4 {
+  animation: s1_drawLine 0.5s ease forwards;
+  animation-delay: 3.7s;
+}
+
+/* Glow pass — arrows light up in accent color */
+.s1_stage.visible .s1_arrow1_glow {
+  animation: s1_glowLine 0.6s ease forwards;
+  animation-delay: 4.2s;
+}
+.s1_stage.visible .s1_arrow2_glow {
+  animation: s1_glowLine 0.6s ease forwards;
+  animation-delay: 4.6s;
+}
+.s1_stage.visible .s1_arrow3_glow {
+  animation: s1_glowLine 0.6s ease forwards;
+  animation-delay: 5.0s;
+}
+.s1_stage.visible .s1_arrow4_glow {
+  animation: s1_glowLine 0.6s ease forwards;
+  animation-delay: 5.4s;
+}
+
+.s1_glow_path {
+  fill: none;
+  stroke: #059669;
+  stroke-width: 3;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  marker-end: url(#s1_arrowhead_glow);
+  opacity: 0;
+}
+
+/* 20年 label */
+.s1_year {
+  position: absolute;
+  left: 142px;
+  top: 78px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #7C3AED;
+  opacity: 0;
+  z-index: 3;
+  text-align: center;
+  width: 56px;
+}
+
+.s1_stage.visible .s1_year {
+  animation: s1_fadeIn 0.4s ease forwards, s1_pulse 1.2s ease 6.2s infinite;
+  animation-delay: 5.9s;
+}
+
+/* Keyframes */
+@keyframes s1_fadeIn {
+  from { opacity: 0; transform: scale(0.7); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s1_drawLine {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes s1_glowLine {
+  0% { opacity: 0; stroke-dashoffset: 200; }
+  10% { opacity: 1; }
+  100% { opacity: 1; stroke-dashoffset: 0; }
+}
+
+@keyframes s1_pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.8; }
+}
+</style>
+
+<!-- SVG arrows -->
+<svg class="s1_svg" viewBox="0 0 340 280">
+  <defs>
+    <marker id="s1_arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#CBD5E1"/>
+    </marker>
+    <marker id="s1_arrowhead_glow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#059669"/>
+    </marker>
+  </defs>
+
+  <!-- Arrow 1: 安装基数(170,34) → 优化(292,140) — exit bottom-right of pill, enter top-left of circle -->
+  <path class="s1_arrow_path s1_arrow1" d="M 200,52 Q 260,60 272,120"/>
+  <path class="s1_glow_path s1_arrow1_glow" d="M 200,52 Q 260,60 272,120"/>
+
+  <!-- Arrow 2: 优化(292,140) → 降本(170,244) — exit bottom-left of circle, enter top-right of circle -->
+  <path class="s1_arrow_path s1_arrow2" d="M 280,160 Q 248,220 192,224"/>
+  <path class="s1_glow_path s1_arrow2_glow" d="M 280,160 Q 248,220 192,224"/>
+
+  <!-- Arrow 3: 降本(170,244) → 用户增长(40,130) — exit left of circle, enter bottom-right of pill -->
+  <path class="s1_arrow_path s1_arrow3" d="M 148,240 Q 80,230 60,156"/>
+  <path class="s1_glow_path s1_arrow3_glow" d="M 148,240 Q 80,230 60,156"/>
+
+  <!-- Arrow 4: 用户增长(40,130) → 安装基数(170,34) — exit top-right of pill, enter bottom-left of pill -->
+  <path class="s1_arrow_path s1_arrow4" d="M 68,112 Q 80,60 138,42"/>
+  <path class="s1_glow_path s1_arrow4_glow" d="M 68,112 Q 80,60 138,42"/>
+</svg>
+
+<!-- Center node -->
+<div class="s1_center">CUDA</div>
+
+<!-- Flywheel nodes -->
+<div class="s1_node s1_node_install">安装基数</div>
+<div class="s1_node s1_node_optimize">优化</div>
+<div class="s1_node s1_node_cost">降本</div>
+<div class="s1_node s1_node_users">用户增长</div>
+
+<!-- 20年 label -->
+<div class="s1_year">20年</div>
+</div></div>
+    <div class="deep-dive-trigger" onclick="toggleDeepDive(1)">&#8595; 深入了解</div>
+  </div>
+</section>
+
+<!-- gap: 观众互动 -->
+<div class="coverage-gap-inline reveal" style="background: var(--bg-act1);">
+  <span class="gap-line"></span>
+  <span class="gap-text">~ 40秒 观众互动已跳过 ~</span>
+  <span class="gap-line"></span>
+</div>
+
+<!-- S2 — 神经渲染与DLSS5 -->
+<section class="section" style="background: var(--bg-act1);">
+  <div class="content-width">
+    <div class="section-label reveal">02</div>
+    <h2 class="big-statement reveal reveal-delay-1">神经渲染</h2>
+    <p class="body-text reveal reveal-delay-2">RTX 不再只是光线追踪。DLSS5 将可控的 3D 图形与生成式 AI 融合在一起——用 <span class="hl">结构化的虚拟世界</span>作为 ground truth，再用概率计算生成细节。这意味着游戏画面不再是渲染出来的，而是 <span class="hl-violet">生成</span>出来的。</p>
+    <div id="s2-anim" class="reveal reveal-delay-3"><style>
+/* === S2 STAGE: Neural Rendering Fusion === */
+.s2_stage {
+  width: 340px;
+  height: 280px;
+  position: relative;
+  margin: 0 auto;
+}
+
+/* --- Shared element base --- */
+.s2_box {
+  position: absolute;
+  opacity: 0;
+  transform: scale(0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* --- Left box: 3D Graphics (structured, solid border) --- */
+.s2_box_3d {
+  width: 100px;
+  height: 64px;
+  border-radius: 10px;
+  background: #059669;
+  border: 3px solid #059669;
+  left: 20px;
+  top: 60px;
+  font-size: 16px;
+}
+
+/* --- Right box: Generative AI (probabilistic, dashed border) --- */
+.s2_box_ai {
+  width: 100px;
+  height: 64px;
+  border-radius: 10px;
+  background: transparent;
+  border: 3px dashed #7C3AED;
+  color: #7C3AED;
+  left: 220px;
+  top: 60px;
+  font-size: 16px;
+}
+
+/* --- Center merged element: DLSS5 (both solid+dashed) --- */
+.s2_box_dlss {
+  width: 110px;
+  height: 68px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #059669 0%, #7C3AED 100%);
+  border: 3px solid #059669;
+  outline: 3px dashed #7C3AED;
+  outline-offset: 3px;
+  left: 115px;
+  top: 150px;
+  font-size: 20px;
+  z-index: 10;
+}
+
+/* --- Arrow lines via SVG --- */
+.s2_arrows {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 340px;
+  height: 280px;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* --- Bottom label --- */
+.s2_label_bottom {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.s2_label_render {
+  color: #94A3B8;
+}
+.s2_label_arrow {
+  color: #94A3B8;
+  margin: 0 6px;
+}
+.s2_label_gen {
+  color: #7C3AED;
+}
+
+/* --- Small type labels under boxes --- */
+.s2_type_label {
+  position: absolute;
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(4px);
+  text-align: center;
+}
+
+.s2_type_structured {
+  color: #059669;
+  left: 20px;
+  width: 100px;
+  top: 128px;
+}
+
+.s2_type_probabilistic {
+  color: #7C3AED;
+  left: 220px;
+  width: 100px;
+  top: 128px;
+}
+
+/* === KEYFRAMES === */
+
+@keyframes s2_appear {
+  0%   { opacity: 0; transform: scale(0); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s2_pop {
+  0%   { opacity: 0; transform: scale(0); }
+  60%  { transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s2_fade_in {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes s2_fade_up {
+  0%   { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes s2_glow_pulse {
+  0%, 100% { box-shadow: 0 0 12px 4px rgba(124, 58, 237, 0.3), 0 0 12px 4px rgba(5, 150, 105, 0.3); }
+  50%      { box-shadow: 0 0 24px 8px rgba(124, 58, 237, 0.5), 0 0 24px 8px rgba(5, 150, 105, 0.5); }
+}
+
+/* === ANIMATION TRIGGERS === */
+
+/* Step 1: Left box appears at 0.4s */
+.s2_stage.visible .s2_box_3d {
+  animation: s2_appear 0.5s ease-out 0.4s forwards;
+}
+
+/* Step 1b: "structured" label at 0.9s */
+.s2_stage.visible .s2_type_structured {
+  animation: s2_fade_up 0.4s ease-out 0.9s forwards;
+}
+
+/* Step 2: Right box appears at 1.4s */
+.s2_stage.visible .s2_box_ai {
+  animation: s2_appear 0.5s ease-out 1.4s forwards;
+}
+
+/* Step 2b: "probabilistic" label at 1.9s */
+.s2_stage.visible .s2_type_probabilistic {
+  animation: s2_fade_up 0.4s ease-out 1.9s forwards;
+}
+
+/* Step 3: Arrows converge at 2.4s */
+.s2_stage.visible .s2_arrows {
+  animation: s2_fade_in 0.5s ease-out 2.4s forwards;
+}
+
+/* Step 4: DLSS5 merged element pops at 3.0s, then glows */
+.s2_stage.visible .s2_box_dlss {
+  animation: s2_pop 0.5s cubic-bezier(0.34,1.56,0.64,1) 3.0s forwards,
+             s2_glow_pulse 2s ease-in-out 3.8s infinite;
+}
+
+/* Step 5: Bottom label at 3.8s */
+.s2_stage.visible .s2_label_bottom {
+  animation: s2_fade_up 0.5s ease-out 3.8s forwards;
+}
+</style>
+
+<!-- S2 Animation Stage -->
+<div class="s2_stage reveal">
+  <!-- Left: 3D Graphics box (solid border = structured) -->
+  <div class="s2_box s2_box_3d">3D图形</div>
+  <div class="s2_type_label s2_type_structured">结构化</div>
+
+  <!-- Right: Generative AI box (dashed border = probabilistic) -->
+  <div class="s2_box s2_box_ai">生成AI</div>
+  <div class="s2_type_label s2_type_probabilistic">概率性</div>
+
+  <!-- Convergence arrows -->
+  <svg class="s2_arrows" viewBox="0 0 340 280">
+    <defs>
+      <marker id="s2_arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#CBD5E1"/>
+      </marker>
+    </defs>
+    <!-- Left box bottom-right to DLSS5 top-left -->
+    <line x1="100" y1="124" x2="138" y2="155" stroke="#CBD5E1" stroke-width="2" marker-end="url(#s2_arrowhead)"/>
+    <!-- Right box bottom-left to DLSS5 top-right -->
+    <line x1="240" y1="124" x2="202" y2="155" stroke="#CBD5E1" stroke-width="2" marker-end="url(#s2_arrowhead)"/>
+  </svg>
+
+  <!-- Center: DLSS5 merged element -->
+  <div class="s2_box s2_box_dlss">DLSS5</div>
+
+  <!-- Bottom label -->
+  <div class="s2_label_bottom">
+    <span class="s2_label_render">渲染</span><span class="s2_label_arrow"> &rarr; </span><span class="s2_label_gen">生成</span>
+  </div>
+</div></div>
+    <div class="deep-dive-trigger" onclick="toggleDeepDive(2)">&#8595; 深入了解</div>
+  </div>
+</section>
+
+<!-- gap: 过渡 -->
+<div class="coverage-gap-inline reveal" style="background: var(--bg-act1);">
+  <span class="gap-line"></span>
+  <span class="gap-text">~ 40秒 过渡已跳过 ~</span>
+  <span class="gap-line"></span>
+</div>
+
+<!-- S3 — 数据处理加速平台 -->
+<section class="section" style="background: var(--bg-act1);">
+  <div class="content-width">
+    <div class="section-label reveal">03</div>
+    <h2 class="big-statement reveal reveal-delay-1">数据处理加速</h2>
+    <p class="body-text reveal reveal-delay-2">NVIDIA 把加速计算从 AI 推向了数据处理的全链路。KUDF 处理结构化数据帧，KVS 处理非结构化数据，两者合力让 SQL 引擎、Spark 作业、向量搜索的速度提升数十倍，同时 <span class="hl">降低近 80% 的计算成本</span>。IBM Watsonx、Dell、Google、AWS、Azure 全部接入。</p>
+    <div id="s3-anim" class="reveal reveal-delay-3"><!-- S3: 数据处理加速平台 -->
+<div id="s3-anim" class="reveal">
+<style>
+#s3-anim{display:flex;justify-content:center;align-items:center;padding:24px 0;overflow:visible}
+.s3_stage{position:relative;width:340px;height:280px}
+
+/* Lane labels */
+.s3_lane_label{position:absolute;font-size:12px;font-weight:700;color:#1E293B;opacity:0}
+.s3_lane_top{top:52px;left:16px}
+.s3_lane_bot{top:164px;left:16px}
+
+/* Boxes for KUDF / KVS */
+.s3_box{position:absolute;width:88px;height:48px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;opacity:0;letter-spacing:1px}
+.s3_kudf{background:#059669;top:38px;left:108px}
+.s3_kvs{background:#7C3AED;top:150px;left:108px}
+
+/* Arrows from boxes to center circle */
+.s3_arrow{position:absolute;opacity:0}
+.s3_arrow_top{top:62px;left:200px;width:48px;height:2px;background:#059669}
+.s3_arrow_top::after{content:"";position:absolute;right:-6px;top:-5px;border:6px solid transparent;border-left:8px solid #059669}
+.s3_arrow_bot{top:174px;left:200px;width:48px;height:2px;background:#7C3AED}
+.s3_arrow_bot::after{content:"";position:absolute;right:-6px;top:-5px;border:6px solid transparent;border-left:8px solid #7C3AED}
+
+/* Diagonal connector lines to center */
+.s3_diag{position:absolute;opacity:0;height:2px;transform-origin:left center}
+.s3_diag_top{top:64px;left:250px;width:42px;background:#059669;transform:rotate(32deg)}
+.s3_diag_bot{top:174px;left:250px;width:42px;background:#7C3AED;transform:rotate(-32deg)}
+
+/* Center result circle */
+.s3_center{position:absolute;width:110px;height:110px;border-radius:50%;background:linear-gradient(135deg,#059669,#7C3AED);top:85px;left:196px;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(0)}
+.s3_center_txt{font-size:48px;font-weight:800;color:#fff;text-align:center;line-height:1}
+
+/* -80% badge */
+.s3_badge{position:absolute;top:68px;left:264px;background:#059669;color:#fff;font-size:16px;font-weight:800;padding:4px 12px;border-radius:16px;opacity:0;transform:scale(0);white-space:nowrap;box-shadow:0 2px 8px rgba(5,150,105,0.4)}
+
+/* Pulse ring on center */
+.s3_pulse_ring{position:absolute;width:110px;height:110px;border-radius:50%;top:85px;left:196px;border:2px solid rgba(5,150,105,0.3);opacity:0}
+
+/* ---- Animations triggered by .visible ---- */
+
+#s3-anim.visible .s3_lane_label{animation:s3_fadeSlide 0.5s ease forwards}
+#s3-anim.visible .s3_lane_top{animation-delay:0.2s}
+#s3-anim.visible .s3_lane_bot{animation-delay:0.6s}
+
+#s3-anim.visible .s3_kudf{animation:s3_fadeSlide 0.5s ease forwards 0.5s}
+#s3-anim.visible .s3_kvs{animation:s3_fadeSlide 0.5s ease forwards 0.9s}
+
+#s3-anim.visible .s3_arrow_top{animation:s3_drawArrow 0.4s ease forwards 1.2s}
+#s3-anim.visible .s3_arrow_bot{animation:s3_drawArrow 0.4s ease forwards 1.6s}
+
+#s3-anim.visible .s3_diag_top{animation:s3_drawArrow 0.3s ease forwards 1.5s}
+#s3-anim.visible .s3_diag_bot{animation:s3_drawArrow 0.3s ease forwards 1.9s}
+
+#s3-anim.visible .s3_center{animation:s3_popIn 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards 2.2s}
+#s3-anim.visible .s3_badge{animation:s3_popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards 3.0s}
+#s3-anim.visible .s3_pulse_ring{animation:s3_pulse 2s ease-in-out infinite 2.8s}
+
+@keyframes s3_fadeSlide{
+  0%{opacity:0;transform:translateX(-12px)}
+  100%{opacity:1;transform:translateX(0)}
+}
+@keyframes s3_drawArrow{
+  0%{opacity:0;clip-path:inset(0 100% 0 0)}
+  100%{opacity:1;clip-path:inset(0 0 0 0)}
+}
+@keyframes s3_popIn{
+  0%{opacity:0;transform:scale(0)}
+  100%{opacity:1;transform:scale(1)}
+}
+@keyframes s3_pulse{
+  0%,100%{opacity:0;transform:scale(1)}
+  50%{opacity:0.6;transform:scale(1.5)}
+}
+</style>
+
+<div class="s3_stage">
+  <!-- Top lane: structured data -->
+  <div class="s3_lane_label s3_lane_top">结构化</div>
+  <div class="s3_box s3_kudf">KUDF</div>
+  <div class="s3_arrow s3_arrow_top"></div>
+  <div class="s3_diag s3_diag_top"></div>
+
+  <!-- Bottom lane: unstructured data -->
+  <div class="s3_lane_label s3_lane_bot">非结构化</div>
+  <div class="s3_box s3_kvs">KVS</div>
+  <div class="s3_arrow s3_arrow_bot"></div>
+  <div class="s3_diag s3_diag_bot"></div>
+
+  <!-- Center circle -->
+  <div class="s3_center"><span class="s3_center_txt">加速</span></div>
+  <div class="s3_pulse_ring"></div>
+
+  <!-- Cost badge -->
+  <div class="s3_badge">-80%</div>
+</div>
+</div>
+
+<!-- S3 Deep Dive Data -->
+<script>
+deepDiveData[3] = {
+  title: "数据处理加速平台",
+  sections: [
+    {
+      heading: "两种数据，一个问题",
+      body: "全世界每年产生的数据中，大约 90% 是非结构化的——PDF、视频、语音、图片。过去这些数据基本是 \"死\" 的：存进文件系统就再也没人动。因为没有好的索引方式，你没法查询它、搜索它。\n\n另外 10% 是结构化数据——数据库里的表格、电子表格、交易记录。这是企业计算的 \"地面真相\"，公司运营的基石。\n\n问题在于：AI 代理要同时使用这两种数据。结构化数据需要加速，因为未来代理查询的频率会远超人类。非结构化数据需要被 \"理解\"，才能变成可查询的资源。"
+    },
+    {
+      heading: "KUDF 与 KVS：两块基石",
+      body: "NVIDIA 创建了两个基础库来解决这个问题。KUDF（GPU-accelerated DataFrames）加速结构化数据处理，相当于给 SQL 和 Spark 装上 GPU 引擎。KVS（Key-Value Store for vectors）则处理非结构化数据——利用多模态感知把 PDF、视频的 \"含义\" 编码成向量，存入可检索的语义数据库。\n\nIBM——SQL 的发明者——正在用 KUDF 加速 Watsonx Data 平台。这不是小公司的尝试，这是数据处理行业的根基在被重新构建。",
+      diagram: '<div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:16px 0;flex-wrap:wrap;"><div style="text-align:center;"><div style="width:56px;height:56px;border-radius:8px;background:#059669;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;">KUDF</div><div style="font-size:10px;color:#64748B;margin-top:4px;">结构化加速</div></div><div style="font-size:20px;color:#CBD5E1;font-weight:700;">+</div><div style="text-align:center;"><div style="width:56px;height:56px;border-radius:8px;background:#7C3AED;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;">KVS</div><div style="font-size:10px;color:#64748B;margin-top:4px;">语义索引</div></div><div style="font-size:20px;color:#059669;font-weight:700;">&#8594;</div><div style="text-align:center;"><div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#059669,#7C3AED);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;">-80%</div><div style="font-size:10px;color:#64748B;margin-top:4px;">成本降低</div></div></div>'
+    },
+    {
+      heading: "为什么是 80%",
+      body: "成本下降 80% 不是靠压缩功能，而是靠 GPU 并行计算的本质优势。传统 CPU 数据处理是 \"一条一条扫\"，GPU 是 \"几千条同时算\"。当数据量越大、查询越频繁时，GPU 加速的优势越明显。\n\n更关键的是时间维度：未来 AI 代理会以远超人类的速度查询数据库。如果底层处理跟不上，代理就会变成在排队等数据——这等于把最贵的 GPU 算力浪费在等待上。加速数据处理不是锦上添花，是让整个 AI 工厂不卡脖子的前提条件。"
+    }
+  ],
+  originalText: "NVIDIA created two foundational libraries. Just like we created RTX for 3D graphics, we created KUDF for data frames, structured data. We created KVS for vector stores, semantic data, unstructured data, AI data. These two platforms are going to be two of the most important platforms in the future. IBM the inventor of SQL is accelerating Watson X data with KUDF. About 90% of what is generated every single year is unstructured data. Until now, this data has been completely useless to the world."
+};
+</script></div>
+    <div class="deep-dive-trigger" onclick="toggleDeepDive(3)">&#8595; 深入了解</div>
+  </div>
+</section>
+
+<!-- S4 — 垂直整合与横向开放 -->
+<section class="section" style="background: var(--bg-act1);">
+  <div class="content-width">
+    <div class="section-label reveal">04</div>
+    <h2 class="big-statement reveal reveal-delay-1">垂直整合，横向开放</h2>
+    <p class="body-text reveal reveal-delay-2">NVIDIA 的商业模式独一无二：<span class="hl">纵向</span>从芯片设计到系统到软件栈全部自研，<span class="hl-violet">横向</span>通过合作伙伴（OEM、云厂商、行业ISV）把平台送到每个行业的每个角落。汽车、金融、医疗、工业、量子计算、电信——每个垂直领域都有专门的加速方案。</p>
+    <div id="s4-anim" class="reveal reveal-delay-3"><style>
+/* --- S4: Vertical Integration + Horizontal Openness --- */
+.s4_stage {
+  position: relative;
+  width: 340px;
+  height: 280px;
+  margin: 24px auto;
+  font-family: 'Inter', 'SF Pro', -apple-system, sans-serif;
+  overflow: visible;
+}
+
+/* Vertical stack boxes (center column) */
+.s4_vbox {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 72px;
+  height: 36px;
+  border: 2.5px solid #059669;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #059669;
+  background: #fff;
+  opacity: 0;
+  z-index: 2;
+}
+
+.s4_vbox--chip   { top: 16px; }
+.s4_vbox--sys    { top: 78px; }
+.s4_vbox--sw     { top: 140px; }
+.s4_vbox--plat   { top: 202px; border-color: #7C3AED; color: #7C3AED; }
+
+/* Vertical arrows between boxes */
+.s4_varrow {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2.5px;
+  background: #059669;
+  opacity: 0;
+  z-index: 1;
+}
+.s4_varrow--1 { top: 52px;  height: 26px; }
+.s4_varrow--2 { top: 114px; height: 26px; }
+.s4_varrow--3 { top: 176px; height: 26px; background: #7C3AED; }
+
+/* Arrowhead triangles */
+.s4_varrow::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #059669;
+}
+.s4_varrow--3::after {
+  border-top-color: #7C3AED;
+}
+
+/* Horizontal branch boxes */
+.s4_hbox {
+  position: absolute;
+  top: 202px;
+  width: 56px;
+  height: 36px;
+  border: 2.5px solid #7C3AED;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #7C3AED;
+  background: #fff;
+  opacity: 0;
+  z-index: 2;
+}
+
+.s4_hbox--l2 { left: 10px; }
+.s4_hbox--l1 { left: 76px; }
+.s4_hbox--r1 { right: 76px; }
+.s4_hbox--r2 { right: 10px; }
+
+/* Horizontal connector lines */
+.s4_hline {
+  position: absolute;
+  top: 220px;
+  height: 2.5px;
+  background: #7C3AED;
+  opacity: 0;
+  z-index: 1;
+}
+.s4_hline--left  { left: 66px;  width: 68px; }
+.s4_hline--right { right: 66px; width: 68px; }
+
+/* Vertical axis label */
+.s4_vlabel {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 600;
+  color: #059669;
+  letter-spacing: 1px;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+/* ========================
+   KEYFRAMES
+   ======================== */
+@keyframes s4_popIn {
+  from { opacity: 0; transform: translateX(-50%) scale(0.5); }
+  to   { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+@keyframes s4_popInRaw {
+  from { opacity: 0; transform: scale(0.5); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s4_fadeIn {
+  to { opacity: 1; }
+}
+
+@keyframes s4_growDown {
+  from { opacity: 0; transform: translateX(-50%) scaleY(0); }
+  to   { opacity: 1; transform: translateX(-50%) scaleY(1); }
+}
+
+/* ========================
+   VISIBILITY-TRIGGERED TIMELINE
+   ======================== */
+
+/* Step 1: top box "chip" */
+.s4_stage.visible .s4_vbox--chip {
+  animation: s4_popIn 0.4s ease-out 0.4s forwards;
+}
+
+/* Step 2: arrow 1 */
+.s4_stage.visible .s4_varrow--1 {
+  transform-origin: top center;
+  animation: s4_growDown 0.35s ease-out 1.0s forwards;
+}
+
+/* Step 3: "system" box */
+.s4_stage.visible .s4_vbox--sys {
+  animation: s4_popIn 0.4s ease-out 1.5s forwards;
+}
+
+/* Step 4: arrow 2 */
+.s4_stage.visible .s4_varrow--2 {
+  transform-origin: top center;
+  animation: s4_growDown 0.35s ease-out 2.1s forwards;
+}
+
+/* Step 5: "software" box */
+.s4_stage.visible .s4_vbox--sw {
+  animation: s4_popIn 0.4s ease-out 2.6s forwards;
+}
+
+/* Step 6: arrow 3 */
+.s4_stage.visible .s4_varrow--3 {
+  transform-origin: top center;
+  animation: s4_growDown 0.35s ease-out 3.2s forwards;
+}
+
+/* Step 7: "platform" box */
+.s4_stage.visible .s4_vbox--plat {
+  animation: s4_popIn 0.4s ease-out 3.7s forwards;
+}
+
+/* Step 8: horizontal lines */
+.s4_stage.visible .s4_hline--left {
+  animation: s4_fadeIn 0.35s ease-out 4.3s forwards;
+}
+.s4_stage.visible .s4_hline--right {
+  animation: s4_fadeIn 0.35s ease-out 4.3s forwards;
+}
+
+/* Step 9-12: industry boxes, staggered */
+.s4_stage.visible .s4_hbox--l2 {
+  animation: s4_popInRaw 0.35s ease-out 4.8s forwards;
+}
+.s4_stage.visible .s4_hbox--l1 {
+  animation: s4_popInRaw 0.35s ease-out 5.2s forwards;
+}
+.s4_stage.visible .s4_hbox--r1 {
+  animation: s4_popInRaw 0.35s ease-out 5.6s forwards;
+}
+.s4_stage.visible .s4_hbox--r2 {
+  animation: s4_popInRaw 0.35s ease-out 6.0s forwards;
+}
+</style>
+
+<div class="s4_stage">
+  <!-- Vertical stack: chip -> system -> software -> platform -->
+  <div class="s4_vbox s4_vbox--chip">芯片</div>
+  <div class="s4_varrow s4_varrow--1"></div>
+  <div class="s4_vbox s4_vbox--sys">系统</div>
+  <div class="s4_varrow s4_varrow--2"></div>
+  <div class="s4_vbox s4_vbox--sw">软件</div>
+  <div class="s4_varrow s4_varrow--3"></div>
+  <div class="s4_vbox s4_vbox--plat">平台</div>
+
+  <!-- Horizontal branches at platform level -->
+  <div class="s4_hline s4_hline--left"></div>
+  <div class="s4_hline s4_hline--right"></div>
+  <div class="s4_hbox s4_hbox--l2">汽车</div>
+  <div class="s4_hbox s4_hbox--l1">医疗</div>
+  <div class="s4_hbox s4_hbox--r1">金融</div>
+  <div class="s4_hbox s4_hbox--r2">工业</div>
+</div></div>
+    <div class="deep-dive-trigger" onclick="toggleDeepDive(4)">&#8595; 深入了解</div>
+  </div>
+</section>
+
+<!-- ==================== ACT II: AI 推理革命 ==================== -->
+<section class="act-transition" style="background: var(--bg-act2);">
+  <div class="act-number reveal">Act II</div>
+  <div class="act-title reveal reveal-delay-1">推理革命</div>
+</section>
+
+<!-- gap: 过渡 -->
+<div class="coverage-gap-inline reveal" style="background: var(--bg-act2);">
+  <span class="gap-line"></span>
+  <span class="gap-text">~ 50秒 过渡已跳过 ~</span>
+  <span class="gap-line"></span>
+</div>
+
+<!-- S5 — 推理拐点与AI计算需求爆发 -->
+<section class="section" style="background: var(--bg-act2);">
+  <div class="content-width">
+    <div class="section-label reveal">05</div>
+    <h2 class="big-statement reveal reveal-delay-1">推理拐点</h2>
+    <p class="body-text reveal reveal-delay-2">从 ChatGPT 到推理模型再到 Agent，AI 计算需求在两年内增长了 <span class="hl-violet">一百万倍</span>。1500 亿美元风投涌入 AI 原生公司，推理需求的爆发让 Jensen 预测 AI 基础设施将是一个 <span class="hl">万亿美元</span>的市场。</p>
+    <div id="s5-anim" class="reveal reveal-delay-3"><style>
+.s5_stage{position:relative;width:340px;height:280px;margin:0 auto}
+.s5_bar_wrap{position:absolute;left:24px;display:flex;align-items:center;opacity:0;transform:translateX(-12px)}
+.s5_bar_wrap.s5_vis{opacity:1;transform:translateX(0);transition:opacity 0.5s ease,transform 0.5s ease}
+.s5_bar{height:40px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;letter-spacing:0.5px;width:0;transition:width 0.8s cubic-bezier(0.22,1,0.36,1)}
+.s5_bar_wrap.s5_vis .s5_bar{width:var(--bw)}
+.s5_label{position:absolute;right:-8px;top:50%;transform:translate(100%,-50%);font-size:12px;color:#64748B;white-space:nowrap;font-weight:600}
+.s5_mult{position:absolute;left:24px;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(0.7)}
+.s5_mult.s5_vis{opacity:1;transform:scale(1);transition:opacity 0.4s ease,transform 0.4s ease}
+.s5_mult_txt{background:rgba(5,150,105,0.12);color:#059669;font-weight:800;font-size:13px;padding:2px 10px;border-radius:16px;letter-spacing:0.5px}
+.s5_total{position:absolute;top:8px;left:50%;transform:translateX(-50%) scale(0.6);opacity:0;font-size:22px;font-weight:800;letter-spacing:1px;white-space:nowrap}
+.s5_total.s5_vis{opacity:1;transform:translateX(-50%) scale(1);transition:opacity 0.5s ease,transform 0.5s cubic-bezier(0.22,1,0.36,1)}
+.s5_total_inner{background:linear-gradient(135deg,#059669,#7C3AED);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+@keyframes s5_pulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.3)}}
+.s5_total.s5_vis{animation:s5_pulse 1.5s ease 0.5s 2}
+</style>
+<div class="s5_stage">
+<div class="s5_total" id="s5-total"><span class="s5_total_inner">= 1,000,000x</span></div>
+<div class="s5_bar_wrap" id="s5-b1" style="top:56px"><div class="s5_bar" style="--bw:80px;background:#CBD5E1"><span style="font-size:15px">&#29983;&#25104;&#24335;</span></div><div class="s5_label">2023</div></div>
+<div class="s5_mult" id="s5-m1" style="top:100px;width:292px;text-align:center"><span class="s5_mult_txt">x100</span></div>
+<div class="s5_bar_wrap" id="s5-b2" style="top:132px"><div class="s5_bar" style="--bw:170px;background:#059669"><span style="font-size:15px">&#25512;&#29702;</span></div><div class="s5_label">2024</div></div>
+<div class="s5_mult" id="s5-m2" style="top:178px;width:292px;text-align:center"><span class="s5_mult_txt">x100</span></div>
+<div class="s5_bar_wrap" id="s5-b3" style="top:210px"><div class="s5_bar" style="--bw:280px;background:#7C3AED"><span style="font-size:15px">&#20195;&#29702;</span></div><div class="s5_label">2025</div></div>
+</div>
+<script>(function(){var ids=['s5-b1','s5-m1','s5-b2','s5-m2','s5-b3','s5-total'];var delays=[400,1200,1600,2400,2800,3600];var go=false;var el=document.getElementById('s5-anim');if(!el)return;var obs=new IntersectionObserver(function(entries){entries.forEach(function(en){if(en.isIntersecting&&!go){go=true;ids.forEach(function(id,i){setTimeout(function(){var e=document.getElementById(id);if(e)e.classList.add('s5_vis')},delays[i])})}})},{threshold:0.3});obs.observe(el)})();</script></div>
+    <div class="deep-dive-trigger" onclick="toggleDeepDive(5)">&#8595; 深入了解</div>
+  </div>
+</section>
+
+<!-- S6 — Token工厂经济学 -->
+<section class="section" style="background: var(--bg-act2);">
+  <div class="content-width">
+    <div class="section-label reveal">06</div>
+    <h2 class="big-statement reveal reveal-delay-1">Token 工厂经济学</h2>
+    <p class="body-text reveal reveal-delay-2">AI 工厂的核心指标是 <span class="hl">tokens per watt</span>——每瓦电力能产出多少 token。Blackwell NVLink72 系统配合 Dynamo 推理引擎，让 NVIDIA 的单 token 成本成为全球最低。通过 NVFP4 精度格式和极限代码设计，<span class="hl-violet">同一套硬件</span>的吞吐量不断提升。</p>
+    <div id="s6-anim" class="reveal reveal-delay-3"><style>
+        .s6_factory {
+          position: relative; width: 340px; height: 280px;
+          margin: 36px auto 28px;
+        }
+        /* Input: electricity */
+        .s6_input {
+          position: absolute; left: 0; top: 60px;
+          display: flex; flex-direction: column; align-items: center; gap: 4px;
+          opacity: 0; transform: translateX(-18px);
+          transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .s6_input-icon {
+          width: 48px; height: 48px; border-radius: 50%;
+          background: rgba(5,150,105,0.1); border: 2px solid #059669;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 22px;
+        }
+        .s6_input-label {
+          font-size: 14px; font-weight: 600; color: #059669;
+        }
+        /* Arrow left */
+        .s6_arrow-l {
+          position: absolute; left: 60px; top: 76px;
+          width: 36px; height: 2px; background: #059669;
+          opacity: 0; transition: opacity 0.5s ease;
+        }
+        .s6_arrow-l::after {
+          content: ""; position: absolute; right: -1px; top: -4px;
+          border: 5px solid transparent; border-left: 6px solid #059669;
+        }
+        /* Center: factory box */
+        .s6_box {
+          position: absolute; left: 96px; top: 36px;
+          width: 148px; height: 96px; border-radius: 12px;
+          background: rgba(124,58,237,0.06);
+          border: 2px solid #7C3AED;
+          display: flex; flex-direction: column;
+          align-items: center; justify-content: center; gap: 4px;
+          opacity: 0; transform: scale(0.85);
+          transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .s6_box-title {
+          font-size: 18px; font-weight: 700; color: #7C3AED;
+          letter-spacing: 1px;
+        }
+        .s6_box-sub {
+          font-size: 11px; color: #7C3AED; opacity: 0.7;
+          font-family: 'SF Mono','Fira Code','Consolas',monospace;
+          text-align: center; line-height: 1.4;
+        }
+        /* Arrow right */
+        .s6_arrow-r {
+          position: absolute; right: 60px; top: 76px;
+          width: 36px; height: 2px; background: #7C3AED;
+          opacity: 0; transition: opacity 0.5s ease;
+        }
+        .s6_arrow-r::after {
+          content: ""; position: absolute; right: -1px; top: -4px;
+          border: 5px solid transparent; border-left: 6px solid #7C3AED;
+        }
+        /* Output: tokens */
+        .s6_output {
+          position: absolute; right: 0; top: 60px;
+          display: flex; flex-direction: column; align-items: center; gap: 4px;
+          opacity: 0; transform: translateX(18px);
+          transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .s6_output-icon {
+          width: 48px; height: 48px; border-radius: 50%;
+          background: rgba(124,58,237,0.1); border: 2px solid #7C3AED;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 16px; font-weight: 700; color: #7C3AED;
+        }
+        .s6_output-label {
+          font-size: 14px; font-weight: 600; color: #7C3AED;
+        }
+        /* Cost bar */
+        .s6_cost-area {
+          position: absolute; left: 24px; right: 24px; top: 160px;
+          opacity: 0; transform: translateY(12px);
+          transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .s6_cost-header {
+          display: flex; justify-content: space-between; align-items: center;
+          margin-bottom: 6px;
+        }
+        .s6_cost-title {
+          font-size: 12px; font-weight: 600; color: #1E293B;
+        }
+        .s6_cost-hint {
+          font-size: 11px; color: #CBD5E1;
+        }
+        .s6_bar-bg {
+          width: 100%; height: 20px; border-radius: 10px;
+          background: linear-gradient(90deg, #059669 0%, #059669 100%);
+          overflow: hidden; position: relative;
+        }
+        .s6_bar-fill {
+          position: absolute; right: 0; top: 0; bottom: 0;
+          width: 100%; border-radius: 10px;
+          background: linear-gradient(90deg, #EF4444 0%, #F97316 50%, #EF4444 100%);
+          transition: width 1.2s cubic-bezier(0.25,0.46,0.45,0.94);
+        }
+        .s6_bar-label-lo {
+          position: absolute; left: 8px; top: 1px;
+          font-size: 11px; font-weight: 700; color: white; line-height: 20px;
+        }
+        .s6_bar-label-hi {
+          position: absolute; right: 8px; top: 1px;
+          font-size: 11px; font-weight: 700; color: white; line-height: 20px;
+          opacity: 0; transition: opacity 0.5s ease;
+        }
+        /* 7x badge */
+        .s6_badge {
+          position: absolute; left: 50%; top: 224px;
+          transform: translateX(-50%) scale(0);
+          display: flex; align-items: center; gap: 8px;
+          padding: 10px 22px; border-radius: 24px;
+          background: linear-gradient(135deg, #059669 0%, #047857 100%);
+          box-shadow: 0 4px 20px rgba(5,150,105,0.35);
+          transition: transform 0.7s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .s6_badge-num {
+          font-size: 24px; font-weight: 700; color: white;
+          font-family: 'Noto Serif SC', serif;
+        }
+        .s6_badge-txt {
+          font-size: 13px; color: rgba(255,255,255,0.9); font-weight: 500;
+        }
+        /* Metric label */
+        .s6_metric {
+          position: absolute; left: 50%; top: 148px;
+          transform: translateX(-50%);
+          font-size: 11px; color: #CBD5E1;
+          opacity: 0; transition: opacity 0.5s ease;
+          white-space: nowrap;
+        }
+        /* Visible triggers */
+        #s6-anim.visible .s6_input { opacity: 1; transform: translateX(0); transition-delay: 0.2s; }
+        #s6-anim.visible .s6_arrow-l { opacity: 1; transition-delay: 0.5s; }
+        #s6-anim.visible .s6_box { opacity: 1; transform: scale(1); transition-delay: 0.8s; }
+        #s6-anim.visible .s6_arrow-r { opacity: 1; transition-delay: 1.1s; }
+        #s6-anim.visible .s6_output { opacity: 1; transform: translateX(0); transition-delay: 1.4s; }
+        #s6-anim.visible .s6_metric { opacity: 1; transition-delay: 1.7s; }
+        #s6-anim.visible .s6_cost-area { opacity: 1; transform: translateY(0); transition-delay: 2.0s; }
+        #s6-anim.visible .s6_bar-fill { width: 20%; transition-delay: 2.4s; }
+        #s6-anim.visible .s6_bar-label-hi { opacity: 1; transition-delay: 2.8s; }
+        #s6-anim.visible .s6_badge { transform: translateX(-50%) scale(1); transition-delay: 3.2s; }
+      </style>
+      <div class="s6_factory">
+        <!-- Input: electricity -->
+        <div class="s6_input">
+          <div class="s6_input-icon">&#x26A1;</div>
+          <div class="s6_input-label">电力</div>
+        </div>
+        <!-- Arrow left -->
+        <div class="s6_arrow-l"></div>
+        <!-- Center factory -->
+        <div class="s6_box">
+          <div class="s6_box-title">Token 工厂</div>
+          <div class="s6_box-sub">Dynamo + NVFP4<br>NVLink72</div>
+        </div>
+        <!-- Arrow right -->
+        <div class="s6_arrow-r"></div>
+        <!-- Output: tokens -->
+        <div class="s6_output">
+          <div class="s6_output-icon">Tk</div>
+          <div class="s6_output-label">Tokens</div>
+        </div>
+        <!-- Metric label -->
+        <div class="s6_metric">核心指标: tokens / watt</div>
+        <!-- Cost bar -->
+        <div class="s6_cost-area">
+          <div class="s6_cost-header">
+            <span class="s6_cost-title">单 Token 成本</span>
+            <span class="s6_cost-hint">Hopper → Blackwell</span>
+          </div>
+          <div class="s6_bar-bg">
+            <div class="s6_bar-fill"></div>
+            <div class="s6_bar-label-lo">最低</div>
+            <div class="s6_bar-label-hi">&#x2193; 大幅下降</div>
+          </div>
+        </div>
+        <!-- 7x badge -->
+        <div class="s6_badge">
+          <div class="s6_badge-num">7x</div>
+          <div class="s6_badge-txt">同硬件软件提速</div>
+        </div>
+      </div></div>
+    <div class="deep-dive-trigger" onclick="toggleDeepDive(6)">&#8595; 深入了解</div>
+  </div>
+</section>
+
+<!-- ==================== ACT III: 硬件与工厂 ==================== -->
+<section class="act-transition" style="background: var(--bg-act3);">
+  <div class="act-number reveal">Act III</div>
+  <div class="act-title reveal reveal-delay-1">硬件与工厂</div>
+</section>
+
+<!-- gap: 产品演示过渡 -->
+<div class="coverage-gap-inline reveal" style="background: var(--bg-act3);">
+  <span class="gap-line"></span>
+  <span class="gap-text">~ 40秒 产品演示过渡已跳过 ~</span>
+  <span class="gap-line"></span>
+</div>
+
+<!-- S7 — Vera Rubin 系统架构 -->
+<section class="section" style="background: var(--bg-act3);">
+  <div class="content-width">
+    <div class="section-label reveal">07</div>
+    <h2 class="big-statement reveal reveal-delay-1">Vera Rubin</h2>
+    <p class="body-text reveal reveal-delay-2">Vera Rubin 是 NVIDIA 为 <span class="hl">Agent AI 时代</span>设计的下一代系统。NVLink 从 72 芯片扩展到 144，集成 Groq LPX 实现解聚推理——prefill 和 decode 分别在最适合的芯片上运行。路线图一路延伸到 Feynman，每一代都在 tokens/watt 上实现数量级提升。</p>
+    <div id="s7-anim" class="reveal reveal-delay-3"><style>
+  .s7_stage {
+    width: 340px; height: 280px;
+    margin: 24px auto; position: relative;
+    overflow: hidden;
+  }
+
+  /* === Roadmap row: three boxes connected by arrows === */
+  .s7_box {
+    position: absolute; top: 32px;
+    width: 80px; height: 48px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: #fff;
+    opacity: 0; transform: scale(0.6);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .s7_box_bw {
+    left: 20px;
+    background: #94A3B8; color: #fff;
+  }
+  .s7_box_vr {
+    left: 130px;
+    background: #059669; color: #fff;
+    box-shadow: 0 0 0 3px rgba(5,150,105,0.25);
+  }
+  .s7_box_fy {
+    left: 240px;
+    background: transparent; color: #7C3AED;
+    border: 2px dashed #7C3AED;
+  }
+
+  .s7_stage.visible .s7_box_bw {
+    opacity: 1; transform: scale(1); transition-delay: 0.3s;
+  }
+  .s7_stage.visible .s7_box_vr {
+    opacity: 1; transform: scale(1); transition-delay: 0.8s;
+  }
+  .s7_stage.visible .s7_box_fy {
+    opacity: 1; transform: scale(1); transition-delay: 1.3s;
+  }
+
+  /* === Arrows between boxes === */
+  .s7_arrow_h {
+    position: absolute; top: 54px;
+    width: 24px; height: 2px; background: #CBD5E1;
+    transform-origin: left center; transform: scaleX(0);
+    transition: transform 0.4s ease;
+  }
+  .s7_arrow_h::after {
+    content: "";
+    position: absolute; right: -6px; top: -4px;
+    border: 5px solid transparent;
+    border-left: 6px solid #CBD5E1;
+  }
+  .s7_ah1 { left: 104px; }
+  .s7_ah2 { left: 214px; }
+
+  .s7_stage.visible .s7_ah1 {
+    transform: scaleX(1); transition-delay: 0.6s;
+  }
+  .s7_stage.visible .s7_ah2 {
+    transform: scaleX(1); transition-delay: 1.1s;
+  }
+
+  /* === NVLink label above Vera Rubin === */
+  .s7_nvlink {
+    position: absolute; top: 10px; left: 124px;
+    width: 92px; text-align: center;
+    font-size: 11px; font-weight: 600; color: #059669;
+    letter-spacing: 0.5px;
+    opacity: 0; transition: opacity 0.4s ease;
+  }
+  .s7_stage.visible .s7_nvlink {
+    opacity: 1; transition-delay: 1.6s;
+  }
+
+  /* === Vertical arrow from VR box down to sub-nodes === */
+  .s7_arrow_v {
+    position: absolute; left: 168px; top: 82px;
+    width: 2px; height: 32px; background: #CBD5E1;
+    transform-origin: top center; transform: scaleY(0);
+    transition: transform 0.4s ease;
+  }
+  .s7_stage.visible .s7_arrow_v {
+    transform: scaleY(1); transition-delay: 1.8s;
+  }
+
+  /* === Sub-nodes row: GPU + Groq === */
+  .s7_sub {
+    position: absolute; top: 120px;
+    width: 72px; height: 40px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600;
+    opacity: 0; transform: translateY(12px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .s7_sub_gpu {
+    left: 94px;
+    background: #059669; color: #fff;
+  }
+  .s7_sub_groq {
+    left: 174px;
+    background: #7C3AED; color: #fff;
+  }
+
+  .s7_stage.visible .s7_sub_gpu {
+    opacity: 1; transform: translateY(0); transition-delay: 2.1s;
+  }
+  .s7_stage.visible .s7_sub_groq {
+    opacity: 1; transform: translateY(0); transition-delay: 2.4s;
+  }
+
+  /* === Connector between GPU and Groq === */
+  .s7_conn {
+    position: absolute; top: 139px; left: 168px;
+    width: 4px; height: 4px; border-radius: 50%;
+    background: #CBD5E1;
+    opacity: 0; transition: opacity 0.3s ease;
+  }
+  .s7_stage.visible .s7_conn {
+    opacity: 1; transition-delay: 2.6s;
+  }
+
+  /* === Disaggregated inference label === */
+  .s7_label {
+    position: absolute; top: 170px; left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 11px; color: #64748B; font-weight: 500;
+    letter-spacing: 0.3px;
+    opacity: 0; transition: opacity 0.4s ease;
+  }
+  .s7_stage.visible .s7_label {
+    opacity: 1; transition-delay: 2.8s;
+  }
+
+  /* === Bottom summary chips === */
+  .s7_chips {
+    position: absolute; bottom: 20px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; gap: 12px;
+  }
+  .s7_chip {
+    padding: 4px 12px; border-radius: 12px;
+    font-size: 11px; font-weight: 600;
+    white-space: nowrap;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .s7_chip_perf {
+    background: #ECFDF5; color: #059669;
+    border: 1px solid #A7F3D0;
+  }
+  .s7_chip_eff {
+    background: #EDE9FE; color: #7C3AED;
+    border: 1px solid #C4B5FD;
+  }
+
+  .s7_stage.visible .s7_chip_perf {
+    opacity: 1; transform: translateY(0); transition-delay: 3.2s;
+  }
+  .s7_stage.visible .s7_chip_eff {
+    opacity: 1; transform: translateY(0); transition-delay: 3.5s;
+  }
+
+  /* === Horizontal connector line between sub-nodes === */
+  .s7_hconn {
+    position: absolute; top: 139px; left: 166px;
+    width: 8px; height: 2px; background: #CBD5E1;
+    transform-origin: left center; transform: scaleX(0);
+    transition: transform 0.3s ease;
+  }
+  .s7_stage.visible .s7_hconn {
+    transform: scaleX(1); transition-delay: 2.6s;
+  }
+</style>
+
+<div class="s7_stage">
+  <!-- Roadmap row -->
+  <div class="s7_box s7_box_bw">Blackwell</div>
+  <div class="s7_arrow_h s7_ah1"></div>
+  <div class="s7_nvlink">NVLink 144</div>
+  <div class="s7_box s7_box_vr">Vera Rubin</div>
+  <div class="s7_arrow_h s7_ah2"></div>
+  <div class="s7_box s7_box_fy">Feynman</div>
+
+  <!-- Vertical connector -->
+  <div class="s7_arrow_v"></div>
+
+  <!-- Disaggregated inference sub-nodes -->
+  <div class="s7_sub s7_sub_gpu">Prefill</div>
+  <div class="s7_hconn"></div>
+  <div class="s7_sub s7_sub_groq">Decode</div>
+
+  <div class="s7_label">GPU + Groq LPX disaggregated</div>
+
+  <!-- Bottom chips -->
+  <div class="s7_chips">
+    <div class="s7_chip s7_chip_perf">6 ExaFLOPS</div>
+    <div class="s7_chip s7_chip_eff">35x/MW</div>
+  </div>
+</div></div>
+    <div class="deep-dive-trigger" onclick="toggleDeepDive(7)">&#8595; 深入了解</div>
+  </div>
+</section>
+
+<!-- S8 — AI工厂数字孪生(DSX) -->
+<section class="section" style="background: var(--bg-act3);">
+  <div class="content-width">
+    <div class="section-label reveal">08</div>
+    <h2 class="big-statement reveal reveal-delay-1">AI 工厂数字孪生</h2>
+    <p class="body-text reveal reveal-delay-2">建设一座 AI 工厂，每延迟一个月就损失数十亿美元的收入。DSX 用 Omniverse 创建数据中心的<span class="hl">数字孪生</span>——从布局设计到散热仿真到能效优化，在虚拟世界里把问题解决完，再到物理世界里施工。MaxQ 则持续优化运行中的工厂，让每一瓦电力都产出最多的 token。</p>
+    <div id="s8-anim" class="reveal reveal-delay-3"><div class="s8_stage">
+<style>
+.s8_stage {
+  width: 340px;
+  height: 280px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Factory boxes */
+.s8_box {
+  position: absolute;
+  top: 40px;
+  width: 110px;
+  height: 76px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1E293B;
+  opacity: 0;
+  z-index: 2;
+}
+
+.s8_box_virtual {
+  left: 16px;
+  border: 3px dashed #7C3AED;
+  background: rgba(124, 58, 237, 0.06);
+}
+
+.s8_box_physical {
+  right: 16px;
+  border: 3px solid #059669;
+  background: rgba(5, 150, 105, 0.06);
+}
+
+.s8_stage.visible .s8_box_virtual {
+  animation: s8_fadeIn 0.5s ease forwards;
+  animation-delay: 0s;
+}
+
+.s8_stage.visible .s8_box_physical {
+  animation: s8_fadeIn 0.5s ease forwards;
+  animation-delay: 0.4s;
+}
+
+/* SVG arrow layer */
+.s8_svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 340px;
+  height: 280px;
+  z-index: 3;
+}
+
+.s8_arrow_path {
+  fill: none;
+  stroke: #CBD5E1;
+  stroke-width: 2.5;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+}
+
+.s8_stage.visible .s8_arrow_fwd {
+  animation: s8_drawLine 0.6s ease forwards;
+  animation-delay: 0.9s;
+}
+
+.s8_stage.visible .s8_arrow_back {
+  animation: s8_drawLineReverse 0.6s ease forwards;
+  animation-delay: 1.2s;
+}
+
+/* Label between boxes, above arrows */
+.s8_twin_label {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 600;
+  color: #7C3AED;
+  opacity: 0;
+  white-space: nowrap;
+  z-index: 4;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.s8_stage.visible .s8_twin_label {
+  animation: s8_fadeInCenter 0.4s ease forwards;
+  animation-delay: 1.5s;
+}
+
+/* Bottom tags */
+.s8_tag {
+  position: absolute;
+  bottom: 28px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  z-index: 2;
+  color: #fff;
+}
+
+.s8_tag_sim {
+  left: 16px;
+  background: #059669;
+}
+.s8_tag_exchange {
+  left: 96px;
+  background: #7C3AED;
+}
+.s8_tag_flex {
+  left: 192px;
+  background: #059669;
+}
+.s8_tag_maxq {
+  left: 262px;
+  background: #7C3AED;
+}
+
+.s8_stage.visible .s8_tag_sim {
+  animation: s8_tagIn 0.4s ease forwards;
+  animation-delay: 2.0s;
+}
+.s8_stage.visible .s8_tag_exchange {
+  animation: s8_tagIn 0.4s ease forwards;
+  animation-delay: 2.4s;
+}
+.s8_stage.visible .s8_tag_flex {
+  animation: s8_tagIn 0.4s ease forwards;
+  animation-delay: 2.8s;
+}
+.s8_stage.visible .s8_tag_maxq {
+  animation: s8_tagIn 0.4s ease forwards;
+  animation-delay: 3.2s;
+}
+
+/* Divider line above tags */
+.s8_divider {
+  position: absolute;
+  bottom: 72px;
+  left: 24px;
+  right: 24px;
+  height: 1px;
+  background: #CBD5E1;
+  opacity: 0;
+}
+
+.s8_stage.visible .s8_divider {
+  animation: s8_fadeIn 0.3s ease forwards;
+  animation-delay: 1.8s;
+}
+
+/* DSX label */
+.s8_dsx_label {
+  position: absolute;
+  bottom: 66px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 600;
+  color: #059669;
+  opacity: 0;
+  white-space: nowrap;
+  z-index: 3;
+  letter-spacing: 0.5px;
+}
+
+.s8_stage.visible .s8_dsx_label {
+  animation: s8_fadeInCenter 0.3s ease forwards;
+  animation-delay: 1.9s;
+}
+
+/* Keyframes */
+@keyframes s8_fadeIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s8_fadeInCenter {
+  from { opacity: 0; transform: translateX(-50%) scale(0.85); }
+  to { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+@keyframes s8_drawLine {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes s8_drawLineReverse {
+  from { stroke-dashoffset: -100; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes s8_tagIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.8); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+</style>
+
+<!-- SVG bidirectional arrows -->
+<svg class="s8_svg" viewBox="0 0 340 280">
+  <defs>
+    <marker id="s8_ah_fwd" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#CBD5E1"/>
+    </marker>
+    <marker id="s8_ah_back" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#CBD5E1"/>
+    </marker>
+  </defs>
+  <!-- Forward arrow: virtual -> physical (top row, y=70) -->
+  <path class="s8_arrow_path s8_arrow_fwd" d="M 134,70 L 208,70" marker-end="url(#s8_ah_fwd)"/>
+  <!-- Back arrow: physical -> virtual (bottom row, y=88) -->
+  <path class="s8_arrow_path s8_arrow_back" d="M 208,88 L 134,88" marker-end="url(#s8_ah_back)"/>
+</svg>
+
+<!-- Factory boxes -->
+<div class="s8_box s8_box_virtual">虚拟工厂</div>
+<div class="s8_box s8_box_physical">物理工厂</div>
+
+<!-- Digital twin label -->
+<div class="s8_twin_label">数字孪生</div>
+
+<!-- Divider and DSX label -->
+<div class="s8_divider"></div>
+<div class="s8_dsx_label">DSX Platform</div>
+
+<!-- 4 tags -->
+<div class="s8_tag s8_tag_sim">Sim</div>
+<div class="s8_tag s8_tag_exchange">Exchange</div>
+<div class="s8_tag s8_tag_flex">Flex</div>
+<div class="s8_tag s8_tag_maxq">MaxQ</div>
+</div></div>
+    <div class="deep-dive-trigger" onclick="toggleDeepDive(8)">&#8595; 深入了解</div>
+  </div>
+</section>
+
+<!-- ==================== ACT IV: Agent 与物理 AI ==================== -->
+<section class="act-transition" style="background: linear-gradient(160deg, #0F172A 0%, #312E81 50%, #0F172A 100%); color: #E2E8F0;">
+  <div class="act-number reveal" style="color: #A78BFA;">Act IV</div>
+  <div class="act-title reveal reveal-delay-1" style="color: #F5F3FF;">Agent 与物理 AI</div>
+</section>
+
+<!-- gap: 观众鼓掌 -->
+<div class="coverage-gap-inline reveal" style="background: linear-gradient(160deg, #0F172A 0%, #312E81 50%, #0F172A 100%);">
+  <span class="gap-line"></span>
+  <span class="gap-text">~ 40秒 观众鼓掌已跳过 ~</span>
+  <span class="gap-line"></span>
+</div>
+
+<!-- S9 — OpenClaw与Agent革命 -->
+<section class="section" style="background: var(--bg-act2);">
+  <div class="content-width">
+    <div class="section-label reveal">09</div>
+    <h2 class="big-statement reveal reveal-delay-1">OpenClaw 与 Agent 革命</h2>
+    <p class="body-text reveal reveal-delay-2">OpenClaw 是 AI 时代的操作系统——开源、可编程、到处运行。它让每个人和每家公司都能拥有自己的 AI Agent。企业 IT 正在经历一次文艺复兴：从 <span class="hl">SaaS</span>（租用工具）转向 <span class="hl-violet">GaaS</span>（租用 Agent），原本 2 万亿美元的 IT 产业将扩展到数万亿。</p>
+    <div id="s9-anim" class="reveal reveal-delay-3"><div class="s9_stage">
+<style>
+.s9_stage {
+  width: 340px;
+  height: 280px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* SaaS box — left, gray/old */
+.s9_saas_box {
+  position: absolute;
+  width: 96px;
+  height: 72px;
+  left: 24px;
+  top: 60px;
+  border-radius: 12px;
+  background: #F1F5F9;
+  border: 2.5px solid #CBD5E1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #94A3B8;
+  opacity: 0;
+  z-index: 2;
+}
+
+.s9_stage.visible .s9_saas_box {
+  animation: s9_fadeIn 0.5s ease forwards;
+  animation-delay: 0s;
+}
+
+/* GaaS box — right, accent2/new */
+.s9_gaas_box {
+  position: absolute;
+  width: 96px;
+  height: 72px;
+  right: 24px;
+  top: 60px;
+  border-radius: 12px;
+  background: #F5F3FF;
+  border: 2.5px solid #7C3AED;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #7C3AED;
+  opacity: 0;
+  z-index: 2;
+}
+
+.s9_stage.visible .s9_gaas_box {
+  animation: s9_fadeIn 0.5s ease forwards;
+  animation-delay: 0.5s;
+}
+
+/* Labels below boxes */
+.s9_label_tool {
+  position: absolute;
+  left: 24px;
+  top: 140px;
+  width: 96px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #94A3B8;
+  opacity: 0;
+  z-index: 2;
+}
+
+.s9_stage.visible .s9_label_tool {
+  animation: s9_fadeIn 0.4s ease forwards;
+  animation-delay: 0.3s;
+}
+
+.s9_label_agent {
+  position: absolute;
+  right: 24px;
+  top: 140px;
+  width: 96px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #7C3AED;
+  opacity: 0;
+  z-index: 2;
+}
+
+.s9_stage.visible .s9_label_agent {
+  animation: s9_fadeIn 0.4s ease forwards;
+  animation-delay: 0.8s;
+}
+
+/* Arrow SVG */
+.s9_svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 340px;
+  height: 280px;
+  z-index: 1;
+}
+
+.s9_arrow_path {
+  fill: none;
+  stroke: #CBD5E1;
+  stroke-width: 2.5;
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+}
+
+.s9_arrow_glow {
+  fill: none;
+  stroke: #7C3AED;
+  stroke-width: 3;
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  opacity: 0;
+}
+
+.s9_stage.visible .s9_arrow_path {
+  animation: s9_drawLine 0.6s ease forwards;
+  animation-delay: 1.2s;
+}
+
+.s9_stage.visible .s9_arrow_glow {
+  animation: s9_glowLine 0.6s ease forwards;
+  animation-delay: 1.8s;
+}
+
+/* OpenClaw badge — center bottom */
+.s9_badge {
+  position: absolute;
+  left: 108px;
+  top: 186px;
+  width: 124px;
+  height: 40px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #059669, #7C3AED);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  z-index: 3;
+  letter-spacing: 0.5px;
+}
+
+.s9_stage.visible .s9_badge {
+  animation: s9_badgeIn 0.6s ease forwards;
+  animation-delay: 2.4s;
+}
+
+/* Connector lines from badge to both boxes */
+.s9_connector {
+  fill: none;
+  stroke: #059669;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+  opacity: 0;
+}
+
+.s9_stage.visible .s9_conn_left {
+  animation: s9_connIn 0.5s ease forwards;
+  animation-delay: 3.0s;
+}
+
+.s9_stage.visible .s9_conn_right {
+  animation: s9_connIn 0.5s ease forwards;
+  animation-delay: 3.2s;
+}
+
+/* Bottom tagline */
+.s9_tagline {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  width: 340px;
+  text-align: center;
+  font-size: 12px;
+  color: #64748B;
+  opacity: 0;
+  z-index: 2;
+}
+
+.s9_stage.visible .s9_tagline {
+  animation: s9_fadeIn 0.5s ease forwards;
+  animation-delay: 3.5s;
+}
+
+/* Strikethrough on SaaS — fading old */
+.s9_strike {
+  position: absolute;
+  left: 30px;
+  top: 95px;
+  width: 84px;
+  height: 0;
+  border-top: 2.5px solid #94A3B8;
+  opacity: 0;
+  z-index: 3;
+  transform: rotate(-8deg);
+}
+
+.s9_stage.visible .s9_strike {
+  animation: s9_strikeIn 0.4s ease forwards;
+  animation-delay: 2.0s;
+}
+
+/* Keyframes */
+@keyframes s9_fadeIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes s9_drawLine {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes s9_glowLine {
+  0% { opacity: 0; stroke-dashoffset: 120; }
+  10% { opacity: 1; }
+  100% { opacity: 1; stroke-dashoffset: 0; }
+}
+
+@keyframes s9_badgeIn {
+  0% { opacity: 0; transform: scale(0.5) translateY(10px); }
+  60% { opacity: 1; transform: scale(1.08) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes s9_connIn {
+  from { opacity: 0; }
+  to { opacity: 0.7; }
+}
+
+@keyframes s9_strikeIn {
+  from { opacity: 0; }
+  to { opacity: 0.6; }
+}
+</style>
+
+<!-- SVG arrows and connectors -->
+<svg class="s9_svg" viewBox="0 0 340 280">
+  <defs>
+    <marker id="s9_arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#CBD5E1"/>
+    </marker>
+    <marker id="s9_arrowhead_glow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#7C3AED"/>
+    </marker>
+  </defs>
+
+  <!-- Main arrow: SaaS box right edge → GaaS box left edge -->
+  <path class="s9_arrow_path" d="M 122,96 L 218,96" marker-end="url(#s9_arrowhead)"/>
+  <path class="s9_arrow_glow" d="M 122,96 L 218,96" marker-end="url(#s9_arrowhead_glow)"/>
+
+  <!-- Connector: badge to SaaS -->
+  <path class="s9_connector s9_conn_left" d="M 140,186 Q 90,170 72,136"/>
+  <!-- Connector: badge to GaaS -->
+  <path class="s9_connector s9_conn_right" d="M 200,186 Q 250,170 268,136"/>
+</svg>
+
+<!-- SaaS box -->
+<div class="s9_saas_box">SaaS</div>
+<div class="s9_label_tool">工具</div>
+
+<!-- Strikethrough on SaaS -->
+<div class="s9_strike"></div>
+
+<!-- GaaS box -->
+<div class="s9_gaas_box">GaaS</div>
+<div class="s9_label_agent">Agent</div>
+
+<!-- OpenClaw badge -->
+<div class="s9_badge">OpenClaw</div>
+
+<!-- Tagline -->
+<div class="s9_tagline">$2T IT → Multi-Trillion Agent Economy</div>
+</div></div>
+    <div class="deep-dive-trigger" onclick="toggleDeepDive(9)">&#8595; 深入了解</div>
+  </div>
+</section>
+
+<!-- gap: 过渡 -->
+<div class="coverage-gap-inline reveal" style="background: linear-gradient(160deg, #0F172A 0%, #312E81 50%, #0F172A 100%);">
+  <span class="gap-line"></span>
+  <span class="gap-text">~ 20秒 过渡已跳过 ~</span>
+  <span class="gap-line"></span>
+</div>
+
+<!-- S10 — 物理AI与机器人 -->
+<section class="section" style="background: var(--bg-act2);">
+  <div class="content-width">
+    <div class="section-label reveal">10</div>
+    <h2 class="big-statement reveal reveal-delay-1">物理 AI 与机器人</h2>
+    <p class="body-text reveal reveal-delay-2">Alpamo 是 NVIDIA 的推理式自动驾驶系统，Groot 是人形机器人的基础模型，Isaac Lab 和 Cosmos 提供仿真训练环境。从 <span class="hl">Uber 的 robo-taxi</span> 到 <span class="hl-violet">Disney 的 Olaf 机器人</span>在台上与黄仁勋互动——物理 AI 正在从实验室走向现实世界。</p>
+    <div id="s10-anim" class="reveal reveal-delay-3"><style>
+.s10_stage {
+  width: 340px;
+  height: 280px;
+  margin: 0 auto;
+  position: relative;
+  font-family: 'Noto Sans SC', -apple-system, sans-serif;
+}
+
+/* Top row: three domain boxes */
+.s10_box {
+  position: absolute;
+  width: 88px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+  z-index: 2;
+}
+.s10_box_left {
+  top: 20px;
+  left: 14px;
+  background: #059669;
+}
+.s10_box_center {
+  top: 20px;
+  left: 126px;
+  background: #7C3AED;
+}
+.s10_box_right {
+  top: 20px;
+  left: 238px;
+  background: #059669;
+}
+
+/* Sub-labels under boxes */
+.s10_sub {
+  position: absolute;
+  font-size: 11px;
+  color: #64748B;
+  text-align: center;
+  width: 88px;
+  opacity: 0;
+  z-index: 2;
+  font-weight: 600;
+}
+.s10_sub_left {
+  top: 66px;
+  left: 14px;
+}
+.s10_sub_center {
+  top: 66px;
+  left: 126px;
+}
+.s10_sub_right {
+  top: 66px;
+  left: 238px;
+}
+
+/* SVG connector lines */
+.s10_connectors {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 340px;
+  height: 280px;
+  z-index: 1;
+}
+.s10_conn {
+  stroke: #CBD5E1;
+  stroke-width: 2.5;
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  fill: none;
+}
+
+/* Bottom convergence node */
+.s10_base {
+  position: absolute;
+  bottom: 36px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 108px;
+  height: 44px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #059669, #7C3AED);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 2px;
+  opacity: 0;
+  z-index: 2;
+}
+
+/* Detail chips row */
+.s10_chips {
+  position: absolute;
+  top: 142px;
+  left: 0;
+  width: 340px;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  opacity: 0;
+  z-index: 2;
+}
+.s10_chip {
+  font-size: 10px;
+  color: #1E293B;
+  background: #f1f5f9;
+  border-radius: 4px;
+  padding: 3px 7px;
+  text-align: center;
+  line-height: 1.3;
+}
+
+/* Summary line */
+.s10_summary {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #059669;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  z-index: 2;
+}
+
+/* ========================
+   Animations
+   ======================== */
+@keyframes s10_fadeIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes s10_drawLine {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes s10_fadeSimple {
+  to { opacity: 1; }
+}
+@keyframes s10_pulseGlow {
+  0%, 100% { filter: brightness(1); box-shadow: 0 0 0 rgba(5,150,105,0); }
+  50% { filter: brightness(1.15); box-shadow: 0 0 16px rgba(5,150,105,0.3); }
+}
+
+/* Triggered states */
+.s10_stage.visible .s10_box_left {
+  animation: s10_fadeIn 0.5s ease forwards;
+  animation-delay: 0.2s;
+}
+.s10_stage.visible .s10_sub_left {
+  animation: s10_fadeSimple 0.4s ease forwards;
+  animation-delay: 0.5s;
+}
+.s10_stage.visible .s10_box_center {
+  animation: s10_fadeIn 0.5s ease forwards;
+  animation-delay: 0.8s;
+}
+.s10_stage.visible .s10_sub_center {
+  animation: s10_fadeSimple 0.4s ease forwards;
+  animation-delay: 1.1s;
+}
+.s10_stage.visible .s10_box_right {
+  animation: s10_fadeIn 0.5s ease forwards;
+  animation-delay: 1.4s;
+}
+.s10_stage.visible .s10_sub_right {
+  animation: s10_fadeSimple 0.4s ease forwards;
+  animation-delay: 1.7s;
+}
+
+/* Connector lines */
+.s10_stage.visible .s10_conn_left {
+  animation: s10_drawLine 0.6s ease forwards;
+  animation-delay: 2.0s;
+}
+.s10_stage.visible .s10_conn_center {
+  animation: s10_drawLine 0.6s ease forwards;
+  animation-delay: 2.3s;
+}
+.s10_stage.visible .s10_conn_right {
+  animation: s10_drawLine 0.6s ease forwards;
+  animation-delay: 2.6s;
+}
+
+/* Base node */
+.s10_stage.visible .s10_base {
+  animation: s10_fadeIn 0.6s ease forwards;
+  animation-delay: 3.0s;
+}
+
+/* Detail chips */
+.s10_stage.visible .s10_chips {
+  animation: s10_fadeSimple 0.5s ease forwards;
+  animation-delay: 3.6s;
+}
+
+/* Summary */
+.s10_stage.visible .s10_summary {
+  animation: s10_fadeSimple 0.5s ease forwards;
+  animation-delay: 4.0s;
+}
+
+/* Pulse glow on base after full reveal */
+.s10_stage.visible .s10_base {
+  animation: s10_fadeIn 0.6s ease forwards, s10_pulseGlow 2s ease 4.5s infinite;
+}
+</style>
+<div class="s10_stage">
+  <!-- Three domain boxes -->
+  <div class="s10_box s10_box_left">自动驾驶</div>
+  <div class="s10_box s10_box_center">机器人</div>
+  <div class="s10_box s10_box_right">仿真</div>
+
+  <!-- Sub-labels -->
+  <div class="s10_sub s10_sub_left">Alpamo</div>
+  <div class="s10_sub s10_sub_center">Groot</div>
+  <div class="s10_sub s10_sub_right">Cosmos</div>
+
+  <!-- SVG connectors -->
+  <svg class="s10_connectors" viewBox="0 0 340 280">
+    <line class="s10_conn s10_conn_left" x1="58" y1="66" x2="140" y2="200"/>
+    <line class="s10_conn s10_conn_center" x1="170" y1="66" x2="170" y2="200"/>
+    <line class="s10_conn s10_conn_right" x1="282" y1="66" x2="200" y2="200"/>
+  </svg>
+
+  <!-- Detail chips -->
+  <div class="s10_chips">
+    <div class="s10_chip">Uber合作<br/>自动出租</div>
+    <div class="s10_chip">Isaac Lab<br/>机器人训练</div>
+    <div class="s10_chip">Disney Olaf<br/>角色机器人</div>
+  </div>
+
+  <!-- Convergence base -->
+  <div class="s10_base">物理AI</div>
+
+  <!-- Summary -->
+  <div class="s10_summary">三大领域汇聚，物理AI从实验室走向现实</div>
+</div></div>
+    <div class="deep-dive-trigger" onclick="toggleDeepDive(10)">&#8595; 深入了解</div>
+  </div>
+</section>
+
+<!-- ==================== TAKEAWAY ==================== -->
+<section class="section" style="background: var(--bg-close); color: #E2E8F0;">
+  <div class="content-width" style="text-align: center;">
+    <div class="section-label reveal" style="color: #6EE7B7;">Takeaway</div>
+    <h2 class="big-statement reveal reveal-delay-1" style="color: #F0FDF4;">GTC 2026 的关键信号</h2>
+  </div>
+  <div class="takeaway-grid reveal reveal-delay-2">
+    <div class="takeaway-card">
+      <div class="num">1,000,000&times;</div>
+      <p>两年内推理<br>计算需求增长</p>
+    </div>
+    <div class="takeaway-card">
+      <div class="num">$1T</div>
+      <p>AI 基础设施<br>市场规模预测</p>
+    </div>
+    <div class="takeaway-card">
+      <div class="num">20 年</div>
+      <p>CUDA 生态<br>飞轮积累</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="page-footer">
+  <p>基于 Jensen Huang GTC 2026 Keynote</p>
+  <p style="margin-top: 8px;">Visual narrative &middot; Spatial canvas pattern</p>
+</footer>
+
+</div><!-- /main-scroll -->
+
+<div class="detail-scroll" id="detailScroll">
+  <div class="detail-header" id="detailBack">&larr; 返回</div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+
+</div><!-- /space -->
+
+<script>
+var deepDiveData = {};
+
+// === Spatial canvas deep-dive ===
+var ddCurrentN = null;
+
+function toggleDeepDive(n) {
+  if (document.body.classList.contains('dd-active') && ddCurrentN === n) { closeDeepDive(); return; }
+  ddCurrentN = n;
+  var body = document.getElementById('detailBody');
+  var scroll = document.getElementById('detailScroll');
+  if (deepDiveData[n]) {
+    var d = deepDiveData[n];
+    var html = '<h4>' + d.title + '</h4>';
+    d.sections.forEach(function(s) {
+      if (s.heading) html += '<h4>' + s.heading + '</h4>';
+      if (s.diagram) html += s.diagram;
+      html += s.body.split('\n\n').map(function(p) { return '<p>' + p + '</p>'; }).join('');
+    });
+    if (d.originalText) html += '<div class="original-text"><p><strong>原文：</strong>' + d.originalText + '</p></div>';
+    body.innerHTML = html;
+  }
+  scroll.scrollTop = 0;
+  document.body.classList.add('dd-active');
+}
+
+function closeDeepDive() {
+  document.body.classList.remove('dd-active');
+  document.getElementById('space').style.transform = '';
+  document.getElementById('mainScroll').style.transform = '';
+  ddCurrentN = null;
+}
+
+var mainScrollRoot = document.getElementById('mainScroll');
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+}, { threshold: 0.15, root: mainScrollRoot });
+document.querySelectorAll('.reveal, [class*=\"_stage\"]').forEach(function(el) { observer.observe(el); });
+deepDiveData[1] = {
+  title: "CUDA 二十年与加速计算飞轮",
+  sections: [
+    {
+      heading: "SIMT：让并行编程变简单",
+      body: "CUDA 的核心发明是 SIMT（单指令多线程）架构。在 SIMT 出现之前，GPU 编程需要用 SIMD 方式手动管理数据并行，门槛极高。SIMT 让开发者写普通的标量代码就能自动展开成多线程执行，大幅降低了 GPU 编程的入门难度。这个架构选择是 CUDA 生态能扩展到数十万开源项目的根本前提。"
+    },
+    {
+      heading: "飞轮效应：为什么越转越快",
+      body: "黄仁勋反复强调的飞轮有四个环节：庞大的安装基数吸引开发者，开发者创造新算法和突破（比如深度学习），突破催生新市场和新生态，生态扩大又带来更多安装基数。二十年积累下来，全球数以亿计的 GPU 构成了 CUDA 的护城河。飞轮一旦转起来，后来者几乎不可能复制这个循环。",
+      diagram: "flywheel"
+    },
+    {
+      heading: "持续降本：加速计算的隐藏价值",
+      body: "加速计算的价值不止于首次部署时的性能提升。由于所有 NVIDIA GPU 架构兼容，NVIDIA 愿意持续为每一代硬件更新软件栈。这意味着同一块 GPU 随着 CUDA-X 库的优化，计算成本会持续下降。黄仁勋举了 Ampere 的例子：六年前出货的芯片，云端租赁价格反而在上涨，因为软件优化让它能跑更多新应用。"
+    }
+  ],
+  originalText: "CUDA 二十年来构建了单指令多线程（SIMT）架构，让标量代码自动并行执行，大幅降低 GPU 编程门槛。围绕 CUDA 形成的飞轮——安装基数吸引开发者、开发者创造突破、突破催生新市场、新市场扩大安装基数——已经积累了数亿 GPU 的全球部署。架构兼容性使 NVIDIA 能持续优化软件栈，让已部署硬件的计算成本不断下降，形成加速计算的长期价值。"
+};
+
+deepDiveData[2] = {
+  title: "神经渲染与DLSS5",
+  sections: [
+    {
+      heading: "从渲染到生成",
+      body: "游戏画面不再是一帧一帧<span class=\"hl\">渲染</span>出来的，而是<span class=\"hl\">生成</span>出来的。这是一个根本性的范式转换。过去20年，GPU做的事是按照确定的数学公式算出每个像素的颜色。现在DLSS5把这个过程变成了：给AI一组结构化信号，让它<span class=\"hl\">生成</span>看起来正确的画面。",
+      diagram: "<div style=\"display:flex;align-items:center;justify-content:center;gap:16px;padding:20px 0;\">" +
+        "<div class=\"dd-pop dd-d1\" style=\"width:64px;height:48px;border-radius:8px;background:#059669;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;\">渲染</div>" +
+        "<div class=\"dd-anim dd-d2\" style=\"font-size:22px;color:#CBD5E1;\">&#8594;</div>" +
+        "<div class=\"dd-pop dd-d3\" style=\"width:64px;height:48px;border-radius:8px;background:linear-gradient(135deg,#059669,#7C3AED);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;\">生成</div>" +
+      "</div>"
+    },
+    {
+      heading: "两种计算的融合",
+      body: "DLSS5 的核心是把两种截然不同的计算融合在一起。<span class=\"hl\">3D图形</span>是结构化的、确定性的——你给它三角形和光照参数，它给你精确的像素。<span class=\"hl\">生成式AI</span>是概率性的——它不算精确答案，而是采样一个看起来对的结果。黄仁勋说这是<span class=\"hl\">ground truth</span>（地面真相）和<span class=\"hl\">probabilistic computing</span>（概率计算）的结合。一个完全可控，一个极度逼真，DLSS5把两者的优势合二为一。",
+      diagram: "<div style=\"display:flex;align-items:center;justify-content:center;gap:12px;padding:20px 0;\">" +
+        "<div class=\"dd-pop dd-d1\" style=\"width:72px;height:52px;border-radius:8px;border:3px solid #059669;display:flex;align-items:center;justify-content:center;color:#059669;font-size:11px;font-weight:700;\">3D图形</div>" +
+        "<div class=\"dd-anim dd-d2\" style=\"font-size:18px;color:#CBD5E1;\">+</div>" +
+        "<div class=\"dd-pop dd-d3\" style=\"width:72px;height:52px;border-radius:8px;border:3px dashed #7C3AED;display:flex;align-items:center;justify-content:center;color:#7C3AED;font-size:11px;font-weight:700;\">生成AI</div>" +
+        "<div class=\"dd-anim dd-d4\" style=\"font-size:18px;color:#CBD5E1;\">=</div>" +
+        "<div class=\"dd-pop dd-d5\" style=\"width:72px;height:52px;border-radius:10px;background:linear-gradient(135deg,#059669,#7C3AED);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;\">DLSS5</div>" +
+      "</div>"
+    },
+    {
+      heading: "结构化数据是可信AI的基础",
+      body: "黄仁勋特别强调了一句话：<span class=\"hl\">structured data is the foundation of trustworthy AI</span>（结构化数据是可信AI的基石）。这不只是在说图形。他在预告一个更大的主题：在医疗、金融、自动驾驶等所有需要可信赖的AI领域，纯粹的生成式AI不够，必须有结构化的地面真相来<span class=\"hl\">锚定</span>和<span class=\"hl\">约束</span>AI的输出。DLSS5只是这个模式的第一个落地场景，相同的融合思路会在一个又一个行业重复出现。"
+    }
+  ],
+  originalText: "\"We fused controllable 3D graphics, the ground truth of virtual worlds, the structured data of generated worlds. We combine 3D graphics structured data with generative AI probabilistic computing. One of them is completely predictive, the other one probabilistic yet highly realistic... This concept of fusing structured information and generative AI will repeat itself in one industry after another.\"\n\u2014 Jensen Huang, GTC 2026 Keynote"
+};
+
+deepDiveData[7] = {
+  title: "Vera Rubin: Agentic AI 的系统架构",
+  sections: [
+    {
+      heading: "NVLink 72 到 144 的跃迁",
+      body: "Blackwell 用 NVLink 72 连接了 72 颗 GPU，提供 130TB/s 的全互联带宽，重新定义了 AI 超算的系统架构。Vera Rubin 把这个数字翻倍到 144，全互联带宽达到 260TB/s，算力达到 3.6 ExaFLOPS。关键不仅是数字变大——当你把 144 颗 GPU 当作一颗巨型 GPU 来用时，训练万亿参数模型的通信瓶颈被根本性地消除了。这是 scale-up 路线的极致体现。"
+    },
+    {
+      heading: "Groq LPX: 解耦推理的新范式",
+      body: "Vera Rubin 最令人意外的设计是引入 Groq 的 LPX 机架。GPU 擅长 prefill（处理大量输入 token 的矩阵运算），而 Groq 的 LPU 凭借巨量片上 SRAM 擅长 decode（逐 token 生成）。两者分工合作，推理吞吐量提升 35 倍/兆瓦。这种'disaggregated inference'（解耦推理）意味着系统不再是同构的——不同阶段用最适合的硬件，像流水线一样衔接。对 Agentic AI 来说，这意味着 agent 的'思考'速度会快得多。",
+      diagram: "<div style=\"display:flex;gap:16px;justify-content:center;margin:16px 0;\"><div style=\"width:100px;height:48px;border-radius:8px;background:#059669;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;\">GPU Prefill</div><div style=\"display:flex;align-items:center;color:#CBD5E1;font-size:20px;\">&#8594;</div><div style=\"width:100px;height:48px;border-radius:8px;background:#7C3AED;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;\">Groq Decode</div></div>"
+    },
+    {
+      heading: "七芯五架的完整平台",
+      body: "Jensen 展示 Vera Rubin 时不再举起一颗芯片——他展示的是一个完整平台：七种芯片（Rubin GPU、Vera CPU、ConnectX-8、Bluefield-4 等）、五种机架级计算机（NVLink 机架、CPU 机架、STX 存储机架、网络机架、Groq LPX 机架），垂直整合为一台 AI 超级计算机。这代表了一种哲学转变：AI 系统的设计单元不再是芯片或服务器，而是整个数据中心。从 Blackwell 到 Vera Rubin 到 Rubin Ultra 再到 Feynman，每一代都在扩大这个'设计单元'的边界。十年间算力增长了 4000 万倍。"
+    }
+  ],
+  originalText: "Vera Rubin architected for every phase of Agentic AI. NVLink 144, 3.6 exaflops, 260TB/s bandwidth. Groq LPX rack tightly connected, 35x more throughput per megawatt. Seven chips, five rack-scale computers, one revolutionary AI supercomputer. 40 million times more compute in 10 years."
+};
+
+deepDiveData[8] = {
+  title: "AI工厂数字孪生：从设计到运营的全栈优化",
+  sections: [
+    {
+      heading: "为什么需要数字孪生？",
+      body: "AI 工厂是人类历史上最复杂的基础设施之一。机架、冷却、供电、网络等数百个组件来自不同供应商，<span class=\"hl\">过去它们第一次「见面」是在数据中心安装现场</span>。这意味着任何设计缺陷都要等到施工阶段才能发现。而在吉瓦级 AI 工厂中，每延迟一个月就意味着数十亿美元的收入损失。Omniverse 数字孪生让所有组件在虚拟空间中率先集成和验证。"
+    },
+    {
+      heading: "DSX 四大支柱",
+      body: "<b>Sim</b>：在虚拟环境中进行物理、电气、热力和网络仿真，提前发现设计问题。<br><b>Exchange</b>：连接电网与数据中心的运营数据交换层，实现跨系统协调。<br><b>Flex</b>：安全的动态功率管理，让数据中心与电网之间智能调度用电。<br><b>MaxQ</b>：在运行时动态优化功率分配和冷却策略，最大化每瓦特的 token 产出。"
+    },
+    {
+      heading: "Tokens per Watt：AI 工厂的核心 KPI",
+      body: "黄仁勋提出了一个极其简洁的公式：<span class=\"hl\">AI 工厂收入 = tokens per watt</span>。在功率受限的条件下，每一瓦未被利用的电力都是收入损失。DSX 平台的终极目标就是让「浪费的电力归零」。黄仁勋估计仅通过软件优化就能带来 <span class=\"hl\">2倍</span> 的效率提升——在吉瓦级规模下，这是一个天文数字。"
+    }
+  ],
+  originalText: "NVIDIA 推出 Omniverse DSX 数字孪生平台，用于设计和运营 AI 工厂。平台包含四大组件：Sim（仿真）、Exchange（数据交换）、Flex（动态功率管理）和 MaxQ（运行时优化）。核心理念是 tokens per watt 即收入，通过全栈优化消除功率浪费，预计可带来 2 倍效率提升。"
+};
+
+deepDiveData[9] = {
+  title: "OpenClaw: Agent时代的操作系统",
+  sections: [
+    {
+      heading: "OpenClaw = Agent的操作系统",
+      body: "黄仁勋把 OpenClaw 类比为 Windows 之于 PC 的角色：它管理资源、调用 LLM、访问文件系统和工具、做任务调度和分解、生成子 agent、处理多模态 IO。这些描述几乎和操作系统的定义一一对应。OpenClaw 开源了 agent 计算机的操作系统，让每个人都能构建自己的个人 agent。黄仁勋认为，它的意义堪比 HTML 催生互联网、Linux 催生服务器生态、Kubernetes 催生云计算。"
+    },
+    {
+      heading: "SaaS → GaaS: 企业IT的范式转移",
+      body: "当前 2 万亿美元的企业 IT 产业建立在数据中心 + SaaS 工具 + 人工操作的模型上。OpenClaw 之后，每一家 SaaS 公司都将转型为 GaaS（Agent as a Service）公司。不再只提供工具让人操作，而是提供能自主执行的 agent。这意味着企业 IT 将从 '卖工具' 变成 '卖 agent 服务'，市场规模将远超现有的 2 万亿。黄仁勋甚至预测，未来每个工程师都会有年度 token 预算，就像今天有差旅预算一样。"
+    },
+    {
+      heading: "企业安全与 Nemo Claw",
+      body: "Agent 在企业网络中拥有三个危险能力：访问敏感信息、执行代码、对外通信。为此 NVIDIA 推出了 Nemo Claw 参考设计，集成 OpenShell 安全层、策略引擎、隐私路由和护栏机制，让 OpenClaw 可以安全部署在企业环境中。同时配合 Nemotron、Cosmos、Groot 等开源前沿模型家族，以及 Nemotron 联盟（包括 Cursor、LangChain、Mistral、Perplexity 等），构建完整的 agent 生态。"
+    }
+  ],
+  originalText: "OpenClaw 是 NVIDIA 开源的 agent 操作系统框架，具备资源管理、LLM 调用、任务调度、子 agent 生成、多模态 IO 等操作系统级能力。它的出现标志着企业 IT 从 SaaS（工具服务）向 GaaS（Agent 服务）的范式转移，2 万亿美元的 IT 产业将扩展为多万亿的 agent 经济。NVIDIA 同时推出 Nemo Claw 企业安全参考设计和 Nemotron 开源模型联盟，为 agent 生态提供安全基础设施和前沿模型支撑。"
+};
+
+deepDiveData[10] = {
+  title: "物理AI与机器人：从实验室到现实",
+  sections: [
+    {
+      heading: "Alpamo：会推理的自动驾驶",
+      body: "自动驾驶的ChatGPT时刻已经到来。NVIDIA发布的Alpamo是一个推理型自动驾驶模型，车辆不再只是识别障碍物然后刹车，而是像人一样理解场景、做出判断。演示中，车辆能主动解释自己的决策：遇到双排停车会绕行，收到乘客指令会加速。BYD、现代、日产等年产1800万辆汽车的厂商加入了NVIDIA的Robo-taxi Ready平台，Uber也宣布合作在多城市部署自动出租车网络。"
+    },
+    {
+      heading: "Groot与Isaac Lab：机器人的大脑和训练场",
+      body: "现实世界充满了边缘情况，真实数据永远不够训练。NVIDIA的方案是用仿真生成海量数据：Isaac Lab提供开源的机器人训练和评估框架，Newton提供GPU加速的可微物理仿真，Cosmos世界模型用神经网络模拟物理世界。Groot是开放的机器人基础模型，负责推理和动作生成。Foxconn、Hexagon等公司已经在用Isaac Lab微调Groot模型。"
+    },
+    {
+      heading: "Disney Olaf：物理AI的魔法时刻",
+      body: "黄仁勋在台上与迪士尼的Olaf雪人机器人互动，成为全场最出圈的演示。Olaf的步态控制是在Omniverse中用Newton物理求解器训练出来的，这个求解器由NVIDIA与Disney Research和DeepMind联合开发。Olaf能实时适应物理环境，自主行走和对话。黄仁勋说这就是迪士尼乐园的未来——所有角色都将成为有生命的机器人。物理AI不再只是工业场景，它正在走向每个人的日常生活。"
+    }
+  ],
+  originalText: "物理AI的三大支柱正在汇聚。自动驾驶方面，Alpamo推理模型让车辆理解场景并解释决策，BYD、现代等18家车企加入Robo-taxi Ready平台，Uber合作部署自动出租车网络。机器人方面，Isaac Lab + Newton + Cosmos构成完整的仿真训练栈，Groot基础模型提供推理和动作生成能力。Disney的Olaf雪人机器人在台上实时行走对话，展示了物理AI从工厂车间走向日常生活的可能性。三个领域的核心共性：计算即数据，仿真弥补真实世界的数据缺口。"
+};
+
+
+deepDiveData[4] = {
+  title: "垂直整合与横向开放",
+  sections: [
+    {
+      heading: "独特的商业模式",
+      body: "NVIDIA 的护城河不是某一颗芯片，而是从芯片设计到系统架构到软件平台的全栈垂直整合。但 Jensen 强调，NVIDIA 不卖服务器——它通过 OEM（Dell、HPE、联想）、云厂商（AWS、Azure、GCP）和行业 ISV 把平台送到每个角落。这种'垂直整合 + 横向开放'的模式让 NVIDIA 既能控制技术栈的质量，又能最大化市场覆盖。"
+    },
+    {
+      heading: "领域专用加速",
+      body: "每个行业的计算需求都不一样。NVIDIA 为每个垂直领域打造了专门的加速方案：汽车有 DRIVE，金融有 cuQuantFin，医疗有 Clara，工业有 Omniverse，量子计算有 cuQuantum，电信有 Aerial。CUDA-X 算法库是连接所有这些垂直方案的共同基础——开发者只需要学一次 CUDA，就能在所有领域受益。"
+    },
+    {
+      heading: "供应链的教训",
+      body: "Jensen 特别提到了供应链的加速：全球供应链价值 105 万亿美元，但大量环节还在用 Excel 和手动流程。NVIDIA 的合作伙伴正在用加速计算重新设计供应链的每个节点——从需求预测到库存优化到物流调度。这不是 AI 的锦上添花场景，这是万亿美元级别的基础设施升级。"
+    }
+  ],
+  originalText: "NVIDIA is vertically integrated but horizontally open. We design the chip, the system, the software stack — but we go to market through every cloud, every OEM, every industry partner. Every industry now has a domain-specific accelerated computing solution."
+};
+
+deepDiveData[5] = {
+  title: "推理拐点与AI计算需求爆发",
+  sections: [
+    {
+      heading: "三级跳：生成式 → 推理 → Agent",
+      body: "2023 年 ChatGPT 引爆了生成式 AI，计算需求是传统搜索的 10 倍。2024 年 OpenAI 的 o1/o3 引入了推理模型——AI 不只是生成答案，而是像人一样思考、验证、迭代。每次推理调用的计算量又增长了 100 倍。2025 年 Agent AI 登场，Claude Code 这样的系统能自主完成多步骤任务。每个 agent 调用背后是上百次推理调用。三级跳叠加，两年内计算需求增长了一百万倍。"
+    },
+    {
+      heading: "1500 亿美元 VC 投入",
+      body: "AI 原生公司正在改写创业投资的规模。Jensen 引用数据：过去一年，风险投资在 AI 原生公司上投入了 1500 亿美元，这些公司的核心基础设施就是 GPU 集群。他把这些公司称为'新的计算平台'——就像 PC 和互联网催生了各自的生态系统，AI 正在催生一个以推理为核心的新计算平台。"
+    },
+    {
+      heading: "万亿美元市场",
+      body: "Jensen 给出了他最大胆的预测：AI 基础设施是一个万亿美元的市场机会。逻辑链是：推理需求持续指数增长 → 需要更多 GPU 集群 → 需要更多数据中心 → 需要更多能源和冷却设施。这不是一个五年后的远景，而是正在发生的需求。NVIDIA 上一季度的数据中心收入已经超过 350 亿美元，但 Jensen 认为这只是开始。"
+    }
+  ],
+  originalText: "Generative AI, 100x. Reasoning AI, another 100x. Agentic AI, yet another 100x. In two years, compute demand grew 1 million times. $150 billion in VC invested in AI-native companies last year. This is a trillion-dollar infrastructure opportunity."
+};
+
+deepDiveData[6] = {
+  title: "Token工厂经济学",
+  sections: [
+    {
+      heading: "Tokens per Watt：新的核心指标",
+      body: "Jensen 把 AI 数据中心重新定义为'Token 工厂'：输入电力，输出 token。评价一座 Token 工厂好不好，核心指标是 tokens per watt——每瓦电力能产出多少 token。Blackwell NVLink72 系统在这个指标上领先所有竞争对手，Semi-Analysis 的独立基准测试证实了这一点。"
+    },
+    {
+      heading: "软件优化的复利效应",
+      body: "硬件每一代提升 2-3 倍已经是极限，但软件优化的空间几乎无限。NVIDIA 展示了一个惊人的数据：通过 Dynamo 推理引擎的持续更新，同一套 Blackwell 硬件的推理吞吐量在几个月内提升了 7 倍。这意味着买了 Blackwell 的客户，在不换硬件的情况下，性能还在不断提升。这就是'极限代码设计'的威力——它让客户的硬件投资持续增值。"
+    },
+    {
+      heading: "Token 定价分层",
+      body: "不同的模型和任务需要不同等级的推理。Jensen 展示了从 Hopper 到 Blackwell 到 Vera Rubin 的 token 成本阶梯：每一代硬件让同等 token 的成本下降一个数量级。这创造了一个分层市场：最新硬件处理最复杂的推理（长上下文、多步 agent），上一代硬件处理轻量级推理（简单问答），再上一代处理批量离线任务。NVIDIA 确保每一代硬件都不会被淘汰——它只是在 token 定价阶梯上下移一层。"
+    }
+  ],
+  originalText: "The core metric is tokens per watt. Blackwell NVLink72 with Dynamo delivers the lowest cost per token. Software updates alone improved throughput 7x on the same hardware. From Hopper to Blackwell to Vera Rubin, each generation drops token cost by an order of magnitude."
+};
+
+document.querySelectorAll('.s1_stage').forEach(function(el) { observer.observe(el); });
+document.querySelectorAll('.s2_stage').forEach(function(el) { observer.observe(el); });
+document.querySelectorAll('.s3_stage').forEach(function(el) { observer.observe(el); });
+document.querySelectorAll('.s4_stage').forEach(function(el) { observer.observe(el); });
+document.querySelectorAll('.s5_stage').forEach(function(el) { observer.observe(el); });
+document.querySelectorAll('.s6_stage').forEach(function(el) { observer.observe(el); });
+document.querySelectorAll('.s7_stage').forEach(function(el) { observer.observe(el); });
+document.querySelectorAll('.s8_stage').forEach(function(el) { observer.observe(el); });
+document.querySelectorAll('.s9_stage').forEach(function(el) { observer.observe(el); });
+document.querySelectorAll('.s10_stage').forEach(function(el) { observer.observe(el); });
+</script>
+
+<script>
+var detailBack = document.getElementById('detailBack');
+var mainScrollEl = document.getElementById('mainScroll');
+var spaceEl = document.getElementById('space');
+var detailScroll = document.getElementById('detailScroll');
+
+detailBack.addEventListener('click', closeDeepDive);
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && document.body.classList.contains('dd-active')) closeDeepDive(); });
+mainScrollEl.addEventListener('click', function(e) { if (document.body.classList.contains('dd-active') && !e.target.closest('.deep-dive-trigger')) closeDeepDive(); });
+
+(function() {
+  var startX = 0, tracking = false, decided = false;
+  detailScroll.addEventListener('touchstart', function(e) { startX = e.touches[0].clientX; tracking = false; decided = false; if (startX < 60) { tracking = true; decided = true; spaceEl.style.transition = 'none'; mainScrollEl.style.transition = 'none'; } }, { passive: true });
+  detailScroll.addEventListener('touchmove', function(e) { if (!decided) { var dx = e.touches[0].clientX - startX; var dy = e.touches[0].clientY - startY; if (Math.abs(dx) > 8 || Math.abs(dy) > 8) { decided = true; if (Math.abs(dx) > Math.abs(dy) && dx > 0) { tracking = true; spaceEl.style.transition = 'none'; mainScrollEl.style.transition = 'none'; } } } if (!tracking) return; var dx = e.touches[0].clientX - startX; if (dx > 0) { var halfW = window.innerWidth; spaceEl.style.transform = 'translateX(' + (-halfW + 24 + dx) + 'px)'; mainScrollEl.style.transform = 'scale(' + (0.96 + 0.04 * Math.min(dx / halfW, 1)) + ')'; } }, { passive: true });
+  detailScroll.addEventListener('touchend', function(e) { if (!tracking) return; tracking = false; decided = false; spaceEl.style.transition = ''; mainScrollEl.style.transition = ''; if (e.changedTouches[0].clientX - startX > 80) closeDeepDive(); else { spaceEl.style.transform = ''; mainScrollEl.style.transform = ''; } }, { passive: true });
+})();
+</script>
+
+<!-- Source Horizon: 底部覆盖率时间轴 -->
+<div class="source-horizon" id="sourceHorizon">
+  <div class="horizon-track" id="horizonTrack"></div>
+  <div class="horizon-detail" id="horizonDetail"></div>
+</div>
+
+<script>
+// GTC 2026 Keynote 话题覆盖数据
+var topicData = {
+  1: [
+    { name: "CUDA 20年飞轮效应", status: "included", ddHeading: "飞轮效应：为什么越转越快" },
+    { name: "安装基数与正反馈循环", status: "included", ddHeading: "SIMT：让并行编程变简单" },
+    { name: "加速计算应用领域扩展", status: "deep-dive", ddHeading: "持续降本：加速计算的隐藏价值" },
+    { name: "CUDA 版本迭代细节", status: "compressed", reason: "技术细节" },
+    { name: "早期GPU编程历史", status: "compressed", reason: "历史回顾" }
+  ],
+  2: [
+    { name: "DLSS5 融合原理", status: "included", ddHeading: "两种计算的融合" },
+    { name: "结构化 vs 概率性计算", status: "included", ddHeading: "从渲染到生成" },
+    { name: "渲染管线变化", status: "deep-dive", ddHeading: "结构化数据是可信AI的基础" },
+    { name: "RTX Remix 工具链演示", status: "compressed", reason: "工具演示" },
+    { name: "合作伙伴实机 demo", status: "compressed", reason: "演示环节" }
+  ],
+  3: [
+    { name: "KUDF 结构化数据帧", status: "included", ddHeading: "两种数据，一个问题" },
+    { name: "KVS 非结构化处理", status: "included", ddHeading: "KUDF 与 KVS：两块基石" },
+    { name: "降低80%计算成本", status: "included", ddHeading: "为什么是 80%" },
+    { name: "IBM/Dell/AWS 合作伙伴", status: "deep-dive", ddHeading: "KUDF 与 KVS：两块基石" },
+    { name: "SQL引擎加速基准测试", status: "compressed", reason: "性能数据" },
+    { name: "Spark作业迁移流程", status: "compressed", reason: "操作细节" }
+  ],
+  4: [
+    { name: "纵向自研全栈", status: "included", ddHeading: "独特的商业模式" },
+    { name: "横向合作伙伴生态", status: "included", ddHeading: "独特的商业模式" },
+    { name: "垂直行业覆盖", status: "included", ddHeading: "供应链的教训" },
+    { name: "NIM 微服务平台", status: "deep-dive", ddHeading: "供应链的教训" },
+    { name: "各行业客户案例逐一介绍", status: "compressed", reason: "案例列举" },
+    { name: "OEM 渠道合作细节", status: "compressed", reason: "商务细节" }
+  ],
+  5: [
+    { name: "推理需求百万倍增长", status: "included", ddHeading: "三级跳：生成式 → 推理 → Agent" },
+    { name: "1500亿风投涌入", status: "included", ddHeading: "三级跳：生成式 → 推理 → Agent" },
+    { name: "万亿美元市场预测", status: "included", ddHeading: "三级跳：生成式 → 推理 → Agent" },
+    { name: "ChatGPT到Agent演进", status: "deep-dive", ddHeading: "三级跳：生成式 → 推理 → Agent" },
+    { name: "具体投资案例和公司名", status: "compressed", reason: "案例列举" }
+  ],
+  6: [
+    { name: "Token 工厂核心概念", status: "included", ddHeading: "Tokens per Watt：新的核心指标" },
+    { name: "tokens/watt 核心指标", status: "included", ddHeading: "Tokens per Watt：新的核心指标" },
+    { name: "Dynamo 推理引擎", status: "deep-dive", ddHeading: "软件优化的复利效应" },
+    { name: "每代硬件成本阶梯", status: "deep-dive", ddHeading: "Tokens per Watt：新的核心指标" },
+    { name: "软件优化7x吞吐量提升", status: "deep-dive", ddHeading: "软件优化的复利效应" },
+    { name: "具体基准测试数据表", status: "compressed", reason: "性能数据" },
+    { name: "Dynamo 代码架构细节", status: "compressed", reason: "技术细节" }
+  ],
+  7: [
+    { name: "Vera Rubin 架构概览", status: "included", ddHeading: "七芯五架的完整平台" },
+    { name: "Rubin GPU 规格", status: "included", ddHeading: "七芯五架的完整平台" },
+    { name: "NVLink 72 互联", status: "included", ddHeading: "NVLink 72 到 144 的跃迁" },
+    { name: "与 Blackwell 对比", status: "deep-dive", ddHeading: "七芯五架的完整平台" },
+    { name: "制造工艺与封装细节", status: "compressed", reason: "制造细节" },
+    { name: "功耗与散热方案", status: "compressed", reason: "工程细节" }
+  ],
+  8: [
+    { name: "AI 工厂数字孪生概念", status: "included", ddHeading: "为什么需要数字孪生？" },
+    { name: "DSX 仿真平台", status: "included", ddHeading: "DSX 四大支柱" },
+    { name: "物理仿真与虚拟部署", status: "deep-dive", ddHeading: "Tokens per Watt：AI 工厂的核心 KPI" },
+    { name: "Omniverse 集成", status: "deep-dive", ddHeading: "为什么需要数字孪生？" },
+    { name: "客户部署案例逐一展示", status: "compressed", reason: "案例列举" },
+    { name: "数据中心建设流程", status: "compressed", reason: "工程细节" }
+  ],
+  9: [
+    { name: "Agent 革命核心论点", status: "included", ddHeading: "SaaS → GaaS: 企业IT的范式转移" },
+    { name: "SaaS → GaaS 转型", status: "included", ddHeading: "SaaS → GaaS: 企业IT的范式转移" },
+    { name: "OpenClaw 开源计划", status: "deep-dive", ddHeading: "OpenClaw = Agent的操作系统" },
+    { name: "Agent 架构设计模式", status: "deep-dive", ddHeading: "OpenClaw = Agent的操作系统" },
+    { name: "具体 Agent 产品演示", status: "compressed", reason: "产品演示" },
+    { name: "企业客户对话环节", status: "compressed", reason: "访谈环节" }
+  ],
+  10: [
+    { name: "物理 AI 核心概念", status: "included", ddHeading: "Alpamo：会推理的自动驾驶" },
+    { name: "机器人基础模型", status: "included", ddHeading: "Alpamo：会推理的自动驾驶" },
+    { name: "Isaac/Cosmos 平台", status: "deep-dive", ddHeading: "Groot与Isaac Lab：机器人的大脑和训练场" },
+    { name: "合作伙伴机器人展示", status: "compressed", reason: "产品展示" },
+    { name: "工厂自动化实机演示", status: "compressed", reason: "演示环节" }
+  ]
+}
+
+// GTC 2026 Keynote 覆盖率数据（1:52:30 视频）
+var coverageData = {
+  sourceType: "video",
+  totalLength: "1:52:30",
+  segments: [
+    { start: "00:00", end: "03:20", section: null, reason: "开场寒暄" },
+    { start: "03:20", end: "10:45", section: 1, reason: null },
+    { start: "10:45", end: "14:30", section: 1, reason: null, deepDive: true },
+    { start: "14:30", end: "15:10", section: null, reason: "观众互动" },
+    { start: "15:10", end: "22:00", section: 2, reason: null },
+    { start: "22:00", end: "25:40", section: 2, reason: null, deepDive: true },
+    { start: "25:40", end: "26:20", section: null, reason: "过渡" },
+    { start: "26:20", end: "34:15", section: 3, reason: null },
+    { start: "34:15", end: "38:50", section: 3, reason: null, deepDive: true },
+    { start: "38:50", end: "48:30", section: 4, reason: null },
+    { start: "48:30", end: "52:10", section: 4, reason: null, deepDive: true },
+    { start: "52:10", end: "53:00", section: null, reason: "过渡" },
+    { start: "53:00", end: "58:20", section: 5, reason: null },
+    { start: "58:20", end: "1:02:10", section: 5, reason: null, deepDive: true },
+    { start: "1:02:10", end: "1:12:40", section: 6, reason: null },
+    { start: "1:12:40", end: "1:16:50", section: 6, reason: null, deepDive: true },
+    { start: "1:16:50", end: "1:17:30", section: null, reason: "产品演示过渡" },
+    { start: "1:17:30", end: "1:25:10", section: 7, reason: null },
+    { start: "1:25:10", end: "1:28:50", section: 7, reason: null, deepDive: true },
+    { start: "1:28:50", end: "1:36:20", section: 8, reason: null },
+    { start: "1:36:20", end: "1:39:50", section: 8, reason: null, deepDive: true },
+    { start: "1:39:50", end: "1:40:30", section: null, reason: "观众鼓掌" },
+    { start: "1:40:30", end: "1:46:10", section: 9, reason: null },
+    { start: "1:46:10", end: "1:49:00", section: 9, reason: null, deepDive: true },
+    { start: "1:49:00", end: "1:49:20", section: null, reason: "过渡" },
+    { start: "1:49:20", end: "1:51:40", section: 10, reason: null },
+    { start: "1:51:40", end: "1:52:30", section: null, reason: "结尾致谢" }
+  ]
+};
+
+// Source Horizon 渲染
+(function() {
+  var horizon = document.getElementById('sourceHorizon');
+  var track = document.getElementById('horizonTrack');
+  var detail = document.getElementById('horizonDetail');
+  if (!horizon || !track || !coverageData.segments) return;
+
+  function toSec(v) {
+    if (typeof v === 'number') return v;
+    var parts = String(v).split(':').map(Number);
+    return parts.length === 3 ? parts[0]*3600+parts[1]*60+parts[2]
+         : parts.length === 2 ? parts[0]*60+parts[1] : parts[0];
+  }
+  var total = toSec(coverageData.totalLength);
+  var coveredLen = 0;
+
+  coverageData.segments.forEach(function(seg) {
+    var s = toSec(seg.start), e = toSec(seg.end);
+    var leftPct = (s / total * 100).toFixed(2) + '%';
+    var widthPct = ((e - s) / total * 100).toFixed(2) + '%';
+
+    var div = document.createElement('div');
+    div.className = 'horizon-seg ' + (seg.section ? (seg.deepDive ? 'covered deep-dive' : 'covered') : 'gap');
+    div.style.left = leftPct; div.style.width = widthPct;
+    track.appendChild(div);
+
+    if (seg.section) coveredLen += (e - s);
+
+    if (!seg.section && seg.reason) {
+      var gz = document.createElement('div');
+      gz.className = 'horizon-gap-zone';
+      gz.style.left = leftPct; gz.style.width = 'max(' + widthPct + ', 16px)';
+      gz.innerHTML = '<div class="gap-pattern"></div>'
+        + '<div class="gap-tooltip">' + seg.reason + ' (' + seg.start + ' - ' + seg.end + ')</div>';
+      detail.appendChild(gz);
+    }
+
+    if (seg.section && !seg.deepDive) {
+      var mk = document.createElement('div');
+      mk.className = 'horizon-marker';
+      mk.style.left = ((s + (e-s)/2) / total * 100).toFixed(2) + '%';
+      mk.innerHTML = '<div class="marker-tick"></div><div class="marker-label">S' + seg.section + '<br>' + seg.start + '</div>';
+      mk.addEventListener('click', function(ev) {
+        ev.stopPropagation();
+        var target = document.getElementById('s' + seg.section + '-anim');
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+      detail.appendChild(mk);
+    }
+  });
+
+  var pct = document.createElement('div');
+  pct.className = 'horizon-pct';
+  pct.textContent = Math.round(coveredLen / total * 100) + '%';
+  detail.appendChild(pct);
+
+  horizon.addEventListener('click', function() { horizon.classList.toggle('expanded'); });
+  var mainScroll = document.getElementById('mainScroll');
+  var collapseTimer;
+  mainScroll.addEventListener('scroll', function() {
+    clearTimeout(collapseTimer);
+    var ticks = detail.querySelectorAll('.marker-tick');
+    ticks.forEach(function(t) { t.classList.remove('active'); });
+    var scrollTop = mainScroll.scrollTop;
+    var closest = null, closestDist = Infinity;
+    for (var i = 1; i <= 10; i++) {
+      var el = document.getElementById('s' + i + '-anim');
+      if (!el) continue;
+      var dist = Math.abs(el.offsetTop - scrollTop - window.innerHeight/2);
+      if (dist < closestDist) { closestDist = dist; closest = i; }
+    }
+    if (closest) {
+      detail.querySelectorAll('.horizon-marker').forEach(function(mk) {
+        if (mk.querySelector('.marker-label').textContent === 'S' + closest)
+          mk.querySelector('.marker-tick').classList.add('active');
+      });
+    }
+    collapseTimer = setTimeout(function() { horizon.classList.remove('expanded'); }, 2000);
+  });
+
+  // 把时间范围注入到 section-label 中
+  var sectionTimes = {};
+  coverageData.segments.forEach(function(seg) {
+    if (!seg.section) return;
+    if (!sectionTimes[seg.section]) sectionTimes[seg.section] = { start: seg.start, end: seg.end };
+    else sectionTimes[seg.section].end = seg.end; // 扩展到 deep-dive 结束
+  });
+  document.querySelectorAll('.section-label').forEach(function(label) {
+    var num = parseInt(label.textContent.trim(), 10);
+    if (sectionTimes[num]) {
+      label.textContent = label.textContent.trim() + ' · ' + sectionTimes[num].start + ' – ' + sectionTimes[num].end;
+    }
+  });
+
+})();
+
+// Coverage Footnote: deep-dive 面板底部话题覆盖地图
+// 从 deepDiveData 和主文 section 中提取实际内容作为 excerpt，而非单独存储
+(function() {
+  if (typeof topicData === 'undefined') return;
+  var origToggle = window.toggleDeepDive;
+  if (!origToggle) return;
+
+  // 从 deepDiveData 中按 heading 查找 body 文本（去除 HTML 标签）
+  function findBodyByHeading(n, heading) {
+    var dd = deepDiveData[n];
+    if (!dd || !dd.sections) return '';
+    for (var i = 0; i < dd.sections.length; i++) {
+      if (dd.sections[i].heading === heading) {
+        // 去掉 HTML span 标签，保留纯文本
+        return dd.sections[i].body.replace(/<[^>]+>/g, '');
+      }
+    }
+    return '';
+  }
+
+  // 从主文 section HTML 中提取 body-text 段落
+  function findMainBodyText(n) {
+    var sec = document.querySelectorAll('.section')[n - 1];
+    if (!sec) return '';
+    var p = sec.querySelector('.body-text');
+    return p ? p.textContent : '';
+  }
+
+  window.toggleDeepDive = function(n) {
+    origToggle(n);
+    setTimeout(function() {
+      var body = document.getElementById('detailBody');
+      if (!body || body.querySelector('.coverage-map')) return;
+      var topics = topicData[n];
+      if (!topics || !topics.length) return;
+
+      var map = document.createElement('div');
+      map.className = 'coverage-map';
+      var title = document.createElement('div');
+      title.className = 'coverage-map-title';
+      title.textContent = '原文话题覆盖';
+      map.appendChild(title);
+
+      // 获取该 section 的 originalText 作为 compressed 话题的来源
+      var dd = deepDiveData[n];
+      var origText = dd ? (dd.originalText || '') : '';
+      var mainBody = findMainBodyText(n);
+
+      var bars = document.createElement('div');
+      bars.className = 'coverage-bars';
+      var compressed = [];
+      topics.forEach(function(t) {
+        var row = document.createElement('div');
+        row.className = 'cbar-row ' + t.status;
+        var barClass = t.status === 'included' ? 'included'
+                     : t.status === 'deep-dive' ? 'deep-dive-bar' : 'compressed-bar';
+        var width = t.status === 'compressed' ? '30%' : t.status === 'deep-dive' ? '60%' : '85%';
+
+        // 根据话题状态从页面实际内容中提取 excerpt
+        var excerptText = '';
+        if (t.ddHeading) {
+          excerptText = findBodyByHeading(n, t.ddHeading);
+        }
+        if (!excerptText && t.status === 'included') {
+          excerptText = mainBody;
+        }
+        if (!excerptText && t.status === 'compressed' && origText) {
+          excerptText = origText;
+        }
+
+        var hint = excerptText ? '<span class="cbar-expand-hint">▸</span>' : '';
+        row.innerHTML = '<div class="cbar-label">' + t.name + hint + '</div>'
+          + '<div class="cbar-track"><div class="cbar-fill ' + barClass + '" style="width:' + width + '"></div></div>';
+        bars.appendChild(row);
+
+        // Expandable excerpt — 从页面实际内容提取
+        if (excerptText) {
+          var exc = document.createElement('div');
+          exc.className = 'cbar-excerpt';
+          var label = t.status === 'compressed' ? '⚡ 被压缩的原文：' : '📄 对应内容：';
+          exc.innerHTML = '<div class="cbar-excerpt-inner"><span style="font-weight:600;color:var(--text);font-size:12px;display:block;margin-bottom:4px;">' + label + '</span>' + excerptText + '</div>';
+          row.addEventListener('click', function() { exc.classList.toggle('open'); });
+          bars.appendChild(exc);
+        }
+
+        if (t.status === 'compressed') compressed.push(t);
+      });
+      map.appendChild(bars);
+
+      if (compressed.length) {
+        var omit = document.createElement('div');
+        omit.className = 'coverage-omitted';
+        omit.innerHTML = '本节省略了：' + compressed.map(function(t) {
+          return '<strong>' + t.name + '</strong>' + (t.reason ? '<span class="omit-reason">' + t.reason + '</span>' : '');
+        }).join('、');
+        map.appendChild(omit);
+      }
+      body.appendChild(map);
+    }, 100);
+  };
+})();
+</script>
+
+</body>
+</html>
