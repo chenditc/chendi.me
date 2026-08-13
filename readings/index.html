@@ -299,9 +299,9 @@ a {
       </div>
     </div>
     <div class="reading-stats">
-      <div class="reading-stat"><strong>83</strong><span>reading 页面</span></div>
-      <div class="reading-stat"><strong>66</strong><span>已补原文链接</span></div>
-      <div class="reading-stat"><strong>4</strong><span>生成月份</span></div>
+      <div class="reading-stat"><strong>84</strong><span>reading 页面</span></div>
+      <div class="reading-stat"><strong>67</strong><span>已补原文链接</span></div>
+      <div class="reading-stat"><strong>5</strong><span>生成月份</span></div>
     </div>
   </section>
 
@@ -310,6 +310,7 @@ a {
     <div class="reading-filters" id="readingFilters">
       <button type="button" class="active" data-month="all">全部</button>
       <button type="button" data-month="linked">有原文链接</button>
+<button type="button" data-month="2026-08">2026-08</button>
 <button type="button" data-month="2026-07">2026-07</button>
 <button type="button" data-month="2026-06">2026-06</button>
 <button type="button" data-month="2026-05">2026-05</button>
@@ -318,6 +319,18 @@ a {
   </div>
 
   <div class="reading-list" id="readingList">
+    <article class="reading-card" data-month="2026-08" data-linked="true" data-search="从专有 llm api 里偷走推理轨迹 — 用弱模型解密强模型的思维链 arxiv stealing reasoning traces from proprietary llm apis">
+      <a class="reading-title" href="/readings/encrypted-reasoning-blocks/">从专有 LLM API 里偷走推理轨迹 — 用弱模型解密强模型的思维链</a>
+      <div class="reading-meta">
+        <span>生成 2026-08-13</span>
+        <span>原文 2026-08-10</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://arxiv.org/abs/2608.09867" target="_blank" rel="noopener">Stealing Reasoning Traces from Proprietary LLM APIs</a>
+      </div>
+      <p class="reading-desc">Anthropic、OpenAI 和 Google 现在都把模型的思维链藏起来，以加密文本块的形式返回给客户端保管。八位作者发现，这些加密块在同一家厂商的生态里，跨会话、跨用户甚至跨模型都完全兼容且可以互换——于是他们把强模型的加密思维交给同门更弱的模型，让它逐字抄了出来，全程没有直接越狱强模型。顺着同一条链路，他们还从 6,708 条公开 agent 轨迹里解出 367 条个人信息和 182 条凭据。</p>
+    </article>
     <article class="reading-card" data-month="2026-07" data-linked="true" data-search="&quot;难以评测&quot;是产品气味 hamel husain it is hard to eval is a product smell">
       <a class="reading-title" href="/readings/eval-smell/">&quot;难以评测&quot;是产品气味</a>
       <div class="reading-meta">
