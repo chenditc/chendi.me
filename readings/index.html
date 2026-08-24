@@ -319,6 +319,18 @@ a {
   </div>
 
   <div class="reading-list" id="readingList">
+    <article class="reading-card" data-month="2026-08" data-linked="true" data-search="vllm 是怎么把版本发稳的 — ci、基准评估与发布流程 vllm blog keeping vllm production quality: a look inside ci, benchmarking, and the release process">
+      <a class="reading-title" href="/readings/vllm-production-quality/">vLLM 是怎么把版本发稳的 — CI、基准评估与发布流程</a>
+      <div class="reading-meta">
+        <span>生成 2026-08-24</span>
+        <span>原文 2026-07-16</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://vllm.ai/blog/2026-07-16-keeping-vllm-production-quality" target="_blank" rel="noopener">Keeping vLLM Production Quality: A Look Inside CI, Benchmarking, and the Release Process</a>
+      </div>
+      <p class="reading-desc">vLLM 团队 2026 年 7 月发布的工程博客，作者 Kevin Luu 详述了如何为一个高速迭代的开源推理引擎维持质量基线。2026 年 6 月单月合入 1,918 个 commit，CI 消耗约 1300 万 job 分钟，峰值并发 1400 个 runner。整套机制分三层：按 diff 动态调度的 CI（37 个 test group、266 个 job）、每晚运行的性能与精度评估（17 个 model-hardware recipe）、两周一版三道 gate 的发布流程。依赖图由 pip-compile 锁定，配合统一 container image 保证环境一致性，曾被上游悄悄推出新版本破坏过。硬件来自多家合作方捐赠，58 个 runner queue，每年价值达数百万美元。文章没有回避问题：v0.20.0 发布后几天连续推出两个紧急补丁，两个 bug 都绕过了 CI，事后才补充了测试覆盖。</p>
+    </article>
     <article class="reading-card" data-month="2026-08" data-linked="true" data-search="从专有 llm api 里偷走推理轨迹 — 用弱模型解密强模型的思维链 arxiv stealing reasoning traces from proprietary llm apis">
       <a class="reading-title" href="/readings/encrypted-reasoning-blocks/">从专有 LLM API 里偷走推理轨迹 — 用弱模型解密强模型的思维链</a>
       <div class="reading-meta">
