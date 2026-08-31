@@ -319,6 +319,18 @@ a {
   </div>
 
   <div class="reading-list" id="readingList">
+    <article class="reading-card" data-month="2026-08" data-linked="true" data-search="wikiskill 为 agent 技能优化引入跨轮累积的知识层 在 5 个模型上平均分均最高 wikiskill: compiling agent experience into persistent knowledge for skill evolution">
+      <a class="reading-title" href="/readings/wikiskill-persistent-knowledge/">WikiSkill 为 agent 技能优化引入跨轮累积的知识层 — 在 5 个模型上平均分均最高</a>
+      <div class="reading-meta">
+        <span>生成 2026-08-31</span>
+        <span>原文 2026-08-27</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://arxiv.org/abs/2608.27454" target="_blank" rel="noopener">WikiSkill: Compiling Agent Experience into Persistent Knowledge for Skill Evolution</a>
+      </div>
+      <p class="reading-desc">WikiSkill 是 Google Research 与 Virginia Tech 于 2026 年 8 月 27 日发布的论文，提出一套让 AI agent 技能跨轮自动优化的框架。现有方法（EvoSkill、Trace2Skill、SkillOpt）把优化过程中学到的知识留在各自的历史记录里，没有存成会跨轮累积的独立形式。WikiSkill 把工作区分为三层：raw/ 存不可修改的执行记录，wiki/ 存跨轮累积的知识，skills/ 存供 agent 使用的说明书。每轮由四个角色依次工作：Inference Agent 跑任务，Wiki Maintainer 整理记录进 wiki，Skill Proposer 提出只改一个技能的方案，最后在验证集上打分；不涨分的技能改动会回滚，wiki 永不回滚。在 5 个 benchmark、5 个模型的评测中，WikiSkill 各模型的平均分均最高，相对每个模型下最强竞争方法高出 3.3 到 12.0 点。此外，一个模型练出的技能可以交给另一个模型使用：Qwen-3.5-9B 使用 Qwen-3.6-27B 练出的技能在 ALFWorld 上达到 70.2%，高于它用自己练的技能所得的 63.4%。</p>
+    </article>
     <article class="reading-card" data-month="2026-08" data-linked="true" data-search="cursor router 按真实开发表现选模型，不按跑分 官方博客可视化解读 how cursor router chooses the right model for the task">
       <a class="reading-title" href="/readings/how-cursor-router-works/">Cursor Router 按真实开发表现选模型，不按跑分 — 官方博客可视化解读</a>
       <div class="reading-meta">

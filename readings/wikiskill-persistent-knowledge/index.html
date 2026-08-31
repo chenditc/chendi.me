@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>WikiSkill：让 AI 助手把干过的活攒成一份不会丢的知识</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@700&display=swap"
+      rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root{
+  --bg-act1:#FAFAFF; --bg-act2:#F3F4FC; --bg-act3:#F7F4FD; --bg-dark:#151633;
+  --text:#1A1B33; --text-muted:#484B70; --dim:#5E6187;
+  --accent:#4F46E5; --accent2:#DB2777;
+  --ink-accent:#4338CA; --ink-accent2:#BE185D;
+  --line:rgba(26,27,51,.14); --card-bg:#FFFFFF;
+}
+
+/* the branch-complete marker is a real control now, not a label */
+.branch-complete{display:block;width:100%;border:none;font-family:inherit;
+  cursor:pointer;letter-spacing:.01em;
+  transition:background .2s ease,transform .2s ease,box-shadow .2s ease}
+.branch-complete:hover{background:#312E9E;transform:translateY(-1px);
+  box-shadow:0 6px 16px rgba(67,56,202,.34)}
+.branch-complete:active{transform:translateY(0)}
+.branch-complete:focus-visible{outline:2px solid #A5B4FC;outline-offset:3px}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;overflow:hidden}
+body{font-family:'Noto Sans SC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  color:var(--text);background:var(--bg-act1);-webkit-font-smoothing:antialiased}
+
+.layer{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+  visibility:hidden;opacity:0;will-change:transform,opacity;scroll-snap-type:y proximity}
+.layer.active{visibility:visible;opacity:1}
+
+.feed-section{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:84px 22px 96px;scroll-snap-align:start;background:var(--bg-act1)}
+.feed-section.act2{background:var(--bg-act2)}
+.feed-section.act3{background:var(--bg-act3)}
+.feed-section.dark{
+  background:var(--bg-dark);
+  --text:#EAEBFA; --text-muted:#B6BADF; --dim:#9FA4CF;
+  --ink-accent:#A5B4FC; --ink-accent2:#F9A8D4;
+  --line:rgba(234,235,250,.18); --card-bg:rgba(255,255,255,.06);
+  color:var(--text)}
+.section-inner{max-width:600px;width:100%}
+.content-width{max-width:640px;margin:0 auto;padding:0 28px}
+
+.reveal{opacity:0;transform:translateY(34px);transition:opacity .8s ease,transform .8s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-d1{transition-delay:.12s}.reveal-d2{transition-delay:.24s}
+.reveal-d3{transition-delay:.36s}.reveal-d4{transition-delay:.48s}
+
+/* ── 设问标题下的回答句：一句话答完标题，再进正文 ── */
+.chapter-answer{font-size:17px;line-height:1.72;font-weight:600;color:var(--text);
+  margin:0 0 22px;padding-left:14px;border-left:3px solid var(--accent)}
+
+.kicker{font-size:11px;letter-spacing:.14em;font-weight:700;color:var(--ink-accent);
+  margin:0 0 10px;text-transform:uppercase}
+.big-statement{font-family:'Noto Serif SC',Georgia,serif;
+  font-size:clamp(21px,5.2vw,30px);font-weight:700;line-height:1.5;
+  margin:0 0 16px;color:var(--text);letter-spacing:-.01em}
+.body-text{font-size:16px;line-height:1.92;color:var(--text);margin:0 0 26px}
+.body-text .hl{color:var(--ink-accent);font-weight:600}
+.body-text .hl2{color:var(--ink-accent2);font-weight:600}
+.sentence-cue{color:var(--text-muted);transition:color .38s ease}
+.has-runtime .sentence-cue{color:var(--text-muted)}
+.has-runtime .sentence-cue.is-cur,.has-runtime .sentence-cue.cue-active{color:var(--text)}
+.has-runtime .sentence-cue.is-cur .hl,.has-runtime .sentence-cue.cue-active .hl{color:var(--ink-accent)}
+
+/* ── hero ── */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:80px 22px;background:var(--bg-dark);
+  --text:#EAEBFA;--text-muted:#B6BADF;--dim:#9FA4CF;--ink-accent:#A5B4FC;--ink-accent2:#F9A8D4;
+  color:var(--text)}
+.hero-tag{font-size:11px;letter-spacing:.16em;font-weight:700;color:var(--ink-accent);margin-bottom:20px}
+.hero-title{font-family:'Noto Serif SC',Georgia,serif;font-size:clamp(28px,7.4vw,44px);
+  font-weight:700;line-height:1.34;margin:0 0 22px;color:#F4F4FE;letter-spacing:-.015em}
+.hero-sub{font-size:15px;line-height:1.9;color:var(--text-muted);margin:0 0 24px}
+.hero-meta{font-size:12.5px;line-height:1.85;color:var(--dim);border-top:1px solid var(--line);padding-top:16px}
+.hero-meta a{color:var(--ink-accent);text-decoration:none;border-bottom:1px solid rgba(165,180,252,.4)}
+.scroll-hint{margin-top:30px;font-size:12px;color:var(--dim);letter-spacing:.08em}
+
+/* ── 动画舞台 ── */
+.anim-stage{width:100%;display:flex;justify-content:center;margin:26px 0 22px;min-height:180px}
+.anim-stage>div{width:100%}
+.stage{width:100%;max-width:520px;margin:0 auto;position:relative;
+  --sentence-action-ms:1350ms}
+.stage svg{display:block;width:100%;max-width:340px;margin:0 auto;height:auto;overflow:visible}
+.stage svg text{font-family:'Noto Sans SC',sans-serif;fill:var(--text)}
+.stage-cap{font-size:12.5px;line-height:1.7;color:var(--text-muted);text-align:center;
+  margin:0 0 16px;padding:0 10px}
+
+.stage-subtitle{display:grid;max-width:500px;margin:16px auto 0;
+  border-top:1px solid var(--line);padding-top:14px}
+.stage-sub{grid-area:1/1;font-size:15px;line-height:1.82;color:var(--text);text-align:center;
+  padding:0 8px;margin:0;opacity:0;transform:translateY(7px);
+  transition:opacity .4s ease,transform .4s cubic-bezier(.34,.02,.2,1)}
+.stage-sub.is-cur{opacity:1;transform:none}
+.stage-sub .hl{color:var(--ink-accent);font-weight:600}
+.stage-sub .hl2{color:var(--ink-accent2);font-weight:600}
+
+.stage-controls{display:flex;align-items:center;justify-content:center;gap:6px;margin:12px 0 0;
+  user-select:none;-webkit-user-select:none}
+.sc-btn{width:32px;height:26px;padding:0;border:1px solid rgba(67,56,202,.34);border-radius:7px;
+  background:rgba(255,255,255,.78);color:var(--ink-accent);font-size:13px;line-height:1;
+  font-family:inherit;cursor:pointer;transition:background .18s ease,border-color .18s ease,color .18s ease;
+  display:inline-flex;align-items:center;justify-content:center;flex:none}
+.sc-btn:hover{background:var(--ink-accent);border-color:var(--ink-accent);color:#fff}
+.sc-btn:disabled{opacity:.4;cursor:default}
+.sc-btn:disabled:hover{background:rgba(255,255,255,.78);border-color:rgba(67,56,202,.34);color:var(--ink-accent)}
+.sc-btn:focus-visible{outline:2px solid var(--ink-accent);outline-offset:2px}
+.sc-play{width:40px;font-size:12px}
+.sc-step{font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums;
+  min-width:38px;text-align:center;flex:none}
+.dark .sc-btn,.hero .sc-btn{border-color:rgba(165,180,252,.44);background:rgba(255,255,255,.1)}
+.dark .sc-btn:hover{background:var(--ink-accent);color:#12122B}
+.dark .sc-btn:disabled:hover{background:rgba(255,255,255,.1);color:var(--ink-accent)}
+
+/* ── 导航 ── */
+.breadcrumb{position:fixed;top:14px;left:14px;z-index:1000;display:flex;align-items:center;gap:4px;
+  background:rgba(255,255,255,.94);backdrop-filter:blur(12px);padding:7px 13px;border-radius:10px;
+  box-shadow:0 2px 16px rgba(21,22,51,.13);font-size:12.5px;font-weight:600;max-width:calc(100vw - 90px)}
+.breadcrumb span{color:#484B70;cursor:pointer;transition:color .2s;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.breadcrumb span:hover{color:#4338CA}
+.breadcrumb span.current{color:#1A1B33;cursor:default}
+.breadcrumb .sep{color:#9195B8;margin:0 1px;cursor:default;flex:none}
+.back-btn{position:fixed;top:14px;left:14px;z-index:1001;width:36px;height:36px;border-radius:10px;
+  border:none;background:rgba(255,255,255,.94);backdrop-filter:blur(12px);
+  box-shadow:0 2px 12px rgba(21,22,51,.13);font-size:17px;cursor:pointer;display:none;
+  align-items:center;justify-content:center;color:#1A1B33;transition:all .2s}
+.back-btn:hover{background:#4338CA;color:#fff}
+.depth-dots{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:1000;
+  display:flex;gap:8px;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);
+  padding:7px 13px;border-radius:20px;box-shadow:0 2px 12px rgba(21,22,51,.12)}
+.dot{width:9px;height:9px;border-radius:50%;background:#C6C8DE;transition:all .3s}
+.dot.active{background:#4338CA;box-shadow:0 0 8px rgba(79,70,229,.45);transform:scale(1.2)}
+
+.drill-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;
+  border:1.5px solid rgba(67,56,202,.36);border-radius:10px;background:transparent;
+  color:var(--ink-accent);font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .25s}
+.drill-btn:hover{background:var(--ink-accent);color:#fff;border-color:var(--ink-accent);
+  transform:translateY(-1px);box-shadow:0 4px 12px rgba(79,70,229,.28)}
+.dark .drill-btn{border-color:rgba(165,180,252,.45)}
+.dark .drill-btn:hover{color:#12122B}
+
+/* ── 章节衔接 ── */
+.chapter-bridge{max-width:600px;margin:34px auto 0;padding-top:22px;border-top:1px solid var(--line)}
+.chapter-bridge-text{font-size:15px;line-height:1.92;color:var(--text-muted);margin:0;font-style:normal}
+
+/* ── 原文与覆盖 ── */
+.source-panel{margin-top:22px;border-radius:12px;overflow:hidden;
+  border:1px solid rgba(79,70,229,.2);background:rgba(79,70,229,.045)}
+.dark .source-panel{border-color:rgba(234,235,250,.16);background:rgba(255,255,255,.05)}
+.source-toggle{width:100%;padding:11px 15px;border:none;background:none;display:flex;align-items:center;
+  gap:8px;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink-accent);font-family:inherit}
+.source-toggle:hover{background:rgba(79,70,229,.07)}
+.source-toggle .arrow{transition:transform .3s;font-size:10px}
+.source-toggle.open .arrow{transform:rotate(90deg)}
+.source-body{max-height:0;overflow:hidden;transition:max-height .4s ease;padding:0 15px}
+.source-body.open{max-height:2000px;padding:0 15px 15px;overflow-y:auto}
+.source-body p{font-size:12.5px;line-height:1.85;color:var(--text-muted);margin:0 0 10px;white-space:pre-wrap}
+.source-body p:last-child{margin-bottom:0}
+.source-label{font-size:10.5px;font-weight:700;letter-spacing:.07em;color:var(--ink-accent);
+  margin-bottom:8px;display:block;text-transform:uppercase}
+
+/* ── branch ── */
+.branch-page .page-num{font-size:11px;letter-spacing:.13em;font-weight:700;
+  color:var(--ink-accent2);margin-bottom:9px}
+.branch-complete{margin-top:26px;padding:13px 18px;border-radius:10px;
+  background:#4338CA;color:#FFFFFF;font-size:13.5px;font-weight:700;text-align:center}
+
+@media (max-width:420px){
+  .body-text{font-size:15.2px}
+  .stage-sub{font-size:14px}
+  .breadcrumb span{max-width:110px}
+}
+@media (prefers-reduced-motion:reduce){
+  .reveal{transition:none;opacity:1;transform:none}
+}
+
+
+.stage svg{overflow:visible}
+.stage svg .gl-p circle{fill:currentColor}
+.stage svg .gl-p path{stroke:currentColor;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.stage svg .gl-card{fill:var(--card-bg);stroke:currentColor;stroke-width:1.6}
+.stage svg .gl-line{stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round}
+.stage svg .gl-fill{fill:currentColor}
+.stage svg .gl-doc rect{fill:var(--card-bg);stroke:currentColor;stroke-width:1.5}
+.stage svg .gl-doc line{stroke:currentColor;stroke-width:1.4;stroke-linecap:round;opacity:.75}
+.stage svg text{font-size:9.5px;font-weight:600;letter-spacing:.01em}
+.stage svg .t-sm{font-size:8.6px;font-weight:600}
+.stage svg .t-num{font-size:10.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.stage svg .t-key{font-size:10px;font-weight:700}
+
+
+
+
+.w1_stage svg{color:var(--text)}
+.w1_stage .w1_slot{fill:none;stroke:var(--ink-accent2);stroke-width:1.8;stroke-dasharray:4 3}
+.w1_stage .w1_script{fill:var(--ink-accent);opacity:.85}
+.w1_stage .w1_tab{fill:var(--card-bg);stroke:currentColor;stroke-width:1.6}
+.w1_stage .w1_key{fill:none;stroke:var(--ink-accent);stroke-width:2;stroke-linecap:round;
+  stroke-dasharray:90;stroke-dashoffset:90;opacity:0}
+.w1_stage .w1_flow{fill:none;stroke:var(--ink-accent2);stroke-width:2;stroke-linecap:round;
+  stroke-dasharray:160;stroke-dashoffset:160;opacity:0}
+.w1_stage .w1_kit,.w1_stage .w1_hand,.w1_stage .w1_exp,.w1_stage .w1_gapLbl{opacity:0}
+.w1_stage .w1_kit{transform:translateX(26px)}
+.w1_stage .w1_kit,.w1_stage .w1_hand,.w1_stage .w1_exp,.w1_stage .w1_gapLbl,
+.w1_stage .w1_key,.w1_stage .w1_flow,.w1_stage .w1_kitBox,.w1_stage .w1_slot,
+.w1_stage .w1_tr1,.w1_stage .w1_tr2,.w1_stage .w1_tr3{
+  transition:opacity var(--sentence-action-ms) ease,
+             transform var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1),
+             stroke-dashoffset var(--sentence-action-ms) ease}
+/* s0 — 任务卡上的缺口被标出来 */
+.w1_stage[data-sentence-step="0"] .w1_gapLbl,
+.w1_stage[data-sentence-step="1"] .w1_gapLbl{opacity:1}
+/* s1 — 技能目录从右边移进来，一条连接落进缺口 */
+.w1_stage[data-sentence-step="1"] .w1_kit,
+.w1_stage[data-sentence-step="2"] .w1_kit,
+.w1_stage[data-sentence-step="3"] .w1_kit{opacity:1;transform:translateX(0)}
+.w1_stage[data-sentence-step="1"] .w1_key,
+.w1_stage[data-sentence-step="2"] .w1_key,
+.w1_stage[data-sentence-step="3"] .w1_key{opacity:1;stroke-dashoffset:0}
+/* s2 — 手写的人出现在目录上方，目录被推离缺口的对位（歪出去） */
+.w1_stage[data-sentence-step="2"] .w1_hand{opacity:1}
+.w1_stage[data-sentence-step="2"] .w1_kitBox{stroke-dasharray:5 4}
+.w1_stage[data-sentence-step="2"] .w1_slot{stroke:var(--ink-accent2)}
+/* s3 — 人手退出，记录从任务那一侧流到目录，目录实线闭合 */
+.w1_stage[data-sentence-step="3"] .w1_exp{opacity:1}
+.w1_stage[data-sentence-step="3"] .w1_flow{opacity:1;stroke-dashoffset:0}
+
+
+.w2_stage svg{color:var(--text)}
+.w2_stage .w2_f1 rect,.w2_stage .w2_f2 rect,.w2_stage .w2_f3 rect{
+  fill:var(--ink-accent2);opacity:0;transform:translateY(-8px);
+  transition:opacity var(--sentence-action-ms) ease,transform var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1)}
+.w2_stage .w2_m{opacity:0;transition:opacity var(--sentence-action-ms) ease}
+.w2_stage .w2_slot{fill:none;stroke:var(--ink-accent);stroke-width:1.8;stroke-dasharray:5 4;opacity:0;
+  transition:opacity var(--sentence-action-ms) ease}
+.w2_stage .w2_slotLbl,.w2_stage .w2_next{opacity:0;transition:opacity var(--sentence-action-ms) ease}
+.w2_stage .w2_arc{fill:none;stroke:var(--ink-accent);stroke-width:1.8;stroke-linecap:round;
+  stroke-dasharray:3 5;opacity:0;transition:opacity var(--sentence-action-ms) ease}
+/* s0 — 三套做法一起出现 */
+.w2_stage:not([data-sentence-step="-1"]) .w2_m{opacity:1}
+/* s1 — 碎片在各自柱子下面同拍长出来 */
+.w2_stage[data-sentence-step="1"] .w2_f1 rect,.w2_stage[data-sentence-step="1"] .w2_f2 rect,
+.w2_stage[data-sentence-step="1"] .w2_f3 rect,
+.w2_stage[data-sentence-step="2"] .w2_f1 rect,.w2_stage[data-sentence-step="2"] .w2_f2 rect,
+.w2_stage[data-sentence-step="2"] .w2_f3 rect,
+.w2_stage[data-sentence-step="3"] .w2_f1 rect,.w2_stage[data-sentence-step="3"] .w2_f2 rect,
+.w2_stage[data-sentence-step="3"] .w2_f3 rect{opacity:1;transform:translateY(0)}
+/* s2 — 中间那一格被画出来，三条虚线都指向它，但它是空的 */
+.w2_stage[data-sentence-step="2"] .w2_slot,.w2_stage[data-sentence-step="3"] .w2_slot{opacity:1}
+.w2_stage[data-sentence-step="2"] .w2_slotLbl,.w2_stage[data-sentence-step="3"] .w2_slotLbl{opacity:1}
+.w2_stage[data-sentence-step="2"] .w2_arc,.w2_stage[data-sentence-step="3"] .w2_arc{opacity:.55}
+/* s3 — 碎片留在原地，下一轮的标记出现，空格仍然空 */
+.w2_stage[data-sentence-step="3"] .w2_next{opacity:1}
+
+
+.w3_stage svg{color:var(--text)}
+.w3_stage .w3_pat{fill:var(--ink-accent);opacity:0;transform:translateY(14px)}
+.w3_stage .w3_t1,.w3_stage .w3_t2,.w3_stage .w3_t3{opacity:0;transform:translateY(-24px)}
+.w3_stage .w3_lock{fill:none;stroke:var(--ink-accent2);stroke-width:1.8;opacity:0}
+.w3_stage .w3_lock rect{fill:var(--card-bg)}
+.w3_stage .w3_up{fill:none;stroke:var(--ink-accent);stroke-width:2.2;stroke-linecap:round;
+  stroke-dasharray:16;stroke-dashoffset:16;opacity:0}
+.w3_stage .w3_read{fill:none;stroke:var(--ink-accent2);stroke-width:1.8;stroke-linecap:round;
+  stroke-dasharray:70;stroke-dashoffset:70;opacity:0}
+.w3_stage .w3_v2{opacity:0;transform:translateY(-16px)}
+.w3_stage .w3_e1,.w3_stage .w3_e2{fill:currentColor;opacity:.3}
+.w3_stage .w3_reader{opacity:0}
+.w3_stage .w3_pat,.w3_stage .w3_t1,.w3_stage .w3_t2,.w3_stage .w3_t3,.w3_stage .w3_lock,
+.w3_stage .w3_up,.w3_stage .w3_read,.w3_stage .w3_v1,.w3_stage .w3_v2,.w3_stage .w3_reader,
+.w3_stage .w3_e1,.w3_stage .w3_e2{
+  transition:opacity var(--sentence-action-ms) ease,
+             transform var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1),
+             stroke-dashoffset var(--sentence-action-ms) ease}
+/* s1 — 三份记录落进最底下那一格，落定后加锁 */
+.w3_stage[data-sentence-step="1"] .w3_t1,.w3_stage[data-sentence-step="1"] .w3_t2,
+.w3_stage[data-sentence-step="1"] .w3_t3,.w3_stage[data-sentence-step="2"] .w3_t1,
+.w3_stage[data-sentence-step="2"] .w3_t2,.w3_stage[data-sentence-step="2"] .w3_t3,
+.w3_stage[data-sentence-step="3"] .w3_t1,.w3_stage[data-sentence-step="3"] .w3_t2,
+.w3_stage[data-sentence-step="3"] .w3_t3{opacity:1;transform:translateY(0)}
+.w3_stage[data-sentence-step="1"] .w3_lock,.w3_stage[data-sentence-step="2"] .w3_lock,
+.w3_stage[data-sentence-step="3"] .w3_lock{opacity:1}
+/* s2 — 记录被提炼成中间那一层的三条条目 */
+.w3_stage[data-sentence-step="2"] .w3_up1,.w3_stage[data-sentence-step="3"] .w3_up1{opacity:1;stroke-dashoffset:0}
+.w3_stage[data-sentence-step="2"] .w3_pat,.w3_stage[data-sentence-step="3"] .w3_pat{opacity:1;transform:translateY(0)}
+/* s3 — 中层条目把最上面那份说明书换成新版；AI 助手来读的是最上面这一层 */
+.w3_stage[data-sentence-step="3"] .w3_up2{opacity:1;stroke-dashoffset:0}
+.w3_stage[data-sentence-step="3"] .w3_v1{opacity:0;transform:translateY(16px)}
+.w3_stage[data-sentence-step="3"] .w3_v2{opacity:1;transform:translateY(0)}
+.w3_stage[data-sentence-step="3"] .w3_e1,.w3_stage[data-sentence-step="3"] .w3_e2{opacity:.85;fill:var(--ink-accent2)}
+.w3_stage[data-sentence-step="3"] .w3_reader{opacity:1}
+.w3_stage[data-sentence-step="3"] .w3_read{opacity:1;stroke-dashoffset:0}
+
+
+.w4_stage svg{color:var(--text)}
+.w4_stage .w4_role .gl-p circle{fill:var(--dim)}
+.w4_stage .w4_role .gl-p path{stroke:var(--dim)}
+.w4_stage .w4_role text{fill:var(--text-muted)}
+.w4_stage .w4_role .gl-p circle,.w4_stage .w4_role .gl-p path,.w4_stage .w4_role text{
+  transition:fill var(--sentence-action-ms) ease,stroke var(--sentence-action-ms) ease}
+.w4_stage .w4_traces,.w4_stage .w4_wiki,.w4_stage .w4_skill,.w4_stage .w4_gate{opacity:0}
+.w4_stage .w4_wcell{fill:var(--ink-accent);opacity:0;transform:translateY(10px)}
+.w4_stage .w4_patch{fill:var(--ink-accent2);opacity:0;transform:translateX(34px)}
+.w4_stage .w4_flat{stroke:var(--ink-accent2);stroke-width:2.4;stroke-linecap:round;
+  stroke-dasharray:44;stroke-dashoffset:44}
+.w4_stage .w4_verdict{opacity:0}
+.w4_stage .w4_arr{fill:none;stroke:var(--ink-accent);stroke-width:1.8;stroke-linecap:round;
+  stroke-dasharray:48;stroke-dashoffset:48;opacity:0}
+.w4_stage .w4_traces,.w4_stage .w4_wiki,.w4_stage .w4_skill,.w4_stage .w4_gate,
+.w4_stage .w4_wcell,.w4_stage .w4_patch,.w4_stage .w4_flat,.w4_stage .w4_verdict,
+.w4_stage .w4_arr{
+  transition:opacity var(--sentence-action-ms) ease,
+             transform var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1),
+             stroke-dashoffset var(--sentence-action-ms) ease}
+/* s0 — 第一棒亮起 */
+.w4_stage[data-sentence-step="0"] .w4_r1 .gl-p circle{fill:var(--ink-accent)}
+.w4_stage[data-sentence-step="0"] .w4_r1 .gl-p path{stroke:var(--ink-accent)}
+.w4_stage[data-sentence-step="0"] .w4_r1 text{fill:var(--text)}
+/* s1 — Inference Agent 跑完，三份记录落在它脚下 */
+.w4_stage[data-sentence-step="1"] .w4_r1 .gl-p circle{fill:var(--ink-accent)}
+.w4_stage[data-sentence-step="1"] .w4_r1 .gl-p path{stroke:var(--ink-accent)}
+.w4_stage[data-sentence-step="1"] .w4_r1 text{fill:var(--text)}
+.w4_stage[data-sentence-step="1"] .w4_traces,.w4_stage[data-sentence-step="2"] .w4_traces,
+.w4_stage[data-sentence-step="3"] .w4_traces,.w4_stage[data-sentence-step="4"] .w4_traces{opacity:1}
+/* s2 — Wiki Maintainer 把记录变成柱子上的一格 */
+.w4_stage[data-sentence-step="2"] .w4_r2 .gl-p circle{fill:var(--ink-accent)}
+.w4_stage[data-sentence-step="2"] .w4_r2 .gl-p path{stroke:var(--ink-accent)}
+.w4_stage[data-sentence-step="2"] .w4_r2 text{fill:var(--text)}
+.w4_stage[data-sentence-step="2"] .w4_a1,.w4_stage[data-sentence-step="3"] .w4_a1,
+.w4_stage[data-sentence-step="4"] .w4_a1{opacity:1;stroke-dashoffset:0}
+.w4_stage[data-sentence-step="2"] .w4_wiki,.w4_stage[data-sentence-step="3"] .w4_wiki,
+.w4_stage[data-sentence-step="4"] .w4_wiki{opacity:1}
+.w4_stage[data-sentence-step="2"] .w4_wcell,.w4_stage[data-sentence-step="3"] .w4_wcell,
+.w4_stage[data-sentence-step="4"] .w4_wcell{opacity:1;transform:translateY(0)}
+/* s3 — Skill Proposer 把一块补丁贴进说明书 */
+.w4_stage[data-sentence-step="3"] .w4_r3 .gl-p circle{fill:var(--ink-accent)}
+.w4_stage[data-sentence-step="3"] .w4_r3 .gl-p path{stroke:var(--ink-accent)}
+.w4_stage[data-sentence-step="3"] .w4_r3 text{fill:var(--text)}
+.w4_stage[data-sentence-step="3"] .w4_a2,.w4_stage[data-sentence-step="4"] .w4_a2{opacity:1;stroke-dashoffset:0}
+.w4_stage[data-sentence-step="3"] .w4_skill,.w4_stage[data-sentence-step="4"] .w4_skill{opacity:1}
+.w4_stage[data-sentence-step="3"] .w4_patch{opacity:1;transform:translateX(0)}
+/* s4 — 打分没涨，补丁被抽出说明书；wiki 那一格纹丝不动 */
+.w4_stage[data-sentence-step="4"] .w4_gate{opacity:1}
+.w4_stage[data-sentence-step="4"] .w4_a3{opacity:1;stroke-dashoffset:0}
+.w4_stage[data-sentence-step="4"] .w4_flat{stroke-dashoffset:0}
+.w4_stage[data-sentence-step="4"] .w4_verdict{opacity:1}
+.w4_stage[data-sentence-step="4"] .w4_patch{opacity:0;transform:translateX(52px)}
+
+
+.w5_stage svg{color:var(--text)}
+.w5_stage .w5_tasks,.w5_stage .w5_models,.w5_stage .w5_chart{opacity:0}
+.w5_stage .w5_md{fill:var(--ink-accent2)}
+.w5_stage .w5_base{stroke:currentColor;stroke-width:1.6;opacity:.5}
+.w5_stage .w5_barR{fill:var(--dim)}
+.w5_stage .w5_barW{fill:var(--ink-accent)}
+.w5_stage .w5_gap{opacity:0}
+.w5_stage .w5_gapline{stroke:var(--ink-accent2);stroke-width:1.4;stroke-dasharray:3 3}
+.w5_stage .w5_gaparr{stroke:var(--ink-accent2);stroke-width:2.2;stroke-linecap:round}
+.w5_stage .w5_tasks,.w5_stage .w5_models,.w5_stage .w5_chart,.w5_stage .w5_gap,
+.w5_stage .w5_barR,.w5_stage .w5_barW{
+  transition:opacity var(--sentence-action-ms) ease,
+             width var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1)}
+/* s0 — 五项任务并排出现 */
+.w5_stage:not([data-sentence-step="-1"]) .w5_tasks{opacity:1}
+/* s1 — 五个模型点出现 */
+.w5_stage[data-sentence-step="1"] .w5_models,.w5_stage[data-sentence-step="2"] .w5_models,
+.w5_stage[data-sentence-step="3"] .w5_models{opacity:1}
+/* s2 — 两根量条从同一条基线同拍长出，WikiSkill 更长 */
+.w5_stage[data-sentence-step="2"] .w5_tasks,.w5_stage[data-sentence-step="3"] .w5_tasks{opacity:0}
+.w5_stage[data-sentence-step="2"] .w5_chart,.w5_stage[data-sentence-step="3"] .w5_chart{opacity:1}
+.w5_stage[data-sentence-step="2"] .w5_barR,.w5_stage[data-sentence-step="3"] .w5_barR{width:138px}
+.w5_stage[data-sentence-step="2"] .w5_barW,.w5_stage[data-sentence-step="3"] .w5_barW{width:194px}
+/* s3 — 两根之间的差值被量出来 */
+.w5_stage[data-sentence-step="3"] .w5_gap{opacity:1}
+
+
+.w6_stage svg{color:var(--text)}
+.w6_stage .w6_base{stroke:currentColor;stroke-width:1.8;opacity:.55}
+.w6_stage .w6_no{fill:var(--dim);opacity:0}
+.w6_stage .w6_sk{fill:var(--ink-accent)}
+.w6_stage .w6_d{opacity:0;fill:var(--ink-accent2)}
+.w6_stage .w6_cross{opacity:0}
+.w6_stage .w6_line{stroke:var(--ink-accent2);stroke-width:2;stroke-dasharray:5 4}
+.w6_stage .w6_no,.w6_stage .w6_sk,.w6_stage .w6_d,.w6_stage .w6_cross{
+  transition:opacity var(--sentence-action-ms) ease,
+             y var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1),
+             height var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1)}
+/* s0 — 三根不带技能的柱从同一条基线出现，个头递增 */
+.w6_stage:not([data-sentence-step="-1"]) .w6_no{opacity:1}
+/* s1 — 三根带技能的那一截在同一拍一起长出来 */
+.w6_stage[data-sentence-step="1"] .w6_s1,.w6_stage[data-sentence-step="2"] .w6_s1,
+.w6_stage[data-sentence-step="3"] .w6_s1{y:112px;height:32px}
+.w6_stage[data-sentence-step="1"] .w6_s2,.w6_stage[data-sentence-step="2"] .w6_s2,
+.w6_stage[data-sentence-step="3"] .w6_s2{y:94px;height:46px}
+.w6_stage[data-sentence-step="1"] .w6_s3,.w6_stage[data-sentence-step="2"] .w6_s3,
+.w6_stage[data-sentence-step="3"] .w6_s3{y:66px;height:64px}
+/* s2 — 三个增量被标出来，越往右越大 */
+.w6_stage[data-sentence-step="2"] .w6_d,.w6_stage[data-sentence-step="3"] .w6_d{opacity:1}
+/* s3 — 一条线从 9B 带技能的顶端拉过去，明显高过 27B 不带技能的顶端 */
+.w6_stage[data-sentence-step="3"] .w6_cross{opacity:1}
+
+
+.w7_stage svg{color:var(--text)}
+.w7_stage .w7_div{stroke:currentColor;stroke-width:1.4;stroke-dasharray:4 4;opacity:.4}
+.w7_stage .w7_card{transform:translate(0,0)}
+.w7_stage .w7_base{stroke:currentColor;stroke-width:1.6;opacity:.55}
+.w7_stage .w7_self{fill:var(--dim)}
+.w7_stage .w7_moved{fill:var(--ink-accent)}
+.w7_stage .w7_selfline{stroke:var(--dim);stroke-width:1.4;stroke-dasharray:4 3;opacity:0}
+.w7_stage .w7_score,.w7_stage .w7_dst,.w7_stage .w7_num,.w7_stage .w7_bad{opacity:0}
+.w7_stage .w7_badarr{stroke:var(--ink-accent2);stroke-width:2.2;stroke-linecap:round;stroke-dasharray:4 4}
+.w7_stage .w7_card,.w7_stage .w7_score,.w7_stage .w7_dst,.w7_stage .w7_moved,
+.w7_stage .w7_num,.w7_stage .w7_bad,.w7_stage .w7_selfline{
+  transition:opacity var(--sentence-action-ms) ease,
+             transform var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1),
+             y var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1),
+             height var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1)}
+/* s1 — 目标模型出场 */
+.w7_stage[data-sentence-step="1"] .w7_dst,.w7_stage[data-sentence-step="2"] .w7_dst,
+.w7_stage[data-sentence-step="3"] .w7_dst{opacity:1}
+/* s1 — 技能卡跨过中线，落到目标模型这一侧 */
+.w7_stage[data-sentence-step="1"] .w7_card,.w7_stage[data-sentence-step="2"] .w7_card,
+.w7_stage[data-sentence-step="3"] .w7_card{transform:translate(148px,0)}
+/* s2 — 目标模型这一侧的分数柱从同一条基线长上去，越过它自己练的那条线 */
+.w7_stage[data-sentence-step="2"] .w7_score,.w7_stage[data-sentence-step="3"] .w7_score{opacity:1}
+.w7_stage[data-sentence-step="2"] .w7_moved,.w7_stage[data-sentence-step="3"] .w7_moved{y:102px;height:46px}
+.w7_stage[data-sentence-step="2"] .w7_selfline,.w7_stage[data-sentence-step="3"] .w7_selfline{opacity:1}
+.w7_stage[data-sentence-step="2"] .w7_num,.w7_stage[data-sentence-step="3"] .w7_num{opacity:1}
+/* s3 — 另一条来源路径出现，方向朝下 */
+.w7_stage[data-sentence-step="3"] .w7_bad{opacity:1}
+
+
+.w8_stage svg{color:var(--text)}
+.w8_stage .w8_wc{fill:var(--ink-accent)}
+.w8_stage .w8_base{stroke:currentColor;stroke-width:1.6;opacity:.5}
+.w8_stage .w8_fill{fill:var(--ink-accent)}
+.w8_stage .w8_linkP,.w8_stage .w8_linkI{fill:none;stroke:var(--ink-accent);stroke-width:2.4;
+  stroke-linecap:round;stroke-dasharray:110;stroke-dashoffset:110}
+.w8_stage .w8_linkI{stroke:var(--ink-accent2)}
+.w8_stage .w8_drop,.w8_stage .w8_v637,.w8_stage .w8_v487,.w8_stage .w8_v609{opacity:0}
+.w8_stage .w8_droparr{stroke:var(--ink-accent2);stroke-width:2.2;stroke-linecap:round}
+.w8_stage .w8_linkP,.w8_stage .w8_linkI,.w8_stage .w8_fill,.w8_stage .w8_drop,
+.w8_stage .w8_v637,.w8_stage .w8_v487,.w8_stage .w8_v609{
+  transition:opacity var(--sentence-action-ms) ease,
+             width var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1),
+             stroke-dashoffset var(--sentence-action-ms) ease}
+/* s0 — 默认接法：wiki 只接 Skill Proposer；量条停在 63.7 */
+.w8_stage[data-sentence-step="0"] .w8_linkP,.w8_stage[data-sentence-step="2"] .w8_linkP,
+.w8_stage[data-sentence-step="3"] .w8_linkP,.w8_stage[data-sentence-step="4"] .w8_linkP{stroke-dashoffset:0}
+.w8_stage[data-sentence-step="0"] .w8_v637,.w8_stage[data-sentence-step="4"] .w8_v637{opacity:1}
+.w8_stage[data-sentence-step="1"] .w8_v487,.w8_stage[data-sentence-step="2"] .w8_v487{opacity:1}
+.w8_stage[data-sentence-step="3"] .w8_v609{opacity:1}
+/* s1 — 把 wiki 和 Skill Proposer 之间的连线断开，量条回撤 */
+.w8_stage[data-sentence-step="1"] .w8_fill,.w8_stage[data-sentence-step="2"] .w8_fill{width:112px}
+/* s2 — 回撤的幅度被量出来 */
+.w8_stage[data-sentence-step="2"] .w8_drop{opacity:1}
+/* s3 — 连线接回来，同时把 wiki 也接到干活的那个 agent 身上，量条从 63.7 缩到 60.9 */
+.w8_stage[data-sentence-step="3"] .w8_linkI,.w8_stage[data-sentence-step="4"] .w8_linkI{stroke-dashoffset:0}
+.w8_stage[data-sentence-step="3"] .w8_fill,.w8_stage[data-sentence-step="4"] .w8_fill{width:194px}
+/* s4 — 只有 Skill Proposer 那一条连线留下 */
+.w8_stage[data-sentence-step="4"] .w8_linkI{stroke-dashoffset:110}
+.w8_stage[data-sentence-step="4"] .w8_fill{width:212px}
+
+
+.b31_stage svg{color:var(--text)}
+.b31_stage .b31_part rect{fill:var(--card-bg);stroke:currentColor;stroke-width:1.3;opacity:0}
+.b31_stage .b31_part text{opacity:0}
+.b31_stage .b31_reader,.b31_stage .b31_lock{opacity:0}
+.b31_stage .b31_link{fill:none;stroke:var(--ink-accent);stroke-width:2;stroke-linecap:round;
+  stroke-dasharray:58;stroke-dashoffset:58}
+.b31_stage .b31_lock{fill:none;stroke:var(--ink-accent2);stroke-width:1.8}
+.b31_stage .b31_lock rect{fill:var(--card-bg)}
+.b31_stage .b31_lock text{fill:var(--ink-accent2);stroke:none}
+.b31_stage .b31_part rect,.b31_stage .b31_part text,.b31_stage .b31_reader,
+.b31_stage .b31_lock,.b31_stage .b31_link{
+  transition:opacity var(--sentence-action-ms) ease,stroke-dashoffset var(--sentence-action-ms) ease}
+.b31_stage[data-sentence-step="1"] .b31_part rect,.b31_stage[data-sentence-step="1"] .b31_part text,
+.b31_stage[data-sentence-step="2"] .b31_part rect,.b31_stage[data-sentence-step="2"] .b31_part text,
+.b31_stage[data-sentence-step="3"] .b31_part rect,.b31_stage[data-sentence-step="3"] .b31_part text{opacity:1}
+.b31_stage[data-sentence-step="2"] .b31_reader,.b31_stage[data-sentence-step="3"] .b31_reader{opacity:1}
+.b31_stage[data-sentence-step="2"] .b31_link,.b31_stage[data-sentence-step="3"] .b31_link{stroke-dashoffset:0}
+.b31_stage[data-sentence-step="3"] .b31_lock{opacity:1}
+
+
+.b32_stage svg{color:var(--text)}
+.b32_stage .b32_pc{fill:var(--ink-accent);opacity:0;transform:translateY(10px)}
+.b32_stage .b32_pl,.b32_stage .b32_idx,.b32_stage .b32_log,.b32_stage .b32_imp,
+.b32_stage .b32_keep{opacity:0}
+.b32_stage .b32_ia{stroke:var(--ink-accent);stroke-width:1.8;stroke-linecap:round}
+.b32_stage .b32_lrow{fill:var(--dim)}
+.b32_stage .b32_ok{fill:var(--ink-accent)}
+.b32_stage .b32_no{fill:var(--ink-accent2)}
+.b32_stage .b32_pc,.b32_stage .b32_pl,.b32_stage .b32_idx,.b32_stage .b32_log,
+.b32_stage .b32_imp,.b32_stage .b32_keep{
+  transition:opacity var(--sentence-action-ms) ease,
+             transform var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1)}
+.b32_stage[data-sentence-step="1"] .b32_pc,.b32_stage[data-sentence-step="2"] .b32_pc,
+.b32_stage[data-sentence-step="3"] .b32_pc,.b32_stage[data-sentence-step="4"] .b32_pc{opacity:1;transform:translateY(0)}
+.b32_stage[data-sentence-step="1"] .b32_pl,.b32_stage[data-sentence-step="2"] .b32_pl,
+.b32_stage[data-sentence-step="3"] .b32_pl,.b32_stage[data-sentence-step="4"] .b32_pl{opacity:1}
+.b32_stage[data-sentence-step="2"] .b32_idx,.b32_stage[data-sentence-step="3"] .b32_idx,
+.b32_stage[data-sentence-step="4"] .b32_idx{opacity:1}
+.b32_stage[data-sentence-step="3"] .b32_log,.b32_stage[data-sentence-step="4"] .b32_log{opacity:1}
+.b32_stage[data-sentence-step="4"] .b32_imp,.b32_stage[data-sentence-step="4"] .b32_keep{opacity:1}
+
+
+.b33_stage svg{color:var(--text)}
+.b33_stage .b33_r{fill:var(--dim)}
+.b33_stage .b33_card{fill:var(--ink-accent)}
+.b33_stage .b33_sk,.b33_stage .b33_pp,.b33_stage .b33_pat{opacity:0}
+.b33_stage .b33_back{fill:none;stroke:var(--ink-accent2);stroke-width:2.2;stroke-linecap:round;
+  stroke-dasharray:80;stroke-dashoffset:80}
+.b33_stage .b33_sk,.b33_stage .b33_pp,.b33_stage .b33_pat,.b33_stage .b33_back{
+  transition:opacity var(--sentence-action-ms) ease,stroke-dashoffset var(--sentence-action-ms) ease}
+.b33_stage[data-sentence-step="1"] .b33_sk,.b33_stage[data-sentence-step="2"] .b33_sk,
+.b33_stage[data-sentence-step="3"] .b33_sk{opacity:1}
+.b33_stage[data-sentence-step="2"] .b33_pp,.b33_stage[data-sentence-step="3"] .b33_pp{opacity:1}
+.b33_stage[data-sentence-step="3"] .b33_pat{opacity:1}
+.b33_stage[data-sentence-step="3"] .b33_back{stroke-dashoffset:0}
+
+
+.b41_stage svg{color:var(--text)}
+.b41_stage .b41_card{transform:translate(0,0)}
+.b41_stage .b41_slot{fill:none;stroke:var(--ink-accent);stroke-width:1.6;stroke-dasharray:4 3}
+.b41_stage .b41_prompt,.b41_stage .b41_agent,.b41_stage .b41_out,.b41_stage .b41_dot,
+.b41_stage .b41_x{opacity:0}
+.b41_stage .b41_path{fill:none;stroke:var(--ink-accent);stroke-width:2.2;stroke-linecap:round;
+  stroke-dasharray:230;stroke-dashoffset:230}
+.b41_stage .b41_dot{fill:var(--ink-accent)}
+.b41_stage .b41_x path{stroke:var(--ink-accent2);stroke-width:2.4;stroke-linecap:round;fill:none}
+.b41_stage .b41_card,.b41_stage .b41_prompt,.b41_stage .b41_agent,.b41_stage .b41_path,
+.b41_stage .b41_dot,.b41_stage .b41_out,.b41_stage .b41_x{
+  transition:opacity var(--sentence-action-ms) ease,
+             transform var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1),
+             stroke-dashoffset var(--sentence-action-ms) ease}
+.b41_stage:not([data-sentence-step="-1"]) .b41_prompt{opacity:1}
+.b41_stage[data-sentence-step="1"] .b41_card,.b41_stage[data-sentence-step="2"] .b41_card,
+.b41_stage[data-sentence-step="3"] .b41_card{transform:translate(162px,8px)}
+.b41_stage[data-sentence-step="2"] .b41_agent,.b41_stage[data-sentence-step="3"] .b41_agent{opacity:1}
+.b41_stage[data-sentence-step="2"] .b41_path,.b41_stage[data-sentence-step="3"] .b41_path{stroke-dashoffset:0}
+.b41_stage[data-sentence-step="2"] .b41_dot,.b41_stage[data-sentence-step="3"] .b41_dot,
+.b41_stage[data-sentence-step="2"] .b41_out,.b41_stage[data-sentence-step="3"] .b41_out{opacity:1}
+.b41_stage[data-sentence-step="3"] .b41_x{opacity:1}
+
+
+.b42_stage svg{color:var(--text)}
+.b42_stage .b42_ring{fill:none;stroke:currentColor;stroke-width:1.6;opacity:.45}
+.b42_stage .b42_s1,.b42_stage .b42_s2,.b42_stage .b42_s3{transform:translate(0,0)}
+.b42_stage .b42_wm,.b42_stage .b42_why,.b42_stage .b42_new,.b42_stage .b42_old,
+.b42_stage .b42_idx{opacity:0}
+.b42_stage .b42_probe{stroke:var(--ink-accent2);stroke-width:2.2;stroke-linecap:round;
+  stroke-dasharray:24;stroke-dashoffset:24}
+.b42_stage .b42_nc{fill:var(--ink-accent)}
+.b42_stage .b42_patch{fill:var(--ink-accent2)}
+.b42_stage .b42_s1,.b42_stage .b42_s2,.b42_stage .b42_s3,.b42_stage .b42_wm,
+.b42_stage .b42_why,.b42_stage .b42_new,.b42_stage .b42_old,.b42_stage .b42_idx,
+.b42_stage .b42_probe,.b42_stage .b42_patch{
+  transition:opacity var(--sentence-action-ms) ease,
+             transform var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1),
+             width var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1),
+             stroke-dashoffset var(--sentence-action-ms) ease}
+/* s1 — 三份被抽出候选池，其余留在池里不动 */
+.b42_stage[data-sentence-step="1"] .b42_s1,.b42_stage[data-sentence-step="2"] .b42_s1,
+.b42_stage[data-sentence-step="3"] .b42_s1,.b42_stage[data-sentence-step="4"] .b42_s1{transform:translate(-4px,58px)}
+.b42_stage[data-sentence-step="1"] .b42_s2,.b42_stage[data-sentence-step="2"] .b42_s2,
+.b42_stage[data-sentence-step="3"] .b42_s2,.b42_stage[data-sentence-step="4"] .b42_s2{transform:translate(-36px,58px)}
+.b42_stage[data-sentence-step="1"] .b42_s3,.b42_stage[data-sentence-step="2"] .b42_s3,
+.b42_stage[data-sentence-step="3"] .b42_s3,.b42_stage[data-sentence-step="4"] .b42_s3{transform:translate(-92px,58px)}
+.b42_stage[data-sentence-step="1"] .b42_wm,.b42_stage[data-sentence-step="2"] .b42_wm,
+.b42_stage[data-sentence-step="3"] .b42_wm,.b42_stage[data-sentence-step="4"] .b42_wm{opacity:1}
+/* s2 — 追出原因，写成一张新卡 */
+.b42_stage[data-sentence-step="2"] .b42_why,.b42_stage[data-sentence-step="3"] .b42_why,
+.b42_stage[data-sentence-step="4"] .b42_why{opacity:1}
+.b42_stage[data-sentence-step="2"] .b42_probe,.b42_stage[data-sentence-step="3"] .b42_probe,
+.b42_stage[data-sentence-step="4"] .b42_probe{stroke-dashoffset:0}
+.b42_stage[data-sentence-step="2"] .b42_new,.b42_stage[data-sentence-step="3"] .b42_new,
+.b42_stage[data-sentence-step="4"] .b42_new{opacity:1}
+/* s3 — 老卡上补一段，卡本身不重画 */
+.b42_stage[data-sentence-step="3"] .b42_old,.b42_stage[data-sentence-step="4"] .b42_old{opacity:1}
+.b42_stage[data-sentence-step="3"] .b42_patch,.b42_stage[data-sentence-step="4"] .b42_patch{width:64px}
+/* s4 — 目录和日志跟着更新 */
+.b42_stage[data-sentence-step="4"] .b42_idx{opacity:1}
+
+
+.b43_stage svg{color:var(--text)}
+.b43_stage .b43_l1{fill:none;stroke:var(--ink-accent);stroke-width:2;stroke-linecap:round;
+  stroke-dasharray:70;stroke-dashoffset:70}
+.b43_stage .b43_look,.b43_stage .b43_slots,.b43_stage .b43_gate,.b43_stage .b43_book{opacity:0}
+.b43_stage .b43_prop{fill:var(--ink-accent2);opacity:0;transform:translateX(-40px)}
+.b43_stage .b43_axis{stroke:currentColor;stroke-width:1.6;opacity:.5}
+.b43_stage .b43_best{stroke:var(--dim);stroke-width:1.8;stroke-dasharray:5 4}
+.b43_stage .b43_new{fill:var(--ink-accent)}
+.b43_stage .b43_rej{fill:var(--ink-accent2)}
+.b43_stage .b43_look,.b43_stage .b43_slots,.b43_stage .b43_gate,.b43_stage .b43_book,
+.b43_stage .b43_prop,.b43_stage .b43_new,.b43_stage .b43_l1{
+  transition:opacity var(--sentence-action-ms) ease,
+             transform var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1),
+             y var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1),
+             height var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1),
+             stroke-dashoffset var(--sentence-action-ms) ease}
+.b43_stage[data-sentence-step="1"] .b43_look,.b43_stage[data-sentence-step="2"] .b43_look,
+.b43_stage[data-sentence-step="3"] .b43_look,.b43_stage[data-sentence-step="4"] .b43_look{opacity:1}
+.b43_stage[data-sentence-step="1"] .b43_l1,.b43_stage[data-sentence-step="2"] .b43_l1,
+.b43_stage[data-sentence-step="3"] .b43_l1,.b43_stage[data-sentence-step="4"] .b43_l1{stroke-dashoffset:0}
+.b43_stage[data-sentence-step="2"] .b43_slots,.b43_stage[data-sentence-step="3"] .b43_slots,
+.b43_stage[data-sentence-step="4"] .b43_slots{opacity:1}
+.b43_stage[data-sentence-step="2"] .b43_prop,.b43_stage[data-sentence-step="3"] .b43_prop{opacity:1;transform:translateX(0)}
+.b43_stage[data-sentence-step="3"] .b43_gate,.b43_stage[data-sentence-step="4"] .b43_gate{opacity:1}
+.b43_stage[data-sentence-step="3"] .b43_new,.b43_stage[data-sentence-step="4"] .b43_new{y:118px;height:30px}
+/* s4 — 没过线，提案整块退回原处；账本上多一笔 */
+.b43_stage[data-sentence-step="4"] .b43_prop{opacity:0;transform:translateX(-46px)}
+.b43_stage[data-sentence-step="4"] .b43_book{opacity:1}
+
+
+.b71_stage svg{color:var(--text)}
+.b71_stage .b71_base{stroke:currentColor;stroke-width:1.8;opacity:.55}
+.b71_stage .b71_b1{fill:var(--dim)}
+.b71_stage .b71_b2{fill:var(--ink-accent2)}
+.b71_stage .b71_b3{fill:var(--ink-accent)}
+.b71_stage .b71_c1,.b71_stage .b71_c2,.b71_stage .b71_c3{opacity:0}
+.b71_stage .b71_n2,.b71_stage .b71_n3{opacity:0}
+.b71_stage .b71_ref{stroke:var(--ink-accent2);stroke-width:1.6;stroke-dasharray:5 4;opacity:0}
+.b71_stage .b71_c1,.b71_stage .b71_c2,.b71_stage .b71_c3,.b71_stage .b71_b2,
+.b71_stage .b71_b3,.b71_stage .b71_n2,.b71_stage .b71_n3,.b71_stage .b71_ref{
+  transition:opacity var(--sentence-action-ms) ease,
+             y var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1),
+             height var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1)}
+.b71_stage:not([data-sentence-step="-1"]) .b71_c1{opacity:1}
+.b71_stage[data-sentence-step="1"] .b71_c2,.b71_stage[data-sentence-step="2"] .b71_c2,
+.b71_stage[data-sentence-step="3"] .b71_c2{opacity:1}
+.b71_stage[data-sentence-step="1"] .b71_b2,.b71_stage[data-sentence-step="2"] .b71_b2,
+.b71_stage[data-sentence-step="3"] .b71_b2{y:104px;height:54px}
+.b71_stage[data-sentence-step="1"] .b71_n2,.b71_stage[data-sentence-step="2"] .b71_n2,
+.b71_stage[data-sentence-step="3"] .b71_n2{opacity:1}
+.b71_stage[data-sentence-step="2"] .b71_c3,.b71_stage[data-sentence-step="3"] .b71_c3{opacity:1}
+.b71_stage[data-sentence-step="2"] .b71_b3,.b71_stage[data-sentence-step="3"] .b71_b3{y:54px;height:104px}
+.b71_stage[data-sentence-step="2"] .b71_n3,.b71_stage[data-sentence-step="3"] .b71_n3{opacity:1}
+.b71_stage[data-sentence-step="3"] .b71_ref{opacity:1}
+
+
+.b72_stage svg{color:var(--text)}
+.b72_stage .b72_base{stroke:currentColor;stroke-width:1.8;opacity:.55}
+.b72_stage .b72_ref{stroke:var(--dim);stroke-width:1.5;stroke-dasharray:5 4}
+.b72_stage .b72_bar{fill:var(--ink-accent)}
+.b72_stage .b72_bar2{fill:var(--ink-accent)}
+.b72_stage .b72_narrow{fill:var(--ink-accent2)}
+.b72_stage .b72_wide{fill:var(--dim);opacity:.35}
+.b72_stage .b72_ticks{stroke:var(--ink-accent2);stroke-width:2.4;stroke-linecap:round}
+.b72_stage .b72_r1,.b72_stage .b72_r2,.b72_stage .b72_fix,.b72_stage .b72_v2,
+.b72_stage .b72_lbl,.b72_stage .b72_v181{opacity:0}
+.b72_stage .b72_bar,.b72_stage .b72_bar2,.b72_stage .b72_v181,.b72_stage .b72_v2,
+.b72_stage .b72_r1,.b72_stage .b72_r2,.b72_stage .b72_fix,.b72_stage .b72_lbl{
+  transition:opacity var(--sentence-action-ms) ease,
+             y var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1),
+             height var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1)}
+/* s1 — 装上 4B 练的技能，柱子掉到基线之下很远 */
+.b72_stage[data-sentence-step="1"] .b72_bar,.b72_stage[data-sentence-step="2"] .b72_bar,
+.b72_stage[data-sentence-step="3"] .b72_bar,.b72_stage[data-sentence-step="4"] .b72_bar{y:140px;height:22px}
+.b72_stage[data-sentence-step="1"] .b72_v181,.b72_stage[data-sentence-step="2"] .b72_v181,
+.b72_stage[data-sentence-step="3"] .b72_v181,.b72_stage[data-sentence-step="4"] .b72_v181{opacity:1}
+.b72_stage[data-sentence-step="1"] .b72_lbl,.b72_stage[data-sentence-step="2"] .b72_lbl,
+.b72_stage[data-sentence-step="3"] .b72_lbl,.b72_stage[data-sentence-step="4"] .b72_lbl{opacity:1}
+/* s2 — 第一条原因 */
+.b72_stage[data-sentence-step="2"] .b72_r1,.b72_stage[data-sentence-step="3"] .b72_r1,
+.b72_stage[data-sentence-step="4"] .b72_r1{opacity:1}
+/* s3 — 第二条原因 */
+.b72_stage[data-sentence-step="3"] .b72_r2,.b72_stage[data-sentence-step="4"] .b72_r2{opacity:1}
+/* s4 — 换成 27B 练的技能，另一根柱越过基线 */
+.b72_stage[data-sentence-step="4"] .b72_fix,.b72_stage[data-sentence-step="4"] .b72_v2{opacity:1}
+.b72_stage[data-sentence-step="4"] .b72_bar2{y:88px;height:74px}
+
+
+.b73_stage svg{color:var(--text)}
+.b73_stage .b73_base{stroke:currentColor;stroke-width:1.8;opacity:.55}
+.b73_stage .b73_bar{fill:var(--ink-accent)}
+.b73_stage .b73_fan{fill:none;stroke:var(--ink-accent);stroke-width:2;stroke-linecap:round;
+  stroke-dasharray:80;stroke-dashoffset:80}
+.b73_stage .b73_n{opacity:0;fill:var(--ink-accent2)}
+.b73_stage .b73_flip{opacity:0}
+.b73_stage .b73_bar,.b73_stage .b73_fan,.b73_stage .b73_n,.b73_stage .b73_flip{
+  transition:opacity var(--sentence-action-ms) ease,
+             y var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1),
+             height var(--sentence-action-ms) cubic-bezier(.34,.02,.2,1),
+             stroke-dashoffset var(--sentence-action-ms) ease}
+/* s1 — 同一份技能在同一拍分给三个模型 */
+.b73_stage[data-sentence-step="1"] .b73_fan,.b73_stage[data-sentence-step="2"] .b73_fan,
+.b73_stage[data-sentence-step="3"] .b73_fan,.b73_stage[data-sentence-step="4"] .b73_fan{stroke-dashoffset:0}
+/* s2 — 三段增量同拍长出，越往大模型越长 */
+.b73_stage[data-sentence-step="2"] .b73_g1 .b73_bar,.b73_stage[data-sentence-step="3"] .b73_g1 .b73_bar,
+.b73_stage[data-sentence-step="4"] .b73_g1 .b73_bar{y:112px;height:34px}
+.b73_stage[data-sentence-step="2"] .b73_g2 .b73_bar,.b73_stage[data-sentence-step="3"] .b73_g2 .b73_bar,
+.b73_stage[data-sentence-step="4"] .b73_g2 .b73_bar{y:94px;height:52px}
+.b73_stage[data-sentence-step="2"] .b73_g3 .b73_bar,.b73_stage[data-sentence-step="3"] .b73_g3 .b73_bar,
+.b73_stage[data-sentence-step="4"] .b73_g3 .b73_bar{y:64px;height:82px}
+/* s3 — 三个增量被标出来 */
+.b73_stage[data-sentence-step="3"] .b73_n,.b73_stage[data-sentence-step="4"] .b73_n{opacity:1}
+/* s4 — 反过来的那个例子 */
+.b73_stage[data-sentence-step="4"] .b73_flip{opacity:1}
+
+</style></head>
+<body>
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<button class="back-btn" id="backBtn" onclick="goBack()" type="button" aria-label="返回上一层">&#8592;</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+<div class="layer active" id="layer-overview" data-depth="0">
+<section class="hero">
+<div class="section-inner">
+<p class="hero-tag">arXiv:2608.27454 · cs.AI · 2026-08-27</p>
+<h1 class="hero-title">让 AI 助手把干过的活<br>攒成一份不会丢的知识</h1>
+<p class="hero-sub">给 AI 助手配一份说明书，它就能把领域知识用起来。可说明书大多要人提前写好。
+WikiSkill 让 AI 自己跑任务、自己改说明书，并且在说明书之外单独存一份会一直长大的知识库——
+说明书改坏了会被撤回，这份知识库不会。</p>
+<p class="hero-meta">WikiSkill: Compiling Agent Experience into Persistent Knowledge for Skill Evolution<br>
+Liyan Tang、Cyrus Rashtchian、Chun-Sung Ferng、Andrew Tomkins、Da-Cheng Juan、Tu Vu · Google Research / Virginia Tech<br>
+<a href="https://arxiv.org/abs/2608.27454" target="_blank" rel="noopener">arxiv.org/abs/2608.27454</a></p>
+<p class="scroll-hint">向下滚动 · 每章的图跟着句子一句一句走，也可以按 &#8592; &#8594; 自己翻</p>
+</div></section>
+<section class="feed-section overview-section " data-section="1"
+  data-source-start="00:04:51" data-source-end="00:12:42">
+<div class="section-inner">
+<p class="kicker reveal">CHAPTER 01</p>
+<h2 class="big-statement chapter-question reveal">有了经验变知识这个方向，这份知识眼下怎么配呢？</h2>
+<p class="body-text reveal reveal-d1"><span class="sentence-cue" data-sentence-index="0">AI 助手处理复杂任务的能力越来越强，但真实任务常常需要特定领域的程序知识。</span><span class="sentence-cue" data-sentence-index="1">技能（存放指令的目录）正是用来打包和复用这类知识的。</span><span class="sentence-cue" data-sentence-index="2">手写技能要求提前预判相关需求。</span><span class="sentence-cue" data-sentence-index="3">所以研究者开始让 AI 助手先跑任务、分析成败，再从中改进技能。</span></p>
+<div class="anim-stage reveal reveal-d3" id="overview-1-anim">
+<div class="stage w1_stage" data-page-design="overview-1" data-designer-task="pg-overview-1"
+     data-designer-run="run-w1" data-visual-thesis="任务上的空缺只有一份打包好的说明书能填上；凭空写的那份对不上，靠跑完任务的记录做出来的那份才对得上"
+     data-layout-grammar="左侧任务卡固定，右侧说明书在同一个槽位上换版" data-motion-verb="fit-into-slot"
+     data-visual-subject="任务卡上的空缺" data-sentence-count="4"
+     data-sentence-step="-1" data-sentence-state="initial" data-step-ms="5220,5200,5000,5600">
+<p class="stage-cap">一个技能目录的组成内容</p>
+<svg viewBox="0 0 340 200" role="img" aria-label="任务上的空缺只有一份打包好的说明书能填上；凭空写的那份对不上，靠跑完任务的记录做出来的那份才对得上"><g class="w1_task">
+    <rect class="gl-card" x="18" y="52" width="96" height="76" rx="5"/>
+    <path class="gl-line" d="M27 66 H100 M27 76 H88 M27 118 H92" opacity=".45"/>
+    <path class="w1_slot" d="M30 88 h50 v18 h-50 Z"/>
+    <text class="t-key" x="66" y="44" text-anchor="middle" data-visual-label>真实任务</text>
+    <text class="t-sm w1_gapLbl" x="55" y="101" text-anchor="middle" data-visual-label>缺一段</text>
+  </g>
+
+  <g class="w1_agent">
+    <g class="gl-p w1_ag" transform="translate(150,106) scale(1.0)" ><circle cx="0" cy="-9" r="4.4"/><path d="M0 -4.2 V6 M-6.4 -0.6 H6.4 M0 6 L-4.6 13 M0 6 L4.6 13"/></g>
+    <text class="t-sm" x="150" y="126" text-anchor="middle" data-visual-label>AI 助手</text>
+  </g>
+
+  <g class="w1_kit">
+    <rect class="gl-card w1_kitBox" x="222" y="76" width="80" height="56" rx="4"/>
+    <path class="gl-line" d="M231 90 H288 M231 100 H278" opacity=".55"/>
+    <rect class="w1_script" x="231" y="108" width="26" height="12" rx="2"/>
+    <path class="w1_tab" d="M222 76 v-8 h26 l5 8 Z"/>
+    <text class="t-key" x="262" y="62" text-anchor="middle" data-visual-label>技能目录</text>
+    <path class="w1_key" d="M262 132 v10 h-207 v-36"/>
+  </g>
+
+  <g class="w1_hand">
+    <g class="gl-p w1_author" transform="translate(276,34) scale(0.82)" ><circle cx="0" cy="-9" r="4.4"/><path d="M0 -4.2 V6 M-6.4 -0.6 H6.4 M0 6 L-4.6 13 M0 6 L4.6 13"/></g>
+    <text class="t-sm" x="276" y="12" text-anchor="middle" data-visual-label>人手写</text>
+  </g>
+
+  <g class="w1_exp">
+    <path class="w1_flow" d="M114 140 H262 V136"/>
+    <g class="gl-doc w1_tr1" ><rect x="120" y="148" width="17" height="20" rx="2.5"/><line x1="124" y1="155" x2="133" y2="155"/><line x1="124" y1="161" x2="133" y2="161"/></g>
+    <g class="gl-doc w1_tr2" ><rect x="142" y="148" width="17" height="20" rx="2.5"/><line x1="146" y1="155" x2="155" y2="155"/><line x1="146" y1="161" x2="155" y2="161"/></g>
+    <g class="gl-doc w1_tr3" ><rect x="164" y="148" width="17" height="20" rx="2.5"/><line x1="168" y1="155" x2="177" y2="155"/><line x1="168" y1="161" x2="177" y2="161"/></g>
+    <text class="t-sm" x="222" y="162" text-anchor="middle" data-visual-label>跑完任务的记录</text>
+  </g></svg>
+<div class="stage-subtitle"><p class="stage-sub" data-sentence-index="0">AI 助手处理复杂任务的能力越来越强，但真实任务常常需要特定领域的程序知识。</p><p class="stage-sub" data-sentence-index="1">技能（存放指令的目录）正是用来打包和复用这类知识的。</p><p class="stage-sub" data-sentence-index="2">手写技能要求提前预判相关需求。</p><p class="stage-sub" data-sentence-index="3">所以研究者开始让 AI 助手先跑任务、分析成败，再从中改进技能。</p></div>
+<div class="stage-controls" role="group" aria-label="逐句播放控制">
+<button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+<button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+<button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+<span class="sc-step" aria-live="polite">1 / 4</span></div></div></div>
+
+<div class="source-panel reveal reveal-d4"><button class="source-toggle" type="button" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button><div class="source-body"><span class="source-label">Source · arXiv:2608.27454</span><p>General-purpose AI agents are increasingly capable of performing complex tasks across domains (Patwardhan et al., 2026; Jackson et al., 2025; Merrill et al., 2026; Phan et al., 2026). However, reliably accomplishing real-world tasks often requires domain-specific expertise (e.g., procedural knowledge and workflows). Agent skills (Zhang et al., 2025; Li et al., 2026; Chen et al., 2026a; Liu et al., 2026) provide a lightweight, open format for capturing such expertise without updating model parameters. At its core, a skill packages instructions, scripts, and other resources into a reusable filesystem-based module (i.e., an organized directory) (Zhang et al., 2025; Li et al., 2026; Anthropic, 2026; Xia et al., 2026b). This design makes specialized knowledge consistent, auditable, and reusable across skill-compatible agents. It also supports progressive disclosure (Jiang et al., 2026), where
+agents only load relevant content at any given time, which saves context space. More broadly, skills provide a natural mechanism for accumulating knowledge independently of model parameters.</p><p>Developing effective skills, however, remains challenging. Most agent skills are manually authored, which requires anticipating the procedural knowledge and workflows that an agent will need (Li et al., 2026; Liang et al., 2026; Xu and Yan, 2026). This challenge motivates recent work that iteratively develops agent skills by executing agents on training tasks, analyzing successful and failed trajectories, and refining skills based on the resulting experience (Yuksekgonul et al., 2025; Agrawal et al., 2026; Alzubi et al., 2026; Ni et al., 2026; Ouyang et al., 2026; Yang et al., 2026).</p></div></div>
+</div></section><section class="feed-section overview-section " data-section="2"
+  data-source-start="00:12:42" data-source-end="00:15:56">
+<div class="section-inner">
+<p class="kicker reveal">CHAPTER 02</p>
+<h2 class="big-statement chapter-question reveal">既然说明书要靠人猜，那自己学自己改有没有坑呢？</h2>
+<p class="body-text reveal reveal-d1"><span class="sentence-cue" data-sentence-index="0">EvoSkill、Trace2Skill、SkillOpt 是三套让 AI 自动改说明书的已有做法。</span><span class="sentence-cue" data-sentence-index="1">它们各自的运作方式不同。</span><span class="sentence-cue" data-sentence-index="2">而它们都把 AI 积累的知识留在了历史记录或执行轨迹之类的过程产物里。</span><span class="sentence-cue" data-sentence-index="3">这些做法都没有把 AI 学到的知识单独整理成一套可以持续增长的东西。</span></p>
+<div class="anim-stage reveal reveal-d3" id="overview-2-anim">
+<div class="stage w2_stage" data-page-design="overview-2" data-designer-task="pg-overview-2"
+     data-designer-run="run-w2" data-visual-thesis="三套做法各自积起自己的碎片，中间那个共用的知识位一直是空的"
+     data-layout-grammar="三列并排的方法柱 + 一个居中的空知识位" data-motion-verb="accumulate-beside"
+     data-visual-subject="三套做法各自的碎片" data-sentence-count="4"
+     data-sentence-step="-1" data-sentence-state="initial" data-step-ms="4800,5400,5400,5000">
+<p class="stage-cap">三套做法将知识散落在各类历史记录里</p>
+<svg viewBox="0 0 340 200" role="img" aria-label="三套做法各自积起自己的碎片，中间那个共用的知识位一直是空的"><g class="w2_m1 w2_m">
+    <rect class="gl-card" x="14" y="26" width="88" height="26" rx="4"/>
+    <text class="t-key" x="58" y="43" text-anchor="middle" data-visual-label>EvoSkill</text>
+    <g class="w2_f1">
+      <rect x="20" y="62" width="16" height="9" rx="1.5"/>
+      <rect x="41" y="62" width="16" height="9" rx="1.5"/>
+      <rect x="62" y="62" width="16" height="9" rx="1.5"/>
+      <rect x="30" y="76" width="16" height="9" rx="1.5"/>
+      <rect x="52" y="76" width="16" height="9" rx="1.5"/>
+    </g>
+  </g>
+  <g class="w2_m2 w2_m">
+    <rect class="gl-card" x="118" y="26" width="104" height="26" rx="4"/>
+    <text class="t-key" x="170" y="43" text-anchor="middle" data-visual-label>Trace2Skill</text>
+    <g class="w2_f2">
+      <rect x="128" y="62" width="16" height="9" rx="1.5"/>
+      <rect x="149" y="62" width="16" height="9" rx="1.5"/>
+      <rect x="170" y="62" width="16" height="9" rx="1.5"/>
+      <rect x="191" y="62" width="16" height="9" rx="1.5"/>
+      <rect x="149" y="76" width="16" height="9" rx="1.5"/>
+    </g>
+  </g>
+  <g class="w2_m3 w2_m">
+    <rect class="gl-card" x="238" y="26" width="88" height="26" rx="4"/>
+    <text class="t-key" x="282" y="43" text-anchor="middle" data-visual-label>SkillOpt</text>
+    <g class="w2_f3">
+      <rect x="244" y="62" width="16" height="9" rx="1.5"/>
+      <rect x="265" y="62" width="16" height="9" rx="1.5"/>
+      <rect x="286" y="62" width="16" height="9" rx="1.5"/>
+      <rect x="255" y="76" width="16" height="9" rx="1.5"/>
+      <rect x="276" y="76" width="16" height="9" rx="1.5"/>
+    </g>
+  </g>
+
+  <g class="w2_slotG">
+    <rect class="w2_slot" x="96" y="104" width="148" height="40" rx="5"/>
+    <text class="t-key w2_slotLbl" x="170" y="128" text-anchor="middle" data-visual-label>没有这一格</text>
+  </g>
+  <path class="w2_p1 w2_arc" d="M58 90 C58 104 96 110 118 124"/>
+  <path class="w2_p2 w2_arc" d="M170 90 V104"/>
+  <path class="w2_p3 w2_arc" d="M282 90 C282 104 244 110 222 124"/>
+  <text class="t-sm w2_next" x="170" y="176" text-anchor="middle" data-visual-label>下一轮从头再来</text></svg>
+<div class="stage-subtitle"><p class="stage-sub" data-sentence-index="0">EvoSkill、Trace2Skill、SkillOpt 是三套让 AI 自动改说明书的已有做法。</p><p class="stage-sub" data-sentence-index="1">它们各自的运作方式不同。</p><p class="stage-sub" data-sentence-index="2">而它们都把 AI 积累的知识留在了历史记录或执行轨迹之类的过程产物里。</p><p class="stage-sub" data-sentence-index="3">这些做法都没有把 AI 学到的知识单独整理成一套可以持续增长的东西。</p></div>
+<div class="stage-controls" role="group" aria-label="逐句播放控制">
+<button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+<button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+<button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+<span class="sc-step" aria-live="polite">1 / 4</span></div></div></div>
+
+<div class="source-panel reveal reveal-d4"><button class="source-toggle" type="button" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button><div class="source-body"><span class="source-label">Source · arXiv:2608.27454</span><p>A key design question is how to preserve and organize what an agent learns throughout skill evolution. Prior work addresses this question in different ways. EvoSkill (Alzubi et al., 2026) maintains a cumulative history of prior proposals and their evaluation outcomes; Trace2Skill (Ni et al., 2026) extracts and consolidates lessons across execution trajectories into skill updates; and SkillOpt (Yang et al., 2026) uses rejected-edit feedback and epoch-wise meta guidance. However, these methods do not maintain what has been learned as a separate, evolving knowledge representation. Inspired by Karpathy (2026)’s perspective on LLM Wiki, which advocates compiling experience into persistent, compounding knowledge, we ask: Can agent experience be similarly compiled into persistent knowledge to support long-term skill evolution? We introduce WikiSkill, which adds a structured knowledge layer between raw experience and executable procedures (i.e., skills). This layer allows skill development to build on increasingly well-supported and integrated knowledge across iterations, rather than on knowledge scattered across skill-evolution artifacts.</p></div></div>
+</div></section><section class="feed-section overview-section act2" data-section="3"
+  data-source-start="00:27:25" data-source-end="00:35:24">
+<div class="section-inner">
+<p class="kicker reveal">CHAPTER 03</p>
+<h2 class="big-statement chapter-question reveal">学到的东西散落各处靠不住，但该怎么把它们好好整理呢？</h2>
+<p class="body-text reveal reveal-d1"><span class="sentence-cue" data-sentence-index="0">WikiSkill 把工作区划分成 raw/、wiki/、skills/ 三个独立目录。</span><span class="sentence-cue" data-sentence-index="1">三层互不混用。</span><span class="sentence-cue" data-sentence-index="2">即便某次技能更新被撤回，wiki/ 里积累的知识仍然留存。</span><span class="sentence-cue" data-sentence-index="3">这样的分层让经验可以持续积累，并在此后的每次迭代里支撑技能不断演化。</span></p>
+<div class="anim-stage reveal reveal-d3" id="overview-3-anim">
+<div class="stage w3_stage" data-page-design="overview-3" data-designer-task="pg-overview-3"
+     data-designer-run="run-w3" data-visual-thesis="同一份经验依次落进最底层、被提炼成中层的条目、再把最上层的说明书换成新版"
+     data-layout-grammar="三层上下堆叠的目录，物料自下而上穿过" data-motion-verb="settle-distil-swap"
+     data-visual-subject="一轮跑出来的执行记录" data-sentence-count="4"
+     data-sentence-step="-1" data-sentence-state="initial" data-step-ms="4400,5400,5600,5600">
+<p class="stage-cap">WikiSkill 工作区的三层结构示意图</p>
+<svg viewBox="0 0 340 200" role="img" aria-label="同一份经验依次落进最底层、被提炼成中层的条目、再把最上层的说明书换成新版"><g class="w3_sk w3_lay">
+    <rect class="gl-card" x="52" y="26" width="176" height="40" rx="4"/>
+    <text class="t-key" x="46" y="50" text-anchor="end" data-visual-label>skills/</text>
+    <g class="w3_v1"><g class="gl-doc " ><rect x="64" y="32" width="22" height="28" rx="2.5"/><line x1="68" y1="39" x2="82" y2="39"/><line x1="68" y1="45" x2="82" y2="45"/><line x1="68" y1="51" x2="82" y2="51"/></g></g>
+    <g class="w3_v2"><g class="gl-doc " ><rect x="64" y="32" width="22" height="28" rx="2.5"/><line x1="68" y1="39" x2="82" y2="39"/><line x1="68" y1="45" x2="82" y2="45"/><line x1="68" y1="51" x2="82" y2="51"/></g></g>
+    <rect class="w3_e1" x="98" y="40" width="52" height="6" rx="2"/>
+    <rect class="w3_e2" x="98" y="50" width="38" height="6" rx="2"/>
+  </g>
+
+  <g class="w3_wk w3_lay">
+    <rect class="gl-card" x="52" y="80" width="176" height="40" rx="4"/>
+    <text class="t-key" x="46" y="104" text-anchor="end" data-visual-label>wiki/</text>
+    <rect class="w3_p1 w3_pat" x="62" y="88" width="46" height="24" rx="3"/>
+    <rect class="w3_p2 w3_pat" x="116" y="88" width="46" height="24" rx="3"/>
+    <rect class="w3_p3 w3_pat" x="170" y="88" width="46" height="24" rx="3"/>
+  </g>
+
+  <g class="w3_rw w3_lay">
+    <rect class="gl-card" x="52" y="134" width="176" height="40" rx="4"/>
+    <text class="t-key" x="46" y="158" text-anchor="end" data-visual-label>raw/</text>
+    <g class="gl-doc w3_t1" ><rect x="64" y="140" width="18" height="28" rx="2.5"/><line x1="68" y1="147" x2="78" y2="147"/><line x1="68" y1="153" x2="78" y2="153"/><line x1="68" y1="159" x2="78" y2="159"/></g>
+    <g class="gl-doc w3_t2" ><rect x="88" y="140" width="18" height="28" rx="2.5"/><line x1="92" y1="147" x2="102" y2="147"/><line x1="92" y1="153" x2="102" y2="153"/><line x1="92" y1="159" x2="102" y2="159"/></g>
+    <g class="gl-doc w3_t3" ><rect x="112" y="140" width="18" height="28" rx="2.5"/><line x1="116" y1="147" x2="126" y2="147"/><line x1="116" y1="153" x2="126" y2="153"/><line x1="116" y1="159" x2="126" y2="159"/></g>
+    <g class="w3_lock">
+      <rect x="198" y="148" width="16" height="12" rx="2"/>
+      <path d="M202 148 v-4 a4 4 0 0 1 8 0 v4"/>
+    </g>
+  </g>
+
+  <path class="w3_up1 w3_up" d="M140 134 V120"/>
+  <path class="w3_up2 w3_up" d="M140 80 V66"/>
+
+  <g class="w3_reader">
+    <g class="gl-p " transform="translate(268,52) scale(1.0)" ><circle cx="0" cy="-9" r="4.4"/><path d="M0 -4.2 V6 M-6.4 -0.6 H6.4 M0 6 L-4.6 13 M0 6 L4.6 13"/></g>
+    <text class="t-sm" x="268" y="80" text-anchor="middle" data-visual-label>AI 助手来读</text>
+    <path class="w3_read" d="M228 46 H268 V40"/>
+  </g></svg>
+<div class="stage-subtitle"><p class="stage-sub" data-sentence-index="0">WikiSkill 把工作区划分成 raw/、wiki/、skills/ 三个独立目录。</p><p class="stage-sub" data-sentence-index="1">三层互不混用。</p><p class="stage-sub" data-sentence-index="2">即便某次技能更新被撤回，wiki/ 里积累的知识仍然留存。</p><p class="stage-sub" data-sentence-index="3">这样的分层让经验可以持续积累，并在此后的每次迭代里支撑技能不断演化。</p></div>
+<div class="stage-controls" role="group" aria-label="逐句播放控制">
+<button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+<button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+<button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+<span class="sc-step" aria-live="polite">1 / 4</span></div></div></div>
+<button class="drill-btn reveal reveal-d4" type="button" data-parent-section="3" data-target-layer="layer-s3" onclick="drillDown('layer-s3', this)">深入 &#8595;</button>
+<div class="source-panel reveal reveal-d4"><button class="source-toggle" type="button" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button><div class="source-body"><span class="source-label">Source · arXiv:2608.27454</span><p>WikiSkill organizes the agent workspace into three layers: a Raw Layer that stores immutable execution traces, a Wiki Layer that maintains structured knowledge, and a Skill Layer that contains evolving procedural knowledge (Figure 2). Each iteration involves four components: an Inference Agent that executes rollouts using the current skills, a Wiki Maintainer that consolidates traces into the wiki, a Skill Proposer that uses the wiki and traces to propose skill updates, and a Gating and Rollback mechanism that retains updates that improve validation performance. While skill updates can be rolled back, the wiki persists so that future updates can build on accumulated knowledge. At a high level, these components form a continual loop in which experience is consolidated into persistent knowledge that supports skill evolution.</p><p>The WikiSkill workspace consists of three distinct layers, as shown in Figure 2 and described below.</p><p>This layer stores the raw execution traces \tau_{i}\in\mathcal{T}_{\text{train},k} collected from training examples in each iteration. These traces capture the agent’s complete step-by-step interactions, including reasoning, tool calls, tool-call outputs, and final answers. In our setup, the Wiki Maintainer and Skill Proposer agents can access these raw traces to analyze agent behavior. To preserve the raw history, this layer is immutable.</p><p>This layer compiles raw traces into structured, compounding knowledge and is maintained throughout skill evolution. It contains a pattern directory (patterns/) populated with individual markdown files that document specific failure modes or successful strategies, along with actionable workarounds. Crucially, this layer provides long-term historical awareness across optimization iterations through an evolution log (logs.md, updated by the Wiki Maintainer) and a skill impact tracker (skill-impact.md, updated programmatically by the outer-loop harness after validation gating). These records allow the Wiki Maintainer and Skill Proposer to (1) observe the complete skill acceptance history so that rejected interventions are not proposed again, (2) track what was proposed in prior iterations and whether those proposals succeeded, and (3) identify which errors recur across iterations. The wiki is not reset between iterations, but rather accumulates and compiles knowledge continuously throughout the evolution process.</p><p>This layer contains the active set of evolved skills S, which encode the procedural knowledge that the Inference Agent can read. Each skill directory in WikiSkill contains two files: SKILL.md, which contains the full content of the skill; and PURPOSE.md, which maps the skill back to the motivating Wiki patterns that inspired its creation or modification. A detailed example of interactions between the Skill Layer and the Wiki Layer is illustrated in Figure 3 and explained in the case study in Section 5.3.</p></div></div>
+</div></section><section class="feed-section overview-section act2" data-section="4"
+  data-source-start="00:35:24" data-source-end="00:52:16">
+<div class="section-inner">
+<p class="kicker reveal">CHAPTER 04</p>
+<h2 class="big-statement chapter-question reveal">三层都有了，这三层谁来写、写坏了怎么办呢？</h2>
+<p class="body-text reveal reveal-d1"><span class="sentence-cue" data-sentence-index="0">WikiSkill 每轮有四个角色依次工作。</span><span class="sentence-cue" data-sentence-index="1">Inference Agent 先用 skills/ 里的当前说明书跑任务，并把执行记录写入 raw/，这些记录此后不会被改动。</span><span class="sentence-cue" data-sentence-index="2">Wiki Maintainer 接着读取这些记录，分析失败原因，提取成功策略，并更新 wiki/ 层的知识。</span><span class="sentence-cue" data-sentence-index="3">Skill Proposer 再查阅更新后的 wiki/ 和最新记录，生成或修改 skills/ 里的候选说明书。</span><span class="sentence-cue" data-sentence-index="4">候选说明书在验证集（留作考试的题）上接受检验，不达标即撤回，wiki/ 知识则始终保留。</span></p>
+<div class="anim-stage reveal reveal-d3" id="overview-4-anim">
+<div class="stage w4_stage" data-page-design="overview-4" data-designer-task="pg-overview-4"
+     data-designer-run="run-w4" data-visual-thesis="一块补丁被贴进说明书又被抽走，同一轮攒下的那一格知识留在原处不动"
+     data-layout-grammar="左到右三个角色接力 + 右侧一根只涨不退的知识柱" data-motion-verb="hand-off-then-revert"
+     data-visual-subject="贴进说明书的那块补丁" data-sentence-count="5"
+     data-sentence-step="-1" data-sentence-state="initial" data-step-ms="4800,6480,5760,5520,6200">
+<p class="stage-cap">四个角色每轮按序协作的流程示意</p>
+<svg viewBox="0 0 340 200" role="img" aria-label="一块补丁被贴进说明书又被抽走，同一轮攒下的那一格知识留在原处不动"><g class="w4_r1 w4_role"><g class="gl-p " transform="translate(50,54) scale(1.0)" ><circle cx="0" cy="-9" r="4.4"/><path d="M0 -4.2 V6 M-6.4 -0.6 H6.4 M0 6 L-4.6 13 M0 6 L4.6 13"/></g><text class="t-sm" x="50" y="74" text-anchor="middle" data-visual-label>Inference Agent</text></g>
+  <g class="w4_r2 w4_role"><g class="gl-p " transform="translate(125,54) scale(1.0)" ><circle cx="0" cy="-9" r="4.4"/><path d="M0 -4.2 V6 M-6.4 -0.6 H6.4 M0 6 L-4.6 13 M0 6 L4.6 13"/></g><text class="t-sm" x="125" y="74" text-anchor="middle" data-visual-label>Wiki Maintainer</text></g>
+  <g class="w4_r3 w4_role"><g class="gl-p " transform="translate(204,54) scale(1.0)" ><circle cx="0" cy="-9" r="4.4"/><path d="M0 -4.2 V6 M-6.4 -0.6 H6.4 M0 6 L-4.6 13 M0 6 L4.6 13"/></g><text class="t-sm" x="204" y="74" text-anchor="middle" data-visual-label>Skill Proposer</text></g>
+
+  <g class="w4_traces">
+    <g class="gl-doc " ><rect x="26" y="96" width="14" height="18" rx="2.5"/><line x1="30" y1="103" x2="36" y2="103"/><line x1="30" y1="109" x2="36" y2="109"/></g><g class="gl-doc " ><rect x="44" y="96" width="14" height="18" rx="2.5"/><line x1="48" y1="103" x2="54" y2="103"/><line x1="48" y1="109" x2="54" y2="109"/></g><g class="gl-doc " ><rect x="62" y="96" width="14" height="18" rx="2.5"/><line x1="66" y1="103" x2="72" y2="103"/><line x1="66" y1="109" x2="72" y2="109"/></g>
+    <text class="t-sm" x="50" y="132" text-anchor="middle" data-visual-label>跑完的记录</text>
+  </g>
+
+  <g class="w4_wiki">
+    <rect class="gl-card" x="100" y="90" width="50" height="42" rx="3"/>
+    <rect class="w4_wcell" x="106" y="116" width="38" height="10" rx="2"/>
+    <text class="t-sm" x="125" y="146" text-anchor="middle" data-visual-label>wiki 攒下一格</text>
+  </g>
+
+  <g class="w4_skill">
+    <rect class="gl-card" x="176" y="90" width="56" height="42" rx="3"/>
+    <path class="gl-line" d="M183 100 H225 M183 108 H216" opacity=".5"/>
+    <rect class="w4_patch" x="183" y="116" width="42" height="10" rx="2"/>
+    <text class="t-sm" x="204" y="146" text-anchor="middle" data-visual-label>技能说明书</text>
+  </g>
+
+  <g class="w4_gate">
+    <rect class="gl-card" x="256" y="82" width="64" height="50" rx="4"/>
+    <text class="t-sm" x="288" y="98" text-anchor="middle" data-visual-label>验证集打分</text>
+    <path class="w4_flat" d="M266 120 H310"/>
+    <text class="t-sm w4_verdict" x="288" y="114" text-anchor="middle" data-visual-label>没涨</text>
+    <text class="t-sm" x="288" y="146" text-anchor="middle" data-visual-label>不涨就撤回</text>
+  </g>
+
+  <path class="w4_a1 w4_arr" d="M80 110 H96"/>
+  <path class="w4_a2 w4_arr" d="M154 110 H172"/>
+  <path class="w4_a3 w4_arr" d="M236 110 H252"/></svg>
+<div class="stage-subtitle"><p class="stage-sub" data-sentence-index="0">WikiSkill 每轮有四个角色依次工作。</p><p class="stage-sub" data-sentence-index="1">Inference Agent 先用 skills/ 里的当前说明书跑任务，并把执行记录写入 raw/，这些记录此后不会被改动。</p><p class="stage-sub" data-sentence-index="2">Wiki Maintainer 接着读取这些记录，分析失败原因，提取成功策略，并更新 wiki/ 层的知识。</p><p class="stage-sub" data-sentence-index="3">Skill Proposer 再查阅更新后的 wiki/ 和最新记录，生成或修改 skills/ 里的候选说明书。</p><p class="stage-sub" data-sentence-index="4">候选说明书在验证集（留作考试的题）上接受检验，不达标即撤回，wiki/ 知识则始终保留。</p></div>
+<div class="stage-controls" role="group" aria-label="逐句播放控制">
+<button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+<button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+<button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+<span class="sc-step" aria-live="polite">1 / 5</span></div></div></div>
+<button class="drill-btn reveal reveal-d4" type="button" data-parent-section="4" data-target-layer="layer-s4" onclick="drillDown('layer-s4', this)">深入 &#8595;</button>
+<div class="source-panel reveal reveal-d4"><button class="source-toggle" type="button" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button><div class="source-body"><span class="source-label">Source · arXiv:2608.27454</span><p>The WikiSkill loop consists of four components. In each iteration, the Inference Agent (§3.2.1) executes tasks using the active skills in skills/, producing immutable execution traces in raw/. During the training rollouts, the Inference Agent is restricted from accessing the Wiki Layer, as our ablation study (§5.1) shows that allowing wiki access during training negatively affects skill development. Next, the Wiki Maintainer (§3.2.2) analyzes these raw traces alongside the existing wiki/ layer to diagnose failures and extract successful strategies, updating the persistent pattern catalog and evolution logs. The Skill Proposer (§3.2.3) then reviews the updated wiki and reads execution traces from the latest iteration to generate or modify candidate skills in skills/. Finally, a Gating and Rollback mechanism (§3.2.4) evaluates the candidate skills on a validation split, accepting successful modifications or rolling back the skill set if the changes degrade performance. The entire evolution algorithm is described in Algorithm 1 in Appendix A.</p><p>In each iteration, the Skill Proposer produces an atomic proposal P_{k} that targets a single skill, either creating a new skill or applying an incremental, patch-based edit to the targeted existing skill.</p><p>Once a proposal P_{k} is generated, it is applied to the workspace to yield a candidate skill set S^{\prime}_{k}=\text{Apply}(S_{k-1},P_{k}). The system evaluates S^{\prime}_{k} on the validation split \mathcal{D}_{\text{val}}, obtaining validation traces \mathcal{T}_{\text{val},k} and score \mathcal{R}(\mathcal{T}_{\text{val},k}). The acceptance decision is governed by:</p></div></div>
+</div></section><section class="feed-section overview-section act3" data-section="5"
+  data-source-start="00:52:16" data-source-end="01:05:37">
+<div class="section-inner">
+<p class="kicker reveal">CHAPTER 05</p>
+<h2 class="big-statement chapter-question reveal">好的留下来坏的撤掉，别的方法还能比它更强吗？</h2>
+<p class="body-text reveal reveal-d1"><span class="sentence-cue" data-sentence-index="0">实验覆盖 LiveMath （数学推理）、SealQA （网络搜索）、SpreadSheet （表格操作）、OfficeQA （长文档问答）、ALFWorld （模拟家务）五个任务。</span><span class="sentence-cue" data-sentence-index="1">研究者在 Qwen-3.5-4B/9B、Qwen-3.6-27B、Gemma-4-31B、Gemini-3.5-Flash 五个模型上，将 WikiSkill 与 Trace2Skill、EvoSkill、SkillOpt 及无技能基准对比。</span><span class="sentence-cue" data-sentence-index="2">WikiSkill 的平均得分在五个模型上均最高。</span><span class="sentence-cue" data-sentence-index="3">WikiSkill 比各模型最强的对比方法高 3.3 到 12.0 分，其他框架有时反而使得分下滑。</span></p>
+<div class="anim-stage reveal reveal-d3" id="overview-5-anim">
+<div class="stage w5_stage" data-page-design="overview-5" data-designer-task="pg-overview-5"
+     data-designer-run="run-w5" data-visual-thesis="在同一批任务和同一批模型上，WikiSkill 的量条从同一条基线长得比最强的对手更长"
+     data-layout-grammar="上排任务瓦片、中排模型点，下方两根共基线量条" data-motion-verb="measure-against-common-baseline"
+     data-visual-subject="两根从同一基线长出的平均分量条" data-sentence-count="4"
+     data-sentence-step="-1" data-sentence-state="initial" data-step-ms="8640,8800,5600,5400">
+<p class="stage-cap">五种方法在五个任务五个模型上的得分对比</p>
+<svg viewBox="0 0 340 200" role="img" aria-label="在同一批任务和同一批模型上，WikiSkill 的量条从同一条基线长得比最强的对手更长"><g class="w5_tasks">
+    <g class="w5_tk"><rect class="gl-card" x="12" y="22" width="52" height="30" rx="3"/>
+      <path class="gl-line" d="M22 40 l6 -8 l6 8 M40 32 h14" opacity=".7"/>
+      <text class="t-sm" x="38" y="64" text-anchor="middle" data-visual-label>LiveMath</text></g>
+    <g class="w5_tk"><rect class="gl-card" x="76" y="22" width="52" height="30" rx="3"/>
+      <circle cx="98" cy="35" r="6.5" fill="none" stroke="currentColor" stroke-width="1.7"/>
+      <path class="gl-line" d="M103 40 l8 7" opacity=".7"/>
+      <text class="t-sm" x="102" y="64" text-anchor="middle" data-visual-label>SealQA</text></g>
+    <g class="w5_tk"><rect class="gl-card" x="140" y="22" width="52" height="30" rx="3"/>
+      <path class="gl-line" d="M150 30 h32 M150 38 h32 M150 46 h32 M161 26 v24 M172 26 v24" opacity=".7"/>
+      <text class="t-sm" x="166" y="64" text-anchor="middle" data-visual-label>SpreadSheet</text></g>
+    <g class="w5_tk"><rect class="gl-card" x="204" y="22" width="52" height="30" rx="3"/>
+      <path class="gl-line" d="M216 29 h28 M216 36 h28 M216 43 h18" opacity=".7"/>
+      <text class="t-sm" x="230" y="64" text-anchor="middle" data-visual-label>OfficeQA</text></g>
+    <g class="w5_tk"><rect class="gl-card" x="268" y="22" width="52" height="30" rx="3"/>
+      <path class="gl-line" d="M278 46 v-12 l8 -8 l8 8 v12 Z" opacity=".7"/>
+      <text class="t-sm" x="294" y="64" text-anchor="middle" data-visual-label>ALFWorld</text></g>
+  </g>
+
+  <g class="w5_models">
+    <circle class="w5_md" cx="112" cy="86" r="6"/>
+    <circle class="w5_md" cx="140" cy="86" r="6"/>
+    <circle class="w5_md" cx="168" cy="86" r="6"/>
+    <circle class="w5_md" cx="196" cy="86" r="6"/>
+    <circle class="w5_md" cx="224" cy="86" r="6"/>
+    <text class="t-sm" x="72" y="90" text-anchor="end" data-visual-label>5 个模型</text>
+  </g>
+
+  <g class="w5_chart">
+    <path class="w5_base" d="M74 108 V172"/>
+    <rect class="w5_barR" x="74" y="116" width="10" height="16" rx="2"/>
+    <rect class="w5_barW" x="74" y="142" width="10" height="16" rx="2"/>
+    <text class="t-sm w5_lblR" x="70" y="128" text-anchor="end" data-visual-label>最强的对手</text>
+    <text class="t-sm w5_lblW" x="70" y="154" text-anchor="end" data-visual-label>WikiSkill</text>
+    <g class="w5_gap">
+      <path class="w5_gapline" d="M212 112 V162"/>
+      <path class="w5_gapline" d="M268 112 V162"/>
+      <path class="w5_gaparr" d="M212 168 H268"/>
+      <text class="t-num" x="240" y="106" text-anchor="middle" data-visual-label>+3.3 ~ +12.0</text>
+    </g>
+  </g></svg>
+<div class="stage-subtitle"><p class="stage-sub" data-sentence-index="0">实验覆盖 LiveMath （数学推理）、SealQA （网络搜索）、SpreadSheet （表格操作）、OfficeQA （长文档问答）、ALFWorld （模拟家务）五个任务。</p><p class="stage-sub" data-sentence-index="1">研究者在 Qwen-3.5-4B/9B、Qwen-3.6-27B、Gemma-4-31B、Gemini-3.5-Flash 五个模型上，将 WikiSkill 与 Trace2Skill、EvoSkill、SkillOpt 及无技能基准对比。</p><p class="stage-sub" data-sentence-index="2">WikiSkill 的平均得分在五个模型上均最高。</p><p class="stage-sub" data-sentence-index="3">WikiSkill 比各模型最强的对比方法高 3.3 到 12.0 分，其他框架有时反而使得分下滑。</p></div>
+<div class="stage-controls" role="group" aria-label="逐句播放控制">
+<button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+<button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+<button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+<span class="sc-step" aria-live="polite">1 / 4</span></div></div></div>
+
+<div class="source-panel reveal reveal-d4"><button class="source-toggle" type="button" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button><div class="source-body"><span class="source-label">Source · arXiv:2608.27454</span><p>We evaluate across five benchmarks spanning diverse domains: mathematical reasoning (LiveMathematicianBench (LiveMath) (He et al., 2026)), web search (SealQA (Pham et al., 2026)), spreadsheet manipulation (SpreadsheetBench (SpreadSheet) (Ma et al., 2024)), long-context document question answering OfficeQA (Singhvi et al., 2025)), and interactive embodied tasks (ALFWorld (Shridhar et al., 2021)). Dataset details and statistics are provided in Appendix B.</p><p>We compare WikiSkill against three representative skill-evolution baselines, including Trace2Skill (Ni et al., 2026), EvoSkill (Alzubi et al., 2026), and SkillOpt (Yang et al., 2026), all of which share the same general loop of rolling out an agent, analyzing execution traces, proposing skill modifications, and gating changes via validation. We also evaluate each model without skills as a no-skill baseline. A detailed description and an analysis of the complexity of optimizer API calls across these frameworks are provided in Appendix D. We focus our comparison on dedicated skill-evolution frameworks rather than general automatic prompt optimizers (e.g., GEPA (Agrawal et al., 2026)), following prior work that shows specialized skill-evolution pipelines consistently outperform general prompt optimization methods (Yang et al., 2026).</p><p>We experiment with both closed and open-weight models to evaluate WikiSkill and the baselines. For closed models, we use Gemini-3.5-Flash (Google DeepMind, 2026). For open-weight models, we evaluate Qwen-3.5-4B/9B-Instruct (Qwen Team, 2026a), Qwen-3.6-27B (Qwen Team, 2026b), and Gemma-4-31B-It (Gemma Team, 2026), which we deploy using the vLLM framework (Kwon et al., 2023).</p><p>[FIGCAP] Table 1: Method comparison across inference models and test sets. Each horizontal block evaluates a specific inference model without skills (No skill) and with skills developed by different skill-evolution methods. To ensure a fair comparison, all skill-evolution methods start with an empty skill set, and evolved skills are injected into the Inference Agent’s prompt at inference time. All reported scores are the average test performance across three independent runs of the full evolution process. Our method (WikiSkill) is highlighted. Bold indicates the best performance for each dataset; multiple bold results indicate methods that are not significantly different from the best under a paired bootstrap test with 1,000 iterations (p</p><p>As shown in Table 1, WikiSkill achieves the highest average performance across all five models. Compared with the strongest competing skill-evolution method for each model, WikiSkill improves average performance by 3.3, 5.1, 10.0, 5.8, and 12.0 points for Qwen-3.5-4B, Qwen-3.5-9B, Qwen-3.6-27B, Gemma-4-31B, and Gemini-3.5-Flash, respectively. These improvements are consistent across settings: WikiSkill improves over the no-skill baseline in most model-dataset pairs and matches or exceeds the strongest competing method across all models in the average performance across 5 datasets. The improvements also span diverse domains and can be substantial. For example, WikiSkill improves Gemini-3.5-Flash from 33.0% to 72.6% on LiveMath and from 50.5% to 76.6% on SpreadSheet, while improving Qwen-3.6-27B from 52.8% to 77.6% on ALFWorld. In contrast, existing skill-evolution methods are less consistent. For example, EvoSkill improves Qwen-9B substantially on LiveMath (28.2% \rightarrow 58.1%) but degrades Gemma-4-31B on the same benchmark (33.9 % \rightarrow 29.8%), while SkillOpt degrades Gemini-3.5-Flash on SealQA (29.4 % \rightarrow 28.2%). These results show that WikiSkill produces both stronger and more reliable improvements across settings.</p></div></div>
+</div></section><section class="feed-section overview-section act3" data-section="6"
+  data-source-start="01:05:37" data-source-end="01:19:41">
+<div class="section-inner">
+<p class="kicker reveal">CHAPTER 06</p>
+<h2 class="big-statement chapter-question reveal">已全面胜过对手，但大小不同的系统各得多少好处呢？</h2>
+<p class="body-text reveal reveal-d1"><span class="sentence-cue" data-sentence-index="0">在 Qwen 家族中，WikiSkill 给 Qwen-3.5-4B、Qwen-3.5-9B、Qwen-3.6-27B（参数量从小到大）带来的平均分提升依次为 12.3、17.5、23.9 个百分点。</span><span class="sentence-cue" data-sentence-index="1">在 SpreadSheet 上，WikiSkill 让三者分别提升了 6.5、9.3、40.9 个百分点。</span><span class="sentence-cue" data-sentence-index="2">配上 WikiSkill 的 Qwen-3.5-9B 平均准确率达到 47.4%，超过了未配技能的 Qwen-3.6-27B（39.4%），Qwen-3.5-4B 配上 WikiSkill 后也达到了 38.5%。</span><span class="sentence-cue" data-sentence-index="3">这一结果提示，模型能力与技能知识互补。</span></p>
+<div class="anim-stage reveal reveal-d3" id="overview-6-anim">
+<div class="stage w6_stage" data-page-design="overview-6" data-designer-task="pg-overview-6"
+     data-designer-run="run-w6" data-visual-thesis="三个个头不同的模型从同一条基线一起长，带技能那一截越往大模型越长，9B 带技能的那一截越过了 27B 不带技能的高度"
+     data-layout-grammar="三组共基线的柱，第二段叠在第一段之上" data-motion-verb="stack-and-overtake"
+     data-visual-subject="每个模型加上技能之后多出来的那一截" data-sentence-count="4"
+     data-sentence-step="-1" data-sentence-state="initial" data-step-ms="8640,5600,8520,5800">
+<p class="stage-cap">模型越大，WikiSkill 带来的提升越显著</p>
+<svg viewBox="0 0 340 200" role="img" aria-label="三个个头不同的模型从同一条基线一起长，带技能那一截越往大模型越长，9B 带技能的那一截越过了 27B 不带技能的高度"><path class="w6_base" d="M76 170 H320"/>
+  <g class="w6_g1">
+    <rect class="w6_no" x="92" y="144" width="46" height="26" rx="2"/>
+    <rect class="w6_sk w6_s1" x="92" y="144" width="46" height="0" rx="2"/>
+    <text class="t-sm" x="115" y="184" text-anchor="middle" data-visual-label>4B</text>
+    <text class="t-num w6_d1 w6_d" x="115" y="106" text-anchor="middle" data-visual-label>+12.3</text>
+  </g>
+  <g class="w6_g2">
+    <rect class="w6_no" x="180" y="140" width="46" height="30" rx="2"/>
+    <rect class="w6_sk w6_s2" x="180" y="140" width="46" height="0" rx="2"/>
+    <text class="t-sm" x="203" y="184" text-anchor="middle" data-visual-label>9B</text>
+    <text class="t-num w6_d2 w6_d" x="203" y="88" text-anchor="middle" data-visual-label>+17.5</text>
+  </g>
+  <g class="w6_g3">
+    <rect class="w6_no" x="262" y="130" width="46" height="40" rx="2"/>
+    <rect class="w6_sk w6_s3" x="262" y="130" width="46" height="0" rx="2"/>
+    <text class="t-sm" x="285" y="184" text-anchor="middle" data-visual-label>27B</text>
+    <text class="t-num w6_d3 w6_d" x="285" y="60" text-anchor="middle" data-visual-label>+23.9</text>
+  </g>
+  <g class="w6_cross">
+    <path class="w6_line" d="M84 94 H312"/>
+  <path class="w6_line w6_line2" d="M84 130 H312"/>
+    <text class="t-sm" x="70" y="92" text-anchor="end" data-visual-label>9B 带技能</text>
+  <text class="t-num" x="244" y="88" text-anchor="middle" data-visual-label>47.4</text>
+    <text class="t-sm" x="70" y="134" text-anchor="end" data-visual-label>27B 不带技能</text>
+  <text class="t-num" x="244" y="126" text-anchor="middle" data-visual-label>39.4</text>
+  </g></svg>
+<div class="stage-subtitle"><p class="stage-sub" data-sentence-index="0">在 Qwen 家族中，WikiSkill 给 Qwen-3.5-4B、Qwen-3.5-9B、Qwen-3.6-27B（参数量从小到大）带来的平均分提升依次为 12.3、17.5、23.9 个百分点。</p><p class="stage-sub" data-sentence-index="1">在 SpreadSheet 上，WikiSkill 让三者分别提升了 6.5、9.3、40.9 个百分点。</p><p class="stage-sub" data-sentence-index="2">配上 WikiSkill 的 Qwen-3.5-9B 平均准确率达到 47.4%，超过了未配技能的 Qwen-3.6-27B（39.4%），Qwen-3.5-4B 配上 WikiSkill 后也达到了 38.5%。</p><p class="stage-sub" data-sentence-index="3">这一结果提示，模型能力与技能知识互补。</p></div>
+<div class="stage-controls" role="group" aria-label="逐句播放控制">
+<button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+<button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+<button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+<span class="sc-step" aria-live="polite">1 / 4</span></div></div></div>
+
+<div class="source-panel reveal reveal-d4"><button class="source-toggle" type="button" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button><div class="source-body"><span class="source-label">Source · arXiv:2608.27454</span><p>Within the Qwen family, the average improvement from WikiSkill increases with model scale, from +12.3 points for Qwen-3.5-4B to +17.5 points for Qwen-3.5-9B and +23.9 points for Qwen-3.6-27B. This trend is particularly pronounced on SpreadSheet, where WikiSkill improves the three models by +6.5, +9.3, and +40.9 points, respectively, showing that the benefits of skill evolution can increase substantially with model scale. At the same time, evolved skills can compensate for substantial differences in model scale: Qwen-3.5-9B with WikiSkill reaches 47.4% average accuracy, outperforming Qwen-3.6-27B without skills at 39.4%, while Qwen-3.5-4B with WikiSkill reaches 38.5%. Our results suggest that model capability and evolved procedural knowledge provide complementary sources of performance: stronger models can derive greater value from skill evolution by developing and executing more effective skills, while effective skills can allow smaller models to outperform substantially larger models that do not use skills.</p><p>Our results suggest that some datasets are more amenable to skill evolution than others. For Qwen-3.6-27B, WikiSkill improves performance by 11.6 points on OfficeQA and 14.1 points on SealQA, compared with 24.8 points on ALFWorld, 28.0 points on LiveMath, and 40.9 points on SpreadSheet. Similar differences appear across other models. LiveMath consistently benefits from skill evolution, with gains ranging from 20.6 to 39.6 points across all five models, while ALFWorld yields gains of 14.0 to 29.3 points across the four models for which WikiSkill evolves skills (excluding Gemini-3.5-Flash due to early stopping). In contrast, OfficeQA presents unique challenges due to its long-context document-retrieval requirements. Larger models effectively leverage evolved search workflows to navigate lengthy documents (e.g., +11.6 points for Qwen-3.6-27B and +12.1 points for Gemini-3.5-Flash), whereas Qwen-3.5-4B struggles to execute these multi-step search workflows across long contexts and reverts to its default reading behavior, resulting in slight degradation.</p></div></div>
+</div></section><section class="feed-section overview-section act3" data-section="7"
+  data-source-start="01:19:41" data-source-end="01:28:19">
+<div class="section-inner">
+<p class="kicker reveal">CHAPTER 07</p>
+<h2 class="big-statement chapter-question reveal">小的配上本事也能赢大的，于是这套本事能换人用吗？</h2>
+<p class="body-text reveal reveal-d1"><span class="sentence-cue" data-sentence-index="0">WikiSkill 为某个模型练出的技能，可以搬给另一个模型去运行任务。</span><span class="sentence-cue" data-sentence-index="1">搬过来的技能，常常能超过没有技能的情况，也超过自己练出的技能。</span><span class="sentence-cue" data-sentence-index="2">小模型练的技能也能帮到大模型。</span><span class="sentence-cue" data-sentence-index="3">练出技能的模型，和用这份技能的模型，并不需要是同一个。</span></p>
+<div class="anim-stage reveal reveal-d3" id="overview-7-anim">
+<div class="stage w7_stage" data-page-design="overview-7" data-designer-task="pg-overview-7"
+     data-designer-run="run-w7" data-visual-thesis="同一份技能从练它的模型手上跨到另一个模型手上，把那个模型的分数推过它自己练出来的高度，但换一个来源就可能把分数推下去"
+     data-layout-grammar="左源右靶，技能卡在两者之间跨界，靶侧一根共基线的分数柱" data-motion-verb="carry-across"
+     data-visual-subject="那一份被搬走的技能" data-sentence-count="4"
+     data-sentence-step="-1" data-sentence-state="initial" data-step-ms="4800,5600,5800,5400">
+<p class="stage-cap">各模型之间搬用技能后的成绩对比</p>
+<svg viewBox="0 0 340 200" role="img" aria-label="同一份技能从练它的模型手上跨到另一个模型手上，把那个模型的分数推过它自己练出来的高度，但换一个来源就可能把分数推下去"><g class="w7_src">
+    <g class="gl-p " transform="translate(42,60) scale(1.0)" ><circle cx="0" cy="-9" r="4.4"/><path d="M0 -4.2 V6 M-6.4 -0.6 H6.4 M0 6 L-4.6 13 M0 6 L4.6 13"/></g>
+    <text class="t-sm" x="42" y="80" text-anchor="middle" data-visual-label>Qwen-3.6-27B</text>
+    <text class="t-sm" x="42" y="92" text-anchor="middle" data-visual-label>练出技能</text>
+  </g>
+  <g class="w7_dst">
+    <g class="gl-p " transform="translate(292,60) scale(1.0)" ><circle cx="0" cy="-9" r="4.4"/><path d="M0 -4.2 V6 M-6.4 -0.6 H6.4 M0 6 L-4.6 13 M0 6 L4.6 13"/></g>
+    <text class="t-sm" x="292" y="80" text-anchor="middle" data-visual-label>Qwen-3.5-9B</text>
+  </g>
+  <path class="w7_div" d="M167 20 V150"/>
+
+  <g class="w7_card">
+    <rect class="gl-card" x="66" y="40" width="46" height="34" rx="3"/>
+    <path class="gl-line" d="M73 50 H105 M73 58 H98 M73 66 H101" opacity=".6"/>
+  </g>
+
+  <g class="w7_score">
+    <path class="w7_base" d="M196 148 H326"/>
+    <rect class="w7_self" x="204" y="120" width="34" height="28" rx="2"/>
+    <rect class="w7_moved" x="250" y="148" width="34" height="0" rx="2"/>
+    <path class="w7_selfline" d="M198 120 H322"/>
+    <text class="t-sm" x="221" y="162" text-anchor="middle" data-visual-label>自己练 63.4</text>
+    <text class="t-num w7_num" x="267" y="94" text-anchor="middle" data-visual-label>70.2</text>
+  </g>
+
+  <g class="w7_bad">
+    <path class="w7_badarr" d="M120 168 H206"/>
+    <text class="t-sm" x="120" y="184" text-anchor="start" data-visual-label>换一个来源，也可能掉下去</text>
+  </g></svg>
+<div class="stage-subtitle"><p class="stage-sub" data-sentence-index="0">WikiSkill 为某个模型练出的技能，可以搬给另一个模型去运行任务。</p><p class="stage-sub" data-sentence-index="1">搬过来的技能，常常能超过没有技能的情况，也超过自己练出的技能。</p><p class="stage-sub" data-sentence-index="2">小模型练的技能也能帮到大模型。</p><p class="stage-sub" data-sentence-index="3">练出技能的模型，和用这份技能的模型，并不需要是同一个。</p></div>
+<div class="stage-controls" role="group" aria-label="逐句播放控制">
+<button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+<button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+<button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+<span class="sc-step" aria-live="polite">1 / 4</span></div></div></div>
+<button class="drill-btn reveal reveal-d4" type="button" data-parent-section="7" data-target-layer="layer-s7" onclick="drillDown('layer-s7', this)">深入 &#8595;</button>
+<div class="source-panel reveal reveal-d4"><button class="source-toggle" type="button" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button><div class="source-body"><span class="source-label">Source · arXiv:2608.27454</span><p>Table 2 evaluates how skills evolved by WikiSkill transfer across inference models when developed using different source models. Transferred skills frequently outperform both the no-skill baseline and self-evolved skills. For example, Qwen-3.6-27B skills improve Qwen-3.5-9B to 50.5% on SpreadSheet, compared with 24.3% without skills and 33.6% with self-evolved skills, and improve Gemma-4-31B to 73.7% on LiveMath, compared with 33.9% and 56.7%, respectively. Notably, effective transfer also occurs from smaller to larger models: Qwen-3.5-4B skills improve Gemma-4-31B to 73.1% on LiveMath and 66.9% on ALFWorld. Our results indicate that stronger source models do not necessarily produce better skills and that procedural knowledge developed by one model’s experience can transfer across model scales and families.</p></div></div>
+</div></section><section class="feed-section overview-section dark" data-section="8"
+  data-source-start="01:28:19" data-source-end="01:47:45">
+<div class="section-inner">
+<p class="kicker reveal">CHAPTER 08</p>
+<h2 class="big-statement chapter-question reveal">既然借来的更好用，那好处真是靠那份积累吗？</h2>
+<p class="body-text reveal reveal-d1"><span class="sentence-cue" data-sentence-index="0">研究者用 Gemini-3.5-Flash 做了消融（拆掉一部分再测），把 Skill Proposer 和 Inference Agent 的 wiki 权限分别关掉，得到四种配置。</span><span class="sentence-cue" data-sentence-index="1">给 Skill Proposer 读 wiki 的权限后，平均得分从 48.7% 升到 63.7%，提高了 15.0 个百分点。</span><span class="sentence-cue" data-sentence-index="2">LiveMath 的得分从 51.3% 升到 72.6%，SpreadsheetBench 的得分从 49.9% 升到 76.6%。</span><span class="sentence-cue" data-sentence-index="3">反过来，Inference Agent 也能读 wiki 时，平均分反而从 63.7% 降到 60.9%。</span><span class="sentence-cue" data-sentence-index="4">研究者推测，Inference Agent 可能直接从 wiki 取得信息，这可能使训练轨迹对技能开发的价值降低。</span></p>
+<div class="anim-stage reveal reveal-d3" id="overview-8-anim">
+<div class="stage w8_stage" data-page-design="overview-8" data-designer-task="pg-overview-8"
+     data-designer-run="run-w8" data-visual-thesis="同一根平均分量条，随着 wiki 接到谁身上而两次改变长度"
+     data-layout-grammar="两条可接可断的连线 + 一根共基线的分数条" data-motion-verb="connect-and-disconnect"
+     data-visual-subject="那根平均分量条" data-sentence-count="5"
+     data-sentence-step="-1" data-sentence-state="initial" data-step-ms="7920,5600,5220,6000,6180">
+<p class="stage-cap">四种配置下消融 wiki 权限的得分对比</p>
+<svg viewBox="0 0 340 200" role="img" aria-label="同一根平均分量条，随着 wiki 接到谁身上而两次改变长度"><g class="w8_wiki">
+    <rect class="gl-card" x="130" y="24" width="76" height="40" rx="4"/>
+    <rect class="w8_wc" x="137" y="32" width="28" height="10" rx="2"/>
+    <rect class="w8_wc" x="171" y="32" width="28" height="10" rx="2"/>
+    <rect class="w8_wc" x="137" y="47" width="28" height="10" rx="2"/>
+    <rect class="w8_wc" x="171" y="47" width="28" height="10" rx="2"/>
+    <text class="t-key" x="168" y="16" text-anchor="middle" data-visual-label>wiki</text>
+  </g>
+
+  <g class="w8_prop">
+    <g class="gl-p " transform="translate(272,106) scale(1.0)" ><circle cx="0" cy="-9" r="4.4"/><path d="M0 -4.2 V6 M-6.4 -0.6 H6.4 M0 6 L-4.6 13 M0 6 L4.6 13"/></g>
+    <text class="t-sm" x="272" y="126" text-anchor="middle" data-visual-label>Skill Proposer</text>
+  </g>
+  <g class="w8_inf">
+    <g class="gl-p " transform="translate(58,106) scale(1.0)" ><circle cx="0" cy="-9" r="4.4"/><path d="M0 -4.2 V6 M-6.4 -0.6 H6.4 M0 6 L-4.6 13 M0 6 L4.6 13"/></g>
+    <text class="t-sm" x="58" y="126" text-anchor="middle" data-visual-label>Inference Agent</text>
+  </g>
+
+  <path class="w8_linkP" d="M206 52 H272 V92"/>
+  <path class="w8_linkI" d="M130 52 H58 V92"/>
+
+  <g class="w8_bar">
+    <path class="w8_base" d="M62 176 H300"/>
+    <rect class="w8_fill" x="62" y="150" width="212" height="20" rx="3"/>
+    <text class="t-num w8_v637" x="272" y="144" text-anchor="end" data-visual-label>63.7</text>
+    <text class="t-num w8_v487" x="172" y="144" text-anchor="end" data-visual-label>48.7</text>
+    <text class="t-num w8_v609" x="254" y="144" text-anchor="end" data-visual-label>60.9</text>
+    <g class="w8_drop">
+      <path class="w8_droparr" d="M272 140 H176"/>
+      <text class="t-num" x="224" y="134" text-anchor="middle" data-visual-label>-15.0</text>
+    </g>
+  </g></svg>
+<div class="stage-subtitle"><p class="stage-sub" data-sentence-index="0">研究者用 Gemini-3.5-Flash 做了消融（拆掉一部分再测），把 Skill Proposer 和 Inference Agent 的 wiki 权限分别关掉，得到四种配置。</p><p class="stage-sub" data-sentence-index="1">给 Skill Proposer 读 wiki 的权限后，平均得分从 48.7% 升到 63.7%，提高了 15.0 个百分点。</p><p class="stage-sub" data-sentence-index="2">LiveMath 的得分从 51.3% 升到 72.6%，SpreadsheetBench 的得分从 49.9% 升到 76.6%。</p><p class="stage-sub" data-sentence-index="3">反过来，Inference Agent 也能读 wiki 时，平均分反而从 63.7% 降到 60.9%。</p><p class="stage-sub" data-sentence-index="4">研究者推测，Inference Agent 可能直接从 wiki 取得信息，这可能使训练轨迹对技能开发的价值降低。</p></div>
+<div class="stage-controls" role="group" aria-label="逐句播放控制">
+<button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+<button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+<button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+<span class="sc-step" aria-live="polite">1 / 5</span></div></div></div>
+
+<div class="source-panel reveal reveal-d4"><button class="source-toggle" type="button" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button><div class="source-body"><span class="source-label">Source · arXiv:2608.27454</span><p>To understand where persistent knowledge contributes to skill evolution, we ablate wiki access for the two components that can use it during evolution (Table 3). Specifically, using Gemini-3.5-Flash, we independently vary wiki access for the Inference Agent during training rollouts and the Skill Proposer during skill development, which results in four configurations. When the Skill Proposer has no wiki access, we also remove the Wiki Maintainer, eliminating persistent knowledge accumulation across iterations. Our default WikiSkill configuration gives wiki access to the Skill Proposer but not the Inference Agent.</p><p>As shown in Table 3, when wiki access for the Inference Agent is disabled, providing the Skill Proposer with access to the persistent wiki increases average benchmark performance from 48.7% to 63.7% (+15.0%), with substantial gains on LiveMath (51.3% to 72.6%) and SpreadsheetBench (49.9% to 76.6%). Without persistent knowledge accumulated across iterations, the Skill Proposer struggles to resolve intricate failure modes.</p><p>When the Skill Proposer has access to the persistent wiki, providing the Inference Agent with wiki access during training rollouts reduces average benchmark performance from 63.7% to 60.9%, with a substantial drop on LiveMath from 72.6% to 64.8%. We hypothesize that when the Inference Agent has access to both skills and the wiki during training rollouts, some task-solving knowledge may be obtained directly from the wiki rather than the skills, which can make the resulting trajectories less informative for skill development.</p><p>To illustrate how the Wiki and Skill Layers interact during evolution, we trace a concrete example from Qwen-3.6-27B on ALFWorld, as shown in Figure 3 (simplified for presentation).</p><p>At Iteration 0, the Wiki Maintainer identifies a basic looping behavior (take-examine-move-loop.md), while the Skill Proposer proposes goal-directed-action, which fails to improve performance on the validation set and is rejected. Crucially, skill-impact.md preserves the proposal diff and rejection outcome, allowing subsequent skill updates to account for this failed attempt.</p><p>Informed by this audit trail, the Skill Proposer creates break-repetition-loop at Iteration 1 with a concrete action rule (Never Return an Item to Its Origin Location), which is accepted. As new loop variants emerge across rollouts (multi-operation-loop.md), the Wiki Maintainer accumulates new evidence in the persistent wiki. Guided by these accumulated wiki patterns and newly stored trajectories (not shown in the figure), the Skill Proposer further refines the skill at Iteration 4 with a new rule (Each Operation Type ONCE Per Item). This example illustrates how persistent knowledge from prior iterations informs subsequent skill refinement.</p></div></div>
+</div></section>
+</div>
+<div class="layer branch-layer" id="layer-s3" data-depth="1" data-parent-section="3"><section class="feed-section branch-page act2"
+  data-parent-section="3" data-page="3.1"
+  data-source-start="00:31:15" data-source-end="00:32:37">
+<div class="section-inner">
+<p class="page-num reveal">3.1 / 3.3</p>
+<h2 class="big-statement reveal">raw/：一份谁都不许改的原始记录</h2>
+<p class="body-text reveal reveal-d1"><span class="sentence-cue" data-sentence-index="0">raw/ 在每次迭代中存储执行记录（智能体步骤日志），来源是当轮的训练样本。</span><span class="sentence-cue" data-sentence-index="1">每条记录完整地捕捉推理过程、工具调用、工具返回结果和最终答案。</span><span class="sentence-cue" data-sentence-index="2">Wiki Maintainer 与 Skill Proposer 均可读取记录以分析智能体行为。</span><span class="sentence-cue" data-sentence-index="3">为了保全这份原始历史，raw/ 被设计为不允许修改的只读层。</span></p>
+<div class="anim-stage reveal reveal-d3" id="3_1-anim">
+<div class="stage b31_stage" data-page-design="3.1" data-designer-task="pg-3.1"
+     data-designer-run="run-b31" data-visual-thesis="一份记录把整段过程原样留在最底层，两个角色都能读它，但谁都不能改它"
+     data-layout-grammar="居中一份摊开的记录，两侧各一个读者，右上一把锁" data-motion-verb="open-read-seal"
+     data-visual-subject="那一份执行记录" data-sentence-count="4"
+     data-sentence-step="-1" data-sentence-state="initial" data-step-ms="5100,5600,5200,5400">
+<p class="stage-cap">raw/ 的内容、读取方与只读限制</p>
+<svg viewBox="0 0 340 200" role="img" aria-label="一份记录把整段过程原样留在最底层，两个角色都能读它，但谁都不能改它"><g class="b31_rec">
+    <rect class="gl-card" x="112" y="34" width="116" height="112" rx="4"/>
+    <text class="t-key" x="170" y="26" text-anchor="middle" data-visual-label>一份执行记录</text>
+    <g class="b31_p1 b31_part"><rect x="120" y="44" width="100" height="20" rx="2"/>
+      <text class="t-sm" x="170" y="58" text-anchor="middle" data-visual-label>它怎么想的</text></g>
+    <g class="b31_p2 b31_part"><rect x="120" y="68" width="100" height="20" rx="2"/>
+      <text class="t-sm" x="170" y="82" text-anchor="middle" data-visual-label>调用了什么工具</text></g>
+    <g class="b31_p3 b31_part"><rect x="120" y="92" width="100" height="20" rx="2"/>
+      <text class="t-sm" x="170" y="106" text-anchor="middle" data-visual-label>工具返回什么</text></g>
+    <g class="b31_p4 b31_part"><rect x="120" y="116" width="100" height="20" rx="2"/>
+      <text class="t-sm" x="170" y="130" text-anchor="middle" data-visual-label>最后给的答案</text></g>
+  </g>
+  <g class="b31_r1 b31_reader"><g class="gl-p " transform="translate(40,92) scale(1.0)" ><circle cx="0" cy="-9" r="4.4"/><path d="M0 -4.2 V6 M-6.4 -0.6 H6.4 M0 6 L-4.6 13 M0 6 L4.6 13"/></g>
+    <text class="t-sm" x="40" y="112" text-anchor="middle" data-visual-label>Wiki Maintainer</text></g>
+  <g class="b31_r2 b31_reader"><g class="gl-p " transform="translate(300,92) scale(1.0)" ><circle cx="0" cy="-9" r="4.4"/><path d="M0 -4.2 V6 M-6.4 -0.6 H6.4 M0 6 L-4.6 13 M0 6 L4.6 13"/></g>
+    <text class="t-sm" x="300" y="112" text-anchor="middle" data-visual-label>Skill Proposer</text></g>
+  <path class="b31_l1 b31_link" d="M56 86 H112"/>
+  <path class="b31_l2 b31_link" d="M284 86 H228"/>
+  <g class="b31_lock"><rect x="238" y="40" width="18" height="14" rx="2"/>
+    <path d="M242 40 v-5 a5 5 0 0 1 10 0 v5"/>
+    <text class="t-sm" x="247" y="70" text-anchor="middle" data-visual-label>不许改</text></g></svg>
+<div class="stage-subtitle"><p class="stage-sub" data-sentence-index="0">raw/ 在每次迭代中存储执行记录（智能体步骤日志），来源是当轮的训练样本。</p><p class="stage-sub" data-sentence-index="1">每条记录完整地捕捉推理过程、工具调用、工具返回结果和最终答案。</p><p class="stage-sub" data-sentence-index="2">Wiki Maintainer 与 Skill Proposer 均可读取记录以分析智能体行为。</p><p class="stage-sub" data-sentence-index="3">为了保全这份原始历史，raw/ 被设计为不允许修改的只读层。</p></div>
+<div class="stage-controls" role="group" aria-label="逐句播放控制">
+<button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+<button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+<button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+<span class="sc-step" aria-live="polite">1 / 4</span></div></div></div>
+<div class="source-panel reveal reveal-d4"><button class="source-toggle" type="button" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button><div class="source-body"><span class="source-label">Source · arXiv:2608.27454</span><p>This layer stores the raw execution traces \tau_{i}\in\mathcal{T}_{\text{train},k} collected from training examples in each iteration. These traces capture the agent’s complete step-by-step interactions, including reasoning, tool calls, tool-call outputs, and final answers. In our setup, the Wiki Maintainer and Skill Proposer agents can access these raw traces to analyze agent behavior. To preserve the raw history, this layer is immutable.</p></div></div>
+
+</div></section><section class="feed-section branch-page dark"
+  data-parent-section="3" data-page="3.2"
+  data-source-start="00:32:37" data-source-end="00:34:51">
+<div class="section-inner">
+<p class="page-num reveal">3.2 / 3.3</p>
+<h2 class="big-statement reveal">wiki/：会一直长大的那一层</h2>
+<p class="body-text reveal reveal-d1"><span class="sentence-cue" data-sentence-index="0">wiki/ 把原始记录编译成结构化知识。</span><span class="sentence-cue" data-sentence-index="1">patterns/ 里的每个说明文件记录一种具体的失败模式或成功策略，并给出可操作的解决办法。</span><span class="sentence-cue" data-sentence-index="2">Wiki Maintainer 持续更新 logs.md，使后续角色能回顾优化迭代的历史。</span><span class="sentence-cue" data-sentence-index="3">skill-impact.md 由外层循环程序在验证后自动写入，追踪技能改动在历次迭代中的成败。</span><span class="sentence-cue" data-sentence-index="4">wiki/ 从不在迭代之间重置，而是不断把被拒绝的记录、成功的改动和反复出现的错误积累下来。</span></p>
+<div class="anim-stage reveal reveal-d3" id="3_2-anim">
+<div class="stage b32_stage" data-page-design="3.2" data-designer-task="pg-3.2"
+     data-designer-run="run-b32" data-visual-thesis="同一个知识框里先攒下经验卡，再长出目录、日志和一份成败账本，跨轮不清空"
+     data-layout-grammar="一个固定外框，内部分四块依次填满" data-motion-verb="fill-and-keep"
+     data-visual-subject="wiki 框里的内容" data-sentence-count="5"
+     data-sentence-step="-1" data-sentence-state="initial" data-step-ms="4400,5880,5000,5640,6000">
+<p class="stage-cap">wiki/ 的文件结构与积累方式</p>
+<svg viewBox="0 0 340 200" role="img" aria-label="同一个知识框里先攒下经验卡，再长出目录、日志和一份成败账本，跨轮不清空"><rect class="b32_box gl-card" x="26" y="24" width="288" height="150" rx="6"/>
+  <text class="t-key" x="40" y="18" text-anchor="start" data-visual-label>wiki/</text>
+  <g class="b32_pats">
+    <text class="t-sm" x="40" y="46" text-anchor="start" data-visual-label>patterns/</text>
+    <rect class="b32_pc" x="40" y="52" width="64" height="30" rx="3"/>
+    <rect class="b32_pc" x="112" y="52" width="64" height="30" rx="3"/>
+    <rect class="b32_pc" x="184" y="52" width="64" height="30" rx="3"/>
+    <text class="t-sm b32_pl" x="144" y="96" text-anchor="middle" data-visual-label>一条经验一张卡</text>
+  </g>
+  <g class="b32_idx"><rect class="gl-card" x="256" y="52" width="48" height="30" rx="3"/>
+    <text class="t-sm" x="280" y="70" text-anchor="middle" data-visual-label>index.md</text>
+    <path class="b32_ia" d="M256 67 H250"/></g>
+  <g class="b32_log"><rect class="gl-card" x="40" y="106" width="120" height="34" rx="3"/>
+    <text class="t-sm" x="100" y="120" text-anchor="middle" data-visual-label>logs.md</text>
+    <rect class="b32_lrow" x="48" y="126" width="104" height="7" rx="1.5"/></g>
+  <g class="b32_imp"><rect class="gl-card" x="176" y="106" width="128" height="34" rx="3"/>
+    <text class="t-sm" x="240" y="120" text-anchor="middle" data-visual-label>skill-impact.md</text>
+    <rect class="b32_ok" x="184" y="126" width="48" height="7" rx="1.5"/>
+    <rect class="b32_no" x="240" y="126" width="48" height="7" rx="1.5"/></g>
+  <text class="t-sm b32_keep" x="170" y="164" text-anchor="middle" data-visual-label>下一轮不清空</text></svg>
+<div class="stage-subtitle"><p class="stage-sub" data-sentence-index="0">wiki/ 把原始记录编译成结构化知识。</p><p class="stage-sub" data-sentence-index="1">patterns/ 里的每个说明文件记录一种具体的失败模式或成功策略，并给出可操作的解决办法。</p><p class="stage-sub" data-sentence-index="2">Wiki Maintainer 持续更新 logs.md，使后续角色能回顾优化迭代的历史。</p><p class="stage-sub" data-sentence-index="3">skill-impact.md 由外层循环程序在验证后自动写入，追踪技能改动在历次迭代中的成败。</p><p class="stage-sub" data-sentence-index="4">wiki/ 从不在迭代之间重置，而是不断把被拒绝的记录、成功的改动和反复出现的错误积累下来。</p></div>
+<div class="stage-controls" role="group" aria-label="逐句播放控制">
+<button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+<button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+<button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+<span class="sc-step" aria-live="polite">1 / 5</span></div></div></div>
+<div class="source-panel reveal reveal-d4"><button class="source-toggle" type="button" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button><div class="source-body"><span class="source-label">Source · arXiv:2608.27454</span><p>This layer compiles raw traces into structured, compounding knowledge and is maintained throughout skill evolution. It contains a pattern directory (patterns/) populated with individual markdown files that document specific failure modes or successful strategies, along with actionable workarounds. Crucially, this layer provides long-term historical awareness across optimization iterations through an evolution log (logs.md, updated by the Wiki Maintainer) and a skill impact tracker (skill-impact.md, updated programmatically by the outer-loop harness after validation gating). These records allow the Wiki Maintainer and Skill Proposer to (1) observe the complete skill acceptance history so that rejected interventions are not proposed again, (2) track what was proposed in prior iterations and whether those proposals succeeded, and (3) identify which errors recur across iterations. The wiki is not reset between iterations, but rather accumulates and compiles knowledge continuously throughout the evolution process.</p></div></div>
+
+</div></section><section class="feed-section branch-page act2"
+  data-parent-section="3" data-page="3.3"
+  data-source-start="00:34:51" data-source-end="00:35:24">
+<div class="section-inner">
+<p class="page-num reveal">3.3 / 3.3</p>
+<h2 class="big-statement reveal">skills/：真正交到 AI 助手手上的说明书</h2>
+<p class="body-text reveal reveal-d1"><span class="sentence-cue" data-sentence-index="0">Inference Agent 从 skills/ 里读取步骤知识。</span><span class="sentence-cue" data-sentence-index="1">skills/ 里存放的是一套经过演化的技能集合，每个技能目录里都包含两个文件。</span><span class="sentence-cue" data-sentence-index="2">SKILL.md 存放该技能的完整内容。</span><span class="sentence-cue" data-sentence-index="3">PURPOSE.md 把每条技能与 wiki/ 里启发其创建或修改的知识模式对应起来。</span></p>
+<div class="anim-stage reveal reveal-d3" id="3_3-anim">
+<div class="stage b33_stage" data-page-design="3.3" data-designer-task="pg-3.3"
+     data-designer-run="run-b33" data-visual-thesis="一个技能目录里除了说明书本身，还有一张写着它为什么存在的卡，那张卡连回知识库里的那条经验"
+     data-layout-grammar="左侧技能目录，右侧知识库经验卡，一条回指线" data-motion-verb="trace-back"
+     data-visual-subject="PURPOSE.md 连回去的那条线" data-sentence-count="4"
+     data-sentence-step="-1" data-sentence-state="initial" data-step-ms="4400,5200,5200,5600">
+<p class="stage-cap">每个技能目录包含的两个文件</p>
+<svg viewBox="0 0 340 200" role="img" aria-label="一个技能目录里除了说明书本身，还有一张写着它为什么存在的卡，那张卡连回知识库里的那条经验"><rect class="b33_dir gl-card" x="24" y="42" width="150" height="106" rx="5"/>
+  <text class="t-key" x="99" y="34" text-anchor="middle" data-visual-label>一个技能目录</text>
+  <g class="b33_sk"><rect class="gl-card" x="36" y="54" width="126" height="46" rx="3"/>
+    <text class="t-sm" x="99" y="68" text-anchor="middle" data-visual-label>SKILL.md</text>
+    <rect class="b33_r" x="44" y="76" width="110" height="6" rx="1.5"/>
+    <rect class="b33_r" x="44" y="86" width="84" height="6" rx="1.5"/></g>
+  <g class="b33_pp"><rect class="gl-card" x="36" y="106" width="126" height="32" rx="3"/>
+    <text class="t-sm" x="99" y="126" text-anchor="middle" data-visual-label>PURPOSE.md</text></g>
+  <g class="b33_pat"><rect class="b33_card" x="238" y="96" width="80" height="42" rx="3"/>
+    <text class="t-sm" x="278" y="88" text-anchor="middle" data-visual-label>wiki 里的那条经验</text></g>
+  <path class="b33_back" d="M162 122 H238"/></svg>
+<div class="stage-subtitle"><p class="stage-sub" data-sentence-index="0">Inference Agent 从 skills/ 里读取步骤知识。</p><p class="stage-sub" data-sentence-index="1">skills/ 里存放的是一套经过演化的技能集合，每个技能目录里都包含两个文件。</p><p class="stage-sub" data-sentence-index="2">SKILL.md 存放该技能的完整内容。</p><p class="stage-sub" data-sentence-index="3">PURPOSE.md 把每条技能与 wiki/ 里启发其创建或修改的知识模式对应起来。</p></div>
+<div class="stage-controls" role="group" aria-label="逐句播放控制">
+<button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+<button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+<button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+<span class="sc-step" aria-live="polite">1 / 4</span></div></div></div>
+<div class="source-panel reveal reveal-d4"><button class="source-toggle" type="button" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button><div class="source-body"><span class="source-label">Source · arXiv:2608.27454</span><p>This layer contains the active set of evolved skills S, which encode the procedural knowledge that the Inference Agent can read. Each skill directory in WikiSkill contains two files: SKILL.md, which contains the full content of the skill; and PURPOSE.md, which maps the skill back to the motivating Wiki patterns that inspired its creation or modification. A detailed example of interactions between the Skill Layer and the Wiki Layer is illustrated in Figure 3 and explained in the case study in Section 5.3.</p></div></div>
+<button type="button" class="branch-complete" data-parent-section="3" aria-label="本章节展开完毕，回到第 3 章" onclick="if(event.detail>0)this.blur();goBack()">本章节展开完毕 · 回到第 3 章 &#8593;</button>
+</div></section></div><div class="layer branch-layer" id="layer-s4" data-depth="1" data-parent-section="4"><section class="feed-section branch-page act2"
+  data-parent-section="4" data-page="4.1"
+  data-source-start="00:38:11" data-source-end="00:39:50">
+<div class="section-inner">
+<p class="page-num reveal">4.1 / 4.3</p>
+<h2 class="big-statement reveal">第一步：把整份说明书塞进开头，然后去做题</h2>
+<p class="body-text reveal reveal-d1"><span class="sentence-cue" data-sentence-index="0">WikiSkill 把当前所有技能的完整内容，放进 Inference Agent 开头的说明里。</span><span class="sentence-cue" data-sentence-index="1">技能因此在做题时随时可用。</span><span class="sentence-cue" data-sentence-index="2">Inference Agent 随后用环境工具逐步完成任务，形成一段完整的操作记录。</span><span class="sentence-cue" data-sentence-index="3">这种完整放入的做法，是为了排除技能没被触发或找到这类干扰。</span></p>
+<div class="anim-stage reveal reveal-d3" id="4_1-anim">
+<div class="stage b41_stage" data-page-design="4.1" data-designer-task="pg-4.1"
+     data-designer-run="run-b41" data-visual-thesis="整份说明书被原样放进开头那段说明里，AI 助手才一路跑完，途中不需要另去找它"
+     data-layout-grammar="左侧说明书整块进入右侧的开头说明框，下方一条多步轨迹" data-motion-verb="inject-whole"
+     data-visual-subject="那一整份说明书" data-sentence-count="4"
+     data-sentence-step="-1" data-sentence-state="initial" data-step-ms="4920,5000,5600,5400">
+<p class="stage-cap">Inference Agent 做题并录下全程</p>
+<svg viewBox="0 0 340 200" role="img" aria-label="整份说明书被原样放进开头那段说明里，AI 助手才一路跑完，途中不需要另去找它"><g class="b41_card"><rect class="gl-card" x="22" y="34" width="76" height="52" rx="3"/>
+    <path class="gl-line" d="M30 48 H90 M30 58 H82 M30 68 H86" opacity=".55"/>
+    <text class="t-sm" x="60" y="26" text-anchor="middle" data-visual-label>当前的说明书</text></g>
+  <g class="b41_prompt"><rect class="gl-card" x="176" y="26" width="140" height="68" rx="4"/>
+    <text class="t-sm" x="246" y="18" text-anchor="middle" data-visual-label>开头那段说明</text>
+    <rect class="b41_slot" x="184" y="34" width="124" height="26" rx="2"/>
+    <path class="gl-line" d="M186 74 H306 M186 84 H272" opacity=".45"/></g>
+  <g class="b41_agent"><g class="gl-p " transform="translate(60,140) scale(1.0)" ><circle cx="0" cy="-9" r="4.4"/><path d="M0 -4.2 V6 M-6.4 -0.6 H6.4 M0 6 L-4.6 13 M0 6 L4.6 13"/></g>
+    <text class="t-sm" x="60" y="160" text-anchor="middle" data-visual-label>Inference Agent</text></g>
+  <path class="b41_path" d="M76 132 H140 V116 H204 V132 H286"/>
+  <circle class="b41_dot" cx="286" cy="132" r="4.5"/>
+  <text class="t-sm b41_out" x="286" y="152" text-anchor="middle" data-visual-label>一段完整记录</text>
+  <g class="b41_x"><path d="M118 168 l16 16 M134 168 l-16 16"/>
+    <text class="t-sm" x="152" y="182" text-anchor="start" data-visual-label>不用中途去找技能</text></g></svg>
+<div class="stage-subtitle"><p class="stage-sub" data-sentence-index="0">WikiSkill 把当前所有技能的完整内容，放进 Inference Agent 开头的说明里。</p><p class="stage-sub" data-sentence-index="1">技能因此在做题时随时可用。</p><p class="stage-sub" data-sentence-index="2">Inference Agent 随后用环境工具逐步完成任务，形成一段完整的操作记录。</p><p class="stage-sub" data-sentence-index="3">这种完整放入的做法，是为了排除技能没被触发或找到这类干扰。</p></div>
+<div class="stage-controls" role="group" aria-label="逐句播放控制">
+<button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+<button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+<button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+<span class="sc-step" aria-live="polite">1 / 4</span></div></div></div>
+<div class="source-panel reveal reveal-d4"><button class="source-toggle" type="button" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button><div class="source-body"><span class="source-label">Source · arXiv:2608.27454</span><p>At iteration k, the Inference Agent \pi is conditioned on the active skill set S_{k-1} and executes a multi-turn trajectory using environment tools \mathcal{U}:</p><p>In WikiSkill, the full content of active skills S_{k-1} is injected directly into the Inference Agent’s system prompt. Following prior work (Yang et al., 2026; Ni et al., 2026), this full-injection setting ensures that procedural instructions are immediately available during task execution, thereby eliminating skill triggering or retrieval failures as confounding variables in our study.</p></div></div>
+
+</div></section><section class="feed-section branch-page dark"
+  data-parent-section="4" data-page="4.2"
+  data-source-start="00:39:50" data-source-end="00:46:48">
+<div class="section-inner">
+<p class="page-num reveal">4.2 / 4.3</p>
+<h2 class="big-statement reveal">第二步：抽一批记录，追出原因，写成经验卡</h2>
+<p class="body-text reveal reveal-d1"><span class="sentence-cue" data-sentence-index="0">Wiki Maintainer 先读入当前知识库全文，再从本轮执行记录取一批样本，因为上下文窗口容量有限。</span><span class="sentence-cue" data-sentence-index="1">它既读成功记录，也读失败记录。</span><span class="sentence-cue" data-sentence-index="2">它对失败记录找出到底哪一步出的错，并从成功记录里提取策略。</span><span class="sentence-cue" data-sentence-index="3">它把发现写入 wiki/patterns/ 的规律页面，可新建也可修改已有页面，改动后还会更新 index.md 和 logs.md。</span><span class="sentence-cue" data-sentence-index="4">Wiki Maintainer 自行决定每轮新建或修改哪些规律，没有固定的条数上限。</span></p>
+<div class="anim-stage reveal reveal-d3" id="4_2-anim">
+<div class="stage b42_stage" data-page-design="4.2" data-designer-task="pg-4.2"
+     data-designer-run="run-b42" data-visual-thesis="从整池记录里抽出一部分，失败的那些被追出原因写成新卡，已有的卡被就地补一段"
+     data-layout-grammar="上方候选池，中间被抽出的样本，下方经验卡区" data-motion-verb="sample-then-consolidate"
+     data-visual-subject="被抽出来的那几份记录" data-sentence-count="5"
+     data-sentence-step="-1" data-sentence-state="initial" data-step-ms="6180,5600,5400,6600,5600">
+<p class="stage-cap">Wiki Maintainer 把执行样本整理成规律的过程</p>
+<svg viewBox="0 0 340 200" role="img" aria-label="从整池记录里抽出一部分，失败的那些被追出原因写成新卡，已有的卡被就地补一段"><g class="b42_pool">
+    <rect class="b42_ring" x="20" y="22" width="300" height="46" rx="6"/>
+    <text class="t-sm" x="30" y="16" text-anchor="start" data-visual-label>这一轮的全部记录</text>
+    <g class="gl-doc b42_o" ><rect x="32" y="30" width="14" height="30" rx="2.5"/><line x1="36" y1="37" x2="42" y2="37"/><line x1="36" y1="43" x2="42" y2="43"/><line x1="36" y1="49" x2="42" y2="49"/></g><g class="gl-doc b42_o" ><rect x="52" y="30" width="14" height="30" rx="2.5"/><line x1="56" y1="37" x2="62" y2="37"/><line x1="56" y1="43" x2="62" y2="43"/><line x1="56" y1="49" x2="62" y2="49"/></g><g class="gl-doc b42_s1" ><rect x="72" y="30" width="14" height="30" rx="2.5"/><line x1="76" y1="37" x2="82" y2="37"/><line x1="76" y1="43" x2="82" y2="43"/><line x1="76" y1="49" x2="82" y2="49"/></g>
+    <g class="gl-doc b42_o" ><rect x="92" y="30" width="14" height="30" rx="2.5"/><line x1="96" y1="37" x2="102" y2="37"/><line x1="96" y1="43" x2="102" y2="43"/><line x1="96" y1="49" x2="102" y2="49"/></g><g class="gl-doc b42_o" ><rect x="112" y="30" width="14" height="30" rx="2.5"/><line x1="116" y1="37" x2="122" y2="37"/><line x1="116" y1="43" x2="122" y2="43"/><line x1="116" y1="49" x2="122" y2="49"/></g><g class="gl-doc b42_s2" ><rect x="132" y="30" width="14" height="30" rx="2.5"/><line x1="136" y1="37" x2="142" y2="37"/><line x1="136" y1="43" x2="142" y2="43"/><line x1="136" y1="49" x2="142" y2="49"/></g>
+    <g class="gl-doc b42_o" ><rect x="152" y="30" width="14" height="30" rx="2.5"/><line x1="156" y1="37" x2="162" y2="37"/><line x1="156" y1="43" x2="162" y2="43"/><line x1="156" y1="49" x2="162" y2="49"/></g><g class="gl-doc b42_o" ><rect x="172" y="30" width="14" height="30" rx="2.5"/><line x1="176" y1="37" x2="182" y2="37"/><line x1="176" y1="43" x2="182" y2="43"/><line x1="176" y1="49" x2="182" y2="49"/></g><g class="gl-doc b42_o" ><rect x="192" y="30" width="14" height="30" rx="2.5"/><line x1="196" y1="37" x2="202" y2="37"/><line x1="196" y1="43" x2="202" y2="43"/><line x1="196" y1="49" x2="202" y2="49"/></g>
+    <g class="gl-doc b42_s3" ><rect x="212" y="30" width="14" height="30" rx="2.5"/><line x1="216" y1="37" x2="222" y2="37"/><line x1="216" y1="43" x2="222" y2="43"/><line x1="216" y1="49" x2="222" y2="49"/></g><g class="gl-doc b42_o" ><rect x="232" y="30" width="14" height="30" rx="2.5"/><line x1="236" y1="37" x2="242" y2="37"/><line x1="236" y1="43" x2="242" y2="43"/><line x1="236" y1="49" x2="242" y2="49"/></g><g class="gl-doc b42_o" ><rect x="252" y="30" width="14" height="30" rx="2.5"/><line x1="256" y1="37" x2="262" y2="37"/><line x1="256" y1="43" x2="262" y2="43"/><line x1="256" y1="49" x2="262" y2="49"/></g>
+    <g class="gl-doc b42_o" ><rect x="272" y="30" width="14" height="30" rx="2.5"/><line x1="276" y1="37" x2="282" y2="37"/><line x1="276" y1="43" x2="282" y2="43"/><line x1="276" y1="49" x2="282" y2="49"/></g><g class="gl-doc b42_o" ><rect x="292" y="30" width="14" height="30" rx="2.5"/><line x1="296" y1="37" x2="302" y2="37"/><line x1="296" y1="43" x2="302" y2="43"/><line x1="296" y1="49" x2="302" y2="49"/></g>
+  </g>
+  <g class="b42_wm"><g class="gl-p " transform="translate(300,116) scale(1.0)" ><circle cx="0" cy="-9" r="4.4"/><path d="M0 -4.2 V6 M-6.4 -0.6 H6.4 M0 6 L-4.6 13 M0 6 L4.6 13"/></g>
+    <text class="t-sm" x="300" y="136" text-anchor="middle" data-visual-label>Wiki Maintainer</text></g>
+  <g class="b42_why"><path class="b42_probe" d="M92 96 V118"/>
+    <text class="t-sm" x="92" y="132" text-anchor="middle" data-visual-label>哪一步出的错</text></g>
+  <g class="b42_new"><rect class="b42_nc" x="24" y="142" width="76" height="30" rx="3"/>
+    <text class="t-sm" x="62" y="186" text-anchor="middle" data-visual-label>写成新卡</text></g>
+  <g class="b42_old"><rect class="b42_oc gl-card" x="122" y="142" width="76" height="30" rx="3"/>
+    <rect class="b42_patch" x="128" y="160" width="0" height="8" rx="2"/>
+    <text class="t-sm" x="160" y="186" text-anchor="middle" data-visual-label>老卡补一段</text></g>
+  <g class="b42_idx"><rect class="gl-card" x="220" y="142" width="86" height="30" rx="3"/>
+    <text class="t-sm" x="263" y="161" text-anchor="middle" data-visual-label>目录和日志更新</text></g></svg>
+<div class="stage-subtitle"><p class="stage-sub" data-sentence-index="0">Wiki Maintainer 先读入当前知识库全文，再从本轮执行记录取一批样本，因为上下文窗口容量有限。</p><p class="stage-sub" data-sentence-index="1">它既读成功记录，也读失败记录。</p><p class="stage-sub" data-sentence-index="2">它对失败记录找出到底哪一步出的错，并从成功记录里提取策略。</p><p class="stage-sub" data-sentence-index="3">它把发现写入 wiki/patterns/ 的规律页面，可新建也可修改已有页面，改动后还会更新 index.md 和 logs.md。</p><p class="stage-sub" data-sentence-index="4">Wiki Maintainer 自行决定每轮新建或修改哪些规律，没有固定的条数上限。</p></div>
+<div class="stage-controls" role="group" aria-label="逐句播放控制">
+<button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+<button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+<button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+<span class="sc-step" aria-live="polite">1 / 5</span></div></div></div>
+<div class="source-panel reveal reveal-d4"><button class="source-toggle" type="button" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button><div class="source-body"><span class="source-label">Source · arXiv:2608.27454</span><p>At iteration k, after obtaining rollout traces \mathcal{T}_{\text{train},k} on the training split \mathcal{D}_{\text{train}}, we sample a subset of successful and failing execution traces \mathcal{T}_{\text{sample},k}\subset\mathcal{T}_{\text{train},k} (see Appendix C for sampling budget and stratification criteria) to avoid context window limitations. The Wiki Maintainer agent \mathcal{M}_{\text{WM}} consolidates these observations into the persistent wiki W_{k-1}, producing the intermediate wiki state W^{\prime}_{k}:</p><p>The Wiki Maintainer agent receives the full wiki context W_{k-1} alongside sampled traces \mathcal{T}_{\text{sample},k}. It performs root cause analysis on the failing tasks, and extracts successful strategies from the passing tasks. In each iteration, the Wiki Maintainer can create new pattern pages under wiki/patterns/ and update existing pattern pages with new evidence or refined solutions. Updates to pattern pages are applied using incremental, patch-based editing (e.g., appending, replacing, or inserting text spans). Whenever patterns are modified, the Wiki Maintainer revises the index.md catalog to reflect the current state and appends a summary of the iteration’s findings to the evolution log logs.md. There is no hard limit on the number of patterns created or updated per iteration; the Wiki Maintainer decides what updates are warranted based on the traces and the current wiki state.</p></div></div>
+
+</div></section><section class="feed-section branch-page act2"
+  data-parent-section="4" data-page="4.3"
+  data-source-start="00:46:48" data-source-end="00:52:16">
+<div class="section-inner">
+<p class="page-num reveal">4.3 / 4.3</p>
+<h2 class="big-statement reveal">第三步：提一个改动，分数不涨就整份退回</h2>
+<p class="body-text reveal reveal-d1"><span class="sentence-cue" data-sentence-index="0">每轮只有 Skill Proposer 提出改动。</span><span class="sentence-cue" data-sentence-index="1">它以 ReAct（边想边查）方式主动读取 wiki 索引、skill-impact.md 和训练结果摘要，再按需翻阅具体的模式页面和执行轨迹。</span><span class="sentence-cue" data-sentence-index="2">每次它只针对一个技能提一个方案。</span><span class="sentence-cue" data-sentence-index="3">系统在验证集上打分，若新分数不高于当前最高分，就抛弃本次的技能修改。</span><span class="sentence-cue" data-sentence-index="4">无论结果如何，wiki 的积累内容都不退回，skill-impact.md 会记下这次结果，供 Skill Proposer 下轮避免重复失败的改动。</span></p>
+<div class="anim-stage reveal reveal-d3" id="4_3-anim">
+<div class="stage b43_stage" data-page-design="4.3" data-designer-task="pg-4.3"
+     data-designer-run="run-b43" data-visual-thesis="一份只动一个技能的提案被送去打分，分数没超过就整份退回，退回这件事本身被记进账本"
+     data-layout-grammar="左侧提案人，中间一个技能槽，右侧一条分数刻度和一本账本" data-motion-verb="propose-gate-record"
+     data-visual-subject="那一份提案" data-sentence-count="5"
+     data-sentence-step="-1" data-sentence-state="initial" data-step-ms="4800,7500,5200,5800,7380">
+<p class="stage-cap">一轮改动的提出、验证与接受或撤回流程</p>
+<svg viewBox="0 0 340 200" role="img" aria-label="一份只动一个技能的提案被送去打分，分数没超过就整份退回，退回这件事本身被记进账本"><g class="b43_pr"><g class="gl-p " transform="translate(34,62) scale(1.0)" ><circle cx="0" cy="-9" r="4.4"/><path d="M0 -4.2 V6 M-6.4 -0.6 H6.4 M0 6 L-4.6 13 M0 6 L4.6 13"/></g>
+    <text class="t-sm" x="34" y="82" text-anchor="middle" data-visual-label>Skill Proposer</text></g>
+  <g class="b43_look"><path class="b43_l1" d="M50 54 H104 V42"/>
+    <rect class="gl-card" x="80" y="18" width="48" height="24" rx="3"/>
+    <text class="t-sm" x="104" y="12" text-anchor="middle" data-visual-label>自己去翻记录</text></g>
+  <g class="b43_slots">
+    <rect class="gl-card b43_sA" x="96" y="86" width="52" height="34" rx="3"/>
+    <rect class="gl-card" x="156" y="86" width="52" height="34" rx="3"/>
+    <rect class="b43_prop" x="102" y="106" width="40" height="9" rx="2"/>
+    <text class="t-sm" x="152" y="134" text-anchor="middle" data-visual-label>一次只动一个技能</text>
+  </g>
+  <g class="b43_gate">
+    <path class="b43_axis" d="M244 148 V44"/>
+    <path class="b43_best" d="M230 92 H308"/>
+    <text class="t-sm" x="284" y="84" text-anchor="middle" data-visual-label>此前最好成绩</text>
+    <rect class="b43_new" x="252" y="148" width="18" height="0" rx="2"/>
+  </g>
+  <g class="b43_book"><rect class="gl-card" x="228" y="158" width="88" height="26" rx="3"/>
+    <rect class="b43_rej" x="234" y="166" width="34" height="9" rx="1.5"/>
+    <text class="t-sm" x="292" y="174" text-anchor="middle" data-visual-label>记一笔</text></g></svg>
+<div class="stage-subtitle"><p class="stage-sub" data-sentence-index="0">每轮只有 Skill Proposer 提出改动。</p><p class="stage-sub" data-sentence-index="1">它以 ReAct（边想边查）方式主动读取 wiki 索引、skill-impact.md 和训练结果摘要，再按需翻阅具体的模式页面和执行轨迹。</p><p class="stage-sub" data-sentence-index="2">每次它只针对一个技能提一个方案。</p><p class="stage-sub" data-sentence-index="3">系统在验证集上打分，若新分数不高于当前最高分，就抛弃本次的技能修改。</p><p class="stage-sub" data-sentence-index="4">无论结果如何，wiki 的积累内容都不退回，skill-impact.md 会记下这次结果，供 Skill Proposer 下轮避免重复失败的改动。</p></div>
+<div class="stage-controls" role="group" aria-label="逐句播放控制">
+<button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+<button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+<button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+<span class="sc-step" aria-live="polite">1 / 5</span></div></div></div>
+<div class="source-panel reveal reveal-d4"><button class="source-toggle" type="button" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button><div class="source-body"><span class="source-label">Source · arXiv:2608.27454</span><p>The Proposer \mathcal{M}_{\text{P}} is an LLM-based agent responsible for skill discovery and refinement. At iteration k, the proposer operates in a multi-turn ReAct style (Yao et al., 2023). To avoid context window exhaustion when analyzing long execution histories, the proposer is not given a fixed set of pre-sampled traces; instead, it is initially provided with the wiki index I(W^{\prime}_{k}), the historical skill impact tracker (skill-impact.md), and a concise summary of all training task outcomes (pass/fail status, predictions and ground-truth answers). Operating as an autonomous agent, it actively reasons and uses environment tools (read_file) to select and inspect specific pattern pages and raw execution traces \tau_{i}\in\mathcal{T}_{\text{train},k} on demand to diagnose root causes before synthesizing a proposal P_{k}:</p><p>In each iteration, the Skill Proposer produces an atomic proposal P_{k} that targets a single skill, either creating a new skill or applying an incremental, patch-based edit to the targeted existing skill.</p><p>Once a proposal P_{k} is generated, it is applied to the workspace to yield a candidate skill set S^{\prime}_{k}=\text{Apply}(S_{k-1},P_{k}). The system evaluates S^{\prime}_{k} on the validation split \mathcal{D}_{\text{val}}, obtaining validation traces \mathcal{T}_{\text{val},k} and score \mathcal{R}(\mathcal{T}_{\text{val},k}). The acceptance decision is governed by:</p><p>If accepted, the candidate skills are preserved as the new active skill set S_{k}, and the benchmark performance threshold \mathcal{R}_{\text{best}} is updated to \mathcal{R}(\mathcal{T}_{\text{val},k}). Prior to the evolution loop, \mathcal{R}_{\text{best}} is initialized to the baseline validation score \mathcal{R}(\mathcal{T}_{\text{val},0}) obtained by evaluating the empty skill set S_{0} on \mathcal{D}_{\text{val}}. If the validation score reaches the maximum (\mathcal{R}_{\text{best}}=1.0) at any point during evolution, the evolution loop terminates early. If rejected, the system discards the candidate skill modifications and reverts the skill set to the most recent successful configuration S_{k-1}. Notably, the wiki W_{k} is never rolled back regardless of the acceptance decision; accumulated patterns and logs persist across all iterations to ensure long-term knowledge retention. Following each validation evaluation, the outer-loop orchestration harness programmatically appends an entry to wiki/skill-impact.md via W_{k}\leftarrow\text{Update}(W^{\prime}_{k},P_{k},\mathcal{R}(\mathcal{T}_{\text{val},k}),a_{k}), recording the proposal metadata, target skill name, unified diff of the modification, validation score \mathcal{R}(\mathcal{T}_{\text{val},k}), and final acceptance outcome a_{k}\in\{\text{Accepted},\text{Rejected}\}. This completes the wiki state transition W_{k-1}\to W_{k} for iteration k, providing an objective, ground-truth audit trail of past interventions that the Skill Proposer can consult in subsequent iterations to avoid repeating failed modifications.</p></div></div>
+<button type="button" class="branch-complete" data-parent-section="4" aria-label="本章节展开完毕，回到第 4 章" onclick="if(event.detail>0)this.blur();goBack()">本章节展开完毕 · 回到第 4 章 &#8593;</button>
+</div></section></div><div class="layer branch-layer" id="layer-s7" data-depth="1" data-parent-section="7"><section class="feed-section branch-page act2"
+  data-parent-section="7" data-page="7.1"
+  data-source-start="01:19:41" data-source-end="01:22:40">
+<div class="section-inner">
+<p class="page-num reveal">7.1 / 7.3</p>
+<h2 class="big-statement reveal">别人练的技能，比自己练的更管用</h2>
+<p class="body-text reveal reveal-d1"><span class="sentence-cue" data-sentence-index="0">别人练的技能常常比自己练的强。</span><span class="sentence-cue" data-sentence-index="1">Qwen-3.6-27B 的技能让 Qwen-3.5-9B 在 SpreadSheet （电子表格任务）上得 50.5%，而 Qwen-3.5-9B 没有技能时只得 24.3%，用自己练的技能只到 33.6%。</span><span class="sentence-cue" data-sentence-index="2">Qwen-3.5-4B 练出的技能，也能让更大的 Gemma-4-31B 在 LiveMath （数学推理任务）上得 73.1%，在 ALFWorld （家务模拟任务）上得 66.9%。</span><span class="sentence-cue" data-sentence-index="3">技能可以跨规模、跨系列迁移，更强的模型不一定练出更好的技能。</span></p>
+<div class="anim-stage reveal reveal-d3" id="7_1-anim">
+<div class="stage b71_stage" data-page-design="7.1" data-designer-task="pg-7.1"
+     data-designer-run="run-b71" data-visual-thesis="同一个模型在同一件事上的三根柱：不带技能、带自己练的、带别人练的，最后一根最高"
+     data-layout-grammar="三根共基线的柱依次接管同一条比较刻度" data-motion-verb="raise-past-own-line"
+     data-visual-subject="带别人技能的那根柱" data-sentence-count="4"
+     data-sentence-step="-1" data-sentence-state="initial" data-step-ms="4600,8700,8100,5400">
+<p class="stage-cap">跨模型迁移技能的得分对比</p>
+<svg viewBox="0 0 340 200" role="img" aria-label="同一个模型在同一件事上的三根柱：不带技能、带自己练的、带别人练的，最后一根最高"><path class="b71_base" d="M40 158 H310"/>
+  <text class="t-sm" x="40" y="24" text-anchor="start" data-visual-label>Qwen-3.5-9B 做表格题</text>
+  <g class="b71_c1"><rect class="b71_b1" x="58" y="134" width="52" height="24" rx="2"/>
+    <text class="t-num" x="84" y="128" text-anchor="middle" data-visual-label>24.3</text>
+    <text class="t-sm" x="84" y="174" text-anchor="middle" data-visual-label>不带技能</text></g>
+  <g class="b71_c2"><rect class="b71_b2" x="140" y="158" width="52" height="0" rx="2"/>
+    <text class="t-num b71_n2" x="166" y="98" text-anchor="middle" data-visual-label>33.6</text>
+    <text class="t-sm" x="166" y="174" text-anchor="middle" data-visual-label>自己练的</text></g>
+  <g class="b71_c3"><rect class="b71_b3" x="222" y="158" width="52" height="0" rx="2"/>
+    <text class="t-num b71_n3" x="248" y="48" text-anchor="middle" data-visual-label>50.5</text>
+    <text class="t-sm" x="248" y="174" text-anchor="middle" data-visual-label>27B 练的</text></g>
+  <path class="b71_ref" d="M136 104 H300"/></svg>
+<div class="stage-subtitle"><p class="stage-sub" data-sentence-index="0">别人练的技能常常比自己练的强。</p><p class="stage-sub" data-sentence-index="1">Qwen-3.6-27B 的技能让 Qwen-3.5-9B 在 SpreadSheet （电子表格任务）上得 50.5%，而 Qwen-3.5-9B 没有技能时只得 24.3%，用自己练的技能只到 33.6%。</p><p class="stage-sub" data-sentence-index="2">Qwen-3.5-4B 练出的技能，也能让更大的 Gemma-4-31B 在 LiveMath （数学推理任务）上得 73.1%，在 ALFWorld （家务模拟任务）上得 66.9%。</p><p class="stage-sub" data-sentence-index="3">技能可以跨规模、跨系列迁移，更强的模型不一定练出更好的技能。</p></div>
+<div class="stage-controls" role="group" aria-label="逐句播放控制">
+<button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+<button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+<button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+<span class="sc-step" aria-live="polite">1 / 4</span></div></div></div>
+<div class="source-panel reveal reveal-d4"><button class="source-toggle" type="button" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button><div class="source-body"><span class="source-label">Source · arXiv:2608.27454</span><p>Table 2 evaluates how skills evolved by WikiSkill transfer across inference models when developed using different source models. Transferred skills frequently outperform both the no-skill baseline and self-evolved skills. For example, Qwen-3.6-27B skills improve Qwen-3.5-9B to 50.5% on SpreadSheet, compared with 24.3% without skills and 33.6% with self-evolved skills, and improve Gemma-4-31B to 73.7% on LiveMath, compared with 33.9% and 56.7%, respectively. Notably, effective transfer also occurs from smaller to larger models: Qwen-3.5-4B skills improve Gemma-4-31B to 73.1% on LiveMath and 66.9% on ALFWorld. Our results indicate that stronger source models do not necessarily produce better skills and that procedural knowledge developed by one model’s experience can transfer across model scales and families.</p></div></div>
+
+</div></section><section class="feed-section branch-page dark"
+  data-parent-section="7" data-page="7.2"
+  data-source-start="01:22:40" data-source-end="01:25:39">
+<div class="section-inner">
+<p class="page-num reveal">7.2 / 7.3</p>
+<h2 class="big-statement reveal">也有搬砸的时候：50.5% 掉到 18.1%</h2>
+<p class="body-text reveal reveal-d1"><span class="sentence-cue" data-sentence-index="0">SpreadSheet 任务里，Qwen-3.5-4B 产出的技能让 Gemini-3.5-Flash 的正确率从 50.5% 降到了 18.1%。</span><span class="sentence-cue" data-sentence-index="1">Qwen-3.6-27B 的 SpreadSheet 技能却让 Gemini-3.5-Flash 的正确率升至 63.4%。</span><span class="sentence-cue" data-sentence-index="2">Qwen-3.5-4B 的技能记录了绕开运行错误的单行 Python 命令这类低层写法，反而限制了 Gemini-3.5-Flash 用完整脚本。</span><span class="sentence-cue" data-sentence-index="3">Qwen-3.5-4B 技能里碎片化的诊断步骤会产生多余调用，可能耗尽 Gemini-3.5-Flash 一次任务里能操作的次数。</span><span class="sentence-cue" data-sentence-index="4">这两个因素都出在技能本身，说明来源模型把自己的局限编进了技能。</span></p>
+<div class="anim-stage reveal reveal-d3" id="7_2-anim">
+<div class="stage b72_stage" data-page-design="7.2" data-designer-task="pg-7.2"
+     data-designer-run="run-b72" data-visual-thesis="同一个模型的同一根柱，装上小模型练的技能后掉到基线以下，换成大模型练的又升上去"
+     data-layout-grammar="一根柱在同一条刻度上先落后起，中间插两条原因" data-motion-verb="drop-then-recover"
+     data-visual-subject="Gemini-3.5-Flash 做表格题的那根柱" data-sentence-count="5"
+     data-sentence-step="-1" data-sentence-state="initial" data-step-ms="6060,5600,7080,6720,5600">
+<p class="stage-cap">SpreadSheet 任务里三种技能来源的正确率对比</p>
+<svg viewBox="0 0 340 200" role="img" aria-label="同一个模型的同一根柱，装上小模型练的技能后掉到基线以下，换成大模型练的又升上去"><path class="b72_base" d="M30 162 H320"/>
+  <text class="t-sm" x="30" y="22" text-anchor="start" data-visual-label>Gemini-3.5-Flash 做表格题</text>
+  <path class="b72_ref" d="M30 100 H320"/>
+  <text class="t-sm" x="34" y="94" text-anchor="start" data-visual-label>不带技能 50.5</text>
+  <text class="t-num b72_v181" x="71" y="134" text-anchor="middle" data-visual-label>18.1</text>
+  <rect class="b72_bar" x="48" y="100" width="46" height="62" rx="2"/>
+    <g class="b72_r1"><rect class="gl-card" x="118" y="40" width="86" height="34" rx="3"/>
+    <rect class="b72_narrow" x="126" y="58" width="18" height="8" rx="1.5"/>
+    <rect class="b72_wide" x="150" y="58" width="46" height="8" rx="1.5"/>
+    <text class="t-sm" x="161" y="34" text-anchor="middle" data-visual-label>只留窄的走法</text></g>
+  <g class="b72_r2"><rect class="gl-card" x="218" y="40" width="96" height="34" rx="3"/>
+    <path class="b72_ticks" d="M226 62 h8 M240 62 h8 M254 62 h8 M268 62 h8 M282 62 h8 M296 62 h8"/>
+    <text class="t-sm" x="266" y="34" text-anchor="middle" data-visual-label>零碎步骤用光次数</text></g>
+  <g class="b72_fix"><rect class="b72_bar2" x="248" y="162" width="46" height="0" rx="2"/>
+    <text class="t-num b72_v2" x="271" y="82" text-anchor="middle" data-visual-label>63.4</text>
+    <text class="t-sm" x="271" y="178" text-anchor="middle" data-visual-label>换 27B 练的</text></g>
+  <text class="t-sm b72_lbl" x="71" y="178" text-anchor="middle" data-visual-label>装 4B 练的</text></svg>
+<div class="stage-subtitle"><p class="stage-sub" data-sentence-index="0">SpreadSheet 任务里，Qwen-3.5-4B 产出的技能让 Gemini-3.5-Flash 的正确率从 50.5% 降到了 18.1%。</p><p class="stage-sub" data-sentence-index="1">Qwen-3.6-27B 的 SpreadSheet 技能却让 Gemini-3.5-Flash 的正确率升至 63.4%。</p><p class="stage-sub" data-sentence-index="2">Qwen-3.5-4B 的技能记录了绕开运行错误的单行 Python 命令这类低层写法，反而限制了 Gemini-3.5-Flash 用完整脚本。</p><p class="stage-sub" data-sentence-index="3">Qwen-3.5-4B 技能里碎片化的诊断步骤会产生多余调用，可能耗尽 Gemini-3.5-Flash 一次任务里能操作的次数。</p><p class="stage-sub" data-sentence-index="4">这两个因素都出在技能本身，说明来源模型把自己的局限编进了技能。</p></div>
+<div class="stage-controls" role="group" aria-label="逐句播放控制">
+<button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+<button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+<button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+<span class="sc-step" aria-live="polite">1 / 5</span></div></div></div>
+<div class="source-panel reveal reveal-d4"><button class="source-toggle" type="button" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button><div class="source-body"><span class="source-label">Source · arXiv:2608.27454</span><p>Our results in Table 2 suggest that WikiSkill can produce both general procedural knowledge that transfers across models and model-specific strategies that can cause negative transfer. LiveMath skills transfer particularly well across models: Qwen-3.5-4B and Qwen-3.6-27B skills improve Gemini-3.5-Flash from 33.0% to 67.5% and 73.9%, respectively. In contrast, SpreadSheet exhibits strong source-target interactions. Qwen-3.5-4B skills reduce Gemini-3.5-Flash performance from 50.5% to 18.1%, while Qwen-3.6-27B skills improve it to 63.4%. Our error analysis identifies two factors behind this negative transfer. First, Qwen-3.5-4B skills encode low-level workarounds, such as single-line Python commands and string-conversion rules, which help the smaller model avoid execution failures but constrain stronger models such as Gemini-3.5-Flash from using comprehensive end-to-end scripts. Second, fragmented diagnostic procedures introduce redundant tool calls that can exhaust Gemini-3.5-Flash’s interaction budget before task completion.</p></div></div>
+
+</div></section><section class="feed-section branch-page act2"
+  data-parent-section="7" data-page="7.3"
+  data-source-start="01:25:39" data-source-end="01:28:19">
+<div class="section-inner">
+<p class="page-num reveal">7.3 / 7.3</p>
+<h2 class="big-statement reveal">同一份技能，谁执行得动谁受益</h2>
+<p class="body-text reveal reveal-d1"><span class="sentence-cue" data-sentence-index="0">Qwen-3.6-27B 的 SpreadSheet 技能，让 Qwen-3.5-4B 相比无技能基线提升约 18.4%，让 Qwen-3.5-9B 提升约 26.2%，让 Qwen-3.6-27B 自身提升约 40.9%。</span><span class="sentence-cue" data-sentence-index="1">OfficeQA 则呈现另一种情形：Qwen-3.5-4B 开发的技能让自身准确率从 30.2% 降到 28.5%，却让 Qwen-3.6-27B 从 42.1% 升到 52.9%。</span><span class="sentence-cue" data-sentence-index="2">轨迹分析提示，小模型在很长的文档里可能被内容干扰，转而按默认方式阅读。</span><span class="sentence-cue" data-sentence-index="3">较强的模型执行得更可靠。</span><span class="sentence-cue" data-sentence-index="4">这些结果区分了两种能力：从经验中发现有用程序性知识，和在推理时有效执行它。</span></p>
+<div class="anim-stage reveal reveal-d3" id="7_3-anim">
+<div class="stage b73_stage" data-page-design="7.3" data-designer-task="pg-7.3"
+     data-designer-run="run-b73" data-visual-thesis="同一份技能发给三个个头不同的模型，多出来的那一截随执行力变长；换成长文档那件事，练它的模型自己反而用不动"
+     data-layout-grammar="一份技能同拍分给三个模型，下方三段共基线的增量" data-motion-verb="distribute-and-diverge"
+     data-visual-subject="每个模型多出来的那一截" data-sentence-count="5"
+     data-sentence-step="-1" data-sentence-state="initial" data-step-ms="8580,7560,5600,5400,5600">
+<p class="stage-cap">同一份技能交给不同模型执行后的得分变化</p>
+<svg viewBox="0 0 340 200" role="img" aria-label="同一份技能发给三个个头不同的模型，多出来的那一截随执行力变长；换成长文档那件事，练它的模型自己反而用不动"><g class="b73_src"><rect class="gl-card" x="132" y="16" width="76" height="30" rx="3"/>
+    <text class="t-sm" x="170" y="36" text-anchor="middle" data-visual-label>27B 练的表格技能</text></g>
+  <path class="b73_f1 b73_fan" d="M150 46 C130 60 96 62 78 74"/>
+  <path class="b73_f2 b73_fan" d="M170 46 V74"/>
+  <path class="b73_f3 b73_fan" d="M190 46 C210 60 244 62 262 74"/>
+  <path class="b73_base" d="M40 146 H300"/>
+  <g class="b73_g1"><rect class="b73_bar" x="56" y="146" width="44" height="0" rx="2"/>
+    <text class="t-sm" x="78" y="162" text-anchor="middle" data-visual-label>4B</text>
+    <text class="t-num b73_n" x="78" y="106" text-anchor="middle" data-visual-label>+18.4</text></g>
+  <g class="b73_g2"><rect class="b73_bar" x="148" y="146" width="44" height="0" rx="2"/>
+    <text class="t-sm" x="170" y="162" text-anchor="middle" data-visual-label>9B</text>
+    <text class="t-num b73_n" x="170" y="88" text-anchor="middle" data-visual-label>+26.2</text></g>
+  <g class="b73_g3"><rect class="b73_bar" x="240" y="146" width="44" height="0" rx="2"/>
+    <text class="t-sm" x="262" y="162" text-anchor="middle" data-visual-label>27B</text>
+    <text class="t-num b73_n" x="262" y="58" text-anchor="middle" data-visual-label>+40.9</text></g>
+  <g class="b73_flip"><rect class="gl-card" x="40" y="168" width="260" height="26" rx="3"/>
+    <text class="t-sm" x="52" y="185" text-anchor="start" data-visual-label>长文档那件事：4B 自己练的技能，自己反而掉分</text></g></svg>
+<div class="stage-subtitle"><p class="stage-sub" data-sentence-index="0">Qwen-3.6-27B 的 SpreadSheet 技能，让 Qwen-3.5-4B 相比无技能基线提升约 18.4%，让 Qwen-3.5-9B 提升约 26.2%，让 Qwen-3.6-27B 自身提升约 40.9%。</p><p class="stage-sub" data-sentence-index="1">OfficeQA 则呈现另一种情形：Qwen-3.5-4B 开发的技能让自身准确率从 30.2% 降到 28.5%，却让 Qwen-3.6-27B 从 42.1% 升到 52.9%。</p><p class="stage-sub" data-sentence-index="2">轨迹分析提示，小模型在很长的文档里可能被内容干扰，转而按默认方式阅读。</p><p class="stage-sub" data-sentence-index="3">较强的模型执行得更可靠。</p><p class="stage-sub" data-sentence-index="4">这些结果区分了两种能力：从经验中发现有用程序性知识，和在推理时有效执行它。</p></div>
+<div class="stage-controls" role="group" aria-label="逐句播放控制">
+<button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+<button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+<button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+<span class="sc-step" aria-live="polite">1 / 5</span></div></div></div>
+<div class="source-panel reveal reveal-d4"><button class="source-toggle" type="button" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button><div class="source-body"><span class="source-label">Source · arXiv:2608.27454</span><p>We now turn toward how different inference models use skills developed by the same source model. Within the Qwen family, stronger models can derive greater value from the same procedural knowledge. For example, Qwen-3.6-27B SpreadSheet skills improve Qwen-3.5-4B, Qwen-3.5-9B, and Qwen-3.6-27B over their no-skill baselines by 18.4%, 26.2%, and 40.9%, respectively. OfficeQA provides a case where a model develops skills that are more useful to another model than to itself: Qwen-3.5-4B skills decrease its own performance from 30.2% to 28.5%, but improve Qwen-3.6-27B from 42.1% to 52.9%. Our trajectory analysis suggests that in long-context settings, smaller models can become distracted by lengthy document contexts and fail to follow detailed multi-step search instructions, instead reverting to their default document-reading behavior. Stronger models, in contrast, more reliably execute the structured navigation procedures specified by the skill across long contexts. Taken together, these results distinguish two capabilities that self-evolution normally conflates: discovering useful procedural knowledge from experience and effectively executing that knowledge at inference time.</p></div></div>
+<button type="button" class="branch-complete" data-parent-section="7" aria-label="本章节展开完毕，回到第 7 章" onclick="if(event.detail>0)this.blur();goBack()">本章节展开完毕 · 回到第 7 章 &#8593;</button>
+</div></section></div>
+<script>var layerNames = {"layer-overview": "概览", "layer-s3": "学到的东西散落各处靠不住，但该怎么把它们好好整理呢？", "layer-s4": "三层都有了，这三层谁来写、写坏了怎么办呢？", "layer-s7": "小的配上本事也能赢大的，于是这套本事能换人用吗？"};
+var coverageData = {"sourceType": "text", "totalLength": "48197 字符", "segments": [{"start": "00:00:00", "end": "00:04:51", "section": null, "reason": "摘要，内容在正文逐条展开，避免重复"}, {"start": "00:04:51", "end": "00:12:42", "section": 1, "reason": null}, {"start": "00:12:42", "end": "00:15:56", "section": 2, "reason": null}, {"start": "00:15:56", "end": "00:17:41", "section": 3, "reason": null}, {"start": "00:17:41", "end": "00:19:58", "section": 5, "reason": null}, {"start": "00:19:58", "end": "00:27:25", "section": null, "reason": "数学符号形式化，同一内容在第 3 节用自然语言给出"}, {"start": "00:27:25", "end": "00:35:24", "section": 3, "reason": null, "deepDive": true}, {"start": "00:35:24", "end": "00:38:11", "section": 4, "reason": null}, {"start": "00:38:11", "end": "00:52:16", "section": 4, "reason": null, "deepDive": true}, {"start": "00:52:16", "end": "00:56:46", "section": 5, "reason": null}, {"start": "00:56:46", "end": "01:05:37", "section": 5, "reason": null}, {"start": "01:05:37", "end": "01:19:41", "section": 6, "reason": null}, {"start": "01:19:41", "end": "01:28:19", "section": 7, "reason": null, "deepDive": true}, {"start": "01:28:19", "end": "01:35:11", "section": 8, "reason": null}, {"start": "01:35:11", "end": "01:41:47", "section": 8, "reason": null}, {"start": "01:41:47", "end": "01:47:45", "section": 8, "reason": null}, {"start": "01:47:45", "end": "01:53:06", "section": null, "reason": "综述性回顾，核心对比已在 S2 讲过"}, {"start": "01:53:06", "end": "01:55:57", "section": null, "reason": "重复正文结论"}, {"start": "01:55:57", "end": "02:00:00", "section": 8, "reason": null}]};
+var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var layerStack = ['layer-overview'];
+var transitioning = false;
+var stageTimers = new WeakMap();
+
+/* ══ 逐句 runtime（全页唯一） ══ */
+function setSentenceStep(stage, step){
+  stage.dataset.sentenceStep = String(step);
+  stage.dataset.sentenceState = step < 0 ? 'initial' : 'running';
+  var host = stage.closest('.section-inner');
+  if(host){
+    var cues = host.querySelectorAll('.sentence-cue');
+    for(var i=0;i<cues.length;i++){
+      cues[i].classList.toggle('is-cur', i === step);
+      cues[i].classList.toggle('cue-active', i === step);
+    }
+  }
+  var subs = stage.querySelectorAll('.stage-sub');
+  for(var k=0;k<subs.length;k++){ subs[k].classList.toggle('is-cur', k === step); }
+  syncControls(stage);
+}
+function stopStage(stage){
+  var t = stageTimers.get(stage);
+  if(t){ t.forEach(clearTimeout); }
+  stageTimers.set(stage, []);
+  setPlaying(stage, false);
+}
+function setPlaying(stage, on){
+  stage.dataset.playing = on ? '1' : '0';
+  syncControls(stage);
+}
+function armRuntime(stage){
+  stage.dataset.seqStarted = '1';
+  var host = stage.closest('.section-inner');
+  if(host) host.classList.add('has-runtime');
+}
+function playFrom(stage, startIdx){
+  var t0 = stageTimers.get(stage);
+  if(t0){ t0.forEach(clearTimeout); }
+  armRuntime(stage);
+  var n = parseInt(stage.dataset.sentenceCount, 10);
+  var durs = (stage.dataset.stepMs || '').split(',').filter(Boolean).map(Number);
+  if(startIdx >= n){ startIdx = 0; }
+  var timers = [], t = (startIdx === 0 ? 420 : 0);
+  for(var i=startIdx;i<n;i++){
+    (function(idx, delay){
+      timers.push(setTimeout(function(){ setSentenceStep(stage, idx); }, delay));
+    })(i, t);
+    t += (durs[i] || 3000);
+  }
+  timers.push(setTimeout(function(){ setPlaying(stage, false); }, t));
+  stageTimers.set(stage, timers);
+  setPlaying(stage, true);
+}
+function stepBy(stage, delta){
+  stopStage(stage);
+  armRuntime(stage);
+  var n = parseInt(stage.dataset.sentenceCount, 10);
+  var cur = parseInt(stage.dataset.sentenceStep, 10);
+  var next = cur + delta;
+  if(next < 0) next = 0;
+  if(next > n-1) next = n-1;
+  setSentenceStep(stage, next);
+}
+function togglePlay(stage){
+  if(stage.dataset.playing === '1'){ stopStage(stage); return; }
+  var n = parseInt(stage.dataset.sentenceCount, 10);
+  var cur = parseInt(stage.dataset.sentenceStep, 10);
+  playFrom(stage, cur >= n-1 ? 0 : cur + 1);
+}
+function syncControls(stage){
+  var bar = stage.querySelector('.stage-controls');
+  if(!bar) return;
+  var n = parseInt(stage.dataset.sentenceCount, 10);
+  var cur = parseInt(stage.dataset.sentenceStep, 10);
+  var playing = stage.dataset.playing === '1';
+  var btn = bar.querySelector('[data-act="play"]');
+  if(btn){
+    btn.textContent = playing ? '‖' : (cur >= n-1 ? '↺' : '▶');
+    btn.setAttribute('aria-label', playing ? '暂停' : (cur >= n-1 ? '重播' : '播放'));
+    btn.title = playing ? '暂停（空格）' : (cur >= n-1 ? '重播（空格）' : '播放（空格）');
+  }
+  var prev = bar.querySelector('[data-act="prev"]');
+  var next = bar.querySelector('[data-act="next"]');
+  if(prev) prev.disabled = cur <= 0;
+  if(next) next.disabled = cur >= n-1;
+  var ind = bar.querySelector('.sc-step');
+  if(ind) ind.textContent = (cur < 0 ? 1 : cur+1) + ' / ' + n;
+}
+function startStage(stage){
+  if(stage.dataset.seqStarted === '1') return;
+  var n = parseInt(stage.dataset.sentenceCount, 10);
+  if(REDUCED){ armRuntime(stage); setSentenceStep(stage, n-1); return; }
+  playFrom(stage, 0);
+}
+function activeStage(){
+  var layer = document.getElementById(layerStack[layerStack.length-1]);
+  if(!layer) return null;
+  var stages = layer.querySelectorAll('.stage');
+  var best = null, bestD = Infinity, mid = window.innerHeight/2;
+  for(var i=0;i<stages.length;i++){
+    var r = stages[i].getBoundingClientRect();
+    if(r.bottom < 0 || r.top > window.innerHeight) continue;
+    var d = Math.abs((r.top + r.bottom)/2 - mid);
+    if(d < bestD){ bestD = d; best = stages[i]; }
+  }
+  return best;
+}
+document.addEventListener('click', function(e){
+  var btn = e.target.closest ? e.target.closest('.sc-btn') : null;
+  if(!btn || btn.disabled) return;
+  var stage = btn.closest('.stage');
+  if(!stage) return;
+  var act = btn.dataset.act;
+  if(act === 'play') togglePlay(stage);
+  else stepBy(stage, act === 'next' ? 1 : -1);
+  if(e.detail > 0) btn.blur();
+});
+document.addEventListener('keydown', function(e){
+  if(e.key !== ' ' && e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+  if(e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+  var s = activeStage();
+  if(!s) return;
+  e.preventDefault();
+  if(e.key === ' ') togglePlay(s);
+  else stepBy(s, e.key === 'ArrowRight' ? 1 : -1);
+});
+
+/* ══ 每层独立 IntersectionObserver ══ */
+var observers = new Map();
+function setupObserver(layerId){
+  if(observers.has(layerId)) return;
+  var layer = document.getElementById(layerId);
+  if(!layer) return;
+  var targets = layer.querySelectorAll('.reveal, [class*="_stage"]');
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        e.target.classList.add('visible');
+        if(e.target.classList.contains('stage')) startStage(e.target);
+      }
+    });
+  }, {threshold:0.15, root:layer});
+  targets.forEach(function(el){ obs.observe(el); });
+  observers.set(layerId, obs);
+}
+function resetReveals(layerId){
+  var layer = document.getElementById(layerId);
+  if(!layer) return;
+  layer.querySelectorAll('.reveal').forEach(function(el){ el.classList.remove('visible'); });
+  layer.querySelectorAll('[class*="_stage"]').forEach(function(el){ el.classList.remove('visible'); });
+}
+function activateReveals(layerId){
+  resetReveals(layerId);
+  if(observers.has(layerId)){ observers.get(layerId).disconnect(); observers.delete(layerId); }
+  requestAnimationFrame(function(){ setupObserver(layerId); });
+}
+
+/* ══ 面包屑 / 深度 ══ */
+function updateBreadcrumb(){
+  var bc = document.getElementById('breadcrumb');
+  bc.innerHTML = '';
+  layerStack.forEach(function(id, i){
+    if(i > 0){
+      var sep = document.createElement('span');
+      sep.className = 'sep'; sep.textContent = '›';
+      bc.appendChild(sep);
+    }
+    var span = document.createElement('span');
+    span.textContent = layerNames[id] || id;
+    if(i === layerStack.length - 1){ span.className = 'current'; }
+    else { span.addEventListener('click', function(){ goBack(); }); }
+    bc.appendChild(span);
+  });
+  var backBtn = document.getElementById('backBtn');
+  backBtn.style.display = layerStack.length > 1 ? 'flex' : 'none';
+  bc.style.left = layerStack.length > 1 ? '58px' : '14px';
+  var dots = document.getElementById('depthDots');
+  var depth = layerStack.length - 1;
+  dots.querySelectorAll('.dot').forEach(function(d, i){ d.classList.toggle('active', i === depth); });
+}
+
+/* ══ 层间转场 ══ */
+var returnScroll = {};
+function drillDown(targetId, btnEl){
+  if(transitioning) return;
+  transitioning = true;
+  var currentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var targetLayer = document.getElementById(targetId);
+  returnScroll[currentId] = currentLayer.scrollTop;
+  targetLayer.scrollTop = 0;
+  resetReveals(targetId);
+  targetLayer.style.visibility = 'visible';
+  var duration = 600;
+  currentLayer.style.transition = 'transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  currentLayer.style.transformOrigin = 'center center';
+  currentLayer.style.transform = 'scale(1.3)';
+  currentLayer.style.opacity = '0';
+  targetLayer.classList.add('active');
+  targetLayer.style.opacity = '0';
+  targetLayer.style.transform = 'scale(0.85)';
+  targetLayer.style.transition = 'transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){
+    targetLayer.style.opacity = '1'; targetLayer.style.transform = 'scale(1)';
+  });});
+  setTimeout(function(){
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition=''; currentLayer.style.transform=''; currentLayer.style.opacity='';
+    targetLayer.style.transition=''; targetLayer.style.transform='';
+    activateReveals(targetId);
+    transitioning = false;
+  }, duration + 50);
+  layerStack.push(targetId);
+  updateBreadcrumb();
+}
+function goBack(){
+  if(layerStack.length <= 1 || transitioning) return;
+  transitioning = true;
+  var currentId = layerStack.pop();
+  var parentId = layerStack[layerStack.length - 1];
+  var currentLayer = document.getElementById(currentId);
+  var parentLayer = document.getElementById(parentId);
+  var duration = 600;
+  currentLayer.style.transition = 'transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  currentLayer.style.transform = 'scale(0.85)';
+  currentLayer.style.opacity = '0';
+  parentLayer.classList.add('active');
+  parentLayer.style.transform = 'scale(1.3)';
+  parentLayer.style.opacity = '0';
+  parentLayer.style.transition = 'transform '+duration+'ms ease-out, opacity '+duration+'ms ease-out';
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){
+    parentLayer.style.transform = 'scale(1)'; parentLayer.style.opacity = '1';
+  });});
+  setTimeout(function(){
+    currentLayer.classList.remove('active');
+    currentLayer.style.transition=''; currentLayer.style.transform='';
+    currentLayer.style.opacity=''; currentLayer.style.visibility='';
+    parentLayer.style.transition=''; parentLayer.style.transform='';
+    if(returnScroll[parentId] != null) parentLayer.scrollTop = returnScroll[parentId];
+    transitioning = false;
+  }, duration + 50);
+  updateBreadcrumb();
+}
+function toggleSource(btn){
+  btn.classList.toggle('open');
+  btn.nextElementSibling.classList.toggle('open');
+}
+setupObserver('layer-overview');
+updateBreadcrumb();
+
+</script>
+</body></html>
