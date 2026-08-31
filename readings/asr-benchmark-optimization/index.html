@@ -1,0 +1,1634 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>部分语音识别高分模型依赖题库而非音频</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root{
+  --bg-act1:#F7F6FB; --bg-act2:#F2F7FB; --bg-act3:#FAF7F3; --bg-dark:#141B2E;
+  --text:#161D2E; --text-muted:#333C4E; --dim:#414B60;
+  --accent:#7C3AED; --accent2:#0EA5E9;
+  --ink-accent:#4C1D95; --ink-accent2:#075985;
+  --warm:#B45309; --danger:#BE123C; --card-bg:#FFFFFF;
+  /* stage 图形与短标的浅底一套 */
+  --sv-ink:#241C63; --sv-ink2:#0B4A6F; --sv-accent:#6D28D9; --sv-accent2:#0369A1;
+  --sv-warn:#7C2D12; --sv-danger:#9F1239; --sv-ok:#14532D;
+  --sv-grey:#3D4759; --sv-line:#7A8AA0; --sv-card:#FFFFFF; --sv-track:#DDE3EC;
+  --sv-soft:#EDF1F6; --sv-tint-accent:#F3F0FE; --sv-tint-info:#E8FAFE;
+  --sv-tint-warn:#FDF3D3; --sv-tint-ok:#DDFAE7; --sv-tint-danger:#FFEFF2;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;
+  font-family:'Noto Sans SC',-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;
+  background:var(--bg-act1);color:var(--text);-webkit-font-smoothing:antialiased}
+.layer{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+  visibility:hidden;opacity:0;will-change:transform,opacity;scroll-snap-type:y proximity}
+.layer.active{visibility:visible;opacity:1}
+.feed-section{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:104px 22px 96px;scroll-snap-align:start;background:var(--bg-act1)}
+.feed-section:nth-of-type(3n+2){background:var(--bg-act2)}
+.feed-section:nth-of-type(3n){background:var(--bg-act3)}
+.feed-section.dark{background:var(--bg-dark);
+  --text:#EAF0F8; --text-muted:#B7C4D6; --dim:#9DAEC4;
+  --ink-accent:#C4B5FD; --ink-accent2:#7DD3FC;
+  /* stage 图形与短标的深底一套：文字提亮，图形保持 3:1 */
+  --sv-ink:#EAF0F8; --sv-ink2:#7DD3FC; --sv-accent:#B79CFB; --sv-accent2:#54C7F2;
+  --sv-warn:#FCC98A; --sv-danger:#FDA4AF; --sv-ok:#86EFAC;
+  --sv-grey:#C3CFDF; --sv-line:#7C8DA6; --sv-card:#1E2740; --sv-track:#38455F;
+  --sv-soft:#27324A; --sv-tint-accent:#2E2559; --sv-tint-info:#123A4E;
+  --sv-tint-warn:#4A3512; --sv-tint-ok:#14361F; --sv-tint-danger:#431723}
+.section-inner{max-width:600px;width:100%}
+.reveal{opacity:0;transform:translateY(34px);transition:opacity .8s ease,transform .8s ease}
+.reveal.visible{opacity:1;transform:none}
+.reveal-d1{transition-delay:.12s} .reveal-d2{transition-delay:.24s}
+.reveal-d3{transition-delay:.36s} .reveal-d4{transition-delay:.48s}
+.reveal-d5{transition-delay:.6s}
+.kicker{font-size:12px;letter-spacing:.14em;font-weight:700;color:var(--ink-accent2);
+  margin:0 0 12px;text-transform:uppercase}
+.big-statement{font-family:'Noto Serif SC',Georgia,serif;font-size:clamp(21px,5.4vw,30px);
+  font-weight:700;line-height:1.5;margin:0 0 14px;color:var(--text)}
+.chapter-answer{font-size:16px;line-height:1.8;font-weight:600;color:var(--ink-accent);
+  margin:0 0 22px;padding-left:12px;border-left:3px solid var(--accent)}
+.feed-section.dark .chapter-answer{border-left-color:var(--ink-accent)}
+.body-text{font-size:15.5px;line-height:1.95;color:var(--text-muted);margin:0 0 22px}
+.sentence-cue{transition:color .3s ease}
+.has-runtime .sentence-cue{color:var(--dim)}
+.has-runtime .sentence-cue.cue-active{color:var(--text);font-weight:500}
+.anim-stage{width:100%;display:flex;justify-content:center;margin:24px 0;min-height:210px}
+.anim-stage>div{width:100%}
+.stage{width:100%;max-width:520px;margin:0 auto;position:relative}
+.stage svg{display:block;width:100%;max-width:340px;margin:0 auto;height:auto;overflow:visible}
+.stage-cap{font-size:12.5px;line-height:1.6;color:var(--dim);text-align:center;
+  margin:0 0 12px;font-weight:600}
+.stage-subtitle{display:grid;max-width:500px;margin:14px auto 0;
+  border-top:1px solid rgba(100,116,139,.2);padding-top:14px}
+.stage-sub{grid-area:1/1;font-size:15px;line-height:1.82;color:var(--text);text-align:center;
+  padding:0 8px;margin:0;opacity:0;transform:translateY(7px);
+  transition:opacity .4s ease,transform .4s cubic-bezier(.34,.02,.2,1)}
+.stage-sub.is-cur{opacity:1;transform:none}
+.feed-section.dark .stage-subtitle{border-top-color:rgba(255,255,255,.18)}
+.stage-controls{display:flex;align-items:center;justify-content:center;gap:6px;margin:12px 0 0;
+  user-select:none;-webkit-user-select:none}
+.sc-btn{width:32px;height:26px;padding:0;border:1px solid rgba(76,29,149,.35);border-radius:7px;
+  background:rgba(255,255,255,.8);color:var(--ink-accent);font-size:13px;line-height:1;
+  font-family:inherit;cursor:pointer;transition:background .18s ease,border-color .18s ease,color .18s ease;
+  display:inline-flex;align-items:center;justify-content:center;flex:none}
+.sc-btn:hover{background:var(--ink-accent);border-color:var(--ink-accent);color:#fff}
+.sc-btn:disabled{opacity:.4;cursor:default}
+.sc-btn:disabled:hover{background:rgba(255,255,255,.8);border-color:rgba(76,29,149,.35);color:var(--ink-accent)}
+.sc-btn:focus-visible{outline:2px solid var(--ink-accent);outline-offset:2px}
+.sc-play{width:40px;font-size:12px}
+.sc-step{font-size:11.5px;color:var(--text-muted);font-variant-numeric:tabular-nums;
+  min-width:38px;text-align:center;flex:none;font-weight:600}
+.feed-section.dark .sc-btn{border-color:rgba(196,181,253,.5);background:rgba(255,255,255,.12);
+  color:var(--ink-accent)}
+.feed-section.dark .sc-btn:hover{background:var(--ink-accent);color:#141B2E}
+.feed-section.dark .sc-btn:disabled:hover{background:rgba(255,255,255,.12);color:var(--ink-accent)}
+.source-panel{margin-top:22px;border-radius:12px;overflow:hidden;
+  border:1px solid rgba(124,58,237,.22);background:rgba(124,58,237,.04)}
+.feed-section.dark .source-panel{border-color:rgba(255,255,255,.16);background:rgba(255,255,255,.06)}
+.source-toggle{width:100%;padding:12px 16px;border:none;background:none;
+  display:flex;align-items:center;gap:8px;cursor:pointer;font-family:inherit;
+  font-size:13px;font-weight:700;color:var(--ink-accent)}
+.source-toggle:hover{background:rgba(124,58,237,.08)}
+.source-toggle .arrow{transition:transform .3s;font-size:10px}
+.source-toggle.open .arrow{transform:rotate(90deg)}
+.source-body{max-height:0;overflow:hidden;transition:max-height .4s ease;padding:0 16px}
+.source-body.open{max-height:2000px;padding:0 16px 16px;overflow-y:auto}
+.source-body p{font-size:12.5px;line-height:1.85;color:var(--text-muted);margin:0 0 10px}
+.source-body .source-label{font-size:11px;font-weight:700;letter-spacing:.06em;
+  color:var(--ink-accent);margin-bottom:8px;display:block;text-transform:uppercase}
+.drill-btn{display:inline-flex;align-items:center;gap:6px;margin-top:20px;
+  padding:10px 20px;border:1.5px solid rgba(124,58,237,.42);border-radius:10px;
+  background:transparent;color:var(--ink-accent);font-size:14px;font-weight:700;
+  font-family:inherit;cursor:pointer;transition:all .25s}
+.drill-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.feed-section.dark .drill-btn{border-color:rgba(196,181,253,.55)}
+.branch-complete{margin-top:26px;padding:12px 16px;border-radius:10px;
+  background:#EDE9FE;color:#3B1E82;font-size:13.5px;font-weight:700;text-align:center}
+.feed-section.dark .branch-complete{background:#312E81;color:#F5F3FF}
+.breadcrumb{position:fixed;top:14px;left:14px;z-index:1000;display:flex;align-items:center;gap:4px;
+  background:rgba(255,255,255,.94);backdrop-filter:blur(12px);padding:8px 14px;border-radius:10px;
+  box-shadow:0 2px 16px rgba(0,0,0,.12);font-size:12.5px;font-weight:600;max-width:calc(100vw - 90px)}
+.breadcrumb span{color:#4A566E;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.breadcrumb span.current{color:#1B2337;cursor:default}
+.breadcrumb .sep{color:#94A3B8;margin:0 2px;cursor:default}
+.back-btn{position:fixed;top:14px;left:14px;z-index:1001;width:38px;height:38px;border-radius:10px;
+  border:none;background:rgba(255,255,255,.94);backdrop-filter:blur(12px);
+  box-shadow:0 2px 12px rgba(0,0,0,.12);font-size:18px;cursor:pointer;display:none;
+  align-items:center;justify-content:center;color:#1B2337}
+.depth-dots{position:fixed;bottom:18px;right:14px;z-index:1000;
+  display:flex;gap:8px;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);
+  padding:8px 14px;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,.12)}
+.dot{width:9px;height:9px;border-radius:50%;background:#CBD5E1;transition:all .3s}
+.dot.active{background:var(--accent);transform:scale(1.25)}
+.hero{text-align:left}
+.hero-kicker{font-size:12px;letter-spacing:.16em;font-weight:700;color:var(--ink-accent2);margin:0 0 16px}
+.hero-title{font-family:'Noto Serif SC',Georgia,serif;font-size:clamp(27px,7.6vw,42px);
+  font-weight:700;line-height:1.35;margin:0 0 18px;color:var(--text)}
+.hero-sub{font-size:16px;line-height:1.9;color:var(--text-muted);margin:0 0 10px}
+.hero-meta{font-size:12.5px;color:var(--dim);margin-top:26px;line-height:1.8}
+.hero-meta a{color:var(--ink-accent2)}
+@media (max-width:420px){ .section-inner{max-width:100%} }
+
+.p_ov1_bk{fill:var(--sv-card);stroke:var(--sv-grey);stroke-width:1.6}
+.p_ov1_bk1{fill:var(--sv-tint-accent);stroke:var(--sv-accent)}
+.p_ov1_rule{stroke:var(--sv-line);stroke-width:1.6;stroke-linecap:round}
+.p_ov1_track{fill:var(--sv-track)}
+.p_ov1_fill{fill:var(--sv-accent2)}
+.p_ov1_score{fill:var(--sv-accent);transition:y var(--sentence-action-ms) cubic-bezier(.3,.7,.3,1),
+  height var(--sentence-action-ms) cubic-bezier(.3,.7,.3,1)}
+.p_ov1_lab{fill:var(--sv-ink);font-size:11px;text-anchor:middle;font-weight:600}
+.p_ov1_tag{fill:var(--sv-danger);font-size:11px;text-anchor:middle;font-weight:700}
+.p_ov1_link,.p_ov1_gap{opacity:0;transition:opacity .45s ease}
+.p_ov1_arrow{stroke:var(--sv-accent);stroke-width:2;fill:none;stroke-dasharray:5 4}
+.p_ov1_head{fill:var(--sv-accent)}
+.p_ov1_gapline{stroke:var(--sv-danger);stroke-width:1.6;stroke-dasharray:3 3}
+.p_ov1_stage[data-sentence-step="0"] .p_ov1_score{y:66px;height:64px}
+.p_ov1_stage[data-sentence-step="1"] .p_ov1_score{y:58px;height:72px}
+.p_ov1_stage[data-sentence-step="2"] .p_ov1_score{y:46px;height:84px}
+.p_ov1_stage[data-sentence-step="2"] .p_ov1_link{opacity:1}
+.p_ov1_stage[data-sentence-step="3"] .p_ov1_score{y:42px;height:88px}
+.p_ov1_stage[data-sentence-step="3"] .p_ov1_link{opacity:1}
+.p_ov1_stage[data-sentence-step="3"] .p_ov1_gap{opacity:1}
+
+.p_ov2_m{fill:var(--sv-track);stroke:var(--sv-line);stroke-width:1.2;
+  transition:fill var(--sentence-action-ms) ease,y var(--sentence-action-ms) ease}
+.p_ov2_pb circle{fill:var(--sv-card);stroke:var(--sv-accent2);stroke-width:2}
+.p_ov2_pb text{fill:var(--sv-ink2);font-size:12px;text-anchor:middle;font-weight:700}
+.p_ov2_pb{opacity:0;transition:opacity .4s ease}
+.p_ov2_lab{fill:var(--sv-ink);font-size:11px;text-anchor:middle;font-weight:600}
+.p_ov2_tag{fill:var(--sv-danger);font-size:12px;text-anchor:middle;font-weight:700}
+.p_ov2_ref rect{fill:var(--sv-tint-warn);stroke:var(--sv-warn);stroke-width:1.6}
+.p_ov2_reftx{fill:var(--sv-warn);font-size:11px;text-anchor:middle;font-weight:700}
+.p_ov2_ref{opacity:0;transition:opacity .45s ease,transform var(--sentence-action-ms) ease}
+.p_ov2_over{opacity:0;transition:opacity .45s ease}
+.p_ov2_stage[data-sentence-step="0"] .p_ov2_pb{opacity:1}
+.p_ov2_stage[data-sentence-step="1"] .p_ov2_pb{opacity:1}
+.p_ov2_stage[data-sentence-step="1"] .p_ov2_ref{opacity:1;transform:translateY(24px)}
+.p_ov2_stage[data-sentence-step="1"] .p_ov2_m0,
+.p_ov2_stage[data-sentence-step="1"] .p_ov2_m3,
+.p_ov2_stage[data-sentence-step="1"] .p_ov2_m5,
+.p_ov2_stage[data-sentence-step="1"] .p_ov2_m8{fill:var(--sv-warn)}
+.p_ov2_stage[data-sentence-step="2"] .p_ov2_pb{opacity:1}
+.p_ov2_stage[data-sentence-step="2"] .p_ov2_ref{opacity:1;transform:translateY(24px)}
+.p_ov2_stage[data-sentence-step="2"] .p_ov2_m0,
+.p_ov2_stage[data-sentence-step="2"] .p_ov2_m3,
+.p_ov2_stage[data-sentence-step="2"] .p_ov2_m5,
+.p_ov2_stage[data-sentence-step="2"] .p_ov2_m8{fill:var(--sv-warn)}
+.p_ov2_stage[data-sentence-step="2"] .p_ov2_over{opacity:1}
+
+.p_ov3_card{fill:var(--sv-card);stroke:var(--sv-grey);stroke-width:1.8}
+.p_ov3_card2{fill:var(--sv-tint-info);stroke:var(--sv-ink2);stroke-width:1.6}
+.p_ov3_ln{stroke:var(--sv-line);stroke-width:2;stroke-linecap:round}
+.p_ov3_lab{fill:var(--sv-ink);font-size:11px;text-anchor:middle;font-weight:600}
+.p_ov3_small{fill:var(--sv-ink2);font-size:11px;text-anchor:middle;font-weight:600}
+.p_ov3_small2{fill:var(--sv-ink2);font-size:11px;text-anchor:start;font-weight:600}
+.p_ov3_small3{fill:var(--sv-danger);font-size:11px;text-anchor:start;font-weight:600}
+.p_ov3_er{fill:var(--sv-danger);opacity:0;transition:opacity var(--sentence-action-ms) ease}
+.p_ov3_clean,.p_ov3_fork{opacity:0;transition:opacity .45s ease}
+.p_ov3_pa,.p_ov3_pb{fill:none;stroke:var(--sv-line);stroke-width:2}
+.p_ov3_node{fill:var(--sv-accent)}
+.p_ov3_stage[data-sentence-step="0"] .p_ov3_e1{opacity:1}
+.p_ov3_stage[data-sentence-step="0"] .p_ov3_clean{opacity:1}
+.p_ov3_stage[data-sentence-step="1"] .p_ov3_e1,
+.p_ov3_stage[data-sentence-step="1"] .p_ov3_e2,
+.p_ov3_stage[data-sentence-step="1"] .p_ov3_e3{opacity:1}
+.p_ov3_stage[data-sentence-step="1"] .p_ov3_clean{opacity:1}
+.p_ov3_stage[data-sentence-step="2"] .p_ov3_e1,
+.p_ov3_stage[data-sentence-step="2"] .p_ov3_e2,
+.p_ov3_stage[data-sentence-step="2"] .p_ov3_e3{opacity:1}
+.p_ov3_stage[data-sentence-step="2"] .p_ov3_fork{opacity:1}
+.p_ov3_stage[data-sentence-step="2"] .p_ov3_pb{stroke:var(--sv-danger);stroke-width:3}
+
+.p_ov4_w{fill:var(--sv-accent2);transition:opacity var(--sentence-action-ms) ease}
+.p_ov4_lab{fill:var(--sv-ink);font-size:11px;text-anchor:middle;font-weight:600}
+.p_ov4_olab{fill:var(--sv-ink);font-size:11px;text-anchor:middle;font-weight:600}
+.p_ov4_cutlab{fill:var(--sv-danger);font-size:11px;text-anchor:middle;font-weight:700}
+.p_ov4_empty{fill:var(--sv-ink2);font-size:12px;text-anchor:middle;font-weight:700;opacity:0;
+  transition:opacity .4s ease}
+.p_ov4_cut rect{fill:var(--sv-card);stroke:var(--sv-danger);stroke-width:2;stroke-dasharray:5 4}
+.p_ov4_cut{opacity:0;transition:opacity .45s ease}
+.p_ov4_out{opacity:0;transition:opacity .45s ease}
+.p_ov4_obox{fill:var(--sv-card);stroke:var(--sv-grey);stroke-width:1.8}
+.p_ov4_stage[data-sentence-step="0"] .p_ov4_cut{opacity:1}
+.p_ov4_stage[data-sentence-step="1"] .p_ov4_cut{opacity:1}
+.p_ov4_stage[data-sentence-step="1"] .p_ov4_w:nth-of-type(n+7):nth-of-type(-n+11){opacity:0}
+.p_ov4_stage[data-sentence-step="2"] .p_ov4_cut{opacity:1}
+.p_ov4_stage[data-sentence-step="2"] .p_ov4_w:nth-of-type(n+7):nth-of-type(-n+11){opacity:0}
+.p_ov4_stage[data-sentence-step="2"] .p_ov4_out{opacity:1}
+.p_ov4_stage[data-sentence-step="2"] .p_ov4_empty{opacity:1}
+
+.p_ov5_snd{fill:var(--sv-tint-accent);stroke:var(--sv-accent);stroke-width:2}
+.p_ov5_wv{fill:none;stroke:var(--sv-accent);stroke-width:2;stroke-linecap:round}
+.p_ov5_lab{fill:var(--sv-ink);font-size:11px;text-anchor:middle;font-weight:600}
+.p_ov5_v1 rect,.p_ov5_v2 rect{fill:var(--sv-card);stroke:var(--sv-grey);stroke-width:1.8;
+  transition:stroke var(--sentence-action-ms) ease}
+.p_ov5_vt{fill:var(--sv-ink);font-size:12px;text-anchor:middle;font-weight:700}
+.p_ov5_v1,.p_ov5_v2,.p_ov5_pick{opacity:0;transition:opacity .45s ease}
+.p_ov5_pk{stroke:var(--sv-accent);stroke-width:2.4}
+.p_ov5_pt{fill:var(--sv-ink);font-size:11px;text-anchor:end;font-weight:700}
+.p_ov5_stage[data-sentence-step="1"] .p_ov5_v1,
+.p_ov5_stage[data-sentence-step="1"] .p_ov5_v2{opacity:1}
+.p_ov5_stage[data-sentence-step="2"] .p_ov5_v1,
+.p_ov5_stage[data-sentence-step="2"] .p_ov5_v2{opacity:1}
+.p_ov5_stage[data-sentence-step="3"] .p_ov5_v1,
+.p_ov5_stage[data-sentence-step="3"] .p_ov5_v2{opacity:1}
+.p_ov5_stage[data-sentence-step="3"] .p_ov5_v1 rect{stroke:var(--sv-accent);stroke-width:3}
+.p_ov5_stage[data-sentence-step="3"] .p_ov5_pick{opacity:1}
+
+.p_ov6_ctxL,.p_ov6_ctxR{fill:var(--sv-track);stroke:var(--sv-line);stroke-width:1.4;
+  transition:fill var(--sentence-action-ms) ease,opacity var(--sentence-action-ms) ease}
+.p_ov6_core{fill:var(--sv-tint-accent);stroke:var(--sv-accent);stroke-width:2}
+.p_ov6_lab{fill:var(--sv-ink);font-size:11px;text-anchor:middle;font-weight:600}
+.p_ov6_sub{fill:var(--sv-grey);font-size:10px;text-anchor:middle;font-weight:600}
+.p_ov6_pbox,.p_ov6_pbox2{fill:var(--sv-card);stroke:var(--sv-line);stroke-width:1.6;
+  transition:stroke var(--sentence-action-ms) ease,fill var(--sentence-action-ms) ease}
+.p_ov6_ptxt{fill:var(--sv-ink2);font-size:11px;text-anchor:middle;font-weight:700}
+.p_ov6_ptxt2{fill:var(--sv-danger);font-size:11px;text-anchor:middle;font-weight:700}
+.p_ov6_pol{opacity:0;transition:opacity .45s ease}
+.p_ov6_stage[data-sentence-step="0"] .p_ov6_pol{opacity:1}
+.p_ov6_stage[data-sentence-step="0"] .p_ov6_pbox{stroke:var(--sv-ink2);stroke-width:3;fill:var(--sv-tint-info)}
+.p_ov6_stage[data-sentence-step="1"] .p_ov6_pol{opacity:1}
+.p_ov6_stage[data-sentence-step="1"] .p_ov6_ctxL{opacity:.25}
+.p_ov6_stage[data-sentence-step="1"] .p_ov6_ctxR{fill:var(--sv-tint-danger)}
+.p_ov6_stage[data-sentence-step="1"] .p_ov6_pbox2{stroke:var(--sv-danger);stroke-width:3;fill:var(--sv-tint-danger)}
+.p_ov6_stage[data-sentence-step="2"] .p_ov6_pol{opacity:1}
+.p_ov6_stage[data-sentence-step="2"] .p_ov6_ctxR{fill:var(--sv-tint-danger)}
+.p_ov6_stage[data-sentence-step="2"] .p_ov6_pbox{stroke:var(--sv-ink2);stroke-width:3;fill:var(--sv-tint-info)}
+.p_ov6_stage[data-sentence-step="2"] .p_ov6_pbox2{stroke:var(--sv-danger);stroke-width:3;fill:var(--sv-tint-danger)}
+
+.p_ov7_bd{fill:var(--sv-card);stroke:var(--sv-grey);stroke-width:1.8}
+.p_ov7_row{stroke:var(--sv-line);stroke-width:2.4;stroke-linecap:round}
+.p_ov7_lab,.p_ov7_slab{fill:var(--sv-ink);font-size:11px;text-anchor:middle;font-weight:600}
+.p_ov7_seal rect{fill:var(--sv-tint-info);stroke:var(--sv-ink2);stroke-width:2}
+.p_ov7_lock{fill:none;stroke:var(--sv-ink2);stroke-width:2.4}
+.p_ov7_tab rect{fill:var(--sv-tint-accent);stroke:var(--sv-accent);stroke-width:1.6}
+.p_ov7_tlab{fill:var(--sv-ink);font-size:10px;text-anchor:middle;font-weight:700}
+.p_ov7_seal,.p_ov7_tab,.p_ov7_split{opacity:0;transition:opacity .45s ease}
+.p_ov7_dot{fill:var(--sv-accent)}
+.p_ov7_stage[data-sentence-step="0"] .p_ov7_seal{opacity:1}
+.p_ov7_stage[data-sentence-step="1"] .p_ov7_seal{opacity:1}
+.p_ov7_stage[data-sentence-step="1"] .p_ov7_tab{opacity:1}
+.p_ov7_stage[data-sentence-step="2"] .p_ov7_seal{opacity:1}
+.p_ov7_stage[data-sentence-step="2"] .p_ov7_tab{opacity:1}
+.p_ov7_stage[data-sentence-step="2"] .p_ov7_split{opacity:1}
+.p_ov7_stage[data-sentence-step="3"] .p_ov7_seal{opacity:1}
+.p_ov7_stage[data-sentence-step="3"] .p_ov7_tab{opacity:1}
+.p_ov7_stage[data-sentence-step="3"] .p_ov7_split{opacity:1}
+.p_ov7_stage[data-sentence-step="3"] .p_ov7_bd{stroke:var(--sv-accent);stroke-width:2.6}
+
+.p_31_n{fill:var(--sv-card);stroke:var(--sv-accent2);stroke-width:2;
+  transition:fill var(--sentence-action-ms) ease}
+.p_31_lab,.p_31_clab,.p_31_hlab{fill:var(--sv-ink);font-size:11px;text-anchor:middle;font-weight:600}
+.p_31_per{fill:var(--sv-ink2);font-size:11px;text-anchor:middle;font-weight:700;opacity:0;
+  transition:opacity .4s ease}
+.p_31_card{fill:var(--sv-tint-warn);stroke:var(--sv-warn);stroke-width:1.8}
+.p_31_dl{stroke:var(--sv-danger);stroke-width:1.8;stroke-dasharray:4 3;fill:none}
+.p_31_dis{opacity:0;transition:opacity .45s ease}
+.p_31_flag rect{fill:var(--sv-tint-danger);stroke:var(--sv-danger);stroke-width:2}
+.p_31_flab{fill:var(--sv-danger);font-size:12px;text-anchor:middle;font-weight:700}
+.p_31_flag,.p_31_human{opacity:0;transition:opacity .45s ease}
+.p_31_hd{fill:var(--sv-accent)}
+.p_31_bdy{fill:none;stroke:var(--sv-accent);stroke-width:3;stroke-linecap:round}
+.p_31_link{stroke:var(--sv-accent);stroke-width:2}
+.p_31_stage[data-sentence-step="0"] .p_31_n{fill:var(--sv-tint-info)}
+.p_31_stage[data-sentence-step="1"] .p_31_n{fill:var(--sv-tint-info)}
+.p_31_stage[data-sentence-step="1"] .p_31_per{opacity:1}
+.p_31_stage[data-sentence-step="2"] .p_31_per{opacity:1}
+.p_31_stage[data-sentence-step="2"] .p_31_n{fill:var(--sv-tint-info)}
+.p_31_stage[data-sentence-step="2"] .p_31_dis{opacity:1}
+.p_31_stage[data-sentence-step="2"] .p_31_flag{opacity:1}
+.p_31_stage[data-sentence-step="3"] .p_31_per{opacity:1}
+.p_31_stage[data-sentence-step="3"] .p_31_n{fill:var(--sv-tint-info)}
+.p_31_stage[data-sentence-step="3"] .p_31_dis{opacity:1}
+.p_31_stage[data-sentence-step="3"] .p_31_flag{opacity:1}
+.p_31_stage[data-sentence-step="3"] .p_31_human{opacity:1}
+
+.p_32_tk{fill:var(--sv-tint-ok);stroke:var(--sv-ok);stroke-width:1.8}
+.p_32_tkt{fill:var(--sv-ok);font-size:10px;text-anchor:middle;font-weight:700}
+.p_32_rest,.p_32_rest2{fill:var(--sv-soft);stroke:var(--sv-line);stroke-width:1.4}
+.p_32_rt,.p_32_rt2{fill:var(--sv-grey);font-size:10px;text-anchor:middle;font-weight:600}
+.p_32_lab,.p_32_lab2{fill:var(--sv-ink);font-size:11px;text-anchor:middle;font-weight:600}
+.p_32_gap{fill:var(--sv-card);stroke:var(--sv-danger);stroke-width:2;stroke-dasharray:5 4}
+.p_32_ref,.p_32_cnt{opacity:0;transition:opacity .45s ease}
+.p_32_cl{fill:var(--sv-grey);font-size:10px;text-anchor:middle;font-weight:600}
+.p_32_cv{font-size:22px;text-anchor:middle;font-weight:800;fill:var(--sv-danger);opacity:0;
+  transition:opacity var(--sentence-action-ms) ease}
+.p_32_c3{fill:var(--sv-ok)}
+.p_32_stage[data-sentence-step="1"] .p_32_ref{opacity:1}
+.p_32_stage[data-sentence-step="2"] .p_32_ref{opacity:1}
+.p_32_stage[data-sentence-step="2"] .p_32_cnt{opacity:1}
+.p_32_stage[data-sentence-step="2"] .p_32_c1,
+.p_32_stage[data-sentence-step="2"] .p_32_c2{opacity:1}
+.p_32_stage[data-sentence-step="3"] .p_32_ref{opacity:1}
+.p_32_stage[data-sentence-step="3"] .p_32_cnt{opacity:1}
+.p_32_stage[data-sentence-step="3"] .p_32_c1,
+.p_32_stage[data-sentence-step="3"] .p_32_c2,
+.p_32_stage[data-sentence-step="3"] .p_32_c3{opacity:1}
+.p_32_stage[data-sentence-step="4"] .p_32_ref{opacity:1}
+.p_32_stage[data-sentence-step="4"] .p_32_cnt{opacity:1}
+.p_32_stage[data-sentence-step="4"] .p_32_c1,
+.p_32_stage[data-sentence-step="4"] .p_32_c2,
+.p_32_stage[data-sentence-step="4"] .p_32_c3{opacity:1}
+.p_32_stage[data-sentence-step="4"] .p_32_tk{stroke-width:3}
+
+.p_33_ax{stroke:var(--sv-grey);stroke-width:2}
+.p_33_axl{fill:var(--sv-ink);font-size:11px;text-anchor:middle;font-weight:600}
+.p_33_axl2{fill:var(--sv-ink);font-size:11px;text-anchor:start;font-weight:600}
+.p_33_pt{fill:var(--sv-accent);opacity:0;transition:opacity var(--sentence-action-ms) ease}
+.p_33_tl{stroke:var(--sv-danger);stroke-width:2.4;stroke-dasharray:6 4;fill:none}
+.p_33_tt{fill:var(--sv-danger);font-size:11px;text-anchor:end;font-weight:700}
+.p_33_trend,.p_33_scale{opacity:0;transition:opacity .45s ease}
+.p_33_st{fill:var(--sv-ink2);font-size:11px;text-anchor:middle;font-weight:700}
+.p_33_stage[data-sentence-step="0"] .p_33_scale{opacity:1}
+.p_33_stage[data-sentence-step="1"] .p_33_scale{opacity:1}
+.p_33_stage[data-sentence-step="1"] .p_33_pt0,
+.p_33_stage[data-sentence-step="1"] .p_33_pt1,
+.p_33_stage[data-sentence-step="1"] .p_33_pt2{opacity:1}
+.p_33_stage[data-sentence-step="2"] .p_33_scale{opacity:1}
+.p_33_stage[data-sentence-step="2"] .p_33_pt{opacity:1}
+.p_33_stage[data-sentence-step="3"] .p_33_scale{opacity:1}
+.p_33_stage[data-sentence-step="3"] .p_33_pt{opacity:1}
+.p_33_stage[data-sentence-step="3"] .p_33_trend{opacity:1}
+
+.p_41_rl{fill:var(--sv-ink);font-size:11px;text-anchor:start;font-weight:600}
+.p_41_cell{fill:var(--sv-tint-warn);stroke:var(--sv-warn);stroke-width:1.6}
+.p_41_cell2{fill:var(--sv-tint-ok);stroke:var(--sv-ok);stroke-width:1.6}
+.p_41_ct{fill:var(--sv-warn);font-size:10px;text-anchor:middle;font-weight:700}
+.p_41_ct2{fill:var(--sv-ok);font-size:10px;text-anchor:middle;font-weight:700}
+.p_41_yr{fill:var(--sv-tint-warn);stroke:var(--sv-warn);stroke-width:1.6}
+.p_41_yt{fill:var(--sv-warn);font-size:12px;text-anchor:middle;font-weight:800}
+.p_41_hole{fill:var(--sv-card);stroke:var(--sv-danger);stroke-width:2;stroke-dasharray:5 4}
+.p_41_ht{fill:var(--sv-danger);font-size:11px;text-anchor:middle;font-weight:700}
+.p_41_mcell,.p_41_myr{fill:var(--sv-tint-accent);stroke:var(--sv-accent);stroke-width:1.6}
+.p_41_mt,.p_41_myt{fill:var(--sv-ink);font-size:11px;text-anchor:middle;font-weight:700}
+.p_41_out,.p_41_fill{opacity:0;transition:opacity .45s ease}
+.p_41_fa{stroke:var(--sv-accent);stroke-width:2.4}
+.p_41_fh{fill:var(--sv-accent)}
+.p_41_ftx{fill:var(--sv-accent);font-size:11px;text-anchor:middle;font-weight:700}
+.p_41_stage[data-sentence-step="2"] .p_41_out{opacity:1}
+.p_41_stage[data-sentence-step="3"] .p_41_out{opacity:1}
+.p_41_stage[data-sentence-step="3"] .p_41_fill{opacity:1}
+
+.p_42_base{stroke:var(--sv-grey);stroke-width:2}
+.p_42_b{fill:var(--sv-accent);transition:y var(--sentence-action-ms) cubic-bezier(.3,.7,.3,1),
+  height var(--sentence-action-ms) cubic-bezier(.3,.7,.3,1)}
+.p_42_b2,.p_42_b3{fill:var(--sv-accent2)}
+.p_42_bl{fill:var(--sv-ink);font-size:11px;text-anchor:middle;font-weight:600}
+.p_42_ylab{fill:var(--sv-ink);font-size:11px;text-anchor:start;font-weight:600}
+.p_42_nt{fill:var(--sv-ink2);font-size:11px;text-anchor:middle;font-weight:700}
+.p_42_rt{fill:var(--sv-accent);font-size:11px;text-anchor:middle;font-weight:700}
+.p_42_note,.p_42_rng{opacity:0;transition:opacity .45s ease}
+.p_42_stage[data-sentence-step="0"] .p_42_b1{y:62px;height:78px}
+.p_42_stage[data-sentence-step="0"] .p_42_rng{opacity:1}
+.p_42_stage[data-sentence-step="1"] .p_42_b1{y:62px;height:78px}
+.p_42_stage[data-sentence-step="1"] .p_42_b2{y:98px;height:42px}
+.p_42_stage[data-sentence-step="1"] .p_42_b3{y:104px;height:36px}
+.p_42_stage[data-sentence-step="1"] .p_42_rng{opacity:1}
+.p_42_stage[data-sentence-step="2"] .p_42_b1{y:62px;height:78px}
+.p_42_stage[data-sentence-step="2"] .p_42_b2{y:112px;height:28px}
+.p_42_stage[data-sentence-step="2"] .p_42_b3{y:118px;height:22px}
+.p_42_stage[data-sentence-step="2"] .p_42_rng{opacity:1}
+.p_42_stage[data-sentence-step="3"] .p_42_b1{y:62px;height:78px}
+.p_42_stage[data-sentence-step="3"] .p_42_b2{y:112px;height:28px}
+.p_42_stage[data-sentence-step="3"] .p_42_b3{y:118px;height:22px}
+.p_42_stage[data-sentence-step="3"] .p_42_rng{opacity:1}
+.p_42_stage[data-sentence-step="3"] .p_42_note{opacity:1}
+
+.p_51_vb{fill:var(--sv-card);stroke:var(--sv-grey);stroke-width:1.8}
+.p_51_vt{fill:var(--sv-ink);font-size:12px;text-anchor:middle;font-weight:700}
+.p_51_sp{fill:var(--sv-danger);font-size:11px;text-anchor:middle;font-weight:700;opacity:0;
+  transition:opacity .4s ease}
+.p_51_rl{stroke:var(--sv-grey);stroke-width:2.4}
+.p_51_tick{stroke:var(--sv-grey);stroke-width:2}
+.p_51_tk{fill:var(--sv-ink);font-size:11px;text-anchor:middle;font-weight:600}
+.p_51_rlab{fill:var(--sv-ink2);font-size:11px;text-anchor:middle;font-weight:700}
+.p_51_mp{fill:var(--sv-accent)}
+.p_51_mt{fill:var(--sv-accent);font-size:10px;text-anchor:middle;font-weight:700}
+.p_51_wt{fill:var(--sv-ink2);font-size:11px;text-anchor:middle;font-weight:700}
+.p_51_ruler,.p_51_why{opacity:0;transition:opacity .45s ease}
+.p_51_mk{opacity:0;transform:translate(40px,100px);
+  transition:opacity .4s ease,transform var(--sentence-action-ms) cubic-bezier(.3,.7,.3,1)}
+.p_51_stage[data-sentence-step="1"] .p_51_sp{opacity:1}
+.p_51_stage[data-sentence-step="2"] .p_51_sp{opacity:1}
+.p_51_stage[data-sentence-step="2"] .p_51_ruler{opacity:1}
+.p_51_stage[data-sentence-step="3"] .p_51_sp{opacity:1}
+.p_51_stage[data-sentence-step="3"] .p_51_ruler{opacity:1}
+.p_51_stage[data-sentence-step="3"] .p_51_mk{opacity:1;transform:translate(170px,100px)}
+.p_51_stage[data-sentence-step="4"] .p_51_sp{opacity:1}
+.p_51_stage[data-sentence-step="4"] .p_51_ruler{opacity:1}
+.p_51_stage[data-sentence-step="4"] .p_51_mk{opacity:1;transform:translate(300px,100px)}
+.p_51_stage[data-sentence-step="4"] .p_51_why{opacity:1}
+
+.p_52_box{fill:var(--sv-card);stroke:var(--sv-grey);stroke-width:1.8}
+.p_52_bt{fill:var(--sv-ink);font-size:11px;text-anchor:middle;font-weight:600}
+.p_52_bv{fill:var(--sv-ink2);font-size:13px;text-anchor:middle;font-weight:800}
+.p_52_ra,.p_52_rb{fill:none;stroke:var(--sv-line);stroke-width:2;stroke-dasharray:5 4}
+.p_52_hub{fill:var(--sv-accent)}
+.p_52_hl{fill:var(--sv-ink);font-size:11px;text-anchor:middle;font-weight:600}
+.p_52_gl{stroke:var(--sv-line);stroke-width:2}
+.p_52_gb{stroke:var(--sv-grey);stroke-width:2.4}
+.p_52_gt{fill:var(--sv-grey);font-size:10px;text-anchor:middle;font-weight:600}
+.p_52_g9{fill:var(--sv-accent);font-size:11px;text-anchor:middle;font-weight:700;opacity:0;
+  transition:opacity .4s ease}
+.p_52_gp{fill:var(--sv-accent);transition:cx var(--sentence-action-ms) cubic-bezier(.3,.7,.3,1)}
+.p_52_route,.p_52_gauge{opacity:0;transition:opacity .45s ease}
+.p_52_stage[data-sentence-step="0"] .p_52_route{opacity:1}
+.p_52_stage[data-sentence-step="1"] .p_52_route{opacity:1}
+.p_52_stage[data-sentence-step="1"] .p_52_ra{stroke:var(--sv-accent);stroke-dasharray:none;stroke-width:2.6}
+.p_52_stage[data-sentence-step="2"] .p_52_route{opacity:1}
+.p_52_stage[data-sentence-step="2"] .p_52_ra{stroke:var(--sv-accent);stroke-dasharray:none;stroke-width:2.6}
+.p_52_stage[data-sentence-step="2"] .p_52_gauge{opacity:1}
+.p_52_stage[data-sentence-step="2"] .p_52_gp{cx:270px}
+.p_52_stage[data-sentence-step="2"] .p_52_g9{opacity:1}
+.p_52_stage[data-sentence-step="3"] .p_52_route{opacity:1}
+.p_52_stage[data-sentence-step="3"] .p_52_ra,
+.p_52_stage[data-sentence-step="3"] .p_52_rb{stroke:var(--sv-accent);stroke-dasharray:none;stroke-width:2.6}
+.p_52_stage[data-sentence-step="3"] .p_52_gauge{opacity:1}
+.p_52_stage[data-sentence-step="3"] .p_52_gp{cx:270px}
+.p_52_stage[data-sentence-step="3"] .p_52_g9{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="breadcrumb" id="breadcrumb"><span class="current">概览</span></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">&#8592;</button>
+<div class="depth-dots" id="depthDots"><div class="dot active"></div><div class="dot"></div></div>
+
+<div class="layer active" id="layer-overview" data-depth="0">
+  <section class="feed-section">
+    <div class="section-inner hero">
+      <p class="hero-kicker reveal">语音识别评测</p>
+      <h1 class="hero-title reveal reveal-d1">部分语音识别高分模型依赖题库而非音频</h1>
+      <p class="hero-sub reveal reveal-d2">研究者用 3 个测试发现，部分模型可从音频识别题库并输出对应标准答案</p>
+      <p class="hero-meta reveal reveal-d3">原文：Measuring benchmark optimization in speech recognition<br>
+      <a href="https://huggingface.co/blog/asr-benchmark-optimization" target="_blank" rel="noopener">huggingface.co/blog/asr-benchmark-optimization</a></p>
+    </div>
+  </section>
+
+  <section class="feed-section overview-section" data-section="1"
+           data-source-start="00:00" data-source-end="00:06">
+    <div class="section-inner">
+      <p class="kicker reveal">第 1 章</p>
+      <h2 class="big-statement chapter-question reveal">如果题库分数越来越高，为什么未必反映真实能力呢？</h2>
+      <p class="chapter-answer reveal reveal-d1">语音 AI 的公开基准分数可能无法真实反映模型在现实中的能力。</p>
+      <p class="body-text reveal reveal-d2"><span class="sentence-cue" data-sentence-index="0">语音 AI 模型在公开基准（公开的测试题库）上的得分越来越高。</span><span class="sentence-cue" data-sentence-index="1">但分数不总能反映真实表现。</span><span class="sentence-cue" data-sentence-index="2">因为基准公开，模型可能被优化以适应测试，出现 benchmaxxing。</span><span class="sentence-cue" data-sentence-index="3">分数涨了，能力未必真正提升。</span></p>
+      <div class="anim-stage reveal reveal-d3"><div class="stage p_ov1_stage"
+     data-page-design="overview-1"
+     data-designer-run="run-overview-1"
+     data-visual-thesis="题库分数一路抬高，真实能力那一根始终没动，两者之间张开一道差距"
+     data-layout-grammar="two-column-gauge"
+     data-motion-verb="rise-then-hold"
+     data-visual-subject="score-bar-vs-ability-bar"
+     data-sentence-count="4"
+     data-sentence-step="-1"
+     data-sentence-state="initial"
+     data-step-ms="4260,2900,4380,3500">
+    <p class="stage-cap">benchmaxxing：靠学题库套路涨分，实际能力未必提升。</p>
+    <svg viewBox="0 0 340 200" role="img" class="p_ov1_svg">
+
+  <g data-visual-unit="booklet" data-visual-component="booklet">
+    <rect class="p_ov1_bk p_ov1_bk3" x="26" y="52" width="62" height="82" rx="5"/>
+    <rect class="p_ov1_bk p_ov1_bk2" x="20" y="46" width="62" height="82" rx="5"/>
+    <rect class="p_ov1_bk p_ov1_bk1" x="14" y="40" width="62" height="82" rx="5"/>
+    <line class="p_ov1_rule" x1="24" y1="58" x2="66" y2="58"/>
+    <line class="p_ov1_rule" x1="24" y1="72" x2="66" y2="72"/>
+    <line class="p_ov1_rule" x1="24" y1="86" x2="58" y2="86"/>
+    <text class="p_ov1_lab p_ov1_lab-book" x="45" y="146">公开基准</text>
+  </g>
+  <g data-visual-unit="score" data-visual-component="score-bar">
+    <rect class="p_ov1_track" x="176" y="34" width="30" height="96" rx="4"/>
+    <rect class="p_ov1_fill p_ov1_score" x="176" y="118" width="30" height="12" rx="4"/>
+    <text class="p_ov1_lab" x="191" y="146">题库分数</text>
+  </g>
+  <g data-visual-unit="ability" data-visual-component="ability-bar">
+    <rect class="p_ov1_track" x="242" y="34" width="30" height="96" rx="4"/>
+    <rect class="p_ov1_fill p_ov1_abil" x="242" y="106" width="30" height="24" rx="4"/>
+    <text class="p_ov1_lab" x="257" y="146">真实能力</text>
+  </g>
+  <g class="p_ov1_link" data-visual-unit="opt-link" data-visual-component="optimise-link">
+    <path class="p_ov1_arrow" d="M80 82 H164"/>
+    <polygon class="p_ov1_head" points="164,77 174,82 164,87"/>
+  </g>
+  <g class="p_ov1_gap" data-visual-unit="gap" data-visual-component="gap-marker">
+    <line class="p_ov1_gapline" x1="212" y1="42" x2="236" y2="42"/>
+    <line class="p_ov1_gapline" x1="212" y1="106" x2="236" y2="106"/>
+    <text class="p_ov1_tag" x="224" y="80">差距</text>
+  </g>
+</svg>
+    <div class="stage-subtitle">
+      <p class="stage-sub" data-sentence-index="0">语音 AI 模型在公开基准（公开的测试题库）上的得分越来越高。</p>
+      <p class="stage-sub" data-sentence-index="1">但分数不总能反映真实表现。</p>
+      <p class="stage-sub" data-sentence-index="2">因为基准公开，模型可能被优化以适应测试，出现 benchmaxxing。</p>
+      <p class="stage-sub" data-sentence-index="3">分数涨了，能力未必真正提升。</p>
+    </div>
+    <div class="stage-controls" role="group" aria-label="逐句播放控制">
+      <button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+      <button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+      <button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+      <span class="sc-step" aria-live="polite">1 / 4</span>
+    </div>
+  </div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button>
+        <div class="source-body"><span class="source-label">原文</span>
+<p>Public voice AI benchmarks increasingly suggest that models are performing at human levels. Yet those scores don't always reflect how models work in the real-world. Since public benchmarks are open and widely used, models can also become optimized for the tests themselves. Their scores may improve because they have learned benchmark-specific patterns and not because they have become better at the underlying task.</p>
+<p>One reason is that traditional benchmarks overlook many of the conditions and qualities that make voice systems reliable, natural, contextually appropriate, and effective in practice. That's why we recently introduced held-out sets in Real World VoiceEQ , the Open-ASR Leaderboard , and the Far-field ASR Leaderboard : to measure more of what matters in real-world use.</p>
+<p>However, broader measurement alone does not solve the problem. This phenomenon, sometimes called benchmark optimization or "benchmaxxing," is often discussed around machine learning, however, it has been difficult to measure in speech recognition.</p>
+        </div>
+      </div>
+      
+    </div>
+  </section>
+  <section class="feed-section overview-section dark" data-section="2"
+           data-source-start="00:06" data-source-end="00:10">
+    <div class="section-inner">
+      <p class="kicker reveal">第 2 章</p>
+      <h2 class="big-statement chapter-question reveal">成绩不一定反映真实水平，但分数真的高估了能力吗？</h2>
+      <p class="chapter-answer reveal reveal-d1">三项测试在 11 个开源语音识别模型上量化了 benchmaxxing，结果表明得分高估了实际转写能力。</p>
+      <p class="body-text reveal reveal-d2"><span class="sentence-cue" data-sentence-index="0">研究设计三项测试，在 VoxPopuli English 和 LibriSpeech 等公开基准上评估了 11 个开源语音识别模型。</span><span class="sentence-cue" data-sentence-index="1">部分高分系统即使音频与参考转写（题库给的标准答案）矛盾，也仍输出参考转写。</span><span class="sentence-cue" data-sentence-index="2">这说明得分高估了实际转写能力。</span></p>
+      <div class="anim-stage reveal reveal-d3"><div class="stage p_ov2_stage"
+     data-page-design="overview-2"
+     data-designer-run="run-overview-2"
+     data-visual-thesis="三个探针落到十一个模型这一排上，其中四个把标准答案原样接了过去"
+     data-layout-grammar="row-of-eleven-under-three-probes"
+     data-motion-verb="mark-then-pull"
+     data-visual-subject="eleven-model-row"
+     data-sentence-count="3"
+     data-sentence-step="-1"
+     data-sentence-state="initial"
+     data-step-ms="6240,5340,3200">
+    <p class="stage-cap">三项测试评估 11 个开源语音识别模型。</p>
+    <svg viewBox="0 0 340 200" role="img" class="p_ov2_svg">
+
+  <g data-visual-component="probe-row" class="p_ov2_probes">
+    <g class="p_ov2_pb p_ov2_pb0"><circle cx="86" cy="40" r="13"/><text x="86" y="44">1</text></g>
+    <g class="p_ov2_pb p_ov2_pb1"><circle cx="170" cy="40" r="13"/><text x="170" y="44">2</text></g>
+    <g class="p_ov2_pb p_ov2_pb2"><circle cx="254" cy="40" r="13"/><text x="254" y="44">3</text></g>
+    <text class="p_ov2_lab" x="170" y="18">三项测试</text>
+  </g>
+  <g data-visual-component="model-row"><rect class="p_ov2_m p_ov2_m0" data-visual-unit="model-0" x="18" y="112" width="20" height="24" rx="3"/><rect class="p_ov2_m p_ov2_m1" data-visual-unit="model-1" x="46" y="112" width="20" height="24" rx="3"/><rect class="p_ov2_m p_ov2_m2" data-visual-unit="model-2" x="74" y="112" width="20" height="24" rx="3"/><rect class="p_ov2_m p_ov2_m3" data-visual-unit="model-3" x="102" y="112" width="20" height="24" rx="3"/><rect class="p_ov2_m p_ov2_m4" data-visual-unit="model-4" x="130" y="112" width="20" height="24" rx="3"/><rect class="p_ov2_m p_ov2_m5" data-visual-unit="model-5" x="158" y="112" width="20" height="24" rx="3"/><rect class="p_ov2_m p_ov2_m6" data-visual-unit="model-6" x="186" y="112" width="20" height="24" rx="3"/><rect class="p_ov2_m p_ov2_m7" data-visual-unit="model-7" x="214" y="112" width="20" height="24" rx="3"/><rect class="p_ov2_m p_ov2_m8" data-visual-unit="model-8" x="242" y="112" width="20" height="24" rx="3"/><rect class="p_ov2_m p_ov2_m9" data-visual-unit="model-9" x="270" y="112" width="20" height="24" rx="3"/><rect class="p_ov2_m p_ov2_m10" data-visual-unit="model-10" x="298" y="112" width="20" height="24" rx="3"/>
+    <text class="p_ov2_lab" x="170" y="152">11 个语音识别模型</text>
+  </g>
+  <g class="p_ov2_ref" data-visual-unit="ref-card" data-visual-component="reference-card">
+    <rect x="128" y="62" width="84" height="30" rx="4"/>
+    <text class="p_ov2_reftx" x="170" y="81">标准答案</text>
+  </g>
+  <g class="p_ov2_over" data-visual-component="overstate">
+    <text class="p_ov2_tag" x="170" y="176">得分高估了能力</text>
+  </g>
+</svg>
+    <div class="stage-subtitle">
+      <p class="stage-sub" data-sentence-index="0">研究设计三项测试，在 VoxPopuli English 和 LibriSpeech 等公开基准上评估了 11 个开源语音识别模型。</p>
+      <p class="stage-sub" data-sentence-index="1">部分高分系统即使音频与参考转写（题库给的标准答案）矛盾，也仍输出参考转写。</p>
+      <p class="stage-sub" data-sentence-index="2">这说明得分高估了实际转写能力。</p>
+    </div>
+    <div class="stage-controls" role="group" aria-label="逐句播放控制">
+      <button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+      <button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+      <button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+      <span class="sc-step" aria-live="polite">1 / 3</span>
+    </div>
+  </div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button>
+        <div class="source-body"><span class="source-label">原文</span>
+<p>Our latest research introduces three tests to help quantify it. We evaluated 11 widely used open-source ASR models and found that several of the highest-scoring systems reproduced benchmark transcripts from the VoxPopuli English and LibriSpeech (clean, other) datasets – even when the audio contradicted them, relevant words had been silenced, or the audio equally supported two different written forms.</p>
+<p>In some cases, models appeared to rely not only on what was said, but also on subtle acoustic cues that indicated which benchmark they were being tested on. As a result, their scores overstated how well they could transcribe speech more generally.</p>
+        </div>
+      </div>
+      
+    </div>
+  </section>
+  <section class="feed-section overview-section" data-section="3"
+           data-source-start="00:10" data-source-end="00:24">
+    <div class="section-inner">
+      <p class="kicker reveal">第 3 章</p>
+      <h2 class="big-statement chapter-question reveal">分数高估了能力之后，还要看题库有错时模型怎么应对呢？</h2>
+      <p class="chapter-answer reveal reveal-d1">VoxPopuli 的参考转写有大量错误，测试考察模型遇到这些错误时如何作答。</p>
+      <p class="body-text reveal reveal-d2"><span class="sentence-cue" data-sentence-index="0">VoxPopuli 的参考转写已知含有大量转录错误，Artificial Analysis 因此发布了清洗版本。</span><span class="sentence-cue" data-sentence-index="1">这说明题库的参考转写本身有错。</span><span class="sentence-cue" data-sentence-index="2">该测试考察语音识别模型遭遇错误参考转写时，会准确转写音频还是复现错误。</span></p>
+      <div class="anim-stage reveal reveal-d3"><div class="stage p_ov3_stage"
+     data-page-design="overview-3"
+     data-designer-run="run-overview-3"
+     data-visual-thesis="参考转写这张卡上逐个亮出错处，然后从模型那里岔出照音频与照参考两条路"
+     data-layout-grammar="card-with-defects-and-fork"
+     data-motion-verb="flag-then-fork"
+     data-visual-subject="reference-card-with-errors"
+     data-sentence-count="3"
+     data-sentence-step="-1"
+     data-sentence-state="initial"
+     data-step-ms="5640,2900,5100">
+    <p class="stage-cap">VoxPopuli 参考转写含大量错误。</p>
+    <svg viewBox="0 0 340 200" role="img" class="p_ov3_svg">
+
+  <g data-visual-unit="ref" data-visual-component="reference-card">
+    <rect class="p_ov3_card" x="20" y="34" width="120" height="96" rx="6"/>
+    <line class="p_ov3_ln" x1="34" y1="54" x2="126" y2="54"/>
+    <line class="p_ov3_ln" x1="34" y1="72" x2="126" y2="72"/>
+    <line class="p_ov3_ln" x1="34" y1="90" x2="112" y2="90"/>
+    <line class="p_ov3_ln" x1="34" y1="108" x2="126" y2="108"/>
+    <text class="p_ov3_lab" x="80" y="146">参考转写</text>
+    <g class="p_ov3_errs">
+      <rect class="p_ov3_er p_ov3_e1" x="88" y="48" width="26" height="10" rx="2"/>
+      <rect class="p_ov3_er p_ov3_e2" x="50" y="66" width="22" height="10" rx="2"/>
+      <rect class="p_ov3_er p_ov3_e3" x="96" y="102" width="24" height="10" rx="2"/>
+    </g>
+  </g>
+  <g class="p_ov3_clean" data-visual-unit="clean" data-visual-component="cleaned-card">
+    <rect class="p_ov3_card2" x="152" y="40" width="60" height="52" rx="5"/>
+    <text class="p_ov3_small" x="182" y="106">清洗版</text>
+  </g>
+  <g class="p_ov3_fork" data-visual-component="fork">
+    <path class="p_ov3_pa" d="M226 84 L252 58 H272"/>
+    <path class="p_ov3_pb" d="M226 84 L252 110 H272"/>
+    <circle class="p_ov3_node" cx="226" cy="84" r="7"/>
+    <text class="p_ov3_small2" x="278" y="62">照音频</text>
+    <text class="p_ov3_small3" x="278" y="114">照参考</text>
+  </g>
+</svg>
+    <div class="stage-subtitle">
+      <p class="stage-sub" data-sentence-index="0">VoxPopuli 的参考转写已知含有大量转录错误，Artificial Analysis 因此发布了清洗版本。</p>
+      <p class="stage-sub" data-sentence-index="1">这说明题库的参考转写本身有错。</p>
+      <p class="stage-sub" data-sentence-index="2">该测试考察语音识别模型遭遇错误参考转写时，会准确转写音频还是复现错误。</p>
+    </div>
+    <div class="stage-controls" role="group" aria-label="逐句播放控制">
+      <button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+      <button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+      <button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+      <span class="sc-step" aria-live="polite">1 / 3</span>
+    </div>
+  </div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button>
+        <div class="source-body"><span class="source-label">原文</span>
+<p>VoxPopuli is known to contain a high number of transcription errors (which is why Artificial Analysis released a cleaned version ). Our consensus disagreement probe tests what happens when leading ASR models encounter these errors: Do they accurately transcribe what the audio says, or reproduce the benchmark's incorrect reference transcript?</p>
+        </div>
+      </div>
+      <button class="drill-btn reveal reveal-d5" data-parent-section="3" data-target-layer="layer-s3" onclick="drillDown('layer-s3', this)">深入这一章 &#8595;</button>
+    </div>
+  </section>
+  <section class="feed-section overview-section dark" data-section="4"
+           data-source-start="00:24" data-source-end="00:32">
+    <div class="section-inner">
+      <p class="kicker reveal">第 4 章</p>
+      <h2 class="big-statement chapter-question reveal">答案有错模型跟着复现，还能知道它转写的是音频吗？</h2>
+      <p class="chapter-answer reveal reveal-d1">研究者把音频里的数字消掉，模型转写时不应输出任何数字。</p>
+      <p class="body-text reveal reveal-d2"><span class="sentence-cue" data-sentence-index="0">研究者基于一致性分歧探针设计了新测试，将测试数据集音频里的数字消掉。</span><span class="sentence-cue" data-sentence-index="1">该数字在这些音频样本中确实完全缺失，根本不出现在任何一段录音里。</span><span class="sentence-cue" data-sentence-index="2">模型被要求转写，所以不应输出任何数字，更不应输出文本里那个确切数字。</span></p>
+      <div class="anim-stage reveal reveal-d3"><div class="stage p_ov4_stage"
+     data-page-design="overview-4"
+     data-designer-run="run-overview-4"
+     data-visual-thesis="波形中间那一段被切掉后一直空着，右边的输出框也应当空着"
+     data-layout-grammar="waveform-with-cut-window"
+     data-motion-verb="cut-out-then-stay-empty"
+     data-visual-subject="silenced-audio-window"
+     data-sentence-count="3"
+     data-sentence-step="-1"
+     data-sentence-state="initial"
+     data-step-ms="4980,4740,4980">
+    <p class="stage-cap">模型不该输出任何数字，更不该输出那个确切数字。</p>
+    <svg viewBox="0 0 340 200" role="img" class="p_ov4_svg">
+
+  <g data-visual-component="waveform"><rect class="p_ov4_w" x="28" y="63" width="6" height="18" rx="3"/><rect class="p_ov4_w" x="39" y="55" width="6" height="34" rx="3"/><rect class="p_ov4_w" x="50" y="49" width="6" height="46" rx="3"/><rect class="p_ov4_w" x="61" y="57" width="6" height="30" rx="3"/><rect class="p_ov4_w" x="72" y="46" width="6" height="52" rx="3"/><rect class="p_ov4_w" x="83" y="60" width="6" height="24" rx="3"/><rect class="p_ov4_w" x="94" y="52" width="6" height="40" rx="3"/><rect class="p_ov4_w" x="105" y="62" width="6" height="20" rx="3"/><rect class="p_ov4_w" x="116" y="50" width="6" height="44" rx="3"/><rect class="p_ov4_w" x="127" y="57" width="6" height="30" rx="3"/><rect class="p_ov4_w" x="138" y="64" width="6" height="16" rx="3"/><rect class="p_ov4_w" x="149" y="53" width="6" height="38" rx="3"/><rect class="p_ov4_w" x="160" y="59" width="6" height="26" rx="3"/><rect class="p_ov4_w" x="171" y="48" width="6" height="48" rx="3"/><rect class="p_ov4_w" x="182" y="61" width="6" height="22" rx="3"/><rect class="p_ov4_w" x="193" y="54" width="6" height="36" rx="3"/>
+    <text class="p_ov4_lab" x="112" y="112">音频</text>
+  </g>
+  <g class="p_ov4_cut" data-visual-unit="cut" data-visual-component="silence-window">
+    <rect x="94" y="34" width="46" height="76" rx="4"/>
+    <text class="p_ov4_cutlab" x="117" y="26">数字消掉</text>
+  </g>
+  <g class="p_ov4_out" data-visual-unit="out" data-visual-component="output-box">
+    <rect class="p_ov4_obox" x="214" y="52" width="100" height="44" rx="5"/>
+    <text class="p_ov4_olab" x="264" y="114">模型输出</text>
+    <text class="p_ov4_empty" x="264" y="80">应为空</text>
+  </g>
+</svg>
+    <div class="stage-subtitle">
+      <p class="stage-sub" data-sentence-index="0">研究者基于一致性分歧探针设计了新测试，将测试数据集音频里的数字消掉。</p>
+      <p class="stage-sub" data-sentence-index="1">该数字在这些音频样本中确实完全缺失，根本不出现在任何一段录音里。</p>
+      <p class="stage-sub" data-sentence-index="2">模型被要求转写，所以不应输出任何数字，更不应输出文本里那个确切数字。</p>
+    </div>
+    <div class="stage-controls" role="group" aria-label="逐句播放控制">
+      <button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+      <button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+      <button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+      <span class="sc-step" aria-live="polite">1 / 3</span>
+    </div>
+  </div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button>
+        <div class="source-body"><span class="source-label">原文</span>
+<p>To build on the consensus disagreement probe, we deliberately silence numbers in the audio samples of test datasets and ask the models to transcribe what it hears. The number is literally absent from the audio, so models should not output any number, much less the exact number in the text.</p>
+        </div>
+      </div>
+      <button class="drill-btn reveal reveal-d5" data-parent-section="4" data-target-layer="layer-s4" onclick="drillDown('layer-s4', this)">深入这一章 &#8595;</button>
+    </div>
+  </section>
+  <section class="feed-section overview-section" data-section="5"
+           data-source-start="00:32" data-source-end="00:40">
+    <div class="section-inner">
+      <p class="kicker reveal">第 5 章</p>
+      <h2 class="big-statement chapter-question reveal">音频里数字确实没有，于是模型选出的拼写说明什么呢？</h2>
+      <p class="chapter-answer reveal reveal-d1">若模型系统性地选中题库拼写，这表明它可能察觉到了测试期望的写法。</p>
+      <p class="body-text reveal reveal-d2"><span class="sentence-cue" data-sentence-index="0">音频里听不出写法。</span><span class="sentence-cue" data-sentence-index="1">拼写变体（同音不同写法）指语义和发音相同、但书写形式可以不同的词。</span><span class="sentence-cue" data-sentence-index="2">理论上，模型应始终偏好某一种拼写，或以约随机的频率在两种拼写间交替。</span><span class="sentence-cue" data-sentence-index="3">若模型系统性切换写法去匹配各参考转写，则表明它察觉到测试期望哪种写法。</span></p>
+      <div class="anim-stage reveal reveal-d3"><div class="stage p_ov5_stage"
+     data-page-design="overview-5"
+     data-designer-run="run-overview-5"
+     data-visual-thesis="一个读音分出两张写法卡，最后其中一张被题库固定选走"
+     data-layout-grammar="one-sound-two-spellings"
+     data-motion-verb="split-then-lock"
+     data-visual-subject="spelling-pair"
+     data-sentence-count="4"
+     data-sentence-step="-1"
+     data-sentence-state="initial"
+     data-step-ms="2600,4860,4980,5100">
+    <p class="stage-cap">语义发音相同，写法不同，听音频无法辨别。</p>
+    <svg viewBox="0 0 340 200" role="img" class="p_ov5_svg">
+
+  <g data-visual-component="sound">
+    <circle class="p_ov5_snd" cx="52" cy="86" r="24"/>
+    <path class="p_ov5_wv" d="M84 74 q8 12 0 24"/>
+    <path class="p_ov5_wv" d="M94 66 q13 20 0 40"/>
+    <text class="p_ov5_lab" x="52" y="128">同一个读音</text>
+  </g>
+  <g class="p_ov5_v1" data-visual-unit="variant-a" data-visual-component="variant-a">
+    <rect x="150" y="30" width="110" height="34" rx="5"/>
+    <text class="p_ov5_vt" x="205" y="52">写法 A</text>
+  </g>
+  <g class="p_ov5_v2" data-visual-unit="variant-b" data-visual-component="variant-b">
+    <rect x="150" y="108" width="110" height="34" rx="5"/>
+    <text class="p_ov5_vt" x="205" y="130">写法 B</text>
+  </g>
+  <g class="p_ov5_pick" data-visual-component="expected-mark">
+    <path class="p_ov5_pk" d="M268 47 H302"/>
+    <text class="p_ov5_pt" x="304" y="51">题库要的</text>
+  </g>
+</svg>
+    <div class="stage-subtitle">
+      <p class="stage-sub" data-sentence-index="0">音频里听不出写法。</p>
+      <p class="stage-sub" data-sentence-index="1">拼写变体（同音不同写法）指语义和发音相同、但书写形式可以不同的词。</p>
+      <p class="stage-sub" data-sentence-index="2">理论上，模型应始终偏好某一种拼写，或以约随机的频率在两种拼写间交替。</p>
+      <p class="stage-sub" data-sentence-index="3">若模型系统性切换写法去匹配各参考转写，则表明它察觉到测试期望哪种写法。</p>
+    </div>
+    <div class="stage-controls" role="group" aria-label="逐句播放控制">
+      <button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+      <button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+      <button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+      <span class="sc-step" aria-live="polite">1 / 4</span>
+    </div>
+  </div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button>
+        <div class="source-body"><span class="source-label">原文</span>
+<p>Our orthographic switching probe tests whether models reproduce the exact spelling used in a benchmark's reference transcript despite it not being clear in the audio. Orthographic variants are words that are semantically and phonetically identical but can be spelled different ways (1 vs one, Mr. vs mister, John vs Jon, Honor vs Honour, etc). In theory, models should consistently prefer one spelling over another, or alternate between them at roughly random rates. If models systematically switch to match what is in each benchmark's reference transcript, that suggests the models are picking up on which spelling the test expects.</p>
+        </div>
+      </div>
+      <button class="drill-btn reveal reveal-d5" data-parent-section="5" data-target-layer="layer-s5" onclick="drillDown('layer-s5', this)">深入这一章 &#8595;</button>
+    </div>
+  </section>
+  <section class="feed-section overview-section dark" data-section="6"
+           data-source-start="00:40" data-source-end="00:48">
+    <div class="section-inner">
+      <p class="kicker reveal">第 6 章</p>
+      <h2 class="big-statement chapter-question reveal">连发音一样的写法都挑对了，但还能照着声音老实写吗？</h2>
+      <p class="chapter-answer reveal reveal-d1">模型能忠实转写，但周围声学上下文决定最终策略。</p>
+      <p class="body-text reveal reveal-d2"><span class="sentence-cue" data-sentence-index="0">训练截止（模型学完的时间点）后的同源音频使多数模型回归忠实转写。</span><span class="sentence-cue" data-sentence-index="1">换问法、裁周围音频或加普通对话音频也可恢复忠实转写，加 VoxPopuli 音频则可能相反。</span><span class="sentence-cue" data-sentence-index="2">这说明模型具备忠实转写的能力，但依据周围音频决定照音频写还是照基准写。</span></p>
+      <div class="anim-stage reveal reveal-d3"><div class="stage p_ov6_stage"
+     data-page-design="overview-6"
+     data-designer-run="run-overview-6"
+     data-visual-thesis="换掉两侧那段周围音频，右边被选中的那条写法就跟着换"
+     data-layout-grammar="context-strip-flips-output"
+     data-motion-verb="swap-context-then-flip"
+     data-visual-subject="surrounding-audio-strip"
+     data-sentence-count="3"
+     data-sentence-step="-1"
+     data-sentence-state="initial"
+     data-step-ms="4740,5640,5100">
+    <p class="stage-cap">各干预手段对忠实转写率的影响。</p>
+    <svg viewBox="0 0 340 200" role="img" class="p_ov6_svg">
+
+  <g data-visual-component="strip">
+    <rect class="p_ov6_ctxL" x="18" y="60" width="60" height="40" rx="4"/>
+    <rect class="p_ov6_core" x="82" y="54" width="80" height="52" rx="5"/>
+    <rect class="p_ov6_ctxR" x="166" y="60" width="60" height="40" rx="4"/>
+    <text class="p_ov6_lab" x="122" y="126">这句话的音频</text>
+    <text class="p_ov6_sub" x="48" y="84">周围</text>
+    <text class="p_ov6_sub" x="196" y="84">周围</text>
+  </g>
+  <g class="p_ov6_pol" data-visual-component="policy">
+    <rect class="p_ov6_pbox" x="244" y="34" width="82" height="32" rx="5"/>
+    <text class="p_ov6_ptxt" x="285" y="54">照音频写</text>
+    <rect class="p_ov6_pbox2" x="244" y="96" width="82" height="32" rx="5"/>
+    <text class="p_ov6_ptxt2" x="285" y="116">照题库写</text>
+  </g>
+</svg>
+    <div class="stage-subtitle">
+      <p class="stage-sub" data-sentence-index="0">训练截止（模型学完的时间点）后的同源音频使多数模型回归忠实转写。</p>
+      <p class="stage-sub" data-sentence-index="1">换问法、裁周围音频或加普通对话音频也可恢复忠实转写，加 VoxPopuli 音频则可能相反。</p>
+      <p class="stage-sub" data-sentence-index="2">这说明模型具备忠实转写的能力，但依据周围音频决定照音频写还是照基准写。</p>
+    </div>
+    <div class="stage-controls" role="group" aria-label="逐句播放控制">
+      <button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+      <button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+      <button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+      <span class="sc-step" aria-live="polite">1 / 3</span>
+    </div>
+  </div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button>
+        <div class="source-body"><span class="source-label">原文</span>
+<p>To test whether these behaviors generalize beyond the public benchmarks, we also collected fresh data from the same source domains but after the models' training cutoffs: recent European Parliament recordings for VoxPopuli and recordings from newly active LibriVox narrators for LibriSpeech. However, when presented with recently collected data from the same domain, many models stop matching the reference transcript and revert to more audio faithful transcriptions.</p>
+<p>Other interventions point to the same conclusion. Phrases which are present in the audio but are omitted in the reference transcript can reappear when a model is asked to translate the audio or when its attention is restricted to the relevant frames. Trimming away surrounding benchmark context, or appending ordinary conversational audio, can also restore the faithful transcript. Appending VoxPopuli audio can have the opposite effect, making otherwise faithful synthetic or mined samples more likely to match the benchmark reference.</p>
+<p>Together, these results suggest that models are able to faithfully transcribe the literal spoken words, but are using surrounding acoustic context to decide whether to follow the audio or a benchmark-specific transcription policy.</p>
+        </div>
+      </div>
+      
+    </div>
+  </section>
+  <section class="feed-section overview-section" data-section="7"
+           data-source-start="00:48" data-source-end="00:56">
+    <div class="section-inner">
+      <p class="kicker reveal">第 7 章</p>
+      <h2 class="big-statement chapter-question reveal">周围音频决定写法搞定了，那排行榜还怎么用呢？</h2>
+      <p class="chapter-answer reveal reveal-d1">公开基准仍有价值，但只有能区分真实进步与基准特定收益时才最有用。</p>
+      <p class="body-text reveal reveal-d2"><span class="sentence-cue" data-sentence-index="0">选模型时应使用留出集（不公开的考题），不应仅依赖单一公开基准上的成绩。</span><span class="sentence-cue" data-sentence-index="1">Open ASR Leaderboard 已新增 Benchmark fitting 标签页，脚本在 GitHub 开源。</span><span class="sentence-cue" data-sentence-index="2">基准开发者应避免简单的随机划分，改用时间、说话人或元数据来分离测试集。</span><span class="sentence-cue" data-sentence-index="3">公开基准仍有价值，因为透明、可重复、易于运行且研究界熟悉，但需区分真实进步与基准特定收益。</span></p>
+      <div class="anim-stage reveal reveal-d3"><div class="stage p_ov7_stage"
+     data-page-design="overview-7"
+     data-designer-run="run-overview-7"
+     data-visual-thesis="排行榜旁边先锁上一只留出集，再给每一行标上按什么切分"
+     data-layout-grammar="leaderboard-plus-sealed-set"
+     data-motion-verb="seal-then-split"
+     data-visual-subject="leaderboard-rows"
+     data-sentence-count="4"
+     data-sentence-step="-1"
+     data-sentence-state="initial"
+     data-step-ms="5100,4860,5100,6300">
+    <p class="stage-cap">能区分真实转写进步与换音频失效的收益，公开基准才最有用。</p>
+    <svg viewBox="0 0 340 200" role="img" class="p_ov7_svg">
+
+  <g data-visual-component="board">
+    <rect class="p_ov7_bd" x="18" y="30" width="140" height="110" rx="6"/>
+    <line class="p_ov7_row" x1="32" y1="52" x2="144" y2="52"/>
+    <line class="p_ov7_row" x1="32" y1="72" x2="144" y2="72"/>
+    <line class="p_ov7_row" x1="32" y1="92" x2="144" y2="92"/>
+    <line class="p_ov7_row" x1="32" y1="112" x2="128" y2="112"/>
+    <text class="p_ov7_lab" x="88" y="156">排行榜</text>
+  </g>
+  <g class="p_ov7_seal" data-visual-unit="heldout" data-visual-component="held-out-box">
+    <rect x="192" y="30" width="80" height="52" rx="5"/>
+    <path class="p_ov7_lock" d="M224 46 v-6 a8 8 0 0 1 16 0 v6"/>
+    <text class="p_ov7_slab" x="232" y="98">留出集</text>
+  </g>
+  <g class="p_ov7_tab" data-visual-component="fitting-tab">
+    <rect x="192" y="112" width="120" height="28" rx="4"/>
+    <text class="p_ov7_tlab" x="252" y="130">Benchmark fitting</text>
+  </g>
+  <g class="p_ov7_split" data-visual-component="split-marks">
+    <circle class="p_ov7_dot" cx="36" cy="52" r="4"/>
+    <circle class="p_ov7_dot" cx="36" cy="72" r="4"/>
+    <circle class="p_ov7_dot" cx="36" cy="92" r="4"/>
+  </g>
+</svg>
+    <div class="stage-subtitle">
+      <p class="stage-sub" data-sentence-index="0">选模型时应使用留出集（不公开的考题），不应仅依赖单一公开基准上的成绩。</p>
+      <p class="stage-sub" data-sentence-index="1">Open ASR Leaderboard 已新增 Benchmark fitting 标签页，脚本在 GitHub 开源。</p>
+      <p class="stage-sub" data-sentence-index="2">基准开发者应避免简单的随机划分，改用时间、说话人或元数据来分离测试集。</p>
+      <p class="stage-sub" data-sentence-index="3">公开基准仍有价值，因为透明、可重复、易于运行且研究界熟悉，但需区分真实进步与基准特定收益。</p>
+    </div>
+    <div class="stage-controls" role="group" aria-label="逐句播放控制">
+      <button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+      <button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+      <button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+      <span class="sc-step" aria-live="polite">1 / 4</span>
+    </div>
+  </div></div>
+      <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button>
+        <div class="source-body"><span class="source-label">原文</span>
+<p>Our findings suggest that, on two major open-source datasets, some models detect dataset-associated acoustic cues and adjust their transcription behavior accordingly. Specifically, models may reproduce words that are absent from the audio but present in the reference transcript, recover silenced numbers at elevated rates, or use surrounding acoustic context to select the written variant expected by a particular benchmark.</p>
+<p>For people selecting models, these findings underscore the importance of using fully held-out evaluation sets, as RW-Voice-EQ Bench and the Open ASR Leaderboard do, and of looking beyond word error rate on a single public benchmark. To this end, a "Benchmark fitting" tab has been added to the Open ASR Leaderboard , which includes two of the above analyses across all models: quantifying (1) reference error rates from VoxPopuli and (2) orthographic switching across all public datasets. The relevant scripts are open-sourced on GitHub as well as the un-normalized model outputs .</p>
+<p>Our findings also suggest that benchmark developers should avoid simple independent and identically distributed test splits in favor of temporal, speaker, or other metadata-based separation. Greater transparency around training data and model-selection procedures would also help researchers understand how these behaviors arise.</p>
+<p>Public benchmarks remain valuable: they are transparent, repeatable, easy to run, and well understood by the research community. But they are most useful when we can distinguish genuine transcription improvements from benchmark-specific gains that do not generalize to new audio.</p>
+        </div>
+      </div>
+      
+    </div>
+  </section>
+</div>
+
+<div class="layer branch-layer" id="layer-s3" data-depth="1" data-parent-section="3">
+
+    <section class="feed-section branch-page"
+             data-parent-section="3" data-page="3.1"
+             data-source-start="00:12" data-source-end="00:14">
+      <div class="section-inner">
+        <p class="kicker reveal">3.1</p>
+        <h2 class="big-statement reveal">研究者借助模型组合筛查可疑的参考转写</h2>
+        <p class="body-text reveal reveal-d2"><span class="sentence-cue" data-sentence-index="0">研究者搭建了一个独立模型组合，以低 PER（转写和声音有多接近）为模型入选标准。</span><span class="sentence-cue" data-sentence-index="1">PER 是转写忠实度的有效替代指标。</span><span class="sentence-cue" data-sentence-index="2">当所有模型均与基准参考转写不符，该案例被标记为转写可能有误。</span><span class="sentence-cue" data-sentence-index="3">关键在于研究者抽取部分标记案例与人工标注比对，以验证修正后的转写内容。</span></p>
+        <div class="anim-stage reveal reveal-d3"><div class="stage p_31_stage"
+     data-page-design="3.1"
+     data-designer-run="run-3-1"
+     data-visual-thesis="五个模型的分歧线一起落到参考转写上，这条案例才被标记，再交给人工核对"
+     data-layout-grammar="ensemble-vote-then-human-check"
+     data-motion-verb="converge-then-flag"
+     data-visual-subject="ensemble-nodes"
+     data-sentence-count="4"
+     data-sentence-step="-1"
+     data-sentence-state="initial"
+     data-step-ms="5400,2900,4500,5100">
+    <p class="stage-cap">组合内所有模型均与参考转写不符的案例被标记。</p>
+    <svg viewBox="0 0 340 200" role="img" class="p_31_svg">
+
+  <g data-visual-component="ensemble"><circle class="p_31_n p_31_n0" data-visual-unit="member-0" cx="40" cy="46" r="12"/><circle class="p_31_n p_31_n1" data-visual-unit="member-1" cx="70" cy="46" r="12"/><circle class="p_31_n p_31_n2" data-visual-unit="member-2" cx="100" cy="46" r="12"/><circle class="p_31_n p_31_n3" data-visual-unit="member-3" cx="130" cy="46" r="12"/><circle class="p_31_n p_31_n4" data-visual-unit="member-4" cx="160" cy="46" r="12"/>
+    <text class="p_31_lab" x="100" y="22">模型组合</text>
+    <text class="p_31_per" x="100" y="76">低 PER</text>
+  </g>
+  <g data-visual-component="ref">
+    <rect class="p_31_card" x="28" y="94" width="146" height="42" rx="5"/>
+    <text class="p_31_clab" x="101" y="120">参考转写</text>
+  </g>
+  <g class="p_31_dis" data-visual-component="disagree-lines">
+    <path class="p_31_dl" d="M40 58 L84 92"/><path class="p_31_dl" d="M70 58 L94 92"/>
+    <path class="p_31_dl" d="M100 58 L104 92"/><path class="p_31_dl" d="M130 58 L114 92"/>
+    <path class="p_31_dl" d="M160 58 L124 92"/>
+  </g>
+  <g class="p_31_flag" data-visual-unit="flag" data-visual-component="flag">
+    <rect x="196" y="94" width="118" height="42" rx="5"/>
+    <text class="p_31_flab" x="255" y="120">被标记</text>
+  </g>
+  <g class="p_31_human" data-visual-component="human-check">
+    <circle class="p_31_hd" cx="255" cy="36" r="9"/>
+    <path class="p_31_bdy" d="M240 64 a15 15 0 0 1 30 0"/>
+    <text class="p_31_hlab" x="255" y="80">人工标注</text>
+    <path class="p_31_link" d="M255 84 V90"/>
+  </g>
+</svg>
+    <div class="stage-subtitle">
+      <p class="stage-sub" data-sentence-index="0">研究者搭建了一个独立模型组合，以低 PER（转写和声音有多接近）为模型入选标准。</p>
+      <p class="stage-sub" data-sentence-index="1">PER 是转写忠实度的有效替代指标。</p>
+      <p class="stage-sub" data-sentence-index="2">当所有模型均与基准参考转写不符，该案例被标记为转写可能有误。</p>
+      <p class="stage-sub" data-sentence-index="3">关键在于研究者抽取部分标记案例与人工标注比对，以验证修正后的转写内容。</p>
+    </div>
+    <div class="stage-controls" role="group" aria-label="逐句播放控制">
+      <button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+      <button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+      <button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+      <span class="sc-step" aria-live="polite">1 / 4</span>
+    </div>
+  </div></div>
+        <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button>
+        <div class="source-body"><span class="source-label">原文</span>
+<p>To test this at scale, we use an ensemble of independent models selected for their low phoneme error rate (PER). PER measures how closely a written transcription matches the sounds in the audio, making it a useful proxy for how faithfully a model transcribes what it hears. The ensemble results can be used to flag cases in which the models unanimously disagree with the benchmark's reference transcript. We then compare a sample of those flagged cases against human annotations to validate the corrected transcripts.</p>
+        </div>
+      </div>
+        
+      </div>
+    </section>
+    <section class="feed-section branch-page dark"
+             data-parent-section="3" data-page="3.2"
+             data-source-start="00:14" data-source-end="00:20">
+      <div class="section-inner">
+        <p class="kicker reveal">3.2</p>
+        <h2 class="big-statement reveal">参考转写漏掉了 "Thank you"，音频里其实清晰可听</h2>
+        <p class="body-text reveal reveal-d2"><span class="sentence-cue" data-sentence-index="0">参考转写漏掉了 "Thank you"。</span><span class="sentence-cue" data-sentence-index="1">这句话在音频里可以清晰听到，但参考转写从 "Mr President" 直接开始。</span><span class="sentence-cue" data-sentence-index="2">11 个模型里有 6 个跟着省略，换成同一说话人的语音克隆后仍有 5 个。</span><span class="sentence-cue" data-sentence-index="3">把同一句话用 EU 议会新采集的人声重新合成后，省略的模型降至 1 个。</span><span class="sentence-cue" data-sentence-index="4">这说明，模型可能通过声学线索辨认出基准音频，从而给出与实际内容矛盾的转写。</span></p>
+        <div class="anim-stage reveal reveal-d3"><div class="stage p_32_stage"
+     data-page-design="3.2"
+     data-designer-run="run-3-2"
+     data-visual-thesis="音频里那段 Thank you 在参考转写里空了一格，三种条件下漏写的模型数从 6 掉到 1"
+     data-layout-grammar="three-conditions-one-phrase"
+     data-motion-verb="drop-then-return"
+     data-visual-subject="thank-you-token"
+     data-sentence-count="5"
+     data-sentence-step="-1"
+     data-sentence-state="initial"
+     data-step-ms="2600,4680,4500,4560,5340">
+    <p class="stage-cap">原始音频有 6 个模型省略，换用新采集人声后仅 1 个。</p>
+    <svg viewBox="0 0 340 200" role="img" class="p_32_svg">
+
+  <g data-visual-component="audio-line">
+    <rect class="p_32_tk" x="24" y="30" width="66" height="26" rx="4"/>
+    <text class="p_32_tkt" x="57" y="48">Thank you</text>
+    <rect class="p_32_rest" x="96" y="30" width="128" height="26" rx="4"/>
+    <text class="p_32_rt" x="160" y="48">Mr President…</text>
+    <text class="p_32_lab" x="124" y="20">音频里听得到</text>
+  </g>
+  <g class="p_32_ref" data-visual-component="reference-line">
+    <rect class="p_32_gap" x="24" y="70" width="66" height="26" rx="4"/>
+    <rect class="p_32_rest2" x="96" y="70" width="128" height="26" rx="4"/>
+    <text class="p_32_rt2" x="160" y="88">Mr President…</text>
+    <text class="p_32_lab2" x="124" y="110">参考转写少了这段</text>
+  </g>
+  <g class="p_32_cnt" data-visual-component="drop-count">
+    <text class="p_32_cl" x="60" y="150">真实片段</text>
+    <text class="p_32_cl" x="170" y="150">同人克隆</text>
+    <text class="p_32_cl" x="280" y="150">新录克隆</text>
+    <text class="p_32_cv p_32_c1" x="60" y="180">6</text>
+    <text class="p_32_cv p_32_c2" x="170" y="180">5</text>
+    <text class="p_32_cv p_32_c3" x="280" y="180">1</text>
+  </g>
+</svg>
+    <div class="stage-subtitle">
+      <p class="stage-sub" data-sentence-index="0">参考转写漏掉了 "Thank you"。</p>
+      <p class="stage-sub" data-sentence-index="1">这句话在音频里可以清晰听到，但参考转写从 "Mr President" 直接开始。</p>
+      <p class="stage-sub" data-sentence-index="2">11 个模型里有 6 个跟着省略，换成同一说话人的语音克隆后仍有 5 个。</p>
+      <p class="stage-sub" data-sentence-index="3">把同一句话用 EU 议会新采集的人声重新合成后，省略的模型降至 1 个。</p>
+      <p class="stage-sub" data-sentence-index="4">这说明，模型可能通过声学线索辨认出基准音频，从而给出与实际内容矛盾的转写。</p>
+    </div>
+    <div class="stage-controls" role="group" aria-label="逐句播放控制">
+      <button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+      <button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+      <button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+      <span class="sc-step" aria-live="polite">1 / 5</span>
+    </div>
+  </div></div>
+        <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button>
+        <div class="source-body"><span class="source-label">原文</span>
+<p>For example, one VoxPopuli clip audibly includes the phrase "Thank you, Mr. President," but the reference transcript omits "Thank you." Six of the 11 models we tested reproduced the benchmark's erroneous transcript—giving the "expected" answer even though it contradicted the audio. On the real clip, the formatting follows the same pattern: models that omit "Thank you" also reproduce the benchmark's punctuation style, writing "Mr" without a period, while models that include the audible phrase tend to write "Mr." with the period.</p>
+<p>When we present the same content in newly collected voices from EU parliamentary recordings or generic voices, this behavior often weakens or disappears. In the below samples, all but one model flips back to transcribing the audio-faithful transcript for a clone of a new parliamentary recording. This suggests that the models are responding to acoustic cues that help them identify the benchmark membership and thus produce the expected transcript even if it contradicts the audio.</p>
+<p>The reference transcript for this clip reads "Mr President, I have another complaint about this procedure, which is that it is not secret." The audio in all three clips below actually says the same thing, preceded by an audible "Thank you,"—the clones are text-to-speech renditions of that true sentence, so the courtesy is audible in all three. Green highlighting and ✅ mark a transcript that includes the audible "Thank you"; red highlighting and ❌ mark a transcript that reproduces the benchmark's erroneous omission. All transcripts are raw model output, prior to any normalization—casing and punctuation are preserved exactly as generated, including lowercase output from some models.</p>
+<p>Original VoxPopuli recording</p>
+<p>Voice clone of the same speaker</p>
+<p>Clone of a parliament speaker recorded after every model's training cutoff</p>
+<p>[TABLE] Model Real clip Same-speaker clone ep-fresh clone CohereLabs/cohere-transcribe-03-2026 ❌ Mr President… ❌ Mr President… ✅ Thank you, Mr President… nvidia/canary-qwen-2.5b ❌ Mr President… ❌ Mr President… ✅ Thank you Mr. President… ibm-granite/granite-speech-4.1-2b ❌ mr president… ❌ mr president… ✅ thank you mr president… microsoft/Phi-4-multimodal-instruct ❌ Mr President… ❌ Mr President… ❌ Mr President… nvidia/parakeet-tdt-0.6b-v2 ❌ Mr President… ✅ Thank you, Mr President… ✅ Thank you, Mr. President… bosonai/higgs-audio-v3-8b-stt-v2 ❌ mr president… ❌ mr president… ✅ thank you mr president… Qwen/Qwen3-ASR-0.6B-hf ✅ Thank you, Mr. President… ✅ Thank you, Mister President… ✅ Thank you, Mister President… mistralai/Voxtral-Mini-3B-2507 ✅ Thank you, Mr. President… ✅ Thank you, Mr. President… ✅ Thank you, Mr. President… moonshotai/Kimi-Audio-7B-Instruct ✅ Thank you, mr. President… ✅ Thank you, Mr. President… ✅ Thank you, mr. President… openai/whisper-large-v3 ✅ Thank you, Mr. President… ✅ Thank you, Mr. President… ✅ Thank you, Mr. President… moonshine-ai/moonshine-streaming-medium ✅ thank you mr president… ✅ thank you mr president… ✅ thank you mr president… Drops the courtesy (❌) out of 11 6 5 1</p>
+<p>Parakeet is the only model that flips between reproducing the benchmark on the real clip and getting it right on the same-speaker clone. Phi-4 is the only model still dropping the courtesy on the ep-fresh clone. When we instead resynthesize the sentence in a generic TTS voice unconnected to any parliamentary recording, all eleven models restore the courtesy.</p>
+        </div>
+      </div>
+        
+      </div>
+    </section>
+    <section class="feed-section branch-page"
+             data-parent-section="3" data-page="3.3"
+             data-source-start="00:20" data-source-end="00:24">
+      <div class="section-inner">
+        <p class="kicker reveal">3.3</p>
+        <h2 class="big-statement reveal">错误复现的规模与相关性均具有实质意义</h2>
+        <p class="body-text reveal reveal-d2"><span class="sentence-cue" data-sentence-index="0">这套方法在所分析的 VoxPopuli 测试片段中，约 40% 被标记出潜在的参考转写错误。</span><span class="sentence-cue" data-sentence-index="1">这约影响全部参考转写词的 3%。</span><span class="sentence-cue" data-sentence-index="2">表现出基准优化行为的模型，其错误复现率为 18–30%。</span><span class="sentence-cue" data-sentence-index="3">这意味着，WER（转写错了多少词）越低、基准上报告的成绩越好的模型，也越可能复现这些错误。</span></p>
+        <div class="anim-stage reveal reveal-d3"><div class="stage p_33_stage"
+     data-page-design="3.3"
+     data-designer-run="run-3-3"
+     data-visual-thesis="八个模型点铺满散点图后，一条从左上到右下的趋势线把 WER 和复现率连起来"
+     data-layout-grammar="scatter-with-trend"
+     data-motion-verb="plot-then-tilt"
+     data-visual-subject="wer-vs-copyrate-scatter"
+     data-sentence-count="4"
+     data-sentence-step="-1"
+     data-sentence-state="initial"
+     data-step-ms="5220,2900,3780,6120">
+    <p class="stage-cap">散点图横轴为 WER，纵轴为基准错误复现率</p>
+    <svg viewBox="0 0 340 200" role="img" class="p_33_svg">
+
+  <g data-visual-component="axes">
+    <line class="p_33_ax" x1="44" y1="150" x2="300" y2="150"/>
+    <line class="p_33_ax" x1="44" y1="150" x2="44" y2="34"/>
+    <text class="p_33_axl" x="172" y="172">WER 越往左越低</text>
+    <text class="p_33_axl2" x="14" y="92">复现率</text>
+  </g>
+  <g class="p_33_cloud" data-visual-component="points"><circle class="p_33_pt p_33_pt0" data-visual-unit="model-point-0" cx="58" cy="58" r="6"/><circle class="p_33_pt p_33_pt1" data-visual-unit="model-point-1" cx="86" cy="70" r="6"/><circle class="p_33_pt p_33_pt2" data-visual-unit="model-point-2" cx="112" cy="84" r="6"/><circle class="p_33_pt p_33_pt3" data-visual-unit="model-point-3" cx="142" cy="96" r="6"/><circle class="p_33_pt p_33_pt4" data-visual-unit="model-point-4" cx="172" cy="106" r="6"/><circle class="p_33_pt p_33_pt5" data-visual-unit="model-point-5" cx="204" cy="116" r="6"/><circle class="p_33_pt p_33_pt6" data-visual-unit="model-point-6" cx="238" cy="126" r="6"/><circle class="p_33_pt p_33_pt7" data-visual-unit="model-point-7" cx="268" cy="134" r="6"/></g>
+  <g class="p_33_trend" data-visual-component="trend">
+    <path class="p_33_tl" d="M52 52 L276 140"/>
+    <text class="p_33_tt" x="272" y="60">成绩越强，复现越多</text>
+  </g>
+  <g class="p_33_scale" data-visual-component="scale-tag">
+    <text class="p_33_st" x="172" y="24">40% 片段被标记 · 约 3% 参考词</text>
+  </g>
+</svg>
+    <div class="stage-subtitle">
+      <p class="stage-sub" data-sentence-index="0">这套方法在所分析的 VoxPopuli 测试片段中，约 40% 被标记出潜在的参考转写错误。</p>
+      <p class="stage-sub" data-sentence-index="1">这约影响全部参考转写词的 3%。</p>
+      <p class="stage-sub" data-sentence-index="2">表现出基准优化行为的模型，其错误复现率为 18–30%。</p>
+      <p class="stage-sub" data-sentence-index="3">这意味着，WER（转写错了多少词）越低、基准上报告的成绩越好的模型，也越可能复现这些错误。</p>
+    </div>
+    <div class="stage-controls" role="group" aria-label="逐句播放控制">
+      <button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+      <button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+      <button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+      <span class="sc-step" aria-live="polite">1 / 4</span>
+    </div>
+  </div></div>
+        <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button>
+        <div class="source-body"><span class="source-label">原文</span>
+<p>The results suggest that this problem is both widespread and meaningful. Our methodology flagged potential reference errors in 40% of the VoxPopuli test clips we analyzed, affecting roughly 3% of all reference words.</p>
+<p>Models exhibiting benchmark-optimized behavior reproduced erroneous reference transcripts 18–30% of the time. The scatterplot below compares VoxPopuli word error rate (WER) on the x-axis with the rate at which each model reproduces the benchmark's incorrect reference instead of the consensus correction. The models with the lowest WER—and therefore the strongest reported benchmark performance—are also the most likely to reproduce these errors.</p>
+        </div>
+      </div>
+        <div class="branch-complete" data-parent-section="3">本章节展开完毕</div>
+      </div>
+    </section>
+</div>
+<div class="layer branch-layer" id="layer-s4" data-depth="1" data-parent-section="4">
+
+    <section class="feed-section branch-page"
+             data-parent-section="4" data-page="4.1"
+             data-source-start="00:26" data-source-end="00:28">
+      <div class="section-inner">
+        <p class="kicker reveal">4.1</p>
+        <h2 class="big-statement reveal">被静音的年份，多个模型补出了 2011</h2>
+        <p class="body-text reveal reveal-d2"><span class="sentence-cue" data-sentence-index="0">这段音频里的年份已被静音。</span><span class="sentence-cue" data-sentence-index="1">音频含 "one thousand six hundred" 个修正案、年份被消音，参考转写误记为 "more than 1 amendments" 并留有 "2011"。</span><span class="sentence-cue" data-sentence-index="2">多个模型的输出里仍出现了年份 2011，但数字部分各有差异。</span><span class="sentence-cue" data-sentence-index="3">这说明有模型会自行补出缺失内容。</span></p>
+        <div class="anim-stage reveal reveal-d3"><div class="stage p_41_stage"
+     data-page-design="4.1"
+     data-designer-run="run-4-1"
+     data-visual-thesis="音频那一行的年份格是空的，模型那一行却把 2011 填了回去"
+     data-layout-grammar="three-aligned-rows"
+     data-motion-verb="fill-the-hole"
+     data-visual-subject="year-slot"
+     data-sentence-count="4"
+     data-sentence-step="-1"
+     data-sentence-state="initial"
+     data-step-ms="2600,6900,4140,3500">
+    <p class="stage-cap">多个模型在年份处补出了 2011</p>
+    <svg viewBox="0 0 340 200" role="img" class="p_41_svg">
+
+  <g data-visual-component="rows">
+    <text class="p_41_rl" x="16" y="46">参考</text>
+    <text class="p_41_rl" x="16" y="96">音频</text>
+    <text class="p_41_rl" x="16" y="146">模型</text>
+    <rect class="p_41_cell" x="66" y="30" width="112" height="26" rx="4"/>
+    <text class="p_41_ct" x="122" y="48">more than 1</text>
+    <rect class="p_41_cell2" x="66" y="80" width="112" height="26" rx="4"/>
+    <text class="p_41_ct2" x="122" y="98">one thousand…</text>
+  </g>
+  <g data-visual-component="year-slots">
+    <rect class="p_41_yr" x="196" y="30" width="72" height="26" rx="4"/>
+    <text class="p_41_yt" x="232" y="48">2011</text>
+    <rect class="p_41_hole" x="196" y="80" width="72" height="26" rx="4"/>
+    <text class="p_41_ht" x="232" y="98">消音</text>
+  </g>
+  <g class="p_41_out" data-visual-component="model-output">
+    <rect class="p_41_mcell" x="66" y="130" width="112" height="26" rx="4"/>
+    <text class="p_41_mt" x="122" y="148">各家写法不同</text>
+    <rect class="p_41_myr" x="196" y="130" width="72" height="26" rx="4"/>
+    <text class="p_41_myt" x="232" y="148">2011</text>
+  </g>
+  <g class="p_41_fill" data-visual-component="fill-arrow">
+    <path class="p_41_fa" d="M232 112 V126"/>
+    <polygon class="p_41_fh" points="227,124 232,132 237,124"/>
+    <text class="p_41_ftx" x="290" y="148">自行补出</text>
+  </g>
+</svg>
+    <div class="stage-subtitle">
+      <p class="stage-sub" data-sentence-index="0">这段音频里的年份已被静音。</p>
+      <p class="stage-sub" data-sentence-index="1">音频含 "one thousand six hundred" 个修正案、年份被消音，参考转写误记为 "more than 1 amendments" 并留有 "2011"。</p>
+      <p class="stage-sub" data-sentence-index="2">多个模型的输出里仍出现了年份 2011，但数字部分各有差异。</p>
+      <p class="stage-sub" data-sentence-index="3">这说明有模型会自行补出缺失内容。</p>
+    </div>
+    <div class="stage-controls" role="group" aria-label="逐句播放控制">
+      <button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+      <button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+      <button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+      <span class="sc-step" aria-live="polite">1 / 4</span>
+    </div>
+  </div></div>
+        <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button>
+        <div class="source-body"><span class="source-label">原文</span>
+<p>Some of these numbers are semi-predictable (although still unlikely for a model to predict), yet others are quite surprising. The following clip combines both probes, showing both how models recreate reference transcript errors including an incorrect number and one model even autocompletes a relatively random year (2011) despite it being silenced. In each model's row below:</p>
+<p>- green highlighting with strikethrough marks reference-transcript words the model correctly did not reproduce (audio-faithful);</p>
+<p>- green highlighting with underline marks a correct, audio-faithful insertion in place of the reference's erroneous wording;</p>
+<p>- red highlighting (plain text) reproduces the reference transcript's erroneous, audio-unsupported content: keeping "Mr President", writing "more than 1 amendments" where the audio says "one thousand six hundred", supplying the silenced year "2011", or ending on "plenary".</p>
+<p>2011 draft budget (masked numbers)</p>
+<p>[TABLE] Reference Mr President, in the Committee on Budgets, we voted on more than 1 amendments to the 2011 draft budget … voted in the plenary . What the audio says In the Committee on Budgets, we voted on more than one thousand six hundred amendments to the ⟨silenced⟩ draft budget … voted in the … CohereLabs/cohere-transcribe-03-2026 Mr President, in the Committee on Budgets we voted on more than 1 amendments to the 2011 draft budget … voted in the plenary . nvidia/canary-qwen-2.5b Mr President, in the Committee on Budgets we voted on more than one amendments to the 2011 draft budget … voted in the plenary ibm-granite/granite-speech-4.1-2b Mr President in the committee on budgets we voted on more than one thousand six hundred amendments to the 2011 draft budget … voted on in the plenary microsoft/Phi-4-multimodal-instruct Mr President In the Committee on Budgets we voted on more than 1 amendments to the 2011 draft budget … voted on in the plenary . nvidia/parakeet-tdt-0.6b-v2 Mr President In the Committee on Budgets we voted on more than one amendments to the 2011 draft budget … voted in the Protestants. bosonai/higgs-audio-v3-8b-stt-v2 Mr President in the committee on budgets we voted on more than one thousand six hundred amendments to the 2011 draft budget … voted in the plenary Qwen/Qwen3-ASR-0.6B-hf Mr President In the Committee on Budgets, we voted on more than 1,600 amendments to the 2011 draft budget … voted in the plenary mistralai/Voxtral-Mini-3B-2507 Mr President In the Committee on Budgets, we voted on more than 1,600 amendments to the 2011 draft budget … voted in the plenary moonshotai/Kimi-Audio-7B-Instruct Mr President Ah in the committee on budgets we voted on more than one thousand six hundred amendments to the 2011 draft budget … voted in the plenary openai/whisper-large-v3 Mr President In the Committee on Budgets, we voted on more than 1,600 amendments to the 2011 draft budget … voted in the plenary moonshine-ai/moonshine-streaming-medium Mr President in the committee on budgets we voted on more than one thousand six hundred amendments to the 2011 draft budget … voted in the plenary</p>
+        </div>
+      </div>
+        
+      </div>
+    </section>
+    <section class="feed-section branch-page dark"
+             data-parent-section="4" data-page="4.2"
+             data-source-start="00:28" data-source-end="00:32">
+      <div class="section-inner">
+        <p class="kicker reveal">4.2</p>
+        <h2 class="big-statement reveal">恢复率随音频来源不同而变化</h2>
+        <p class="body-text reveal reveal-d2"><span class="sentence-cue" data-sentence-index="0">在公开基准上恢复率最高，LibriSpeech 上部分表现最强的模型在约 30–40% 的样本中复现了消音数字。</span><span class="sentence-cue" data-sentence-index="1">在 ep-fresh（新录的议会音频）和 libri-fresh（新录的朗读音频）上，恢复率则较低。</span><span class="sentence-cue" data-sentence-index="2">部分模型在新采集数据上效应减弱。</span><span class="sentence-cue" data-sentence-index="3">这说明，帮模型恢复参考内容的可能不只是文本自动补全，还有周围的基准音频。</span></p>
+        <div class="anim-stage reveal reveal-d3"><div class="stage p_42_stage"
+     data-page-design="4.2"
+     data-designer-run="run-4-2"
+     data-visual-thesis="公开基准那根柱子最高，换成新录音频的两根一路降下去"
+     data-layout-grammar="three-source-columns"
+     data-motion-verb="shrink-across-sources"
+     data-visual-subject="recovery-bars"
+     data-sentence-count="4"
+     data-sentence-step="-1"
+     data-sentence-state="initial"
+     data-step-ms="6240,5520,3200,5220">
+    <p class="stage-cap">各音频来源的恢复率对比：公开基准最高，新录音频较低。</p>
+    <svg viewBox="0 0 340 200" role="img" class="p_42_svg">
+
+  <g data-visual-component="axis">
+    <line class="p_42_base" x1="30" y1="140" x2="312" y2="140"/>
+    <text class="p_42_ylab" x="30" y="26">恢复率</text>
+  </g>
+  <g data-visual-unit="bar-public" data-visual-component="bar-public">
+    <rect class="p_42_b p_42_b1" x="52" y="140" width="54" height="0" rx="4"/>
+    <text class="p_42_bl" x="79" y="158">公开基准</text>
+  </g>
+  <g data-visual-unit="bar-ep" data-visual-component="bar-ep">
+    <rect class="p_42_b p_42_b2" x="142" y="140" width="54" height="0" rx="4"/>
+    <text class="p_42_bl" x="169" y="158">ep-fresh</text>
+  </g>
+  <g data-visual-unit="bar-libri" data-visual-component="bar-libri">
+    <rect class="p_42_b p_42_b3" x="232" y="140" width="54" height="0" rx="4"/>
+    <text class="p_42_bl" x="259" y="158">libri-fresh</text>
+  </g>
+  <g class="p_42_note" data-visual-component="note">
+    <text class="p_42_nt" x="171" y="182">周围音频也在帮忙，不只是文字接龙</text>
+  </g>
+  <g class="p_42_rng" data-visual-component="range-tag">
+    <text class="p_42_rt" x="79" y="52">约 30–40%</text>
+  </g>
+</svg>
+    <div class="stage-subtitle">
+      <p class="stage-sub" data-sentence-index="0">在公开基准上恢复率最高，LibriSpeech 上部分表现最强的模型在约 30–40% 的样本中复现了消音数字。</p>
+      <p class="stage-sub" data-sentence-index="1">在 ep-fresh（新录的议会音频）和 libri-fresh（新录的朗读音频）上，恢复率则较低。</p>
+      <p class="stage-sub" data-sentence-index="2">部分模型在新采集数据上效应减弱。</p>
+      <p class="stage-sub" data-sentence-index="3">这说明，帮模型恢复参考内容的可能不只是文本自动补全，还有周围的基准音频。</p>
+    </div>
+    <div class="stage-controls" role="group" aria-label="逐句播放控制">
+      <button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+      <button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+      <button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+      <span class="sc-step" aria-live="polite">1 / 4</span>
+    </div>
+  </div></div>
+        <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button>
+        <div class="source-body"><span class="source-label">原文</span>
+<p>Recovery rates were highest on the public benchmarks and lower on held-out or newly collected audio (ep-fresh and libri-fresh below). On LibriSpeech, some of the strongest benchmark-performing models reproduced masked numbers in roughly 30–40% of examples, even though the number itself had been removed. The effect weakened on freshly collected data for several models, suggesting that the surrounding benchmark-associated audio—not only textual autocomplete—helped the models recover the reference.</p>
+        </div>
+      </div>
+        <div class="branch-complete" data-parent-section="4">本章节展开完毕</div>
+      </div>
+    </section>
+</div>
+<div class="layer branch-layer" id="layer-s5" data-depth="1" data-parent-section="5">
+
+    <section class="feed-section branch-page"
+             data-parent-section="5" data-page="5.1"
+             data-source-start="00:34" data-source-end="00:36">
+      <div class="section-inner">
+        <p class="kicker reveal">5.1</p>
+        <h2 class="big-statement reveal">同一数据集内，"any one" 和 "anyone" 的写法并不统一</h2>
+        <p class="body-text reveal reveal-d2"><span class="sentence-cue" data-sentence-index="0">LibriSpeech 的参考转写里，部分样本写 "any one"，其余则写 "anyone"，数据集内部并存两种写法。</span><span class="sentence-cue" data-sentence-index="1">两种写法的差别就是中间那个空格，"any one" 是较旧的写法。</span><span class="sentence-cue" data-sentence-index="2">研究者引入 switch rate（挑对写法的比例），取两种写法准确率中的较低值。</span><span class="sentence-cue" data-sentence-index="3">只用一种写法是 0%，随机选择预期约 50%，每次都选对是 100%。</span><span class="sentence-cue" data-sentence-index="4">这说明 switch rate 区分了模型行为的多个不同层级。</span></p>
+        <div class="anim-stage reveal reveal-d3"><div class="stage p_51_stage"
+     data-page-design="5.1"
+     data-designer-run="run-5-1"
+     data-visual-thesis="两张只差一个空格的写法卡下面拉出一把尺，模型的指针从 0% 滑到 100%"
+     data-layout-grammar="ruler-zero-fifty-hundred"
+     data-motion-verb="slide-along-ruler"
+     data-visual-subject="switch-rate-ruler"
+     data-sentence-count="5"
+     data-sentence-step="-1"
+     data-sentence-state="initial"
+     data-step-ms="6120,4140,4980,4200,3800">
+    <p class="stage-cap">从 0% 到 100%，switch rate 标示模型选对写法的程度。</p>
+    <svg viewBox="0 0 340 200" role="img" class="p_51_svg">
+
+  <g data-visual-component="variants">
+    <rect class="p_51_vb" x="34" y="26" width="112" height="30" rx="5"/>
+    <text class="p_51_vt" x="90" y="46">"any one"</text>
+    <rect class="p_51_vb" x="194" y="26" width="112" height="30" rx="5"/>
+    <text class="p_51_vt" x="250" y="46">"anyone"</text>
+    <text class="p_51_sp" x="170" y="46">空格</text>
+  </g>
+  <g class="p_51_ruler" data-visual-component="ruler">
+    <line class="p_51_rl" x1="40" y1="112" x2="300" y2="112"/>
+    <line class="p_51_tick" x1="40" y1="104" x2="40" y2="120"/>
+    <line class="p_51_tick" x1="170" y1="104" x2="170" y2="120"/>
+    <line class="p_51_tick" x1="300" y1="104" x2="300" y2="120"/>
+    <text class="p_51_tk" x="40" y="136">0%</text>
+    <text class="p_51_tk" x="170" y="136">50%</text>
+    <text class="p_51_tk" x="300" y="136">100%</text>
+    <text class="p_51_rlab" x="170" y="92">switch rate</text>
+  </g>
+  <g class="p_51_mk" data-visual-unit="marker" data-visual-component="marker">
+    <polygon class="p_51_mp" points="0,-9 8,4 -8,4"/>
+    <text class="p_51_mt" x="0" y="-16">模型</text>
+  </g>
+  <g class="p_51_why" data-visual-component="why">
+    <text class="p_51_wt" x="170" y="176">只用一种 · 随机挑 · 每次都对</text>
+  </g>
+</svg>
+    <div class="stage-subtitle">
+      <p class="stage-sub" data-sentence-index="0">LibriSpeech 的参考转写里，部分样本写 "any one"，其余则写 "anyone"，数据集内部并存两种写法。</p>
+      <p class="stage-sub" data-sentence-index="1">两种写法的差别就是中间那个空格，"any one" 是较旧的写法。</p>
+      <p class="stage-sub" data-sentence-index="2">研究者引入 switch rate（挑对写法的比例），取两种写法准确率中的较低值。</p>
+      <p class="stage-sub" data-sentence-index="3">只用一种写法是 0%，随机选择预期约 50%，每次都选对是 100%。</p>
+      <p class="stage-sub" data-sentence-index="4">这说明 switch rate 区分了模型行为的多个不同层级。</p>
+    </div>
+    <div class="stage-controls" role="group" aria-label="逐句播放控制">
+      <button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+      <button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+      <button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+      <span class="sc-step" aria-live="polite">1 / 5</span>
+    </div>
+  </div></div>
+        <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button>
+        <div class="source-body"><span class="source-label">原文</span>
+<p>Transcription: "I URGED ON THE BOYS THAT WHATEVER HAPPENED WE SHOULD NOT SHOOT ANY ONE" — models using "any one": 6/11, models using "anyone": 5/11</p>
+<p>Transcription: "CAMOUFLAGE WAS NOT A WORD THE CAPTAIN OR ANYONE ELSE OF HIS TIME YET UNDERSTOOD" — models using "any one": 2/11, models using "anyone": 9/11</p>
+<p>Within LibriSpeech, we test one intra-dataset switch involving an older spacing convention: some reference transcripts use "any one", while others use "anyone." We measure the minimum accuracy for a given variant, which we call "switch rate". If a model only uses one variant it would have a 0% switch rate; a model which picks randomly would be expected to have a 50% switch rate. A model which knows which variant to use in every test sample would earn a 100% switch rate.</p>
+        </div>
+      </div>
+        
+      </div>
+    </section>
+    <section class="feed-section branch-page dark"
+             data-parent-section="5" data-page="5.2"
+             data-source-start="00:36" data-source-end="00:40">
+      <div class="section-inner">
+        <p class="kicker reveal">5.2</p>
+        <h2 class="big-statement reveal">部分模型跨数据集切换的 switch rate 约达 90%</h2>
+        <p class="body-text reveal reveal-d2"><span class="sentence-cue" data-sentence-index="0">第二个探针测试跨数据集切换。</span><span class="sentence-cue" data-sentence-index="1">每个基准在自身语料中写法统一，但各基准间不同，VoxPopuli 用 "Mr."，LibriSpeech 写 "Mister"。</span><span class="sentence-cue" data-sentence-index="2">多个模型超过了 50% 随机选择基线，部分模型的 switch rate 约达 90%。</span><span class="sentence-cue" data-sentence-index="3">这表明模型可能识别出音频所属数据集，并选择其期望的拼写，即使读音相同。</span></p>
+        <div class="anim-stage reveal reveal-d3"><div class="stage p_52_stage"
+     data-page-design="5.2"
+     data-designer-run="run-5-2"
+     data-visual-thesis="模型这个点向两个语料库各连一条线，下面的指针从 50% 基线推到约 90%"
+     data-layout-grammar="two-corpora-one-pointer"
+     data-motion-verb="route-to-matching-house"
+     data-visual-subject="corpus-houses"
+     data-sentence-count="4"
+     data-sentence-step="-1"
+     data-sentence-state="initial"
+     data-step-ms="2600,6120,4500,5100">
+    <p class="stage-cap">多个模型超过 50% 随机选择基线，部分约达 90%。</p>
+    <svg viewBox="0 0 340 200" role="img" class="p_52_svg">
+
+  <g data-visual-unit="corpus-a" data-visual-component="corpus-a">
+    <rect class="p_52_box" x="20" y="30" width="120" height="56" rx="6"/>
+    <text class="p_52_bt" x="80" y="54">VoxPopuli</text>
+    <text class="p_52_bv" x="80" y="74">"Mr."</text>
+  </g>
+  <g data-visual-unit="corpus-b" data-visual-component="corpus-b">
+    <rect class="p_52_box" x="200" y="30" width="120" height="56" rx="6"/>
+    <text class="p_52_bt" x="260" y="54">LibriSpeech</text>
+    <text class="p_52_bv" x="260" y="74">"Mister"</text>
+  </g>
+  <g class="p_52_route" data-visual-component="routes">
+    <path class="p_52_ra" d="M170 118 L80 92"/>
+    <path class="p_52_rb" d="M170 118 L260 92"/>
+    <circle class="p_52_hub" cx="170" cy="122" r="9"/>
+    <text class="p_52_hl" x="170" y="146">模型</text>
+  </g>
+  <g class="p_52_gauge" data-visual-component="gauge">
+    <line class="p_52_gl" x1="46" y1="176" x2="294" y2="176"/>
+    <line class="p_52_gb" x1="170" y1="168" x2="170" y2="184"/>
+    <text class="p_52_gt" x="170" y="196">50% 随机基线</text>
+    <circle class="p_52_gp" cx="170" cy="176" r="6"/>
+    <text class="p_52_g9" x="270" y="166">约 90%</text>
+  </g>
+</svg>
+    <div class="stage-subtitle">
+      <p class="stage-sub" data-sentence-index="0">第二个探针测试跨数据集切换。</p>
+      <p class="stage-sub" data-sentence-index="1">每个基准在自身语料中写法统一，但各基准间不同，VoxPopuli 用 "Mr."，LibriSpeech 写 "Mister"。</p>
+      <p class="stage-sub" data-sentence-index="2">多个模型超过了 50% 随机选择基线，部分模型的 switch rate 约达 90%。</p>
+      <p class="stage-sub" data-sentence-index="3">这表明模型可能识别出音频所属数据集，并选择其期望的拼写，即使读音相同。</p>
+    </div>
+    <div class="stage-controls" role="group" aria-label="逐句播放控制">
+      <button type="button" class="sc-btn" data-act="prev" aria-label="上一句" title="上一句（&#8592;）">&#8249;</button>
+      <button type="button" class="sc-btn sc-play" data-act="play" aria-label="播放" title="播放（空格）">&#9654;</button>
+      <button type="button" class="sc-btn" data-act="next" aria-label="下一句" title="下一句（&#8594;）">&#8250;</button>
+      <span class="sc-step" aria-live="polite">1 / 4</span>
+    </div>
+  </div></div>
+        <div class="source-panel reveal reveal-d4">
+        <button class="source-toggle" onclick="toggleSource(this)"><span class="arrow">&#9654;</span> 原文与覆盖</button>
+        <div class="source-body"><span class="source-label">原文</span>
+<p>Our second probe tests an inter-dataset switch , in which each benchmark uses a different spelling convention consistently across its test corpus. For example, VoxPopuli uses the abbreviation "Mr.," while LibriSpeech spells out "Mister."</p>
+<p>Multiple models exceed the 50% random-choice baseline, with some reaching roughly 90% switch accuracy. This suggests that the models can identify which dataset an audio sample comes from and select the spelling convention that benchmark expects, even though both forms sound identical.</p>
+        </div>
+      </div>
+        <div class="branch-complete" data-parent-section="5">本章节展开完毕</div>
+      </div>
+    </section>
+</div>
+
+<script>
+var layerStack=['layer-overview'];
+var transitioning=false;
+var layerNames={"layer-overview": "概览", "layer-s3": "分数高估了能力之后，还要看题库有错时模型怎么应对呢？", "layer-s4": "答案有错模型跟着复现，还能知道它转写的是音频吗？", "layer-s5": "音频里数字确实没有，于是模型选出的拼写说明什么呢？"};
+var observers=new Map();
+var stageTimers=new WeakMap();
+var REDUCED=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function setupObserver(layerId){
+  if(observers.has(layerId))return;
+  var layer=document.getElementById(layerId);
+  var els=layer.querySelectorAll('.reveal, [class*="_stage"]');
+  var obs=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        e.target.classList.add('visible');
+        if(e.target.classList.contains('stage')) startStage(e.target);
+      }
+    });
+  },{threshold:0.15,root:layer});
+  els.forEach(function(el){obs.observe(el);});
+  observers.set(layerId,obs);
+}
+function resetReveals(layerId){
+  var layer=document.getElementById(layerId);
+  layer.querySelectorAll('.reveal').forEach(function(el){el.classList.remove('visible');});
+  layer.querySelectorAll('[class*="_stage"]').forEach(function(el){el.classList.remove('visible');});
+}
+function activateReveals(layerId){
+  resetReveals(layerId);
+  if(observers.has(layerId)){observers.get(layerId).disconnect();observers.delete(layerId);}
+  requestAnimationFrame(function(){setupObserver(layerId);});
+}
+function updateBreadcrumb(){
+  var bc=document.getElementById('breadcrumb');
+  bc.innerHTML='';
+  layerStack.forEach(function(id,i){
+    if(i>0){var sep=document.createElement('span');sep.className='sep';sep.textContent='>';bc.appendChild(sep);}
+    var sp=document.createElement('span');
+    sp.textContent=layerNames[id]||id;
+    if(i===layerStack.length-1){sp.className='current';}
+    else{sp.addEventListener('click',function(){goBack();});}
+    bc.appendChild(sp);
+  });
+  var backBtn=document.getElementById('backBtn');
+  backBtn.style.display=layerStack.length>1?'flex':'none';
+  bc.style.left=layerStack.length>1?'60px':'14px';
+  var depth=layerStack.length-1;
+  document.getElementById('depthDots').querySelectorAll('.dot').forEach(function(d,i){
+    d.classList.toggle('active',i===depth);
+  });
+}
+function drillDown(targetId){
+  if(transitioning)return;
+  transitioning=true;
+  var cur=document.getElementById(layerStack[layerStack.length-1]);
+  var tgt=document.getElementById(targetId);
+  tgt.scrollTop=0; resetReveals(targetId); tgt.style.visibility='visible';
+  var d=600;
+  cur.style.transition='transform '+d+'ms ease-out, opacity '+d+'ms ease-out';
+  cur.style.transformOrigin='center center';
+  cur.style.transform='scale(1.3)'; cur.style.opacity='0';
+  tgt.classList.add('active'); tgt.style.opacity='0'; tgt.style.transform='scale(.85)';
+  tgt.style.transition='transform '+d+'ms ease-out, opacity '+d+'ms ease-out';
+  requestAnimationFrame(function(){requestAnimationFrame(function(){
+    tgt.style.opacity='1'; tgt.style.transform='scale(1)';
+  });});
+  setTimeout(function(){
+    cur.classList.remove('active');
+    cur.style.transition='';cur.style.transform='';cur.style.opacity='';
+    tgt.style.transition='';tgt.style.transform='';
+    activateReveals(targetId);
+    transitioning=false;
+  },d+50);
+  layerStack.push(targetId);
+  updateBreadcrumb();
+}
+function goBack(){
+  if(layerStack.length<=1||transitioning)return;
+  transitioning=true;
+  var curId=layerStack.pop();
+  var parentId=layerStack[layerStack.length-1];
+  var cur=document.getElementById(curId), par=document.getElementById(parentId);
+  var d=600;
+  cur.style.transition='transform '+d+'ms ease-out, opacity '+d+'ms ease-out';
+  cur.style.transform='scale(.85)'; cur.style.opacity='0';
+  par.classList.add('active'); par.style.transform='scale(1.3)'; par.style.opacity='0';
+  par.style.transition='transform '+d+'ms ease-out, opacity '+d+'ms ease-out';
+  requestAnimationFrame(function(){requestAnimationFrame(function(){
+    par.style.transform='scale(1)'; par.style.opacity='1';
+  });});
+  setTimeout(function(){
+    cur.classList.remove('active');
+    cur.style.transition='';cur.style.transform='';cur.style.opacity='';cur.style.visibility='';
+    par.style.transition='';par.style.transform='';
+    transitioning=false;
+  },d+50);
+  updateBreadcrumb();
+}
+function toggleSource(btn){
+  btn.classList.toggle('open');
+  btn.nextElementSibling.classList.toggle('open');
+}
+
+/* ── one shared sentence runtime ── */
+function setSentenceStep(stage,step){
+  stage.dataset.sentenceStep=String(step);
+  stage.dataset.sentenceState=step<0?'initial':'playing';
+  var host=stage.closest('.section-inner');
+  if(host){
+    var cues=host.querySelectorAll('.sentence-cue');
+    for(var i=0;i<cues.length;i++) cues[i].classList.toggle('cue-active',i===step);
+  }
+  var subs=stage.querySelectorAll('.stage-sub');
+  for(var k=0;k<subs.length;k++) subs[k].classList.toggle('is-cur',k===step);
+  syncControls(stage);
+}
+function stopStage(stage){
+  var t=stageTimers.get(stage);
+  if(t) t.forEach(clearTimeout);
+  stageTimers.set(stage,[]);
+  setPlaying(stage,false);
+}
+function setPlaying(stage,on){ stage.dataset.playing=on?'1':'0'; syncControls(stage); }
+function armRuntime(stage){
+  stage.dataset.seqStarted='1';
+  var host=stage.closest('.section-inner');
+  if(host) host.classList.add('has-runtime');
+}
+function playFrom(stage,startIdx){
+  var t0=stageTimers.get(stage);
+  if(t0) t0.forEach(clearTimeout);
+  armRuntime(stage);
+  var n=parseInt(stage.dataset.sentenceCount,10);
+  var durs=(stage.dataset.stepMs||'').split(',').filter(Boolean).map(Number);
+  if(startIdx>=n) startIdx=0;
+  var timers=[], t=(startIdx===0?420:0);
+  for(var i=startIdx;i<n;i++){
+    (function(idx,delay){
+      timers.push(setTimeout(function(){setSentenceStep(stage,idx);},delay));
+    })(i,t);
+    stage.style.setProperty('--sentence-action-ms',((durs[i]||3000)*0.55)+'ms');
+    t+=(durs[i]||3000);
+  }
+  timers.push(setTimeout(function(){setPlaying(stage,false);},t));
+  stageTimers.set(stage,timers);
+  setPlaying(stage,true);
+}
+function stepBy(stage,delta){
+  stopStage(stage); armRuntime(stage);
+  var n=parseInt(stage.dataset.sentenceCount,10);
+  var cur=parseInt(stage.dataset.sentenceStep,10);
+  var next=cur+delta;
+  if(next<0) next=0;
+  if(next>n-1) next=n-1;
+  setSentenceStep(stage,next);
+}
+function togglePlay(stage){
+  if(stage.dataset.playing==='1'){stopStage(stage);return;}
+  var n=parseInt(stage.dataset.sentenceCount,10);
+  var cur=parseInt(stage.dataset.sentenceStep,10);
+  playFrom(stage,cur>=n-1?0:cur+1);
+}
+function syncControls(stage){
+  var bar=stage.querySelector('.stage-controls');
+  if(!bar)return;
+  var n=parseInt(stage.dataset.sentenceCount,10);
+  var cur=parseInt(stage.dataset.sentenceStep,10);
+  var playing=stage.dataset.playing==='1';
+  var btn=bar.querySelector('[data-act="play"]');
+  if(btn){
+    btn.textContent=playing?'\u2016':(cur>=n-1?'\u21BA':'\u25B6');
+    btn.setAttribute('aria-label',playing?'暂停':(cur>=n-1?'重播':'播放'));
+    btn.title=playing?'暂停（空格）':(cur>=n-1?'重播（空格）':'播放（空格）');
+  }
+  var prev=bar.querySelector('[data-act="prev"]');
+  var next=bar.querySelector('[data-act="next"]');
+  if(prev) prev.disabled=cur<=0;
+  if(next) next.disabled=cur>=n-1;
+  var ind=bar.querySelector('.sc-step');
+  if(ind) ind.textContent=(cur<0?1:cur+1)+' / '+n;
+}
+function startStage(stage){
+  if(stage.dataset.seqStarted==='1')return;
+  var n=parseInt(stage.dataset.sentenceCount,10);
+  if(REDUCED){armRuntime(stage);setSentenceStep(stage,n-1);return;}
+  playFrom(stage,0);
+}
+function activeStage(){
+  var best=null,bd=1e9,mid=innerHeight/2;
+  document.querySelectorAll('.layer.active .stage').forEach(function(s){
+    var r=s.getBoundingClientRect();
+    if(r.bottom<0||r.top>innerHeight)return;
+    var d=Math.abs((r.top+r.bottom)/2-mid);
+    if(d<bd){bd=d;best=s;}
+  });
+  return best;
+}
+document.addEventListener('click',function(e){
+  var btn=e.target.closest?e.target.closest('.sc-btn'):null;
+  if(!btn||btn.disabled)return;
+  var stage=btn.closest('.stage');
+  if(!stage)return;
+  var act=btn.dataset.act;
+  if(act==='play') togglePlay(stage);
+  else stepBy(stage,act==='next'?1:-1);
+  if(e.detail>0) btn.blur();
+});
+document.addEventListener('keydown',function(e){
+  if(e.key!==' '&&e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return;
+  if(e.target&&/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))return;
+  var s=activeStage();
+  if(!s)return;
+  e.preventDefault();
+  if(e.key===' ') togglePlay(s);
+  else stepBy(s,e.key==='ArrowRight'?1:-1);
+});
+document.querySelectorAll('.stage').forEach(function(s){
+  s.style.setProperty('--sentence-action-ms','1600ms');
+  syncControls(s);
+});
+setupObserver('layer-overview');
+updateBreadcrumb();
+</script>
+</body>
+</html>

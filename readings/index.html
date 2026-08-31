@@ -319,6 +319,18 @@ a {
   </div>
 
   <div class="reading-list" id="readingList">
+    <article class="reading-card" data-month="2026-08" data-linked="true" data-search="开源语音识别模型基准评估 部分高分模型照搬题库答案而非转录音频 hugging face blog measuring benchmark optimization in speech recognition">
+      <a class="reading-title" href="/readings/asr-benchmark-optimization/">开源语音识别模型基准评估 — 部分高分模型照搬题库答案而非转录音频</a>
+      <div class="reading-meta">
+        <span>生成 2026-08-31</span>
+        <span>原文 2026-08-21</span>
+      </div>
+      <div class="reading-source">
+        <span class="source-chip linked">原文链接</span>
+        <a href="https://huggingface.co/blog/asr-benchmark-optimization" target="_blank" rel="noopener">Measuring benchmark optimization in speech recognition</a>
+      </div>
+      <p class="reading-desc">研究评估了 11 个开源语音识别模型，数据集为 VoxPopuli English 和 LibriSpeech，设计三项测试，检验 benchmark optimization（benchmaxxing）现象——模型分数提升源于学习测试集特定模式而非底层能力增强。测试一（一致性分歧）：约 40% 的测试片段被标出可能含参考错误，涉及约 3% 的参考词；相关模型有 18–30% 的时候照抄错误的参考转写，VoxPopuli 上 WER 最低的模型最易照抄。测试二（掩蔽数字）：将音频中的数字消除后，在 LibriSpeech 上，部分成绩最强的模型仍在约 30–40% 的样本里写出被消音的数字；换用新采集的音频后效应减弱。测试三（拼写切换）：随机基线为 50%，多个模型超过该基线，部分达到约 90% 的切换准确率。换用训练截止后新采集的同源音频，多数模型退回忠实转写。研究建议使用完全留出的评测集，Open ASR Leaderboard 已新增 Benchmark fitting 标签页，脚本在 GitHub 开源。</p>
+    </article>
     <article class="reading-card" data-month="2026-08" data-linked="true" data-search="vllm 是怎么把版本发稳的 — ci、基准评估与发布流程 vllm blog keeping vllm production quality: a look inside ci, benchmarking, and the release process">
       <a class="reading-title" href="/readings/vllm-production-quality/">vLLM 是怎么把版本发稳的 — CI、基准评估与发布流程</a>
       <div class="reading-meta">
